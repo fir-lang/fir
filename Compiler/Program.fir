@@ -99,9 +99,17 @@ Program.prepModuleEnvs(self):
     # - All module-level items are exported.
     # - Imports work as importing `*`, i.e. all exported items are imported and
     #   used directly with their names (no module prefix or renaming).
+    #
+    # That means each SCC has access to every top-level item in all of the nodes
+    # in the SCC. So we create SCCs, and then create one module env for each
+    # SCC, which is shared with all of the modules of the SCC.
     let sccs = _sccs(self)
+
     print("Program SCCs:")
     print(sccs.toDoc().render(80))
+
+    for scc: HashSet[ModuleIdx] in sccs.iter():
+        ()
 
 
 ## Find strongly connected components in the module dependency graph.
