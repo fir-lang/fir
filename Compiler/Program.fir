@@ -229,12 +229,12 @@ _scc(
         if depNode.index is Option.None:
             _scc(pgm, depNode.moduleIdx, indexGen, nodes, stack, output)
             node.lowLink = Option.Some(
-                _minU32(node.lowLink.unwrap(), depNode.lowLink.unwrap()),
+                min(node.lowLink.unwrap(), depNode.lowLink.unwrap()),
             )
         elif depNode.onStack:
             # Dep. is on stack, so in the current SCC.
             node.lowLink = Option.Some(
-                _minU32(node.lowLink.unwrap(), depNode.index.unwrap()),
+                min(node.lowLink.unwrap(), depNode.index.unwrap()),
             )
 
     # If `node` is a root node, pop the stack and generate an SCC.
@@ -250,14 +250,6 @@ _scc(
             if dep == module:
                 break
         output.push(scc)
-
-
-# TODO: Implement this in the standard libs.
-_minU32(i1: U32, i2: U32) U32:
-    if i1 < i2:
-        i1
-    else:
-        i2
 
 
 # ------------------------------------------------------------------------------

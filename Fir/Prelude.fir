@@ -109,6 +109,20 @@ trait Ord[t]:
             _: Bool.False
 
 
+max[Ord[t]](a: t, b: t) t:
+    if a > b:
+        a
+    else:
+        b
+
+
+min[Ord[t]](a: t, b: t) t:
+    if a < b:
+        a
+    else:
+        b
+
+
 trait ToStr[t]:
     toStr(self: t) Str
 
