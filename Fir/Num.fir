@@ -96,6 +96,11 @@ impl Ord[U32]:
     prim cmp(self: U32, other: U32) Ordering
 
 
+impl Hash[U32]:
+    hash(self: U32) U32:
+        self
+
+
 impl BitAnd[U32]:
     prim __bitand(self: U32, other: U32) U32
 

@@ -81,6 +81,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
         _tokens = tokens,
         _termEnv = HashMap.withCapacity(100),
         _tyEnv = HashMap.withCapacity(100),
+        _sccIdx = Option.None,
     )
 
     self._modules.push(module)
@@ -105,11 +106,20 @@ Program.prepModuleEnvs(self):
     # SCC, which is shared with all of the modules of the SCC.
     let sccs = _sccs(self)
 
+    print("Program modules:")
+    for i: U32 in range(u32(0), self._modules.len()):
+        print("  `i`: `self._modules.get(i)._path`")
+
     print("Program SCCs:")
     print(sccs.toDoc().render(80))
 
-    for scc: HashSet[ModuleIdx] in sccs.iter():
-        ()
+    let sccs = _revTopSort(self, sccs)
+    print("Program SCCs, sorted:")
+    print(sccs.toDoc().render(80))
+
+
+# ------------------------------------------------------------------------------
+# Strongly connected components
 
 
 ## Find strongly connected components in the module dependency graph.
@@ -198,22 +208,97 @@ _scc(
 
     # If `node` is a root node, pop the stack and generate an SCC.
     if node.lowLink == node.index:
+        let sccIdx = output.len()
         let scc: HashSet[ModuleIdx] = HashSet.withCapacity(5)
         loop:
             let dep = stack.pop().unwrap()
             let depNode = nodes.get(dep._idx)
             depNode.onStack = Bool.False
             scc.insert(dep)
+            pgm._modules.get(dep._idx)._sccIdx = Option.Some(sccIdx)
             if dep == module:
                 break
         output.push(scc)
 
 
+# TODO: Implement this in the standard libs.
 _minU32(i1: U32, i2: U32) U32:
     if i1 < i2:
         i1
     else:
         i2
+
+
+# ------------------------------------------------------------------------------
+# Topological sorting
+
+
+## Reverse topological sort the strongly connected components.
+##
+## Reverse means child nodes (imported modules) will come before parents
+## (importing modules) in the output.
+_revTopSort(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[ModuleIdx]]:
+    # Generate imports from SCCs to other SCCs.
+    let sccImports: Vec[HashSet[U32]] = Vec.withCapacity(sccs.len())
+
+    # TODO: Add `repeatWith` in the standard libs.
+    for i: U32 in range(u32(0), sccs.len()):
+        sccImports.push(HashSet.withCapacity(10))
+
+    for sccIdx: U32 in range(u32(0), sccs.len()):
+        let importedSccs = sccImports.get(sccIdx)
+        for mod: ModuleIdx in sccs.get(sccIdx).iter():
+            for import_: ModuleIdx in
+                    pgm._modules.get(mod._idx)._imports.iter():
+                let importScc = pgm._modules.get(import_._idx)._sccIdx.unwrap()
+                if importScc != sccIdx:
+                    importedSccs.insert(importScc)
+
+    # The dependency graph with `sccs` as the nodes and `sccImports` as the
+    # edges don't have cycles, so we can depth-first traverse it, add child
+    # nodes before parents to rev top sort.
+    let output: Vec[HashSet[ModuleIdx]] = Vec.withCapacity(sccImports.len())
+
+    # Find the root of the tree. This part is a bit hacky: we assume that
+    # `ModuleIdx(0)` is the entry point, which can potentially change as we
+    # refactor the code.
+    # TODO: Add `Iterator.find` or similar.
+    let rootSccIdx: Option[U32] = Option.None
+    let rootModuleIdx = ModuleIdx(_idx = 0)
+    for i: U32 in range(u32(0), sccs.len()):
+        if sccs.get(i).contains(rootModuleIdx):
+            rootSccIdx = Option.Some(i)
+            break
+    let rootSccIdx = rootSccIdx.unwrap()
+
+    _dft(rootSccIdx, sccs, sccImports, output, HashSet.withCapacity(sccs.len()))
+
+    output
+
+
+_dft(
+    sccIdx: U32,
+    sccs: Vec[HashSet[ModuleIdx]],
+    sccImports: Vec[HashSet[U32]],
+    output: Vec[HashSet[ModuleIdx]],
+    added: HashSet[U32],
+):
+    if added.contains(sccIdx):
+        return
+
+    added.insert(sccIdx)
+
+    let currentScc = sccs.get(sccIdx)
+    let currentSccImports = sccImports.get(sccIdx)
+
+    # Add imports before the current SCC.
+    for import_: U32 in currentSccImports.iter():
+        _dft(import_, sccs, sccImports, output, added)
+
+    output.push(sccs.get(sccIdx))
+
+
+# ------------------------------------------------------------------------------
 
 
 _parseFile(path: Str) (decls: Vec[TopDecl], tokens: Array[Token]):

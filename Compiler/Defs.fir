@@ -97,6 +97,10 @@ type Module(
 
     # Type environment of the module, used for name resolving.
     _tyEnv: HashMap[Str, TyId],
+
+    # Strongly connected component index of the module in the program. Generated
+    # by the dependency analysis.
+    _sccIdx: Option[U32],
 )
 
 
