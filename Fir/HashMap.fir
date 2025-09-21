@@ -10,6 +10,13 @@ type Elem[k, v](
 )
 
 
+HashMap.withCapacity(cap: U32) HashMap[k, v]:
+    let elems: Vec[Option[Elem[k, v]]] = Vec.withCapacity(cap)
+    for i: U32 in range(u32(0), cap):
+        elems.push(Option.None)
+    HashMap(_elems = elems)
+
+
 HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](
     iter: iter,
 ) HashMap[k, v] / exn:
@@ -21,13 +28,6 @@ HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](
 
 HashMap.iter(self: HashMap[k, v]) HashMapIter[k, v]:
     HashMapIter.new(self)
-
-
-HashMap.withCapacity(cap: U32) HashMap[k, v]:
-    let elems: Vec[Option[Elem[k, v]]] = Vec.withCapacity(cap)
-    for i: U32 in range(u32(0), cap):
-        elems.push(Option.None)
-    HashMap(_elems = elems)
 
 
 # Insert new value, return old value.

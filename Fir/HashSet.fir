@@ -1,0 +1,59 @@
+type HashSet[k](
+    _map: HashMap[k, ()],
+)
+
+
+HashSet.withCapacity(cap: U32) HashSet[k]:
+    HashSet(_map = HashMap.withCapacity(cap))
+
+
+HashSet.fromIter[Iterator[iter, k, exn], Eq[k], Hash[k]](iter: iter) HashSet[k] / exn:
+    HashSet(_map = HashMap.fromIter(iter.map(|k|: (key = k, value = ()))))
+
+
+HashSet.iter(self: HashSet[k]) Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn]:
+    self._map.iter().map(|kv| k: kv.key)
+
+
+## Returns whether the value is newly inserted.
+HashSet.insert[Hash[k], Eq[k]](self: HashSet[k], key: k) Bool:
+    self._map.insert(key, ()).isNone()
+
+
+HashSet.contains[Hash[k], Eq[k]](self: HashSet[k], key: k) Bool:
+    self._map.get(key).isSome()
+
+
+impl[ToStr[k]] ToStr[HashSet[k]]:
+    toStr(self: HashSet[k]) Str:
+        let buf = StrBuf.withCapacity(100)
+        buf.push('{')
+        let printed = 0
+        for elem: k in self.iter():
+            if printed != 0:
+                buf.pushStr(", ")
+            buf.pushStr(elem.toStr())
+            printed += 1
+        buf.push('}')
+        buf.toStr()
+
+
+impl[ToDoc[k]] ToDoc[HashSet[k]]:
+    toDoc(self: HashSet[k]) Doc:
+        let elems = Doc.empty()
+        let printed: U32 = 0
+        for elem: k in self.iter():
+            if printed != 0:
+                elems += Doc.char(',') + Doc.break_(1)
+            elems += elem.toDoc()
+            printed += 1
+
+        if printed != 0:
+            elems += Doc.whenNotFlat(Doc.char(','))
+
+        Doc.grouped(
+            Doc.char('{')
+                + Doc.nested(4, Doc.break_(0) + elems)
+                + Doc.break_(0)
+                + Doc.char('}'),
+        )
