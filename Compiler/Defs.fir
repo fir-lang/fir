@@ -81,6 +81,12 @@ type Module(
     _imports: Vec[ModuleIdx],
 
     _tokens: Array[Token],
+
+    # Term environment of the module, used for name resolving.
+    _termEnv: HashMap[Str, VarId],
+
+    # Type environment of the module, used for name resolving.
+    _tyEnv: HashMap[Str, TyId],
 )
 
 

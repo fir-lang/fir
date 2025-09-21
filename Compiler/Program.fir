@@ -79,6 +79,8 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
         _impls = impls,
         _imports = Vec.withCapacity(imports.len()),
         _tokens = tokens,
+        _termEnv = HashMap.withCapacity(100),
+        _tyEnv = HashMap.withCapacity(100),
     )
 
     self._modules.push(module)
@@ -88,6 +90,16 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
         module._imports.push(importedModuleIdx)
 
     moduleIdx
+
+
+Program.prepModuleEnvs(self):
+    # For now, the module system is simple to be compatible with the interpreter
+    # and allow running the bootstrap compiler with the interpreter:
+    #
+    # - All module-level items are exported.
+    # - Imports work as importing `*`, i.e. all exported items are imported and
+    #   used directly with their names (no module prefix or renaming).
+    ()
 
 
 _parseFile(path: Str) (decls: Vec[TopDecl], tokens: Array[Token]):
