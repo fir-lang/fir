@@ -260,11 +260,9 @@ _scc(
 ## (importing modules) in the output.
 _revTopSort(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[ModuleIdx]]:
     # Generate imports from SCCs to other SCCs.
-    let sccImports: Vec[HashSet[U32]] = Vec.withCapacity(sccs.len())
-
-    # TODO: Add `repeatWith` in the standard libs.
-    for i: U32 in range(u32(0), sccs.len()):
-        sccImports.push(HashSet.withCapacity(10))
+    let sccImports: Vec[HashSet[U32]] = Vec.fromIter(
+        repeatWith(||: HashSet.withCapacity(10)).take(sccs.len()),
+    )
 
     for sccIdx: U32 in range(u32(0), sccs.len()):
         let importedSccs = sccImports.get(sccIdx)
@@ -283,14 +281,11 @@ _revTopSort(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[ModuleIdx]]
     # Find the root of the tree. This part is a bit hacky: we assume that
     # `ModuleIdx(0)` is the entry point, which can potentially change as we
     # refactor the code.
-    # TODO: Add `Iterator.find` or similar.
-    let rootSccIdx: Option[U32] = Option.None
     let rootModuleIdx = ModuleIdx(_idx = 0)
-    for i: U32 in range(u32(0), sccs.len()):
-        if sccs.get(i).contains(rootModuleIdx):
-            rootSccIdx = Option.Some(i)
-            break
-    let rootSccIdx = rootSccIdx.unwrap()
+    let rootSccIdx: U32 = sccs.iter().enumerate().find(
+        |item: (idx: U32, item: HashSet[ModuleIdx])| Bool:
+            item.item.contains(rootModuleIdx),
+    ).unwrap().idx
 
     _dft(rootSccIdx, sccs, sccImports, output, HashSet.withCapacity(sccs.len()))
 
