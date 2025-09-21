@@ -99,7 +99,113 @@ Program.prepModuleEnvs(self):
     # - All module-level items are exported.
     # - Imports work as importing `*`, i.e. all exported items are imported and
     #   used directly with their names (no module prefix or renaming).
-    ()
+    let sccs = _sccs(self)
+    print("Program SCCs:")
+    print(sccs.toDoc().render(80))
+
+
+## Find strongly connected components in the module dependency graph.
+##
+## The nodes in the dependency graph is `Program._modules`, and the edges are
+## the imports in `Module._imports`.
+##
+## This implements Tarjan's SCC algorithm, as explained in Wikipedia.
+_sccs(pgm: Program) Vec[HashSet[ModuleIdx]]:
+    let indexGen = SccIndexGen(index = 0)
+
+    # Because the module indices are consecutive numbers between 0 to number of
+    # nodes, we use a `Vec` to map module ids to things.
+    # TODO: We can't allocate an Array directly here because `RangeIterator`
+    # doesn't implement `size`.
+    let nodes: Array[SccNode] = Vec.fromIter(
+        range(u32(0), pgm._modules.len()).map(
+            |i: U32|:
+                SccNode(
+                    moduleIdx = ModuleIdx(_idx = i),
+                    index = Option.None,
+                    lowLink = Option.None,
+                    onStack = Bool.False,
+                ),
+        ),
+    ).takeArray()
+
+    let output: Vec[HashSet[ModuleIdx]] = Vec.withCapacity(pgm._modules.len())
+
+    let stack: Vec[ModuleIdx] = Vec.withCapacity(10)
+
+    for module: Module in pgm._modules.iter():
+        if nodes.get(module._idx._idx).index is Option.None:
+            _scc(pgm, module._idx, indexGen, nodes, stack, output)
+
+    output
+
+
+type SccNode(
+    moduleIdx: ModuleIdx,
+    index: Option[U32],
+    lowLink: Option[U32],
+    onStack: Bool,
+)
+
+
+type SccIndexGen(
+    index: U32,
+)
+
+
+SccIndexGen.next(self) U32:
+    let next = self.index
+    self.index += 1
+    next
+
+
+_scc(
+    pgm: Program,
+    module: ModuleIdx,
+    indexGen: SccIndexGen,
+    nodes: Array[SccNode],
+    stack: Vec[ModuleIdx],
+    output: Vec[HashSet[ModuleIdx]],
+):
+    let node = nodes.get(module._idx)
+    let index = indexGen.next()
+    node.index = Option.Some(index)
+    node.lowLink = Option.Some(index)
+
+    stack.push(module)
+    node.onStack = Bool.True
+
+    for depIdx: ModuleIdx in pgm._modules.get(module._idx)._imports.iter():
+        let depNode = nodes.get(depIdx._idx)
+        if depNode.index is Option.None:
+            _scc(pgm, depNode.moduleIdx, indexGen, nodes, stack, output)
+            node.lowLink = Option.Some(
+                _minU32(node.lowLink.unwrap(), depNode.lowLink.unwrap()),
+            )
+        elif depNode.onStack:
+            # Dep. is on stack, so in the current SCC.
+            node.lowLink = Option.Some(
+                _minU32(node.lowLink.unwrap(), depNode.index.unwrap()),
+            )
+
+    # If `node` is a root node, pop the stack and generate an SCC.
+    if node.lowLink == node.index:
+        let scc: HashSet[ModuleIdx] = HashSet.withCapacity(5)
+        loop:
+            let dep = stack.pop().unwrap()
+            let depNode = nodes.get(dep._idx)
+            depNode.onStack = Bool.False
+            scc.insert(dep)
+            if dep == module:
+                break
+        output.push(scc)
+
+
+_minU32(i1: U32, i2: U32) U32:
+    if i1 < i2:
+        i1
+    else:
+        i2
 
 
 _parseFile(path: Str) (decls: Vec[TopDecl], tokens: Array[Token]):

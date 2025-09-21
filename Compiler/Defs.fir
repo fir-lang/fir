@@ -54,6 +54,16 @@ type ModuleIdx(
 )
 
 
+impl Eq[ModuleIdx]:
+    __eq(self: ModuleIdx, other: ModuleIdx) Bool:
+        self._idx == other._idx
+
+
+impl Hash[ModuleIdx]:
+    hash(self: ModuleIdx) U32:
+        self._idx
+
+
 #[derive(ToDoc)]
 type Module(
     ## The module's package.
