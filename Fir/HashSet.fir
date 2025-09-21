@@ -52,8 +52,8 @@ impl[ToDoc[k]] ToDoc[HashSet[k]]:
             elems += Doc.whenNotFlat(Doc.char(','))
 
         Doc.grouped(
-            Doc.char('{')
+            Doc.str("HashSet.[")
                 + Doc.nested(4, Doc.break_(0) + elems)
                 + Doc.break_(0)
-                + Doc.char('}'),
+                + Doc.char(']'),
         )

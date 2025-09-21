@@ -15,7 +15,7 @@ main():
 # Bool.True
 # Bool.True
 # Bool.True
-# {"d", "c", "b", "a"}
+# HashSet.["d", "c", "b", "a"]
 # Bool.True
 # Bool.True
 # Bool.True

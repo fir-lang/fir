@@ -115,10 +115,10 @@ impl[ToDoc[k], ToDoc[v]] ToDoc[HashMap[k, v]]:
             elems += Doc.whenNotFlat(Doc.char(','))
 
         Doc.grouped(
-            Doc.char('{')
+            Doc.str("HashMap.[")
                 + Doc.nested(4, Doc.break_(0) + elems)
                 + Doc.break_(0)
-                + Doc.char('}'),
+                + Doc.char(']'),
         )
 
 
