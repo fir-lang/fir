@@ -73,6 +73,12 @@ trait Iterator[iter, item, exn]:
     enumerate(self: iter) Enumerate[iter, item, exn]:
         Enumerate(iter = self, idx = 0)
 
+    find(self: iter, pred: Fn(item) Bool / exn) Option[item] / exn:
+        for item: item in self:
+            if pred(item):
+                return Option.Some(item)
+        Option.None
+
 
 # --------------------------------------------------------------------------------------------------
 
