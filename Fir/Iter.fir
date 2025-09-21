@@ -73,8 +73,15 @@ trait Iterator[iter, item, exn]:
     enumerate(self: iter) Enumerate[iter, item, exn]:
         Enumerate(iter = self, idx = 0)
 
+    find(self: iter, pred: Fn(item) Bool / exn) Option[item] / exn:
+        for item: item in self:
+            if pred(item):
+                return Option.Some(item)
+        Option.None
+
 
 # --------------------------------------------------------------------------------------------------
+
 
 trait Step[t]:
     step(self: t) t
@@ -123,6 +130,7 @@ impl[Clone[t]] Clone[RangeIterator[t]]:
 
 # --------------------------------------------------------------------------------------------------
 
+
 type InclusiveRangeIterator[t](
     current: t,
     end: t,
@@ -149,6 +157,7 @@ impl[Clone[t]] Clone[InclusiveRangeIterator[t]]:
 
 # --------------------------------------------------------------------------------------------------
 
+
 type Map[iter, a, b, exn](
     iter: iter,
     f: Fn(a) b / exn,
@@ -166,6 +175,7 @@ impl[Iterator[iter, a, exn]] Iterator[Map[iter, a, b, exn], b, exn]:
 
 
 # --------------------------------------------------------------------------------------------------
+
 
 type Peekable[iter, item, exn](
     iter: iter,
@@ -200,6 +210,7 @@ impl[Clone[iter], Clone[item]] Clone[Peekable[iter, item, exn]]:
 
 # --------------------------------------------------------------------------------------------------
 
+
 type MapResult[iter, item, b, exnOld, exnNew](
     iter: iter,
     f: Fn(Result[exnOld, Option[item]]) Option[b] / exnNew,
@@ -215,6 +226,7 @@ impl[Iterator[iter, item, exnOld]] Iterator[MapResult[iter, item, b1, exnOld, ex
 
 
 # --------------------------------------------------------------------------------------------------
+
 
 type Try[iter, item, exn](
     iter: iter,
@@ -238,6 +250,7 @@ impl[Clone[iter]] Clone[Try[iter, item, exn]]:
 
 
 # --------------------------------------------------------------------------------------------------
+
 
 type Skip[iter, item, exn](
     iter: iter,
@@ -264,6 +277,7 @@ impl[Clone[iter]] Clone[Skip[iter, item, exn]]:
 
 
 # --------------------------------------------------------------------------------------------------
+
 
 type Once[t](
     val: Option[t],
@@ -314,6 +328,7 @@ impl Iterator[OnceWith[t, exn], t, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
+
 type Empty
 
 
@@ -335,6 +350,7 @@ impl Clone[Empty]:
 
 
 # --------------------------------------------------------------------------------------------------
+
 
 type Chain[iter1, iter2, item, exn](
     iter1: Option[iter1],
@@ -379,6 +395,7 @@ impl[Clone[iter1], Clone[iter2]] Clone[Chain[iter1, iter2, item, exn]]:
 
 # --------------------------------------------------------------------------------------------------
 
+
 type Filter[iter, item, exn](
     iter: iter,
     f: Fn(item) Bool / exn,
@@ -395,6 +412,7 @@ impl[Iterator[iter, item, exn]] Iterator[Filter[iter, item, exn], item, exn]:
 
 
 # --------------------------------------------------------------------------------------------------
+
 
 type Enumerate[iter, item, exn](
     iter: iter,
@@ -419,3 +437,20 @@ impl[Iterator[iter, item, exn]] Iterator[Enumerate[iter, item, exn], (idx: U32, 
 impl[Clone[iter]] Clone[Enumerate[iter, item, exn]]:
     clone(self: Enumerate[iter, item, exn]) Enumerate[iter, item, exn]:
         Enumerate(iter = self.iter.clone(), idx = self.idx)
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+type RepeatWith[item, exn](
+    f: Fn() item / exn,
+)
+
+
+repeatWith(f: Fn() item / exn) RepeatWith[item, exn]:
+    RepeatWith(f)
+
+
+impl Iterator[RepeatWith[item, exn], item, exn]:
+    next(self: RepeatWith[item, exn]) Option[item] / exn:
+        Option.Some(self.f())
