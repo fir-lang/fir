@@ -158,19 +158,12 @@ Doc._req(self) _SpaceReq:
             | Doc._Align(req, ..): req
 
 
-_countChars(s: Str) U32:
-    let i = u32(0)
-    for x: Char in s.chars():
-        i += 1
-    i
-
-
 Doc.empty() Doc:
     Doc._Empty
 
 
-Doc.str(str: Str) Doc:
-    Doc._Str(str, lenChars = _countChars(str))
+Doc.str(str: Str) Doc / exn:
+    Doc._Str(str, lenChars = str.chars().count[CharIter, Char, exn]())
 
 
 Doc.char(c: Char) Doc:
