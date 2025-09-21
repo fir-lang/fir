@@ -95,6 +95,33 @@ impl[ToStr[k], ToStr[v]] ToStr[HashMap[k, v]]:
         buf.toStr()
 
 
+impl[ToDoc[k], ToDoc[v]] ToDoc[HashMap[k, v]]:
+    toDoc(self: HashMap[k, v]) Doc:
+        let elems = Doc.empty()
+        let printed: U32 = 0
+        for entry: HashMapEntry[k, v] in self.iter():
+            if printed != 0:
+                elems += Doc.char(',') + Doc.break_(1)
+            elems += Doc.grouped(
+                entry.key.toDoc()
+                    + Doc.blank(1)
+                    + Doc.char('=')
+                    + Doc.break_(1)
+                    + entry.value.toDoc(),
+            )
+            printed += 1
+
+        if printed != 0:
+            elems += Doc.whenNotFlat(Doc.char(','))
+
+        Doc.grouped(
+            Doc.char('{')
+                + Doc.nested(4, Doc.break_(0) + elems)
+                + Doc.break_(0)
+                + Doc.char('}'),
+        )
+
+
 type HashMapIter[k, v](
     _elems: Vec[Option[Elem[k, v]]],
 
