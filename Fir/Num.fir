@@ -96,6 +96,11 @@ impl Ord[U32]:
     prim cmp(self: U32, other: U32) Ordering
 
 
+impl Hash[U32]:
+    hash(self: U32) U32:
+        self
+
+
 impl BitAnd[U32]:
     prim __bitand(self: U32, other: U32) U32
 
@@ -128,6 +133,12 @@ impl ToDoc[U32]:
 impl Step[U32]:
     step(self: U32) U32:
         self + 1
+
+    stepsBetween(self: U32, end: U32) Option[U32]:
+        if end <= self:
+            Option.Some(0)
+        else:
+            Option.Some(end - self)
 
 
 prim U32.mod(self: U32, rhs: U32) U32

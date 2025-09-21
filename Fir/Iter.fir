@@ -79,6 +79,15 @@ trait Iterator[iter, item, exn]:
 trait Step[t]:
     step(self: t) t
 
+    ## If the number of steps (iterations) between `self` and `end` is known and
+    ## it fits into an `U32`, this gives the number of steps. Otherwise it
+    ## returns `Option.None`.
+    ##
+    ## This is mainly useful for implementing `RangeIterator.size`, which is
+    ## necessary to be able to allocate `Array`s from `RangeIterator`s.
+    stepsBetween(self: t, end: t) Option[U32]:
+        Option.None
+
 
 range(start: t, end: t) RangeIterator[t]:
     RangeIterator(current = start, end = end)
@@ -102,6 +111,9 @@ impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t, exn]:
             let current = self.current
             self.current = self.current.step()
             Option.Some(current)
+
+    size(self: RangeIterator[t]) Option[U32]:
+        self.current.stepsBetween(self.end)
 
 
 impl[Clone[t]] Clone[RangeIterator[t]]:
