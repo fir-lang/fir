@@ -19,6 +19,10 @@ HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](
     map
 
 
+HashMap.iter(self: HashMap[k, v]) HashMapIter[k, v]:
+    HashMapIter.new(self)
+
+
 HashMap.withCapacity(cap: U32) HashMap[k, v]:
     let elems: Vec[Option[Elem[k, v]]] = Vec.withCapacity(cap)
     for i: U32 in range(u32(0), cap):
@@ -80,15 +84,55 @@ impl[ToStr[k], ToStr[v]] ToStr[HashMap[k, v]]:
         let buf = StrBuf.withCapacity(100)
         buf.push('{')
         let printed = 0
-        for i: U32 in range(u32(0), self._elems.len()):
-            let elem = self._elems.get(i)
-            while elem is Option.Some(elem_):
-                if printed != 0:
-                    buf.pushStr(", ")
-                buf.pushStr(elem_.key.toStr())
-                buf.pushStr(": ")
-                buf.pushStr(elem_.value.toStr())
-                printed += 1
-                elem = elem_.next
+        for entry: HashMapEntry[k, v] in self.iter():
+            if printed != 0:
+                buf.pushStr(", ")
+            buf.pushStr(entry.key.toStr())
+            buf.pushStr(": ")
+            buf.pushStr(entry.value.toStr())
+            printed += 1
         buf.push('}')
         buf.toStr()
+
+
+type HashMapIter[k, v](
+    _elems: Vec[Option[Elem[k, v]]],
+
+    # Current index in `_elems`.
+    _idx: U32,
+
+    # Current element to yield.
+    _nextElem: Option[Elem[k, v]],
+)
+
+
+type HashMapEntry[k, v](
+    key: k,
+    value: v,
+)
+
+
+HashMapIter.new(map: HashMap[k, v]) HashMapIter[k, v]:
+    HashMapIter(
+        _elems = map._elems,
+        _idx = 0,
+        _nextElem = map._elems.getOpt(0).flatten(),
+    )
+
+
+impl Iterator[HashMapIter[k, v], HashMapEntry[k, v], exn]:
+    next(self: HashMapIter[k, v]) Option[HashMapEntry[k, v]] / exn:
+        match self._nextElem:
+            Option.Some(next):
+                let ret = HashMapEntry(key = next.key, value = next.value)
+                self._nextElem = next.next
+                Option.Some(ret)
+
+            Option.None:
+                while self._idx + 1 < self._elems.len():
+                    self._idx += 1
+                    self._nextElem = self._elems.get(self._idx)
+                    if self._nextElem is Option.Some(_):
+                        return self.next()
+
+                Option.None
