@@ -963,7 +963,7 @@ type MethodSelectExpr(
     ## The method id.
     ##
     ## E.g. `push`, `next`.
-    method: Id,
+    method: AssocVarId,
 
     ## Type arguments of `method_ty_id`.
     ##
@@ -999,7 +999,7 @@ type AssocFnSelectExpr(
 
     # The associated function name: `withCapacity` and `push` in the examples
     # above.
-    member: Id,
+    member: AssocVarId,
 
     ## Type arguments explicitly passed to the variable.
     userTyArgs: Option[TyArgs],

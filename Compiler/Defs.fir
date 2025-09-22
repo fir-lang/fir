@@ -23,6 +23,13 @@ VarId.new(token: TokenIdx) VarId:
     VarId(token, _resolved = Option.None)
 
 
+#[derive(ToDoc)]
+type AssocVarId(
+    token: TokenIdx,
+    _resolved: Option[AssocVarDefIdx],
+)
+
+
 ## A type id.
 ##
 ## These can refer to: product and sum types, traits.
@@ -78,6 +85,8 @@ type Module(
     ## associated functions.
     _varItems: Vec[VarDef],
 
+    _assocItems: Vec[AssocVarDef],
+
     ## Type declarations in the module.
     _tyItems: Vec[TyDef],
 
@@ -94,6 +103,9 @@ type Module(
 
     # Term environment of the module, used for name resolving.
     _termEnv: HashMap[Str, VarId],
+
+    # Associated item environment of the module, used for name resolving.
+    _assocTermEnv: HashMap[Str, HashMap[Str, AssocVarId]],
 
     # Type environment of the module, used for name resolving.
     _tyEnv: HashMap[Str, TyId],
@@ -126,6 +138,21 @@ type TopVarDefIdx(
     _mod: ModuleIdx,
 
     ## Index into the module's `_varItems`.
+    _idx: U32,
+)
+
+
+#[derive(ToDoc)]
+type AssocVarDef(
+    _ast: FunDecl,
+    _idx: AssocVarDefIdx,
+)
+
+
+type AssocVarDefIdx(
+    _mod: ModuleIdx,
+
+    ## Index into the module's `_assocItems`.
     _idx: U32,
 )
 
@@ -189,6 +216,22 @@ impl ToDoc[VarId]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("VarId") + Doc.char('(') + args)
+
+
+impl ToDoc[AssocVarId]:
+    toDoc(self: AssocVarId) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("token =")
+                + Doc.nested(4, Doc.break_(1) + self.token.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("_resolved =")
+                + Doc.nested(4, Doc.break_(1) + self._resolved.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("AssocVarId") + Doc.char('(') + args)
 
 
 impl ToDoc[TyId]:
@@ -300,6 +343,11 @@ impl ToDoc[VarDefIdx]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("VarDefIdx.Top") + Doc.char('(') + args)
+
+
+impl ToDoc[AssocVarDefIdx]:
+    toDoc(self: AssocVarDefIdx) Doc:
+        panic("TODO")
 
 
 impl ToDoc[TopVarDefIdx]:

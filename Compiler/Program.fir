@@ -38,6 +38,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
     let moduleIdx = ModuleIdx(_idx = self._modules.len())
 
     let varItems: Vec[VarDef] = Vec.empty()
+    let assocItems: Vec[AssocVarDef] = Vec.empty()
     let tyItems: Vec[TyDef] = Vec.empty()
     let traitItems: Vec[TraitDef] = Vec.empty()
     let impls: Vec[ImplDecl] = Vec.empty()
@@ -49,8 +50,19 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
                 tyItems.push(TyDef(_ast = typeDecl, _idx = idx))
 
             TopDecl.Fun(funDecl):
-                let idx = TopVarDefIdx(_mod = moduleIdx, _idx = varItems.len())
-                varItems.push(VarDef(_ast = funDecl, _idx = idx))
+                match funDecl.parentTy:
+                    Option.Some(_):
+                        let idx = AssocVarDefIdx(
+                            _mod = moduleIdx,
+                            _idx = assocItems.len(),
+                        )
+                        assocItems.push(AssocVarDef(_ast = funDecl, _idx = idx))
+                    Option.None:
+                        let idx = TopVarDefIdx(
+                            _mod = moduleIdx,
+                            _idx = varItems.len(),
+                        )
+                        varItems.push(VarDef(_ast = funDecl, _idx = idx))
 
             TopDecl.Trait(traitDecl):
                 let idx = TraitDefIdx(
@@ -74,12 +86,14 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
         _path = path,
         _idx = moduleIdx,
         _varItems = varItems,
+        _assocItems = assocItems,
         _tyItems = tyItems,
         _traitItems = traitItems,
         _impls = impls,
         _imports = Vec.withCapacity(imports.len()),
         _tokens = tokens,
         _termEnv = HashMap.withCapacity(100),
+        _assocTermEnv = HashMap.withCapacity(10),
         _tyEnv = HashMap.withCapacity(100),
         _sccIdx = Option.None,
     )
@@ -120,6 +134,8 @@ Program.prepModuleEnvs(self):
 
     for scc: HashSet[ModuleIdx] in sccs.iter():
         let termEnv: HashMap[Str, VarDefIdx] = HashMap.withCapacity(50)
+        let assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]] = HashMap
+            .withCapacity(25)
         let typeEnv: HashMap[Str, TyDefIdx] = HashMap.withCapacity(25)
 
         # Add items in the modules in the SCC to the envs.
@@ -142,9 +158,29 @@ Program.prepModuleEnvs(self):
                     panic("Trait `tyName` defined multiple times")
 
             for varDef: VarDef in mod._varItems.iter():
-                ()
+                assert(varDef._ast.parentTy is Option.None)
+                let funName = tokens.get(varDef._ast.name.token.idx).text
+                let old = termEnv.insert(funName, VarDefIdx.Top(varDef._idx))
+                if old is Option.Some(_):
+                    panic("Function `funName` defined multiple times")
 
-            ()
+            for assocDef: AssocVarDef in mod._assocItems.iter():
+                let tyName = tokens.get(
+                    assocDef._ast.parentTy.unwrap().token.idx,
+                ).text
+                let funName = tokens.get(assocDef._ast.name.token.idx).text
+                let tyItems = match assocTermEnv.get(tyName):
+                    Option.Some(tyItems): tyItems
+                    Option.None:
+                        let tyItems: HashMap[Str, AssocVarDefIdx] = HashMap
+                            .withCapacity(10)
+                        assocTermEnv.insert(tyName, tyItems)
+                        tyItems
+                let old = tyItems.insert(funName, assocDef._idx)
+                if old is Option.Some(_):
+                    panic(
+                        "Associated function `tyName`.`funName` defined multiple times",
+                    )
 
         ()
 
