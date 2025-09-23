@@ -81,34 +81,37 @@ type Module(
 
     _idx: ModuleIdx,
 
-    ## Module-level items that `VarId`s resolve to: top-level variables,
-    ## associated functions.
-    _varItems: Vec[VarDef],
+    ## Functions defined in the module.
+    _funItems: HashMap[Str, FunDecl],
 
-    _assocItems: Vec[AssocVarDef],
+    ## Associated functions (including methods, but not trait methods) defined
+    ## in the module.
+    _assocItems: HashMap[Str, HashMap[Str, FunDecl]],
 
-    ## Type declarations in the module.
-    _tyItems: Vec[TyDef],
+    ## Types defined in the module.
+    _tyItems: HashMap[Str, TypeDecl],
 
-    ## Trait declarations in the module.
-    _traitItems: Vec[TraitDef],
+    ## Traits defined in the module.
+    _traitItems: HashMap[Str, TraitDecl],
 
-    ## Impl declarations in the module.
+    ## Impls defined in the module.
     _impls: Vec[ImplDecl],
 
     ## Imported modules. These are used when resolving identifiers.
     _imports: Vec[ModuleIdx],
 
+    ## Tokens of the module. ASTs in the other fields for definitions in the
+    ## current module refer to tokens in this array.
     _tokens: Array[Token],
 
     # Term environment of the module, used for name resolving.
-    _termEnv: HashMap[Str, VarId],
+    _termEnv: HashMap[Str, VarDefIdx],
 
     # Associated item environment of the module, used for name resolving.
-    _assocTermEnv: HashMap[Str, HashMap[Str, AssocVarId]],
+    _assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]],
 
     # Type environment of the module, used for name resolving.
-    _tyEnv: HashMap[Str, TyId],
+    _tyEnv: HashMap[Str, TyDefIdx],
 
     # Strongly connected component index of the module in the program. Generated
     # by the dependency analysis.
@@ -121,13 +124,6 @@ type Module(
 
 
 #[derive(ToDoc)]
-type VarDef(
-    _ast: FunDecl,
-    _idx: TopVarDefIdx,
-)
-
-
-#[derive(ToDoc)]
 type VarDefIdx:
     Local
     Top(TopVarDefIdx)
@@ -135,44 +131,33 @@ type VarDefIdx:
 
 #[derive(ToDoc)]
 type TopVarDefIdx(
+    ## Module of the variable.
     _mod: ModuleIdx,
 
-    ## Index into the module's `_varItems`.
-    _idx: U32,
-)
-
-
-#[derive(ToDoc)]
-type AssocVarDef(
-    _ast: FunDecl,
-    _idx: AssocVarDefIdx,
+    ## Name of the variable in the module.
+    ##
+    ## This name can be different than the use site name.
+    _name: Str,
 )
 
 
 type AssocVarDefIdx(
-    _mod: ModuleIdx,
+    ## Module of the associated function's type.
+    _tyModule: ModuleIdx,
 
-    ## Index into the module's `_assocItems`.
-    _idx: U32,
+    ## Name of the associated function's type in `_tyModule`.
+    _tyName: Str,
+
+    ## Module of the associated function.
+    _varModule: ModuleIdx,
+
+    ## Name of the associated function in `_varModule`.
+    _varName: Str,
 )
 
 
 # ------------------------------------------------------------------------------
 # Type items
-
-
-#[derive(ToDoc)]
-type TyDef(
-    _ast: TypeDecl,
-    _idx: TyDefIdx_,
-)
-
-
-#[derive(ToDoc)]
-type TraitDef(
-    _ast: TraitDecl,
-    _idx: TraitDefIdx,
-)
 
 
 #[derive(ToDoc)]
@@ -183,19 +168,21 @@ type TyDefIdx:
 
 #[derive(ToDoc)]
 type TraitDefIdx(
+    ## The trait's module.
     _mod: ModuleIdx,
 
-    ## Index into the module's `_traitItems`.
-    _traitIdx: U32,
+    ## Name of the trait in `_mod`.
+    _name: Str,
 )
 
 
 #[derive(ToDoc)]
 type TyDefIdx_(
+    ## The type's module.
     _mod: ModuleIdx,
 
-    ## Index into the module's `_tyItems`.
-    _tyIdx: U32,
+    ## Name of the type in `_mod`.
+    _name: Str,
 )
 
 
@@ -272,66 +259,7 @@ impl ToDoc[ModuleIdx]:
 
 impl ToDoc[Module]:
     toDoc(self: Module) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_package =")
-                + Doc.nested(4, Doc.break_(1) + self._package.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_path =")
-                + Doc.nested(4, Doc.break_(1) + self._path.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_idx =") + Doc.nested(4, Doc.break_(1) + self._idx.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_varItems =")
-                + Doc.nested(4, Doc.break_(1) + self._varItems.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_tyItems =")
-                + Doc.nested(4, Doc.break_(1) + self._tyItems.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_traitItems =")
-                + Doc.nested(4, Doc.break_(1) + self._traitItems.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_impls =")
-                + Doc.nested(4, Doc.break_(1) + self._impls.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_imports =")
-                + Doc.nested(4, Doc.break_(1) + self._imports.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_tokens =")
-                + Doc.nested(4, Doc.break_(1) + self._tokens.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("Module") + Doc.char('(') + args)
-
-
-impl ToDoc[VarDef]:
-    toDoc(self: VarDef) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_ast =") + Doc.nested(4, Doc.break_(1) + self._ast.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_idx =") + Doc.nested(4, Doc.break_(1) + self._idx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("VarDef") + Doc.char('(') + args)
+        panic("TODO")
 
 
 impl ToDoc[VarDefIdx]:
@@ -352,44 +280,7 @@ impl ToDoc[AssocVarDefIdx]:
 
 impl ToDoc[TopVarDefIdx]:
     toDoc(self: TopVarDefIdx) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_mod =") + Doc.nested(4, Doc.break_(1) + self._mod.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_idx =") + Doc.nested(4, Doc.break_(1) + self._idx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TopVarDefIdx") + Doc.char('(') + args)
-
-
-impl ToDoc[TyDef]:
-    toDoc(self: TyDef) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_ast =") + Doc.nested(4, Doc.break_(1) + self._ast.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_idx =") + Doc.nested(4, Doc.break_(1) + self._idx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TyDef") + Doc.char('(') + args)
-
-
-impl ToDoc[TraitDef]:
-    toDoc(self: TraitDef) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_ast =") + Doc.nested(4, Doc.break_(1) + self._ast.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_idx =") + Doc.nested(4, Doc.break_(1) + self._idx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TraitDef") + Doc.char('(') + args)
+        panic("TODO")
 
 
 impl ToDoc[TyDefIdx]:
@@ -409,29 +300,9 @@ impl ToDoc[TyDefIdx]:
 
 impl ToDoc[TraitDefIdx]:
     toDoc(self: TraitDefIdx) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_mod =") + Doc.nested(4, Doc.break_(1) + self._mod.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_traitIdx =")
-                + Doc.nested(4, Doc.break_(1) + self._traitIdx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TraitDefIdx") + Doc.char('(') + args)
+        panic("TODO")
 
 
 impl ToDoc[TyDefIdx_]:
     toDoc(self: TyDefIdx_) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_mod =") + Doc.nested(4, Doc.break_(1) + self._mod.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_tyIdx =")
-                + Doc.nested(4, Doc.break_(1) + self._tyIdx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TyDefIdx_") + Doc.char('(') + args)
+        panic("TODO")

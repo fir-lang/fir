@@ -37,39 +37,54 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
     # Add the module to the program first to handle recursive imports.
     let moduleIdx = ModuleIdx(_idx = self._modules.len())
 
-    let varItems: Vec[VarDef] = Vec.empty()
-    let assocItems: Vec[AssocVarDef] = Vec.empty()
-    let tyItems: Vec[TyDef] = Vec.empty()
-    let traitItems: Vec[TraitDef] = Vec.empty()
+    let funItems: HashMap[Str, FunDecl] = HashMap.withCapacity(100)
+    let assocItems: HashMap[Str, HashMap[Str, FunDecl]] = HashMap.withCapacity(
+        10,
+    )
+    let tyItems: HashMap[Str, TypeDecl] = HashMap.withCapacity(100)
+    let traitItems: HashMap[Str, TraitDecl] = HashMap.withCapacity(10)
     let impls: Vec[ImplDecl] = Vec.empty()
     let imports: Vec[Vec[Str]] = Vec.empty()
     for decl: TopDecl in moduleDecls.iter():
         match decl:
             TopDecl.Type(typeDecl):
-                let idx = TyDefIdx_(_mod = moduleIdx, _tyIdx = tyItems.len())
-                tyItems.push(TyDef(_ast = typeDecl, _idx = idx))
+                let name = tokens.get(typeDecl.name.token.idx).text
+                let old = tyItems.insert(name, typeDecl)
+                if old is Option.Some(_):
+                    panic("Type `name` defined multiple times in `filePath`")
 
             TopDecl.Fun(funDecl):
                 match funDecl.parentTy:
-                    Option.Some(_):
-                        let idx = AssocVarDefIdx(
-                            _mod = moduleIdx,
-                            _idx = assocItems.len(),
-                        )
-                        assocItems.push(AssocVarDef(_ast = funDecl, _idx = idx))
+                    Option.Some(parentTy):
+                        let parentTyName = tokens.get(parentTy.token.idx).text
+                        let assocFunMap = match assocItems.get(parentTyName):
+                            Option.None:
+                                let map = HashMap.withCapacity(10)
+                                assocItems.insert(parentTyName, map)
+                                map
+                            Option.Some(map): map
+                        let funName = tokens.get(funDecl.name.token.idx).text
+                        let old = assocFunMap.insert(funName, funDecl)
+                        if old is Option.Some(_):
+                            panic(
+                                "Associated function `parentTyName`.`funName` defined multipe times in `filePath`",
+                            )
+
                     Option.None:
-                        let idx = TopVarDefIdx(
-                            _mod = moduleIdx,
-                            _idx = varItems.len(),
-                        )
-                        varItems.push(VarDef(_ast = funDecl, _idx = idx))
+                        let funName = tokens.get(funDecl.name.token.idx).text
+                        let old = funItems.insert(funName, funDecl)
+                        if old is Option.Some(_):
+                            panic(
+                                "Function`funName` defined multipe times in `filePath`",
+                            )
 
             TopDecl.Trait(traitDecl):
-                let idx = TraitDefIdx(
-                    _mod = moduleIdx,
-                    _traitIdx = traitItems.len(),
-                )
-                traitItems.push(TraitDef(_ast = traitDecl, _idx = idx))
+                let traitName = tokens.get(traitDecl.name.token.idx).text
+                let old = traitItems.insert(traitName, traitDecl)
+                if old is Option.Some(_):
+                    panic(
+                        "Trait `traitName` defined multiple times in `filePath`",
+                    )
 
             TopDecl.Impl(implDecl): impls.push(implDecl)
 
@@ -85,7 +100,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
         _package = _defaultPackage(),
         _path = path,
         _idx = moduleIdx,
-        _varItems = varItems,
+        _funItems = funItems,
         _assocItems = assocItems,
         _tyItems = tyItems,
         _traitItems = traitItems,
@@ -133,54 +148,31 @@ Program.prepModuleEnvs(self):
     print(sccs.toDoc().render(80))
 
     for scc: HashSet[ModuleIdx] in sccs.iter():
-        let termEnv: HashMap[Str, VarDefIdx] = HashMap.withCapacity(50)
+        let sccTermEnv: HashMap[Str, VarDefIdx] = HashMap.withCapacity(50)
         let assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]] = HashMap
             .withCapacity(25)
         let typeEnv: HashMap[Str, TyDefIdx] = HashMap.withCapacity(25)
 
         # Add items in the modules in the SCC to the envs.
+        #
+        # Reminder: currently importing a module imports all of the things it
+        # has access to, and renaming an imported thing is not possible.
         for modIdx: ModuleIdx in scc.iter():
             let mod = self._modules.get(modIdx._idx)
             let tokens = mod._tokens
 
-            for tyDef: TyDef in mod._tyItems.iter():
-                let tyName = tokens.get(tyDef._ast.name.token.idx).text
-                let defIdx = TyDefIdx.Type(tyDef._idx)
-                let old = typeEnv.insert(tyName, defIdx)
-                if old is Option.Some(_):
-                    panic("Type `tyName` defined multiple times")
+            for ty: HashMapEntry[Str, TypeDecl] in mod._tyItems.iter():
+                ()
 
-            for traitDef: TraitDef in mod._traitItems.iter():
-                let tyName = tokens.get(traitDef._ast.name.token.idx).text
-                let defIdx = TyDefIdx.Trait(traitDef._idx)
-                let old = typeEnv.insert(tyName, defIdx)
-                if old is Option.Some(_):
-                    panic("Trait `tyName` defined multiple times")
+            for trait_: HashMapEntry[Str, TraitDecl] in mod._traitItems.iter():
+                ()
 
-            for varDef: VarDef in mod._varItems.iter():
-                assert(varDef._ast.parentTy is Option.None)
-                let funName = tokens.get(varDef._ast.name.token.idx).text
-                let old = termEnv.insert(funName, VarDefIdx.Top(varDef._idx))
-                if old is Option.Some(_):
-                    panic("Function `funName` defined multiple times")
+            for fun: HashMapEntry[Str, FunDecl] in mod._funItems.iter():
+                ()
 
-            for assocDef: AssocVarDef in mod._assocItems.iter():
-                let tyName = tokens.get(
-                    assocDef._ast.parentTy.unwrap().token.idx,
-                ).text
-                let funName = tokens.get(assocDef._ast.name.token.idx).text
-                let tyItems = match assocTermEnv.get(tyName):
-                    Option.Some(tyItems): tyItems
-                    Option.None:
-                        let tyItems: HashMap[Str, AssocVarDefIdx] = HashMap
-                            .withCapacity(10)
-                        assocTermEnv.insert(tyName, tyItems)
-                        tyItems
-                let old = tyItems.insert(funName, assocDef._idx)
-                if old is Option.Some(_):
-                    panic(
-                        "Associated function `tyName`.`funName` defined multiple times",
-                    )
+            for assocDef: HashMapEntry[Str, HashMap[Str, FunDecl]] in
+                    mod._assocItems.iter():
+                ()
 
         ()
 
