@@ -142,14 +142,15 @@ type TopVarDefIdx(
 
 
 type AssocVarDefIdx(
-    ## Module of the associated function's type.
-    _tyModule: ModuleIdx,
+    ## Module of the type.
+    ##
+    ## Note: both the type and the associated function definition need to be in
+    ## the same module, which should also be the type's module. (mainly to keep
+    ## things simple)
+    _mod: ModuleIdx,
 
     ## Name of the associated function's type in `_tyModule`.
     _tyName: Str,
-
-    ## Module of the associated function.
-    _varModule: ModuleIdx,
 
     ## Name of the associated function in `_varModule`.
     _varName: Str,

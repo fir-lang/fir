@@ -148,7 +148,7 @@ Program.prepModuleEnvs(self):
     print(sccs.toDoc().render(80))
 
     for scc: HashSet[ModuleIdx] in sccs.iter():
-        let sccTermEnv: HashMap[Str, VarDefIdx] = HashMap.withCapacity(50)
+        let termEnv: HashMap[Str, VarDefIdx] = HashMap.withCapacity(50)
         let assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]] = HashMap
             .withCapacity(25)
         let typeEnv: HashMap[Str, TyDefIdx] = HashMap.withCapacity(25)
@@ -162,17 +162,71 @@ Program.prepModuleEnvs(self):
             let tokens = mod._tokens
 
             for ty: HashMapEntry[Str, TypeDecl] in mod._tyItems.iter():
-                ()
+                let tyDefIdx = TyDefIdx.Type(
+                    TyDefIdx_(_mod = modIdx, _name = ty.key),
+                )
+                let old = typeEnv.insert(ty.key, tyDefIdx)
+                if old is Option.Some(_):
+                    panic(
+                        "Type `ty.key` defined multiple times in a recursive import group",
+                    )
 
             for trait_: HashMapEntry[Str, TraitDecl] in mod._traitItems.iter():
-                ()
+                let traitDefIdx = TyDefIdx.Trait(
+                    TraitDefIdx(_mod = modIdx, _name = trait_.key),
+                )
+                let old = typeEnv.insert(trait_.key, traitDefIdx)
+                if old is Option.Some(_):
+                    panic(
+                        "Type `trait_.key` defined multiple times in a recursive import group",
+                    )
 
             for fun: HashMapEntry[Str, FunDecl] in mod._funItems.iter():
-                ()
+                let varDefIdx = VarDefIdx.Top(
+                    TopVarDefIdx(_mod = modIdx, _name = fun.key),
+                )
+                let old = termEnv.insert(fun.key, varDefIdx)
+                if old is Option.Some(_):
+                    panic(
+                        "Value `fun.key` defined multiple times in a recursive import group",
+                    )
 
             for assocDef: HashMapEntry[Str, HashMap[Str, FunDecl]] in
                     mod._assocItems.iter():
-                ()
+                let tyMap = match assocTermEnv.get(assocDef.key):
+                    Option.None:
+                        let map = HashMap.withCapacity(10)
+                        assocTermEnv.insert(assocDef.key, map)
+                        map
+                    Option.Some(map): map
+
+                for assocValue: HashMapEntry[Str, FunDecl] in
+                        assocDef.value.iter():
+                    let old = tyMap.insert(
+                        assocValue.key,
+                        AssocVarDefIdx(
+                            _mod = modIdx,
+                            _tyName = assocDef.key,
+                            _varName = assocValue.key,
+                        ),
+                    )
+                    if old is Option.Some(_):
+                        panic(
+                            "Value `assocDef.key`.`assocValue.key` defined multiple times in a recursive import group",
+                        )
+
+        # Copy SCC environments to modules in the SCC.
+        for modIdx: ModuleIdx in scc.iter():
+            let mod = self._modules.get(modIdx._idx)
+            mod._termEnv = HashMap.fromIter(
+                termEnv.iter().map(
+                    |entry: HashMapEntry[Str, VarDefIdx]|:
+                        (key = entry.key, value = entry.value),
+                ),
+            )
+            mod._assocTermEnv = assocTermEnv
+
+        # TODO
 
         ()
 
