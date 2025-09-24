@@ -23,6 +23,11 @@ VarId.new(token: TokenIdx) VarId:
     VarId(token, _resolved = Option.None)
 
 
+VarId.resolve(self, def: VarDefIdx):
+    assert(self._resolved is Option.None)
+    self._resolved = Option.Some(def)
+
+
 #[derive(ToDoc)]
 type AssocVarId(
     token: TokenIdx,

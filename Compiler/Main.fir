@@ -37,3 +37,4 @@ main():
     let pgm = Program.new()
     pgm.loadCachedModule(parts)
     pgm.prepModuleEnvs()
+    resolveNames(pgm)

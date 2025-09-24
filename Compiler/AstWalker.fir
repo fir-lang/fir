@@ -4,64 +4,37 @@ import [Compiler/Ast]
 walkExpr[Visitor[v]](expr: Expr, v: v):
     match expr:
         Expr.Var(e): v.visitVarExpr(e)
-
         Expr.ConstrSelect(e): v.visitConstrSelectExpr(e)
-
         Expr.FieldSelect(e): v.visitFieldSelectExpr(e)
-
         Expr.MethodSelect(e): v.visitMethodSelectExpr(e)
-
         Expr.AssocFnSelect(e): v.visitAssocFnSelectExpr(e)
-
         Expr.Call(e): v.visitCallExpr(e)
-
         Expr.Int(e): v.visitIntExpr(e)
-
         Expr.Str(e): v.visitStrExpr(e)
-
         Expr.Char(e): v.visitCharExpr(e)
-
         Expr.Self(e): v.visitSelfExpr(e)
-
         Expr.BinOp(e): v.visitBinOpExpr(e)
-
         Expr.UnOp(e): v.visitUnOpExpr(e)
-
         Expr.Record(e): v.visitRecordExpr(e)
-
         Expr.Return(e): v.visitReturnExpr(e)
-
         Expr.Match(e): v.visitMatchExpr(e)
-
         Expr.If(e): v.visitIfExpr(e)
-
         Expr.Fn_(e): v.visitFnExpr(e)
-
         Expr.Is(e): v.visitIsExpr(e)
-
         Expr.Do(e): v.visitDoExpr(e)
-
         Expr.Seq(e): v.visitSeqExpr(e)
-
         Expr.Paren(e): v.visitParenExpr(e)
 
 
 walkStmt[Visitor[v]](stmt: Stmt, v: v):
     match stmt:
         Stmt.Let(s): v.visitLetStmt(s)
-
         Stmt.Assign(s): v.visitAssignStmt(s)
-
         Stmt.Expr(s): v.visitExprStmt(s)
-
         Stmt.For(s): v.visitForStmt(s)
-
         Stmt.While(s): v.visitWhileStmt(s)
-
         Stmt.Loop(s): v.visitLoopStmt(s)
-
         Stmt.Break(s): v.visitBreakStmt(s)
-
         Stmt.Continue(s): v.visitContinueStmt(s)
 
 
