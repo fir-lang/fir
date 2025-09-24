@@ -49,6 +49,15 @@ walkPat[Visitor[v]](pat: Pat, v: v):
         Pat.Or(ps): v.visitOrPat(ps)
 
 
+walkType[Visitor[v]](ty: Type, v: v):
+    match ty:
+        Type.Named(t): v.visitNamedType(t)
+        Type.Var(t): v.visitTypeVarType(t)
+        Type.Record(t): v.visitRecordType(t)
+        Type.Variant(t): v.visitVariantType(t)
+        Type.Fn_(t): v.visitFnType(t)
+
+
 trait Visitor[t]:
     # ----------------------------------------------------------------
     # Exprs
@@ -169,6 +178,24 @@ trait Visitor[t]:
 
     visitOrPat(self: t, ps: Vec[Pat]):
         defaultVisitOrPat(self, ps)
+
+    # ----------------------------------------------------------------
+    # Types
+
+    visitNamedType(self: t, t: NamedType):
+        defaultVisitNamedType(self, t)
+
+    visitTypeVarType(self: t, t: Id):
+        ()
+
+    visitRecordType(self: t, t: RecordType):
+        defaultVisitRecordType(self, t)
+
+    visitVariantType(self: t, t: VariantType):
+        defaultVisitVariantType(self, t)
+
+    visitFnType(self: t, t: FnType):
+        defaultVisitFnType(self, t)
 
 
 defaultVisitFieldSelectExpr[Visitor[t]](visitor: t, e: FieldSelectExpr):
@@ -304,3 +331,30 @@ defaultVisitRecordPat[Visitor[t]](visitor: t, s: RecordPat):
 defaultVisitOrPat[Visitor[t]](visitor: t, ps: Vec[Pat]):
     for p: Pat in ps.iter():
         walkPat(p, visitor)
+
+
+defaultVisitNamedType[Visitor[t]](visitor: t, t: NamedType):
+    if t.args is Option.Some(args):
+        for arg: Type in args.args.iter():
+            walkType(arg, visitor)
+
+
+defaultVisitRecordType[Visitor[t]](visitor: t, t: RecordType):
+    for field: Named[Type] in t.fields.iter():
+        walkType(field.node, visitor)
+
+
+defaultVisitVariantType[Visitor[t]](visitor: t, t: VariantType):
+    for alt: NamedType in t.alts.iter():
+        visitor.visitNamedType(alt)
+
+
+defaultVisitFnType[Visitor[t]](visitor: t, t: FnType):
+    for arg: Type in t.args.iter():
+        walkType(arg, visitor)
+
+    if t.ret is Option.Some(ret):
+        walkType(ret, visitor)
+
+    if t.exceptions is Option.Some(exn):
+        walkType(exn, visitor)
