@@ -23,6 +23,8 @@ Program.new() Program:
 ##
 ## Follows imports in the module to transitively import all referred modules.
 Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
+    let firPreludePath = Vec.["Fir", "Prelude"]
+
     for module: Module in self._modules.iter():
         if module._path == path:
             return module._idx
@@ -45,6 +47,13 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
     let traitItems: HashMap[Str, TraitDecl] = HashMap.withCapacity(10)
     let impls: Vec[ImplDecl] = Vec.empty()
     let imports: Vec[Vec[Str]] = Vec.empty()
+
+    # Implicitly import `Fir/Prelude` in all modules.
+    # TODO: Implement flag `--no-prelude`.
+    # TODO: What happens if the module explicitly imports `Fir/Prelude`?
+    if path != firPreludePath:
+        imports.push(Vec.["Fir", "Prelude"])
+
     for decl: TopDecl in moduleDecls.iter():
         match decl:
             TopDecl.Type(typeDecl):
