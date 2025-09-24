@@ -49,6 +49,11 @@ TyId.new(token: TokenIdx) TyId:
     TyId(token, _resolved = Option.None)
 
 
+TyId.resolve(self, def: TyDefIdx):
+    assert(self._resolved is Option.None)
+    self._resolved = Option.Some(def)
+
+
 # ------------------------------------------------------------------------------
 # Packages and modules
 

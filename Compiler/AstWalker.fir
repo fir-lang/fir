@@ -197,6 +197,15 @@ trait Visitor[t]:
     visitFnType(self: t, t: FnType):
         defaultVisitFnType(self, t)
 
+    # ----------------------------------------------------------------
+    # Ids
+
+    visitVarId(self: t, id: VarId):
+        ()
+
+    visitTyId(self: t, id: TyId):
+        ()
+
 
 defaultVisitFieldSelectExpr[Visitor[t]](visitor: t, e: FieldSelectExpr):
     walkExpr(e.object, visitor)

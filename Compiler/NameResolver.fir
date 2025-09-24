@@ -51,6 +51,26 @@ type NameResolverVisitor(
 
 
 impl Visitor[NameResolverVisitor]:
+    visitVarId(self: NameResolverVisitor, id: VarId):
+        let token = self._tokens.get(id.token.idx)
+        let varText = token.text
+        match self._termEnv.get(varText):
+            Option.Some(idx): id.resolve(idx)
+            Option.None:
+                panic(
+                    "`tokenLocStr(self._moduleFilePath, token)`: Unbound variable `varText`",
+                )
+
+    visitTyId(self: NameResolverVisitor, id: TyId):
+        let token = self._tokens.get(id.token.idx)
+        let varText = token.text
+        match self._tyEnv.get(varText):
+            Option.Some(idx): id.resolve(idx)
+            Option.None:
+                panic(
+                    "`tokenLocStr(self._moduleFilePath, token)`: Unbound type `varText`",
+                )
+
     visitVarPat(self: NameResolverVisitor, pat: VarPat):
         let varText = self._tokens.get(pat.var_.token.idx).text
         self._termEnv.insert(varText, VarDefIdx.Local)
@@ -61,16 +81,6 @@ impl Visitor[NameResolverVisitor]:
         defaultVisitAlt(self, alt)
         self._termEnv.exitScope()
         ()
-
-    visitVarExpr(self: NameResolverVisitor, expr: VarExpr):
-        let token = self._tokens.get(expr.id.token.idx)
-        let varText = token.text
-        match self._termEnv.get(varText):
-            Option.Some(idx): expr.id.resolve(idx)
-            Option.None:
-                panic(
-                    "`tokenLocStr(self._moduleFilePath, token)`: Unbound variable `varText`",
-                )
 
     visitLetStmt(self: NameResolverVisitor, stmt: LetStmt):
         walkExpr(stmt.rhs, self)
