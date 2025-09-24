@@ -9,12 +9,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-
       - name: Install just
         run: sudo apt install -y just
 
@@ -27,12 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-
       - name: Install just
         run: sudo apt install -y just
 
@@ -44,12 +32,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
 
       - name: Install just
         run: sudo apt install -y just
@@ -64,12 +46,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get Rust stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-
       - name: Install just
         run: sudo apt install -y just
 
@@ -83,12 +59,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-
       - name: Install just
         run: sudo apt install -y just
 
@@ -101,12 +71,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
 
       - name: Install just
         run: sudo apt install -y just
@@ -127,12 +91,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-
       - name: Install just
         run: sudo apt install -y just
 
@@ -145,12 +103,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
 
       - name: Install just
         run: sudo apt install -y just
@@ -170,12 +122,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
 
       - name: Install just
         run: sudo apt install -y just
@@ -197,12 +143,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-
       - name: Install just
         run: sudo apt install -y just
 
@@ -215,12 +155,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
 
       - name: Install just
         run: sudo apt install -y just
@@ -241,12 +175,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-            target: wasm32-unknown-unknown
+      - name: Add wasm32 target
+        run: rustup target add wasm32-unknown-unknown
 
       - name: Make Wasm build
         run: cargo build --lib --release --target=wasm32-unknown-unknown
