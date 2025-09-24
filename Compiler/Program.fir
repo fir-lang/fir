@@ -107,6 +107,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
 
     let module = Module(
         _package = _defaultPackage(),
+        _filePath = filePath,
         _path = path,
         _idx = moduleIdx,
         _funItems = funItems,

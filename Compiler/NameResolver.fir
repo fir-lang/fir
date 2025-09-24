@@ -13,9 +13,16 @@ import [
 
 resolveNames(pgm: Program):
     for module: Module in pgm._modules.iter():
+        let termEnv = ScopeMap.fromMap(module._termEnv)
+
+        # Create a new scope to avoid modifying the module env with function
+        # locals.
+        termEnv.enterScope()
+
         let visitor = NameResolverVisitor(
+            _moduleFilePath = module._filePath,
             _tokens = module._tokens,
-            _termEnv = ScopeMap.fromMap(module._termEnv),
+            _termEnv = termEnv,
             _assocTermEnv = module._assocTermEnv,
             _tyEnv = module._tyEnv,
         )
@@ -30,6 +37,7 @@ resolveNames(pgm: Program):
 
 
 type NameResolverVisitor(
+    _moduleFilePath: Str,
     _tokens: Array[Token],
     _termEnv: ScopeMap[Str, VarDefIdx],
     _assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]],
@@ -39,7 +47,31 @@ type NameResolverVisitor(
 
 impl Visitor[NameResolverVisitor]:
     visitVarExpr(self: NameResolverVisitor, e: VarExpr):
-        let varText = self._tokens.get(e.id.token.idx).text
+        let token = self._tokens.get(e.id.token.idx)
+        let varText = token.text
         match self._termEnv.get(varText):
             Option.Some(idx): e.id.resolve(idx)
-            Option.None: panic("Unbound variable `varText`")
+            Option.None:
+                panic(
+                    "`tokenLocStr(self._moduleFilePath, token)`: Unbound variable `varText`",
+                )
+
+    visitForStmt(self: NameResolverVisitor, e: ForStmt):
+        self._termEnv.enterScope()
+
+        # Visit iterator expression first as it cannot refer to loop binders.
+        walkExpr(e.expr, self)
+
+        # Bind loop binders.
+        walkPat(e.pat, self)
+
+        for stmt in e.body.iter():
+            walkStmt(stmt, self)
+
+        self._termEnv.exitScope()
+
+        ()
+
+
+tokenLocStr(filePath: Str, token: Token) Str:
+    "`filePath`:`token.line + 1`:`token.col + 1`"

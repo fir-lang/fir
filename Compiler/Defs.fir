@@ -81,6 +81,11 @@ type Module(
     ## The module's package.
     _package: PackageUri,
 
+    ## File path of the module's file.
+    # TODO: Is this absolute? Or relative? If relative, relative to what?
+    # For now we only use this for errors so it doesn't matter too much.
+    _filePath: Str,
+
     ## Path of the module in its package.
     _path: Vec[Str],
 

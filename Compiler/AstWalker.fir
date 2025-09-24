@@ -38,6 +38,17 @@ walkStmt[Visitor[v]](stmt: Stmt, v: v):
         Stmt.Continue(s): v.visitContinueStmt(s)
 
 
+walkPat[Visitor[v]](pat: Pat, v: v):
+    match pat:
+        Pat.Var(p): v.visitVarPat(p)
+        Pat.Constr(p): v.visitConstrPat(p)
+        Pat.Record(p): v.visitRecordPat(p)
+        Pat.Ignore(p): v.visitIgnorePat(p)
+        Pat.Str(s, t): v.visitStrPat(s, t)
+        Pat.Char(c, t): v.visitCharPat(c, t)
+        Pat.Or(ps): v.visitOrPat(ps)
+
+
 trait Visitor[t]:
     # ----------------------------------------------------------------
     # Exprs
@@ -87,6 +98,9 @@ trait Visitor[t]:
     visitMatchExpr(self: t, e: MatchExpr):
         defaultVisitMatch(self, e)
 
+    visitAlt(self: t, e: Alt):
+        defaultVisitAlt(self, e)
+
     visitIfExpr(self: t, e: IfExpr):
         defaultVisitIf(self, e)
 
@@ -132,6 +146,30 @@ trait Visitor[t]:
     visitContinueStmt(self: t, e: ContinueStmt):
         defaultVisitContinueStmt(self, e)
 
+    # ----------------------------------------------------------------
+    # Pats
+
+    visitVarPat(self: t, p: VarPat):
+        ()
+
+    visitConstrPat(self: t, p: ConstrPat):
+        defaultVisitConstrPat(self, p)
+
+    visitRecordPat(self: t, p: RecordPat):
+        defaultVisitRecordPat(self, p)
+
+    visitIgnorePat(self: t, t: TokenIdx):
+        ()
+
+    visitStrPat(self: t, s: Str, t: TokenIdx):
+        ()
+
+    visitCharPat(self: t, c: Char, t: TokenIdx):
+        ()
+
+    visitOrPat(self: t, ps: Vec[Pat]):
+        defaultVisitOrPat(self, ps)
+
 
 defaultVisitFieldSelectExpr[Visitor[t]](visitor: t, e: FieldSelectExpr):
     walkExpr(e.object, visitor)
@@ -169,10 +207,14 @@ defaultVisitReturn[Visitor[t]](visitor: t, e: ReturnExpr):
 defaultVisitMatch[Visitor[t]](visitor: t, e: MatchExpr):
     walkExpr(e.scrutinee, visitor)
     for alt: Alt in e.alts.iter():
-        if alt.guard is Option.Some(e):
-            walkExpr(e, visitor)
-        for stmt: Stmt in alt.rhs.iter():
-            walkStmt(stmt, visitor)
+        visitor.visitAlt(alt)
+
+
+defaultVisitAlt[Visitor[t]](visitor: t, e: Alt):
+    if e.guard is Option.Some(e):
+        walkExpr(e, visitor)
+    for stmt: Stmt in e.rhs.iter():
+        walkStmt(stmt, visitor)
 
 
 defaultVisitIf[Visitor[t]](visitor: t, e: IfExpr):
@@ -244,3 +286,18 @@ defaultVisitBreakStmt[Visitor[t]](visitor: t, s: BreakStmt):
 
 defaultVisitContinueStmt[Visitor[t]](visitor: t, s: ContinueStmt):
     ()
+
+
+defaultVisitConstrPat[Visitor[t]](visitor: t, s: ConstrPat):
+    for field: Named[Pat] in s.fields.iter():
+        walkPat(field.node, visitor)
+
+
+defaultVisitRecordPat[Visitor[t]](visitor: t, s: RecordPat):
+    for field: Named[Pat] in s.fields.iter():
+        walkPat(field.node, visitor)
+
+
+defaultVisitOrPat[Visitor[t]](visitor: t, ps: Vec[Pat]):
+    for p: Pat in ps.iter():
+        walkPat(p, visitor)
