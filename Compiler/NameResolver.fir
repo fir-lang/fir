@@ -6,7 +6,6 @@ import [
     Compiler/Ast,
     Compiler/AstWalker,
     Compiler/Defs,
-    Compiler/Error,
     Compiler/ScopeMap,
 ]
 

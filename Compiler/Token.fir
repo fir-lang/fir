@@ -1,6 +1,3 @@
-import [Tool/Peg/ParseTree]
-
-
 type Token(
     kind: TokenKind,
     text: Str,

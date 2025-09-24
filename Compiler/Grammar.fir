@@ -1,7 +1,6 @@
 # This is generated file, do not edit.
 
 import [
-    Compiler/Defs,
     Compiler/ParseUtils,
     Compiler/Token,
     Tool/Peg/ParseTree,
