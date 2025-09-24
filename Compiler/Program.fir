@@ -143,95 +143,19 @@ Program.prepModuleEnvs(self):
     print("Program SCCs:")
     print(sccs.toDoc().render(80))
 
-    let sccs = _revTopSort(self, sccs)
-    print("Program SCCs, sorted:")
-    print(sccs.toDoc().render(80))
+    let sccEnvs: Vec[Option[SccEnv]] = Vec.fromIter(
+        repeatWith(||: Option.None).take(sccs.len()),
+    )
 
-    for scc: HashSet[ModuleIdx] in sccs.iter():
-        let termEnv: HashMap[Str, VarDefIdx] = HashMap.withCapacity(50)
-        let assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]] = HashMap
-            .withCapacity(25)
-        let typeEnv: HashMap[Str, TyDefIdx] = HashMap.withCapacity(25)
+    let sccImports = _makeSccDepGraph(self, sccs)
 
-        # Add items in the modules in the SCC to the envs.
-        #
-        # Reminder: currently importing a module imports all of the things it
-        # has access to, and renaming an imported thing is not possible.
-        for modIdx: ModuleIdx in scc.iter():
-            let mod = self._modules.get(modIdx._idx)
-            let tokens = mod._tokens
+    for sccIdx in range(u32(0), sccs.len()):
+        _makeSccEnv(self, sccIdx, sccs, sccImports, sccEnvs)
 
-            for ty: HashMapEntry[Str, TypeDecl] in mod._tyItems.iter():
-                let tyDefIdx = TyDefIdx.Type(
-                    TyDefIdx_(_mod = modIdx, _name = ty.key),
-                )
-                let old = typeEnv.insert(ty.key, tyDefIdx)
-                if old is Option.Some(_):
-                    panic(
-                        "Type `ty.key` defined multiple times in a recursive import group",
-                    )
-
-            for trait_: HashMapEntry[Str, TraitDecl] in mod._traitItems.iter():
-                let traitDefIdx = TyDefIdx.Trait(
-                    TraitDefIdx(_mod = modIdx, _name = trait_.key),
-                )
-                let old = typeEnv.insert(trait_.key, traitDefIdx)
-                if old is Option.Some(_):
-                    panic(
-                        "Type `trait_.key` defined multiple times in a recursive import group",
-                    )
-
-            for fun: HashMapEntry[Str, FunDecl] in mod._funItems.iter():
-                let varDefIdx = VarDefIdx.Top(
-                    TopVarDefIdx(_mod = modIdx, _name = fun.key),
-                )
-                let old = termEnv.insert(fun.key, varDefIdx)
-                if old is Option.Some(_):
-                    panic(
-                        "Value `fun.key` defined multiple times in a recursive import group",
-                    )
-
-            for assocDef: HashMapEntry[Str, HashMap[Str, FunDecl]] in
-                    mod._assocItems.iter():
-                let tyMap = match assocTermEnv.get(assocDef.key):
-                    Option.None:
-                        let map = HashMap.withCapacity(10)
-                        assocTermEnv.insert(assocDef.key, map)
-                        map
-                    Option.Some(map): map
-
-                for assocValue: HashMapEntry[Str, FunDecl] in
-                        assocDef.value.iter():
-                    let old = tyMap.insert(
-                        assocValue.key,
-                        AssocVarDefIdx(
-                            _mod = modIdx,
-                            _tyName = assocDef.key,
-                            _varName = assocValue.key,
-                        ),
-                    )
-                    if old is Option.Some(_):
-                        panic(
-                            "Value `assocDef.key`.`assocValue.key` defined multiple times in a recursive import group",
-                        )
-
-        # Copy SCC environments to modules in the SCC.
-        for modIdx: ModuleIdx in scc.iter():
-            let mod = self._modules.get(modIdx._idx)
-            mod._termEnv = HashMap.fromIter(
-                termEnv.iter().map(
-                    |entry: HashMapEntry[Str, VarDefIdx]|:
-                        (key = entry.key, value = entry.value),
-                ),
-            )
-            mod._assocTermEnv = assocTermEnv
-
-        # TODO
-
-        ()
+    ()
 
 
-makeSccDepGraph(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[U32]]:
+_makeSccDepGraph(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[U32]]:
     let sccImports: Vec[HashSet[U32]] = Vec.fromIter(
         repeatWith(||: HashSet.withCapacity(10)).take(sccs.len()),
     )
@@ -246,6 +170,112 @@ makeSccDepGraph(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[U32]]:
                     importedSccs.insert(importScc)
 
     sccImports
+
+
+type SccEnv(
+    _termEnv: HashMap[Str, VarDefIdx],
+    _assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]],
+    _tyEnv: HashMap[Str, TyDefIdx],
+)
+
+
+SccEnv.merge(self, other: SccEnv):
+    panic("TODO")
+
+
+_makeSccEnv(
+    pgm: Program,
+    sccIdx: U32,
+    sccs: Vec[HashSet[ModuleIdx]],
+    sccImports: Vec[HashSet[U32]],
+    sccEnvs: Vec[Option[SccEnv]],
+) SccEnv:
+    if sccEnvs.get(sccIdx) is Option.Some(env):
+        return env
+
+    let termEnv: HashMap[Str, VarDefIdx] = HashMap.withCapacity(50)
+    let assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]] = HashMap
+        .withCapacity(25)
+    let typeEnv: HashMap[Str, TyDefIdx] = HashMap.withCapacity(25)
+
+    let scc = sccs.get(sccIdx)
+
+    for modIdx: ModuleIdx in scc.iter():
+        let mod = pgm._modules.get(modIdx._idx)
+        let tokens = mod._tokens
+
+        for ty: HashMapEntry[Str, TypeDecl] in mod._tyItems.iter():
+            let tyDefIdx = TyDefIdx.Type(
+                TyDefIdx_(_mod = modIdx, _name = ty.key),
+            )
+            let old = typeEnv.insert(ty.key, tyDefIdx)
+            if old is Option.Some(_):
+                panic(
+                    "Type `ty.key` defined multiple times in a recursive import group",
+                )
+
+        for trait_: HashMapEntry[Str, TraitDecl] in mod._traitItems.iter():
+            let traitDefIdx = TyDefIdx.Trait(
+                TraitDefIdx(_mod = modIdx, _name = trait_.key),
+            )
+            let old = typeEnv.insert(trait_.key, traitDefIdx)
+            if old is Option.Some(_):
+                panic(
+                    "Type `trait_.key` defined multiple times in a recursive import group",
+                )
+
+        for fun: HashMapEntry[Str, FunDecl] in mod._funItems.iter():
+            let varDefIdx = VarDefIdx.Top(
+                TopVarDefIdx(_mod = modIdx, _name = fun.key),
+            )
+            let old = termEnv.insert(fun.key, varDefIdx)
+            if old is Option.Some(_):
+                panic(
+                    "Value `fun.key` defined multiple times in a recursive import group",
+                )
+
+        for assocDef: HashMapEntry[Str, HashMap[Str, FunDecl]] in
+                mod._assocItems.iter():
+            let tyMap = match assocTermEnv.get(assocDef.key):
+                Option.None:
+                    let map = HashMap.withCapacity(10)
+                    assocTermEnv.insert(assocDef.key, map)
+                    map
+                Option.Some(map): map
+
+            for assocValue: HashMapEntry[Str, FunDecl] in assocDef.value.iter():
+                let old = tyMap.insert(
+                    assocValue.key,
+                    AssocVarDefIdx(
+                        _mod = modIdx,
+                        _tyName = assocDef.key,
+                        _varName = assocValue.key,
+                    ),
+                )
+                if old is Option.Some(_):
+                    panic(
+                        "Value `assocDef.key`.`assocValue.key` defined multiple times in a recursive import group",
+                    )
+
+    let selfEnv = SccEnv(
+        _termEnv = termEnv,
+        _assocTermEnv = assocTermEnv,
+        _tyEnv = typeEnv,
+    )
+
+    for importedSccIdx: U32 in sccImports.get(sccIdx).iter():
+        let importedSccEnv = _makeSccEnv(
+            pgm,
+            importedSccIdx,
+            sccs,
+            sccImports,
+            sccEnvs,
+        )
+        selfEnv.merge(importedSccEnv)
+
+    sccEnvs.set(sccIdx, Option.Some(selfEnv))
+
+    selfEnv
 
 
 # ------------------------------------------------------------------------------
@@ -347,59 +377,6 @@ _scc(
             if dep == module:
                 break
         output.push(scc)
-
-
-# ------------------------------------------------------------------------------
-# Topological sorting
-
-
-## Reverse topological sort the strongly connected components.
-##
-## Reverse means child nodes (imported modules) will come before parents
-## (importing modules) in the output.
-_revTopSort(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[ModuleIdx]]:
-    # Generate imports from SCCs to other SCCs.
-    let sccImports = makeSccDepGraph(pgm, sccs)
-
-    # The dependency graph with `sccs` as the nodes and `sccImports` as the
-    # edges don't have cycles, so we can depth-first traverse it, add child
-    # nodes before parents to rev top sort.
-    let output: Vec[HashSet[ModuleIdx]] = Vec.withCapacity(sccImports.len())
-
-    # Find the root of the tree. This part is a bit hacky: we assume that
-    # `ModuleIdx(0)` is the entry point, which can potentially change as we
-    # refactor the code.
-    let rootModuleIdx = ModuleIdx(_idx = 0)
-    let rootSccIdx: U32 = sccs.iter().enumerate().find(
-        |item: (idx: U32, item: HashSet[ModuleIdx])| Bool:
-            item.item.contains(rootModuleIdx),
-    ).unwrap().idx
-
-    _dft(rootSccIdx, sccs, sccImports, output, HashSet.withCapacity(sccs.len()))
-
-    output
-
-
-_dft(
-    sccIdx: U32,
-    sccs: Vec[HashSet[ModuleIdx]],
-    sccImports: Vec[HashSet[U32]],
-    output: Vec[HashSet[ModuleIdx]],
-    added: HashSet[U32],
-):
-    if added.contains(sccIdx):
-        return
-
-    added.insert(sccIdx)
-
-    let currentScc = sccs.get(sccIdx)
-    let currentSccImports = sccImports.get(sccIdx)
-
-    # Add imports before the current SCC.
-    for import_: U32 in currentSccImports.iter():
-        _dft(import_, sccs, sccImports, output, added)
-
-    output.push(sccs.get(sccIdx))
 
 
 # ------------------------------------------------------------------------------
