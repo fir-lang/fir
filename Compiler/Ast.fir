@@ -380,7 +380,7 @@ impl Tokens[Context]:
 #[derive(ToDoc)]
 type NamedType(
     ## Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
-    name: Id,
+    name: TyId,
 
     ## Arguments of the type constructor.
     args: Option[TyArgs],

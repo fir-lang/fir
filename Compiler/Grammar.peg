@@ -116,7 +116,7 @@ type_ Type:
     name=^ "UpperId" argFirst=^ "[" arg0=type_ args=(_"," type_)* ","? argLast=^ "]":
         let args = once(arg0).chain(args.iter()).toVec()
         NamedType(
-            name = newId(name),
+            name = newTyId(name),
             args = Option.Some(TyArgs(
                 args,
                 _firstToken = TokenIdx(idx = argFirst),
@@ -125,7 +125,7 @@ type_ Type:
         )
 
     name=^ "UpperId":
-        NamedType(name = newId(name), args = Option.None)
+        NamedType(name = newTyId(name), args = Option.None)
 
 
 # - ()

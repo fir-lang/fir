@@ -210,7 +210,7 @@ namedType(state: ParserState[Token]) NamedType / U32:
             let value = do:
                 let args = once(arg0).chain(args.iter()).toVec()
                 NamedType(
-                    name = newId(name),
+                    name = newTyId(name),
                     args =
                         Option.Some(
                             TyArgs(
@@ -234,7 +234,7 @@ namedType(state: ParserState[Token]) NamedType / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                NamedType(name = newId(name), args = Option.None)
+                NamedType(name = newTyId(name), args = Option.None)
             value,
     )
     match altResult:
