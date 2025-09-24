@@ -212,7 +212,7 @@ type ImplDecl(
     ## The trait name.
     ##
     ## In the example: `ToStr`.
-    trait_: Id,
+    trait_: TyId,
 
     ## Type parameters of the trait.
     ##

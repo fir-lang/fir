@@ -5074,7 +5074,7 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
             let value = do:
                 ImplDecl(
                     context = ctx,
-                    trait_ = newId(name),
+                    trait_ = newTyId(name),
                     tys = once(t0).chain(ts.iter()).toVec(),
                     items = rhs,
                     _firstToken = TokenIdx(idx = first),
