@@ -211,6 +211,7 @@ defaultVisitMatch[Visitor[t]](visitor: t, e: MatchExpr):
 
 
 defaultVisitAlt[Visitor[t]](visitor: t, e: Alt):
+    walkPat(e.pattern, visitor)
     if e.guard is Option.Some(e):
         walkExpr(e, visitor)
     for stmt: Stmt in e.rhs.iter():
@@ -232,6 +233,7 @@ defaultVisitFn[Visitor[t]](visitor: t, e: FnExpr):
 
 defaultVisitIs[Visitor[t]](visitor: t, e: IsExpr):
     walkExpr(e.expr, visitor)
+    walkPat(e.pat, visitor)
 
 
 defaultVisitDo[Visitor[t]](visitor: t, e: DoExpr):
@@ -251,6 +253,7 @@ defaultVisitParen[Visitor[t]](visitor: t, e: ParenExpr):
 
 
 defaultVisitLetStmt[Visitor[t]](visitor: t, s: LetStmt):
+    walkPat(s.lhs, visitor)
     walkExpr(s.rhs, visitor)
 
 

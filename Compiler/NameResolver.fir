@@ -15,10 +15,6 @@ resolveNames(pgm: Program):
     for module: Module in pgm._modules.iter():
         let termEnv = ScopeMap.fromMap(module._termEnv)
 
-        # Create a new scope to avoid modifying the module env with function
-        # locals.
-        termEnv.enterScope()
-
         let visitor = NameResolverVisitor(
             _moduleFilePath = module._filePath,
             _tokens = module._tokens,
@@ -29,9 +25,18 @@ resolveNames(pgm: Program):
 
         for funDecl: HashMapEntry[Str, FunDecl] in module._funItems.iter():
             let funDecl = funDecl.value
+
             if funDecl.body is Option.Some(stmts):
+                termEnv.enterScope()
+
+                for param: FunArg in funDecl.sig.params.iter():
+                    let nameText = module._tokens.get(param.name.token.idx).text
+                    termEnv.insert(nameText, VarDefIdx.Local)
+
                 for stmt: Stmt in stmts.iter():
                     walkStmt(stmt, visitor)
+
+                termEnv.exitScope()
 
         ()
 
@@ -46,26 +51,55 @@ type NameResolverVisitor(
 
 
 impl Visitor[NameResolverVisitor]:
-    visitVarExpr(self: NameResolverVisitor, e: VarExpr):
-        let token = self._tokens.get(e.id.token.idx)
+    visitVarPat(self: NameResolverVisitor, pat: VarPat):
+        let varText = self._tokens.get(pat.var_.token.idx).text
+        self._termEnv.insert(varText, VarDefIdx.Local)
+        ()
+
+    visitAlt(self: NameResolverVisitor, alt: Alt):
+        self._termEnv.enterScope()
+        defaultVisitAlt(self, alt)
+        self._termEnv.exitScope()
+        ()
+
+    visitVarExpr(self: NameResolverVisitor, expr: VarExpr):
+        let token = self._tokens.get(expr.id.token.idx)
         let varText = token.text
         match self._termEnv.get(varText):
-            Option.Some(idx): e.id.resolve(idx)
+            Option.Some(idx): expr.id.resolve(idx)
             Option.None:
                 panic(
                     "`tokenLocStr(self._moduleFilePath, token)`: Unbound variable `varText`",
                 )
 
-    visitForStmt(self: NameResolverVisitor, e: ForStmt):
+    visitLetStmt(self: NameResolverVisitor, stmt: LetStmt):
+        walkExpr(stmt.rhs, self)
+        walkPat(stmt.lhs, self)
+
+    visitForStmt(self: NameResolverVisitor, stmt: ForStmt):
         self._termEnv.enterScope()
 
         # Visit iterator expression first as it cannot refer to loop binders.
-        walkExpr(e.expr, self)
+        walkExpr(stmt.expr, self)
 
         # Bind loop binders.
-        walkPat(e.pat, self)
+        walkPat(stmt.pat, self)
 
-        for stmt in e.body.iter():
+        for stmt in stmt.body.iter():
+            walkStmt(stmt, self)
+
+        self._termEnv.exitScope()
+
+        ()
+
+    visitFnExpr(self: NameResolverVisitor, fn_: FnExpr):
+        self._termEnv.enterScope()
+
+        for param: FunArg in fn_.sig.params.iter():
+            let nameText = self._tokens.get(param.name.token.idx).text
+            self._termEnv.insert(nameText, VarDefIdx.Local)
+
+        for stmt: Stmt in fn_.body.iter():
             walkStmt(stmt, self)
 
         self._termEnv.exitScope()
