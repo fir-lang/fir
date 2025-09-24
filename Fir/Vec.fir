@@ -201,7 +201,7 @@ impl[ToStr[t]] ToStr[Vec[t]]:
         buf.push('[')
         for i: U32 in range(u32(0), self.len()):
             if i != 0:
-                buf.pushStr(", ")
+                buf.push(',')
             buf.pushStr(self.get(i).toStr())
         buf.push(']')
         buf.toStr()
