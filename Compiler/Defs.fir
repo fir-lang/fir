@@ -129,6 +129,14 @@ type VarDefIdx:
     Top(TopVarDefIdx)
 
 
+impl Eq[VarDefIdx]:
+    __eq(self: VarDefIdx, other: VarDefIdx) Bool:
+        match (left = self, right = other):
+            (left = VarDefIdx.Local, right = VarDefIdx.Local): Bool.True
+            (left = VarDefIdx.Top(l1), right = VarDefIdx.Top(r1)): l1 == r1
+            _: Bool.False
+
+
 #[derive(ToDoc)]
 type TopVarDefIdx(
     ## Module of the variable.
@@ -139,6 +147,11 @@ type TopVarDefIdx(
     ## This name can be different than the use site name.
     _name: Str,
 )
+
+
+impl Eq[TopVarDefIdx]:
+    __eq(self: TopVarDefIdx, other: TopVarDefIdx) Bool:
+        self._mod == other._mod and self._name == other._name
 
 
 #[derive(ToDoc)]
@@ -158,6 +171,13 @@ type AssocVarDefIdx(
 )
 
 
+impl Eq[AssocVarDefIdx]:
+    __eq(self: AssocVarDefIdx, other: AssocVarDefIdx) Bool:
+        self._mod == other._mod
+            and self._tyName == other._tyName
+            and self._varName == other._varName
+
+
 # ------------------------------------------------------------------------------
 # Type items
 
@@ -166,6 +186,14 @@ type AssocVarDefIdx(
 type TyDefIdx:
     Trait(TraitDefIdx)
     Type(TyDefIdx_)
+
+
+impl Eq[TyDefIdx]:
+    __eq(self: TyDefIdx, other: TyDefIdx) Bool:
+        match (left = self, right = other):
+            (left = TyDefIdx.Trait(l1), right = TyDefIdx.Trait(r1)): l1 == r1
+            (left = TyDefIdx.Type(l1), right = TyDefIdx.Type(r1)): l1 == r1
+            _: Bool.False
 
 
 #[derive(ToDoc)]
@@ -178,6 +206,11 @@ type TraitDefIdx(
 )
 
 
+impl Eq[TraitDefIdx]:
+    __eq(self: TraitDefIdx, other: TraitDefIdx) Bool:
+        self._mod == other._mod and self._name == other._name
+
+
 #[derive(ToDoc)]
 type TyDefIdx_(
     ## The type's module.
@@ -186,6 +219,11 @@ type TyDefIdx_(
     ## Name of the type in `_mod`.
     _name: Str,
 )
+
+
+impl Eq[TyDefIdx_]:
+    __eq(self: TyDefIdx_, other: TyDefIdx_) Bool:
+        self._mod == other._mod and self._name == other._name
 
 
 # ------------------------------------------------------------------------------

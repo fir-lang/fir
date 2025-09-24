@@ -148,6 +148,8 @@ Program.prepModuleEnvs(self):
     )
 
     let sccImports = _makeSccDepGraph(self, sccs)
+    print("SCC imports:")
+    print(sccImports.toDoc().render(80))
 
     for sccIdx in range(u32(0), sccs.len()):
         _makeSccEnv(self, sccIdx, sccs, sccImports, sccEnvs)
@@ -180,7 +182,31 @@ type SccEnv(
 
 
 SccEnv.merge(self, other: SccEnv):
-    panic("TODO")
+    for term: HashMapEntry[Str, VarDefIdx] in other._termEnv.iter():
+        let old = self._termEnv.insert(term.key, term.value)
+        if old is Option.Some(oldImport) and oldImport != term.value:
+            panic("Variable `term.key` defined multiple times in SCC")
+
+    for assoc: HashMapEntry[Str, HashMap[Str, AssocVarDefIdx]] in
+            other._assocTermEnv.iter():
+        let termMap = match self._assocTermEnv.get(assoc.key):
+            Option.Some(map): map
+            Option.None:
+                let map = HashMap.withCapacity(10)
+                self._assocTermEnv.insert(assoc.key, map)
+                map
+
+        for term: HashMapEntry[Str, AssocVarDefIdx] in assoc.value.iter():
+            let old = termMap.insert(term.key, term.value)
+            if old is Option.Some(oldImport) and oldImport != term.value:
+                panic(
+                    "Associated function `assoc.key`.`term.key` defined multiple times in SCC",
+                )
+
+    for ty: HashMapEntry[Str, TyDefIdx] in other._tyEnv.iter():
+        let old = self._tyEnv.insert(ty.key, ty.value)
+        if old is Option.Some(oldImport) and oldImport != ty.value:
+            panic("Type `ty.key` defined multiple times in SCC")
 
 
 _makeSccEnv(
