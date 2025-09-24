@@ -231,6 +231,23 @@ Program.prepModuleEnvs(self):
         ()
 
 
+makeSccDepGraph(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[U32]]:
+    let sccImports: Vec[HashSet[U32]] = Vec.fromIter(
+        repeatWith(||: HashSet.withCapacity(10)).take(sccs.len()),
+    )
+
+    for sccIdx: U32 in range(u32(0), sccs.len()):
+        let importedSccs = sccImports.get(sccIdx)
+        for mod: ModuleIdx in sccs.get(sccIdx).iter():
+            for import_: ModuleIdx in
+                    pgm._modules.get(mod._idx)._imports.iter():
+                let importScc = pgm._modules.get(import_._idx)._sccIdx.unwrap()
+                if importScc != sccIdx:
+                    importedSccs.insert(importScc)
+
+    sccImports
+
+
 # ------------------------------------------------------------------------------
 # Strongly connected components
 
@@ -342,18 +359,7 @@ _scc(
 ## (importing modules) in the output.
 _revTopSort(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[ModuleIdx]]:
     # Generate imports from SCCs to other SCCs.
-    let sccImports: Vec[HashSet[U32]] = Vec.fromIter(
-        repeatWith(||: HashSet.withCapacity(10)).take(sccs.len()),
-    )
-
-    for sccIdx: U32 in range(u32(0), sccs.len()):
-        let importedSccs = sccImports.get(sccIdx)
-        for mod: ModuleIdx in sccs.get(sccIdx).iter():
-            for import_: ModuleIdx in
-                    pgm._modules.get(mod._idx)._imports.iter():
-                let importScc = pgm._modules.get(import_._idx)._sccIdx.unwrap()
-                if importScc != sccIdx:
-                    importedSccs.insert(importScc)
+    let sccImports = makeSccDepGraph(pgm, sccs)
 
     # The dependency graph with `sccs` as the nodes and `sccImports` as the
     # edges don't have cycles, so we can depth-first traverse it, add child
