@@ -92,7 +92,7 @@ update_generated_files:
     Tool/Peg/Peg.sh Tool/Peg/TestGrammar.peg > Tool/Peg/TestGrammar.fir
     Tool/Peg/Peg.sh Compiler/Grammar.peg > Compiler/Grammar.fir
 
-    # Tool/Format/Format.sh Tool/Peg/{PegGrammar,TestGrammar}.fir Compiler/Grammar.fir
+    Tool/Format/Format.sh Tool/Peg/{PegGrammar,TestGrammar}.fir Compiler/Grammar.fir
 
 check_generated_files: update_generated_files
     git -P diff
