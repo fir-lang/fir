@@ -66,7 +66,7 @@ trait Visitor[t]:
         ()
 
     visitConstrSelectExpr(self: t, e: Constructor):
-        ()
+        self.visitConstructor(e)
 
     visitFieldSelectExpr(self: t, e: FieldSelectExpr):
         defaultVisitFieldSelectExpr(self, e)
@@ -206,6 +206,12 @@ trait Visitor[t]:
     visitTyId(self: t, id: TyId):
         ()
 
+    # ----------------------------------------------------------------
+    # Shared things
+
+    visitConstructor(self: t, c: Constructor):
+        defaultVisitConstructor(self, c)
+
 
 defaultVisitFieldSelectExpr[Visitor[t]](visitor: t, e: FieldSelectExpr):
     walkExpr(e.object, visitor)
@@ -288,6 +294,12 @@ defaultVisitParen[Visitor[t]](visitor: t, e: ParenExpr):
     walkExpr(e.expr, visitor)
 
 
+defaultVisitConstructor[Visitor[t]](visitor: t, c: Constructor):
+    visitor.visitTyId(c.ty)
+    for arg: Type in c.tyArgs.iter():
+        walkType(arg, visitor)
+
+
 defaultVisitLetStmt[Visitor[t]](visitor: t, s: LetStmt):
     walkPat(s.lhs, visitor)
     walkExpr(s.rhs, visitor)
@@ -328,6 +340,7 @@ defaultVisitContinueStmt[Visitor[t]](visitor: t, s: ContinueStmt):
 
 
 defaultVisitConstrPat[Visitor[t]](visitor: t, s: ConstrPat):
+    visitor.visitConstructor(s.constr)
     for field: Named[Pat] in s.fields.iter():
         walkPat(field.node, visitor)
 
@@ -343,6 +356,7 @@ defaultVisitOrPat[Visitor[t]](visitor: t, ps: Vec[Pat]):
 
 
 defaultVisitNamedType[Visitor[t]](visitor: t, t: NamedType):
+    visitor.visitTyId(t.name)
     if t.args is Option.Some(args):
         for arg: Type in args.args.iter():
             walkType(arg, visitor)

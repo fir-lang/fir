@@ -71,6 +71,12 @@ impl Visitor[NameResolverVisitor]:
                     "`tokenLocStr(self._moduleFilePath, token)`: Unbound type `varText`",
                 )
 
+    visitConstructor(self: NameResolverVisitor, c: Constructor):
+        if not c.variant:
+            self.visitTyId(c.ty)
+        for arg: Type in c.tyArgs.iter():
+            walkType(arg, self)
+
     visitVarPat(self: NameResolverVisitor, pat: VarPat):
         let varText = self._tokens.get(pat.var_.token.idx).text
         self._termEnv.insert(varText, VarDefIdx.Local)
