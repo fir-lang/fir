@@ -154,7 +154,23 @@ Program.prepModuleEnvs(self):
     for sccIdx in range(u32(0), sccs.len()):
         _makeSccEnv(self, sccIdx, sccs, sccImports, sccEnvs)
 
-    ()
+    # Copy SCC envs to modules.
+    for sccIdx: U32 in range(u32(0), sccs.len()):
+        let sccEnv = sccEnvs.get(sccIdx).unwrap()
+        let scc = sccs.get(sccIdx)
+        for moduleIdx: ModuleIdx in scc.iter():
+            let module = self._modules.get(moduleIdx._idx)
+
+            # TODO: Modul envs should be scope maps.
+            module._termEnv = HashMap.fromIter(
+                sccEnv._termEnv.iter().map(
+                    |entry: HashMapEntry[Str, VarDefIdx]|:
+                        (key = entry.key, value = entry.value),
+                ),
+            )
+
+            module._assocTermEnv = sccEnv._assocTermEnv
+            module._tyEnv = sccEnv._tyEnv
 
 
 _makeSccDepGraph(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[U32]]:
