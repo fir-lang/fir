@@ -1,4 +1,5 @@
 import [
+    Compiler/Assert,
     Compiler/Ast,
     Compiler/Defs,
 ]
