@@ -4,12 +4,11 @@
 
 import [
     Compiler/Ast,
+    Compiler/AstWalker,
     Compiler/Defs,
     Compiler/Error,
-    Compiler/Grammar,
-    Compiler/Scanner,
 ]
 
 
-resolveNames(pgm: Program, items: Vec[TopDecl]):
+resolveNames(pgm: Program):
     panic("TODO")

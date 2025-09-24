@@ -1,5 +1,6 @@
 import [
     Compiler/Ast,
+    Compiler/AstWalker,
     Compiler/Defs,
     Compiler/Lexer,
     Compiler/NameResolver,
