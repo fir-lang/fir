@@ -206,6 +206,9 @@ trait Visitor[t]:
     visitTyId(self: t, id: TyId):
         ()
 
+    visitAssocVarId(self: t, varId: AssocVarId):
+        ()
+
     # ----------------------------------------------------------------
     # Shared things
 
@@ -217,8 +220,15 @@ defaultVisitFieldSelectExpr[Visitor[t]](visitor: t, e: FieldSelectExpr):
     walkExpr(e.object, visitor)
 
 
+# TODO: `field` field
+
+
 defaultVisitMethodSelectExpr[Visitor[t]](visitor: t, e: MethodSelectExpr):
     walkExpr(e.object, visitor)
+    visitor.visitTyId(e.methodTyId)
+    visitor.visitAssocVarId(e.method)
+    for tyArg: Type in e.tyArgs.iter():
+        walkType(tyArg, visitor)
 
 
 defaultVisitCallExpr[Visitor[t]](visitor: t, e: CallExpr):
@@ -302,6 +312,8 @@ defaultVisitConstructor[Visitor[t]](visitor: t, c: Constructor):
 
 defaultVisitLetStmt[Visitor[t]](visitor: t, s: LetStmt):
     walkPat(s.lhs, visitor)
+    if s.ty is Option.Some(ty):
+        walkType(ty, visitor)
     walkExpr(s.rhs, visitor)
 
 
@@ -315,6 +327,9 @@ defaultVisitExprStmt[Visitor[t]](visitor: t, s: Expr):
 
 
 defaultVisitForStmt[Visitor[t]](visitor: t, s: ForStmt):
+    walkPat(s.pat, visitor)
+    if s.astTy is Option.Some(ty):
+        walkType(ty, visitor)
     walkExpr(s.expr, visitor)
     for stmt: Stmt in s.body.iter():
         walkStmt(stmt, visitor)
