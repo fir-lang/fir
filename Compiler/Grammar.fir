@@ -209,7 +209,7 @@ namedType(state: ParserState[Token]) NamedType / U32:
             let value = do:
                 let args = once(arg0).chain(args.iter()).toVec()
                 NamedType(
-                    name = newId(name),
+                    name = newTyId(name),
                     args =
                         Option.Some(
                             TyArgs(
@@ -233,7 +233,7 @@ namedType(state: ParserState[Token]) NamedType / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                NamedType(name = newId(name), args = Option.None)
+                NamedType(name = newTyId(name), args = Option.None)
             value,
     )
     match altResult:
@@ -2183,7 +2183,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
             let value = do:
                 Expr.Var(
                     VarExpr(
-                        id = newId(var_),
+                        id = newVarId(var_),
                         userTyArgs = tyArgs,
                         tyArgs = Vec.empty(),
                     ),
@@ -2805,7 +2805,7 @@ constructor(state: ParserState[Token]) Constructor / U32:
             let value = do:
                 Constructor(
                     variant = Bool.False,
-                    ty = newId(ty),
+                    ty = newTyId(ty),
                     constr = con.map(|con: U32|: newId(con)),
                     userTyArgs,
                     tyArgs = Vec.empty(),
@@ -2863,7 +2863,7 @@ constructor(state: ParserState[Token]) Constructor / U32:
             let value = do:
                 Constructor(
                     variant = Bool.True,
-                    ty = newId(ty),
+                    ty = newTyId(ty),
                     constr = con.map(|con: U32|: newId(con)),
                     userTyArgs,
                     tyArgs = Vec.empty(),
@@ -4598,7 +4598,7 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-topFunSig(state: ParserState[Token]) (parentTy: Option[Id], name: Id, sig: FunSig) / U32:
+topFunSig(state: ParserState[Token]) (parentTy: Option[TyId], name: Id, sig: FunSig) / U32:
     let cursor0 = state._cursor
     let altResult = try(
         ||:
@@ -4661,7 +4661,7 @@ topFunSig(state: ParserState[Token]) (parentTy: Option[Id], name: Id, sig: FunSi
             let value = do:
                 let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
                 (
-                    parentTy = parentTy.map(|id: U32|: newId(id)),
+                    parentTy = parentTy.map(|id: U32|: newTyId(id)),
                     name = newId(name),
                     sig =
                         FunSig(
@@ -5074,7 +5074,7 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
             let value = do:
                 ImplDecl(
                     context = ctx,
-                    trait_ = newId(name),
+                    trait_ = newTyId(name),
                     tys = once(t0).chain(ts.iter()).toVec(),
                     items = rhs,
                     _firstToken = TokenIdx(idx = first),

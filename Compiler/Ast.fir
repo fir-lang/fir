@@ -1,4 +1,5 @@
 import [
+    Compiler/Defs,
     # imports Loc
     # TODO: Why is Loc in Error module?
     Compiler/Error,
@@ -133,7 +134,7 @@ type FunDecl(
     prim_: Option[TokenIdx],
 
     ## Only in associated functions: the parent type. E.g. `Vec` in `Vec.push(...) = ...`.
-    parentTy: Option[Id],
+    parentTy: Option[TyId],
 
     ## Name of the function.
     name: Id,
@@ -212,7 +213,7 @@ type ImplDecl(
     ## The trait name.
     ##
     ## In the example: `ToStr`.
-    trait_: Id,
+    trait_: TyId,
 
     ## Type parameters of the trait.
     ##
@@ -380,7 +381,7 @@ impl Tokens[Context]:
 #[derive(ToDoc)]
 type NamedType(
     ## Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
-    name: Id,
+    name: TyId,
 
     ## Arguments of the type constructor.
     args: Option[TyArgs],
@@ -704,12 +705,13 @@ impl Tokens[RecordPat]:
         self._lastToken
 
 
+## A sum or product constructor, in patterns and expressions.
 #[derive(ToDoc)]
 type Constructor(
     variant: Bool,
 
     ## Type of the constructor.
-    ty: Id,
+    ty: TyId,
 
     ## Name of the constructor. Only in sum types.
     constr: Option[Id],
@@ -863,7 +865,7 @@ impl Tokens[Expr]:
 
 #[derive(ToDoc)]
 type VarExpr(
-    id: Id,
+    id: VarId,
 
     # Type arguments explicitly passed to the variable.
     userTyArgs: Option[TyArgs],
@@ -949,20 +951,20 @@ type MethodSelectExpr(
     # TODO: We could also add types to every expression if it's going to help with monomorphisation.
     #       For efficiency though, we should only annotate inferred types and then type check from
     #       the top-level expression every time we need to compute type of an expr.
-    objectTy: Option[Type], # TODO: type-checking type
-
+    # TODO: This should be a type-checking type.
+    objectTy: Option[Type],
 
     ## The type or trait id that defines the method.
     ##
     ## E.g. `Vec`, `Iterator`.
     ##
     ## Note: when calling trait methods, this will be the trait type rather than the receiver type.
-    methodTyId: Id,
+    methodTyId: TyId,
 
     ## The method id.
     ##
     ## E.g. `push`, `next`.
-    method: Id,
+    method: AssocVarId,
 
     ## Type arguments of `method_ty_id`.
     ##
@@ -993,8 +995,12 @@ impl Tokens[MethodSelectExpr]:
 ## - Method: `Vec.push`.
 #[derive(ToDoc)]
 type AssocFnSelectExpr(
-    ty: Id,
-    member: Id,
+    # The type of the associated function: `Vec` in the examples above.
+    ty: TyId,
+
+    # The associated function name: `withCapacity` and `push` in the examples
+    # above.
+    member: AssocVarId,
 
     ## Type arguments explicitly passed to the variable.
     userTyArgs: Option[TyArgs],
@@ -1009,7 +1015,7 @@ type AssocFnSelectExpr(
 
 impl Tokens[AssocFnSelectExpr]:
     firstToken(self: AssocFnSelectExpr) TokenIdx:
-        self.ty.firstToken()
+        self.ty.token
 
     lastToken(self: AssocFnSelectExpr) TokenIdx:
         self._lastToken
