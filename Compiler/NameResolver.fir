@@ -24,18 +24,7 @@ resolveNames(pgm: Program):
 
         for funDecl: HashMapEntry[Str, FunDecl] in module._funItems.iter():
             let funDecl = funDecl.value
-
-            if funDecl.body is Option.Some(stmts):
-                termEnv.enterScope()
-
-                for param: FunArg in funDecl.sig.params.iter():
-                    let nameText = module._tokens.get(param.name.token.idx).text
-                    termEnv.insert(nameText, VarDefIdx.Local)
-
-                for stmt: Stmt in stmts.iter():
-                    walkStmt(stmt, visitor)
-
-                termEnv.exitScope()
+            visitor.visitFunDecl(funDecl)
 
         for tyDecl: HashMapEntry[Str, TypeDecl] in module._tyItems.iter():
             let tyDecl = tyDecl.value
@@ -48,6 +37,16 @@ resolveNames(pgm: Program):
 
                     TypeDeclRhs.Product(fields): walkConFields(fields, visitor)
 
+        for traitDecl: HashMapEntry[Str, TraitDecl] in
+                module._traitItems.iter():
+            let traitDecl = traitDecl.value
+            for funDecl: FunDecl in traitDecl.items.iter():
+                visitor.visitFunDecl(funDecl)
+
+        for implDecl: ImplDecl in module._impls.iter():
+            for funDecl: FunDecl in implDecl.items.iter():
+                visitor.visitFunDecl(funDecl)
+
 
 type NameResolverVisitor(
     _moduleFilePath: Str,
@@ -59,6 +58,22 @@ type NameResolverVisitor(
 
 
 impl Visitor[NameResolverVisitor]:
+    visitFunDecl(self: NameResolverVisitor, funDecl: FunDecl):
+        if funDecl.body is Option.Some(stmts):
+            self._termEnv.enterScope()
+
+            for param: FunArg in funDecl.sig.params.iter():
+                let nameText = self._tokens.get(param.name.token.idx).text
+                self._termEnv.insert(nameText, VarDefIdx.Local)
+
+            for stmt: Stmt in stmts.iter():
+                walkStmt(stmt, self)
+
+            self._termEnv.exitScope()
+
+        # BUG: #227.
+        ()
+
     visitVarId(self: NameResolverVisitor, id: VarId):
         let token = self._tokens.get(id.token.idx)
         let varText = token.text
