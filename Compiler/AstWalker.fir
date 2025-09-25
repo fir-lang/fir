@@ -1,3 +1,19 @@
+#|
+This module implements the AST walkers and the `Visitor` trait, to make it
+convenient to traverse the ASTs.
+
+Ideally, the walkers and default visit methods should visit all of the fields of
+AST nodes.
+
+But that's too much work, so for now, we only visit the fields that we need to
+visit in the use cases of the visitors. We should update the visitors and as we
+need to visit more of the fields in new use sites.
+
+In particular, for now, the top-level declaration visitors don't do anything.
+Use sites should always override the top-level declaration visitors if they use
+`walkModule`.
+|#
+
 import [Compiler/Ast]
 
 
@@ -77,19 +93,22 @@ trait Visitor[t]:
     # Declarations
 
     visitTypeDecl(self: t, d: TypeDecl):
-        defaultVisitTypeDecl(self, d)
+        ()
+
+    visitTypeDeclRhs(self: t, d: TypeDeclRhs):
+        ()
 
     visitFunDecl(self: t, d: FunDecl):
-        defaultVisitFunDecl(self, d)
+        ()
 
     visitImportDecl(self: t, d: ImportDecl):
-        defaultVisitImportDecl(self, d)
+        ()
 
     visitTraitDecl(self: t, d: TraitDecl):
-        defaultVisitTraitDecl(self, d)
+        ()
 
     visitImplDecl(self: t, d: ImplDecl):
-        defaultVisitImplDecl(self, d)
+        ()
 
     # ----------------------------------------------------------------
     # Exprs
@@ -246,31 +265,6 @@ trait Visitor[t]:
 
     visitConstructor(self: t, c: Constructor):
         defaultVisitConstructor(self, c)
-
-
-defaultVisitTypeDecl[Visitor[t]](visitor: t, d: TypeDecl):
-    # TODO
-    ()
-
-
-defaultVisitFunDecl[Visitor[t]](visitor: t, d: FunDecl):
-    # TODO
-    ()
-
-
-defaultVisitImportDecl[Visitor[t]](visitor: t, d: ImportDecl):
-    # TODO
-    ()
-
-
-defaultVisitTraitDecl[Visitor[t]](visitor: t, d: TraitDecl):
-    # TODO
-    ()
-
-
-defaultVisitImplDecl[Visitor[t]](visitor: t, d: ImplDecl):
-    # TODO
-    ()
 
 
 defaultVisitFieldSelectExpr[Visitor[t]](visitor: t, e: FieldSelectExpr):
