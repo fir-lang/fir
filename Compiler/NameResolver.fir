@@ -4,7 +4,7 @@
 
 import [
     Compiler/Ast,
-    Compiler/AstWalker,
+    Compiler/AstVisitor,
     Compiler/Defs,
     Compiler/ScopeMap,
 ]
@@ -33,9 +33,9 @@ resolveNames(pgm: Program):
                 match rhs:
                     TypeDeclRhs.Sum(cons):
                         for con: ConDecl in cons.iter():
-                            walkConFields(con.fields, visitor)
+                            visitor.visitConFields(con.fields)
 
-                    TypeDeclRhs.Product(fields): walkConFields(fields, visitor)
+                    TypeDeclRhs.Product(fields): visitor.visitConFields(fields)
 
         for traitDecl: HashMapEntry[Str, TraitDecl] in
                 module._traitItems.iter():
@@ -67,7 +67,7 @@ impl Visitor[NameResolverVisitor]:
                 self._termEnv.insert(nameText, VarDefIdx.Local)
 
             for stmt: Stmt in stmts.iter():
-                walkStmt(stmt, self)
+                self.visitStmt(stmt)
 
             self._termEnv.exitScope()
 
@@ -98,7 +98,7 @@ impl Visitor[NameResolverVisitor]:
         if not c.variant:
             self.visitTyId(c.ty)
         for arg: Type in c.tyArgs.iter():
-            walkType(arg, self)
+            self.visitType(arg)
 
     visitVarPat(self: NameResolverVisitor, pat: VarPat):
         let varText = self._tokens.get(pat.var_.token.idx).text
@@ -112,20 +112,20 @@ impl Visitor[NameResolverVisitor]:
         ()
 
     visitLetStmt(self: NameResolverVisitor, stmt: LetStmt):
-        walkExpr(stmt.rhs, self)
-        walkPat(stmt.lhs, self)
+        self.visitExpr(stmt.rhs)
+        self.visitPat(stmt.lhs)
 
     visitForStmt(self: NameResolverVisitor, stmt: ForStmt):
         self._termEnv.enterScope()
 
         # Visit iterator expression first as it cannot refer to loop binders.
-        walkExpr(stmt.expr, self)
+        self.visitExpr(stmt.expr)
 
         # Bind loop binders.
-        walkPat(stmt.pat, self)
+        self.visitPat(stmt.pat)
 
         for stmt in stmt.body.iter():
-            walkStmt(stmt, self)
+            self.visitStmt(stmt)
 
         self._termEnv.exitScope()
 
@@ -139,7 +139,7 @@ impl Visitor[NameResolverVisitor]:
             self._termEnv.insert(nameText, VarDefIdx.Local)
 
         for stmt: Stmt in fn_.body.iter():
-            walkStmt(stmt, self)
+            self.visitStmt(stmt)
 
         self._termEnv.exitScope()
 
