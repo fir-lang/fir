@@ -37,7 +37,16 @@ resolveNames(pgm: Program):
 
                 termEnv.exitScope()
 
-        ()
+        for tyDecl: HashMapEntry[Str, TypeDecl] in module._tyItems.iter():
+            let tyDecl = tyDecl.value
+
+            if tyDecl.rhs is Option.Some(rhs):
+                match rhs:
+                    TypeDeclRhs.Sum(cons):
+                        for con: ConDecl in cons.iter():
+                            walkConFields(con.fields, visitor)
+
+                    TypeDeclRhs.Product(fields): walkConFields(fields, visitor)
 
 
 type NameResolverVisitor(

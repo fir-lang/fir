@@ -31,6 +31,19 @@ walkTopDecl[Visitor[v]](topDecl: TopDecl, v: v):
         TopDecl.Impl(d): v.visitImplDecl(d)
 
 
+walkConFields[Visitor[v]](fields: ConFields, v: v):
+    match fields:
+        ConFields.Empty: ()
+
+        ConFields.Named(fields):
+            for field: NamedField in fields.iter():
+                walkType(field.ty, v)
+
+        ConFields.Unnamed(fields):
+            for ty: Type in fields.iter():
+                walkType(ty, v)
+
+
 walkExpr[Visitor[v]](expr: Expr, v: v):
     match expr:
         Expr.Var(e): v.visitVarExpr(e)
