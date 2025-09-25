@@ -1002,11 +1002,11 @@ topFunDecl FunDecl:
         )
 
 
-topFunSig (parentTy: Option[Id], name: Id, sig: FunSig):
+topFunSig (parentTy: Option[TyId], name: Id, sig: FunSig):
     parentTy=(^ _"UpperId" _".")? name=^ "LowerId" ctx=context? params=paramList ret=returnTy?:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         (
-            parentTy = parentTy.map(|id: U32|: newId(id)),
+            parentTy = parentTy.map(|id: U32|: newTyId(id)),
             name = newId(name),
             sig = FunSig(
                 context = ctx,

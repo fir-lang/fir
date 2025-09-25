@@ -4598,7 +4598,7 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-topFunSig(state: ParserState[Token]) (parentTy: Option[Id], name: Id, sig: FunSig) / U32:
+topFunSig(state: ParserState[Token]) (parentTy: Option[TyId], name: Id, sig: FunSig) / U32:
     let cursor0 = state._cursor
     let altResult = try(
         ||:
@@ -4661,7 +4661,7 @@ topFunSig(state: ParserState[Token]) (parentTy: Option[Id], name: Id, sig: FunSi
             let value = do:
                 let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
                 (
-                    parentTy = parentTy.map(|id: U32|: newId(id)),
+                    parentTy = parentTy.map(|id: U32|: newTyId(id)),
                     name = newId(name),
                     sig =
                         FunSig(

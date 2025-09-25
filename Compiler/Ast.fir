@@ -133,7 +133,7 @@ type FunDecl(
     prim_: Option[TokenIdx],
 
     ## Only in associated functions: the parent type. E.g. `Vec` in `Vec.push(...) = ...`.
-    parentTy: Option[Id],
+    parentTy: Option[TyId],
 
     ## Name of the function.
     name: Id,
