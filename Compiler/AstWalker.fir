@@ -1,6 +1,20 @@
 import [Compiler/Ast]
 
 
+walkModule[Visitor[v]](module: Vec[TopDecl], v: v):
+    for topDecl in module.iter():
+        walkTopDecl(topDecl, v)
+
+
+walkTopDecl[Visitor[v]](topDecl: TopDecl, v: v):
+    match topDecl:
+        TopDecl.Type(d): v.visitTypeDecl(d)
+        TopDecl.Fun(d): v.visitFunDecl(d)
+        TopDecl.Import(d): v.visitImportDecl(d)
+        TopDecl.Trait(d): v.visitTraitDecl(d)
+        TopDecl.Impl(d): v.visitImplDecl(d)
+
+
 walkExpr[Visitor[v]](expr: Expr, v: v):
     match expr:
         Expr.Var(e): v.visitVarExpr(e)
@@ -59,6 +73,24 @@ walkType[Visitor[v]](ty: Type, v: v):
 
 
 trait Visitor[t]:
+    # ----------------------------------------------------------------
+    # Declarations
+
+    visitTypeDecl(self: t, d: TypeDecl):
+        defaultVisitTypeDecl(self, d)
+
+    visitFunDecl(self: t, d: FunDecl):
+        defaultVisitFunDecl(self, d)
+
+    visitImportDecl(self: t, d: ImportDecl):
+        defaultVisitImportDecl(self, d)
+
+    visitTraitDecl(self: t, d: TraitDecl):
+        defaultVisitTraitDecl(self, d)
+
+    visitImplDecl(self: t, d: ImplDecl):
+        defaultVisitImplDecl(self, d)
+
     # ----------------------------------------------------------------
     # Exprs
 
@@ -216,11 +248,34 @@ trait Visitor[t]:
         defaultVisitConstructor(self, c)
 
 
+defaultVisitTypeDecl[Visitor[t]](visitor: t, d: TypeDecl):
+    # TODO
+    ()
+
+
+defaultVisitFunDecl[Visitor[t]](visitor: t, d: FunDecl):
+    # TODO
+    ()
+
+
+defaultVisitImportDecl[Visitor[t]](visitor: t, d: ImportDecl):
+    # TODO
+    ()
+
+
+defaultVisitTraitDecl[Visitor[t]](visitor: t, d: TraitDecl):
+    # TODO
+    ()
+
+
+defaultVisitImplDecl[Visitor[t]](visitor: t, d: ImplDecl):
+    # TODO
+    ()
+
+
 defaultVisitFieldSelectExpr[Visitor[t]](visitor: t, e: FieldSelectExpr):
+    # TODO: `field` field
     walkExpr(e.object, visitor)
-
-
-# TODO: `field` field
 
 
 defaultVisitMethodSelectExpr[Visitor[t]](visitor: t, e: MethodSelectExpr):
