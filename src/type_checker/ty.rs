@@ -51,7 +51,7 @@ pub enum Ty {
     /// Instantiation converts these into unification variables (`Ty::Var`).
     QVar(Id, Kind),
 
-    /// A function type, e.g. `Fn(U32): Str`, `Fn(x: U32, y: U32): T`.
+    /// A function type, e.g. `Fn(U32) Str`, `Fn(x: U32, y: U32) T / Err`.
     Fun {
         args: FunArgs,
 
@@ -64,12 +64,15 @@ pub enum Ty {
         exceptions: Option<Box<Ty>>,
     },
 
-    /// An anonymous record or variant type or row type. E.g. `(a: Str, ..R)`, `[Err1(Str), ..R]`.
+    /// An anonymous record or variant type or row type. E.g. `(a: Str, ..r)`, `[Err1(Str), ..r]`.
     Anonymous {
         labels: TreeMap<Id, Ty>,
 
-        /// Row extension. See `Extension` documentation.
-        extension: Extension,
+        /// Row extension. When available, this will be one of:
+        ///
+        /// - `Ty::Var`: a unification variable.
+        /// - `Ty::Con`: a rigid type variable.
+        extension: Option<Box<Ty>>,
 
         kind: RecordOrVariant,
 
@@ -84,15 +87,6 @@ pub enum RecordOrVariant {
     Record,
     Variant,
 }
-
-/// A row extension for a `Ty::Record`, `Ty::Variant` or `Ty::Row`.
-///
-/// When available, this will be one of:
-///
-/// - `Ty::Var`: a unification variable.
-/// - `Ty::Con`: a rigid type variable.
-/// - `Ty::Row`: an extension.
-type Extension = Option<Box<Ty>>;
 
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum FunArgs {
@@ -150,7 +144,7 @@ pub struct TyVar {
     loc: ast::Loc,
 }
 
-/// Kind of a unification variable.
+/// Kind of a type.
 ///
 /// We don't support higher-kinded variables yet, so this is either a `*` or `row` for now.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
