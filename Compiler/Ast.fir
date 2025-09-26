@@ -5,6 +5,7 @@ import [
     Compiler/Error,
     # imports IntKind
     Compiler/Token,
+    Compiler/TcTy,
 ]
 
 
@@ -100,18 +101,6 @@ type ConDecl(
     fields: ConFields,
     _lastToken: TokenIdx,
 )
-
-
-#[derive(ToDoc)]
-type Kind:
-    Star
-    Row(RecordOrVariant)
-
-
-#[derive(ToDoc)]
-type RecordOrVariant:
-    Record
-    Variant
 
 
 #[derive(ToDoc)]
@@ -1508,24 +1497,6 @@ impl ToDoc[ConDecl]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("ConDecl") + Doc.char('(') + args)
-
-
-impl ToDoc[Kind]:
-    toDoc(self: Kind) Doc:
-        match self:
-            Kind.Star: Doc.str("Kind.Star")
-            Kind.Row(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Kind.Row") + Doc.char('(') + args)
-
-
-impl ToDoc[RecordOrVariant]:
-    toDoc(self: RecordOrVariant) Doc:
-        match self:
-            RecordOrVariant.Record: Doc.str("RecordOrVariant.Record")
-            RecordOrVariant.Variant: Doc.str("RecordOrVariant.Variant")
 
 
 impl ToDoc[ConFields]:
