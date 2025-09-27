@@ -170,7 +170,6 @@ pub(super) fn convert_and_bind_context(
     tys: &mut TyMap,
     context_ast: &ast::Context,
     conversion: TyVarConversion,
-    _loc: &ast::Loc,
 ) -> Set<Pred> {
     let mut preds_converted: Set<Pred> =
         Set::with_capacity_and_hasher(context_ast.preds.len(), Default::default());
