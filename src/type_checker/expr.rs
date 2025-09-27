@@ -1124,7 +1124,7 @@ pub(super) fn check_expr(
 
             check_stmts(tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
 
-            let new_preds: Set<Pred> = replace(tc_state.preds, old_preds);
+            let new_preds: PredSet = replace(tc_state.preds, old_preds);
             crate::type_checker::resolve_preds(
                 tc_state.trait_env,
                 tc_state.assumps,

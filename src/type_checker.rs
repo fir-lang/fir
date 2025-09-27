@@ -208,9 +208,9 @@ struct TcFunState<'a> {
     ///
     /// After checking the body, these predicates should all be resolved by the function context and
     /// trait environment (in `PgmTypes`).
-    preds: &'a mut Set<Pred>,
+    preds: &'a mut PredSet,
 
-    assumps: &'a Set<Pred>,
+    assumps: &'a PredSet,
 }
 
 const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
@@ -357,7 +357,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     preds: vec![],
                 };
 
-                let _trait_context: Set<Pred> =
+                let _trait_context: PredSet =
                     convert_and_bind_context(&mut tys, &trait_context_ast, TyVarConversion::ToQVar);
 
                 let mut methods: Map<Id, TraitMethod> =
@@ -367,7 +367,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     // New scope for function context.
                     tys.enter_scope();
 
-                    let fun_preds: Set<Pred> = convert_and_bind_context(
+                    let fun_preds: PredSet = convert_and_bind_context(
                         &mut tys,
                         &fun.node.sig.context,
                         TyVarConversion::ToQVar,
@@ -629,7 +629,7 @@ fn collect_schemes(
 
                     // TODO: Checking is the same as top-level functions, maybe move the code into a
                     // function and reuse.
-                    let fun_preds: Set<Pred> =
+                    let fun_preds: PredSet =
                         convert_and_bind_context(tys, &context, TyVarConversion::ToQVar);
 
                     let mut arg_tys: Vec<Ty> = fun
@@ -712,7 +712,7 @@ fn collect_schemes(
                     );
                 }
 
-                let fun_preds: Set<Pred> =
+                let fun_preds: PredSet =
                     convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar);
 
                 let mut arg_tys: Vec<Ty> = sig
@@ -994,7 +994,7 @@ fn collect_schemes(
 
                     let impl_fun_scheme = Scheme {
                         quantified_vars: fun.node.sig.context.type_params.clone(),
-                        preds: fun_assumps.iter().cloned().collect(),
+                        preds: fun_assumps.clone(),
                         ty: fun_ty,
                         loc: fun.loc.clone(),
                     };
@@ -1146,7 +1146,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         None => Ty::unit(),
     };
 
-    let mut preds: Set<Pred> = Default::default();
+    let mut preds: PredSet = Default::default();
 
     let exceptions = match &fun.node.sig.exceptions {
         Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
@@ -1228,7 +1228,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 None => Ty::unit(),
             };
 
-            let mut preds: Set<Pred> = Default::default();
+            let mut preds: PredSet = Default::default();
             let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
             let mut var_gen = TyVarGen::default();
 
@@ -1257,11 +1257,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 );
             }
 
-            let assumps = impl_assumps
-                .iter()
-                .cloned()
-                .chain(fun_assumps.into_iter())
-                .collect();
+            let assumps = impl_assumps.iter().chain(fun_assumps.iter()).collect();
 
             let exceptions = match &fun.node.sig.exceptions {
                 Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
@@ -1337,13 +1333,13 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
 fn resolve_preds(
     trait_env: &TraitEnv,
-    assumps: &Set<Pred>,
+    assumps: &PredSet,
     tys: &PgmTypes,
-    preds: Set<Pred>,
+    preds: PredSet,
     var_gen: &mut TyVarGen,
     _level: u32,
 ) {
-    let mut goals: Vec<Pred> = preds.into_iter().collect();
+    let mut goals: Vec<Pred> = preds.iter().collect();
     let mut ambiguous_var_rows: Vec<TyVarRef> = vec![];
     let mut ambiguous_rec_rows: Vec<TyVarRef> = vec![];
 
@@ -1392,12 +1388,9 @@ fn resolve_preds(
                 }
             }
 
-            for assump in assumps {
-                // We can't use set lookup as locs will be different.
-                if assump.trait_ == pred.trait_ && assump.params == pred.params {
-                    // No need to flip `progress` as we haven't done any unification.
-                    continue 'goals;
-                }
+            if assumps.contains(&pred.trait_, &pred.params) {
+                // No need to flip `progress` as we haven't done any unification.
+                continue 'goals;
             }
 
             let trait_impls = match trait_env.get(&pred.trait_) {

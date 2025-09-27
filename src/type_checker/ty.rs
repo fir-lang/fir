@@ -19,7 +19,7 @@ pub struct Scheme {
     pub(super) quantified_vars: Vec<(Id, Kind)>,
 
     /// Predicates.
-    pub(super) preds: Set<Pred>,
+    pub(super) preds: PredSet,
 
     /// The generalized type.
     // TODO: Should we have separate fields for arguments types and return type?
@@ -236,14 +236,14 @@ pub(super) struct ConShape {
 
 /// Types of fields of value constructors. Types may contain quantified types of the type.
 // TODO: Why do we need this? Why not use the type scheme from the env?
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) enum ConFields {
     Unnamed(Vec<Ty>),
     Named(TreeMap<Id, Ty>),
 }
 
 /// A predicate, e.g. `Iterator[coll, item]`.
-#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq)]
 pub(super) struct Pred {
     /// Trait of the predicate.
     ///
@@ -257,13 +257,87 @@ pub(super) struct Pred {
     pub(super) loc: ast::Loc,
 }
 
+#[derive(Debug, Default, Clone)]
+pub(super) struct PredSet {
+    /// Maps trait ids to predicates of the traits.
+    set: Map<Id, TraitPreds>,
+}
+
+impl PredSet {
+    pub(super) fn is_empty(&self) -> bool {
+        self.set.is_empty()
+    }
+
+    /// Whether the set contains the given predicate.
+    pub(super) fn contains(&self, trait_: &Id, ty_args: &[Ty]) -> bool {
+        match self.set.get(trait_) {
+            None => false,
+            Some(trait_preds) => trait_preds.arg_map.contains_key(ty_args),
+        }
+    }
+
+    pub(super) fn insert(&mut self, pred: Pred) {
+        let id = pred.trait_.clone();
+        self.set
+            .entry(id.clone())
+            .or_insert_with(|| TraitPreds {
+                id,
+                arg_map: Default::default(),
+            })
+            .add(pred);
+    }
+
+    pub(super) fn iter(&self) -> impl Iterator<Item = Pred> + '_ {
+        self.set.values().flat_map(TraitPreds::iter)
+    }
+}
+
+impl FromIterator<Pred> for PredSet {
+    fn from_iter<T: IntoIterator<Item = Pred>>(iter: T) -> Self {
+        let mut set = PredSet::default();
+        for pred in iter {
+            set.insert(pred);
+        }
+        set
+    }
+}
+
+/// Predicates on a trait. E.g. `Eq[T]`, `Iterator[iter, item, exn]`.
+#[derive(Debug, Clone)]
+pub(super) struct TraitPreds {
+    /// The trait id. E.g. `Eq`, `Iterator`.
+    id: Id,
+
+    /// Maps type arguments to the trait to the source code locations that generated the predicate.
+    ///
+    /// For example, when we have code like `doc1 + doc2 + doc3`, this will have one entry for the 3
+    /// `Add[Doc]` predicates, but with 2 locations for the two `+` calls.
+    arg_map: Map<Vec<Ty>, Vec<ast::Loc>>,
+}
+
+impl TraitPreds {
+    fn iter(&self) -> impl Iterator<Item = Pred> + '_ {
+        self.arg_map.iter().flat_map(|(tys, locs)| {
+            locs.iter().map(|loc| Pred {
+                trait_: self.id.clone(),
+                params: tys.clone(),
+                loc: loc.clone(),
+            })
+        })
+    }
+
+    fn add(&mut self, pred: Pred) {
+        self.arg_map.entry(pred.params).or_default().push(pred.loc)
+    }
+}
+
 impl Scheme {
     /// Instantiate the type scheme, return instantiated predicates and type.
     pub(super) fn instantiate(
         &self,
         level: u32,
         var_gen: &mut TyVarGen,
-        preds: &mut Set<Pred>,
+        preds: &mut PredSet,
         loc: &ast::Loc,
     ) -> (Ty, Vec<TyVarRef>) {
         // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
@@ -283,7 +357,7 @@ impl Scheme {
         }
 
         // Generate predicates.
-        for pred in &self.preds {
+        for pred in self.preds.iter() {
             let pred = Pred {
                 trait_: pred.trait_.clone(),
                 params: pred
@@ -302,7 +376,7 @@ impl Scheme {
     pub(super) fn instantiate_with_tys(
         &self,
         arg_tys: &[Ty],
-        preds: &mut Set<Pred>,
+        preds: &mut PredSet,
         loc: &ast::Loc,
     ) -> Ty {
         assert!(self.quantified_vars.len() == arg_tys.len());
@@ -315,7 +389,7 @@ impl Scheme {
         }
 
         // Generate predicates.
-        for pred in &self.preds {
+        for pred in self.preds.iter() {
             let pred = Pred {
                 trait_: pred.trait_.clone(),
                 params: pred
@@ -404,10 +478,10 @@ impl Scheme {
             other.quantified_vars,
         );
 
-        let mut left_preds: Vec<Pred> = self.preds.iter().cloned().collect();
+        let mut left_preds: Vec<Pred> = self.preds.iter().collect();
         left_preds.sort();
 
-        let mut right_preds: Vec<Pred> = other.preds.iter().cloned().collect();
+        let mut right_preds: Vec<Pred> = other.preds.iter().collect();
         right_preds.sort();
 
         if left_preds.len() != right_preds.len() {
