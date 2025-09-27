@@ -290,6 +290,28 @@ impl PredSet {
     pub(super) fn iter(&self) -> impl Iterator<Item = Pred> + '_ {
         self.set.values().flat_map(TraitPreds::iter)
     }
+
+    pub(super) fn into_goals(self) -> impl Iterator<Item = PredGoal> {
+        self.set
+            .into_values()
+            .flat_map(|TraitPreds { id, arg_map }| {
+                let id = id.clone();
+                arg_map.into_iter().map(move |(tys, locs)| PredGoal {
+                    trait_: id.clone(),
+                    args: tys,
+                    locs: locs,
+                })
+            })
+    }
+}
+
+#[derive(Debug, PartialOrd, Ord, PartialEq, Eq)]
+pub(super) struct PredGoal {
+    pub(super) trait_: Id,
+    pub(super) args: Vec<Ty>,
+
+    // NB. Never empty.
+    pub(super) locs: Vec<ast::Loc>,
 }
 
 impl FromIterator<Pred> for PredSet {

@@ -1339,9 +1339,12 @@ fn resolve_preds(
     var_gen: &mut TyVarGen,
     _level: u32,
 ) {
-    let mut goals: Vec<Pred> = preds.iter().collect();
+    let mut goals: Vec<PredGoal> = preds.into_goals().collect();
     let mut ambiguous_var_rows: Vec<TyVarRef> = vec![];
     let mut ambiguous_rec_rows: Vec<TyVarRef> = vec![];
+
+    // println!("{}", goals.len());
+    // println!("{:#?}", &goals);
 
     // TODO: Not sure if this is a bug or not, but resolving a predicate may allow other predicates
     // to be resolved as well. Keep looping as long as we resolve predicates.
@@ -1349,15 +1352,15 @@ fn resolve_preds(
 
     while progress {
         progress = false;
-        let mut next_goals: Vec<Pred> = vec![];
+        let mut next_goals: Vec<PredGoal> = vec![];
 
-        'goals: while let Some(mut pred) = goals.pop() {
-            pred.params
+        'goals: while let Some(mut goal) = goals.pop() {
+            goal.args
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(tys.tys.cons()));
 
-            if pred.trait_ == "RecRow" {
-                match &pred.params[0] {
+            if goal.trait_ == "RecRow" {
+                match &goal.args[0] {
                     Ty::Anonymous { kind, is_row, .. } => {
                         if *is_row && *kind == RecordOrVariant::Record {
                             continue;
@@ -1372,8 +1375,8 @@ fn resolve_preds(
                 }
             }
 
-            if pred.trait_ == "VarRow" {
-                match &pred.params[0] {
+            if goal.trait_ == "VarRow" {
+                match &goal.args[0] {
                     Ty::Anonymous { kind, is_row, .. } => {
                         if *is_row && *kind == RecordOrVariant::Variant {
                             continue;
@@ -1388,31 +1391,33 @@ fn resolve_preds(
                 }
             }
 
-            if assumps.contains(&pred.trait_, &pred.params) {
+            if assumps.contains(&goal.trait_, &goal.args) {
                 // No need to flip `progress` as we haven't done any unification.
                 continue 'goals;
             }
 
-            let trait_impls = match trait_env.get(&pred.trait_) {
+            let trait_impls = match trait_env.get(&goal.trait_) {
                 Some(impls) => impls,
                 None => panic!(
-                    "{}: Unable to resolve pred {}",
-                    loc_display(&pred.loc.clone()),
-                    Pred {
-                        trait_: pred.trait_,
-                        params: pred.params,
-                        loc: pred.loc
-                    },
+                    "{}: Unable to resolve pred {}[{}]",
+                    loc_display(goal.locs.first().unwrap()),
+                    goal.trait_,
+                    goal.args
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect::<Vec<_>>()
+                        .join(", "),
                 ),
             };
 
             for impl_ in trait_impls {
-                if let Some(subgoals) = impl_.try_match(&pred.params, var_gen, &tys.tys, &pred.loc)
+                if let Some(subgoals) =
+                    impl_.try_match(&goal.args, var_gen, &tys.tys, &goal.locs.first().unwrap())
                 {
-                    next_goals.extend(subgoals.into_iter().map(|(trait_, params)| Pred {
+                    next_goals.extend(subgoals.into_iter().map(|(trait_, args)| PredGoal {
                         trait_,
-                        params,
-                        loc: pred.loc.clone(),
+                        args,
+                        locs: goal.locs.clone(),
                     }));
                     progress = true;
                     continue 'goals;
@@ -1420,7 +1425,7 @@ fn resolve_preds(
             }
 
             // Try again after making progress (unifying stuff).
-            next_goals.push(pred);
+            next_goals.push(goal);
         }
 
         goals = next_goals;
@@ -1431,8 +1436,20 @@ fn resolve_preds(
         use std::fmt::Write;
         let mut msg = String::new();
         writeln!(&mut msg, "Unable to resolve predicates:").unwrap();
-        for goal in goals {
-            writeln!(&mut msg, "{}: {}", loc_display(&goal.loc.clone()), goal).unwrap();
+        for PredGoal { trait_, args, locs } in goals {
+            for loc in locs {
+                writeln!(
+                    &mut msg,
+                    "{}: {}[{}]",
+                    loc_display(&loc),
+                    trait_,
+                    args.iter()
+                        .map(ToString::to_string)
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                )
+                .unwrap();
+            }
         }
         panic!("{}", msg);
     }
