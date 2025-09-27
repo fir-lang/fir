@@ -1,3 +1,9 @@
+import [Compiler/Defs]
+
+
+# ------------------------------------------------------------------------------
+
+
 ## A type checking type.
 type Ty:
     ## A type constructor, e.g. `Vec`, `Option`, `U32`.
@@ -100,6 +106,37 @@ type Kind:
 type RecordOrVariant:
     Record
     Variant
+
+
+# ------------------------------------------------------------------------------
+# Type schemes
+
+
+type Scheme(
+    ## Generalized variables with kinds.
+    ##
+    ## When the scheme is for a trait method, the first type parameters will be
+    ## the type parameters for the trait, in the right order.
+    qvars: Vec[(id: Id, kind: Kind)],
+
+    ## Predicates.
+    preds: HashSet[Pred],
+
+    ## The generalized type.
+    # TODO: Should we have separate fields for arguments types and return type?
+    ty: Ty,
+# TODO: Location of the signature the scheme is generated from.
+)
+
+
+# ------------------------------------------------------------------------------
+# Predicates
+
+
+type Pred(
+    trait_: TyId,
+    params: Vec[Ty],
+)
 
 
 # ------------------------------------------------------------------------------
