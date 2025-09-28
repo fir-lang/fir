@@ -118,12 +118,8 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
 
         tys.enter_scope();
 
-        let preds: Set<Pred> = convert_and_bind_context(
-            tys,
-            &impl_.node.context,
-            TyVarConversion::ToQVar,
-            &impl_.loc,
-        );
+        let preds: Set<Pred> =
+            convert_and_bind_context(tys, &impl_.node.context, TyVarConversion::ToQVar);
 
         let trait_impl = TraitImpl {
             qvars: impl_.node.context.type_params.clone(),

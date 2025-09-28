@@ -1,3 +1,8 @@
+type AssertionError(
+    msg: Str,
+)
+
+
 assertEq[Eq[t], ToStr[t]](expected: t, found: t):
     if expected != found:
         throwUnchecked(

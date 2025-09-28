@@ -357,12 +357,8 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     preds: vec![],
                 };
 
-                let _trait_context: Set<Pred> = convert_and_bind_context(
-                    &mut tys,
-                    &trait_context_ast,
-                    TyVarConversion::ToQVar,
-                    &trait_decl.loc,
-                );
+                let _trait_context: Set<Pred> =
+                    convert_and_bind_context(&mut tys, &trait_context_ast, TyVarConversion::ToQVar);
 
                 let mut methods: Map<Id, TraitMethod> =
                     Map::with_capacity_and_hasher(trait_decl.node.items.len(), Default::default());
@@ -375,7 +371,6 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         &mut tys,
                         &fun.node.sig.context,
                         TyVarConversion::ToQVar,
-                        &fun.loc,
                     );
 
                     let mut arg_tys: Vec<Ty> = fun
@@ -495,12 +490,8 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         assert_eq!(tys.len_scopes(), 1);
         tys.enter_scope();
 
-        let _impl_context = convert_and_bind_context(
-            &mut tys,
-            &impl_decl.context,
-            TyVarConversion::ToQVar,
-            &decl.loc,
-        );
+        let _impl_context =
+            convert_and_bind_context(&mut tys, &impl_decl.context, TyVarConversion::ToQVar);
 
         let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap(); // checked above
         let trait_type_params = &trait_ty_con.ty_params;
@@ -639,7 +630,7 @@ fn collect_schemes(
                     // TODO: Checking is the same as top-level functions, maybe move the code into a
                     // function and reuse.
                     let fun_preds: Set<Pred> =
-                        convert_and_bind_context(tys, &context, TyVarConversion::ToQVar, &fun.loc);
+                        convert_and_bind_context(tys, &context, TyVarConversion::ToQVar);
 
                     let mut arg_tys: Vec<Ty> = fun
                         .node
@@ -722,7 +713,7 @@ fn collect_schemes(
                 }
 
                 let fun_preds: Set<Pred> =
-                    convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar, loc);
+                    convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar);
 
                 let mut arg_tys: Vec<Ty> = sig
                     .params
@@ -955,22 +946,14 @@ fn collect_schemes(
             ast::TopDecl::Impl(impl_decl) => {
                 // Default methods are already copied to impls. Check that impl method signatures
                 // match the trait method signatures.
-                let _impl_assumps = convert_and_bind_context(
-                    tys,
-                    &impl_decl.node.context,
-                    TyVarConversion::ToQVar,
-                    &impl_decl.loc,
-                );
+                let _impl_assumps =
+                    convert_and_bind_context(tys, &impl_decl.node.context, TyVarConversion::ToQVar);
 
                 for fun in &impl_decl.node.items {
                     let sig = &fun.node.sig;
 
-                    let fun_assumps = convert_and_bind_context(
-                        tys,
-                        &sig.context,
-                        TyVarConversion::ToQVar,
-                        &fun.loc,
-                    );
+                    let fun_assumps =
+                        convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar);
 
                     let mut arg_tys: Vec<Ty> = sig
                         .params
@@ -1107,7 +1090,6 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         &mut tys.tys,
         &fun.node.sig.context,
         TyVarConversion::ToOpaque,
-        &fun.loc,
     );
 
     // TODO: This code is the same as collect_scheme's, maybe get arg and return types from the
@@ -1204,12 +1186,8 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
-    let impl_assumps = convert_and_bind_context(
-        &mut tys.tys,
-        &impl_.node.context,
-        TyVarConversion::ToOpaque,
-        &impl_.loc,
-    );
+    let impl_assumps =
+        convert_and_bind_context(&mut tys.tys, &impl_.node.context, TyVarConversion::ToOpaque);
 
     let trait_ty_con_id = &impl_.node.trait_;
 
@@ -1241,7 +1219,6 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
             &mut tys.tys,
             &fun.node.sig.context,
             TyVarConversion::ToOpaque,
-            &fun.loc,
         );
 
         // Check the body.
