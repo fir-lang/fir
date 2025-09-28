@@ -119,8 +119,17 @@ type Scheme(
     ## the type parameters for the trait, in the right order.
     qvars: Vec[(id: Id, kind: Kind)],
 
-    ## Predicates.
-    preds: HashSet[Pred],
+    ## Predicates of the type scheme. These can refer to `qvars` and need to be
+    ## instantiated with `qvars`.
+    ##
+    ## This is a `Vec`, so in principle it can contain duplicates. Schemes are
+    ## currently only generated from top-level functions, which have explicit
+    ## type signatures. So the only way to have duplicates here is when the user
+    ## writes duplicate predicates.
+    ##
+    ## Duplicates in predicates are harmless, just cause extra work when
+    ## resolving the predicates at the call sites.
+    preds: Vec[Pred],
 
     ## The generalized type.
     # TODO: Should we have separate fields for arguments types and return type?
@@ -136,6 +145,24 @@ type Scheme(
 type Pred(
     trait_: TyId,
     params: Vec[Ty],
+)
+
+
+## A set of predicates.
+type PredSet(
+    ## The set is actually a `Vec`, at least for now.
+    ##
+    ## The reason why we don't use a `HashSet` here is because the type checker
+    ## never adds a duplicate predicates, because it visits every expression
+    ## just once, and predicates hold source code location of the expression
+    ## that created them. So even if we have e.g. `Eq[U32]` multiple times here,
+    ## each of those predicates will have a different location.
+    ##
+    ## The only way to have duplicate predicates is when a user has a signature
+    ## with the same predicate multiple times. In that case `Scheme.preds` will
+    ## have duplicates, and calling the function will create duplicate
+    ## predicates. Those are harmless, just cause more work when resolving them.
+    preds: Vec[Pred],
 )
 
 
