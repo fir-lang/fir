@@ -1,9 +1,5 @@
 import [
     Compiler/Defs,
-    # imports Loc
-    # TODO: Why is Loc in Error module?
-    Compiler/Error,
-    # imports IntKind
     Compiler/Token,
 ]
 
