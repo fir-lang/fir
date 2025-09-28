@@ -109,7 +109,7 @@ type RecordOrVariant:
 
 
 # ------------------------------------------------------------------------------
-# Type schemes
+# Type schemes and instantiation
 
 
 type Scheme(
@@ -134,8 +134,75 @@ type Scheme(
     ## The generalized type.
     # TODO: Should we have separate fields for arguments types and return type?
     ty: Ty,
-# TODO: Location of the signature the scheme is generated from.
+
+    ## Location of the scheme's function (or field etc.).
+    loc: Loc,
 )
+
+
+type TyVarGen(
+    _nextId: U32,
+)
+
+
+TyVarGen.new() TyVarGen:
+    TyVarGen(_nextId = 0)
+
+
+TyVarGen.nextId(self) U32:
+    let next = self._nextId
+    self._nextId += 1
+    next
+
+
+TyVarGen.newVar(self, level: U32, kind: Kind, loc: Loc) TyVar:
+    TyVar(id = self.nextId(), kind, level, link = Option.None,)
+
+
+## Instantiate the type scheme. Generated predicates are added to `preds`.
+## Returns the instantiated type and instantiated type variables of the scheme.
+Scheme.instantiate(
+    self,
+    level: U32,
+    varGen: TyVarGen,
+    preds: Vec[Pred],
+    loc: Loc,
+) (ty: Ty, vars: Vec[TyVar]):
+    # TODO: We should rename type variables in a renaming pass, or disallow
+    # shadowing, or handle shadowing here.
+
+    # Maps `QVar`s to instantiations.
+    let varMap: HashMap[Id, Ty] = HashMap.withCapacity(10)
+
+    # Instantiated type parameters, in the same order as `self.qvars`.
+    let instantiations: Vec[TyVar] = Vec.withCapacity(self.qvars.len())
+
+    # Instantiate qvars of the scheme.
+    for qvarKind: (id: Id, kind: Kind) in self.qvars.iter():
+        let qvar = qvarKind.id
+        let kind = qvarKind.kind
+
+        let instantiatedVar = varGen.newVar(level, kind, self.loc)
+
+        # TODO: This needs Eq and Hash for Id, but Ids don't have the variable
+        # text, and ids from different modules can get mixed. We should be using
+        # `Str` or `InternedStr`.
+        # let old = varMap.insert(qvar, Ty.Var(instantiatedVar))
+        # assert(old is Option.None)
+        instantiations.push(instantiatedVar)
+
+    # Generate predicates.
+    for pred: Pred in self.preds.iter():
+        let instantiatedPred = Pred(
+            trait_ = pred.trait_,
+            params =
+                pred.params.iter().map(|param: Ty|: param.substQVars(varMap))
+                    .toVec(),
+            loc,
+        )
+        preds.push(instantiatedPred)
+
+    (ty = self.ty.substQVars(varMap), vars = instantiations)
 
 
 # ------------------------------------------------------------------------------
@@ -145,6 +212,7 @@ type Scheme(
 type Pred(
     trait_: TyId,
     params: Vec[Ty],
+    loc: Loc,
 )
 
 
@@ -164,6 +232,14 @@ type PredSet(
     ## predicates. Those are harmless, just cause more work when resolving them.
     preds: Vec[Pred],
 )
+
+
+# ------------------------------------------------------------------------------
+# Substitutions
+
+
+Ty.substQVars(self, vars: HashMap[Id, Ty]) Ty:
+    panic("TODO")
 
 
 # ------------------------------------------------------------------------------

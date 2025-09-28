@@ -258,7 +258,8 @@ pub(super) struct Pred {
 }
 
 impl Scheme {
-    /// Instantiate the type scheme, return instantiated predicates and type.
+    /// Instantiate the type scheme. Generated predicates are added to `preds`. Returns the
+    /// instantiated type and instantiated type variables of the scheme.
     pub(super) fn instantiate(
         &self,
         level: u32,
