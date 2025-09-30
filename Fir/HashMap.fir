@@ -26,6 +26,15 @@ HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](
     map
 
 
+HashMap.fromEntries[Iterator[iter, HashMapEntry[k, v], exn], Eq[k], Hash[k]](
+    iter: iter,
+) HashMap[k, v] / exn:
+    let map = HashMap.withCapacity(10)
+    for item: HashMapEntry[k, v] in iter:
+        map.insert(item.key, item.value)
+    map
+
+
 HashMap.iter(self: HashMap[k, v]) HashMapIter[k, v]:
     HashMapIter.new(self)
 

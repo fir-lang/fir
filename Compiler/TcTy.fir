@@ -34,7 +34,7 @@ type Ty:
     ##
     ## Instantiation converts these into unification variables (`Ty.Var`).
     QVar(
-        id: Id,
+        id: LocalId,
         kind: Kind,
     )
 
@@ -53,7 +53,7 @@ type Ty:
     ## An anonymous record or variant type or row type. E.g. `(a: Str, ..r)`,
     ## `[Err1(Str), ..r]`.
     Anonymous(
-        labels: HashMap[Id, Ty],
+        labels: HashMap[LocalId, Ty],
 
         ## Row extension. When available, this will be one of:
         ##
@@ -92,7 +92,7 @@ type TyVar(
 
 type FunArgs:
     Positional(Vec[Ty])
-    Named(HashMap[Id, Ty])
+    Named(HashMap[LocalId, Ty])
 
 
 ## Kind of a type.
@@ -120,7 +120,7 @@ type Scheme(
     ##
     ## When the scheme is for a trait method, the first type parameters will be
     ## the type parameters for the trait, in the right order.
-    qvars: Vec[(id: Id, kind: Kind)],
+    qvars: Vec[(id: LocalId, kind: Kind)],
 
     ## Predicates of the type scheme. These can refer to `qvars` and need to be
     ## instantiated with `qvars`.
@@ -175,23 +175,21 @@ Scheme.instantiate(
     # shadowing, or handle shadowing here.
 
     # Maps `QVar`s to instantiations.
-    let varMap: HashMap[Id, Ty] = HashMap.withCapacity(10)
+    let varMap: HashMap[LocalId, Ty] = HashMap.withCapacity(10)
 
     # Instantiated type parameters, in the same order as `self.qvars`.
     let instantiations: Vec[TyVar] = Vec.withCapacity(self.qvars.len())
 
     # Instantiate qvars of the scheme.
-    for qvarKind: (id: Id, kind: Kind) in self.qvars.iter():
+    for qvarKind: (id: LocalId, kind: Kind) in self.qvars.iter():
         let qvar = qvarKind.id
         let kind = qvarKind.kind
 
         let instantiatedVar = varGen.newVar(level, kind, self.loc)
 
-        # TODO: This needs Eq and Hash for Id, but Ids don't have the variable
-        # text, and ids from different modules can get mixed. We should be using
-        # `Str` or `InternedStr`.
-        # let old = varMap.insert(qvar, Ty.Var(instantiatedVar))
-        # assert(old is Option.None)
+        let old = varMap.insert(qvar, Ty.Var(instantiatedVar))
+        assert(old is Option.None)
+
         instantiations.push(instantiatedVar)
 
     # Generate predicates.
@@ -241,8 +239,64 @@ type PredSet(
 # Substitutions
 
 
-Ty.substQVars(self, vars: HashMap[Id, Ty]) Ty:
-    panic("TODO")
+Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
+    match self:
+        Ty.Con(..) | Ty.Var(..): self
+
+        Ty.App(conId, args, kind):
+            Ty.App(
+                conId,
+                args = args.iter().map(|ty: Ty|: ty.substQVars(vars)).toVec(),
+                kind,
+            )
+
+        Ty.QVar(id, ..):
+            vars.get(id).unwrapOrElse(
+                ||: panic("Ty.substQVars: unbound QVar `id.name`"),
+            )
+
+        Ty.Fun(args, ret, exn):
+            Ty.Fun(
+                args =
+                    match args:
+                        FunArgs.Positional(tys):
+                            FunArgs.Positional(
+                                tys.iter().map(|ty: Ty|: ty.substQVars(vars))
+                                    .toVec(),
+                            )
+                        FunArgs.Named(tys):
+                            FunArgs.Named(
+                                HashMap.fromIter(
+                                    tys.iter().map(
+                                        |entry: HashMapEntry[LocalId, Ty]|:
+                                            (
+                                                key = entry.key,
+                                                value =
+                                                    entry.value.substQVars(vars),
+                                            ),
+                                    ),
+                                ),
+                            ),
+                ret = ret.substQVars(vars),
+                exn = exn.map(|exn: Ty|: exn.substQVars(vars)),
+            )
+
+        Ty.Anonymous(labels, extension, kind, isRow):
+            Ty.Anonymous(
+                labels =
+                    HashMap.fromIter(
+                        labels.iter().map(
+                            |entry: HashMapEntry[LocalId, Ty]|:
+                                (
+                                    key = entry.key,
+                                    value = entry.value.substQVars(vars),
+                                ),
+                        ),
+                    ),
+                extension = extension.map(|ty: Ty|: ty.substQVars(vars)),
+                kind,
+                isRow,
+            )
 
 
 # ------------------------------------------------------------------------------

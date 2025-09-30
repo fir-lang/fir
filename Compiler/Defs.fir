@@ -8,6 +8,26 @@ import [Compiler/Ast]
 # Identifiers
 
 
+## Local ids refer to function and type -local things, they cannot refer to
+## top-level things.
+##
+## This type is used both in binder position (e.g. function arguments, patterns,
+## type arguments) and use position (e.g. expressions, type variables).
+type LocalId(
+    name: Str,
+)
+
+
+impl Eq[LocalId]:
+    __eq(self: LocalId, other: LocalId) Bool:
+        self.name == other.name
+
+
+impl Hash[LocalId]:
+    hash(self: LocalId) U32:
+        self.name.hash()
+
+
 ## A term variable id.
 ##
 ## This can refer to: local variables, top-level variables, associated
