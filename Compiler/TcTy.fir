@@ -1,4 +1,7 @@
-import [Compiler/Defs]
+import [
+    Compiler/Defs,
+    Compiler/Error,
+]
 
 
 # ------------------------------------------------------------------------------
