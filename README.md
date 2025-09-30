@@ -5,7 +5,7 @@ Fir is a programming language with:
 - Static types and indentation sensitive syntax
 - Traits (typeclasses) for polymorphism
 - Monomorphisation and unboxed/value types
-- Effects
+- [Effects][effects]
 - [Built-in tooling][tooling] and a [large standard library][libs]
 
 For introduction, see blog posts:
@@ -14,8 +14,14 @@ For introduction, see blog posts:
 - [Throwing iterators in Fir][2]
 - [Fir is getting useful][3]
 
+Implementation notes:
+
+- [How Fir formats comments][4]
+
 [1]: https://osa1.net/posts/2025-01-18-fir-error-handling.html
 [2]: https://osa1.net/posts/2025-04-17-throwing-iterators-fir.html
 [3]: https://osa1.net/posts/2025-09-04-fir-getting-useful.html
+[4]: https://osa1.net/posts/2025-09-27-fir-formatter.html
 [tooling]: https://github.com/fir-lang/fir/issues/28
 [libs]: https://github.com/fir-lang/fir/issues/76
+[effects]: https://osa1.net/posts/2025-06-28-why-effects.html
