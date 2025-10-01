@@ -188,7 +188,7 @@ genSumBody(tyName: Id, cons: Vec[ConDecl], tokens: Array[Token]) Doc:
                         ) + Doc.hardLine()
                     let fieldNameStr = tokens.get(field.name.token.idx).text
                     altBody += Doc.str(
-                        "args += Doc.grouped(Doc.str(\"`fieldNameStr` =\") + Doc.nested(4, Doc.break_(1) + self.`fieldNameStr`.toDoc()))",
+                        "args += Doc.grouped(Doc.str(\"`fieldNameStr` =\") + Doc.nested(4, Doc.break_(1) + `fieldNameStr`.toDoc()))",
                     ) + Doc.hardLine()
                     fieldIdx += 1
 
@@ -301,7 +301,9 @@ type S1[t]:
 type S2[t]:
     S2A
     S2B(x: t)
-    S2C(x: t, y: U32)",
+    S2C(x: t, y: U32)
+    S2D(t)
+    S2E(t, U32)",
     )
 
     print("")
@@ -316,6 +318,8 @@ type NamedType")
 #[derive(ToDoc)]
 type NamedType(name: Id)")
 
+    print("")
+
     genModule(
         "\
 #[derive(ToDoc)]
@@ -324,7 +328,6 @@ type NamedType(
     args: Option[TyArgs],
 )",
     )
-
 
 # args after: --main deriveToDoc -- --test
 # expected stdout:
@@ -352,24 +355,33 @@ type NamedType(
 #             S2.S2B(x):
 #                 let args = Doc.break_(0)
 #                 args += Doc.grouped(
-#                     Doc.str("x =")
-#                         + Doc.nested(4, Doc.break_(1) + self.x.toDoc()),
+#                     Doc.str("x =") + Doc.nested(4, Doc.break_(1) + x.toDoc()),
 #                 )
 #                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
 #                 Doc.str("S2.S2B") + Doc.char('(') + args
 #             S2.S2C(x, y):
 #                 let args = Doc.break_(0)
 #                 args += Doc.grouped(
-#                     Doc.str("x =")
-#                         + Doc.nested(4, Doc.break_(1) + self.x.toDoc()),
+#                     Doc.str("x =") + Doc.nested(4, Doc.break_(1) + x.toDoc()),
 #                 )
 #                 args += Doc.char(',') + Doc.break_(1)
 #                 args += Doc.grouped(
-#                     Doc.str("y =")
-#                         + Doc.nested(4, Doc.break_(1) + self.y.toDoc()),
+#                     Doc.str("y =") + Doc.nested(4, Doc.break_(1) + y.toDoc()),
 #                 )
 #                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
 #                 Doc.str("S2.S2C") + Doc.char('(') + args
+#             S2.S2D(i0):
+#                 let args = Doc.break_(0)
+#                 args += i0.toDoc()
+#                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+#                 Doc.grouped(Doc.str("S2.S2D") + Doc.char('(') + args)
+#             S2.S2E(i0, i1):
+#                 let args = Doc.break_(0)
+#                 args += i0.toDoc()
+#                 args += Doc.char(',') + Doc.break_(1)
+#                 args += i1.toDoc()
+#                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+#                 Doc.grouped(Doc.str("S2.S2E") + Doc.char('(') + args)
 # 
 # impl ToDoc[NamedType]:
 #     toDoc(self: NamedType) Doc:
@@ -383,6 +395,7 @@ type NamedType(
 #         )
 #         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
 #         Doc.grouped(Doc.str("NamedType") + Doc.char('(') + args)
+# 
 # impl ToDoc[NamedType]:
 #     toDoc(self: NamedType) Doc:
 #         let args = Doc.break_(0)
