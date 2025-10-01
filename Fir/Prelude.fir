@@ -136,6 +136,11 @@ trait ToDoc[t]:
     toDoc(self: t) Doc
 
 
+impl ToDoc[Doc]:
+    toDoc(self: Doc) Doc:
+        self
+
+
 prim printStrNoNl(s: Str)
 
 
