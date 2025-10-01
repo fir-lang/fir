@@ -657,7 +657,6 @@ impl Ty {
         }
     }
 
-    #[allow(unused)]
     pub(super) fn empty_variant() -> Ty {
         Ty::Anonymous {
             labels: Default::default(),

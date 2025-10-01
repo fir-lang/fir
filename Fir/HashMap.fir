@@ -10,6 +10,10 @@ type Elem[k, v](
 )
 
 
+HashMap.empty() HashMap[k, v]:
+    HashMap.withCapacity(0)
+
+
 HashMap.withCapacity(cap: U32) HashMap[k, v]:
     let elems: Vec[Option[Elem[k, v]]] = Vec.withCapacity(cap)
     for i: U32 in range(u32(0), cap):

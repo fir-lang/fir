@@ -9,34 +9,45 @@ import [
 
 ## A type checking type.
 type Ty:
-    ## A type constructor, e.g. `Vec`, `Option`, `U32`.
+    ## A type constructor with kind `*`. E.g. `U32`, `Bool`.
     Con(
         id: TyId,
-        kind: Kind,
     )
-
-    ## A unification variable, created by a type scheme when instantiated.
-    Var(TyVar)
 
     ## A type application, e.g. `Vec[U32]`, `Result[E, T]`.
     ##
-    ## Because type variables have kind `*`, the constructor can only be a type
-    ## constructor.
-    ##
-    ## Invariant: the `args` vector is not empty.
+    ## Invariant: the `args` vector is not empty. Nullary constructor
+    ## applications are represented as `Ty.Con`.
     App(
         conId: TyId,
         args: Vec[Ty],
-        kind: Kind,
     )
+
+    # --------------------------------------------------------------------------
+    # Variables
 
     ## Only in type schemes: a quantified type variable.
     ##
-    ## Instantiation converts these into unification variables (`Ty.Var`).
+    ## When instantiated, these become unification variables (`Ty.UVar`).
+    ##
+    ## When checking function bodies, quantified type variables of the
+    ## function's type scheme becomes rigid type variables (`Ty.RVar`).
     QVar(
         id: LocalId,
         kind: Kind,
     )
+
+    ## A unification variable, created from a `Ty.QVar` in instantiation.
+    UVar(UVar)
+
+    ## A rigid type variable. These are quantified type variables when checking
+    ## the body of the function with the quantified type variables.
+    RVar(
+        id: LocalId,
+        kind: Kind,
+    )
+
+    # --------------------------------------------------------------------------
 
     ## A function type, e.g. `Fn(U32) Str`, `Fn(x: U32, y: U32) T / Err`.
     Fun(
@@ -72,7 +83,7 @@ type Ty:
 ## A unification variable.
 ##
 ## Note: `Hash` and `Eq` are implemented based on `id`.
-type TyVar(
+type UVar(
     ## Identity of the unification variable.
     ##
     ## This is used to compare unification variables for equality.
@@ -111,12 +122,41 @@ type RecordOrVariant:
     Variant
 
 
+Ty.kind(self) Kind:
+    match self:
+        Ty.Con(..) | Ty.App(..) | Ty.Fun(..): Kind.Star
+
+        Ty.QVar(kind, ..) | Ty.RVar(kind, ..): kind
+
+        Ty.UVar(uvar): uvar.kind
+
+        Ty.Anonymous(kind, ..): Kind.Row(kind)
+
+
+Ty.unit() Ty:
+    Ty.Anonymous(
+        labels = HashMap.empty(),
+        extension = Option.None,
+        kind = RecordOrVariant.Record,
+        isRow = Bool.False,
+    )
+
+
+Ty.emptyVariant() Ty:
+    Ty.Anonymous(
+        labels = HashMap.empty(),
+        extension = Option.None,
+        kind = RecordOrVariant.Variant,
+        isRow = Bool.False,
+    )
+
+
 # ------------------------------------------------------------------------------
 # Type schemes and instantiation
 
 
 type Scheme(
-    ## Generalized variables with kinds.
+    ## Generalized (quantified) variables with kinds.
     ##
     ## When the scheme is for a trait method, the first type parameters will be
     ## the type parameters for the trait, in the right order.
@@ -143,23 +183,23 @@ type Scheme(
 )
 
 
-type TyVarGen(
+type UVarGen(
     _nextId: U32,
 )
 
 
-TyVarGen.new() TyVarGen:
-    TyVarGen(_nextId = 0)
+UVarGen.new() UVarGen:
+    UVarGen(_nextId = 0)
 
 
-TyVarGen.nextId(self) U32:
+UVarGen.nextId(self) U32:
     let next = self._nextId
     self._nextId += 1
     next
 
 
-TyVarGen.newVar(self, level: U32, kind: Kind, loc: Loc) TyVar:
-    TyVar(id = self.nextId(), kind, level, link = Option.None,)
+UVarGen.newVar(self, level: U32, kind: Kind, loc: Loc) UVar:
+    UVar(id = self.nextId(), kind, level, link = Option.None)
 
 
 ## Instantiate the type scheme. Generated predicates are added to `preds`.
@@ -167,30 +207,30 @@ TyVarGen.newVar(self, level: U32, kind: Kind, loc: Loc) TyVar:
 Scheme.instantiate(
     self,
     level: U32,
-    varGen: TyVarGen,
+    varGen: UVarGen,
     preds: Vec[Pred],
     loc: Loc,
-) (ty: Ty, vars: Vec[TyVar]):
+) (ty: Ty, vars: Vec[UVar]):
     # TODO: We should rename type variables in a renaming pass, or disallow
     # shadowing, or handle shadowing here.
 
-    # Maps `QVar`s to instantiations.
-    let varMap: HashMap[LocalId, Ty] = HashMap.withCapacity(10)
+    # Maps `QVar`s to unification variables.
+    let varMap = HashMap[LocalId, Ty].withCapacity(10)
 
     # Instantiated type parameters, in the same order as `self.qvars`.
-    let instantiations: Vec[TyVar] = Vec.withCapacity(self.qvars.len())
+    let instantiations = Vec[UVar].withCapacity(self.qvars.len())
 
     # Instantiate qvars of the scheme.
     for qvarKind: (id: LocalId, kind: Kind) in self.qvars.iter():
         let qvar = qvarKind.id
         let kind = qvarKind.kind
 
-        let instantiatedVar = varGen.newVar(level, kind, self.loc)
+        let uvar = varGen.newVar(level, kind, self.loc)
 
-        let old = varMap.insert(qvar, Ty.Var(instantiatedVar))
+        let old = varMap.insert(qvar, Ty.UVar(uvar))
         assert(old is Option.None)
 
-        instantiations.push(instantiatedVar)
+        instantiations.push(uvar)
 
     # Generate predicates.
     for pred: Pred in self.preds.iter():
@@ -241,13 +281,12 @@ type PredSet(
 
 Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
     match self:
-        Ty.Con(..) | Ty.Var(..): self
+        Ty.Con(..) | Ty.UVar(..) | Ty.RVar(..): self
 
-        Ty.App(conId, args, kind):
+        Ty.App(conId, args):
             Ty.App(
                 conId,
                 args = args.iter().map(|ty: Ty|: ty.substQVars(vars)).toVec(),
-                kind,
             )
 
         Ty.QVar(id, ..):
