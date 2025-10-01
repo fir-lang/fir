@@ -13,6 +13,7 @@ import [Compiler/Ast]
 ##
 ## This type is used both in binder position (e.g. function arguments, patterns,
 ## type arguments) and use position (e.g. expressions, type variables).
+#[derive(ToDoc)]
 type LocalId(
     name: Str,
 )
@@ -264,6 +265,16 @@ impl Eq[TyDefIdx_]:
 # ------------------------------------------------------------------------------
 
 
+impl ToDoc[LocalId]:
+    toDoc(self: LocalId) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("name =") + Doc.nested(4, Doc.break_(1) + self.name.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("LocalId") + Doc.char('(') + args)
+
+
 impl ToDoc[VarId]:
     toDoc(self: VarId) Doc:
         let args = Doc.break_(0)
@@ -338,6 +349,11 @@ impl ToDoc[Module]:
         args += Doc.grouped(
             Doc.str("_package =")
                 + Doc.nested(4, Doc.break_(1) + self._package.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("_filePath =")
+                + Doc.nested(4, Doc.break_(1) + self._filePath.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(

@@ -84,6 +84,7 @@ type Ty:
 ## A unification variable.
 ##
 ## Note: `Hash` and `Eq` are implemented based on `id`.
+#[derive(ToDoc)]
 type UVar(
     ## Identity of the unification variable.
     ##
@@ -102,6 +103,7 @@ type UVar(
 )
 
 
+#[derive(ToDoc)]
 type FunArgs:
     Positional(Vec[Ty])
     Named(HashMap[LocalId, Ty])
@@ -156,6 +158,7 @@ Ty.emptyVariant() Ty:
 # Type schemes and instantiation
 
 
+#[derive(ToDoc)]
 type Scheme(
     ## Generalized (quantified) variables with kinds.
     ##
@@ -184,6 +187,7 @@ type Scheme(
 )
 
 
+#[derive(ToDoc)]
 type UVarGen(
     _nextId: U32,
 )
@@ -251,6 +255,7 @@ Scheme.instantiate(
 # Predicates
 
 
+#[derive(ToDoc)]
 type Pred(
     trait_: TyId,
     params: Vec[Ty],
@@ -259,6 +264,7 @@ type Pred(
 
 
 ## A set of predicates.
+#[derive(ToDoc)]
 type PredSet(
     ## The set is actually a `Vec`, at least for now.
     ##
@@ -344,7 +350,135 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
 
 impl ToDoc[Ty]:
     toDoc(self: Ty) Doc:
-        panic("TODO")
+        match self:
+            Ty.Con(id):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("id =") + Doc.nested(4, Doc.break_(1) + id.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Ty.Con") + Doc.char('(') + args
+            Ty.App(conId, args):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("conId =")
+                        + Doc.nested(4, Doc.break_(1) + conId.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("args =")
+                        + Doc.nested(4, Doc.break_(1) + args.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Ty.App") + Doc.char('(') + args
+            Ty.QVar(id, kind):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("id =") + Doc.nested(4, Doc.break_(1) + id.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("kind =")
+                        + Doc.nested(4, Doc.break_(1) + kind.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Ty.QVar") + Doc.char('(') + args
+            Ty.UVar(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Ty.UVar") + Doc.char('(') + args)
+            Ty.RVar(id, kind):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("id =") + Doc.nested(4, Doc.break_(1) + id.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("kind =")
+                        + Doc.nested(4, Doc.break_(1) + kind.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Ty.RVar") + Doc.char('(') + args
+            Ty.Fun(args, ret, exn):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("args =")
+                        + Doc.nested(4, Doc.break_(1) + args.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("ret =")
+                        + Doc.nested(4, Doc.break_(1) + ret.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("exn =")
+                        + Doc.nested(4, Doc.break_(1) + exn.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Ty.Fun") + Doc.char('(') + args
+            Ty.Anonymous(labels, extension, kind, isRow):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("labels =")
+                        + Doc.nested(4, Doc.break_(1) + labels.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("extension =")
+                        + Doc.nested(4, Doc.break_(1) + extension.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("kind =")
+                        + Doc.nested(4, Doc.break_(1) + kind.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("isRow =")
+                        + Doc.nested(4, Doc.break_(1) + isRow.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Ty.Anonymous") + Doc.char('(') + args
+
+
+impl ToDoc[UVar]:
+    toDoc(self: UVar) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("id =") + Doc.nested(4, Doc.break_(1) + self.id.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("kind =") + Doc.nested(4, Doc.break_(1) + self.kind.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("level =")
+                + Doc.nested(4, Doc.break_(1) + self.level.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("link =") + Doc.nested(4, Doc.break_(1) + self.link.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("UVar") + Doc.char('(') + args)
+
+
+impl ToDoc[FunArgs]:
+    toDoc(self: FunArgs) Doc:
+        match self:
+            FunArgs.Positional(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("FunArgs.Positional") + Doc.char('(') + args)
+            FunArgs.Named(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("FunArgs.Named") + Doc.char('(') + args)
 
 
 impl ToDoc[Kind]:
@@ -363,3 +497,70 @@ impl ToDoc[RecordOrVariant]:
         match self:
             RecordOrVariant.Record: Doc.str("RecordOrVariant.Record")
             RecordOrVariant.Variant: Doc.str("RecordOrVariant.Variant")
+
+
+impl ToDoc[Scheme]:
+    toDoc(self: Scheme) Doc:
+        let args = Doc.break_(0)
+
+        # args += Doc.grouped(
+        #     Doc.str("qvars =")
+        #         + Doc.nested(4, Doc.break_(1) + self.qvars.toDoc()),
+        # )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("preds =")
+                + Doc.nested(4, Doc.break_(1) + self.preds.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + self.ty.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("loc =") + Doc.nested(4, Doc.break_(1) + self.loc.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("Scheme") + Doc.char('(') + args)
+
+
+impl ToDoc[UVarGen]:
+    toDoc(self: UVarGen) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("_nextId =")
+                + Doc.nested(4, Doc.break_(1) + self._nextId.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("UVarGen") + Doc.char('(') + args)
+
+
+impl ToDoc[Pred]:
+    toDoc(self: Pred) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("trait_ =")
+                + Doc.nested(4, Doc.break_(1) + self.trait_.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("params =")
+                + Doc.nested(4, Doc.break_(1) + self.params.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("loc =") + Doc.nested(4, Doc.break_(1) + self.loc.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("Pred") + Doc.char('(') + args)
+
+
+impl ToDoc[PredSet]:
+    toDoc(self: PredSet) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("preds =")
+                + Doc.nested(4, Doc.break_(1) + self.preds.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("PredSet") + Doc.char('(') + args)
