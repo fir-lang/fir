@@ -488,14 +488,12 @@ type ForStmt(
     astTy: Option[Type],
 
     ## `ast_ty`, converted to type checking types by the type checker.
-    tcTy: Option[Type], # TODO: type-checking type
-
+    tcTy: Option[Ty],
 
     expr: Expr,
 
     ## Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, item]`.
-    exprTy: Option[Type], # TODO: type-checking type
-
+    exprTy: Option[Ty],
 
     body: Vec[Stmt],
 
@@ -640,8 +638,7 @@ type VarPat(
     var_: Id,
 
     ## Inferred type of the binder. Filled in by the type checker.
-    ty: Option[Type], # TODO: This should be type-checking type instead of AST type
-
+    ty: Option[Ty],
 )
 
 
@@ -674,9 +671,7 @@ impl Tokens[ConstrPat]:
 type RecordPat(
     fields: Vec[Named[Pat]],
     ignoreRest: Bool,
-
-    # TODO: This should be type-checking type instead of AST type
-    inferredTy: Option[Type],
+    inferredTy: Option[Ty],
     _firstToken: TokenIdx,
     _lastToken: TokenIdx,
 )
@@ -936,8 +931,7 @@ type MethodSelectExpr(
     # TODO: We could also add types to every expression if it's going to help with monomorphisation.
     #       For efficiency though, we should only annotate inferred types and then type check from
     #       the top-level expression every time we need to compute type of an expr.
-    # TODO: This should be a type-checking type.
-    objectTy: Option[Type],
+    objectTy: Option[Ty],
 
     ## The type or trait id that defines the method.
     ##
@@ -953,14 +947,13 @@ type MethodSelectExpr(
 
     ## Type arguments of `method_ty_id`.
     ##
-    ## If the method is for a trait, the first arguments here will be for the trait type parameters.
-    ## E.g. in `Iterator.next`, the first two argumetns will be the `iter` and `item` parameters of
-    ## `trait Iterator[iter, item]`.
+    ## If the method is for a trait, the first arguments here will be for the
+    ## trait type parameters. E.g. in `Iterator.next`, the first two argumetns
+    ## will be the `iter` and `item` parameters of `trait Iterator[iter, item]`.
     ##
-    ## (If the method is not a trait method, then we don't care about the type parameter order.. I
-    ## think?)
-    tyArgs: Vec[Type], # TODO: type-checking type
-
+    ## (If the method is not a trait method, then we don't care about the type
+    ## parameter order.. I think?)
+    tyArgs: Vec[Ty],
 
     _lastToken: TokenIdx,
 )
@@ -990,9 +983,9 @@ type AssocFnSelectExpr(
     ## Type arguments explicitly passed to the variable.
     userTyArgs: Option[TyArgs],
 
-    ## Inferred type arguments of the type and associated function. Filled in by the type checker.
-    tyArgs: Vec[Type], # TODO: type-checking type
-
+    ## Inferred type arguments of the type and associated function. Filled in by
+    ## the type checker.
+    tyArgs: Vec[Ty],
 
     _lastToken: TokenIdx,
 )

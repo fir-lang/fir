@@ -8,6 +8,7 @@ import [
 
 
 ## A type checking type.
+#[derive(ToDoc)]
 type Ty:
     ## A type constructor with kind `*`. E.g. `U32`, `Bool`.
     Con(
@@ -339,6 +340,11 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
 
 
 # ------------------------------------------------------------------------------
+
+
+impl ToDoc[Ty]:
+    toDoc(self: Ty) Doc:
+        panic("TODO")
 
 
 impl ToDoc[Kind]:
