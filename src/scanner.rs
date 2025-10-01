@@ -17,7 +17,7 @@ where
         None => return vec![],
     };
     scan_indented(&mut tokens, module, &mut new_tokens, start_loc);
-    assert_eq!(tokens.next(), None);
+    assert_eq!(tokens.next(), None, "module = {module}");
     new_tokens
 }
 

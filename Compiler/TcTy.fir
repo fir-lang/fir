@@ -27,26 +27,15 @@ type Ty:
     # --------------------------------------------------------------------------
     # Variables
 
-    ## Only in type schemes: a quantified type variable.
-    ##
-    ## When instantiated, these become unification variables (`Ty.UVar`).
-    ##
-    ## When checking function bodies, quantified type variables of the
-    ## function's type scheme becomes rigid type variables (`Ty.RVar`).
-    QVar(
-        id: LocalId,
-        kind: Kind,
-    )
+    ## A quantified type variable, in type schemes.
+    QVar(QVar)
 
     ## A unification variable, created from a `Ty.QVar` in instantiation.
     UVar(UVar)
 
     ## A rigid type variable. These are quantified type variables when checking
     ## the body of the function with the quantified type variables.
-    RVar(
-        id: LocalId,
-        kind: Kind,
-    )
+    RVar(RVar)
 
     # --------------------------------------------------------------------------
 
@@ -81,6 +70,19 @@ type Ty:
     )
 
 
+## Only in type schemes: a quantified type variable.
+##
+## When instantiated, these become unification variables (`Ty.UVar`).
+##
+## When checking function bodies, quantified type variables of the function's
+## type scheme becomes rigid type variables (`Ty.RVar`).
+#[derive(ToDoc)]
+type QVar(
+    id: LocalId,
+    kind: Kind,
+)
+
+
 ## A unification variable.
 ##
 ## Note: `Hash` and `Eq` are implemented based on `id`.
@@ -100,6 +102,15 @@ type UVar(
 
     ## When unified with a type, this holds the type.
     link: Option[Ty],
+)
+
+
+## A rigid type variable. These are quantified type variables when checking
+## the body of the function with the quantified type variables.
+#[derive(ToDoc)]
+type RVar(
+    id: LocalId,
+    kind: Kind,
 )
 
 
@@ -129,7 +140,7 @@ Ty.kind(self) Kind:
     match self:
         Ty.Con(..) | Ty.App(..) | Ty.Fun(..): Kind.Star
 
-        Ty.QVar(kind, ..) | Ty.RVar(kind, ..): kind
+        Ty.QVar(QVar(kind, ..)) | Ty.RVar(RVar(kind, ..)): kind
 
         Ty.UVar(uvar): uvar.kind
 
@@ -164,7 +175,7 @@ type Scheme(
     ##
     ## When the scheme is for a trait method, the first type parameters will be
     ## the type parameters for the trait, in the right order.
-    qvars: Vec[(id: LocalId, kind: Kind)],
+    qvars: Vec[QVar],
 
     ## Predicates of the type scheme. These can refer to `qvars` and need to be
     ## instantiated with `qvars`.
@@ -226,13 +237,13 @@ Scheme.instantiate(
     let instantiations = Vec[UVar].withCapacity(self.qvars.len())
 
     # Instantiate qvars of the scheme.
-    for qvarKind: (id: LocalId, kind: Kind) in self.qvars.iter():
-        let qvar = qvarKind.id
-        let kind = qvarKind.kind
+    for qvar: QVar in self.qvars.iter():
+        let qvarId = qvar.id
+        let qvarKind = qvar.kind
 
-        let uvar = varGen.newVar(level, kind, self.loc)
+        let uvar = varGen.newVar(level, qvarKind, self.loc)
 
-        let old = varMap.insert(qvar, Ty.UVar(uvar))
+        let old = varMap.insert(qvarId, Ty.UVar(uvar))
         assert(old is Option.None)
 
         instantiations.push(uvar)
@@ -296,7 +307,7 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                 args = args.iter().map(|ty: Ty|: ty.substQVars(vars)).toVec(),
             )
 
-        Ty.QVar(id, ..):
+        Ty.QVar(QVar(id, ..)):
             vars.get(id).unwrapOrElse(
                 ||: panic("Ty.substQVars: unbound QVar `id.name`"),
             )
@@ -350,97 +361,12 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
 
 impl ToDoc[Ty]:
     toDoc(self: Ty) Doc:
-        match self:
-            Ty.Con(id):
-                let args = Doc.break_(0)
-                args += Doc.grouped(
-                    Doc.str("id =") + Doc.nested(4, Doc.break_(1) + id.toDoc()),
-                )
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.str("Ty.Con") + Doc.char('(') + args
-            Ty.App(conId, args):
-                let args = Doc.break_(0)
-                args += Doc.grouped(
-                    Doc.str("conId =")
-                        + Doc.nested(4, Doc.break_(1) + conId.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("args =")
-                        + Doc.nested(4, Doc.break_(1) + args.toDoc()),
-                )
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.str("Ty.App") + Doc.char('(') + args
-            Ty.QVar(id, kind):
-                let args = Doc.break_(0)
-                args += Doc.grouped(
-                    Doc.str("id =") + Doc.nested(4, Doc.break_(1) + id.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("kind =")
-                        + Doc.nested(4, Doc.break_(1) + kind.toDoc()),
-                )
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.str("Ty.QVar") + Doc.char('(') + args
-            Ty.UVar(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Ty.UVar") + Doc.char('(') + args)
-            Ty.RVar(id, kind):
-                let args = Doc.break_(0)
-                args += Doc.grouped(
-                    Doc.str("id =") + Doc.nested(4, Doc.break_(1) + id.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("kind =")
-                        + Doc.nested(4, Doc.break_(1) + kind.toDoc()),
-                )
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.str("Ty.RVar") + Doc.char('(') + args
-            Ty.Fun(args, ret, exn):
-                let args = Doc.break_(0)
-                args += Doc.grouped(
-                    Doc.str("args =")
-                        + Doc.nested(4, Doc.break_(1) + args.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("ret =")
-                        + Doc.nested(4, Doc.break_(1) + ret.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("exn =")
-                        + Doc.nested(4, Doc.break_(1) + exn.toDoc()),
-                )
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.str("Ty.Fun") + Doc.char('(') + args
-            Ty.Anonymous(labels, extension, kind, isRow):
-                let args = Doc.break_(0)
-                args += Doc.grouped(
-                    Doc.str("labels =")
-                        + Doc.nested(4, Doc.break_(1) + labels.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("extension =")
-                        + Doc.nested(4, Doc.break_(1) + extension.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("kind =")
-                        + Doc.nested(4, Doc.break_(1) + kind.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("isRow =")
-                        + Doc.nested(4, Doc.break_(1) + isRow.toDoc()),
-                )
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.str("Ty.Anonymous") + Doc.char('(') + args
+        panic("TODO")
+
+
+impl ToDoc[QVar]:
+    toDoc(self: QVar) Doc:
+        panic("TODO")
 
 
 impl ToDoc[UVar]:
@@ -464,6 +390,11 @@ impl ToDoc[UVar]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("UVar") + Doc.char('(') + args)
+
+
+impl ToDoc[RVar]:
+    toDoc(self: RVar) Doc:
+        panic("TODO")
 
 
 impl ToDoc[FunArgs]:
