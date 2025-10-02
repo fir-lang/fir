@@ -43,6 +43,14 @@ HashMap.iter(self: HashMap[k, v]) HashMapIter[k, v]:
     HashMapIter.new(self)
 
 
+HashMap.keys(self: HashMap[k, v]) Map[HashMapIter[k, v], HashMapEntry[k, v], k, exn] / exn:
+    HashMapIter.new(self).map(|entry: HashMapEntry[k, v]|: entry.key)
+
+
+HashMap.values(self: HashMap[k, v]) Map[HashMapIter[k, v], HashMapEntry[k, v], v, exn] / exn:
+    HashMapIter.new(self).map(|entry: HashMapEntry[k, v]|: entry.value)
+
+
 # Insert new value, return old value.
 HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v) Option[v]:
     let hash = key.hash()

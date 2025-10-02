@@ -75,6 +75,10 @@ TyId.resolve(self, def: TyDefIdx):
     self._resolved = Option.Some(def)
 
 
+TyId.def(self) TyDefIdx:
+    self._resolved.unwrapOrElse(||: panic("Type id is not resolved yet"))
+
+
 # ------------------------------------------------------------------------------
 # Packages and modules
 

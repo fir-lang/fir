@@ -130,10 +130,28 @@ type Kind:
     Row(RecordOrVariant)
 
 
+impl Eq[Kind]:
+    __eq(self: Kind, other: Kind) Bool:
+        match (left = self, right = other):
+            (left = Kind.Star, right = Kind.Star): Bool.True
+            (left = Kind.Row(row1), right = Kind.Row(row2)): row1 == row2
+            _: Bool.False
+
+
 #[derive(ToDoc)]
 type RecordOrVariant:
     Record
     Variant
+
+
+impl Eq[RecordOrVariant]:
+    __eq(self: RecordOrVariant, other: RecordOrVariant) Bool:
+        match (left = self, right = other):
+            (left = RecordOrVariant.Record, right = RecordOrVariant.Record):
+                Bool.True
+            (left = RecordOrVariant.Variant, right = RecordOrVariant.Variant):
+                Bool.True
+            _: Bool.False
 
 
 Ty.kind(self) Kind:
