@@ -1633,7 +1633,7 @@ fn call_builtin_fun<W: Write>(
 }
 
 fn write_call_stack<W: std::fmt::Write>(call_stack: &[Frame], out: &mut W) {
-    for frame in call_stack {
+    for frame in call_stack.iter().rev() {
         write!(out, "{}: ", loc_display(&frame.call_site)).unwrap();
         match &frame.kind {
             FrameKind::Builtin(builtin_fun_decl) => {
