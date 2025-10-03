@@ -1,8 +1,13 @@
+#[derive(ToDoc)]
 type HashMap[k, v](
     _elems: Array[Option[Elem[k, v]]],
+
+    ## How many more elements to add before growing the array and rehashing.
+    _capacityLeft: U32,
 )
 
 
+#[derive(ToDoc)]
 type Elem[k, v](
     key: k,
     value: v,
@@ -19,7 +24,11 @@ HashMap.withCapacity(cap: U32) HashMap[k, v]:
         repeatWith(||: Option.None),
         cap,
     )
-    HashMap(_elems = elems)
+    HashMap(_elems = elems, _capacityLeft = HashMap._capacityBeforeGrowth(cap))
+
+
+HashMap._capacityBeforeGrowth(cap: U32) U32:
+    (u32(cap) * u32(8000)) / u32(10000)
 
 
 HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](
@@ -29,6 +38,28 @@ HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](
     for item: (key: k, value: v) in iter:
         map.insert(item.key, item.value)
     map
+
+
+HashMap._grow[Eq[k], Hash[k]](self: HashMap[k, v]):
+    let currentCap = self._elems.len()
+    let newCap = if currentCap == 0:
+        u32(10)
+    else:
+        currentCap * u32(2)
+
+    let newElems: Array[Option[Elem[k, v]]] = Array.fromIter(
+        repeatWith(||: Option.None),
+        newCap,
+    )
+
+    let newCapacityLeft: U32 = HashMap._capacityBeforeGrowth(newCap)
+
+    for entry: HashMapEntry[k, v] in self.iter():
+        HashMap._insert(newElems, entry.key, entry.value)
+        newCapacityLeft -= 1
+
+    self._elems = newElems
+    self._capacityLeft = newCapacityLeft
 
 
 HashMap.fromEntries[Iterator[iter, HashMapEntry[k, v], exn], Eq[k], Hash[k]](
@@ -54,11 +85,24 @@ HashMap.values(self: HashMap[k, v]) Map[HashMapIter[k, v], HashMapEntry[k, v], v
 
 # Insert new value, return old value.
 HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v) Option[v]:
+    if self._capacityLeft == 0:
+        self._grow()
+
+    let ret = HashMap._insert(self._elems, key, value)
+    self._capacityLeft -= 1
+    ret
+
+
+HashMap._insert[Hash[k], Eq[k]](
+    elems: Array[Option[Elem[k, v]]],
+    key: k,
+    value: v,
+) Option[v]:
     let hash = key.hash()
-    let index = hash.mod(self._elems.len())
-    match self._elems.get(index):
+    let index = hash.mod(elems.len())
+    match elems.get(index):
         Option.None:
-            self._elems.set(
+            elems.set(
                 index,
                 Option.Some(Elem(key = key, value = value, next = Option.None)),
             )
@@ -185,3 +229,39 @@ impl Iterator[HashMapIter[k, v], HashMapEntry[k, v], exn]:
                         return self.next()
 
                 Option.None
+
+
+# ------------------------------------------------------------------------------
+
+
+HashMap.toDebugDoc[ToDoc[k], ToDoc[v]](self: HashMap[k, v]) Doc:
+    let args = Doc.break_(0)
+    args += Doc.grouped(
+        Doc.str("_elems =") + Doc.nested(4, Doc.break_(1) + self._elems.toDoc()),
+    )
+    args += Doc.char(',') + Doc.break_(1)
+    args += Doc.grouped(
+        Doc.str("_capacityLeft =")
+            + Doc.nested(4, Doc.break_(1) + self._capacityLeft.toDoc()),
+    )
+    args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+    Doc.grouped(Doc.str("HashMap") + Doc.char('(') + args)
+
+
+impl[ToDoc[k], ToDoc[v]] ToDoc[Elem[k, v]]:
+    toDoc(self: Elem[k, v]) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("key =") + Doc.nested(4, Doc.break_(1) + self.key.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("value =")
+                + Doc.nested(4, Doc.break_(1) + self.value.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("next =") + Doc.nested(4, Doc.break_(1) + self.next.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("Elem") + Doc.char('(') + args)
