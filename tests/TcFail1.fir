@@ -8,7 +8,7 @@ impl T[Str]:
     toStr(self: Str) I32:
         123
 
-# args: --typecheck --no-prelude --no-backtrace
+# args: --typecheck --no-prelude
 # expected exit status: 101
 # expected stderr:
 # tests/TcFail1.fir:8:5: Trait method implementation of toStr does not match the trait method type

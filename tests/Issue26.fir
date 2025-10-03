@@ -13,6 +13,5 @@ impl[A[t4]] B[Box[t4]]:
 main():
     Box(thing = u32(123)).b()
 
-# args: --no-backtrace
 # expected exit status: 101
 # expected stderr: tests/Issue26.fir:14:5: Unable to resolve pred A[U32]

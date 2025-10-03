@@ -30,7 +30,7 @@ use smol_str::SmolStr;
 pub struct CompilerOpts {
     pub typecheck: bool,
     pub no_prelude: bool,
-    pub no_backtrace: bool,
+    pub backtrace: bool,
     pub tokenize: bool,
     pub scan: bool,
     pub print_parsed_ast: bool,
@@ -128,7 +128,7 @@ mod native {
             return;
         }
 
-        if opts.no_backtrace {
+        if !opts.backtrace {
             std::panic::set_hook(Box::new(|panic_info| {
                 if let Some(s) = panic_info.payload().downcast_ref::<String>() {
                     eprintln!("{s}");

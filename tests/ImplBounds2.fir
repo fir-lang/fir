@@ -6,4 +6,4 @@ A.test[ToStr[t1], Eq[t2]](self: A[t1], t2: t2):
 
 main(): A(i = i32(123)).test(u32(456))
 
-# args: --typecheck --no-backtrace
+# args: --typecheck

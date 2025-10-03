@@ -1,7 +1,6 @@
 main() U32:
     123
 
-# args: --no-backtrace
 # expected exit status: 101
 # expected stderr:
 # tests/MainType1.fir:1:1: Unable to unify types

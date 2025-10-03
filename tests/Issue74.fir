@@ -3,7 +3,6 @@ main():
     iter.next[RangeIterator[Bool], Bool, []]()
     ()
 
-# args: --no-backtrace
 # expected exit status: 101
 # expected stderr:
 # Unable to resolve predicates:

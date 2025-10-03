@@ -14,10 +14,10 @@ fn main() {
                 .help("Don't implicitly import Fir.Prelude."),
         )
         .arg(
-            clap::Arg::new(NO_BACKTRACE)
-                .long(NO_BACKTRACE)
+            clap::Arg::new(BACKTRACE)
+                .long(BACKTRACE)
                 .num_args(0)
-                .help("Don't print backtraces in panics."),
+                .help("Print interpreter backtraces in pacnis."),
         )
         .arg(
             clap::Arg::new(TOKENIZE)
@@ -80,7 +80,7 @@ fn main() {
     let compiler_opts = fir::CompilerOpts {
         typecheck: matches.get_flag(TYPECHECK),
         no_prelude: matches.get_flag(NO_PRELUDE),
-        no_backtrace: matches.get_flag(NO_BACKTRACE),
+        backtrace: matches.get_flag(BACKTRACE),
         tokenize: matches.get_flag(TOKENIZE),
         scan: matches.get_flag(SCAN),
         print_parsed_ast: matches.get_flag(PRINT_PARSED_AST),
@@ -102,7 +102,7 @@ fn main() {
 
 const TYPECHECK: &str = "typecheck";
 const NO_PRELUDE: &str = "no-prelude";
-const NO_BACKTRACE: &str = "no-backtrace";
+const BACKTRACE: &str = "backtrace";
 const TOKENIZE: &str = "tokenize";
 const SCAN: &str = "scan";
 const PRINT_PARSED_AST: &str = "print-parsed-ast";

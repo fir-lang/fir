@@ -11,5 +11,4 @@ main():
     printStr(f(vec1).toStr())
     printStr(f(vec2).toStr())
 
-# args: --no-backtrace
 # expected stderr: tests/TcFail3.fir:12:16: Unable to unify types I32 and Str

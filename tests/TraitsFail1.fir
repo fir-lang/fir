@@ -9,6 +9,6 @@ trait ToStr[a]:
 f(a: a):
     printStr(a.toStr())
 
-# args: --typecheck --no-prelude --no-backtrace
+# args: --typecheck --no-prelude
 # expected exit status: 101
 # expected stderr: tests/TraitsFail1.fir:10:14: Unable to resolve pred ToStr[a]

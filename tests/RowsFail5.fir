@@ -10,6 +10,6 @@ poly_fn(alts: [A, B, ..r]):
 
 main(): poly_fn(~B(y = Bool.False))
 
-# args: --typecheck --no-backtrace
+# args: --typecheck
 # expected exit status: 101
 # expected stderr: tests/RowsFail5.fir:11:24: Unable to unify types Bool and Str

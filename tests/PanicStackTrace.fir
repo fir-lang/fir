@@ -12,7 +12,6 @@ g():
 t():
     ()
 
-# args: --no-backtrace
 # expected exit status: 101
 # expected stderr:
 # tests/PanicStackTrace.fir:9:17: PANIC: Hi

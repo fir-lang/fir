@@ -5,7 +5,6 @@ main():
     foo(||: print("Hi"))
     foo(||: throw("Hi"))
 
-# args: --no-backtrace
 # expected exit status: 101
 # expected stderr:
 # tests/FnExnTypes2.fir:6:5: Unable to unify types

@@ -8,5 +8,4 @@ main():
     let vec2 = f(u32(20))
     vec2.push(i32(123))
 
-# args: --no-backtrace
 # expected stderr: tests/TcFail4.fir:9:15: Unable to unify types I32 and Str

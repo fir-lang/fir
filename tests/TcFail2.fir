@@ -8,5 +8,5 @@ type Bool:
 Bool.toStr(self) Str:
     Bool.False
 
-# args: --typecheck --no-prelude --no-backtrace
+# args: --typecheck --no-prelude
 # expected stderr: tests/TcFail2.fir:9:5: Unable to unify types Bool and Str
