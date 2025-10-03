@@ -1,5 +1,5 @@
 type HashMap[k, v](
-    _elems: Vec[Option[Elem[k, v]]],
+    _elems: Array[Option[Elem[k, v]]],
 )
 
 
@@ -15,9 +15,10 @@ HashMap.empty() HashMap[k, v]:
 
 
 HashMap.withCapacity(cap: U32) HashMap[k, v]:
-    let elems: Vec[Option[Elem[k, v]]] = Vec.withCapacity(cap)
-    for i: U32 in range(u32(0), cap):
-        elems.push(Option.None)
+    let elems: Array[Option[Elem[k, v]]] = Array.fromIter(
+        repeatWith(||: Option.None),
+        cap,
+    )
     HashMap(_elems = elems)
 
 
@@ -144,7 +145,7 @@ impl[ToDoc[k], ToDoc[v]] ToDoc[HashMap[k, v]]:
 
 
 type HashMapIter[k, v](
-    _elems: Vec[Option[Elem[k, v]]],
+    _elems: Array[Option[Elem[k, v]]],
 
     # Current index in `_elems`.
     _idx: U32,
