@@ -31,6 +31,7 @@ syntax keyword firKeyword
     \ while
 
 syntax region firLineComment start="#" end="$"  contains=@Spell
+syntax region firLineCommentDoc start="##" end="$"  contains=@Spell
 syntax region firDeriveMacroInvocation start="#\[" end="\]"
 
 syntax match firNumber display "\<\(0x\|0X\|0b\|0B\)\?[a-fA-F0-9][a-fA-F0-9_]*\(u8\|u16\|u32\|u64\|i8\|i16\|i32\|i64\)\?\>"
@@ -66,6 +67,7 @@ syntax match firOperator "=\|==\|+=\|-=\|*=\|\^=\|+\|-\|*\|!\|&\|&&\||\|||\|<\|<
 
 highlight default link firKeyword Keyword
 highlight default link firLineComment Comment
+highlight default link firLineCommentDoc SpecialComment
 highlight default link firDeriveMacroInvocation Macro
 highlight default link firNumber Number
 highlight default link firStringDelimiter String
