@@ -5,6 +5,5 @@ main():
     match x:
         T(a = a, b = b, c = c, d = d): ()
 
-# args: --no-backtrace
 # expected exit status: 101
 # expected stderr: tests/ConPatFail1.fir:6:9: Constructor doesn't take named argument 'd'

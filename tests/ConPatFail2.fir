@@ -5,7 +5,6 @@ main():
     match x:
         T(a = a, b = b): ()
 
-# args: --no-backtrace
 # expected exit status: 101
 # expected stderr:
 # tests/ConPatFail2.fir:6:9: Constructor takes named arguments {a, b, c}, but applied {a, b}

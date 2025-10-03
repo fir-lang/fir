@@ -7,7 +7,7 @@ A.test[ToStr[t1]](self: A[t1]):
 
 main(): A(i = T).test()
 
-# args: --typecheck --no-backtrace
+# args: --typecheck
 # expected exit status: 101
 # expected stderr:
 # Unable to resolve predicates:

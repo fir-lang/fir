@@ -10,7 +10,7 @@ impl Trait1[Type[x]]:
     t1[Trait2[x]](self: Type[x])
         ()
 
-# args: --typecheck --no-prelude --no-backtrace
+# args: --typecheck --no-prelude
 # expected exit status: 101
 # expected stderr:
 # tests/Issue142.fir:10:5: Trait method implementation of t1 does not match the trait method type

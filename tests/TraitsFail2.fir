@@ -13,6 +13,6 @@ prim type I32
 prim type U32
 prim printStr(s: Str) ()
 
-# args: --typecheck --no-prelude --no-backtrace
+# args: --typecheck --no-prelude
 # expected exit status: 101
 # expected stderr: tests/TraitsFail2.fir:7:6: Unable to resolve pred ToStr[U32]

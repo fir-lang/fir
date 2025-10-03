@@ -10,7 +10,7 @@ f1() a / [A]:
 f2() a / [A]:
     throw(~B.B)
 
-# args: --typecheck --no-backtrace
+# args: --typecheck
 # expected exit status: 101
 # expected stderr:
 # tests/ExnFail2.fir:11:5: Unable to unify variant with constructors {"B"} with variant with constructors {"A"}

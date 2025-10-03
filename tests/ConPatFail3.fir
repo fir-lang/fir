@@ -5,6 +5,5 @@ main():
     match x:
         T(b = a, b = b): ()
 
-# args: --no-backtrace
 # expected exit status: 101
 # expected stderr: tests/ConPatFail3.fir:6:9: Named argument 'b' applied multiple times

@@ -7,7 +7,7 @@ impl T[I32]:
     a(self: a): ()
     b(self: a): ()
 
-# args: --typecheck --no-prelude --no-backtrace
+# args: --typecheck --no-prelude
 # expected exit status: 101
 # expected stderr:
 # tests/TraitImplFail2.fir:7:5: Trait method implementation of a does not match the trait method type

@@ -19,4 +19,4 @@ Vec.sort[Ord[t]](self: Vec[t]):
 _quicksort[Ord[t]](vec: Vec[t], low: U32, high: U32):
     ()
 
-# args: --typecheck --no-backtrace --no-prelude
+# args: --typecheck --no-prelude

@@ -25,7 +25,6 @@ type FooError:
 type AssertionError:
     AssertionError
 
-# args: --no-backtrace
 # expected exit status: 101
 # expected stdout:
 # Calling f... FooError

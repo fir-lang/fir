@@ -27,11 +27,11 @@ Array.getOpt(self: Array[t], idx: U32) Option[t]:
         Option.None
 
 
-Array.fromIter[Iterator[iter, item, exn]](iter: iter) Array[item] / exn:
-    let size = match iter.size[iter, item, exn, exn]():
-        Option.Some(size): size
-        Option.None: panic("Array.fromIter iterator size unknown")
-
+## Create an array of length `size`, from the iterator `iter`.
+##
+## The iterator should yield at least `size` amount of times, to be able to
+## initialize the array elements.
+Array.fromIter[Iterator[iter, item, exn]](iter: iter, size: U32) Array[item] / exn:
     let array = Array.new(size)
 
     for i: U32 in range(u32(0), size):

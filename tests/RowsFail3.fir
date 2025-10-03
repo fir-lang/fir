@@ -5,7 +5,7 @@ main():
         (y = "hi")
     ()
 
-# args: --typecheck --no-backtrace
+# args: --typecheck
 # expected exit status: 101
 # expected stderr:
 # tests/RowsFail3.fir:5:9: Unable to unify record with fields {"y"} with record with fields {"x"}
