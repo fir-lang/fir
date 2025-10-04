@@ -60,6 +60,10 @@ compiler_update_goldens:
 format_repo:
     ./Tool/Format/FormatRepo.sh
 
+check_fir_formatting: format_repo
+    git -P diff
+    ! git status --porcelain | grep -q '^ M'
+
 formatter_golden_test:
     goldentests Tool/Format/FormatGoldenTest.sh Tool/Format/tests '# '
 
