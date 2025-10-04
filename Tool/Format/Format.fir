@@ -72,7 +72,7 @@ formatModule(mod: Vec[TopDecl], tokens: Array[Token]) Doc:
     if findCommentBefore(eofTokenIdx, tokens) is Option.Some(commentStart):
         if not mod.isEmpty():
             doc += emptyLines
-        let comments = formatLeadingComments(
+        let comments = formatLeadingComments_(
             commentStart,
             eofTokenIdx,
             2,
@@ -1536,17 +1536,23 @@ RecordPat.format(self, tokens: Array[Token]) Doc:
 ##      (1) before the token, that are not with other tokens in their lines.
 ##      (2) after the token, at the same line with the token being formatted.
 formatToken(tokenIdx: TokenIdx, tokens: Array[Token]) Doc:
+    formatLeadingComments(tokenIdx, tokens)
+        + Doc.str(tokens.get(tokenIdx.idx).text)
+        + formatTrailingComments(tokenIdx, tokens)
+
+
+formatLeadingComments(tokenIdx: TokenIdx, tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
-    let token = tokens.get(tokenIdx.idx)
-
     if findCommentBefore(tokenIdx, tokens) is Option.Some(commentStart):
+        let token = tokens.get(tokenIdx.idx)
+
         let maxEmptyLines: U32 = if token.col == 0:
             2
         else:
             1
 
-        let leading = formatLeadingComments(
+        let leading = formatLeadingComments_(
             commentStart,
             tokenIdx,
             maxEmptyLines,
@@ -1565,40 +1571,10 @@ formatToken(tokenIdx: TokenIdx, tokens: Array[Token]) Doc:
             for _: U32 in range(u32(0), emptyLines):
                 doc += Doc.hardLine()
 
-    doc += Doc.str(token.text)
-
-    let tokenLastLine = token.rightLoc().line
-    let trailingTokenIdx = tokenIdx.idx + 1
-    while tokens.getOpt(trailingTokenIdx) is Option.Some(nextToken):
-        if nextToken.kind
-                is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
-            trailingTokenIdx += 1
-            continue
-
-        if not (nextToken.kind is TokenKind.Comment):
-            break
-
-        if nextToken.line != tokenLastLine:
-            break
-
-        doc += Doc.blank(1) + Doc.str(nextToken.text)
-
-        let multiLine = nextToken.text.startsWith("#|")
-        if multiLine:
-            doc += Doc.blank(1)
-
-            # Keep scanning for more multi-line comments.
-            trailingTokenIdx += 1
-        else:
-            doc += Doc.hardLine()
-
-            # Single-line comments end with a newline, so there can't be more comments.
-            break
-
     doc
 
 
-formatLeadingComments(
+formatLeadingComments_(
     commentStart: TokenIdx,
     commentEnd: TokenIdx,
     maxEmptyLines: U32,
@@ -1631,6 +1607,40 @@ formatLeadingComments(
         prevCommentTokenIdx = Option.Some(commentTokenIdx)
 
     (doc = doc, lastCommentIdx = prevCommentTokenIdx.unwrap())
+
+
+formatTrailingComments(tokenIdx: TokenIdx, tokens: Array[Token]) Doc:
+    let doc = Doc.empty()
+    let token = tokens.get(tokenIdx.idx)
+    let tokenLastLine = token.rightLoc().line
+    let trailingTokenIdx = tokenIdx.idx + 1
+    while tokens.getOpt(trailingTokenIdx) is Option.Some(nextToken):
+        if nextToken.kind
+                is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+            trailingTokenIdx += 1
+            continue
+
+        if not (nextToken.kind is TokenKind.Comment):
+            break
+
+        if nextToken.line != tokenLastLine:
+            break
+
+        doc += Doc.blank(1) + Doc.str(nextToken.text)
+
+        let multiLine = nextToken.text.startsWith("#|")
+        if multiLine:
+            doc += Doc.blank(1)
+
+            # Keep scanning for more multi-line comments.
+            trailingTokenIdx += 1
+        else:
+            doc += Doc.hardLine()
+
+            # Single-line comments end with a newline, so there can't be more comments.
+            break
+
+    doc
 
 
 formatTyArgs(tyArgs: Option[TyArgs], tokens: Array[Token]) Doc:
