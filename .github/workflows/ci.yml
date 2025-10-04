@@ -27,8 +27,8 @@ jobs:
       - name: 'Check Rust formatting'
         run: just check_rust_formatting
 
-  run_fir_formatter:
-    name: Run Fir formatter on the repo
+  check_fir_formatting:
+    name: Check Fir formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -36,7 +36,7 @@ jobs:
       - name: Install just
         run: sudo apt install -y just
 
-      - name: 'Run formatter'
+      - name: 'Check Fir formatting'
         run: just format_repo
 
   check_lints:

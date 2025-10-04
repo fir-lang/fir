@@ -329,6 +329,7 @@ type NamedType(
 )",
     )
 
+
 # args after: --main deriveToDoc -- --test
 # expected stdout:
 # impl[ToDoc[t]] ToDoc[S1[t]]:
