@@ -24,6 +24,14 @@ HashSet.contains[Hash[k], Eq[k]](self: HashSet[k], key: k) Bool:
     self._map.get(key).isSome()
 
 
+HashSet.difference[Hash[k], Eq[k]](self: HashSet[k], other: HashSet[k]) Filter[Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn], k, exn]:
+    self.iter().filter(|k: k|: not other.contains(k))
+
+
+HashSet.intersection[Hash[k], Eq[k]](self: HashSet[k], other: HashSet[k]) Filter[Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn], k, exn]:
+    self.iter().filter(|k: k|: other.contains(k))
+
+
 impl[ToStr[k]] ToStr[HashSet[k]]:
     toStr(self: HashSet[k]) Str:
         let buf = StrBuf.withCapacity(100)

@@ -185,6 +185,13 @@ Bool.__not(self) Bool:
         Bool.False: Bool.True
 
 
+impl Eq[Bool]:
+    __eq(self: Bool, other: Bool) Bool:
+        match self:
+            Bool.True: other
+            Bool.False: not other
+
+
 impl ToStr[Bool]:
     toStr(self: Bool) Str:
         match self:

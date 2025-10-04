@@ -122,7 +122,48 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                     kind = kind2,
                     isRow = isRow2
                 ),
-        ): panic("TODO")
+        ):
+            # Kind mismatches can happen when try to unify a record with a
+            # variant (e.g. pass a record when a variant is expected), and fail.
+            if kind1 != kind2:
+                throw(UnificationError)
+
+            # If we checked the kinds in type applications properly, we should
+            # only try to unify rows with rows and stars with stars.
+            assert(isRow1 == isRow2)
+
+            let rows1 = collectRows(ty1, kind1, labels1, extension1)
+            let labels1 = rows1.rows
+            let extension1 = rows1.extension
+
+            let rows2 = collectRows(ty2, kind2, labels2, extension2)
+            let labels2 = rows2.rows
+            let extension2 = rows2.extension
+
+            let keys1: HashSet[LocalId] = HashSet.fromIter(labels1.keys())
+            let keys2: HashSet[LocalId] = HashSet.fromIter(labels2.keys())
+
+            # Extra labels in one type will be added to the extension of the
+            # other.
+            let extras1: HashSet[LocalId] = HashSet.fromIter(
+                keys1.difference(keys2),
+            )
+            let extras2: HashSet[LocalId] = HashSet.fromIter(
+                keys2.difference(keys1),
+            )
+
+            # Unify common labels.
+            for key: LocalId in keys1.intersection(keys2):
+                unify(
+                    labels1.get(key).unwrap(),
+                    labels2.get(key).unwrap(),
+                    varGen,
+                    level,
+                    loc,
+                )
+
+        # Add extras to rows.
+        # TODO
 
         _: throw(UnificationError)
 
