@@ -308,8 +308,6 @@ defaultVisitMethodSelectExpr[Visitor[v]](v: v, e: MethodSelectExpr):
     v.visitExpr(e.object)
     v.visitTyId(e.methodTyId)
     v.visitAssocVarId(e.method)
-    for tyArg: Type in e.tyArgs.iter():
-        v.visitType(tyArg)
 
 
 defaultVisitCallExpr[Visitor[v]](v: v, e: CallExpr):
