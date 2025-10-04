@@ -64,7 +64,48 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
         (
             ty1 = Ty.Fun(args = args1, ret = ret1, exn = exn1),
             ty2 = Ty.Fun(args = args2, ret = ret2, exn = exn2),
-        ): panic("TODO")
+        ):
+            match (args1 = args1, args2 = args2):
+                (
+                    args1 = FunArgs.Positional(args1),
+                    args2 = FunArgs.Positional(args2),
+                ):
+                    if args1.len() != args2.len():
+                        throw(UnificationError)
+
+                    for argIdx: U32 in range(u32(0), args1.len()):
+                        unify(
+                            args1.get(argIdx),
+                            args2.get(argIdx),
+                            varGen,
+                            level,
+                            loc,
+                        )
+
+                (args1 = FunArgs.Named(args1), args2 = FunArgs.Named(args2)):
+                    # TODO: HashMap.len and HashSet.len
+                    # if args1.len() != args2.len():
+                    #     throw(UnificationError)
+
+                    for arg1: HashMapEntry[LocalId, Ty] in args1.iter():
+                        let arg2 = args2.get(arg1.key).unwrapOrElse(
+                            ||: throw(UnificationError),
+                        )
+                        unify(arg1.value, arg2, varGen, level, loc)
+
+                _: throw(UnificationError)
+
+            match (exn1 = exn1, exn2 = exn2):
+                (exn1 = Option.Some(exn1), exn2 = Option.Some(exn2)):
+                    unify(exn1, exn2, varGen, level, loc)
+
+                _:
+                    # In all other cases we have `None` as at least one of the
+                    # types. `None` comes from a constructor, and constructors
+                    # can't throw. So we let these unify.
+                    ()
+
+            unify(ret1, ret2, varGen, level, loc)
 
         (
             ty1 =
