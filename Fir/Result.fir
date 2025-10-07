@@ -68,11 +68,3 @@ Result.unwrapOrElse(self: Result[e, t], f: Fn(e) t / exn) t / exn:
     match self:
         Result.Ok(val): val
         Result.Err(err): f(err)
-
-
-Result.isOk(self: Result[e, t]) Bool:
-    self is Result.Ok(_)
-
-
-Result.isErr(self: Result[e, t]) Bool:
-    self is Result.Err(_)

@@ -535,7 +535,7 @@ simpleExpr Expr:
                     _lastToken = TokenIdx(idx = last),
                 ))
             Option.Some(fields):
-                if fields.es.isEmpty() and fields.comma.isNone() and fields.e0.name.isNone():
+                if fields.es.isEmpty() and fields.comma is Option.None and fields.e0.name is Option.None:
                     Expr.Paren(ParenExpr(
                         expr = fields.e0.node,
                         _lparen = TokenIdx(idx = first),

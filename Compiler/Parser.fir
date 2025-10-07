@@ -15,7 +15,7 @@ main():
         if arg == "--print":
             printAst = Bool.True
         else:
-            if path.isSome():
+            if path is Option.Some(_):
                 showUsageAndExit()
 
             path = Option.Some(arg)

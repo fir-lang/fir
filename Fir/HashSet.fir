@@ -17,11 +17,11 @@ HashSet.iter(self: HashSet[k]) Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, e
 
 ## Returns whether the value is newly inserted.
 HashSet.insert[Hash[k], Eq[k]](self: HashSet[k], key: k) Bool:
-    self._map.insert(key, ()).isNone()
+    self._map.insert(key, ()) is Option.None
 
 
 HashSet.contains[Hash[k], Eq[k]](self: HashSet[k], key: k) Bool:
-    self._map.get(key).isSome()
+    self._map.get(key) is Option.Some(_)
 
 
 HashSet.difference[Hash[k], Eq[k]](self: HashSet[k], other: HashSet[k]) Filter[Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn], k, exn]:

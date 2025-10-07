@@ -64,10 +64,10 @@ main():
         # If the non-terminal has a return type, then it needs to have a semantic action, and we
         # don't generate a constructor for the non-terminal in the parse tree types, as we never
         # allocate it.
-        if nonTerminal.ty.isSome():
+        if nonTerminal.ty is Option.Some(_):
             # Check that all productions have a semantic action.
             for alt: Alt in nonTerminal.alts.iter():
-                if alt.rhs.isNone():
+                if alt.rhs is Option.None:
                     panic(
                         "Non-terminal `nonTerminal.name` has a return type, but it also has production(s) without a semantic action.",
                     )
@@ -498,12 +498,12 @@ generateNonTerminal(
         # TODO: Count the non-ignored symbols, allocate vector (or maybe array) with the right size.
         # TODO: Update the symbol code generator to only push to `nodes` when the production doesn't
         # have a semantic action, then move this code to the commented-out `if` above.
-        if alt.rhs.isNone():
+        if alt.rhs is Option.None:
             altResultDoc += Doc.str(
                 "let nodes: Vec[ParseTree[`terminalType`, `nonTerminalType`]] = Vec.empty()",
             ) + Doc.hardLine()
 
-        let symbolCont = if alt.rhs.isSome():
+        let symbolCont = if alt.rhs is Option.Some(_):
             SymbolCont.Ignore
         else:
             SymbolCont.PushToParseTree("nodes")
@@ -975,7 +975,7 @@ generateSymbolParser(
         Symbol.EndOfInput:
             Doc.nested(
                 4,
-                Doc.str("if state.peek().isNone():")
+                Doc.str("if state.peek() is Option.None:")
                     + Doc.hardLine()
                     + Doc.str("state._cursor"),
             )
