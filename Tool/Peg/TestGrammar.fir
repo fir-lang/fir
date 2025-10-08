@@ -555,7 +555,7 @@ endOfInputTest(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            if state.peek().isNone():
+            if state.peek() is Option.None:
                 state._cursor
             else:
                 throw(state.updateErrorCursor(state._cursor))
@@ -589,7 +589,7 @@ bracketedOneOrMoreA(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U
                         nodes.truncate(nodesLen0)
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
-            if state.peek().isNone():
+            if state.peek() is Option.None:
                 state._cursor
             else:
                 throw(state.updateErrorCursor(state._cursor))
@@ -755,7 +755,7 @@ semanticActionOptional(state: ParserState[Token]) Option[Token] / U32:
                 Result.Ok(ok):
                     ()
                     Option.Some(ok)
-            if state.peek().isNone():
+            if state.peek() is Option.None:
                 state._cursor
             else:
                 throw(state.updateErrorCursor(state._cursor))
@@ -856,7 +856,7 @@ semanticActionComplex(state: ParserState[Token]) (aVec: Vec[Token], bVec: Vec[To
                     ()
                     Option.Some(ok)
             let group = (aVec = aVec, bVec = bVec, cOpt = cOpt)
-            if state.peek().isNone():
+            if state.peek() is Option.None:
                 state._cursor
             else:
                 throw(state.updateErrorCursor(state._cursor))
@@ -1883,7 +1883,7 @@ errorCursorBug(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
         ||:
             let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
             nodes.push(errorCursorBugAlt1(state))
-            if state.peek().isNone():
+            if state.peek() is Option.None:
                 state._cursor
             else:
                 throw(state.updateErrorCursor(state._cursor))
@@ -1898,7 +1898,7 @@ errorCursorBug(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
         ||:
             let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
             nodes.push(errorCursorBugAlt2(state))
-            if state.peek().isNone():
+            if state.peek() is Option.None:
                 state._cursor
             else:
                 throw(state.updateErrorCursor(state._cursor))

@@ -83,7 +83,7 @@ processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:
     let foundUnnamed = Bool.False
 
     for field: (name: Option[Id], ty: Type) in fields.iter():
-        if field.name.isSome():
+        if field.name is Option.Some(_):
             foundNamed = Bool.True
         else:
             foundUnnamed = Bool.True

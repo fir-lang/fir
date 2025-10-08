@@ -210,7 +210,7 @@ grammar(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             nodes.push(typeDecls(state))
             nodes.push(terminalsDecl(state))
             nodes.push(nonTerminalDecls(state))
-            if state.peek().isNone():
+            if state.peek() is Option.None:
                 state._cursor
             else:
                 throw(state.updateErrorCursor(state._cursor))

@@ -22,7 +22,7 @@ module(state: ParserState[Token]) Vec[TopDecl] / U32:
                         ds.truncate(dsLen0)
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
-            if state.peek().isNone():
+            if state.peek() is Option.None:
                 state._cursor
             else:
                 throw(state.updateErrorCursor(state._cursor))
@@ -2281,8 +2281,8 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                         )
                     Option.Some(fields):
                         if fields.es.isEmpty()
-                                and fields.comma.isNone()
-                                and fields.e0.name.isNone():
+                                and fields.comma is Option.None
+                                and fields.e0.name is Option.None:
                             Expr.Paren(
                                 ParenExpr(
                                     expr = fields.e0.node,
