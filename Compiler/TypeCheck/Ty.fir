@@ -105,6 +105,11 @@ type UVar(
 )
 
 
+UVar.setLink(self, link: Ty):
+    assert(self.link is Option.None)
+    self.link = Option.Some(link)
+
+
 ## A rigid type variable. These are quantified type variables when checking
 ## the body of the function with the quantified type variables.
 #[derive(ToDoc)]

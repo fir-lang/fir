@@ -143,15 +143,6 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
             let keys1: HashSet[LocalId] = HashSet.fromIter(labels1.keys())
             let keys2: HashSet[LocalId] = HashSet.fromIter(labels2.keys())
 
-            # Extra labels in one type will be added to the extension of the
-            # other.
-            let extras1: HashSet[LocalId] = HashSet.fromIter(
-                keys1.difference(keys2),
-            )
-            let extras2: HashSet[LocalId] = HashSet.fromIter(
-                keys2.difference(keys1),
-            )
-
             # Unify common labels.
             for key: LocalId in keys1.intersection(keys2):
                 unify(
@@ -161,6 +152,15 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                     level,
                     loc,
                 )
+
+            # Extra labels in one type will be added to the extension of the
+            # other.
+            let extras1: HashSet[LocalId] = HashSet.fromIter(
+                keys1.difference(keys2),
+            )
+            let extras2: HashSet[LocalId] = HashSet.fromIter(
+                keys2.difference(keys1),
+            )
 
         # Add extras to rows.
         # TODO
@@ -176,9 +176,37 @@ unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / Unificati
 # Maybe for now rename the field (add underscore).
 linkVar(var_: UVar, ty: Ty):
     # TODO: Occurs check.
-    # TODO: Debug assert that link is `None`?
     ty.pruneLevel(var_.level)
-    var_.link = Option.Some(ty)
+    var_.setLink(ty)
+
+
+linkExtension(
+    kind: RecordOrVariant,
+    extraLabels: HashSet[LocalId],
+    labelValues: HashMap[LocalId, Ty],
+    uvar: UVar,
+    varGen: UVarGen,
+    level: U32,
+    loc: Loc,
+) UVar:
+    let extensionLabels: HashMap[LocalId, Ty] = HashMap.fromIter(
+        extraLabels.iter().map(
+            |label: LocalId|:
+                (key = label, value = labelValues.get(label).unwrap()),
+        ),
+    )
+
+    # TODO: Not sure about the level.
+    let newExtensionVar = varGen.newVar(level, Kind.Row(kind), loc)
+    let newExtensionTy = Ty.Anonymous(
+        labels = extensionLabels,
+        extension = Option.Some(Ty.UVar(newExtensionVar)),
+        kind,
+        isRow = Bool.True,
+    )
+
+    uvar.setLink(newExtensionTy)
+    newExtensionVar
 
 
 Ty.pruneLevel(self, maxLevel: U32):
