@@ -162,8 +162,53 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                 keys2.difference(keys1),
             )
 
-        # Add extras to rows.
-        # TODO
+            # Add extras to rows.
+            if not extras1.isEmpty():
+                match extension2:
+                    Option.Some(Ty.UVar(uvar)):
+                        # TODO: Not sure about level
+                        extension2 = Option.Some(
+                            Ty.UVar(
+                                linkExtension(
+                                    kind2,
+                                    extras1,
+                                    labels1,
+                                    uvar,
+                                    varGen,
+                                    level,
+                                    loc,
+                                ),
+                            ),
+                        )
+                    _: throw(UnificationError)
+
+            if not extras2.isEmpty():
+                match extension1:
+                    Option.Some(Ty.UVar(uvar)):
+                        # TODO: Not sure about level
+                        extension1 = Option.Some(
+                            Ty.UVar(
+                                linkExtension(
+                                    kind1,
+                                    extras2,
+                                    labels2,
+                                    uvar,
+                                    varGen,
+                                    level,
+                                    loc,
+                                ),
+                            ),
+                        )
+                    _: throw(UnificationError)
+
+            match (ext1 = extension1, ext2 = extension2):
+                (ext1 = Option.None, ext2 = Option.None): ()
+                (ext1 = Option.Some(ext1), ext2 = Option.None):
+                    unify(ext1, Ty.unitRow(kind1), varGen, level, loc)
+                (ext1 = Option.None, ext2 = Option.Some(ext2)):
+                    unify(ext2, Ty.unitRow(kind2), varGen, level, loc)
+                (ext1 = Option.Some(ext1), ext2 = Option.Some(ext2)):
+                    unify(ext1, ext2, varGen, level, loc)
 
         _: throw(UnificationError)
 

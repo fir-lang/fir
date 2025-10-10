@@ -188,6 +188,15 @@ Ty.emptyVariant() Ty:
     )
 
 
+Ty.unitRow(kind: RecordOrVariant) Ty:
+    Ty.Anonymous(
+        labels = HashMap.empty(),
+        extension = Option.None,
+        kind,
+        isRow = Bool.True,
+    )
+
+
 # ------------------------------------------------------------------------------
 # Type schemes and instantiation
 
