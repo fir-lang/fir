@@ -7,6 +7,14 @@ HashSet.withCapacity(cap: U32) HashSet[k]:
     HashSet(_map = HashMap.withCapacity(cap))
 
 
+HashSet.len(self: HashSet[k]) U32:
+    self._map.len()
+
+
+HashSet.isEmpty(self: HashSet[k]) Bool:
+    self._map.isEmpty()
+
+
 HashSet.fromIter[Iterator[iter, k, exn], Eq[k], Hash[k]](iter: iter) HashSet[k] / exn:
     HashSet(_map = HashMap.fromIter(iter.map(|k|: (key = k, value = ()))))
 
