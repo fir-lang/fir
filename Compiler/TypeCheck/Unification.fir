@@ -83,9 +83,8 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                         )
 
                 (args1 = FunArgs.Named(args1), args2 = FunArgs.Named(args2)):
-                    # TODO: HashMap.len and HashSet.len
-                    # if args1.len() != args2.len():
-                    #     throw(UnificationError)
+                    if args1.len() != args2.len():
+                        throw(UnificationError)
 
                     for arg1: HashMapEntry[LocalId, Ty] in args1.iter():
                         let arg2 = args2.get(arg1.key).unwrapOrElse(
