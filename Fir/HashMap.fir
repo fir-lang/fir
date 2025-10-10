@@ -1,9 +1,12 @@
 #[derive(ToDoc)]
 type HashMap[k, v](
-    _elems: Array[Option[Elem[k, v]]],
+    _buckets: Array[Option[Elem[k, v]]],
 
     ## How many more elements to add before growing the array and rehashing.
     _capacityLeft: U32,
+
+    ## Number of elements in the hash map.
+    _numElements: U32,
 )
 
 
@@ -24,7 +27,19 @@ HashMap.withCapacity(cap: U32) HashMap[k, v]:
         repeatWith(||: Option.None),
         cap,
     )
-    HashMap(_elems = elems, _capacityLeft = HashMap._capacityBeforeGrowth(cap))
+    HashMap(
+        _buckets = elems,
+        _capacityLeft = HashMap._capacityBeforeGrowth(cap),
+        _numElements = 0,
+    )
+
+
+HashMap.len(self: HashMap[k, v]) U32:
+    self._numElements
+
+
+HashMap.isEmpty(self: HashMap[k, v]) Bool:
+    self._numElements == 0
 
 
 HashMap._capacityBeforeGrowth(cap: U32) U32:
@@ -41,7 +56,7 @@ HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](
 
 
 HashMap._grow[Eq[k], Hash[k]](self: HashMap[k, v]):
-    let currentCap = self._elems.len()
+    let currentCap = self._buckets.len()
     let newCap = if currentCap == 0:
         u32(10)
     else:
@@ -58,8 +73,9 @@ HashMap._grow[Eq[k], Hash[k]](self: HashMap[k, v]):
         HashMap._insert(newElems, entry.key, entry.value)
         newCapacityLeft -= 1
 
-    self._elems = newElems
-    self._capacityLeft = newCapacityLeft
+    self._buckets = newElems
+    self._capacityLeft = HashMap._capacityBeforeGrowth(newCap)
+        - self._numElements
 
 
 HashMap.fromEntries[Iterator[iter, HashMapEntry[k, v], exn], Eq[k], Hash[k]](
@@ -88,8 +104,9 @@ HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v) Option[v]:
     if self._capacityLeft == 0:
         self._grow()
 
-    let ret = HashMap._insert(self._elems, key, value)
+    let ret = HashMap._insert(self._buckets, key, value)
     self._capacityLeft -= 1
+    self._numElements += 1
     ret
 
 
@@ -131,8 +148,8 @@ HashMap._insert[Hash[k], Eq[k]](
 
 HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
     let hash = key.hash()
-    let index = hash.mod(self._elems.len())
-    let elem = self._elems.get(index)
+    let index = hash.mod(self._buckets.len())
+    let elem = self._buckets.get(index)
     loop:
         match elem:
             Option.None: return Option.None
@@ -189,9 +206,9 @@ impl[ToDoc[k], ToDoc[v]] ToDoc[HashMap[k, v]]:
 
 
 type HashMapIter[k, v](
-    _elems: Array[Option[Elem[k, v]]],
+    _buckets: Array[Option[Elem[k, v]]],
 
-    # Current index in `_elems`.
+    # Current index in `_buckets`.
     _idx: U32,
 
     # Current element to yield.
@@ -207,9 +224,9 @@ type HashMapEntry[k, v](
 
 HashMapIter.new(map: HashMap[k, v]) HashMapIter[k, v]:
     HashMapIter(
-        _elems = map._elems,
+        _buckets = map._buckets,
         _idx = 0,
-        _nextElem = map._elems.getOpt(0).flatten(),
+        _nextElem = map._buckets.getOpt(0).flatten(),
     )
 
 
@@ -222,9 +239,9 @@ impl Iterator[HashMapIter[k, v], HashMapEntry[k, v], exn]:
                 Option.Some(ret)
 
             Option.None:
-                while self._idx + 1 < self._elems.len():
+                while self._idx + 1 < self._buckets.len():
                     self._idx += 1
-                    self._nextElem = self._elems.get(self._idx)
+                    self._nextElem = self._buckets.get(self._idx)
                     if self._nextElem is Option.Some(_):
                         return self.next()
 
@@ -237,12 +254,18 @@ impl Iterator[HashMapIter[k, v], HashMapEntry[k, v], exn]:
 HashMap.toDebugDoc[ToDoc[k], ToDoc[v]](self: HashMap[k, v]) Doc:
     let args = Doc.break_(0)
     args += Doc.grouped(
-        Doc.str("_elems =") + Doc.nested(4, Doc.break_(1) + self._elems.toDoc()),
+        Doc.str("_buckets =")
+            + Doc.nested(4, Doc.break_(1) + self._buckets.toDoc()),
     )
     args += Doc.char(',') + Doc.break_(1)
     args += Doc.grouped(
         Doc.str("_capacityLeft =")
             + Doc.nested(4, Doc.break_(1) + self._capacityLeft.toDoc()),
+    )
+    args += Doc.char(',') + Doc.break_(1)
+    args += Doc.grouped(
+        Doc.str("_numElements =")
+            + Doc.nested(4, Doc.break_(1) + self._numElements.toDoc()),
     )
     args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
     Doc.grouped(Doc.str("HashMap") + Doc.char('(') + args)

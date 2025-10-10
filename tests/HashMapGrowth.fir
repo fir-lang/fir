@@ -14,11 +14,10 @@ main():
         map.insert(i, i)
     print(map.toDebugDoc().render(80))
 
-
 # expected stdout:
-# HashMap(_elems = Array.[], _capacityLeft = 0)
+# HashMap(_buckets = Array.[], _capacityLeft = 0, _numElements = 0)
 # HashMap(
-#     _elems =
+#     _buckets =
 #         Array.[
 #             Option.Some(Elem(key = 0, value = 0, next = Option.None)),
 #             Option.None,
@@ -31,10 +30,11 @@ main():
 #             Option.None,
 #             Option.None
 #         ],
-#     _capacityLeft = 7
+#     _capacityLeft = 7,
+#     _numElements = 1
 # )
 # HashMap(
-#     _elems =
+#     _buckets =
 #         Array.[
 #             Option.Some(Elem(key = 0, value = 0, next = Option.None)),
 #             Option.Some(Elem(key = 1, value = 1, next = Option.None)),
@@ -77,5 +77,6 @@ main():
 #             Option.None,
 #             Option.None
 #         ],
-#     _capacityLeft = 12
+#     _capacityLeft = 12,
+#     _numElements = 20
 # )
