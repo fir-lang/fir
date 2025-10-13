@@ -142,20 +142,20 @@ LLowerId: L<Id> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TypeDecl: L<TypeDecl> = {
-    <l:@L> "type" <type_name:UpperId> <rhs:TypeDeclRhs?> <r:@R> =>
+    <l:@L> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params: vec![],
             type_param_kinds: vec![],
-            rhs: Some(rhs.unwrap_or(TypeDeclRhs::Product(ConstructorFields::Empty))),
+            rhs: Some(rhs),
         }),
 
-    <l:@L> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs?> <r:@R> =>
+    <l:@L> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params,
             type_param_kinds: vec![],
-            rhs: Some(rhs.unwrap_or(TypeDeclRhs::Product(ConstructorFields::Empty))),
+            rhs: Some(rhs),
         }),
 
     <l:@L> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>
@@ -176,6 +176,9 @@ TypeDecl: L<TypeDecl> = {
 }
 
 TypeDeclRhs: TypeDeclRhs = {
+    NEWLINE =>
+        TypeDeclRhs::Product(ConstructorFields::Empty),
+
     ":" NEWLINE INDENT <constrs:TypeConstrs> DEDENT =>
         TypeDeclRhs::Sum(constrs),
 
