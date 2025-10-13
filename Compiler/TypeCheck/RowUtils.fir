@@ -1,4 +1,7 @@
-import [Compiler/TypeCheck/Ty,]
+import [
+    Compiler/Assert,
+    Compiler/TypeCheck/Ty,
+]
 
 
 collectRows(

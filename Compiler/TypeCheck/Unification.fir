@@ -1,4 +1,5 @@
 import [
+    Compiler/Assert,
     Compiler/TypeCheck/Normalization,
     Compiler/TypeCheck/RowUtils,
     Compiler/TypeCheck/Ty,
