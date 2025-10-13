@@ -53,7 +53,7 @@ trait Visitor[v]:
         defaultVisitExpr(self, e)
 
     visitVarExpr(self: v, e: VarExpr):
-        ()
+        defaultVisitVarExpr(self, e)
 
     visitConstrSelectExpr(self: v, e: Constructor):
         self.visitConstructor(e)
@@ -65,7 +65,7 @@ trait Visitor[v]:
         defaultVisitMethodSelectExpr(self, e)
 
     visitAssocFnSelectExpr(self: v, e: AssocFnSelectExpr):
-        ()
+        defaultVisitAssocFnSelectExpr(self, e)
 
     visitCallExpr(self: v, e: CallExpr):
         defaultVisitCallExpr(self, e)
@@ -196,6 +196,9 @@ trait Visitor[v]:
     visitFnType(self: v, t: FnType):
         defaultVisitFnType(self, t)
 
+    visitTyArgs(self: v, t: TyArgs):
+        defaultVisitTyArgs(self, t)
+
     # ----------------------------------------------------------------
     # Ids
 
@@ -299,17 +302,30 @@ defaultVisitType[Visitor[v]](v: v, ty: Type):
         Type.Fn_(t): v.visitFnType(t)
 
 
+defaultVisitVarExpr[Visitor[v]](v: v, e: VarExpr):
+    v.visitVarId(e.id)
+    if e.userTyArgs is Option.Some(args):
+        v.visitTyArgs(args)
+
+
 defaultVisitFieldSelectExpr[Visitor[v]](v: v, e: FieldSelectExpr):
     # TODO: `field` field
     v.visitExpr(e.object)
+    if e.userTyArgs is Option.Some(args):
+        v.visitTyArgs(args)
 
 
 defaultVisitMethodSelectExpr[Visitor[v]](v: v, e: MethodSelectExpr):
     v.visitExpr(e.object)
     v.visitTyId(e.methodTyId)
     v.visitAssocVarId(e.method)
-    for tyArg: Type in e.tyArgs.iter():
-        v.visitType(tyArg)
+
+
+defaultVisitAssocFnSelectExpr[Visitor[v]](v: v, e: AssocFnSelectExpr):
+    v.visitTyId(e.ty)
+    v.visitAssocVarId(e.member)
+    if e.userTyArgs is Option.Some(args):
+        v.visitTyArgs(args)
 
 
 defaultVisitCallExpr[Visitor[v]](v: v, e: CallExpr):
@@ -387,8 +403,8 @@ defaultVisitParen[Visitor[v]](v: v, e: ParenExpr):
 
 defaultVisitConstructor[Visitor[v]](v: v, c: Constructor):
     v.visitTyId(c.ty)
-    for arg: Type in c.tyArgs.iter():
-        v.visitType(arg)
+    if c.userTyArgs is Option.Some(args):
+        v.visitTyArgs(args)
 
 
 defaultVisitLetStmt[Visitor[v]](v: v, s: LetStmt):
@@ -454,8 +470,7 @@ defaultVisitOrPat[Visitor[v]](v: v, ps: Vec[Pat]):
 defaultVisitNamedType[Visitor[v]](v: v, t: NamedType):
     v.visitTyId(t.name)
     if t.args is Option.Some(args):
-        for arg: Type in args.args.iter():
-            v.visitType(arg)
+        v.visitTyArgs(args)
 
 
 defaultVisitRecordType[Visitor[v]](v: v, t: RecordType):
@@ -477,3 +492,8 @@ defaultVisitFnType[Visitor[v]](v: v, t: FnType):
 
     if t.exceptions is Option.Some(exn):
         v.visitType(exn)
+
+
+defaultVisitTyArgs[Visitor[v]](v: v, t: TyArgs):
+    for arg: Type in t.args.iter():
+        v.visitType(arg)
