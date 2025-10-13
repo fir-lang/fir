@@ -229,47 +229,36 @@ impl Eq[AssocVarDefIdx]:
 
 
 #[derive(ToDoc)]
-type TyDefIdx:
-    Trait(TraitDefIdx)
-    Type(TyDefIdx_)
-
-
-impl Eq[TyDefIdx]:
-    __eq(self: TyDefIdx, other: TyDefIdx) Bool:
-        match (left = self, right = other):
-            (left = TyDefIdx.Trait(l1), right = TyDefIdx.Trait(r1)): l1 == r1
-            (left = TyDefIdx.Type(l1), right = TyDefIdx.Type(r1)): l1 == r1
-            _: Bool.False
-
-
-#[derive(ToDoc)]
-type TraitDefIdx(
-    ## The trait's module.
-    _mod: ModuleIdx,
-
-    ## Name of the trait in `_mod`.
-    _name: Str,
-)
-
-
-impl Eq[TraitDefIdx]:
-    __eq(self: TraitDefIdx, other: TraitDefIdx) Bool:
-        self._mod == other._mod and self._name == other._name
-
-
-#[derive(ToDoc)]
-type TyDefIdx_(
+type TyDefIdx(
     ## The type's module.
     _mod: ModuleIdx,
 
     ## Name of the type in `_mod`.
     _name: Str,
+
+    ## Kind of the definition: type or trait.
+    _kind: TyDefKind,
 )
 
 
-impl Eq[TyDefIdx_]:
-    __eq(self: TyDefIdx_, other: TyDefIdx_) Bool:
-        self._mod == other._mod and self._name == other._name
+#[derive(ToDoc)]
+type TyDefKind:
+    Type
+    Trait
+
+
+impl Eq[TyDefIdx]:
+    __eq(self: TyDefIdx, other: TyDefIdx) Bool:
+        self._mod == other._mod
+            and self._name == other._name
+            and self._kind == other._kind
+
+
+impl Eq[TyDefKind]:
+    __eq(self: TyDefKind, other: TyDefKind) Bool:
+        match self:
+            TyDefKind.Type: other is TyDefKind.Type
+            TyDefKind.Trait: other is TyDefKind.Trait
 
 
 # ------------------------------------------------------------------------------
@@ -481,44 +470,26 @@ impl ToDoc[AssocVarDefIdx]:
 
 impl ToDoc[TyDefIdx]:
     toDoc(self: TyDefIdx) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("_mod =") + Doc.nested(4, Doc.break_(1) + self._mod.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("_name =")
+                + Doc.nested(4, Doc.break_(1) + self._name.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("_kind =")
+                + Doc.nested(4, Doc.break_(1) + self._kind.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("TyDefIdx") + Doc.char('(') + args)
+
+
+impl ToDoc[TyDefKind]:
+    toDoc(self: TyDefKind) Doc:
         match self:
-            TyDefIdx.Trait(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("TyDefIdx.Trait") + Doc.char('(') + args)
-            TyDefIdx.Type(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("TyDefIdx.Type") + Doc.char('(') + args)
-
-
-impl ToDoc[TraitDefIdx]:
-    toDoc(self: TraitDefIdx) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_mod =") + Doc.nested(4, Doc.break_(1) + self._mod.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_name =")
-                + Doc.nested(4, Doc.break_(1) + self._name.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TraitDefIdx") + Doc.char('(') + args)
-
-
-impl ToDoc[TyDefIdx_]:
-    toDoc(self: TyDefIdx_) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_mod =") + Doc.nested(4, Doc.break_(1) + self._mod.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_name =")
-                + Doc.nested(4, Doc.break_(1) + self._name.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TyDefIdx_") + Doc.char('(') + args)
+            TyDefKind.Type: Doc.str("TyDefKind.Type")
+            TyDefKind.Trait: Doc.str("TyDefKind.Trait")
