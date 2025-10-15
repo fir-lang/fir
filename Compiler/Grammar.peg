@@ -115,7 +115,7 @@ type_ Type:
     name=^ "UpperId" argFirst=^ "[" arg0=type_ args=(_"," type_)* ","? argLast=^ "]":
         let args = once(arg0).chain(args.iter()).toVec()
         NamedType(
-            name = newTyId(name),
+            name = newTyId(name, state._tokens),
             args = Option.Some(TyArgs(
                 args,
                 _firstToken = TokenIdx(idx = argFirst),
@@ -124,7 +124,7 @@ type_ Type:
         )
 
     name=^ "UpperId":
-        NamedType(name = newTyId(name), args = Option.None)
+        NamedType(name = newTyId(name, state._tokens), args = Option.None)
 
 
 # - ()
@@ -516,7 +516,7 @@ simpleExpr Expr:
     # Variables
     var_=^ "LowerId" tyArgs=tyArgs?:
         Expr.Var(VarExpr(
-            id = newVarId(var_),
+            id = newVarId(var_, state._tokens),
             userTyArgs = tyArgs,
             tyArgs = Vec.empty(),
         ))
@@ -705,7 +705,7 @@ constructor Constructor:
     ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.False,
-            ty = newTyId(ty),
+            ty = newTyId(ty, state._tokens),
             constr = con.map(|con: U32|: newId(con)),
             userTyArgs,
             tyArgs = Vec.empty(),
@@ -715,7 +715,7 @@ constructor Constructor:
     ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.True,
-            ty = newTyId(ty),
+            ty = newTyId(ty, state._tokens),
             constr = con.map(|con: U32|: newId(con)),
             userTyArgs,
             tyArgs = Vec.empty(),
@@ -1006,7 +1006,7 @@ topFunSig (parentTy: Option[TyId], name: Id, sig: FunSig):
     parentTy=(^ _"UpperId" _".")? name=^ "LowerId" ctx=context? params=paramList ret=returnTy?:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         (
-            parentTy = parentTy.map(|id: U32|: newTyId(id)),
+            parentTy = parentTy.map(|id: U32|: newTyId(id, state._tokens)),
             name = newId(name),
             sig = FunSig(
                 context = ctx,
@@ -1076,7 +1076,7 @@ implDecl ImplDecl:
     first=^ "impl" ctx=context? name=^ "UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]" rhs=implDeclRhs:
         ImplDecl(
             context = ctx,
-            trait_ = newTyId(name),
+            trait_ = newTyId(name, state._tokens),
             tys = once(t0).chain(ts.iter()).toVec(),
             items = rhs,
             _firstToken = TokenIdx(idx = first),

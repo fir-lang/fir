@@ -35,13 +35,14 @@ impl Hash[LocalId]:
 ## functions.
 #[derive(ToDoc)]
 type VarId(
+    ## Index of the identifier's token in its module.
     token: TokenIdx,
+
+    ## Text of the token at `token`.
+    name: Str,
+
     _resolved: Option[VarDefIdx],
 )
-
-
-VarId.new(token: TokenIdx) VarId:
-    VarId(token, _resolved = Option.None)
 
 
 VarId.resolve(self, def: VarDefIdx):
@@ -51,7 +52,12 @@ VarId.resolve(self, def: VarDefIdx):
 
 #[derive(ToDoc)]
 type AssocVarId(
+    ## Index of the associated member identifier's token in its module.
     token: TokenIdx,
+
+    ## Text of the token at `token`.
+    name: Str,
+
     _resolved: Option[AssocVarDefIdx],
 )
 
@@ -61,13 +67,14 @@ type AssocVarId(
 ## These can refer to: product and sum types, traits.
 #[derive(ToDoc)]
 type TyId(
+    ## Index of the type identifier's token in its module.
     token: TokenIdx,
+
+    ## Text of the token at `token`.
+    name: Str,
+
     _resolved: Option[TyDefIdx],
 )
-
-
-TyId.new(token: TokenIdx) TyId:
-    TyId(token, _resolved = Option.None)
 
 
 TyId.resolve(self, def: TyDefIdx):
