@@ -298,8 +298,72 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
             )
 
 
-unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationError:
-    panic("TODO")
+## Unify `ty1` with `ty2`, without updating `t2`.
+##
+## Unlike `unify`, this does not throw on errors. Returns whether unification
+## was successful.
+#
+# Currently this has two use cases:
+#
+# - When matching an `impl` arguments with given type arguments, to be able to
+#   select implementation of a predicate. Here `ty1` is instantiated type
+#   arguments of an `impl` and `ty2` is the argument we have from a trait type
+#   application.
+#
+# - When selecting a method in a method call, we unify a candidate's receiver
+#   type (`ty1`) with the actual receiver type (`ty2`). If the unification is
+#   successful, we consider the method as a potential target.
+#
+unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) Bool:
+    ty1 = ty1.normalize()
+    ty2 = ty2.normalize()
+
+    match (ty1 = ty1, ty2 = ty2):
+        (ty1 = Ty.Con(id = id1), ty2 = Ty.Con(id = id2)): id1.def() == id2.def()
+
+        (
+            ty1 = Ty.App(conId = id1, args = args1),
+            ty2 = Ty.App(conId = id2, args = args2),
+        ):
+            if id1.def() != id2.def():
+                return Bool.False
+
+            if args1.len() != args2.len():
+                return Bool.False
+
+            for argIdx: U32 in range(u32(0), args1.len()):
+                if not unifyOneWay(
+                        args1.get(argIdx),
+                        args2.get(argIdx),
+                        varGen,
+                        level,
+                        loc,
+                    ):
+                    return Bool.False
+
+            Bool.True
+
+        (ty1 = Ty.QVar(_), ..) | (ty2 = Ty.QVar(_), ..):
+            panic("`loc`: BUG: QVar in unification")
+
+        (ty1 = Ty.UVar(var1), ty2 = Ty.UVar(var2)):
+            # TODO: Rust implementation doesn't have kind check here.
+            if var1.kind != ty2.kind():
+                return Bool.False
+
+            if var1 == var2:
+                return Bool.True
+
+            # TODO: Copied from Rust implementation, this updates ty2. Is this
+            # expected? We promise to not update ty2 in the documentation.
+            if var1.level() > var2.level():
+                var1.set_link(ty2)
+            else:
+                var2.set_link(ty1)
+
+            Bool.True
+
+        _: Bool.False
 
 
 # TODO: This can't be `UVar.link` as `link` is also a field.
