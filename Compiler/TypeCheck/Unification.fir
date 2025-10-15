@@ -1,12 +1,16 @@
 import [
     Compiler/Assert,
+    Compiler/Error,
     Compiler/TypeCheck/Normalization,
     Compiler/TypeCheck/RowUtils,
     Compiler/TypeCheck/Ty,
 ]
 
 
-type UnificationError
+type UnificationError(
+    loc: Loc,
+    msg: Str,
+)
 
 
 unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationError:
@@ -16,14 +20,24 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
     match (ty1 = ty1, ty2 = ty2):
         (ty1 = Ty.Con(id = id1), ty2 = Ty.Con(id = id2)):
             if id1.def() != id2.def():
-                throw(UnificationError)
+                throw(
+                    UnificationError(
+                        loc,
+                        msg = "Unable to unify types `ty1` and `ty2`",
+                    ),
+                )
 
         (
             ty1 = Ty.App(conId = id1, args = args1),
             ty2 = Ty.App(conId = id2, args = args2),
         ):
             if id1.def() != id2.def():
-                throw(UnificationError)
+                throw(
+                    UnificationError(
+                        loc,
+                        msg = "Unable to unify types `ty1` and `ty2`",
+                    ),
+                )
 
             if args1.len() != args2.len():
                 panic(
@@ -52,13 +66,25 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
 
         (ty1 = Ty.UVar(var1), ty2 = ty2):
             if var1.kind != ty2.kind():
-                throw(UnificationError)
+                throw(
+                    UnificationError(
+                        loc,
+                        msg =
+                            "Unable to unify var with kind `var1.kind` with type with kind `ty2.kind()`",
+                    ),
+                )
 
             linkVar(var1, ty2)
 
         (ty1 = ty1, ty2 = Ty.UVar(var2)):
             if var2.kind != ty1.kind():
-                throw(UnificationError)
+                throw(
+                    UnificationError(
+                        loc,
+                        msg =
+                            "Unable to unify var with kind `var2.kind` with type with kind `ty1.kind()`",
+                    ),
+                )
 
             linkVar(var2, ty1)
 
@@ -72,7 +98,13 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                     args2 = FunArgs.Positional(args2),
                 ):
                     if args1.len() != args2.len():
-                        throw(UnificationError)
+                        throw(
+                            UnificationError(
+                                loc,
+                                msg =
+                                    "Unable to unify functions `ty1` and `ty2` (argument numbers don't match)",
+                            ),
+                        )
 
                     for argIdx: U32 in range(u32(0), args1.len()):
                         unify(
@@ -85,15 +117,35 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
 
                 (args1 = FunArgs.Named(args1), args2 = FunArgs.Named(args2)):
                     if args1.len() != args2.len():
-                        throw(UnificationError)
+                        throw(
+                            UnificationError(
+                                loc,
+                                msg =
+                                    "Unable to unify functions `ty1` and `ty2` (argument numbers don't match)",
+                            ),
+                        )
 
                     for arg1: HashMapEntry[LocalId, Ty] in args1.iter():
                         let arg2 = args2.get(arg1.key).unwrapOrElse(
-                            ||: throw(UnificationError),
+                            ||:
+                                throw(
+                                    UnificationError(
+                                        loc,
+                                        msg =
+                                            "Unable to unify functions with different named arguments",
+                                    ),
+                                ),
                         )
                         unify(arg1.value, arg2, varGen, level, loc)
 
-                _: throw(UnificationError)
+                _:
+                    throw(
+                        UnificationError(
+                            loc,
+                            msg =
+                                "Unable to unify functions with positional and named arguments",
+                        ),
+                    )
 
             match (exn1 = exn1, exn2 = exn2):
                 (exn1 = Option.Some(exn1), exn2 = Option.Some(exn2)):
@@ -126,7 +178,12 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
             # Kind mismatches can happen when try to unify a record with a
             # variant (e.g. pass a record when a variant is expected), and fail.
             if kind1 != kind2:
-                throw(UnificationError)
+                throw(
+                    UnificationError(
+                        loc,
+                        msg = "Unable to unify `kind1` `ty1` with `kind2` `ty2`",
+                    ),
+                )
 
             # If we checked the kinds in type applications properly, we should
             # only try to unify rows with rows and stars with stars.
@@ -162,6 +219,14 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                 keys2.difference(keys1),
             )
 
+            let kindStr = match kind1:
+                RecordOrVariant.Record: "record"
+                RecordOrVariant.Variant: "variant"
+
+            let labelStr = match kind1:
+                RecordOrVariant.Record: "field"
+                RecordOrVariant.Variant: "constructor"
+
             # Add extras to rows.
             if not extras1.isEmpty():
                 match extension2:
@@ -180,7 +245,14 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                                 ),
                             ),
                         )
-                    _: throw(UnificationError)
+                    _:
+                        throw(
+                            UnificationError(
+                                loc,
+                                msg =
+                                    "Unable to unify `kindStr` with `labelStr`s `keys1` with `kindStr` with `labelStr`s `keys2`",
+                            ),
+                        )
 
             if not extras2.isEmpty():
                 match extension1:
@@ -199,7 +271,14 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                                 ),
                             ),
                         )
-                    _: throw(UnificationError)
+                    _:
+                        throw(
+                            UnificationError(
+                                loc,
+                                msg =
+                                    "Unable to unify `kindStr` with `labelStr`s `keys1` with `kindStr` with `labelStr`s `keys2`",
+                            ),
+                        )
 
             match (ext1 = extension1, ext2 = extension2):
                 (ext1 = Option.None, ext2 = Option.None): ()
@@ -210,7 +289,13 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                 (ext1 = Option.Some(ext1), ext2 = Option.Some(ext2)):
                     unify(ext1, ext2, varGen, level, loc)
 
-        _: throw(UnificationError)
+        _:
+            throw(
+                UnificationError(
+                    loc,
+                    msg = "Unable to unify types `ty1` and `ty2`",
+                ),
+            )
 
 
 unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationError:

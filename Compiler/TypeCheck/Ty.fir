@@ -389,6 +389,7 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
 
 
 # ------------------------------------------------------------------------------
+# Generated ToDoc implementations
 
 
 impl ToDoc[Ty]:
@@ -527,3 +528,23 @@ impl ToDoc[PredSet]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("PredSet") + Doc.char('(') + args)
+
+
+# ------------------------------------------------------------------------------
+# ToStr implementations. These are used when generating error messages, so they
+# should be readable by the users and should not expose implementation details.
+
+impl ToStr[Ty]:
+    toStr(self: Ty) Str:
+        panic("TODO")
+
+
+impl ToStr[Kind]:
+    toStr(self: Kind) Str:
+        panic("TODO")
+        panic("TODO")
+
+
+impl ToStr[RecordOrVariant]:
+    toStr(self: RecordOrVariant) Str:
+        panic("TODO")

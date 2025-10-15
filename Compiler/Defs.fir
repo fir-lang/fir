@@ -269,6 +269,7 @@ impl Eq[TyDefKind]:
 
 
 # ------------------------------------------------------------------------------
+# Generated ToDoc implementations
 
 
 impl ToDoc[LocalId]:
@@ -500,3 +501,12 @@ impl ToDoc[TyDefKind]:
         match self:
             TyDefKind.Type: Doc.str("TyDefKind.Type")
             TyDefKind.Trait: Doc.str("TyDefKind.Trait")
+
+
+# ------------------------------------------------------------------------------
+# ToStr implementations. These are used when generating error messages, so they
+# should be readable by the users and should not expose implementation details.
+
+impl ToStr[LocalId]:
+    toStr(self: LocalId) Str:
+        panic("TODO")
