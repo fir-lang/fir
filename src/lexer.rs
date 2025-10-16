@@ -19,7 +19,7 @@ lexgen::lexer! {
         // Skip comments
         '#',
         '#' '\n',
-        '#' (_ # '|') (_ # '\n')* '\n',
+        '#' (_ # ['|' '\n']) (_ # '\n')* '\n',
 
         "#|" => |lexer| {
             lexer.switch(LexerRule::Comment)
