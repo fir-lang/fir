@@ -105,6 +105,11 @@ type UVar(
 )
 
 
+impl Eq[UVar]:
+    __eq(self: UVar, other: UVar) Bool:
+        self.id == other.id
+
+
 UVar.setLink(self, link: Ty):
     assert(self.link is Option.None)
     self.link = Option.Some(link)

@@ -356,10 +356,10 @@ unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) Bool:
 
             # TODO: Copied from Rust implementation, this updates ty2. Is this
             # expected? We promise to not update ty2 in the documentation.
-            if var1.level() > var2.level():
-                var1.set_link(ty2)
+            if var1.level > var2.level:
+                var1.setLink(ty2)
             else:
-                var2.set_link(ty1)
+                var2.setLink(ty1)
 
             Bool.True
 
