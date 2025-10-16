@@ -273,10 +273,13 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
 
             match (ext1 = extension1, ext2 = extension2):
                 (ext1 = Option.None, ext2 = Option.None): ()
+
                 (ext1 = Option.Some(ext1), ext2 = Option.None):
                     unify(ext1, Ty.unitRow(kind1), varGen, level, loc)
+
                 (ext1 = Option.None, ext2 = Option.Some(ext2)):
                     unify(ext2, Ty.unitRow(kind2), varGen, level, loc)
+
                 (ext1 = Option.Some(ext1), ext2 = Option.Some(ext2)):
                     unify(ext1, ext2, varGen, level, loc)
 
@@ -413,6 +416,91 @@ unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) Bool:
                         return Bool.False
 
             unifyOneWay(ret1, ret2, varGen, level, loc)
+
+        (
+            ty1 =
+                Ty.Anonymous(
+                    labels = labels1,
+                    extension = extension1,
+                    kind = kind1,
+                    isRow = isRow1
+                ),
+            ty2 =
+                Ty.Anonymous(
+                    labels = labels2,
+                    extension = extension2,
+                    kind = kind2,
+                    isRow = isRow2
+                ),
+        ):
+            # Kind mismatches can happen when try to unify a record with a
+            # variant (e.g. pass a record when a variant is expected), and fail.
+            if kind1 != kind2:
+                return Bool.False
+
+            # If we checked the kinds in type applications properly, we should
+            # only try to unify rows with rows and stars with stars.
+            assert(isRow1 == isRow2)
+
+            let rows1 = collectRows(ty1, kind1, labels1, extension1)
+            let labels1 = rows1.rows
+            let extension1 = rows1.extension
+
+            let rows2 = collectRows(ty2, kind2, labels2, extension2)
+            let labels2 = rows2.rows
+            let extension2 = rows2.extension
+
+            let keys1: HashSet[LocalId] = HashSet.fromIter(labels1.keys())
+            let keys2: HashSet[LocalId] = HashSet.fromIter(labels2.keys())
+
+            # Extra labels in one type will be added to the extension of the
+            # other.
+            let extras1: HashSet[LocalId] = HashSet.fromIter(
+                keys1.difference(keys2),
+            )
+            let extras2: HashSet[LocalId] = HashSet.fromIter(
+                keys2.difference(keys1),
+            )
+
+            # Unify common labels.
+            for key: LocalId in keys1.intersection(keys2):
+                let ty1 = labels1.get(key).unwrap()
+                let ty2 = labels2.get(key).unwrap()
+                if not unifyOneWay(ty1, ty2, varGen, level, loc):
+                    return Bool.False
+
+            if not extras1.isEmpty():
+                return Bool.False
+
+            if not extras2.isEmpty():
+                match extension1:
+                    Option.Some(Ty.UVar(uvar)):
+                        # TODO: Not sure about level
+                        extension1 = Option.Some(
+                            Ty.UVar(
+                                linkExtension(
+                                    kind1,
+                                    extras2,
+                                    labels2,
+                                    uvar,
+                                    varGen,
+                                    level,
+                                    loc,
+                                ),
+                            ),
+                        )
+                    _: return Bool.False
+
+            match (ext1 = extension1, ext2 = extension2):
+                (ext1 = Option.None, ext2 = Option.None): Bool.True
+
+                (ext1 = Option.Some(ext1), ext2 = Option.None):
+                    unifyOneWay(ext1, Ty.unitRow(kind1), varGen, level, loc)
+
+                (ext1 = Option.None, ext2 = Option.Some(ext2)): Bool.False
+
+                (ext1 = Option.Some(ext1), ext2 = Option.Some(ext2)):
+                    unifyOneWay(ext1, ext2, varGen, level, loc)
 
         _: Bool.False
 
