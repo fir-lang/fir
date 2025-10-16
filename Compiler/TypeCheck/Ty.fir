@@ -130,6 +130,12 @@ type FunArgs:
     Named(HashMap[LocalId, Ty])
 
 
+FunArgs.len(self) U32:
+    match self:
+        FunArgs.Positional(tys): tys.len()
+        FunArgs.Named(tys): tys.len()
+
+
 ## Kind of a type.
 ##
 ## We don't support higher-kinded variables yet, so this is either a `*` or

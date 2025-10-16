@@ -98,9 +98,7 @@ impl FunArgs {
     pub fn is_named(&self) -> bool {
         matches!(self, FunArgs::Named(_))
     }
-}
 
-impl FunArgs {
     pub fn len(&self) -> usize {
         match self {
             FunArgs::Positional(args) => args.len(),

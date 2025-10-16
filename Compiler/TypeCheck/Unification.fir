@@ -92,20 +92,20 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
             ty1 = Ty.Fun(args = args1, ret = ret1, exn = exn1),
             ty2 = Ty.Fun(args = args2, ret = ret2, exn = exn2),
         ):
+            if args1.len() != args2.len():
+                throw(
+                    UnificationError(
+                        loc,
+                        msg =
+                            "Unable to unify functions `ty1` and `ty2` (argument numbers don't match)",
+                    ),
+                )
+
             match (args1 = args1, args2 = args2):
                 (
                     args1 = FunArgs.Positional(args1),
                     args2 = FunArgs.Positional(args2),
                 ):
-                    if args1.len() != args2.len():
-                        throw(
-                            UnificationError(
-                                loc,
-                                msg =
-                                    "Unable to unify functions `ty1` and `ty2` (argument numbers don't match)",
-                            ),
-                        )
-
                     for argIdx: U32 in range(u32(0), args1.len()):
                         unify(
                             args1.get(argIdx),
@@ -116,15 +116,6 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                         )
 
                 (args1 = FunArgs.Named(args1), args2 = FunArgs.Named(args2)):
-                    if args1.len() != args2.len():
-                        throw(
-                            UnificationError(
-                                loc,
-                                msg =
-                                    "Unable to unify functions `ty1` and `ty2` (argument numbers don't match)",
-                            ),
-                        )
-
                     for arg1: HashMapEntry[LocalId, Ty] in args1.iter():
                         let arg2 = args2.get(arg1.key).unwrapOrElse(
                             ||:
@@ -347,14 +338,14 @@ unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) Bool:
             panic("`loc`: BUG: QVar in unification")
 
         (ty1 = Ty.UVar(var1), ty2 = Ty.UVar(var2)):
-            # TODO: Rust implementation doesn't have kind check here.
+            # TODO: Interpreter doesn't have kind check here.
             if var1.kind != ty2.kind():
                 return Bool.False
 
             if var1 == var2:
                 return Bool.True
 
-            # TODO: Copied from Rust implementation, this updates ty2. Is this
+            # TODO: Copied from the interpreter, this updates ty2. Is this
             # expected? We promise to not update ty2 in the documentation.
             if var1.level > var2.level:
                 var1.setLink(ty2)
@@ -362,6 +353,66 @@ unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) Bool:
                 var2.setLink(ty1)
 
             Bool.True
+
+        (
+            ty1 = Ty.Fun(args = args1, ret = ret1, exn = exn1),
+            ty2 = Ty.Fun(args = args2, ret = ret2, exn = exn2),
+        ):
+            if args1.len() != args2.len():
+                return Bool.False
+
+            match (args1 = args1, args2 = args2):
+                (
+                    args1 = FunArgs.Positional(args1),
+                    args2 = FunArgs.Positional(args2),
+                ):
+                    for argIdx: U32 in range(u32(0), args1.len()):
+                        if not unifyOneWay(
+                                args1.get(argIdx),
+                                args2.get(argIdx),
+                                varGen,
+                                level,
+                                loc,
+                            ):
+                            return Bool.False
+
+                (args1 = FunArgs.Named(args1), args2 = FunArgs.Named(args2)):
+                    let argNames1: HashSet[LocalId] = HashSet.fromIter(
+                        args1.keys(),
+                    )
+                    let argNames2: HashSet[LocalId] = HashSet.fromIter(
+                        args2.keys(),
+                    )
+
+                    if argNames1 != argNames2:
+                        return Bool.False
+
+                    for argName: LocalId in argNames1.iter():
+                        if not unifyOneWay(
+                                args1.get(argName).unwrap(),
+                                args2.get(argName).unwrap(),
+                                varGen,
+                                level,
+                                loc,
+                            ):
+                            return Bool.False
+
+                _: return Bool.False
+
+            match (exn1 = exn1, exn2 = exn2):
+                (exn1 = Option.None, exn2 = Option.None): ()
+
+                (exn1 = Option.None, exn2 = Option.Some(_))
+                    | (exn1 = Option.Some(_), exn2 = Option.None):
+                    # None is the same as [..r] with a fresh r, so it unifies
+                    # with everything.
+                    ()
+
+                (exn1 = Option.Some(exn1), exn2 = Option.Some(exn2)):
+                    if not unifyOneWay(exn1, exn2, varGen, level, loc):
+                        return Bool.False
+
+            unifyOneWay(ret1, ret2, varGen, level, loc)
 
         _: Bool.False
 

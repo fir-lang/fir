@@ -40,6 +40,18 @@ HashSet.intersection[Hash[k], Eq[k]](self: HashSet[k], other: HashSet[k]) Filter
     self.iter().filter(|k: k|: other.contains(k))
 
 
+impl[Hash[k], Eq[k]] Eq[HashSet[k]]:
+    __eq(self: HashSet[k], other: HashSet[k]) Bool:
+        if self.len() != other.len():
+            return Bool.False
+
+        for k: k in self.iter():
+            if not other.contains(k):
+                return Bool.False
+
+        Bool.True
+
+
 impl[ToStr[k]] ToStr[HashSet[k]]:
     toStr(self: HashSet[k]) Str:
         let buf = StrBuf.withCapacity(100)
