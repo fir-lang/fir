@@ -1,6 +1,7 @@
 import [
     Compiler/NameResolver,
     Compiler/Program,
+    Compiler/TypeCheck/TyCon,
     Compiler/TypeCheck/Unification,
 ]
 
