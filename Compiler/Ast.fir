@@ -373,6 +373,12 @@ type NamedType(
 )
 
 
+NamedType.numTyArgs(self) U32:
+    match self.args:
+        Option.None: 0
+        Option.Some(args): args.args.len()
+
+
 impl Tokens[NamedType]:
     firstToken(self: NamedType) TokenIdx:
         self.name.token

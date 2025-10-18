@@ -16,6 +16,10 @@ type TyCon(
 )
 
 
+TyCon.arity(self) U32:
+    self.tyParams.len()
+
+
 ## A type parameter with kind.
 type TyParam(
     name: Id,

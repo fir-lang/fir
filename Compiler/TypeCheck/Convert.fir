@@ -8,7 +8,7 @@ import [
 
 convertAstTy(module: Module, tys: TyMap, astTy: Type, loc: Loc) Ty / TypeError:
     match astTy:
-        Type.Named(namedTy): convertNamedTy(tys, namedTy, loc)
+        Type.Named(namedTy): convertNamedTy(module, tys, namedTy, loc)
 
         Type.Var(var_):
             let varText = module.idText(var_)
@@ -62,10 +62,69 @@ convertAstTy(module: Module, tys: TyMap, astTy: Type, loc: Loc) Ty / TypeError:
 
             Ty.Anonymous(labels, extension, kind = RecordOrVariant.Record, isRow)
 
-        Type.Variant(_): panic("TODO")
+        Type.Variant(VariantType(alts, extension, isRow, ..)):
+            let labels: HashMap[LocalId, Ty] = HashMap.withCapacity(alts.len())
 
-        Type.Fn_(_): panic("TODO")
+            for alt: NamedType in alts.iter():
+                let ty = convertNamedTy(module, tys, alt, loc)
+                let tyNameText = alt.name.name
+                let old = labels.insert(LocalId(name = tyNameText), ty)
+                if old is Option.Some(_):
+                    throw(
+                        TypeError(
+                            loc,
+                            msg =
+                                "Type `tyNameText` used multiple times in variant type",
+                        ),
+                    )
+
+            let extension = extension.map(
+                |extId|:
+                    let extIdText = module.idText(extId)
+                    tys.getVar(extIdText).unwrapOrElse(
+                        ||:
+                            throw(
+                                TypeError(
+                                    loc,
+                                    msg = "Unbound type variable `extIdText`",
+                                ),
+                            ),
+                    ),
+            )
+
+            Ty.Anonymous(
+                labels,
+                extension,
+                kind = RecordOrVariant.Variant,
+                isRow,
+            )
+
+        Type.Fn_(FnType(args, ret, exceptions, ..)): panic("TODO")
 
 
-convertNamedTy(tys: TyMap, namedTy: NamedType, loc: Loc) Ty:
-    panic("TODO")
+convertNamedTy(module: Module, tys: TyMap, namedTy: NamedType, loc: Loc) Ty / TypeError:
+    let tyName = namedTy.name.name
+    let tyArgs = namedTy.args
+    let numTyArgs = namedTy.numTyArgs()
+
+    let tyCon = tys.getCon(tyName).unwrapOrElse(
+        ||: throw(TypeError(loc, msg = "Unknown type `tyName`")),
+    )
+
+    if tyCon.arity() != numTyArgs:
+        throw(
+            TypeError(
+                loc,
+                msg =
+                    "Incorrect number of type arguments to `tyName`, expected `tyCon.arity()`, found `numTyArgs`",
+            ),
+        )
+
+    if numTyArgs == 0:
+        return Ty.Con(id = namedTy.name)
+
+    let convertedArgs: Vec[Ty] = tyArgs.unwrap().args.iter().map(
+        |astTy: Type| Ty: convertAstTy(module, tys, astTy, loc),
+    ).toVec()
+
+    Ty.App(conId = namedTy.name, args = convertedArgs)

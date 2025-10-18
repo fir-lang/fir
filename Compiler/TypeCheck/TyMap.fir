@@ -12,3 +12,7 @@ type TyMap(
 
 TyMap.getVar(self, var_: Str) Option[Ty]:
     self.vars.get(var_)
+
+
+TyMap.getCon(self, con: Str) Option[TyCon]:
+    self.cons.get(con)
