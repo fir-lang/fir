@@ -1416,11 +1416,7 @@ fn resolve_preds(
             for impl_ in trait_impls {
                 if let Some(subgoals) = impl_.try_match(&pred.params, var_gen, &tys.tys, &pred.loc)
                 {
-                    next_goals.extend(subgoals.into_iter().map(|(trait_, params)| Pred {
-                        trait_,
-                        params,
-                        loc: pred.loc.clone(),
-                    }));
+                    next_goals.extend(subgoals);
                     progress = true;
                     continue 'goals;
                 }
