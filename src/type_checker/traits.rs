@@ -157,7 +157,7 @@ impl TraitImpl {
         var_gen: &mut TyVarGen,
         tys: &TyMap,
         loc: &ast::Loc,
-    ) -> Option<Vec<(Id, Vec<Ty>)>> {
+    ) -> Option<Vec<Pred>> {
         if args.len() != self.trait_args.len() {
             panic!(
                 "{}: BUG: Number of arguments applied to the trait don't match the arity",
@@ -185,11 +185,10 @@ impl TraitImpl {
         Some(
             self.preds
                 .iter()
-                .map(|(trait_, args)| {
-                    (
-                        trait_.clone(),
-                        args.iter().map(|arg| arg.subst_qvars(&var_map)).collect(),
-                    )
+                .map(|(trait_, args)| Pred {
+                    trait_: trait_.clone(),
+                    params: args.iter().map(|arg| arg.subst_qvars(&var_map)).collect(),
+                    loc: loc.clone(),
                 })
                 .collect(),
         )
