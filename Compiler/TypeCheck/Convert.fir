@@ -99,7 +99,30 @@ convertAstTy(module: Module, tys: TyMap, astTy: Type, loc: Loc) Ty / TypeError:
                 isRow,
             )
 
-        Type.Fn_(FnType(args, ret, exceptions, ..)): panic("TODO")
+        Type.Fn_(FnType(args, ret, exceptions, ..)):
+            let args = FunArgs.Positional(
+                args.iter().map(
+                    |ty: Type| Ty: convertAstTy(module, tys, ty, loc),
+                ).toVec(),
+            )
+
+            let ret = match ret:
+                Option.None: Ty.unit()
+                Option.Some(ret): convertAstTy(module, tys, ret, loc)
+
+            let exceptions = exceptions.unwrapOrElse(
+                ||:
+                    throw(
+                        TypeError(
+                            loc,
+                            msg = "Function type without exception type",
+                        ),
+                    ),
+            )
+
+            let exceptions = convertAstTy(module, tys, exceptions, loc)
+
+            Ty.Fun(args, ret, exn = Option.Some(exceptions))
 
 
 convertNamedTy(module: Module, tys: TyMap, namedTy: NamedType, loc: Loc) Ty / TypeError:
