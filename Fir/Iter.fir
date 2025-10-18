@@ -34,15 +34,6 @@ trait Iterator[iter, item, exn]:
     filter(self: iter, f: Fn(item) Bool / exn) Filter[iter, item, exn]:
         Filter(iter = self, f = f)
 
-    # Temporary: in the long term we probably want something like `FromIter`.
-    toVec(self: iter) Vec[item] / exn:
-        let vec = Vec[item].withCapacity(
-            self.size[iter, item, exn, exn]().unwrapOr(10),
-        )
-        for item: item in self:
-            vec.push(item)
-        vec
-
     ## Count number of elements the iterator yields.
     ##
     ## Note that this consumes the iterator. The iterator won't yield any more elements after

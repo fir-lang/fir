@@ -526,7 +526,7 @@ generateNonTerminal(
                         semanticActionTokens.iter():
                     parseTreeTokens(node, tokens)
                 let code = tokensToCode(tokens)
-                let lines: Vec[Str] = code.lines().toVec()
+                let lines: Vec[Str] = Vec.fromIter(code.lines())
                 let doc = Doc.empty()
                 let lineIdx: U32 = 0
                 for line in lines.iter():
