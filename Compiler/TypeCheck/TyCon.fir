@@ -1,6 +1,28 @@
 import [Compiler/TypeCheck/Ty]
 
 
+type TyCon(
+    ## Name of the type.
+    name: Str,
+
+    ## Type parameters with kinds.
+    tyParams: Vec[TyParam],
+
+    ## Methods for traits, constructor for sums, fields for products.
+    ##
+    ## Types can refer to `ty_params` and need to be substituted by the
+    ## instantiated the types in `ty_params` before use.
+    details: TyConDetails,
+)
+
+
+## A type parameter with kind.
+type TyParam(
+    name: Id,
+    kind: Kind,
+)
+
+
 #[derive(ToDoc)]
 type TyConDetails:
     Trait(TraitDetails)
