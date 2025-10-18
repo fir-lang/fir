@@ -1,19 +1,14 @@
 import [
     Compiler/Assert,
     Compiler/Error,
+    Compiler/TypeCheck/Error,
     Compiler/TypeCheck/Normalization,
     Compiler/TypeCheck/RowUtils,
     Compiler/TypeCheck/Ty,
 ]
 
 
-type UnificationError(
-    loc: Loc,
-    msg: Str,
-)
-
-
-unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationError:
+unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
     ty1 = ty1.normalize()
     ty2 = ty2.normalize()
 
@@ -21,7 +16,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
         (ty1 = Ty.Con(id = id1), ty2 = Ty.Con(id = id2)):
             if id1.def() != id2.def():
                 throw(
-                    UnificationError(
+                    TypeError(
                         loc,
                         msg = "Unable to unify types `ty1` and `ty2`",
                     ),
@@ -33,7 +28,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
         ):
             if id1.def() != id2.def():
                 throw(
-                    UnificationError(
+                    TypeError(
                         loc,
                         msg = "Unable to unify types `ty1` and `ty2`",
                     ),
@@ -67,7 +62,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
         (ty1 = Ty.UVar(var1), ty2 = ty2):
             if var1.kind != ty2.kind():
                 throw(
-                    UnificationError(
+                    TypeError(
                         loc,
                         msg =
                             "Unable to unify var with kind `var1.kind` with type with kind `ty2.kind()`",
@@ -79,7 +74,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
         (ty1 = ty1, ty2 = Ty.UVar(var2)):
             if var2.kind != ty1.kind():
                 throw(
-                    UnificationError(
+                    TypeError(
                         loc,
                         msg =
                             "Unable to unify var with kind `var2.kind` with type with kind `ty1.kind()`",
@@ -94,7 +89,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
         ):
             if args1.len() != args2.len():
                 throw(
-                    UnificationError(
+                    TypeError(
                         loc,
                         msg =
                             "Unable to unify functions `ty1` and `ty2` (argument numbers don't match)",
@@ -120,7 +115,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                         let arg2 = args2.get(arg1.key).unwrapOrElse(
                             ||:
                                 throw(
-                                    UnificationError(
+                                    TypeError(
                                         loc,
                                         msg =
                                             "Unable to unify functions with different named arguments",
@@ -131,7 +126,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
 
                 _:
                     throw(
-                        UnificationError(
+                        TypeError(
                             loc,
                             msg =
                                 "Unable to unify functions with positional and named arguments",
@@ -170,7 +165,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
             # variant (e.g. pass a record when a variant is expected), and fail.
             if kind1 != kind2:
                 throw(
-                    UnificationError(
+                    TypeError(
                         loc,
                         msg = "Unable to unify `kind1` `ty1` with `kind2` `ty2`",
                     ),
@@ -238,7 +233,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                         )
                     _:
                         throw(
-                            UnificationError(
+                            TypeError(
                                 loc,
                                 msg =
                                     "Unable to unify `kindStr` with `labelStr`s `keys1` with `kindStr` with `labelStr`s `keys2`",
@@ -264,7 +259,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
                         )
                     _:
                         throw(
-                            UnificationError(
+                            TypeError(
                                 loc,
                                 msg =
                                     "Unable to unify `kindStr` with `labelStr`s `keys1` with `kindStr` with `labelStr`s `keys2`",
@@ -285,10 +280,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / UnificationErro
 
         _:
             throw(
-                UnificationError(
-                    loc,
-                    msg = "Unable to unify types `ty1` and `ty2`",
-                ),
+                TypeError(loc, msg = "Unable to unify types `ty1` and `ty2`",),
             )
 
 
