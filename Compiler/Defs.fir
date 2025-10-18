@@ -172,6 +172,14 @@ type Module(
 )
 
 
+Module.tokenText(self, idx: TokenIdx) Str:
+    self._tokens.get(idx.idx).text
+
+
+Module.idText(self, id: Id) Str:
+    self.tokenText(id.token)
+
+
 # ------------------------------------------------------------------------------
 # Function items
 
