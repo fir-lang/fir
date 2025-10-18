@@ -67,15 +67,21 @@ TraitImpl.tryMatch(self, args: Vec[Ty], varGen: UVarGen, tys: TyMap, loc: Loc) O
             return Option.None
 
     Option.Some(
-        self.preds.iter().map(
-            |pred: TraitPred|:
-                Pred(
-                    trait_ = pred.trait_,
-                    params =
-                        args.iter().map(|arg: Ty|: arg.substQVars(varMap)).toVec(),
-                    loc,
-                ),
-        ).toVec(),
+        Vec.fromIter(
+            self.preds.iter().map(
+                |pred: TraitPred|:
+                    Pred(
+                        trait_ = pred.trait_,
+                        params =
+                            Vec.fromIter(
+                                args.iter().map(
+                                    |arg: Ty|: arg.substQVars(varMap),
+                                ),
+                            ),
+                        loc,
+                    ),
+            ),
+        ),
     )
 
 

@@ -101,9 +101,11 @@ convertAstTy(module: Module, tys: TyMap, astTy: Type, loc: Loc) Ty / TypeError:
 
         Type.Fn_(FnType(args, ret, exceptions, ..)):
             let args = FunArgs.Positional(
-                args.iter().map(
-                    |ty: Type| Ty: convertAstTy(module, tys, ty, loc),
-                ).toVec(),
+                Vec.fromIter(
+                    args.iter().map(
+                        |ty: Type| Ty: convertAstTy(module, tys, ty, loc),
+                    ),
+                ),
             )
 
             let ret = match ret:
@@ -146,8 +148,10 @@ convertNamedTy(module: Module, tys: TyMap, namedTy: NamedType, loc: Loc) Ty / Ty
     if numTyArgs == 0:
         return Ty.Con(id = namedTy.name)
 
-    let convertedArgs: Vec[Ty] = tyArgs.unwrap().args.iter().map(
-        |astTy: Type| Ty: convertAstTy(module, tys, astTy, loc),
-    ).toVec()
+    let convertedArgs: Vec[Ty] = Vec.fromIter(
+        tyArgs.unwrap().args.iter().map(
+            |astTy: Type| Ty: convertAstTy(module, tys, astTy, loc),
+        ),
+    )
 
     Ty.App(conId = namedTy.name, args = convertedArgs)

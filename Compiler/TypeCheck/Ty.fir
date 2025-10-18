@@ -296,8 +296,9 @@ Scheme.instantiate(
         let instantiatedPred = Pred(
             trait_ = pred.trait_,
             params =
-                pred.params.iter().map(|param: Ty|: param.substQVars(varMap))
-                    .toVec(),
+                Vec.fromIter(
+                    pred.params.iter().map(|param: Ty|: param.substQVars(varMap)),
+                ),
             loc,
         )
         preds.push(instantiatedPred)
@@ -347,7 +348,8 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
         Ty.App(conId, args):
             Ty.App(
                 conId,
-                args = args.iter().map(|ty: Ty|: ty.substQVars(vars)).toVec(),
+                args =
+                    Vec.fromIter(args.iter().map(|ty: Ty|: ty.substQVars(vars))),
             )
 
         Ty.QVar(QVar(id, ..)):
@@ -361,8 +363,9 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                     match args:
                         FunArgs.Positional(tys):
                             FunArgs.Positional(
-                                tys.iter().map(|ty: Ty|: ty.substQVars(vars))
-                                    .toVec(),
+                                Vec.fromIter(
+                                    tys.iter().map(|ty: Ty|: ty.substQVars(vars)),
+                                ),
                             )
                         FunArgs.Named(tys):
                             FunArgs.Named(

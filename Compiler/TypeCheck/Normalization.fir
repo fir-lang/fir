@@ -23,7 +23,8 @@ Ty.deepNormalize(self) Ty:
         Ty.App(conId, args):
             Ty.App(
                 conId,
-                args = args.iter().map(|arg: Ty|: arg.deepNormalize()).toVec(),
+                args =
+                    Vec.fromIter(args.iter().map(|arg: Ty|: arg.deepNormalize())),
             )
 
         Ty.QVar(_): panic("QVar in deepNormalize")
@@ -44,8 +45,9 @@ Ty.deepNormalize(self) Ty:
                     match args:
                         FunArgs.Positional(tys):
                             FunArgs.Positional(
-                                tys.iter().map(|ty: Ty|: ty.deepNormalize())
-                                    .toVec(),
+                                Vec.fromIter(
+                                    tys.iter().map(|ty: Ty|: ty.deepNormalize()),
+                                ),
                             )
                         FunArgs.Named(tys):
                             FunArgs.Named(

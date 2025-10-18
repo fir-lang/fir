@@ -100,9 +100,11 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
             TopDecl.Import(importDecl):
                 for path: Vec[Id] in importDecl.paths.iter():
                     imports.push(
-                        path.iter().map(
-                            |id: Id| Str: tokens.get(id.token.idx).text,
-                        ).toVec(),
+                        Vec.fromIter(
+                            path.iter().map(
+                                |id: Id| Str: tokens.get(id.token.idx).text,
+                            ),
+                        ),
                     )
 
     let module = Module(

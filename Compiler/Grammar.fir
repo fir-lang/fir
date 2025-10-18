@@ -207,7 +207,7 @@ namedType(state: ParserState[Token]) NamedType / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                let args = once(arg0).chain(args.iter()).toVec()
+                let args = Vec.fromIter(once(arg0).chain(args.iter()))
                 NamedType(
                     name = newTyId(name, state._tokens),
                     args =
@@ -345,7 +345,9 @@ recordType(state: ParserState[Token]) RecordType / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                let fields: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
+                let fields: Vec[Named[Type]] = Vec.fromIter(
+                    once(f0).chain(fs.iter()),
+                )
                 RecordType(
                     fields,
                     extension = ext.flatten(),
@@ -539,7 +541,7 @@ variantType(state: ParserState[Token]) VariantType / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
                 VariantType(
-                    alts = once(alt0).chain(alts.iter()).toVec(),
+                    alts = Vec.fromIter(once(alt0).chain(alts.iter())),
                     extension = ext.flatten(),
                     isRow = start.isRow,
                     _firstToken = start.start,
@@ -670,7 +672,9 @@ recordTypeFields(state: ParserState[Token]) Vec[Named[Type]] / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                let vec: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
+                let vec: Vec[Named[Type]] = Vec.fromIter(
+                    once(f0).chain(fs.iter()),
+                )
                 vec
             value,
     )
@@ -713,7 +717,9 @@ recordTypeFields(state: ParserState[Token]) Vec[Named[Type]] / U32:
                 Result.Err(err): state._cursor = optionalCursor0
                 Result.Ok(ok): ()
             let value = do:
-                let vec: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
+                let vec: Vec[Named[Type]] = Vec.fromIter(
+                    once(f0).chain(fs.iter()),
+                )
                 vec
             value,
     )
@@ -862,7 +868,7 @@ fnArgTys(state: ParserState[Token]) Vec[Type] / U32:
                 Result.Err(err): state._cursor = optionalCursor0
                 Result.Ok(ok): ()
             let value = do:
-                let vec: Vec[Type] = once(t0).chain(ts.iter()).toVec()
+                let vec: Vec[Type] = Vec.fromIter(once(t0).chain(ts.iter()))
                 vec
             value,
     )
@@ -1191,9 +1197,9 @@ typeParams(state: ParserState[Token]) Vec[Id] / U32:
                 Result.Err(err): state._cursor = optionalCursor0
                 Result.Ok(ok): ()
             let value = do:
-                let vec: Vec[Id] = once(newId(id0)).chain(
-                    ids.iter().map(|id: U32|: newId(id)),
-                ).toVec()
+                let vec: Vec[Id] = Vec.fromIter(
+                    once(newId(id0)).chain(ids.iter().map(|id: U32|: newId(id))),
+                )
                 vec
             value,
     )
@@ -1323,9 +1329,9 @@ conFields(state: ParserState[Token]) (fields: ConFields, lastToken: TokenIdx) / 
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                let vec: Vec[(name: Option[Id], ty: Type)] = once(f0).chain(
-                    fs.iter(),
-                ).toVec()
+                let vec: Vec[(name: Option[Id], ty: Type)] = Vec.fromIter(
+                    once(f0).chain(fs.iter()),
+                )
                 (fields = processFields(vec), lastToken = TokenIdx(idx = last))
             value,
     )
@@ -1627,15 +1633,18 @@ blockExpr(state: ParserState[Token]) Expr / U32:
                     IfExpr(
                         _firstToken = TokenIdx(idx = cur),
                         branches =
-                            once(IfBranch(guard = cond0, body = body0)).chain(
-                                conds.iter().map(
-                                    |branch: (cond: Expr, body: Vec[Stmt])|:
-                                        IfBranch(
-                                            guard = branch.cond,
-                                            body = branch.body,
-                                        ),
+                            Vec.fromIter(
+                                once(IfBranch(guard = cond0, body = body0))
+                                    .chain(
+                                    conds.iter().map(
+                                        |branch: (cond: Expr, body: Vec[Stmt])|:
+                                            IfBranch(
+                                                guard = branch.cond,
+                                                body = branch.body,
+                                            ),
+                                    ),
                                 ),
-                            ).toVec(),
+                            ),
                         elseBranch = else_,
                     ),
                 )
@@ -2100,9 +2109,9 @@ args(state: ParserState[Token]) (args: Vec[Named[Expr]], cursorRight: U32) / U32
                         match args:
                             Option.None: Vec.empty()
                             Option.Some((arg0, args)):
-                                let vec: Vec[Named[Expr]] = once(arg0).chain(
-                                    args.iter(),
-                                ).toVec()
+                                let vec: Vec[Named[Expr]] = Vec.fromIter(
+                                    once(arg0).chain(args.iter()),
+                                )
                                 vec,
                     cursorRight = last,
                 )
@@ -2297,8 +2306,11 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                             Expr.Record(
                                 RecordExpr(
                                     fields =
-                                        once(fields.e0).chain(fields.es.iter())
-                                            .toVec(),
+                                        Vec.fromIter(
+                                            once(fields.e0).chain(
+                                                fields.es.iter(),
+                                            ),
+                                        ),
                                     _firstToken = TokenIdx(idx = first),
                                     _lastToken = TokenIdx(idx = last),
                                 ),
@@ -2708,7 +2720,7 @@ seqElems(state: ParserState[Token]) (elems: Vec[SeqElem], lbracket: TokenIdx, rb
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                let vec: Vec[SeqElem] = once(e0).chain(es.iter()).toVec()
+                let vec: Vec[SeqElem] = Vec.fromIter(once(e0).chain(es.iter()))
                 (
                     elems = vec,
                     lbracket = TokenIdx(idx = lbracket),
@@ -2930,7 +2942,7 @@ tyArgs(state: ParserState[Token]) TyArgs / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                let ts: Vec[Type] = once(t0).chain(ts.iter()).toVec()
+                let ts: Vec[Type] = Vec.fromIter(once(t0).chain(ts.iter()))
                 TyArgs(
                     args = ts,
                     _firstToken = TokenIdx(idx = first),
@@ -3454,13 +3466,14 @@ fnArgs(state: ParserState[Token]) Vec[FunArg] / U32:
                 Result.Err(err): state._cursor = optionalCursor0
                 Result.Ok(ok): ()
             let value = do:
-                let vec: Vec[FunArg] = once(FunArg(name = newId(v0), ty = ty0))
-                    .chain(
-                    vs.iter().map(
-                        |v: (v: U32, ty: Option[Type])|:
-                            FunArg(name = newId(v.v), ty = v.ty),
+                let vec: Vec[FunArg] = Vec.fromIter(
+                    once(FunArg(name = newId(v0), ty = ty0)).chain(
+                        vs.iter().map(
+                            |v: (v: U32, ty: Option[Type])|:
+                                FunArg(name = newId(v.v), ty = v.ty),
+                        ),
                     ),
-                ).toVec()
+                )
                 vec
             value,
     )
@@ -4056,7 +4069,7 @@ pat(state: ParserState[Token]) Pat / U32:
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let value = do:
-                Pat.Or(once(p0).chain(ps.iter()).toVec())
+                Pat.Or(Vec.fromIter(once(p0).chain(ps.iter())))
             value,
     )
     match altResult:
@@ -4296,7 +4309,9 @@ conFieldPats(state: ParserState[Token]) (fields: Vec[Named[Pat]], ignoreRest: Bo
                     ()
                     Option.Some(ok)
             let value = do:
-                let fields: Vec[Named[Pat]] = once(p0).chain(ps.iter()).toVec()
+                let fields: Vec[Named[Pat]] = Vec.fromIter(
+                    once(p0).chain(ps.iter()),
+                )
                 (fields = fields, ignoreRest = ignoreRest.unwrapOr(Bool.False))
             value,
     )
@@ -4483,8 +4498,9 @@ path(state: ParserState[Token]) Vec[Id] / U32:
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let value = do:
-                let vec: Vec[Id] = once(newId(p0)).chain(ps.iter().map(newId))
-                    .toVec()
+                let vec: Vec[Id] = Vec.fromIter(
+                    once(newId(p0)).chain(ps.iter().map(newId)),
+                )
                 vec
             value,
     )
@@ -4761,7 +4777,7 @@ context(state: ParserState[Token]) Context / U32:
             let value = do:
                 Context(
                     typeParams = Vec.empty(),
-                    preds = once(t0).chain(ts.iter()).toVec(),
+                    preds = Vec.fromIter(once(t0).chain(ts.iter())),
                     _firstToken = TokenIdx(idx = first),
                     _lastToken = TokenIdx(idx = last),
                 )
@@ -4840,7 +4856,7 @@ paramList(state: ParserState[Token]) Vec[FunArg] / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                let vec: Vec[FunArg] = once(p0).chain(ps.iter()).toVec()
+                let vec: Vec[FunArg] = Vec.fromIter(once(p0).chain(ps.iter()))
                 vec
             value,
     )
@@ -5079,7 +5095,7 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
                 ImplDecl(
                     context = ctx,
                     trait_ = newTyId(name, state._tokens),
-                    tys = once(t0).chain(ts.iter()).toVec(),
+                    tys = Vec.fromIter(once(t0).chain(ts.iter())),
                     items = rhs,
                     _firstToken = TokenIdx(idx = first),
                 )

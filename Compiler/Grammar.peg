@@ -113,7 +113,7 @@ type_ Type:
 
  namedType NamedType:
     name=^ "UpperId" argFirst=^ "[" arg0=type_ args=(_"," type_)* ","? argLast=^ "]":
-        let args = once(arg0).chain(args.iter()).toVec()
+        let args = Vec.fromIter(once(arg0).chain(args.iter()))
         NamedType(
             name = newTyId(name, state._tokens),
             args = Option.Some(TyArgs(
@@ -153,7 +153,7 @@ recordType RecordType:
         )
 
     start=recordTypeStart f0=recordTypeField fs=(_"," recordTypeField)* ext=recordTypeCont? last=^ ")":
-        let fields: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
+        let fields: Vec[Named[Type]] = Vec.fromIter(once(f0).chain(fs.iter()))
         RecordType(
             fields,
             extension = ext.flatten(),
@@ -201,7 +201,7 @@ variantType VariantType:
 
     start=variantTypeStart alt0=namedType alts=(_"," namedType)* ext=variantTypeCont? last=^ "]":
         VariantType(
-            alts = once(alt0).chain(alts.iter()).toVec(),
+            alts = Vec.fromIter(once(alt0).chain(alts.iter())),
             extension = ext.flatten(),
             isRow = start.isRow,
             _firstToken = start.start,
@@ -224,11 +224,11 @@ recordTypeFields Vec[Named[Type]]:
     f0=recordTypeField fs=(_"," recordTypeField)* "," ".." "LowerId":
         # TODO: Extension?
         # TODO: We do we need the type annotation here?
-        let vec: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
+        let vec: Vec[Named[Type]] = Vec.fromIter(once(f0).chain(fs.iter()))
         vec
 
     f0=recordTypeField fs=(_"," recordTypeField)* ","?:
-        let vec: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
+        let vec: Vec[Named[Type]] = Vec.fromIter(once(f0).chain(fs.iter()))
         vec
 
 
@@ -255,7 +255,7 @@ fnType FnType:
 
 fnArgTys Vec[Type]:
     t0=type_ ts=(_"," type_)* ","?:
-        let vec: Vec[Type] = once(t0).chain(ts.iter()).toVec()
+        let vec: Vec[Type] = Vec.fromIter(once(t0).chain(ts.iter()))
         vec
 
 
@@ -317,7 +317,7 @@ typeDecl TypeDecl:
 typeParams Vec[Id]:
     id0=^ "LowerId" ids=(_"," ^ _"LowerId")* ","?:
         let vec: Vec[Id] =
-            once(newId(id0)).chain(ids.iter().map(|id: U32|: newId(id))).toVec()
+            Vec.fromIter(once(newId(id0)).chain(ids.iter().map(|id: U32|: newId(id))))
         vec
 
 
@@ -346,7 +346,7 @@ conFields (fields: ConFields, lastToken: TokenIdx):
 
     "(" f0=conField fs=(_"," conField)* ","? last=^ ")":
         let vec: Vec[(name: Option[Id], ty: Type)] =
-            once(f0).chain(fs.iter()).toVec()
+            Vec.fromIter(once(f0).chain(fs.iter()))
         (fields = processFields(vec), lastToken = TokenIdx(idx = last))
 
 
@@ -386,9 +386,9 @@ blockExpr Expr:
         Expr.If(IfExpr(
             _firstToken = TokenIdx(idx = cur),
             branches =
-                once(IfBranch(guard = cond0, body = body0))
+                Vec.fromIter(once(IfBranch(guard = cond0, body = body0))
                     .chain(conds.iter().map(|branch: (cond: Expr, body: Vec[Stmt])|: IfBranch(guard = branch.cond, body = branch.body)))
-                    .toVec(),
+                    ),
             elseBranch = else_,
         ))
 
@@ -494,7 +494,7 @@ args (args: Vec[Named[Expr]], cursorRight: U32):
                  Vec.empty()
              Option.Some((arg0, args)):
                  let vec: Vec[Named[Expr]] =
-                     once(arg0).chain(args.iter()).toVec()
+                     Vec.fromIter(once(arg0).chain(args.iter()))
                  vec,
          cursorRight = last)
 
@@ -543,7 +543,7 @@ simpleExpr Expr:
                     ))
                 else:
                     Expr.Record(RecordExpr(
-                        fields = once(fields.e0).chain(fields.es.iter()).toVec(),
+                        fields = Vec.fromIter(once(fields.e0).chain(fields.es.iter())),
                         _firstToken = TokenIdx(idx = first),
                         _lastToken = TokenIdx(idx = last),
                     ))
@@ -683,7 +683,7 @@ seqElems (elems: Vec[SeqElem], lbracket: TokenIdx, rbracket: TokenIdx):
 
     lbracket=^ "[" e0=seqElem es=(_"," seqElem)* ","? rbracket=^ "]":
         let vec: Vec[SeqElem] =
-            once(e0).chain(es.iter()).toVec()
+            Vec.fromIter(once(e0).chain(es.iter()))
         (
             elems = vec,
             lbracket = TokenIdx(idx = lbracket),
@@ -725,7 +725,7 @@ constructor Constructor:
 
 tyArgs TyArgs:
     first=^ "[" t0=type_ ts=(_"," type_)* ","? last=^ "]":
-        let ts: Vec[Type] = once(t0).chain(ts.iter()).toVec()
+        let ts: Vec[Type] = Vec.fromIter(once(t0).chain(ts.iter()))
         TyArgs(
             args = ts,
             _firstToken = TokenIdx(idx = first),
@@ -782,9 +782,9 @@ altGuard Expr:
 fnArgs Vec[FunArg]:
     v0=^ "LowerId" ty0=(_":" type_)? vs=("," v=^ "LowerId" ty=(_":" type_)?)* ","?:
         let vec: Vec[FunArg] =
-            once(FunArg(name = newId(v0), ty = ty0))
+            Vec.fromIter(once(FunArg(name = newId(v0), ty = ty0))
                 .chain(vs.iter().map(|v: (v: U32, ty: Option[Type])|: FunArg(name = newId(v.v), ty = v.ty)))
-                .toVec()
+                )
         vec
 
 
@@ -878,7 +878,7 @@ assignOp AssignOp:
 
 pat Pat:
     p0=simplePat ps=(_"|" simplePat)*:
-        Pat.Or(once(p0).chain(ps.iter()).toVec())
+        Pat.Or(Vec.fromIter(once(p0).chain(ps.iter())))
 
 
 simplePat Pat:
@@ -935,7 +935,7 @@ conFieldPats (fields: Vec[Named[Pat]], ignoreRest: Bool):
     "..": (fields = Vec.empty(), ignoreRest = Bool.True)
 
     p0=conFieldPat ps=(_"," conFieldPat)* ignoreRest=conFieldPatsCont?:
-        let fields: Vec[Named[Pat]] = once(p0).chain(ps.iter()).toVec()
+        let fields: Vec[Named[Pat]] = Vec.fromIter(once(p0).chain(ps.iter()))
         (fields = fields, ignoreRest = ignoreRest.unwrapOr(Bool.False))
 
 
@@ -965,7 +965,7 @@ importDecl ImportDecl:
 
 path Vec[Id]:
     p0=^ "UpperId" ps=(_"/" ^ _"UpperId")*:
-        let vec: Vec[Id] = once(newId(p0)).chain(ps.iter().map(newId)).toVec()
+        let vec: Vec[Id] = Vec.fromIter(once(newId(p0)).chain(ps.iter().map(newId)))
         vec
 
 
@@ -1028,7 +1028,7 @@ context Context:
     first=^ "[" t0=type_ ts=(_"," type_)* ","? last=^ "]":
         Context(
             typeParams = Vec.empty(),   # generated by the type checker
-            preds = once(t0).chain(ts.iter()).toVec(),
+            preds = Vec.fromIter(once(t0).chain(ts.iter())),
             _firstToken = TokenIdx(idx = first),
             _lastToken = TokenIdx(idx = last),
         )
@@ -1040,7 +1040,7 @@ paramList Vec[FunArg]:
 
     "(" p0=param ps=(_"," param)* ","? ")":
         let vec: Vec[FunArg] =
-            once(p0).chain(ps.iter()).toVec()
+            Vec.fromIter(once(p0).chain(ps.iter()))
         vec
 
 
@@ -1077,7 +1077,7 @@ implDecl ImplDecl:
         ImplDecl(
             context = ctx,
             trait_ = newTyId(name, state._tokens),
-            tys = once(t0).chain(ts.iter()).toVec(),
+            tys = Vec.fromIter(once(t0).chain(ts.iter())),
             items = rhs,
             _firstToken = TokenIdx(idx = first),
         )
