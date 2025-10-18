@@ -2,6 +2,7 @@ import [
     Compiler/NameResolver,
     Compiler/Program,
     Compiler/TypeCheck/Convert,
+    Compiler/TypeCheck/TraitEnv,
 ]
 
 
