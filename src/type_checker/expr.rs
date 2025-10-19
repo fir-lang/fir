@@ -320,14 +320,6 @@ pub(super) fn check_expr(
                 .get(ty)
                 .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(&expr.loc), ty))
                 .get(member)
-                .or_else(|| {
-                    tc_state
-                        .tys
-                        .associated_fn_schemes
-                        .get(ty)
-                        .unwrap()
-                        .get(member)
-                })
                 .unwrap_or_else(|| {
                     panic!(
                         "{}: Type {} does not have associated function {}",
