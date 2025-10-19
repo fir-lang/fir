@@ -1,6 +1,7 @@
 # Import all modules temporarily to type check all.
 import [
     Compiler/Program,
+    Compiler/ScopeMap,
     Compiler/TypeCheck/Convert,
     Compiler/TypeCheck/Error,
     Compiler/TypeCheck/Normalization,
@@ -14,7 +15,7 @@ import [
 
 
 prepTcEnvs(pgm: Program):
-    panic("TODO")
+    ()
 
 
 ## The module environment holds type constructors, traits (with impls), and
