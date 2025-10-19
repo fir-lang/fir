@@ -14,7 +14,7 @@ import [
 
 
 prepTcEnvs(pgm: Program):
-    ()
+    panic("TODO")
 
 
 ## The module environment holds type constructors, traits (with impls), and
@@ -48,7 +48,7 @@ type ModuleTcEnv(
 )
 
 
-## Type checkign state for a single function (top-level, associated, or method).
+## Type checking state for a single function (top-level, associated, or method).
 type FunTcEnv(
     _modEnv: ModuleTcEnv,
 
@@ -83,3 +83,20 @@ type FunTcEnv(
     ## The function context.
     _assumps: Vec[Pred],
 )
+
+
+FunTcEnv.new(modEnv: ModuleTcEnv, exnTy: Ty, retTy: Ty, assumps: Vec[Pred]) FunTcEnv:
+    FunTcEnv(
+        _modEnv = modEnv,
+        _termEnv = ScopeMap.empty(),
+        _varGen = UVarGen.new(),
+        _exnTy = exnTy,
+        _retTy = retTy,
+        _preds = Vec.withCapacity(10),
+        _assumps = assumps,
+    )
+
+
+## Merge an imported module's env into the current module's.
+ModuleTcEnv.mergeImport(self, importEnv: ModuleTcEnv):
+    panic("TODO")
