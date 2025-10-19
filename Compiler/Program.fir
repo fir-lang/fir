@@ -12,11 +12,18 @@ import [
 
 type Program(
     _modules: Vec[Module],
+
+    ## Strongly connected graphs of modules.
+    ##
+    ## Edges indicate dependencies (imports).
+    ##
+    ## Initialized by `prepModuleEnvs`.
+    _depGraph: Option[Vec[HashSet[ModuleIdx]]],
 )
 
 
 Program.new() Program:
-    Program(_modules = Vec.empty())
+    Program(_modules = Vec.empty(), _depGraph = Option.None)
 
 
 ## Load a module, or return it from the cache if it's already loaded.
@@ -147,6 +154,7 @@ Program.prepModuleEnvs(self):
     # in the SCC. So we create SCCs, and then create one module env for each
     # SCC, which is shared with all of the modules of the SCC.
     let sccs = _sccs(self)
+    self._depGraph = Option.Some(sccs)
 
     print("Program modules:")
     for i: U32 in range(u32(0), self._modules.len()):
