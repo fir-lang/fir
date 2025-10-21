@@ -7,6 +7,7 @@ import [
     Compiler/Error,
     Compiler/Grammar,
     Compiler/Scanner,
+    Compiler/TypeCheck,
 ]
 
 
