@@ -19,11 +19,22 @@ type Program(
     ##
     ## Initialized by `prepModuleEnvs`.
     _depGraph: Option[Vec[HashSet[ModuleIdx]]],
+
+    ## Type environments of SCCs.
+    ##
+    ## Because every module in a SCC currently has access to the same things (we
+    ## don't have import lists, renamed imports etc. yet), we map SCCs to type
+    ## environments, rather than modules. We'll update this later.
+    _sccTyEnvs: HashMap[U32, ModuleTcEnv],
 )
 
 
 Program.new() Program:
-    Program(_modules = Vec.empty(), _depGraph = Option.None)
+    Program(
+        _modules = Vec.empty(),
+        _depGraph = Option.None,
+        _sccTyEnvs = HashMap.withCapacity(10),
+    )
 
 
 ## Load a module, or return it from the cache if it's already loaded.
@@ -91,7 +102,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
                         let old = funItems.insert(funName, funDecl)
                         if old is Option.Some(_):
                             panic(
-                                "Function`funName` defined multipe times in `filePath`",
+                                "Function `funName` defined multipe times in `filePath`",
                             )
 
             TopDecl.Trait(traitDecl):

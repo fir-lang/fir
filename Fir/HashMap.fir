@@ -162,6 +162,10 @@ HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
     panic("unreachable")
 
 
+HashMap.containsKey[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Bool:
+    self.get(key) is Option.Some(_)
+
+
 impl[ToStr[k], ToStr[v]] ToStr[HashMap[k, v]]:
     toStr(self: HashMap[k, v]) Str:
         let buf = StrBuf.withCapacity(100)

@@ -18,6 +18,38 @@ prepTcEnvs(pgm: Program):
     ()
 
 
+prepSccTyEnv(pgm: Program, sccIdx: U32) ModuleTcEnv:
+    if pgm._sccTyEnvs.get(sccIdx) is Option.Some(env):
+        return env
+
+    let moduleDeps: HashSet[ModuleIdx] = pgm._depGraph.unwrap().get(sccIdx)
+
+    let sccDeps: HashSet[U32] = HashSet.fromIter(
+        moduleDeps.iter().map(
+            |modIdx: ModuleIdx|: pgm._modules.get(modIdx._idx)._sccIdx.unwrap(),
+        ),
+    )
+
+    let sccModules = pgm._depGraph.unwrap().get(sccIdx)
+
+    # Pick one of the modules from the SCC. It doesn't matter which one as all
+    # modules in the SCC will have the same type checking environment.
+    let selfModuleIdx: ModuleIdx = sccModules.iter().next().unwrap()
+    let selfModule = pgm._modules.get(selfModuleIdx._idx)
+
+    let selfTcEnv = ModuleTcEnv.fromModule(selfModule)
+
+    for depScc: U32 in sccDeps.iter():
+        let depSccEnv = prepSccTyEnv(pgm, depScc)
+        selfTcEnv.mergeImport(depSccEnv)
+
+    selfTcEnv
+
+
+# ------------------------------------------------------------------------------
+# Module type checking environment
+
+
 ## The module environment holds type constructors, traits (with impls), and
 ## associated and top-level functions available in the module.
 type ModuleTcEnv(
@@ -47,6 +79,23 @@ type ModuleTcEnv(
     ## with the name.
     _methodSchemes: HashMap[Str, Vec[(id: Str, scheme: Scheme)]],
 )
+
+
+## Create a type checking environment with just the items in the module `mod`.
+##
+## This does not handle imports. Only populates the environment with the items
+## in the module.
+ModuleTcEnv.fromModule(mod: Module) ModuleTcEnv:
+    panic("TODO")
+
+
+## Merge an imported module's env into the current module's.
+ModuleTcEnv.mergeImport(self, importEnv: ModuleTcEnv):
+    panic("TODO")
+
+
+# ------------------------------------------------------------------------------
+# Function type checking environment
 
 
 ## Type checking state for a single function (top-level, associated, or method).
@@ -96,8 +145,3 @@ FunTcEnv.new(modEnv: ModuleTcEnv, exnTy: Ty, retTy: Ty, assumps: Vec[Pred]) FunT
         _preds = Vec.withCapacity(10),
         _assumps = assumps,
     )
-
-
-## Merge an imported module's env into the current module's.
-ModuleTcEnv.mergeImport(self, importEnv: ModuleTcEnv):
-    panic("TODO")
