@@ -10,6 +10,10 @@ type TraitEnv(
 )
 
 
+TraitEnv.empty() TraitEnv:
+    TraitEnv(_map = HashMap.empty(),)
+
+
 # Example: `impl[Iterator[iter, a]] Iterator[Map[iter, a, b], b]: ...`
 #[derive(ToDoc)]
 type TraitImpl(
