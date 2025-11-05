@@ -119,10 +119,7 @@ HashMap._insert[Hash[k], Eq[k]](
     let index = hash.mod(elems.len())
     match elems.get(index):
         Option.None:
-            elems.set(
-                index,
-                Option.Some(Elem(key = key, value = value, next = Option.None)),
-            )
+            elems.set(index, Option.Some(Elem(key, value, next = Option.None)))
             return Option.None
         Option.Some(elem):
             loop:
@@ -135,11 +132,7 @@ HashMap._insert[Hash[k], Eq[k]](
                         Option.Some(next): elem = next
                         Option.None:
                             elem.next = Option.Some(
-                                Elem(
-                                    key = key,
-                                    value = value,
-                                    next = Option.None,
-                                ),
+                                Elem(key, value, next = Option.None),
                             )
                             return Option.None
 
