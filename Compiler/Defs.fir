@@ -1,7 +1,10 @@
 ## Defines identifiers, packages, modules, module-level items.
 
 
-import [Compiler/Ast]
+import [
+    Compiler/Ast,
+    Compiler/TypeCheck/TyCon,
+]
 
 
 # ------------------------------------------------------------------------------
@@ -129,6 +132,9 @@ type Module(
     _idx: ModuleIdx,
 
     # --------------------------------------------------------------------------
+    # ASTs of definitions in the module.
+    #
+    # These don't include imported things.
 
     ## Functions defined in the module.
     _funItems: HashMap[Str, FunDecl],
@@ -154,6 +160,13 @@ type Module(
     _tokens: Array[Token],
 
     # --------------------------------------------------------------------------
+    # Environments for name resolving.
+    #
+    # At this stage we still can't create type constructors and schemes, but the
+    # environments can refer to things in other modules.
+    #
+    # Conceptually the values here are references to items, potentially in other
+    # modules.
 
     ## Term environment of the module, used for name resolving.
     _termEnv: HashMap[Str, VarDefIdx],
@@ -163,6 +176,23 @@ type Module(
 
     ## Type environment of the module, used for name resolving.
     _tyEnv: HashMap[Str, TyDefIdx],
+
+    # --------------------------------------------------------------------------
+    # Details of the definitions in the module:
+    #
+    # - Kinds, constructors, fields, methods of type constructors
+    #   (types and traits)
+    #
+    # - Schemes of top-level and associated functions.
+
+    ## Type constructors.
+    _cons: HashMap[Str, TyCon],
+
+    ## Top-level function schemes.
+    _topSchemes: HashMap[Str, Scheme],
+
+    ## Associated function schemes.
+    _assocFnSchemes: HashMap[Str, HashMap[Str, Scheme]],
 
     # --------------------------------------------------------------------------
 

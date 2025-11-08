@@ -141,6 +141,9 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
         _termEnv = HashMap.withCapacity(100),
         _assocTermEnv = HashMap.withCapacity(10),
         _tyEnv = HashMap.withCapacity(100),
+        _cons = HashMap.withCapacity(100),
+        _topSchemes = HashMap.withCapacity(10),
+        _assocFnSchemes = HashMap.withCapacity(100),
         _sccIdx = Option.None,
     )
 
