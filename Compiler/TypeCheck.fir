@@ -61,13 +61,13 @@ type ModuleTcEnv(
     _traitEnv: TraitEnv,
 
     ## Type constructors.
-    _cons: HashMap[Str, TyCon],
+    _cons: HashMap[Str, TcItem[TyId, TyCon]],
 
     ## Top-level function schemes.
-    _topSchemes: HashMap[Str, Scheme],
+    _topSchemes: HashMap[Str, TcItem[VarId, Scheme]],
 
     ## Associated function schemes.
-    _assocFnSchemes: HashMap[Str, HashMap[Str, Scheme]],
+    _assocFnSchemes: HashMap[Str, HashMap[Str, TcItem[VarId, Scheme]]],
 
     ## Type schemes of methods.
     ##
@@ -85,9 +85,32 @@ type ModuleTcEnv(
 )
 
 
-type Imported[def](
-    def: def,
-    imports: Vec[Import],
+## An item (function, associated function, method, type, trait) defined
+## somewhere in the program. (current module or imported)
+type TcItem[idx, info](
+    ## Reference to the definition of the item.
+    idx: idx,
+
+    ## The details of the definition we need to type check a module.
+    ##
+    ## For functions this will be the type scheme of the function.
+    ##
+    ## For types this will be the type info:
+    ## - Constructors (and fields etc.) of types
+    ## - Methods of traits
+    ## - Kinds
+    ## - etc.
+    info: info,
+
+    ## Import paths of the item.
+    ##
+    ## An item can be imported via different paths. This will have all of those
+    ## paths.
+    ##
+    ## For items defined in the current module this will be empty.
+    ##
+    ## TODO: Introduce an import path type and use it here.
+    imports: Vec[Vec[Id]],
 )
 
 
@@ -121,16 +144,19 @@ ModuleTcEnv.addImportedThings(self, importedEnv: ModuleTcEnv):
     # problem as long as we import the same thing.
 
     # Add type constructors.
-    for con: HashMapEntry[Str, TyCon] in importedEnv._cons.iter():
+    for con: HashMapEntry[Str, TcItem[TyId, TyCon]] in importedEnv._cons.iter():
         let old = self._cons.insert(con.key, con.value)
         if old is Option.Some(_):
+            # TODO: Handle importing the same type. (compare TyIds, update
+            # import list)
             panic("Type `con.key` imported multiple times")
 
     # Add traits.
     # TODO: TraitEnv doesn't let you rename traits. Needs refactoring.
 
     # Add top-level functions.
-    for top: HashMapEntry[Str, Scheme] in importedEnv._topSchemes.iter():
+    for top: HashMapEntry[Str, TcItem[VarId, Scheme]] in
+            importedEnv._topSchemes.iter():
         let old = self._topSchemes.insert(top.key, top.value)
         if old is Option.Some(_):
             panic("Top-level function `top.key` imported multiple times")
@@ -138,7 +164,7 @@ ModuleTcEnv.addImportedThings(self, importedEnv: ModuleTcEnv):
     # Add associated functions.
     # TODO: We may import a type with another name, the associated function
     # should be added to the right type when we do that.
-    for assoc: HashMapEntry[Str, HashMap[Str, Scheme]] in
+    for assoc: HashMapEntry[Str, HashMap[Str, TcItem[VarId, Scheme]]] in
             importedEnv._assocFnSchemes.iter():
         let tyMap = match self._assocFnSchemes.get(assoc.key):
             Option.Some(tyMap): tyMap
@@ -147,7 +173,7 @@ ModuleTcEnv.addImportedThings(self, importedEnv: ModuleTcEnv):
                 self._assocFnSchemes.insert(assoc.key, tyMap)
                 tyMap
 
-        for fun: HashMapEntry[Str, Scheme] in assoc.value.iter():
+        for fun: HashMapEntry[Str, TcItem[VarId, Scheme]] in assoc.value.iter():
             let old = tyMap.insert(fun.key, fun.value)
             if old is Option.Some(_):
                 panic(
