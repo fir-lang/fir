@@ -412,6 +412,7 @@ ImportDecl.format(self, tokens: Array[Token]) Doc:
     let lastToken = lbracket
 
     let pathIdx: U32 = 0
+    let trailingComma = Bool.False
     for path: Vec[Id] in self.paths.iter():
         for id: Id in path.iter():
             lastToken = id.token
@@ -423,11 +424,17 @@ ImportDecl.format(self, tokens: Array[Token]) Doc:
 
         if nextNonTrivia(lastToken, tokens) is Option.Some(next)
                 and tokens.get(next.idx).kind is TokenKind.Comma:
+            trailingComma = Bool.True
             lastToken = next
             docRest += formatToken(next, tokens)
 
-        if pathIdx != self.paths.len() - 1:
+        if pathIdx == self.paths.len() - 1:
+            if self.paths.len() > 1 and not trailingComma:
+                docRest += Doc.whenNotFlat(Doc.char(','))
+        else:
             docRest += Doc.hardLine()
+
+        trailingComma = Bool.False
 
         pathIdx += 1
 
