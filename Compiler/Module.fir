@@ -1,6 +1,7 @@
 import [
     Compiler/Ast,
     Compiler/Defs,
+    Compiler/TypeCheck,
     Compiler/TypeCheck/Ty,
     Compiler/TypeCheck/TyCon,
 ]
@@ -106,6 +107,10 @@ type Module(
 
     ## Associated function schemes.
     _assocFnSchemes: HashMap[Str, HashMap[Str, Scheme]],
+
+    # --------------------------------------------------------------------------
+
+    _tcEnv: Option[ModuleTcEnv],
 
     # --------------------------------------------------------------------------
 

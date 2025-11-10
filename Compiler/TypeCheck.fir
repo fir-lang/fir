@@ -18,36 +18,50 @@ prepTcEnvs(pgm: Program):
     ()
 
 
-prepSccTyEnv(pgm: Program, sccIdx: U32) ModuleTcEnv:
-    if pgm._sccTyEnvs.get(sccIdx) is Option.Some(env):
-        return env
+prepModuleTyEnv(pgm: Program, modIdx: ModuleIdx):
+    if pgm._modules.get(modIdx._idx)._tcEnv is Option.Some(env):
+        return
 
-    let moduleDeps: HashSet[ModuleIdx] = pgm._depGraph.unwrap().get(sccIdx)
+    # Reminder: with the current import semantics each SCC has access to all of
+    # the things in the SCC.
+    #
+    # However we still need per-module (rather than per-SCC) environments
+    # because
+    #
+    # (1) the import paths of items available in each of the modules will be
+    #     different.
+    #
+    # (2) in the future we will add imported item lists so the environments will
+    #     be different in places other than just the import paths.
 
-    let sccDeps: HashSet[U32] = HashSet.fromIter(
-        moduleDeps.iter().map(
-            |modIdx: ModuleIdx|: pgm._modules.get(modIdx._idx)._sccIdx.unwrap(),
-        ),
-    )
+    let depGraph = pgm._depGraph.unwrap()
+    let sccIdx = pgm._modules.get(modIdx._idx)._sccIdx.unwrap()
+    let sccModules: HashSet[ModuleIdx] = pgm._depGraph.unwrap().get(sccIdx)
 
-    let sccModules = pgm._depGraph.unwrap().get(sccIdx)
+    # Initialize module tc envs with just the defined things in each of the
+    # modules.
+    for modIdx: ModuleIdx in sccModules.iter():
+        pgm._modules.get(modIdx._idx)._tcEnv = Option.Some(
+            moduleTcEnvFromDefinedItems(pgm._modules.get(modIdx._idx)),
+        )
 
-    # Pick one of the modules from the SCC. It doesn't matter which one as all
-    # modules in the SCC will have the same type checking environment.
-    let selfModuleIdx: ModuleIdx = sccModules.iter().next().unwrap()
-    let selfModule = pgm._modules.get(selfModuleIdx._idx)
+    let updated = Bool.True
 
-    # Initialize the env for the current SCC with the imported things (both
-    # types and terms).
-    let selfTcEnv = ModuleTcEnv.empty()
+    # Add imports until we can't add any more imports.
+    while updated:
+        updated = Bool.False
 
-    for depScc: U32 in sccDeps.iter():
-        let depSccEnv = prepSccTyEnv(pgm, depScc)
-        selfTcEnv.addImportedThings(depSccEnv)
+        for modIdx: ModuleIdx in sccModules.iter():
+            if addImports(pgm, modIdx):
+                updated = Bool.True
 
-    # TODO: Add things defined in the current SCC.
 
-    selfTcEnv
+moduleTcEnvFromDefinedItems(mod: Module) ModuleTcEnv:
+    panic("TODO")
+
+
+addImports(pgm: Program, modIdx: ModuleIdx) Bool:
+    panic("TODO")
 
 
 # ------------------------------------------------------------------------------

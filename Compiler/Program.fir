@@ -13,30 +13,18 @@ import [
 
 
 type Program(
+    ## Indexed by `ModuleIdx`.
     _modules: Vec[Module],
 
-    ## Strongly connected graphs of modules.
-    ##
-    ## Edges indicate dependencies (imports).
+    ## Strongly connected graphs of modules. Indexed by SCC indices.
     ##
     ## Initialized by `prepModuleEnvs`.
     _depGraph: Option[Vec[HashSet[ModuleIdx]]],
-
-    ## Type environments of SCCs.
-    ##
-    ## Because every module in a SCC currently has access to the same things (we
-    ## don't have import lists, renamed imports etc. yet), we map SCCs to type
-    ## environments, rather than modules. We'll update this later.
-    _sccTyEnvs: HashMap[U32, ModuleTcEnv],
 )
 
 
 Program.new() Program:
-    Program(
-        _modules = Vec.empty(),
-        _depGraph = Option.None,
-        _sccTyEnvs = HashMap.withCapacity(10),
-    )
+    Program(_modules = Vec.empty(), _depGraph = Option.None,)
 
 
 ## Load a module, or return it from the cache if it's already loaded.
@@ -145,6 +133,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
         _cons = HashMap.withCapacity(100),
         _topSchemes = HashMap.withCapacity(10),
         _assocFnSchemes = HashMap.withCapacity(100),
+        _tcEnv = Option.None,
         _sccIdx = Option.None,
     )
 
