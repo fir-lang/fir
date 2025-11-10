@@ -1,6 +1,7 @@
 import [
     Compiler/NameResolver,
     Compiler/Program,
+    Compiler/TypeCheck,
 ]
 
 
@@ -33,3 +34,4 @@ main():
     pgm.loadCachedModule(parts)
     pgm.prepModuleEnvs()
     resolveNames(pgm)
+    prepTcEnvs(pgm)
