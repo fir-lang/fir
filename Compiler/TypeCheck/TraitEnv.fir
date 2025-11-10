@@ -1,6 +1,6 @@
 import [
     Compiler/TypeCheck/Ty,
-    Compiler/TypeCheck/Unification
+    Compiler/TypeCheck/Unification,
 ]
 
 
