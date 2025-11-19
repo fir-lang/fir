@@ -25,6 +25,9 @@ main():
     map.insert("h", 9898)
     printStr(map.toDoc().render(80))
 
+    map = HashMap.empty()
+    print(map.get("hi"))
+
 # expected stdout:
 # {}
 # HashMap.[]
@@ -60,3 +63,4 @@ main():
 #     "a" = 2,
 #     "h" = 9898,
 # ]
+# Option.None

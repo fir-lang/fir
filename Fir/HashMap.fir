@@ -140,6 +140,8 @@ HashMap._insert[Hash[k], Eq[k]](
 
 
 HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
+    if self.isEmpty():
+        return Option.None
     let hash = key.hash()
     let index = hash.mod(self._buckets.len())
     let elem = self._buckets.get(index)
@@ -153,6 +155,10 @@ HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
                     elem = elem_.next
 
     panic("unreachable")
+
+
+HashMap.containsKey[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Bool:
+    self.get(key) is Option.Some(_)
 
 
 impl[ToStr[k], ToStr[v]] ToStr[HashMap[k, v]]:
