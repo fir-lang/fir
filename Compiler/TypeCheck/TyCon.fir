@@ -1,6 +1,7 @@
 import [Compiler/TypeCheck/Ty]
 
 
+#[derive(ToDoc)]
 type TyCon(
     ## Name of the type.
     name: Str,
@@ -21,6 +22,7 @@ TyCon.arity(self) U32:
 
 
 ## A type parameter with kind.
+#[derive(ToDoc)]
 type TyParam(
     name: Id,
     kind: Kind,
@@ -34,7 +36,7 @@ type TyConDetails:
 
 
 TyConDetails.placeholder() TyConDetails:
-    TyConDetails.Type(TypeDetails(cons = Vec.empty(), sum = Bool.False,))
+    TyConDetails.Type(TypeDetails(cons = Vec.empty(), sum = Bool.False))
 
 
 #[derive(ToDoc)]
@@ -74,6 +76,40 @@ type TypeDetails(
 
 # ------------------------------------------------------------------------------
 # Generated ToDoc implementations
+
+
+impl ToDoc[TyCon]:
+    toDoc(self: TyCon) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("name =") + Doc.nested(4, Doc.break_(1) + self.name.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("tyParams =")
+                + Doc.nested(4, Doc.break_(1) + self.tyParams.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("details =")
+                + Doc.nested(4, Doc.break_(1) + self.details.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("TyCon") + Doc.char('(') + args)
+
+
+impl ToDoc[TyParam]:
+    toDoc(self: TyParam) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("name =") + Doc.nested(4, Doc.break_(1) + self.name.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("kind =") + Doc.nested(4, Doc.break_(1) + self.kind.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("TyParam") + Doc.char('(') + args)
 
 
 impl ToDoc[TyConDetails]:

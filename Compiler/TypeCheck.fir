@@ -168,8 +168,35 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
 
 
 initModTyConDetails(pgm: Program, modIdx: ModuleIdx):
-    print("TODO: Initialize ty con details")
-    ()
+    let mod = pgm._modules.get(modIdx._idx)
+    let tcEnv = mod._tcEnv.unwrap()
+
+    for tyDecl: TypeDecl in mod._tyItems.values():
+        let tyDeclName = mod.idText(tyDecl.name)
+        let tyCon = tcEnv._cons.get(tyDeclName).unwrap()
+        let details = TyConDetails.Type(
+            TypeDetails(
+                cons =
+                    match tyDecl.rhs:
+                        Option.Some(TypeDeclRhs.Sum(cons)):
+                            Vec.fromIter(
+                                cons.iter().map(
+                                    |con: ConDecl| Str: mod.idText(con.name),
+                                ),
+                            )
+                        Option.Some(TypeDeclRhs.Product(_fields)):
+                            Vec.[tyDeclName]
+                        Option.None: Vec.[],
+                sum =
+                    not (tyDecl.rhs is Option.Some(TypeDeclRhs.Product(_fields))),
+            ),
+        )
+        tyCon.info.details = details
+
+    for traitDecl: TraitDecl in mod._traitItems.values():
+        let tyDeclName = mod.idText(traitDecl.name)
+        let tyCon = tcEnv._cons.get(tyDeclName).unwrap()
+        print("TODO: Initialize trait ty con details")
 
 
 # ------------------------------------------------------------------------------
@@ -209,6 +236,7 @@ type ModuleTcEnv(
 
 ## An item (function, associated function, method, type, trait) defined
 ## somewhere in the program. (current module or imported)
+#[derive(ToDoc)]
 type TcItem[idx, info](
     ## Reference to the definition of the item.
     idx: idx,
@@ -359,3 +387,26 @@ FunTcEnv.new(modEnv: ModuleTcEnv, exnTy: Ty, retTy: Ty, assumps: Vec[Pred]) FunT
         _preds = Vec.withCapacity(10),
         _assumps = assumps,
     )
+
+
+# ------------------------------------------------------------------------------
+# Generated ToDoc implementations
+
+
+impl[ToDoc[idx], ToDoc[info]] ToDoc[TcItem[idx, info]]:
+    toDoc(self: TcItem[idx, info]) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("info =") + Doc.nested(4, Doc.break_(1) + self.info.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("imports =")
+                + Doc.nested(4, Doc.break_(1) + self.imports.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("TcItem") + Doc.char('(') + args)
