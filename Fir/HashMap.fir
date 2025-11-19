@@ -140,6 +140,8 @@ HashMap._insert[Hash[k], Eq[k]](
 
 
 HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
+    if self.len() == 0:
+        return Option.None
     let hash = key.hash()
     let index = hash.mod(self._buckets.len())
     let elem = self._buckets.get(index)

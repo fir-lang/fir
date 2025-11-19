@@ -92,23 +92,6 @@ type Module(
     _tyEnv: HashMap[Str, TyDefIdx],
 
     # --------------------------------------------------------------------------
-    # Details of the definitions in the module:
-    #
-    # - Kinds, constructors, fields, methods of type constructors
-    #   (types and traits)
-    #
-    # - Schemes of top-level and associated functions.
-
-    ## Type constructors.
-    _cons: HashMap[Str, TyCon],
-
-    ## Top-level function schemes.
-    _topSchemes: HashMap[Str, Scheme],
-
-    ## Associated function schemes.
-    _assocFnSchemes: HashMap[Str, HashMap[Str, Scheme]],
-
-    # --------------------------------------------------------------------------
 
     _tcEnv: Option[ModuleTcEnv],
 

@@ -15,7 +15,18 @@ import [
 
 
 prepTcEnvs(pgm: Program):
-    ()
+    # Prep envs in dependency order: from imported SCCs to importing SCCs.
+    # In the future: we probably want to prep SCC envs on demand to allow
+    # prepping only the needed envs. I.e. recursively prep envs, cache prepped
+    # envs.
+    for scc: HashSet[ModuleIdx] in pgm._depGraph.unwrap().iter():
+        for modIdx: ModuleIdx in scc.iter():
+            prepModuleTyEnv(pgm, modIdx)
+
+    # All modules have access to all `TyCon`s that they need, add `TyCon`
+    # details.
+    for modIdx: U32 in range(u32(0), pgm._modules.len()):
+        initModTyConDetails(pgm, ModuleIdx(_idx = modIdx))
 
 
 prepModuleTyEnv(pgm: Program, modIdx: ModuleIdx):
@@ -34,34 +45,131 @@ prepModuleTyEnv(pgm: Program, modIdx: ModuleIdx):
     # (2) in the future we will add imported item lists so the environments will
     #     be different in places other than just the import paths.
 
+    # The way we create type envs for the modules of a SCC is similar to the way
+    # we process the whole program in the interpreter (in multiple steps), but
+    # with some differences to handle SCC modules importing each other.
+    #
+    # - Initialize types for each of the modules, without the details
+    #   (`TyConDetails`).
+    #
+    # - Add type imports to modules in the SCCs.
+    #
+    # - At this point each of the module in the SCC has all of the types that
+    #   they need, so add `TyConDetails`.
+    #
+    # - Initialize top-level, associated, and method schemes in each of the
+    #   modules.
+    #
+    # - Add function imports to each of the modules.
+
     let depGraph = pgm._depGraph.unwrap()
+
+    # SCC index of the current module.
     let sccIdx = pgm._modules.get(modIdx._idx)._sccIdx.unwrap()
+
+    # Modules in the current SCC.
     let sccModules: HashSet[ModuleIdx] = pgm._depGraph.unwrap().get(sccIdx)
 
-    # Initialize module tc envs with just the defined things in each of the
-    # modules.
+    initSccTyCons(pgm, sccModules)
+
+
+initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
+    # Initialize empty type checking envs.
     for modIdx: ModuleIdx in sccModules.iter():
-        pgm._modules.get(modIdx._idx)._tcEnv = Option.Some(
-            moduleTcEnvFromDefinedItems(pgm._modules.get(modIdx._idx)),
-        )
+        let mod: Module = pgm._modules.get(modIdx._idx)
+        assert(mod._tcEnv is Option.None)
+        mod._tcEnv = Option.Some(ModuleTcEnv.empty())
 
+    # Initialize types defined in the current SCC first.
+    for modIdx: ModuleIdx in sccModules.iter():
+        let mod: Module = pgm._modules.get(modIdx._idx)
+        let modCons: HashMap[Str, TcItem[TyDefIdx, TyCon]] = mod._tcEnv.unwrap()
+            ._cons
+        let modTokens = mod._tokens
+
+        for tyDecl: TypeDecl in mod._tyItems.values():
+            let tyDeclName = mod.idText(tyDecl.name)
+            let old = modCons.insert(
+                tyDeclName,
+                TcItem(
+                    idx = mod._tyEnv.get(tyDeclName).unwrap(),
+                    info =
+                        TyCon(
+                            name = tyDeclName,
+                            tyParams = Vec.empty(),
+                            details = TyConDetails.placeholder(),
+                        ),
+                    imports = HashSet.[modIdx],
+                ),
+            )
+            assert(old is Option.None)
+
+        for traitDecl: TraitDecl in mod._traitItems.values():
+            let tyDeclName = mod.idText(traitDecl.name)
+            let old = modCons.insert(
+                tyDeclName,
+                TcItem(
+                    idx = mod._tyEnv.get(tyDeclName).unwrap(),
+                    info =
+                        TyCon(
+                            name = tyDeclName,
+                            tyParams = Vec.empty(),
+                            details = TyConDetails.placeholder(),
+                        ),
+                    imports = HashSet.[modIdx],
+                ),
+            )
+            assert(old is Option.None)
+
+    # Add imports until none of the modules in the SCC import anything anymore.
+    # Note: we could handle the imports from other SCCs first and then never
+    # soncider them again in this loop. For now keep the cost simple (and more
+    # obviously corret) at the cost of compile time performance.
     let updated = Bool.True
-
-    # Add imports until we can't add any more imports.
     while updated:
         updated = Bool.False
 
         for modIdx: ModuleIdx in sccModules.iter():
-            if addImports(pgm, modIdx):
-                updated = Bool.True
+            let mod: Module = pgm._modules.get(modIdx._idx)
+            let modCons = mod._tcEnv.unwrap()._cons
+            for importedModIdx: ModuleIdx in mod._imports.iter():
+                let importedMod = pgm._modules.get(importedModIdx._idx)
+                let importedModuleCons = importedMod._tcEnv.unwrap()._cons
+                for importedItemEntry: HashMapEntry[Str, TcItem[TyDefIdx, TyCon]] in
+                        importedModuleCons.iter():
+                    let importedItemName = importedItemEntry.key
+                    let importedItem = importedItemEntry.value
+
+                    # If a type with the name is already imported, it should
+                    # have the same `TyDefIdx`.
+                    match modCons.get(importedItemName):
+                        Option.Some(existingItem):
+                            if existingItem.idx != importedItem.idx:
+                                panic(
+                                    "Type `importedItemName` imported/defined multiple times in `mod._filePath`",
+                                )
+
+                            let new = existingItem.imports.insert(importedModIdx)
+
+                            # Note: we don't have `|=` syntax yet for `updated |= new`.
+                            if new:
+                                updated = Bool.True
+
+                        Option.None:
+                            modCons.insert(
+                                importedItemName,
+                                TcItem(
+                                    idx = importedItem.idx,
+                                    info = importedItem.info,
+                                    imports = HashSet.[importedModIdx],
+                                ),
+                            )
+                            updated = Bool.True
 
 
-moduleTcEnvFromDefinedItems(mod: Module) ModuleTcEnv:
-    panic("TODO")
-
-
-addImports(pgm: Program, modIdx: ModuleIdx) Bool:
-    panic("TODO")
+initModTyConDetails(pgm: Program, modIdx: ModuleIdx):
+    print("TODO: Initialize ty con details")
+    ()
 
 
 # ------------------------------------------------------------------------------
@@ -75,13 +183,13 @@ type ModuleTcEnv(
     _traitEnv: TraitEnv,
 
     ## Type constructors.
-    _cons: HashMap[Str, TcItem[TyId, TyCon]],
+    _cons: HashMap[Str, TcItem[TyDefIdx, TyCon]],
 
     ## Top-level function schemes.
-    _topSchemes: HashMap[Str, TcItem[VarId, Scheme]],
+    _topSchemes: HashMap[Str, TcItem[VarDefIdx, Scheme]],
 
     ## Associated function schemes.
-    _assocFnSchemes: HashMap[Str, HashMap[Str, TcItem[VarId, Scheme]]],
+    _assocFnSchemes: HashMap[Str, HashMap[Str, TcItem[VarDefIdx, Scheme]]],
 
     ## Type schemes of methods.
     ##
@@ -116,15 +224,14 @@ type TcItem[idx, info](
     ## - etc.
     info: info,
 
-    ## Import paths of the item.
+    ## Modules the item was imported from.
     ##
-    ## An item can be imported via different paths. This will have all of those
-    ## paths.
+    ## An item can be imported from different modules. This will have all of
+    ## those imported modules.
     ##
-    ## For items defined in the current module this will be empty.
-    ##
-    ## TODO: Introduce an import path type and use it here.
-    imports: Vec[Vec[Id]],
+    ## For items defined in the current module this will have just one element,
+    ## the defining module.
+    imports: HashSet[ModuleIdx],
 )
 
 
@@ -158,7 +265,8 @@ ModuleTcEnv.addImportedThings(self, importedEnv: ModuleTcEnv):
     # problem as long as we import the same thing.
 
     # Add type constructors.
-    for con: HashMapEntry[Str, TcItem[TyId, TyCon]] in importedEnv._cons.iter():
+    for con: HashMapEntry[Str, TcItem[TyDefIdx, TyCon]] in
+            importedEnv._cons.iter():
         let old = self._cons.insert(con.key, con.value)
         if old is Option.Some(_):
             # TODO: Handle importing the same type. (compare TyIds, update
@@ -169,7 +277,7 @@ ModuleTcEnv.addImportedThings(self, importedEnv: ModuleTcEnv):
     # TODO: TraitEnv doesn't let you rename traits. Needs refactoring.
 
     # Add top-level functions.
-    for top: HashMapEntry[Str, TcItem[VarId, Scheme]] in
+    for top: HashMapEntry[Str, TcItem[VarDefIdx, Scheme]] in
             importedEnv._topSchemes.iter():
         let old = self._topSchemes.insert(top.key, top.value)
         if old is Option.Some(_):
@@ -178,7 +286,7 @@ ModuleTcEnv.addImportedThings(self, importedEnv: ModuleTcEnv):
     # Add associated functions.
     # TODO: We may import a type with another name, the associated function
     # should be added to the right type when we do that.
-    for assoc: HashMapEntry[Str, HashMap[Str, TcItem[VarId, Scheme]]] in
+    for assoc: HashMapEntry[Str, HashMap[Str, TcItem[VarDefIdx, Scheme]]] in
             importedEnv._assocFnSchemes.iter():
         let tyMap = match self._assocFnSchemes.get(assoc.key):
             Option.Some(tyMap): tyMap
@@ -187,7 +295,8 @@ ModuleTcEnv.addImportedThings(self, importedEnv: ModuleTcEnv):
                 self._assocFnSchemes.insert(assoc.key, tyMap)
                 tyMap
 
-        for fun: HashMapEntry[Str, TcItem[VarId, Scheme]] in assoc.value.iter():
+        for fun: HashMapEntry[Str, TcItem[VarDefIdx, Scheme]] in
+                assoc.value.iter():
             let old = tyMap.insert(fun.key, fun.value)
             if old is Option.Some(_):
                 panic(

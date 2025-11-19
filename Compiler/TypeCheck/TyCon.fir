@@ -33,6 +33,10 @@ type TyConDetails:
     Type(TypeDetails)
 
 
+TyConDetails.placeholder() TyConDetails:
+    TyConDetails.Type(TypeDetails(cons = Vec.empty(), sum = Bool.False,))
+
+
 #[derive(ToDoc)]
 type TraitDetails(
     ## Methods of the trait, with optional default implementations.
