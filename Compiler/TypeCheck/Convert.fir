@@ -132,21 +132,22 @@ convertNamedTy(module: Module, tys: TyMap, namedTy: NamedType, loc: Loc) Ty / Ty
     let tyArgs = namedTy.args
     let numTyArgs = namedTy.numTyArgs()
 
-    let tyCon = tys.getCon(tyName).unwrapOrElse(
-        ||: throw(TypeError(loc, msg = "Unknown type `tyName`")),
-    )
+    let tyDefIdx = namedTy.name.def()
+    let tyDefName = tyDefIdx._name
 
-    if tyCon.arity() != numTyArgs:
+    let tyCon = module._tcEnv.unwrap()._cons.get(tyDefName).unwrap()
+
+    if tyCon.info.arity() != numTyArgs:
         throw(
             TypeError(
                 loc,
                 msg =
-                    "Incorrect number of type arguments to `tyName`, expected `tyCon.arity()`, found `numTyArgs`",
+                    "Incorrect number of type arguments to `tyName`, expected `tyCon.info.arity()`, found `numTyArgs`",
             ),
         )
 
     if numTyArgs == 0:
-        return Ty.Con(id = namedTy.name)
+        return Ty.Con(id = tyDefIdx)
 
     let convertedArgs: Vec[Ty] = Vec.fromIter(
         tyArgs.unwrap().args.iter().map(
@@ -154,4 +155,4 @@ convertNamedTy(module: Module, tys: TyMap, namedTy: NamedType, loc: Loc) Ty / Ty
         ),
     )
 
-    Ty.App(conId = namedTy.name, args = convertedArgs)
+    Ty.App(conId = tyDefIdx, args = convertedArgs)

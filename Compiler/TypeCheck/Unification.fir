@@ -14,7 +14,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
 
     match (ty1 = ty1, ty2 = ty2):
         (ty1 = Ty.Con(id = id1), ty2 = Ty.Con(id = id2)):
-            if id1.def() != id2.def():
+            if id1 != id2:
                 throw(
                     TypeError(
                         loc,
@@ -26,7 +26,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
             ty1 = Ty.App(conId = id1, args = args1),
             ty2 = Ty.App(conId = id2, args = args2),
         ):
-            if id1.def() != id2.def():
+            if id1 != id2:
                 throw(
                     TypeError(
                         loc,
@@ -305,13 +305,13 @@ unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) Bool:
     ty2 = ty2.normalize()
 
     match (ty1 = ty1, ty2 = ty2):
-        (ty1 = Ty.Con(id = id1), ty2 = Ty.Con(id = id2)): id1.def() == id2.def()
+        (ty1 = Ty.Con(id = id1), ty2 = Ty.Con(id = id2)): id1 == id2
 
         (
             ty1 = Ty.App(conId = id1, args = args1),
             ty2 = Ty.App(conId = id2, args = args2),
         ):
-            if id1.def() != id2.def():
+            if id1 != id2:
                 return Bool.False
 
             if args1.len() != args2.len():

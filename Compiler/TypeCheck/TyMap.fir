@@ -5,14 +5,22 @@ import [
 
 
 type TyMap(
-    cons: HashMap[Str, TyCon],
-    vars: HashMap[Str, Ty],
+    _vars: ScopeMap[Str, Ty],
 )
 
 
 TyMap.getVar(self, var_: Str) Option[Ty]:
-    self.vars.get(var_)
+    self._vars.get(var_)
 
 
-TyMap.getCon(self, con: Str) Option[TyCon]:
-    self.cons.get(con)
+TyMap.insertVar(self, var_: Str, ty: Ty):
+    self._vars.insert(var_, ty)
+    ()
+
+
+TyMap.enterVarScope(self):
+    self._vars.enterScope()
+
+
+TyMap.exitVarScope(self) HashMap[Str, Ty]:
+    self._vars.exitScope()

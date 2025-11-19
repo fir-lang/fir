@@ -12,7 +12,7 @@ import [
 type Ty:
     ## A type constructor with kind `*`. E.g. `U32`, `Bool`.
     Con(
-        id: TyId,
+        id: TyDefIdx,
     )
 
     ## A type application, e.g. `Vec[U32]`, `Result[E, T]`.
@@ -20,7 +20,7 @@ type Ty:
     ## Invariant: the `args` vector is not empty. Nullary constructor
     ## applications are represented as `Ty.Con`.
     App(
-        conId: TyId,
+        conId: TyDefIdx,
         args: Vec[Ty],
     )
 
