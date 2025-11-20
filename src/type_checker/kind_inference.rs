@@ -33,6 +33,8 @@ fn add_missing_type_params_fun(
     tvs: &mut OrderMap<Id, Option<Kind>>,
     _loc: &ast::Loc,
 ) {
+    assert!(sig.context.type_params.is_empty());
+
     let bound_vars: Set<Id> = tvs.keys().cloned().collect();
 
     for pred in &sig.context.preds {

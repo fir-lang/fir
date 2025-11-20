@@ -4,6 +4,7 @@ import [
     Compiler/ScopeMap,
     Compiler/TypeCheck/Convert,
     Compiler/TypeCheck/Error,
+    Compiler/TypeCheck/KindInference,
     Compiler/TypeCheck/Normalization,
     Compiler/TypeCheck/RowUtils,
     Compiler/TypeCheck/TraitEnv,

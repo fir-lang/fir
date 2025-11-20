@@ -155,9 +155,13 @@ Vec.last(self: Vec[t]) Option[t]:
     Option.Some(self._data.get(len - 1))
 
 
-Vec.sort[Ord[t]](self: Vec[t]):
+Vec.sort[Ord[t]](self: Vec[t]) / exn:
+    self.sortBy(Ord.cmp[t, exn])
+
+
+Vec.sortBy(self: Vec[t], cmp: Fn(t, t) Ordering / exn) / exn:
     if self.len() != 0:
-        _quicksort(self, 0, self.len() - 1)
+        _quicksort(self, 0, self.len() - 1, cmp)
 
 
 ## Take the backing array of this `Vec`.
@@ -170,24 +174,24 @@ Vec.takeArray(self: Vec[t]) Array[t]:
     array
 
 
-_quicksort[Ord[t]](vec: Vec[t], low: U32, high: U32):
+_quicksort(vec: Vec[t], low: U32, high: U32, cmp: Fn(t, t) Ordering / exn) / exn:
     if low >= high:
         return
 
-    let p = _partition(vec, low, high)
+    let p = _partition(vec, low, high, cmp)
 
     if p != low:
-        _quicksort(vec, low, p - 1)
+        _quicksort(vec, low, p - 1, cmp)
 
-    _quicksort(vec, p + 1, high)
+    _quicksort(vec, p + 1, high, cmp)
 
 
-_partition[Ord[t]](vec: Vec[t], low: U32, high: U32) U32:
+_partition(vec: Vec[t], low: U32, high: U32, cmp: Fn(t, t) Ordering / exn) U32 / exn:
     let pivot = vec.get(high)
     let i = low
 
     for j: U32 in irange(low, high - 1):
-        if vec.get(j) <= pivot:
+        if cmp(vec.get(j), pivot) is Ordering.Less | Ordering.Equal:
             vec.swap(i, j)
             i += 1
 

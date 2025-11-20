@@ -584,7 +584,8 @@ Lexer._next(self) Option[Token] / Error:
             Token(kind = TokenKind.Exclamation, text = "!", byteIdx, line, col),
         )
 
-    if input.startsWith("and"):
+    if input.startsWith("and")
+            and not _isIdContStr(input.substr(3, input.len())):
         self._byteIdx += 3
         self._col += 3
         return Option.Some(
@@ -605,7 +606,7 @@ Lexer._next(self) Option[Token] / Error:
             Token(kind = TokenKind.Amp, text = "&", byteIdx, line, col),
         )
 
-    if input.startsWith("or"):
+    if input.startsWith("or") and not _isIdContStr(input.substr(2, input.len())):
         self._byteIdx += 2
         self._col += 2
         return Option.Some(
