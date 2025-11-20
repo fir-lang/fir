@@ -152,6 +152,11 @@ impl ToDoc[Str]:
         Doc.str("\"`self.toStr()`\"")
 
 
+impl Clone[Str]:
+    clone(self: Str) Str:
+        self
+
+
 type CharIter(
     # UTF-8 encoding of the string.
     _bytes: Array[U8],

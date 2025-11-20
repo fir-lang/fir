@@ -184,6 +184,24 @@ HashMap.containsKey[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Bool:
     self.get(key) is Option.Some(_)
 
 
+impl[Clone[k], Clone[v]] Clone[HashMap[k, v]]:
+    clone(self: HashMap[k, v]) HashMap[k, v]:
+        HashMap(
+            _buckets = self._buckets.clone(),
+            _capacityLeft = self._capacityLeft,
+            _numElements = self._numElements,
+        )
+
+
+impl[Clone[k], Clone[v]] Clone[Elem[k, v]]:
+    clone(self: Elem[k, v]) Elem[k, v]:
+        Elem(
+            key = self.key.clone(),
+            value = self.value.clone(),
+            next = self.next.clone(),
+        )
+
+
 impl[ToStr[k], ToStr[v]] ToStr[HashMap[k, v]]:
     toStr(self: HashMap[k, v]) Str:
         let buf = StrBuf.withCapacity(100)
