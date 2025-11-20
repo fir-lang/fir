@@ -303,10 +303,7 @@ OrderedMap.insert[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k, value: v) Opti
 
 OrderedMap.remove[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k) Option[v]:
     let insertionOrder = self._map.len()
-
-    # TODO
-    # self._map.remove(key).map(|v|: v.thing)
-    panic("")
+    self._map.remove(key).map(|v|: v.thing)
 
 
 OrderedMap.orderedEntries(self: OrderedMap[k, v]) Vec[HashMapEntry[k, v]]:

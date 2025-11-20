@@ -100,6 +100,29 @@ HashMap.values(self: HashMap[k, v]) Map[HashMapIter[k, v], HashMapEntry[k, v], v
 
 
 # Insert new value, return old value.
+HashMap.remove[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
+    let hash = key.hash()
+    let index = hash.mod(self._buckets.len())
+    match self._buckets.get(index):
+        Option.None: Option.None
+        Option.Some(elem):
+            let prevElem: Option[Elem[k, v]] = Option.None
+            loop:
+                if elem.key == key:
+                    match prevElem:
+                        Option.None: self._buckets.set(index, Option.None)
+                        Option.Some(prevElem): prevElem.next = elem.next
+                    return Option.Some(elem.value)
+                else:
+                    prevElem = Option.Some(elem)
+                    match elem.next:
+                        Option.Some(next): elem = next
+                        Option.None: return Option.None
+
+            panic("unreachable")
+
+
+# Insert new value, return old value.
 HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v) Option[v]:
     if self._capacityLeft == 0:
         self._grow()
@@ -111,16 +134,16 @@ HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v) Option[v]:
 
 
 HashMap._insert[Hash[k], Eq[k]](
-    elems: Array[Option[Elem[k, v]]],
+    buckets: Array[Option[Elem[k, v]]],
     key: k,
     value: v,
 ) Option[v]:
     let hash = key.hash()
-    let index = hash.mod(elems.len())
-    match elems.get(index):
+    let index = hash.mod(buckets.len())
+    match buckets.get(index):
         Option.None:
-            elems.set(index, Option.Some(Elem(key, value, next = Option.None)))
-            return Option.None
+            buckets.set(index, Option.Some(Elem(key, value, next = Option.None)))
+            Option.None
         Option.Some(elem):
             loop:
                 if elem.key == key:
@@ -136,7 +159,7 @@ HashMap._insert[Hash[k], Eq[k]](
                             )
                             return Option.None
 
-    panic("unreachable")
+            panic("unreachable")
 
 
 HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
