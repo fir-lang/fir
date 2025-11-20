@@ -241,6 +241,14 @@ impl[Eq[t]] Eq[Vec[t]]:
         Bool.True
 
 
+impl[Hash[t]] Hash[Vec[t]]:
+    hash(self: Vec[t]) U32:
+        let hash = self.len()
+        for t: t in self.iter():
+            hash += t.hash()
+        hash
+
+
 type VecIter[t](
     _vec: Vec[t],
     _idx: U32,
