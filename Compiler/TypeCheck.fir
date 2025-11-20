@@ -224,16 +224,15 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
         for method: FunDecl in traitDecl.items.iter():
             varMap.enterScope()
 
-            let funPreds: Vec[Pred] = match method.sig.context:
-                Option.Some(context):
-                    convertAndBindContext(
-                        mod,
-                        varMap,
-                        context.typeParams,
-                        context.preds,
-                        TyVarConversion.ToQVar,
-                    )
-                Option.None: Vec.empty()
+            let funPreds: Vec[Pred] = convertAndBindContext(
+                mod,
+                varMap,
+                method.sig.typeParams,
+                match method.sig.context:
+                    Option.None: Vec.empty()
+                    Option.Some(context): context.preds,
+                TyVarConversion.ToQVar,
+            )
 
             let argTys: Vec[Ty] = Vec.fromIter(
                 method.sig.params.iter().map(
@@ -268,10 +267,7 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             )
 
             let schemeQVars: Vec[QVar] = Vec.withCapacity(
-                traitDecl.typeParams.len()
-                    + method.sig.context.map(
-                        |ctx: Context| U32: ctx.typeParams.len(),
-                    ).unwrapOr(0),
+                traitDecl.typeParams.len() + method.sig.typeParams.len(),
             )
 
             for traitTyArgIdx: U32 in range(u32(0), traitDecl.typeParams.len()):
@@ -288,14 +284,13 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                     ),
                 )
 
-            if method.sig.context is Option.Some(methodContext):
-                for tyParam: TypeParam in methodContext.typeParams.iter():
-                    schemeQVars.push(
-                        QVar(
-                            id = LocalId(name = mod.idText(tyParam.name)),
-                            kind = tyParam.kind,
-                        ),
-                    )
+            for tyParam: TypeParam in method.sig.typeParams.iter():
+                schemeQVars.push(
+                    QVar(
+                        id = LocalId(name = mod.idText(tyParam.name)),
+                        kind = tyParam.kind,
+                    ),
+                )
 
             let scheme = Scheme(
                 qvars = schemeQVars,
