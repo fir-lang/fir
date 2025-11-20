@@ -266,9 +266,38 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 exn = Option.Some(exnTy),
             )
 
-            let scheme = Scheme(
-                qvars = Vec.empty(), # TODO
+            let schemeQVars: Vec[QVar] = Vec.withCapacity(
+                traitDecl.typeParams.len()
+                    + method.sig.context.map(
+                        |ctx: Context| U32: ctx.typeParams.len(),
+                    ).unwrapOr(0),
+            )
 
+            for traitTyArgIdx: U32 in range(u32(0), traitDecl.typeParams.len()):
+                schemeQVars.push(
+                    QVar(
+                        id =
+                            LocalId(
+                                name =
+                                    mod.idText(
+                                        traitDecl.typeParams.get(traitTyArgIdx),
+                                    ),
+                            ),
+                        kind = traitDecl.typeParamKinds.get(traitTyArgIdx),
+                    ),
+                )
+
+            if method.sig.context is Option.Some(methodContext):
+                for tyParam: TypeParam in methodContext.typeParams.iter():
+                    schemeQVars.push(
+                        QVar(
+                            id = LocalId(name = mod.idText(tyParam.name)),
+                            kind = tyParam.kind,
+                        ),
+                    )
+
+            let scheme = Scheme(
+                qvars = schemeQVars,
                 preds = funPreds,
                 ty = funTy,
                 loc = mod.loc(method),
@@ -276,7 +305,7 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
             let old = methods.insert(
                 mod.idText(method.name),
-                TraitMethod(scheme, funDecl = method,),
+                TraitMethod(scheme, funDecl = method),
             )
             assert(old is Option.None)
 
