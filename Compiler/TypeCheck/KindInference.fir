@@ -115,8 +115,14 @@ addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
         addMissingTypeParamsFun(fun.sig, traitContextVarKinds, tokens)
 
         # Drop function context variables added above.
-        # TODO
-        ()
+        let keysToDrop: Vec[Str] = Vec.fromIter(
+            traitContextVarKinds.keys().filter(
+                |key: Str| Bool: not traitContextVars.contains(key),
+            ),
+        )
+
+        for key: Str in keysToDrop.iter():
+            traitContextVarKinds.remove(key)
 
     let traitContextVarKinds = traitContextVarKinds.orderedEntries()
     trait_.typeParamKinds = Vec.fromIter(
@@ -139,8 +145,35 @@ addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
     for ty: Type in impl_.tys.iter():
         collectTvs(ty, implContextVarKinds, tokens)
 
-    # TODO
-    ()
+    # This is a set but we use the map type because I'm lazy.
+    let implContextVars: OrderedMap[Str, ()] = OrderedMap.empty()
+
+    for var_: Str in implContextVarKinds.keys():
+        implContextVars.insert(var_, ())
+
+    for fun: FunDecl in impl_.items.iter():
+        # Same as the loop in in the trait decl case above.
+        addMissingTypeParamsFun(fun.sig, implContextVarKinds, tokens)
+
+        let keysToDrop: Vec[Str] = Vec.fromIter(
+            implContextVarKinds.keys().filter(
+                |key: Str| Bool: not implContextVars.containsKey(key),
+            ),
+        )
+
+        for key: Str in keysToDrop.iter():
+            implContextVarKinds.remove(key)
+
+    for var_: HashMapEntry[Str, ()] in implContextVars.orderedEntries().iter():
+        impl_.typeParams.push(
+            TypeParam(
+                name = LocalId(name = var_.key),
+                kind =
+                    implContextVarKinds.get(var_.key).unwrap().unwrapOr(
+                        Kind.Star,
+                    ),
+            ),
+        )
 
 
 ## Collect type variables in `ty` in `tvs`.
@@ -258,10 +291,22 @@ OrderedMap.containsKey[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k) Bool:
     self._map.containsKey(key)
 
 
+OrderedMap.get[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k) Option[v]:
+    self._map.get(key).map(|v: InsertionOrder[v]| v: v.thing)
+
+
 OrderedMap.insert[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k, value: v) Option[v]:
     let insertionOrder = self._map.len()
     let value = InsertionOrder(insertionOrder, thing = value)
     self._map.insert(key, value).map(|v|: v.thing)
+
+
+OrderedMap.remove[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k) Option[v]:
+    let insertionOrder = self._map.len()
+
+    # TODO
+    # self._map.remove(key).map(|v|: v.thing)
+    panic("")
 
 
 OrderedMap.orderedEntries(self: OrderedMap[k, v]) Vec[HashMapEntry[k, v]]:
