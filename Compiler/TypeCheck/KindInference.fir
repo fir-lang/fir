@@ -114,8 +114,9 @@ addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
         # variables, which we remove below.
         addMissingTypeParamsFun(fun.sig, traitContextVarKinds, tokens)
 
-    # Drop function context variables added above.
-    # TODO
+        # Drop function context variables added above.
+        # TODO
+        ()
 
     let traitContextVarKinds = traitContextVarKinds.orderedEntries()
     trait_.typeParamKinds = Vec.fromIter(
@@ -127,6 +128,17 @@ addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
 
 
 addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
+    assert(impl_.typeParams.isEmpty())
+
+    let implContextVarKinds: OrderedMap[Str, Option[Kind]] = OrderedMap.empty()
+
+    if impl_.context is Option.Some(context):
+        for pred: Type in context.preds.iter():
+            collectTvs(pred, implContextVarKinds, tokens)
+
+    for ty: Type in impl_.tys.iter():
+        collectTvs(ty, implContextVarKinds, tokens)
+
     # TODO
     ()
 

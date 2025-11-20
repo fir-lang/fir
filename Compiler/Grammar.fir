@@ -5097,6 +5097,7 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
             let rhs = implDeclRhs(state)
             let value = do:
                 ImplDecl(
+                    typeParams = Vec.empty(),
                     context = ctx,
                     trait_ = newTyId(name, state._tokens),
                     tys = Vec.fromIter(once(t0).chain(ts.iter())),

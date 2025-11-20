@@ -1079,6 +1079,7 @@ traitDeclRhs Vec[FunDecl]:
 implDecl ImplDecl:
     first=^ "impl" ctx=context? name=^ "UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]" rhs=implDeclRhs:
         ImplDecl(
+            typeParams = Vec.empty(),
             context = ctx,
             trait_ = newTyId(name, state._tokens),
             tys = Vec.fromIter(once(t0).chain(ts.iter())),
