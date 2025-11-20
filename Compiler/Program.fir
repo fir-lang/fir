@@ -41,6 +41,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
 
     let filePath = _modulePathToFilePath(path)
     let parsedModule = _parseFile(filePath)
+    addMissingTypeParams(parsedModule.decls, parsedModule.tokens)
     let moduleDecls = parsedModule.decls
     let tokens = parsedModule.tokens
 

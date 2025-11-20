@@ -28,19 +28,19 @@ import [Compiler/Ast]
 addMissingTypeParams(mod: Vec[TopDecl], tokens: Array[Token]):
     for decl: TopDecl in mod.iter():
         match decl:
-            TopDecl.Type(decl): addMissingTypeParamsType(decl, tokens)
+            TopDecl.Type(decl): _addMissingTypeParamsType(decl, tokens)
 
             TopDecl.Fun(decl):
-                addMissingTypeParamsFun(decl.sig, OrderedMap.empty(), tokens)
+                _addMissingTypeParamsFun(decl.sig, OrderedMap.empty(), tokens)
 
             TopDecl.Import(decl): ()
 
-            TopDecl.Trait(decl): addMissingTypeParamsTrait(decl, tokens)
+            TopDecl.Trait(decl): _addMissingTypeParamsTrait(decl, tokens)
 
-            TopDecl.Impl(decl): addMissingTypeParamsImpl(decl, tokens)
+            TopDecl.Impl(decl): _addMissingTypeParamsImpl(decl, tokens)
 
 
-addMissingTypeParamsType(ty: TypeDecl, tokens: Array[Token]):
+_addMissingTypeParamsType(ty: TypeDecl, tokens: Array[Token]):
     let kinds: Vec[Kind] = Vec.withCapacity(ty.typeParams.len())
 
     for tyParam: Id in ty.typeParams.iter():
@@ -63,7 +63,7 @@ addMissingTypeParamsType(ty: TypeDecl, tokens: Array[Token]):
 ##
 ## When checking an `impl`, the kinds of type parameters in `tvs` should all be
 ## specified before calling this function.
-addMissingTypeParamsFun(
+_addMissingTypeParamsFun(
     sig: FunSig,
     tvs: OrderedMap[Str, Option[Kind]],
     tokens: Array[Token],
@@ -72,21 +72,21 @@ addMissingTypeParamsFun(
 
     if sig.context is Option.Some(context):
         for pred: Type in context.preds.iter():
-            collectTvs(pred, tvs, tokens)
+            _collectTvs(pred, tvs, tokens)
 
     match sig.self_:
         SelfParam.No | SelfParam.Implicit: ()
-        SelfParam.Explicit(ty): collectTvs(ty, tvs, tokens)
+        SelfParam.Explicit(ty): _collectTvs(ty, tvs, tokens)
 
     for arg: FunArg in sig.params.iter():
         if arg.ty is Option.Some(ty):
-            collectTvs(ty, tvs, tokens)
+            _collectTvs(ty, tvs, tokens)
 
     if sig.exceptions is Option.Some(ty):
-        collectTvs(ty, tvs, tokens)
+        _collectTvs(ty, tvs, tokens)
 
     if sig.returnTy is Option.Some(ty):
-        collectTvs(ty, tvs, tokens)
+        _collectTvs(ty, tvs, tokens)
 
     for entry: HashMapEntry[Str, Option[Kind]] in tvs.orderedEntries().iter():
         if boundVars.contains(entry.key):
@@ -98,7 +98,7 @@ addMissingTypeParamsFun(
         )
 
 
-addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
+_addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
     assert(trait_.typeParamKinds.isEmpty())
 
     let traitContextVarKinds: OrderedMap[Str, Option[Kind]] = OrderedMap.empty()
@@ -112,7 +112,7 @@ addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
     for fun: FunDecl in trait_.items.iter():
         # Update trait context variable kinds. This also adds function context
         # variables, which we remove below.
-        addMissingTypeParamsFun(fun.sig, traitContextVarKinds, tokens)
+        _addMissingTypeParamsFun(fun.sig, traitContextVarKinds, tokens)
 
         # Drop function context variables added above.
         let keysToDrop: Vec[Str] = Vec.fromIter(
@@ -133,17 +133,17 @@ addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
     )
 
 
-addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
+_addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
     assert(impl_.typeParams.isEmpty())
 
     let implContextVarKinds: OrderedMap[Str, Option[Kind]] = OrderedMap.empty()
 
     if impl_.context is Option.Some(context):
         for pred: Type in context.preds.iter():
-            collectTvs(pred, implContextVarKinds, tokens)
+            _collectTvs(pred, implContextVarKinds, tokens)
 
     for ty: Type in impl_.tys.iter():
-        collectTvs(ty, implContextVarKinds, tokens)
+        _collectTvs(ty, implContextVarKinds, tokens)
 
     # This is a set but we use the map type because I'm lazy.
     let implContextVars: OrderedMap[Str, ()] = OrderedMap.empty()
@@ -153,7 +153,7 @@ addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
 
     for fun: FunDecl in impl_.items.iter():
         # Same as the loop in in the trait decl case above.
-        addMissingTypeParamsFun(fun.sig, implContextVarKinds, tokens)
+        _addMissingTypeParamsFun(fun.sig, implContextVarKinds, tokens)
 
         let keysToDrop: Vec[Str] = Vec.fromIter(
             implContextVarKinds.keys().filter(
@@ -184,9 +184,9 @@ addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
 ## specify the kind of the variable so that we can update it as record or
 ## variant row when we see one of the marker traits later, or default the kind
 ## as `*` if not.
-collectTvs(ty: Type, tvs: OrderedMap[Str, Option[Kind]], tokens: Array[Token]):
+_collectTvs(ty: Type, tvs: OrderedMap[Str, Option[Kind]], tokens: Array[Token]):
     match ty:
-        Type.Named(namedTy): collectNamedTyTvs(namedTy, tvs, tokens)
+        Type.Named(namedTy): _collectNamedTyTvs(namedTy, tvs, tokens)
 
         Type.Var(var_):
             let varName = tokens.get(var_.token.idx).text
@@ -196,7 +196,7 @@ collectTvs(ty: Type, tvs: OrderedMap[Str, Option[Kind]], tokens: Array[Token]):
 
         Type.Record(RecordType(fields, extension, ..)):
             for field: Named[Type] in fields.iter():
-                collectTvs(field.node, tvs, tokens)
+                _collectTvs(field.node, tvs, tokens)
 
             if extension is Option.Some(ext):
                 let extName = tokens.get(ext.token.idx).text
@@ -210,7 +210,7 @@ collectTvs(ty: Type, tvs: OrderedMap[Str, Option[Kind]], tokens: Array[Token]):
 
         Type.Variant(VariantType(alts, extension, ..)):
             for alt: NamedType in alts.iter():
-                collectNamedTyTvs(alt, tvs, tokens)
+                _collectNamedTyTvs(alt, tvs, tokens)
 
             if extension is Option.Some(ext):
                 let extName = tokens.get(ext.token.idx).text
@@ -224,16 +224,16 @@ collectTvs(ty: Type, tvs: OrderedMap[Str, Option[Kind]], tokens: Array[Token]):
 
         Type.Fn_(FnType(args, ret, exceptions, ..)):
             for arg: Type in args.iter():
-                collectTvs(arg, tvs, tokens)
+                _collectTvs(arg, tvs, tokens)
 
             if ret is Option.Some(ret):
-                collectTvs(ret, tvs, tokens)
+                _collectTvs(ret, tvs, tokens)
 
             if exceptions is Option.Some(exn):
-                collectTvs(exn, tvs, tokens)
+                _collectTvs(exn, tvs, tokens)
 
 
-collectNamedTyTvs(
+_collectNamedTyTvs(
     namedTy: NamedType,
     tvs: OrderedMap[Str, Option[Kind]],
     tokens: Array[Token],
@@ -262,7 +262,7 @@ collectNamedTyTvs(
 
     if namedTy.args is Option.Some(args):
         for arg: Type in args.args.iter():
-            collectTvs(arg, tvs, tokens)
+            _collectTvs(arg, tvs, tokens)
 
 
 # ------------------------------------------------------------------------------
