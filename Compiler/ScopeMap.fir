@@ -16,6 +16,10 @@ ScopeMap.fromMap(map: HashMap[k, v]) ScopeMap[k, v]:
     ScopeMap(scopes)
 
 
+ScopeMap.lenScopes(self: ScopeMap[k, v]) U32:
+    self.scopes.len()
+
+
 ScopeMap.enterScope(self: ScopeMap[k, v]):
     self.scopes.push(HashMap.withCapacity(10))
 

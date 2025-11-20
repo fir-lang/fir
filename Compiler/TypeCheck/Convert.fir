@@ -173,13 +173,14 @@ type TyVarConversion:
 convertAndBindContext(
     module: Module,
     vars: ScopeMap[Str, Ty],
-    contextAst: Context,
+    typeParams: Vec[TypeParam],
+    preds: Vec[Type],
     conversion: TyVarConversion,
 ) Vec[Pred] / TypeError:
-    let predsConverted: Vec[Pred] = Vec.withCapacity(contextAst.preds.len())
+    let predsConverted: Vec[Pred] = Vec.withCapacity(preds.len())
 
     # Bind type parameters.
-    for tyParam: TypeParam in contextAst.typeParams.iter():
+    for tyParam: TypeParam in typeParams.iter():
         let varText = module.idText(tyParam.name)
         let var_ = match conversion:
             TyVarConversion.ToRVar:
@@ -189,7 +190,7 @@ convertAndBindContext(
         vars.insert(varText, var_)
 
     # Convert preds.
-    for pred: Type in contextAst.preds.iter():
+    for pred: Type in preds.iter():
         # TODO: get token loc from module
         let loc = Loc(file = "", line = 0, col = 0)
         let pred = match convertAstTy(module, vars, pred, loc):

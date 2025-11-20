@@ -13,7 +13,7 @@ import [
 ]
 
 
-prepTcEnvs(pgm: Program):
+prepTcEnvs(pgm: Program) / TypeError:
     # Prep envs in dependency order: from imported SCCs to importing SCCs.
     # In the future: we probably want to prep SCC envs on demand to allow
     # prepping only the needed envs. I.e. recursively prep envs, cache prepped
@@ -166,7 +166,7 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                             updated = Bool.True
 
 
-initModTyConDetails(pgm: Program, modIdx: ModuleIdx):
+initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
     let mod = pgm._modules.get(modIdx._idx)
     let tcEnv = mod._tcEnv.unwrap()
 
@@ -195,7 +195,64 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx):
     for traitDecl: TraitDecl in mod._traitItems.values():
         let tyDeclName = mod.idText(traitDecl.name)
         let tyCon = tcEnv._cons.get(tyDeclName).unwrap()
-        print("TODO: Initialize trait ty con details")
+        let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
+
+        # TODO: This doesn't hold, need to add kinds.
+        assert(traitDecl.typeParams.len() == traitDecl.typeParamKinds.len())
+
+        let traitContext: Vec[Pred] = convertAndBindContext(
+            mod,
+            varMap,
+            Vec.fromIter(
+                range(u32(0), traitDecl.typeParams.len()).map(
+                    |i: U32| TypeParam:
+                        TypeParam(
+                            name = traitDecl.typeParams.get(i),
+                            kind = traitDecl.typeParamKinds.get(i),
+                        ),
+                ),
+            ),
+            Vec.empty(),
+            TyVarConversion.ToQVar,
+        )
+
+        assert(traitContext.isEmpty())
+
+        let methods: HashMap[Str, TraitMethod] = HashMap.empty()
+
+        for method: FunDecl in traitDecl.items.iter():
+            varMap.enterScope()
+
+            let funPreds: Vec[Pred] = match method.sig.context:
+                Option.Some(context):
+                    convertAndBindContext(
+                        mod,
+                        varMap,
+                        context.typeParams,
+                        context.preds,
+                        TyVarConversion.ToQVar,
+                    )
+                Option.None: Vec.empty()
+
+            let argTys: Vec[Ty] = Vec.fromIter(
+                method.sig.params.iter().map(
+                    |param: FunArg| Ty:
+                        # TODO: loc
+                        convertAstTy(
+                            mod,
+                            varMap,
+                            param.ty.unwrap(),
+                            Loc(file = "", line = 0, col = 0),
+                        ),
+                ),
+            )
+
+            # TODO
+
+            varMap.exitScope()
+            assert(varMap.lenScopes() == 1)
+
+        tyCon.info.details = TyConDetails.Trait(TraitDetails(methods))
 
 
 # ------------------------------------------------------------------------------
