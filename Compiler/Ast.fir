@@ -132,6 +132,20 @@ type FunDecl(
 )
 
 
+impl Tokens[FunDecl]:
+    firstToken(self: FunDecl) TokenIdx:
+        if self.prim_ is Option.Some(t):
+            return t
+
+        if self.parentTy is Option.Some(tyId):
+            return tyId.token
+
+        self.name.token
+
+    lastToken(self: FunDecl) TokenIdx:
+        panic("TODO")
+
+
 #[derive(ToDoc)]
 type FunSig(
     context: Option[Context],

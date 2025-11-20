@@ -6,7 +6,8 @@ import [
 
 
 ## Convert an AST type to type checking type.
-convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type, loc: Loc) Ty / TypeError:
+convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeError:
+    let loc = module.loc(astTy)
     match astTy:
         Type.Named(namedTy): convertNamedTy(module, vars, namedTy, loc)
 
@@ -35,7 +36,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type, loc: Loc) Ty 
                             ),
                     ),
                 )
-                let ty = convertAstTy(module, vars, namedField.node, loc)
+                let ty = convertAstTy(module, vars, namedField.node)
                 let old = labels.insert(LocalId(name), ty)
                 if old is Option.Some(_):
                     throw(
@@ -103,14 +104,14 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type, loc: Loc) Ty 
             let args = FunArgs.Positional(
                 Vec.fromIter(
                     args.iter().map(
-                        |ty: Type| Ty: convertAstTy(module, vars, ty, loc),
+                        |ty: Type| Ty: convertAstTy(module, vars, ty),
                     ),
                 ),
             )
 
             let ret = match ret:
                 Option.None: Ty.unit()
-                Option.Some(ret): convertAstTy(module, vars, ret, loc)
+                Option.Some(ret): convertAstTy(module, vars, ret)
 
             let exceptions = exceptions.unwrapOrElse(
                 ||:
@@ -122,7 +123,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type, loc: Loc) Ty 
                     ),
             )
 
-            let exceptions = convertAstTy(module, vars, exceptions, loc)
+            let exceptions = convertAstTy(module, vars, exceptions)
 
             Ty.Fun(args, ret, exn = Option.Some(exceptions))
 
@@ -156,7 +157,7 @@ convertNamedTy(
 
     let convertedArgs: Vec[Ty] = Vec.fromIter(
         tyArgs.unwrap().args.iter().map(
-            |astTy: Type| Ty: convertAstTy(module, vars, astTy, loc),
+            |astTy: Type| Ty: convertAstTy(module, vars, astTy),
         ),
     )
 
@@ -192,7 +193,7 @@ convertAndBindContext(
     # Convert preds.
     for pred: Type in preds.iter():
         let loc = module.loc(pred)
-        let pred = match convertAstTy(module, vars, pred, loc):
+        let pred = match convertAstTy(module, vars, pred):
             Ty.App(conId, args): Pred(trait_ = conId, params = args, loc)
             other: panic("Strange predicate syntax")
         predsConverted.push(pred)

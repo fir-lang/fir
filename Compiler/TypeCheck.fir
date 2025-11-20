@@ -238,14 +238,47 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 method.sig.params.iter().map(
                     |param: FunArg| Ty:
                         let ty = param.ty.unwrap()
-                        convertAstTy(mod, varMap, ty, mod.loc(ty)),
+                        convertAstTy(mod, varMap, ty),
                 ),
             )
 
-            # TODO
+            match method.sig.self_:
+                SelfParam.No: ()
+                SelfParam.Implicit:
+                    panic("Trait methods can't have implicit self type")
+                SelfParam.Explicit(ty):
+                    argTys.insert(0, convertAstTy(mod, varMap, ty))
+
+            let retTy: Ty = match method.sig.returnTy:
+                Option.None: Ty.unit()
+                Option.Some(retTy): convertAstTy(mod, varMap, retTy)
+
+            let exnTy: Ty = match method.sig.exceptions:
+                Option.None: panic("FunSig without exception type")
+                Option.Some(retTy): convertAstTy(mod, varMap, retTy)
 
             varMap.exitScope()
             assert(varMap.lenScopes() == 1)
+
+            let funTy = Ty.Fun(
+                args = FunArgs.Positional(argTys),
+                ret = retTy,
+                exn = Option.Some(exnTy),
+            )
+
+            let scheme = Scheme(
+                qvars = Vec.empty(), # TODO
+
+                preds = funPreds,
+                ty = funTy,
+                loc = mod.loc(method),
+            )
+
+            let old = methods.insert(
+                mod.idText(method.name),
+                TraitMethod(scheme, funDecl = method,),
+            )
+            assert(old is Option.None)
 
         tyCon.info.details = TyConDetails.Trait(TraitDetails(methods))
 
