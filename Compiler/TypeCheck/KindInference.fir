@@ -41,8 +41,19 @@ addMissingTypeParams(mod: Vec[TopDecl], tokens: Array[Token]):
 
 
 addMissingTypeParamsType(ty: TypeDecl, tokens: Array[Token]):
-    # TODO
-    ()
+    let kinds: Vec[Kind] = Vec.withCapacity(ty.typeParams.len())
+
+    for tyParam: Id in ty.typeParams.iter():
+        let tyParamStr = tokens.get(tyParam.token.idx).text
+        let kind = if tyParamStr.startsWith("recRow"):
+            Kind.Row(RecordOrVariant.Record)
+        elif tyParamStr.startsWith("varRow"):
+            Kind.Row(RecordOrVariant.Variant)
+        else:
+            Kind.Star
+        kinds.push(kind)
+
+    ty.typeParamKinds = kinds
 
 
 ## `tvs` are the variables bound in the enclosing `trait` or `impl` context.
@@ -77,21 +88,61 @@ addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
     ()
 
 
+## Collect type variables in `ty` in `tvs`.
+##
+## If a type variable is an argument to the special marker traits `RecRow` or
+## `VarRow`, or the variable is used in a row position, the kind of the type
+## variable is added as a record or variant row in `tvs`. Otherwise we don't
+## specify the kind of the variable so that we can update it as record or
+## variant row when we see one of the marker traits later, or default the kind
+## as `*` if not.
 collectTvs(ty: Type, tvs: OrderedMap[Str, Option[Kind]], tokens: Array[Token]):
     match ty:
         Type.Named(namedTy): collectNamedTyTvs(namedTy, tvs, tokens)
 
-        # TODO
-        Type.Var(var_): ()
+        Type.Var(var_):
+            let varName = tokens.get(var_.token.idx).text
+            if not tvs.containsKey(varName):
+                tvs.insert(varName, Option.None)
+            ()
 
-        # TODO
-        Type.Record(RecordType(fields, extension, ..)): ()
+        Type.Record(RecordType(fields, extension, ..)):
+            for field: Named[Type] in fields.iter():
+                collectTvs(field.node, tvs, tokens)
 
-        # TODO
-        Type.Variant(VariantType(alts, extension, ..)): ()
+            if extension is Option.Some(ext):
+                let extName = tokens.get(ext.token.idx).text
+                if tvs.insert(
+                        extName,
+                        Option.Some(Kind.Row(RecordOrVariant.Record)),
+                    )
+                        is Option.Some(Option.Some(old))
+                        and old != Kind.Row(RecordOrVariant.Record):
+                    panic("Conflicting kind of type variable")
 
-        # TODO
-        Type.Fn_(FnType(args, ret, exceptions, ..)): ()
+        Type.Variant(VariantType(alts, extension, ..)):
+            for alt: NamedType in alts.iter():
+                collectNamedTyTvs(alt, tvs, tokens)
+
+            if extension is Option.Some(ext):
+                let extName = tokens.get(ext.token.idx).text
+                if tvs.insert(
+                        extName,
+                        Option.Some(Kind.Row(RecordOrVariant.Variant)),
+                    )
+                        is Option.Some(Option.Some(old))
+                        and old != Kind.Row(RecordOrVariant.Variant):
+                    panic("Conflicting kind of type variable")
+
+        Type.Fn_(FnType(args, ret, exceptions, ..)):
+            for arg: Type in args.iter():
+                collectTvs(arg, tvs, tokens)
+
+            if ret is Option.Some(ret):
+                collectTvs(ret, tvs, tokens)
+
+            if exceptions is Option.Some(exn):
+                collectTvs(exn, tvs, tokens)
 
 
 collectNamedTyTvs(
@@ -146,6 +197,10 @@ OrderedMap.empty() OrderedMap[k, v]:
 
 OrderedMap.keys(self: OrderedMap[k, v]) Map[HashMapIter[k, InsertionOrder[v]], HashMapEntry[k, InsertionOrder[v]], k, exn] / exn:
     self._map.keys()
+
+
+OrderedMap.containsKey[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k) Bool:
+    self._map.containsKey(key)
 
 
 OrderedMap.insert[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k, value: v) Option[v]:
