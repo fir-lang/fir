@@ -43,7 +43,7 @@ type TraitImpl(
 # Similar to `Pred`, but doesn't have a `Loc`.
 #[derive(ToDoc)]
 type TraitPred(
-    trait_: TyId,
+    trait_: TyDefIdx,
     params: Vec[Ty],
 )
 

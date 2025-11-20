@@ -5,6 +5,7 @@ import [
 ]
 
 
+## Convert an AST type to type checking type.
 convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type, loc: Loc) Ty / TypeError:
     match astTy:
         Type.Named(namedTy): convertNamedTy(module, vars, namedTy, loc)
@@ -160,3 +161,40 @@ convertNamedTy(
     )
 
     Ty.App(conId = tyDefIdx, args = convertedArgs)
+
+
+type TyVarConversion:
+    ToRVar
+    ToQVar
+
+
+## Convert the context to type checking types, update `vars` (in the current
+## scope) with the context types.
+convertAndBindContext(
+    module: Module,
+    vars: ScopeMap[Str, Ty],
+    contextAst: Context,
+    conversion: TyVarConversion,
+) Vec[Pred] / TypeError:
+    let predsConverted: Vec[Pred] = Vec.withCapacity(contextAst.preds.len())
+
+    # Bind type parameters.
+    for tyParam: TypeParam in contextAst.typeParams.iter():
+        let varText = module.idText(tyParam.name)
+        let var_ = match conversion:
+            TyVarConversion.ToRVar:
+                Ty.RVar(RVar(id = LocalId(name = varText), kind = tyParam.kind,))
+            TyVarConversion.ToQVar:
+                Ty.QVar(QVar(id = LocalId(name = varText), kind = tyParam.kind,))
+        vars.insert(varText, var_)
+
+    # Convert preds.
+    for pred: Type in contextAst.preds.iter():
+        # TODO: get token loc from module
+        let loc = Loc(file = "", line = 0, col = 0)
+        let pred = match convertAstTy(module, vars, pred, loc):
+            Ty.App(conId, args): Pred(trait_ = conId, params = args, loc)
+            other: panic("Strange predicate syntax")
+        predsConverted.push(pred)
+
+    predsConverted

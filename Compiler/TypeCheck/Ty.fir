@@ -312,7 +312,7 @@ Scheme.instantiate(
 
 #[derive(ToDoc)]
 type Pred(
-    trait_: TyId,
+    trait_: TyDefIdx,
     params: Vec[Ty],
     loc: Loc,
 )
