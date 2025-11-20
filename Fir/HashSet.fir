@@ -3,6 +3,10 @@ type HashSet[k](
 )
 
 
+HashSet.empty() HashSet[k]:
+    HashSet.withCapacity(0)
+
+
 HashSet.withCapacity(cap: U32) HashSet[k]:
     HashSet(_map = HashMap.withCapacity(cap))
 

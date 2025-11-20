@@ -99,8 +99,31 @@ addMissingTypeParamsFun(
 
 
 addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
+    assert(trait_.typeParamKinds.isEmpty())
+
+    let traitContextVarKinds: OrderedMap[Str, Option[Kind]] = OrderedMap.empty()
+    let traitContextVars: HashSet[Str] = HashSet.empty()
+
+    for param: Id in trait_.typeParams.iter():
+        let paramStr = tokens.get(param.token.idx).text
+        traitContextVarKinds.insert(paramStr, Option.None)
+        traitContextVars.insert(paramStr)
+
+    for fun: FunDecl in trait_.items.iter():
+        # Update trait context variable kinds. This also adds function context
+        # variables, which we remove below.
+        addMissingTypeParamsFun(fun.sig, traitContextVarKinds, tokens)
+
+    # Drop function context variables added above.
     # TODO
-    ()
+
+    let traitContextVarKinds = traitContextVarKinds.orderedEntries()
+    trait_.typeParamKinds = Vec.fromIter(
+        traitContextVarKinds.iter().map(
+            |entry: HashMapEntry[Str, Option[Kind]]| Kind:
+                entry.value.unwrapOr(Kind.Star),
+        ),
+    )
 
 
 addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
@@ -245,3 +268,16 @@ OrderedMap.orderedEntries(self: OrderedMap[k, v]) Vec[HashMapEntry[k, v]]:
                 HashMapEntry(key = v.key, value = v.value.thing),
         ),
     )
+
+
+impl[Clone[k], Clone[v]] Clone[OrderedMap[k, v]]:
+    clone(self: OrderedMap[k, v]) OrderedMap[k, v]:
+        OrderedMap(_map = self._map.clone())
+
+
+impl[Clone[t]] Clone[InsertionOrder[t]]:
+    clone(self: InsertionOrder[t]) InsertionOrder[t]:
+        InsertionOrder(
+            insertionOrder = self.insertionOrder,
+            thing = self.thing.clone(),
+        )

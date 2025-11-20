@@ -44,6 +44,14 @@ Array.iter(self: Array[t]) ArrayIter[t]:
     ArrayIter(_array = self, _idx = 0,)
 
 
+impl[Clone[t]] Clone[Array[t]]:
+    clone(self: Array[t]) Array[t]:
+        let new = Array.new(self.len())
+        for i: U32 in range(u32(0), self.len()):
+            new.set(i, self.get(i))
+        new
+
+
 impl[ToStr[t]] ToStr[Array[t]]:
     toStr(self: Array[t]) Str:
         let buf = StrBuf.withCapacity(self.len() * 5 + 2)

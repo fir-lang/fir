@@ -154,6 +154,11 @@ impl Eq[Kind]:
             _: Bool.False
 
 
+impl Clone[Kind]:
+    clone(self: Kind) Kind:
+        self
+
+
 #[derive(ToDoc)]
 type RecordOrVariant:
     Record
