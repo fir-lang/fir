@@ -238,12 +238,7 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 method.sig.params.iter().map(
                     |param: FunArg| Ty:
                         let ty = param.ty.unwrap()
-                        convertAstTy(
-                            mod,
-                            varMap,
-                            ty,
-                            mod.tokenLoc(ty.firstToken()),
-                        ),
+                        convertAstTy(mod, varMap, ty, mod.loc(ty)),
                 ),
             )
 

@@ -116,6 +116,10 @@ Module.tokenLoc(self, token: TokenIdx) Loc:
     Loc(file = self._filePath, line = token.line, col = token.col)
 
 
+Module.loc[Tokens[t]](self, t: t) Loc:
+    self.tokenLoc(t.firstToken())
+
+
 # ------------------------------------------------------------------------------
 # Generated ToDoc implementations
 

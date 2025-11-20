@@ -191,7 +191,7 @@ convertAndBindContext(
 
     # Convert preds.
     for pred: Type in preds.iter():
-        let loc = module.tokenLoc(pred.firstToken())
+        let loc = module.loc(pred)
         let pred = match convertAstTy(module, vars, pred, loc):
             Ty.App(conId, args): Pred(trait_ = conId, params = args, loc)
             other: panic("Strange predicate syntax")
