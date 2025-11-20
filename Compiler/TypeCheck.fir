@@ -208,7 +208,11 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 range(u32(0), traitDecl.typeParams.len()).map(
                     |i: U32| TypeParam:
                         TypeParam(
-                            name = traitDecl.typeParams.get(i),
+                            name =
+                                LocalId(
+                                    name =
+                                        mod.idText(traitDecl.typeParams.get(i)),
+                                ),
                             kind = traitDecl.typeParamKinds.get(i),
                         ),
                 ),
@@ -285,12 +289,7 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 )
 
             for tyParam: TypeParam in method.sig.typeParams.iter():
-                schemeQVars.push(
-                    QVar(
-                        id = LocalId(name = mod.idText(tyParam.name)),
-                        kind = tyParam.kind,
-                    ),
-                )
+                schemeQVars.push(QVar(id = tyParam.name, kind = tyParam.kind,),)
 
             let scheme = Scheme(
                 qvars = schemeQVars,

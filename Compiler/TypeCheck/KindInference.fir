@@ -74,8 +74,28 @@ addMissingTypeParamsFun(
         for pred: Type in context.preds.iter():
             collectTvs(pred, tvs, tokens)
 
-    # TODO
-    ()
+    match sig.self_:
+        SelfParam.No | SelfParam.Implicit: ()
+        SelfParam.Explicit(ty): collectTvs(ty, tvs, tokens)
+
+    for arg: FunArg in sig.params.iter():
+        if arg.ty is Option.Some(ty):
+            collectTvs(ty, tvs, tokens)
+
+    if sig.exceptions is Option.Some(ty):
+        collectTvs(ty, tvs, tokens)
+
+    if sig.returnTy is Option.Some(ty):
+        collectTvs(ty, tvs, tokens)
+
+    for entry: HashMapEntry[Str, Option[Kind]] in tvs.orderedEntries().iter():
+        if boundVars.contains(entry.key):
+            continue
+
+        let fvKind = entry.value.unwrapOr(Kind.Star)
+        sig.typeParams.push(
+            TypeParam(name = LocalId(name = entry.key), kind = fvKind),
+        )
 
 
 addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):

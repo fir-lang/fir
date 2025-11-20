@@ -363,7 +363,7 @@ type Context(
 
 #[derive(ToDoc)]
 type TypeParam(
-    name: Id,
+    name: LocalId,
     kind: Kind,
 )
 

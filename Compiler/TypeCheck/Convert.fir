@@ -182,13 +182,12 @@ convertAndBindContext(
 
     # Bind type parameters.
     for tyParam: TypeParam in typeParams.iter():
-        let varText = module.idText(tyParam.name)
         let var_ = match conversion:
             TyVarConversion.ToRVar:
-                Ty.RVar(RVar(id = LocalId(name = varText), kind = tyParam.kind,))
+                Ty.RVar(RVar(id = tyParam.name, kind = tyParam.kind,))
             TyVarConversion.ToQVar:
-                Ty.QVar(QVar(id = LocalId(name = varText), kind = tyParam.kind,))
-        vars.insert(varText, var_)
+                Ty.QVar(QVar(id = tyParam.name, kind = tyParam.kind,))
+        vars.insert(tyParam.name.name, var_)
 
     # Convert preds.
     for pred: Type in preds.iter():
