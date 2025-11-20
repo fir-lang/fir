@@ -25,6 +25,24 @@ main():
     map.insert("h", 9898)
     printStr(map.toDoc().render(80))
 
+    print(map.remove("d"))
+    print(map.remove("d"))
+    print(map.remove("f"))
+    print(map.remove("f"))
+    print(map.remove("h"))
+    print(map.remove("h"))
+    print(map.remove("g"))
+    print(map.remove("g"))
+    print(map.remove("a"))
+    print(map.remove("a"))
+    print(map.remove("b"))
+    print(map.remove("b"))
+    print(map.remove("c"))
+    print(map.remove("c"))
+    print(map.remove("e"))
+    print(map.remove("e"))
+    printStr(map.toDoc().render(80))
+
     map = HashMap.empty()
     print(map.get("hi"))
 
@@ -63,4 +81,21 @@ main():
 #     "a" = 2,
 #     "h" = 9898,
 # ]
+# Option.Some(5678)
+# Option.None
+# Option.Some(1010)
+# Option.None
+# Option.Some(9898)
+# Option.None
+# Option.Some(1212)
+# Option.None
+# Option.Some(2)
+# Option.None
+# Option.Some(3)
+# Option.None
+# Option.Some(1234)
+# Option.None
+# Option.Some(9876)
+# Option.None
+# HashMap.[]
 # Option.None
