@@ -376,18 +376,6 @@ type TcItem[idx, info](
 )
 
 
-type Import(
-    ## Name the item imported as. E.g. in `import [Foo/Bar as Baz]` this will be
-    ## `Baz`.
-    name: Id,
-
-    ## The path the item was imported from. In the example above: `Foo/Bar`.
-    ##
-    ## The same item can be imported via different paths.
-    importLoc: Vec[Id],
-)
-
-
 ModuleTcEnv.empty() ModuleTcEnv:
     ModuleTcEnv(
         _traitEnv = TraitEnv.empty(),
