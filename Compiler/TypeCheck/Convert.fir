@@ -191,8 +191,7 @@ convertAndBindContext(
 
     # Convert preds.
     for pred: Type in preds.iter():
-        # TODO: get token loc from module
-        let loc = Loc(file = "", line = 0, col = 0)
+        let loc = module.tokenLoc(pred.firstToken())
         let pred = match convertAstTy(module, vars, pred, loc):
             Ty.App(conId, args): Pred(trait_ = conId, params = args, loc)
             other: panic("Strange predicate syntax")

@@ -237,12 +237,12 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             let argTys: Vec[Ty] = Vec.fromIter(
                 method.sig.params.iter().map(
                     |param: FunArg| Ty:
-                        # TODO: loc
+                        let ty = param.ty.unwrap()
                         convertAstTy(
                             mod,
                             varMap,
-                            param.ty.unwrap(),
-                            Loc(file = "", line = 0, col = 0),
+                            ty,
+                            mod.tokenLoc(ty.firstToken()),
                         ),
                 ),
             )

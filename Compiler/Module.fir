@@ -111,6 +111,11 @@ Module.idText(self, id: Id) Str:
     self.tokenText(id.token)
 
 
+Module.tokenLoc(self, token: TokenIdx) Loc:
+    let token = self._tokens.get(token.idx)
+    Loc(file = self._filePath, line = token.line, col = token.col)
+
+
 # ------------------------------------------------------------------------------
 # Generated ToDoc implementations
 

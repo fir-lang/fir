@@ -158,7 +158,7 @@ type Lexer(
 Lexer._fail(self, msg: Str) a / Error:
     throw(
         Error(
-            loc = Loc(file = self._file, line = self._line, col = self._col,),
+            loc = Loc(file = self._file, line = self._line, col = self._col),
             msg = msg,
         ),
     )
