@@ -25,7 +25,7 @@ This also adds missing type parameters to function declarations, e.g.
 import [Compiler/Ast]
 
 
-addMissingTypeParams(mod: Vec[TopDecl], tokens: Vec[Token]):
+addMissingTypeParams(mod: Vec[TopDecl], tokens: Array[Token]):
     for decl: TopDecl in mod.iter():
         match decl:
             TopDecl.Type(decl): addMissingTypeParamsType(decl, tokens)
@@ -40,7 +40,7 @@ addMissingTypeParams(mod: Vec[TopDecl], tokens: Vec[Token]):
             TopDecl.Impl(decl): addMissingTypeParamsImpl(decl, tokens)
 
 
-addMissingTypeParamsType(ty: TypeDecl, tokens: Vec[Token]):
+addMissingTypeParamsType(ty: TypeDecl, tokens: Array[Token]):
     # TODO
     ()
 
@@ -54,28 +54,76 @@ addMissingTypeParamsType(ty: TypeDecl, tokens: Vec[Token]):
 ## specified before calling this function.
 addMissingTypeParamsFun(
     sig: FunSig,
-    tvs: OrderedMap[Str, Kind],
-    tokens: Vec[Token],
+    tvs: OrderedMap[Str, Option[Kind]],
+    tokens: Array[Token],
 ):
     let boundVars: HashSet[Str] = HashSet.fromIter(tvs.keys())
 
     if sig.context is Option.Some(context):
-        # TODO: typeParams should be moved out of `Context` as `Context` may not
-        # be available when the function has type parameters.
-        ()
+        for pred: Type in context.preds.iter():
+            collectTvs(pred, tvs, tokens)
 
     # TODO
     ()
 
 
-addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Vec[Token]):
+addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
     # TODO
     ()
 
 
-addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Vec[Token]):
+addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
     # TODO
     ()
+
+
+collectTvs(ty: Type, tvs: OrderedMap[Str, Option[Kind]], tokens: Array[Token]):
+    match ty:
+        Type.Named(namedTy): collectNamedTyTvs(namedTy, tvs, tokens)
+
+        # TODO
+        Type.Var(var_): ()
+
+        # TODO
+        Type.Record(RecordType(fields, extension, ..)): ()
+
+        # TODO
+        Type.Variant(VariantType(alts, extension, ..)): ()
+
+        # TODO
+        Type.Fn_(FnType(args, ret, exceptions, ..)): ()
+
+
+collectNamedTyTvs(
+    namedTy: NamedType,
+    tvs: OrderedMap[Str, Option[Kind]],
+    tokens: Array[Token],
+):
+    if namedTy.name.name == "RecRow" or namedTy.name.name == "VarRow":
+        let kind = Kind.Row(
+            if namedTy.name.name == "RecRow":
+                RecordOrVariant.Record
+            else:
+                RecordOrVariant.Variant,
+        )
+
+        assert(namedTy.args.unwrap().args.len() == 1)
+
+        match namedTy.args.unwrap().args.get(0):
+            Type.Var(var_):
+                let varName = tokens.get(var_.token.idx).text
+                let old = tvs.insert(varName, Option.Some(kind))
+                if old is Option.Some(Option.Some(oldKind)) and oldKind != kind:
+                    panic("Conflicting kinds")
+
+            other:
+                panic("RecRow or RecVar argument needs to be a type variable")
+
+        return
+
+    if namedTy.args is Option.Some(args):
+        for arg: Type in args.args.iter():
+            collectTvs(arg, tvs, tokens)
 
 
 # ------------------------------------------------------------------------------
