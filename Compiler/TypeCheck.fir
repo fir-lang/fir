@@ -9,7 +9,6 @@ import [
     Compiler/TypeCheck/TraitEnv,
     Compiler/TypeCheck/Ty,
     Compiler/TypeCheck/TyCon,
-    Compiler/TypeCheck/TyMap,
     Compiler/TypeCheck/Unification,
 ]
 

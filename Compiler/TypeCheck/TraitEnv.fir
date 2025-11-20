@@ -48,7 +48,7 @@ type TraitPred(
 )
 
 
-TraitImpl.tryMatch(self, args: Vec[Ty], varGen: UVarGen, tys: TyMap, loc: Loc) Option[Vec[Pred]]:
+TraitImpl.tryMatch(self, args: Vec[Ty], varGen: UVarGen, loc: Loc) Option[Vec[Pred]]:
     if args.len() != self.traitArgs.len():
         panic(
             "`loc`: BUG: Number of arguments applied to the trait don't match the arity",

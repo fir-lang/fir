@@ -2,17 +2,16 @@ import [
     Compiler/Ast,
     Compiler/TypeCheck/Error,
     Compiler/TypeCheck/Ty,
-    Compiler/TypeCheck/TyMap,
 ]
 
 
-convertAstTy(module: Module, tys: TyMap, astTy: Type, loc: Loc) Ty / TypeError:
+convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type, loc: Loc) Ty / TypeError:
     match astTy:
-        Type.Named(namedTy): convertNamedTy(module, tys, namedTy, loc)
+        Type.Named(namedTy): convertNamedTy(module, vars, namedTy, loc)
 
         Type.Var(var_):
             let varText = module.idText(var_)
-            tys.getVar(varText).unwrapOrElse(
+            vars.get(varText).unwrapOrElse(
                 ||:
                     throw(
                         TypeError(loc, msg = "Unbound type variable `varText`",),
@@ -35,7 +34,7 @@ convertAstTy(module: Module, tys: TyMap, astTy: Type, loc: Loc) Ty / TypeError:
                             ),
                     ),
                 )
-                let ty = convertAstTy(module, tys, namedField.node, loc)
+                let ty = convertAstTy(module, vars, namedField.node, loc)
                 let old = labels.insert(LocalId(name), ty)
                 if old is Option.Some(_):
                     throw(
@@ -49,7 +48,7 @@ convertAstTy(module: Module, tys: TyMap, astTy: Type, loc: Loc) Ty / TypeError:
             let extension = extension.map(
                 |extId|:
                     let extIdText = module.idText(extId)
-                    tys.getVar(extIdText).unwrapOrElse(
+                    vars.get(extIdText).unwrapOrElse(
                         ||:
                             throw(
                                 TypeError(
@@ -66,7 +65,7 @@ convertAstTy(module: Module, tys: TyMap, astTy: Type, loc: Loc) Ty / TypeError:
             let labels: HashMap[LocalId, Ty] = HashMap.withCapacity(alts.len())
 
             for alt: NamedType in alts.iter():
-                let ty = convertNamedTy(module, tys, alt, loc)
+                let ty = convertNamedTy(module, vars, alt, loc)
                 let tyNameText = alt.name.name
                 let old = labels.insert(LocalId(name = tyNameText), ty)
                 if old is Option.Some(_):
@@ -81,7 +80,7 @@ convertAstTy(module: Module, tys: TyMap, astTy: Type, loc: Loc) Ty / TypeError:
             let extension = extension.map(
                 |extId|:
                     let extIdText = module.idText(extId)
-                    tys.getVar(extIdText).unwrapOrElse(
+                    vars.get(extIdText).unwrapOrElse(
                         ||:
                             throw(
                                 TypeError(
@@ -103,14 +102,14 @@ convertAstTy(module: Module, tys: TyMap, astTy: Type, loc: Loc) Ty / TypeError:
             let args = FunArgs.Positional(
                 Vec.fromIter(
                     args.iter().map(
-                        |ty: Type| Ty: convertAstTy(module, tys, ty, loc),
+                        |ty: Type| Ty: convertAstTy(module, vars, ty, loc),
                     ),
                 ),
             )
 
             let ret = match ret:
                 Option.None: Ty.unit()
-                Option.Some(ret): convertAstTy(module, tys, ret, loc)
+                Option.Some(ret): convertAstTy(module, vars, ret, loc)
 
             let exceptions = exceptions.unwrapOrElse(
                 ||:
@@ -122,12 +121,17 @@ convertAstTy(module: Module, tys: TyMap, astTy: Type, loc: Loc) Ty / TypeError:
                     ),
             )
 
-            let exceptions = convertAstTy(module, tys, exceptions, loc)
+            let exceptions = convertAstTy(module, vars, exceptions, loc)
 
             Ty.Fun(args, ret, exn = Option.Some(exceptions))
 
 
-convertNamedTy(module: Module, tys: TyMap, namedTy: NamedType, loc: Loc) Ty / TypeError:
+convertNamedTy(
+    module: Module,
+    vars: ScopeMap[Str, Ty],
+    namedTy: NamedType,
+    loc: Loc,
+) Ty / TypeError:
     let tyName = namedTy.name.name
     let tyArgs = namedTy.args
     let numTyArgs = namedTy.numTyArgs()
@@ -151,7 +155,7 @@ convertNamedTy(module: Module, tys: TyMap, namedTy: NamedType, loc: Loc) Ty / Ty
 
     let convertedArgs: Vec[Ty] = Vec.fromIter(
         tyArgs.unwrap().args.iter().map(
-            |astTy: Type| Ty: convertAstTy(module, tys, astTy, loc),
+            |astTy: Type| Ty: convertAstTy(module, vars, astTy, loc),
         ),
     )
 
