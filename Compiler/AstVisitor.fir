@@ -53,7 +53,7 @@ trait Visitor[v]:
         ()
 
     visitContext(self: v, d: Context):
-        ()
+        defaultVisitContext(self, d)
 
     visitSelfParam(self: v, d: SelfParam):
         ()
@@ -269,6 +269,11 @@ defaultVisitFunSig[Visitor[v]](v: v, sig: FunSig):
 defaultVisitFunArg[Visitor[v]](v: v, arg: FunArg):
     if arg.ty is Option.Some(ty):
         v.visitType(ty)
+
+
+defaultVisitContext[Visitor[v]](v: v, ctx: Context):
+    for pred in ctx.preds.iter():
+        v.visitType(pred)
 
 
 defaultVisitConFields[Visitor[v]](v: v, fields: ConFields):
