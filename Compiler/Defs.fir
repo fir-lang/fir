@@ -87,7 +87,9 @@ TyId.resolve(self, def: TyDefIdx):
 
 
 TyId.def(self) TyDefIdx:
-    self._resolved.unwrapOrElse(||: panic("Type id is not resolved yet"))
+    self._resolved.unwrapOrElse(
+        ||: panic("Type id (\``self.name`\`) is not resolved yet"),
+    )
 
 
 # ------------------------------------------------------------------------------

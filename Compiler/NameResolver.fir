@@ -60,6 +60,11 @@ type NameResolverVisitor(
 
 impl Visitor[NameResolverVisitor]:
     visitFunDecl(self: NameResolverVisitor, funDecl: FunDecl):
+        if funDecl.parentTy is Option.Some(id):
+            self.visitTyId(id)
+
+        self.visitFunSig(funDecl.sig)
+
         if funDecl.body is Option.Some(stmts):
             self._termEnv.enterScope()
 
