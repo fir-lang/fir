@@ -118,7 +118,7 @@ type FunDecl(
     ## When the function is a primitive, the `prim` token.
     prim_: Option[TokenIdx],
 
-    ## Only in associated functions: the parent type. E.g. `Vec` in `Vec.push(...) = ...`.
+    ## Only in associated functions: the parent type. E.g. `Vec` in `Vec.push(...): ...`.
     parentTy: Option[TyId],
 
     ## Name of the function.

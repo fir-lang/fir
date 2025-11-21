@@ -289,7 +289,7 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 )
 
             for tyParam: TypeParam in method.sig.typeParams.iter():
-                schemeQVars.push(QVar(id = tyParam.name, kind = tyParam.kind,),)
+                schemeQVars.push(QVar(id = tyParam.name, kind = tyParam.kind))
 
             let scheme = Scheme(
                 qvars = schemeQVars,
@@ -379,57 +379,6 @@ ModuleTcEnv.empty() ModuleTcEnv:
         _assocFnSchemes = HashMap.empty(),
         _methodSchemes = HashMap.empty(),
     )
-
-
-## Add imported things from an imported SCC to the current module.
-ModuleTcEnv.addImportedThings(self, importedEnv: ModuleTcEnv):
-    # TODO: Panics below should be errors.
-    # TODO: The code below is not right: the same type or term can be imported
-    # via different modules. So importing something multiple times is not a
-    # problem as long as we import the same thing.
-
-    # Add type constructors.
-    for con: HashMapEntry[Str, TcItem[TyDefIdx, TyCon]] in
-            importedEnv._cons.iter():
-        let old = self._cons.insert(con.key, con.value)
-        if old is Option.Some(_):
-            # TODO: Handle importing the same type. (compare TyIds, update
-            # import list)
-            panic("Type `con.key` imported multiple times")
-
-    # Add traits.
-    # TODO: TraitEnv doesn't let you rename traits. Needs refactoring.
-
-    # Add top-level functions.
-    for top: HashMapEntry[Str, TcItem[VarDefIdx, Scheme]] in
-            importedEnv._topSchemes.iter():
-        let old = self._topSchemes.insert(top.key, top.value)
-        if old is Option.Some(_):
-            panic("Top-level function `top.key` imported multiple times")
-
-    # Add associated functions.
-    # TODO: We may import a type with another name, the associated function
-    # should be added to the right type when we do that.
-    for assoc: HashMapEntry[Str, HashMap[Str, TcItem[VarDefIdx, Scheme]]] in
-            importedEnv._assocFnSchemes.iter():
-        let tyMap = match self._assocFnSchemes.get(assoc.key):
-            Option.Some(tyMap): tyMap
-            Option.None:
-                let tyMap = HashMap.withCapacity(10)
-                self._assocFnSchemes.insert(assoc.key, tyMap)
-                tyMap
-
-        for fun: HashMapEntry[Str, TcItem[VarDefIdx, Scheme]] in
-                assoc.value.iter():
-            let old = tyMap.insert(fun.key, fun.value)
-            if old is Option.Some(_):
-                panic(
-                    "Associated function `assoc.key`.`fun.key` imported multiple times.",
-                )
-
-
-# Add methods.
-# TODO
 
 
 # ------------------------------------------------------------------------------
