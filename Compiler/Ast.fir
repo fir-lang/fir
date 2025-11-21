@@ -154,8 +154,8 @@ type FunSig(
     context: Option[Context],
     self_: SelfParam,
     params: Vec[FunArg],
-    exceptions: Option[Type],
     returnTy: Option[Type],
+    exceptions: Option[Type],
 )
 
 
