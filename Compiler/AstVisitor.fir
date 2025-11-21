@@ -59,7 +59,7 @@ trait Visitor[v]:
         ()
 
     visitFunArg(self: v, d: FunArg):
-        ()
+        defaultVisitFunArg(self, d)
 
     # ----------------------------------------------------------------
     # Exprs
@@ -263,6 +263,11 @@ defaultVisitFunSig[Visitor[v]](v: v, sig: FunSig):
         v.visitType(ty)
 
     if sig.exceptions is Option.Some(ty):
+        v.visitType(ty)
+
+
+defaultVisitFunArg[Visitor[v]](v: v, arg: FunArg):
+    if arg.ty is Option.Some(ty):
         v.visitType(ty)
 
 
