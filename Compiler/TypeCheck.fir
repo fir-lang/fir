@@ -21,15 +21,22 @@ prepTcEnvs(pgm: Program) / TypeError:
     # envs.
     for scc: HashSet[ModuleIdx] in pgm._depGraph.unwrap().iter():
         for modIdx: ModuleIdx in scc.iter():
-            prepModuleTyEnv(pgm, modIdx)
+            prepModuleTyCons(pgm, modIdx)
 
     # All modules have access to all `TyCon`s that they need, add `TyCon`
     # details.
     for modIdx: U32 in range(u32(0), pgm._modules.len()):
-        initModTyConDetails(pgm, ModuleIdx(_idx = modIdx))
+        addModTyConDetails(pgm, ModuleIdx(_idx = modIdx))
+
+    # Create top-level function, associated function, and method schemes.
+    # Note: this could be done for each SCC after updating `TyCon`s of an SCC,
+    # in the previous loop. For now we keep it separate to make debugging
+    # easier.
+    for modIdx: U32 in range(u32(0), pgm._modules.len()):
+        addModSchemes(pgm, ModuleIdx(_idx = modIdx))
 
 
-prepModuleTyEnv(pgm: Program, modIdx: ModuleIdx):
+prepModuleTyCons(pgm: Program, modIdx: ModuleIdx):
     if pgm._modules.get(modIdx._idx)._tcEnv is Option.Some(env):
         return
 
@@ -206,7 +213,7 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                             updated = Bool.True
 
 
-initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
+addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
     let mod = pgm._modules.get(modIdx._idx)
     let tcEnv = mod._tcEnv.unwrap()
 
@@ -362,6 +369,11 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             assert(old is Option.None)
 
         tyCon.info.details = TyConDetails.Trait(TraitDetails(methods))
+
+
+addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
+    # TODO
+    ()
 
 
 # ------------------------------------------------------------------------------
