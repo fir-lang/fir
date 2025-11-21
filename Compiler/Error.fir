@@ -24,4 +24,4 @@ impl ToStr[Loc]:
 
 impl ToDoc[Loc]:
     toDoc(self: Loc) Doc:
-        panic("TODO")
+        Doc.str(self.toStr())
