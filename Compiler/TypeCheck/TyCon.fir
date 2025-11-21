@@ -24,7 +24,7 @@ TyCon.arity(self) U32:
 ## A type parameter with kind.
 #[derive(ToDoc)]
 type TyParam(
-    name: Id,
+    name: LocalId,
     kind: Kind,
 )
 

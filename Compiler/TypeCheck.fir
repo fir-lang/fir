@@ -96,7 +96,25 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                     info =
                         TyCon(
                             name = tyDeclName,
-                            tyParams = Vec.empty(),
+                            tyParams =
+                                Vec.fromIter(
+                                    range(u32(0), tyDecl.typeParams.len()).map(
+                                        |i: U32| TyParam:
+                                            TyParam(
+                                                name =
+                                                    LocalId(
+                                                        name =
+                                                            mod.idText(
+                                                                tyDecl
+                                                                    .typeParams
+                                                                    .get(i),
+                                                            ),
+                                                    ),
+                                                kind =
+                                                    tyDecl.typeParamKinds.get(i),
+                                            ),
+                                    ),
+                                ),
                             details = TyConDetails.placeholder(),
                         ),
                     imports = HashSet.[modIdx],
@@ -113,7 +131,28 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                     info =
                         TyCon(
                             name = tyDeclName,
-                            tyParams = Vec.empty(),
+                            tyParams =
+                                Vec.fromIter(
+                                    range(u32(0), traitDecl.typeParams.len())
+                                        .map(
+                                        |i: U32| TyParam:
+                                            TyParam(
+                                                name =
+                                                    LocalId(
+                                                        name =
+                                                            mod.idText(
+                                                                traitDecl
+                                                                    .typeParams
+                                                                    .get(i),
+                                                            ),
+                                                    ),
+                                                kind =
+                                                    traitDecl.typeParamKinds.get(
+                                                        i,
+                                                    ),
+                                            ),
+                                    ),
+                                ),
                             details = TyConDetails.placeholder(),
                         ),
                     imports = HashSet.[modIdx],

@@ -144,6 +144,7 @@ convertNamedTy(
     let tyCon = module._tcEnv.unwrap()._cons.get(tyDefName).unwrap()
 
     if tyCon.info.arity() != numTyArgs:
+        print(tyCon.toDoc().render(80))
         throw(
             TypeError(
                 loc,
