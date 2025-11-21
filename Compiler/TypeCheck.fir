@@ -228,6 +228,10 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
         for method: FunDecl in traitDecl.items.iter():
             varMap.enterScope()
 
+            # Note: this doesn't bind the implicit exception type (when the
+            # signature doesn't have an exception type specified). That's OK
+            # because the implicit type cannot be referred to in the function
+            # body.
             let funPreds: Vec[Pred] = convertAndBindContext(
                 mod,
                 varMap,
@@ -237,6 +241,41 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                     Option.Some(context): context.preds,
                 TyVarConversion.ToQVar,
             )
+
+            let numQVars = traitDecl.typeParams.len()
+                + method.sig.typeParams.len()
+
+            # Not specifying the exception type is the same as having a fresh
+            # type variable for the exception type.
+            if method.sig.exceptions is Option.None:
+                numQVars += 1
+
+            let schemeQVars: Vec[QVar] = Vec.withCapacity(numQVars)
+
+            for traitTyArgIdx: U32 in range(u32(0), traitDecl.typeParams.len()):
+                schemeQVars.push(
+                    QVar(
+                        id =
+                            LocalId(
+                                name =
+                                    mod.idText(
+                                        traitDecl.typeParams.get(traitTyArgIdx),
+                                    ),
+                            ),
+                        kind = traitDecl.typeParamKinds.get(traitTyArgIdx),
+                    ),
+                )
+
+            if method.sig.exceptions is Option.None:
+                # The name we invent for the exception type does not matter as
+                # it can't be used in the function body. It's also OK to not
+                # bind it in `convertAndBindContext` above for the same reason.
+                schemeQVars.push(
+                    QVar(id = LocalId(name = "?exn"), kind = Kind.Star),
+                )
+
+            for tyParam: TypeParam in method.sig.typeParams.iter():
+                schemeQVars.push(QVar(id = tyParam.name, kind = tyParam.kind))
 
             let argTys: Vec[Ty] = Vec.fromIter(
                 method.sig.params.iter().map(
@@ -258,7 +297,7 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 Option.Some(retTy): convertAstTy(mod, varMap, retTy)
 
             let exnTy: Ty = match method.sig.exceptions:
-                Option.None: panic("FunSig without exception type")
+                Option.None: Ty.QVar(schemeQVars.last().unwrap())
                 Option.Some(retTy): convertAstTy(mod, varMap, retTy)
 
             varMap.exitScope()
@@ -269,27 +308,6 @@ initModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 ret = retTy,
                 exn = Option.Some(exnTy),
             )
-
-            let schemeQVars: Vec[QVar] = Vec.withCapacity(
-                traitDecl.typeParams.len() + method.sig.typeParams.len(),
-            )
-
-            for traitTyArgIdx: U32 in range(u32(0), traitDecl.typeParams.len()):
-                schemeQVars.push(
-                    QVar(
-                        id =
-                            LocalId(
-                                name =
-                                    mod.idText(
-                                        traitDecl.typeParams.get(traitTyArgIdx),
-                                    ),
-                            ),
-                        kind = traitDecl.typeParamKinds.get(traitTyArgIdx),
-                    ),
-                )
-
-            for tyParam: TypeParam in method.sig.typeParams.iter():
-                schemeQVars.push(QVar(id = tyParam.name, kind = tyParam.kind))
 
             let scheme = Scheme(
                 qvars = schemeQVars,
