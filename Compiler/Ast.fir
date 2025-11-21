@@ -1,7 +1,6 @@
 import [
     Compiler/Defs,
     Compiler/Token,
-    Compiler/TypeCheck/Ty,
 ]
 
 

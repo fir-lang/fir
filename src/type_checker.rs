@@ -791,6 +791,7 @@ fn collect_schemes(
                             .entry(parent_ty.node.clone())
                             .or_default()
                             .insert(name.node.clone(), scheme);
+
                         if old.is_some() {
                             panic!(
                                 "{}: {}.{} is defined multiple times",

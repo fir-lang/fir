@@ -120,6 +120,14 @@ Module.loc[Tokens[t]](self, t: t) Loc:
     self.tokenLoc(t.firstToken())
 
 
+Module.tyCon(self, tyIdx: TyDefIdx) TyCon:
+    assert(self._idx == tyIdx._mod)
+    let tcEnv = self._tcEnv.unwrap()
+    let item = tcEnv._cons.get(tyIdx._name).unwrap()
+    assert(item.idx == tyIdx)
+    item.info
+
+
 # ------------------------------------------------------------------------------
 # Generated ToDoc implementations
 

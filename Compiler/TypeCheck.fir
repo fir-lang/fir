@@ -312,6 +312,9 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                     ),
                 )
 
+            for tyParam: TypeParam in method.sig.typeParams.iter():
+                schemeQVars.push(QVar(id = tyParam.name, kind = tyParam.kind))
+
             if method.sig.exceptions is Option.None:
                 # The name we invent for the exception type does not matter as
                 # it can't be used in the function body. It's also OK to not
@@ -319,9 +322,6 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 schemeQVars.push(
                     QVar(id = LocalId(name = "?exn"), kind = Kind.Star),
                 )
-
-            for tyParam: TypeParam in method.sig.typeParams.iter():
-                schemeQVars.push(QVar(id = tyParam.name, kind = tyParam.kind))
 
             let argTys: Vec[Ty] = Vec.fromIter(
                 method.sig.params.iter().map(
@@ -372,8 +372,126 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
 
 addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
-    # TODO
-    ()
+    let mod = pgm._modules.get(modIdx._idx)
+    let tcEnv = mod._tcEnv.unwrap()
+
+    for topFun: FunDecl in mod._funItems.values():
+        let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
+
+        let funPreds: Vec[Pred] = convertAndBindContext(
+            mod,
+            varMap,
+            topFun.sig.typeParams,
+            topFun.sig.context.map(|ctx: Context|: ctx.preds).unwrapOr(
+                Vec.empty(),
+            ),
+            TyVarConversion.ToQVar,
+        )
+
+        let numQVars = topFun.sig.typeParams.len()
+
+        # Not specifying the exception type is the same as having a fresh
+        # type variable for the exception type.
+        if topFun.sig.exceptions is Option.None:
+            numQVars += 1
+
+        let schemeQVars: Vec[QVar] = Vec.withCapacity(numQVars)
+
+        for tyParam: TypeParam in topFun.sig.typeParams.iter():
+            schemeQVars.push(QVar(id = tyParam.name, kind = tyParam.kind))
+
+        if topFun.sig.exceptions is Option.None:
+            # The name we invent for the exception type does not matter as
+            # it can't be used in the function body. It's also OK to not
+            # bind it in `convertAndBindContext` above for the same reason.
+            schemeQVars.push(
+                QVar(id = LocalId(name = "?exn"), kind = Kind.Star),
+            )
+
+        let argTys: Vec[Ty] = Vec.fromIter(
+            topFun.sig.params.iter().map(
+                |param: FunArg| Ty:
+                    let ty = param.ty.unwrap()
+                    convertAstTy(mod, varMap, ty),
+            ),
+        )
+
+        match topFun.sig.self_:
+            SelfParam.No: ()
+            SelfParam.Implicit:
+                # Parent type should have no type arguments.
+                match topFun.parentTy:
+                    Option.None:
+                        # TODO: location should be the `self` location, but we
+                        # don't have easy access to it yet.
+                        throw(
+                            TypeError(
+                                loc = mod.tokenLoc(topFun.name.token),
+                                msg =
+                                    "Function with \`self\` parameter should be an associated type or method",
+                            ),
+                        )
+                    Option.Some(parentTy):
+                        let parentTyDef = parentTy.def()
+                        let parentTyCon = pgm.tyCon(parentTyDef)
+                        if not parentTyCon.tyParams.isEmpty():
+                            throw(
+                                TypeError(
+                                    loc = mod.tokenLoc(topFun.name.token),
+                                    msg =
+                                        "Function \`self\` type needs type annotation",
+                                ),
+                            )
+                        argTys.insert(0, Ty.Con(id = parentTyDef))
+            SelfParam.Explicit(ty):
+                argTys.insert(0, convertAstTy(mod, varMap, ty))
+
+        let retTy: Ty = match topFun.sig.returnTy:
+            Option.None: Ty.unit()
+            Option.Some(retTy): convertAstTy(mod, varMap, retTy)
+
+        let exnTy: Ty = match topFun.sig.exceptions:
+            Option.None: Ty.QVar(schemeQVars.last().unwrap())
+            Option.Some(retTy): convertAstTy(mod, varMap, retTy)
+
+        assert(varMap.lenScopes() == 1)
+
+        let funTy = Ty.Fun(
+            args = FunArgs.Positional(argTys),
+            ret = retTy,
+            exn = Option.Some(exnTy),
+        )
+
+        let scheme = Scheme(
+            qvars = schemeQVars,
+            preds = funPreds,
+            ty = funTy,
+            loc = mod.loc(topFun),
+        )
+
+        match topFun.parentTy:
+            Option.None:
+                let funName = mod.idText(topFun.name)
+                let old = tcEnv._topSchemes.insert(
+                    funName,
+                    TcItem(
+                        idx = mod._termEnv.get(funName).unwrap(),
+                        info = scheme,
+                        imports = HashSet.[modIdx],
+                    ),
+                )
+                if old is Option.Some(..):
+                    throw(
+                        TypeError(
+                            loc = mod.tokenLoc(topFun.name.token),
+                            msg =
+                                "Top-level function \``funName`\` defined multiple times",
+                        ),
+                    )
+
+            Option.Some(parentTy):
+                # TODO
+                print("TODO")
 
 
 # ------------------------------------------------------------------------------
