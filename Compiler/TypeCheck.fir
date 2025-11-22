@@ -42,6 +42,10 @@ prepTcEnvs(pgm: Program) / TypeError:
     for scc: HashSet[ModuleIdx] in pgm._depGraph.unwrap().iter():
         addImportedSchemes(pgm, scc)
 
+    # TODO: Populate method environments of modules with associated functions
+    # with `self` arguments.
+    ()
+
 
 ## Initialize `TyCon`s of modules in the given SCC.
 ##
@@ -368,6 +372,8 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
         tyCon.info.details = TyConDetails.Trait(TraitDetails(methods))
 
 
+## Update module type checking environment with top-level and associated
+## function schemes for the functions defined in the module.
 addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
     let mod = pgm._modules.get(modIdx._idx)
     let tcEnv = mod._tcEnv.unwrap()
@@ -470,32 +476,14 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
         match topFun.parentTy:
             Option.Some(parentTy):
-                # If the function has a `self` parameter add it as a method too.
                 let parentTyName = parentTy.name
-                match topFun.sig.self_:
-                    SelfParam.No: ()
-                    SelfParam.Implicit | SelfParam.Explicit(..):
-                        let methodTypes = match tcEnv._methodSchemes.get(
-                                        funName,
-                                    ):
-                            Option.Some(methodTypes): methodTypes
-                            Option.None:
-                                let methodTypes: Vec[(id: Str, scheme: Scheme)] = Vec
-                                    .withCapacity(10)
-                                tcEnv._methodSchemes.insert(
-                                    funName,
-                                    methodTypes,
-                                )
-                                methodTypes
-
-                        methodTypes.push((id = parentTyName, scheme = scheme))
 
                 let assocFunMap = match tcEnv._assocFnSchemes.get(parentTyName):
                     Option.Some(methods): methods
                     Option.None:
                         let methods: HashMap[Str, TcItem[AssocVarDefIdx, Scheme]] = HashMap
                             .withCapacity(10)
-                        tcEnv._assocFnSchemes.insert(parentTyName, methods,)
+                        tcEnv._assocFnSchemes.insert(parentTyName, methods)
                         methods
 
                 let old = assocFunMap.insert(
@@ -529,6 +517,8 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
                     )
 
 
+## Update SCC modules with imported top-level and associated function schemes.
+##
 ## Dependency SCCs should already be processed.
 addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
     let updated = Bool.True
@@ -611,9 +601,6 @@ addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
                                     ),
                                 )
                                 updated = Bool.True
-
-                # TODO: import methods
-                ()
 
 
 # ------------------------------------------------------------------------------
