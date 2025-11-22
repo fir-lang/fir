@@ -4,6 +4,7 @@ import [
     Compiler/ScopeMap,
     Compiler/TypeCheck/Convert,
     Compiler/TypeCheck/Error,
+    Compiler/TypeCheck/Expr,
     Compiler/TypeCheck/KindInference,
     Compiler/TypeCheck/Normalization,
     Compiler/TypeCheck/RowUtils,
@@ -729,6 +730,10 @@ FunTcEnv.new(modEnv: ModuleTcEnv, exnTy: Ty, retTy: Ty, assumps: Vec[Pred]) FunT
         _preds = Vec.withCapacity(10),
         _assumps = assumps,
     )
+
+
+FunTcEnv.local(self, local: Str) Ty:
+    self._termEnv.get(local).unwrap()
 
 
 # ------------------------------------------------------------------------------
