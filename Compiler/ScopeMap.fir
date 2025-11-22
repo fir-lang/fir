@@ -4,10 +4,20 @@ type ScopeMap[k, v](
 )
 
 
+ScopeMap.empty() ScopeMap[k, v]:
+    let scopes = Vec.withCapacity(10)
+    scopes.push(HashMap.empty())
+    ScopeMap(scopes)
+
+
 ScopeMap.fromMap(map: HashMap[k, v]) ScopeMap[k, v]:
     let scopes = Vec.withCapacity(10)
     scopes.push(map)
     ScopeMap(scopes)
+
+
+ScopeMap.lenScopes(self: ScopeMap[k, v]) U32:
+    self.scopes.len()
 
 
 ScopeMap.enterScope(self: ScopeMap[k, v]):
