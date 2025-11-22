@@ -31,7 +31,11 @@ addMissingTypeParams(mod: Vec[TopDecl], tokens: Array[Token]):
             TopDecl.Type(decl): _addMissingTypeParamsType(decl, tokens)
 
             TopDecl.Fun(decl):
-                _addMissingTypeParamsFun(decl.sig, OrderedMap.empty(), tokens)
+                _addMissingTypeParamsFun(
+                    decl.sig,
+                    OrderedHashMap.empty(),
+                    tokens,
+                )
 
             TopDecl.Import(decl): ()
 
@@ -65,7 +69,7 @@ _addMissingTypeParamsType(ty: TypeDecl, tokens: Array[Token]):
 ## specified before calling this function.
 _addMissingTypeParamsFun(
     sig: FunSig,
-    tvs: OrderedMap[Str, Option[Kind]],
+    tvs: OrderedHashMap[Str, Option[Kind]],
     tokens: Array[Token],
 ):
     let boundVars: HashSet[Str] = HashSet.fromIter(tvs.keys())
@@ -101,7 +105,8 @@ _addMissingTypeParamsFun(
 _addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
     assert(trait_.typeParamKinds.isEmpty())
 
-    let traitContextVarKinds: OrderedMap[Str, Option[Kind]] = OrderedMap.empty()
+    let traitContextVarKinds: OrderedHashMap[Str, Option[Kind]] = OrderedHashMap
+        .empty()
     let traitContextVars: HashSet[Str] = HashSet.empty()
 
     for param: Id in trait_.typeParams.iter():
@@ -136,7 +141,8 @@ _addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
 _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
     assert(impl_.typeParams.isEmpty())
 
-    let implContextVarKinds: OrderedMap[Str, Option[Kind]] = OrderedMap.empty()
+    let implContextVarKinds: OrderedHashMap[Str, Option[Kind]] = OrderedHashMap
+        .empty()
 
     if impl_.context is Option.Some(context):
         for pred: Type in context.preds.iter():
@@ -146,7 +152,7 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
         _collectTvs(ty, implContextVarKinds, tokens)
 
     # This is a set but we use the map type because I'm lazy.
-    let implContextVars: OrderedMap[Str, ()] = OrderedMap.empty()
+    let implContextVars: OrderedHashMap[Str, ()] = OrderedHashMap.empty()
 
     for var_: Str in implContextVarKinds.keys():
         implContextVars.insert(var_, ())
@@ -184,7 +190,11 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
 ## specify the kind of the variable so that we can update it as record or
 ## variant row when we see one of the marker traits later, or default the kind
 ## as `*` if not.
-_collectTvs(ty: Type, tvs: OrderedMap[Str, Option[Kind]], tokens: Array[Token]):
+_collectTvs(
+    ty: Type,
+    tvs: OrderedHashMap[Str, Option[Kind]],
+    tokens: Array[Token],
+):
     match ty:
         Type.Named(namedTy): _collectNamedTyTvs(namedTy, tvs, tokens)
 
@@ -235,7 +245,7 @@ _collectTvs(ty: Type, tvs: OrderedMap[Str, Option[Kind]], tokens: Array[Token]):
 
 _collectNamedTyTvs(
     namedTy: NamedType,
-    tvs: OrderedMap[Str, Option[Kind]],
+    tvs: OrderedHashMap[Str, Option[Kind]],
     tokens: Array[Token],
 ):
     if namedTy.name.name == "RecRow" or namedTy.name.name == "VarRow":
@@ -274,39 +284,49 @@ type InsertionOrder[t](
 )
 
 
-type OrderedMap[k, v](
+## This map allows iterating the hash map elements in insertion order.
+##
+## It would probably be more efficient to maintain a linked list of elements
+## separately from the wrapped `HashMap`. It shouldn't matter too much for this
+## code as the maps keep type parameter in traits, impls, and functions, so
+## they're always very small.
+type OrderedHashMap[k, v](
     _map: HashMap[k, InsertionOrder[v]],
 )
 
 
-OrderedMap.empty() OrderedMap[k, v]:
-    OrderedMap(_map = HashMap.empty())
+OrderedHashMap.empty() OrderedHashMap[k, v]:
+    OrderedHashMap(_map = HashMap.empty())
 
 
-OrderedMap.keys(self: OrderedMap[k, v]) Map[HashMapIter[k, InsertionOrder[v]], HashMapEntry[k, InsertionOrder[v]], k, exn] / exn:
+OrderedHashMap.keys(self: OrderedHashMap[k, v]) Map[HashMapIter[k, InsertionOrder[v]], HashMapEntry[k, InsertionOrder[v]], k, exn] / exn:
     self._map.keys()
 
 
-OrderedMap.containsKey[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k) Bool:
+OrderedHashMap.containsKey[Hash[k], Eq[k]](self: OrderedHashMap[k, v], key: k) Bool:
     self._map.containsKey(key)
 
 
-OrderedMap.get[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k) Option[v]:
+OrderedHashMap.get[Hash[k], Eq[k]](self: OrderedHashMap[k, v], key: k) Option[v]:
     self._map.get(key).map(|v: InsertionOrder[v]| v: v.thing)
 
 
-OrderedMap.insert[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k, value: v) Option[v]:
+OrderedHashMap.insert[Hash[k], Eq[k]](
+    self: OrderedHashMap[k, v],
+    key: k,
+    value: v,
+) Option[v]:
     let insertionOrder = self._map.len()
     let value = InsertionOrder(insertionOrder, thing = value)
     self._map.insert(key, value).map(|v|: v.thing)
 
 
-OrderedMap.remove[Hash[k], Eq[k]](self: OrderedMap[k, v], key: k) Option[v]:
+OrderedHashMap.remove[Hash[k], Eq[k]](self: OrderedHashMap[k, v], key: k) Option[v]:
     let insertionOrder = self._map.len()
     self._map.remove(key).map(|v|: v.thing)
 
 
-OrderedMap.orderedEntries(self: OrderedMap[k, v]) Vec[HashMapEntry[k, v]]:
+OrderedHashMap.orderedEntries(self: OrderedHashMap[k, v]) Vec[HashMapEntry[k, v]]:
     let vec: Vec[HashMapEntry[k, InsertionOrder[v]]] = Vec.fromIter(
         self._map.iter(),
     )
@@ -324,9 +344,9 @@ OrderedMap.orderedEntries(self: OrderedMap[k, v]) Vec[HashMapEntry[k, v]]:
     )
 
 
-impl[Clone[k], Clone[v]] Clone[OrderedMap[k, v]]:
-    clone(self: OrderedMap[k, v]) OrderedMap[k, v]:
-        OrderedMap(_map = self._map.clone())
+impl[Clone[k], Clone[v]] Clone[OrderedHashMap[k, v]]:
+    clone(self: OrderedHashMap[k, v]) OrderedHashMap[k, v]:
+        OrderedHashMap(_map = self._map.clone())
 
 
 impl[Clone[t]] Clone[InsertionOrder[t]]:
