@@ -15,13 +15,14 @@ import [
 
 
 prepTcEnvs(pgm: Program) / TypeError:
-    # Prep envs in dependency order: from imported SCCs to importing SCCs.
+    # Prep `TyCon` envs in dependency order: from dependency SCCs to dependent
+    # SCCs.
+    #
     # In the future: we probably want to prep SCC envs on demand to allow
     # prepping only the needed envs. I.e. recursively prep envs, cache prepped
     # envs.
     for scc: HashSet[ModuleIdx] in pgm._depGraph.unwrap().iter():
-        for modIdx: ModuleIdx in scc.iter():
-            prepModuleTyCons(pgm, modIdx)
+        initSccTyCons(pgm, scc)
 
     # All modules have access to all `TyCon`s that they need, add `TyCon`
     # details.
@@ -35,11 +36,17 @@ prepTcEnvs(pgm: Program) / TypeError:
     for modIdx: U32 in range(u32(0), pgm._modules.len()):
         addModSchemes(pgm, ModuleIdx(_idx = modIdx))
 
+    # Now that each module has its own schemes, add imported schemes. Similar to
+    # the passes above, we need to initialize one SCC at a time as modules in a
+    # SCC all have access to the same things for now.
+    for scc: HashSet[ModuleIdx] in pgm._depGraph.unwrap().iter():
+        addImportedSchemes(pgm, scc)
 
-prepModuleTyCons(pgm: Program, modIdx: ModuleIdx):
-    if pgm._modules.get(modIdx._idx)._tcEnv is Option.Some(env):
-        return
 
+## Initialize `TyCon`s of modules in the given SCC.
+##
+## Dependency SCC `TyCon`s should already be initialized.
+initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
     # Reminder: with the current import semantics each SCC has access to all of
     # the things in the SCC.
     #
@@ -69,18 +76,6 @@ prepModuleTyCons(pgm: Program, modIdx: ModuleIdx):
     #
     # - Add function imports to each of the modules.
 
-    let depGraph = pgm._depGraph.unwrap()
-
-    # SCC index of the current module.
-    let sccIdx = pgm._modules.get(modIdx._idx)._sccIdx.unwrap()
-
-    # Modules in the current SCC.
-    let sccModules: HashSet[ModuleIdx] = pgm._depGraph.unwrap().get(sccIdx)
-
-    initSccTyCons(pgm, sccModules)
-
-
-initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
     # Initialize empty type checking envs.
     for modIdx: ModuleIdx in sccModules.iter():
         let mod: Module = pgm._modules.get(modIdx._idx)
@@ -213,6 +208,8 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                             updated = Bool.True
 
 
+## After `TyCon`s of the module has been initialized (including imported
+## `TyCon`s): add the details to the module's own `TyCon`s.
 addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
     let mod = pgm._modules.get(modIdx._idx)
     let tcEnv = mod._tcEnv.unwrap()
@@ -530,6 +527,11 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
                                 "Top-level function \``funName`\` defined multiple times",
                         ),
                     )
+
+
+addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
+    # TODO
+    ()
 
 
 # ------------------------------------------------------------------------------
