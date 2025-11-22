@@ -4,7 +4,6 @@
 import [
     Compiler/Ast,
     Compiler/Module,
-    Compiler/TypeCheck/TyCon,
 ]
 
 
