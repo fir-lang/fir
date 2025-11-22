@@ -469,9 +469,51 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
             loc = mod.loc(topFun),
         )
 
+        let funName = mod.idText(topFun.name)
+
         match topFun.parentTy:
+            Option.Some(parentTy):
+                # If the function has a `self` parameter add it as a method too.
+                let parentTyName = parentTy.name
+                match topFun.sig.self_:
+                    SelfParam.No: ()
+                    SelfParam.Implicit | SelfParam.Explicit(..):
+                        let methods = match tcEnv._methodSchemes.get(
+                                        parentTyName,
+                                    ):
+                            Option.Some(methods): methods
+                            Option.None:
+                                let methods: Vec[(id: Str, scheme: Scheme)] = Vec
+                                    .withCapacity(10)
+                                tcEnv._methodSchemes.insert(
+                                    parentTyName,
+                                    methods,
+                                )
+                                methods
+
+                        methods.push((id = funName, scheme = scheme))
+
+                let assocFunMap = match tcEnv._assocFnSchemes.get(parentTyName):
+                    Option.Some(methods): methods
+                    Option.None:
+                        let methods: HashMap[Str, TcItem[AssocVarDefIdx, Scheme]] = HashMap
+                            .withCapacity(10)
+                        tcEnv._assocFnSchemes.insert(parentTyName, methods,)
+                        methods
+
+                let old = assocFunMap.insert(
+                    funName,
+                    TcItem(
+                        idx =
+                            mod._assocTermEnv.get(parentTyName).unwrap().get(
+                                funName,
+                            ).unwrap(),
+                        info = scheme,
+                        imports = HashSet.[modIdx],
+                    ),
+                )
+
             Option.None:
-                let funName = mod.idText(topFun.name)
                 let old = tcEnv._topSchemes.insert(
                     funName,
                     TcItem(
@@ -488,10 +530,6 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
                                 "Top-level function \``funName`\` defined multiple times",
                         ),
                     )
-
-            Option.Some(parentTy):
-                # TODO
-                print("TODO")
 
 
 # ------------------------------------------------------------------------------
@@ -511,7 +549,7 @@ type ModuleTcEnv(
     _topSchemes: HashMap[Str, TcItem[VarDefIdx, Scheme]],
 
     ## Associated function schemes.
-    _assocFnSchemes: HashMap[Str, HashMap[Str, TcItem[VarDefIdx, Scheme]]],
+    _assocFnSchemes: HashMap[Str, HashMap[Str, TcItem[AssocVarDefIdx, Scheme]]],
 
     ## Type schemes of methods.
     ##
