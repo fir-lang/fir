@@ -413,12 +413,97 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
 
 impl ToDoc[Ty]:
     toDoc(self: Ty) Doc:
-        panic("TODO")
+        match self:
+            Ty.Con(id):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("id =") + Doc.nested(4, Doc.break_(1) + id.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Ty.Con") + Doc.char('(') + args
+            Ty.App(conId, args):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("conId =")
+                        + Doc.nested(4, Doc.break_(1) + conId.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("args =")
+                        + Doc.nested(4, Doc.break_(1) + args.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Ty.App") + Doc.char('(') + args
+            Ty.QVar(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Ty.QVar") + Doc.char('(') + args)
+            Ty.UVar(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Ty.UVar") + Doc.char('(') + args)
+            Ty.RVar(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Ty.RVar") + Doc.char('(') + args)
+            Ty.Fun(args, ret, exn):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("args =")
+                        + Doc.nested(4, Doc.break_(1) + args.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("ret =")
+                        + Doc.nested(4, Doc.break_(1) + ret.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("exn =")
+                        + Doc.nested(4, Doc.break_(1) + exn.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Ty.Fun") + Doc.char('(') + args
+            Ty.Anonymous(labels, extension, kind, isRow):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("labels =")
+                        + Doc.nested(4, Doc.break_(1) + labels.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("extension =")
+                        + Doc.nested(4, Doc.break_(1) + extension.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("kind =")
+                        + Doc.nested(4, Doc.break_(1) + kind.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("isRow =")
+                        + Doc.nested(4, Doc.break_(1) + isRow.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Ty.Anonymous") + Doc.char('(') + args
 
 
 impl ToDoc[QVar]:
     toDoc(self: QVar) Doc:
-        panic("TODO")
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("id =") + Doc.nested(4, Doc.break_(1) + self.id.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("kind =") + Doc.nested(4, Doc.break_(1) + self.kind.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("QVar") + Doc.char('(') + args)
 
 
 impl ToDoc[UVar]:
@@ -446,7 +531,16 @@ impl ToDoc[UVar]:
 
 impl ToDoc[RVar]:
     toDoc(self: RVar) Doc:
-        panic("TODO")
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("id =") + Doc.nested(4, Doc.break_(1) + self.id.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("kind =") + Doc.nested(4, Doc.break_(1) + self.kind.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("RVar") + Doc.char('(') + args)
 
 
 impl ToDoc[FunArgs]:
@@ -485,11 +579,10 @@ impl ToDoc[RecordOrVariant]:
 impl ToDoc[Scheme]:
     toDoc(self: Scheme) Doc:
         let args = Doc.break_(0)
-
-        # args += Doc.grouped(
-        #     Doc.str("qvars =")
-        #         + Doc.nested(4, Doc.break_(1) + self.qvars.toDoc()),
-        # )
+        args += Doc.grouped(
+            Doc.str("qvars =")
+                + Doc.nested(4, Doc.break_(1) + self.qvars.toDoc()),
+        )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("preds =")

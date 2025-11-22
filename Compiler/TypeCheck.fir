@@ -609,6 +609,7 @@ addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
 
 ## The module environment holds type constructors, traits (with impls), and
 ## associated and top-level functions available in the module.
+#[derive(ToDoc)]
 type ModuleTcEnv(
     ## The traits, with impls.
     _traitEnv: TraitEnv,
@@ -732,6 +733,38 @@ FunTcEnv.new(modEnv: ModuleTcEnv, exnTy: Ty, retTy: Ty, assumps: Vec[Pred]) FunT
 
 # ------------------------------------------------------------------------------
 # Generated ToDoc implementations
+
+
+impl ToDoc[ModuleTcEnv]:
+    toDoc(self: ModuleTcEnv) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("_traitEnv =")
+                + Doc.nested(4, Doc.break_(1) + self._traitEnv.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("_cons =")
+                + Doc.nested(4, Doc.break_(1) + self._cons.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("_topSchemes =")
+                + Doc.nested(4, Doc.break_(1) + self._topSchemes.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("_assocFnSchemes =")
+                + Doc.nested(4, Doc.break_(1) + self._assocFnSchemes.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+
+        # args += Doc.grouped(
+        #     Doc.str("_methodSchemes =")
+        #         + Doc.nested(4, Doc.break_(1) + self._methodSchemes.toDoc()),
+        # )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("ModuleTcEnv") + Doc.char('(') + args)
 
 
 impl[ToDoc[idx], ToDoc[info]] ToDoc[TcItem[idx, info]]:
