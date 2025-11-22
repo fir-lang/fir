@@ -14,3 +14,13 @@ type Loc(
     line: U32,
     col: U32,
 )
+
+
+impl ToStr[Loc]:
+    toStr(self: Loc) Str:
+        "`self.file`:`self.line + 1`:`self.col + 1`"
+
+
+impl ToDoc[Loc]:
+    toDoc(self: Loc) Doc:
+        Doc.str(self.toStr())

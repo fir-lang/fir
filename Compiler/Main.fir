@@ -1,6 +1,7 @@
 import [
     Compiler/NameResolver,
     Compiler/Program,
+    Compiler/TypeCheck,
 ]
 
 
@@ -33,3 +34,20 @@ main():
     pgm.loadCachedModule(parts)
     pgm.prepModuleEnvs()
     resolveNames(pgm)
+
+    match try(||: prepTcEnvs(pgm)):
+        Result.Ok(()): ()
+        Result.Err(err):
+            print(err.toDoc().render(80))
+            return
+
+    # This prints too much stuff, commented out for now.
+    # for mod: Module in pgm._modules.iter():
+    #     print("`mod._filePath` tc env:")
+    #     let tcEnvDoc = mod._tcEnv.unwrap().toDoc()
+    #     let msgDoc = Doc.nested(
+    #         4,
+    #         Doc.str("`mod._filePath` tc env:") + Doc.hardLine() + tcEnvDoc,
+    #     )
+    #     print(msgDoc.render(200))
+    ()

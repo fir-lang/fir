@@ -46,6 +46,21 @@ trait Visitor[v]:
     visitImplDecl(self: v, d: ImplDecl):
         ()
 
+    visitFunSig(self: v, d: FunSig):
+        defaultVisitFunSig(self, d)
+
+    visitTypeParam(self: v, d: TypeParam):
+        ()
+
+    visitContext(self: v, d: Context):
+        defaultVisitContext(self, d)
+
+    visitSelfParam(self: v, d: SelfParam):
+        ()
+
+    visitFunArg(self: v, d: FunArg):
+        defaultVisitFunArg(self, d)
+
     # ----------------------------------------------------------------
     # Exprs
 
@@ -230,6 +245,35 @@ defaultVisitTopDecl[Visitor[v]](v: v, topDecl: TopDecl):
         TopDecl.Import(d): v.visitImportDecl(d)
         TopDecl.Trait(d): v.visitTraitDecl(d)
         TopDecl.Impl(d): v.visitImplDecl(d)
+
+
+defaultVisitFunSig[Visitor[v]](v: v, sig: FunSig):
+    for typeParam: TypeParam in sig.typeParams.iter():
+        v.visitTypeParam(typeParam)
+
+    if sig.context is Option.Some(context):
+        v.visitContext(context)
+
+    v.visitSelfParam(sig.self_)
+
+    for param: FunArg in sig.params.iter():
+        v.visitFunArg(param)
+
+    if sig.returnTy is Option.Some(ty):
+        v.visitType(ty)
+
+    if sig.exceptions is Option.Some(ty):
+        v.visitType(ty)
+
+
+defaultVisitFunArg[Visitor[v]](v: v, arg: FunArg):
+    if arg.ty is Option.Some(ty):
+        v.visitType(ty)
+
+
+defaultVisitContext[Visitor[v]](v: v, ctx: Context):
+    for pred in ctx.preds.iter():
+        v.visitType(pred)
 
 
 defaultVisitConFields[Visitor[v]](v: v, fields: ConFields):

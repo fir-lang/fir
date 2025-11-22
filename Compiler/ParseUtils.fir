@@ -55,24 +55,36 @@ parseCharLit(text: Str) Char:
 
 
 parseStrParts(text: Str) Vec[StrPart]:
-    Vec.empty() # TODO
-
+    # TODO
+    Vec.empty()
 
 
 newId(cursor: U32) Id:
     Id(token = TokenIdx(idx = cursor))
 
 
-newVarId(cursor: U32) VarId:
-    VarId(token = TokenIdx(idx = cursor), _resolved = Option.None)
+newVarId(cursor: U32, tokens: Vec[Token]) VarId:
+    VarId(
+        token = TokenIdx(idx = cursor),
+        name = tokens.get(cursor).text,
+        _resolved = Option.None,
+    )
 
 
-newAssocId(cursor: U32) AssocVarId:
-    AssocVarId(token = TokenIdx(idx = cursor), _resolved = Option.None)
+newAssocId(cursor: U32, tokens: Vec[Token]) AssocVarId:
+    AssocVarId(
+        token = TokenIdx(idx = cursor),
+        name = tokens.get(cursor).text,
+        _resolved = Option.None,
+    )
 
 
-newTyId(cursor: U32) TyId:
-    TyId(token = TokenIdx(idx = cursor), _resolved = Option.None)
+newTyId(cursor: U32, tokens: Vec[Token]) TyId:
+    TyId(
+        token = TokenIdx(idx = cursor),
+        name = tokens.get(cursor).text,
+        _resolved = Option.None,
+    )
 
 
 processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:

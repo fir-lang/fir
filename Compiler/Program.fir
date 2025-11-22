@@ -6,17 +6,30 @@ import [
     Compiler/Defs,
     Compiler/Error,
     Compiler/Grammar,
+    Compiler/Module,
     Compiler/Scanner,
+    Compiler/TypeCheck,
 ]
 
 
 type Program(
+    ## Indexed by `ModuleIdx`.
     _modules: Vec[Module],
+
+    ## Strongly connected graphs of modules. Indexed by SCC indices.
+    ##
+    ## Initialized by `prepModuleEnvs`.
+    _depGraph: Option[Vec[HashSet[ModuleIdx]]],
 )
 
 
 Program.new() Program:
-    Program(_modules = Vec.empty())
+    Program(_modules = Vec.empty(), _depGraph = Option.None,)
+
+
+Program.tyCon(self, tyIdx: TyDefIdx) TyCon:
+    let mod = self._modules.get(tyIdx._mod._idx)
+    mod.tyCon(tyIdx)
 
 
 ## Load a module, or return it from the cache if it's already loaded.
@@ -33,6 +46,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
 
     let filePath = _modulePathToFilePath(path)
     let parsedModule = _parseFile(filePath)
+    addMissingTypeParams(parsedModule.decls, parsedModule.tokens)
     let moduleDecls = parsedModule.decls
     let tokens = parsedModule.tokens
 
@@ -84,7 +98,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
                         let old = funItems.insert(funName, funDecl)
                         if old is Option.Some(_):
                             panic(
-                                "Function`funName` defined multipe times in `filePath`",
+                                "Function `funName` defined multipe times in `filePath`",
                             )
 
             TopDecl.Trait(traitDecl):
@@ -122,6 +136,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
         _termEnv = HashMap.withCapacity(100),
         _assocTermEnv = HashMap.withCapacity(10),
         _tyEnv = HashMap.withCapacity(100),
+        _tcEnv = Option.None,
         _sccIdx = Option.None,
     )
 
@@ -147,6 +162,7 @@ Program.prepModuleEnvs(self):
     # in the SCC. So we create SCCs, and then create one module env for each
     # SCC, which is shared with all of the modules of the SCC.
     let sccs = _sccs(self)
+    self._depGraph = Option.Some(sccs)
 
     print("Program modules:")
     for i: U32 in range(u32(0), self._modules.len()):
@@ -259,9 +275,12 @@ _makeSccEnv(
         let tokens = mod._tokens
 
         for ty: HashMapEntry[Str, TypeDecl] in mod._tyItems.iter():
-            let tyDefIdx = TyDefIdx.Type(
-                TyDefIdx_(_mod = modIdx, _name = ty.key),
+            let tyDefIdx = TyDefIdx(
+                _mod = modIdx,
+                _name = ty.key,
+                _kind = TyDefKind.Type,
             )
+
             let old = typeEnv.insert(ty.key, tyDefIdx)
             if old is Option.Some(_):
                 panic(
@@ -269,8 +288,10 @@ _makeSccEnv(
                 )
 
         for trait_: HashMapEntry[Str, TraitDecl] in mod._traitItems.iter():
-            let traitDefIdx = TyDefIdx.Trait(
-                TraitDefIdx(_mod = modIdx, _name = trait_.key),
+            let traitDefIdx = TyDefIdx(
+                _mod = modIdx,
+                _name = trait_.key,
+                _kind = TyDefKind.Trait,
             )
             let old = typeEnv.insert(trait_.key, traitDefIdx)
             if old is Option.Some(_):

@@ -209,7 +209,7 @@ namedType(state: ParserState[Token]) NamedType / U32:
             let value = do:
                 let args = Vec.fromIter(once(arg0).chain(args.iter()))
                 NamedType(
-                    name = newTyId(name),
+                    name = newTyId(name, state._tokens),
                     args =
                         Option.Some(
                             TyArgs(
@@ -233,7 +233,10 @@ namedType(state: ParserState[Token]) NamedType / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                NamedType(name = newTyId(name), args = Option.None)
+                NamedType(
+                    name = newTyId(name, state._tokens),
+                    args = Option.None,
+                )
             value,
     )
     match altResult:
@@ -1756,6 +1759,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
                     FnExpr(
                         sig =
                             FunSig(
+                                typeParams = Vec.empty(),
                                 context = Option.None,
                                 self_ = SelfParam.No,
                                 params = Vec.empty(),
@@ -1849,6 +1853,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
                     FnExpr(
                         sig =
                             FunSig(
+                                typeParams = Vec.empty(),
                                 context = Option.None,
                                 self_ = SelfParam.No,
                                 params = args.unwrapOr(Vec.empty()),
@@ -2192,7 +2197,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
             let value = do:
                 Expr.Var(
                     VarExpr(
-                        id = newVarId(var_),
+                        id = newVarId(var_, state._tokens),
                         userTyArgs = tyArgs,
                         tyArgs = Vec.empty(),
                     ),
@@ -2378,6 +2383,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                     FnExpr(
                         sig =
                             FunSig(
+                                typeParams = Vec.empty(),
                                 context = Option.None,
                                 self_ = SelfParam.No,
                                 params = Vec.empty(),
@@ -2445,6 +2451,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                     FnExpr(
                         sig =
                             FunSig(
+                                typeParams = Vec.empty(),
                                 context = Option.None,
                                 self_ = SelfParam.No,
                                 params = args.unwrapOr(Vec.empty()),
@@ -2817,7 +2824,7 @@ constructor(state: ParserState[Token]) Constructor / U32:
             let value = do:
                 Constructor(
                     variant = Bool.False,
-                    ty = newTyId(ty),
+                    ty = newTyId(ty, state._tokens),
                     constr = con.map(|con: U32|: newId(con)),
                     userTyArgs,
                     tyArgs = Vec.empty(),
@@ -2875,7 +2882,7 @@ constructor(state: ParserState[Token]) Constructor / U32:
             let value = do:
                 Constructor(
                     variant = Bool.True,
-                    ty = newTyId(ty),
+                    ty = newTyId(ty, state._tokens),
                     constr = con.map(|con: U32|: newId(con)),
                     userTyArgs,
                     tyArgs = Vec.empty(),
@@ -4677,10 +4684,12 @@ topFunSig(state: ParserState[Token]) (parentTy: Option[TyId], name: Id, sig: Fun
             let value = do:
                 let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
                 (
-                    parentTy = parentTy.map(|id: U32|: newTyId(id)),
+                    parentTy =
+                        parentTy.map(|id: U32|: newTyId(id, state._tokens)),
                     name = newId(name),
                     sig =
                         FunSig(
+                            typeParams = Vec.empty(),
                             context = ctx,
                             self_ = SelfParam.No,
                             params,
@@ -4772,7 +4781,6 @@ context(state: ParserState[Token]) Context / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
                 Context(
-                    typeParams = Vec.empty(),
                     preds = Vec.fromIter(once(t0).chain(ts.iter())),
                     _firstToken = TokenIdx(idx = first),
                     _lastToken = TokenIdx(idx = last),
@@ -5089,8 +5097,9 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
             let rhs = implDeclRhs(state)
             let value = do:
                 ImplDecl(
+                    typeParams = Vec.empty(),
                     context = ctx,
-                    trait_ = newTyId(name),
+                    trait_ = newTyId(name, state._tokens),
                     tys = Vec.fromIter(once(t0).chain(ts.iter())),
                     items = rhs,
                     _firstToken = TokenIdx(idx = first),
@@ -5335,6 +5344,7 @@ funSig(state: ParserState[Token]) (id: Id, sig: FunSig) / U32:
                     id = newId(id),
                     sig =
                         FunSig(
+                            typeParams = Vec.empty(),
                             context = ctx,
                             self_ = SelfParam.No,
                             params,
