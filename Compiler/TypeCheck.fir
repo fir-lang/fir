@@ -475,20 +475,20 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 match topFun.sig.self_:
                     SelfParam.No: ()
                     SelfParam.Implicit | SelfParam.Explicit(..):
-                        let methods = match tcEnv._methodSchemes.get(
-                                        parentTyName,
+                        let methodTypes = match tcEnv._methodSchemes.get(
+                                        funName,
                                     ):
-                            Option.Some(methods): methods
+                            Option.Some(methodTypes): methodTypes
                             Option.None:
-                                let methods: Vec[(id: Str, scheme: Scheme)] = Vec
+                                let methodTypes: Vec[(id: Str, scheme: Scheme)] = Vec
                                     .withCapacity(10)
                                 tcEnv._methodSchemes.insert(
-                                    parentTyName,
-                                    methods,
+                                    funName,
+                                    methodTypes,
                                 )
-                                methods
+                                methodTypes
 
-                        methods.push((id = funName, scheme = scheme))
+                        methodTypes.push((id = parentTyName, scheme = scheme))
 
                 let assocFunMap = match tcEnv._assocFnSchemes.get(parentTyName):
                     Option.Some(methods): methods
