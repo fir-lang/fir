@@ -529,9 +529,91 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
                     )
 
 
+## Dependency SCCs should already be processed.
 addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
-    # TODO
-    ()
+    let updated = Bool.True
+    while updated:
+        updated = Bool.False
+
+        for modIdx: ModuleIdx in sccModules.iter():
+            let mod = pgm._modules.get(modIdx._idx)
+            let modTcEnv = mod._tcEnv.unwrap()
+            for importedModIdx: ModuleIdx in mod._imports.iter():
+                let importedMod = pgm._modules.get(importedModIdx._idx)
+                let importedModTcEnv = importedMod._tcEnv.unwrap()
+
+                # Import top-level functions.
+                for topFun: HashMapEntry[Str, TcItem[VarDefIdx, Scheme]] in
+                        importedModTcEnv._topSchemes.iter():
+                    match modTcEnv._topSchemes.get(topFun.key):
+                        Option.Some(existingItem):
+                            if existingItem.idx != topFun.value.idx:
+                                panic(
+                                    "Type `topFun.key` imported/defined multiple times in `mod._filePath`",
+                                )
+
+                            let new = existingItem.imports.insert(importedModIdx)
+
+                            if new:
+                                updated = Bool.True
+
+                        Option.None:
+                            modTcEnv._topSchemes.insert(
+                                topFun.key,
+                                TcItem(
+                                    idx = topFun.value.idx,
+                                    info = topFun.value.info,
+                                    imports = HashSet.[importedModIdx],
+                                ),
+                            )
+
+                            updated = Bool.True
+
+                # Import associated functions.
+                for assocFunMap: HashMapEntry[Str, HashMap[Str, TcItem[AssocVarDefIdx, Scheme]]] in
+                        modTcEnv._assocFnSchemes.iter():
+                    let typeFunMap = match modTcEnv._assocFnSchemes.get(
+                                    assocFunMap.key,
+                                ):
+                        Option.None:
+                            let typeFunMap: HashMap[Str, TcItem[AssocVarDefIdx, Scheme]] = HashMap
+                                .withCapacity(10)
+                            modTcEnv._assocFnSchemes.insert(
+                                assocFunMap.key,
+                                typeFunMap,
+                            )
+                            typeFunMap
+                        Option.Some(typeFunMap): typeFunMap
+
+                    for fun: HashMapEntry[Str, TcItem[AssocVarDefIdx, Scheme]] in
+                            assocFunMap.value.iter():
+                        match typeFunMap.get(fun.key):
+                            Option.Some(existingItem):
+                                if existingItem.idx != fun.value.idx:
+                                    panic(
+                                        "Type `assocFunMap.key`.`fun.key` imported/defined multiple times in `mod._filePath`",
+                                    )
+
+                                let new = existingItem.imports.insert(
+                                    importedModIdx,
+                                )
+
+                                if new:
+                                    updated = Bool.True
+
+                            Option.None:
+                                typeFunMap.insert(
+                                    fun.key,
+                                    TcItem(
+                                        idx = fun.value.idx,
+                                        info = fun.value.info,
+                                        imports = HashSet.[importedModIdx],
+                                    ),
+                                )
+                                updated = Bool.True
+
+                # TODO: import methods
+                ()
 
 
 # ------------------------------------------------------------------------------
