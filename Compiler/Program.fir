@@ -189,14 +189,8 @@ Program.prepModuleEnvs(self):
         for moduleIdx: ModuleIdx in scc.iter():
             let module = self._modules.get(moduleIdx._idx)
 
-            # TODO: Modul envs should be scope maps.
-            module._termEnv = HashMap.fromIter(
-                sccEnv._termEnv.iter().map(
-                    |entry: HashMapEntry[Str, VarDefIdx]|:
-                        (key = entry.key, value = entry.value),
-                ),
-            )
-
+            # TODO: Module envs should be scope maps.
+            module._termEnv = HashMap.fromEntries(sccEnv._termEnv.iter())
             module._assocTermEnv = sccEnv._assocTermEnv
             module._tyEnv = sccEnv._tyEnv
 
