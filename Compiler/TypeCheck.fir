@@ -685,6 +685,8 @@ ModuleTcEnv.empty() ModuleTcEnv:
 
 ## Type checking state for a single function (top-level, associated, or method).
 type FunTcEnv(
+    _modIdx: ModuleIdx,
+
     _modEnv: ModuleTcEnv,
 
     _termEnv: ScopeMap[Str, Ty],
@@ -720,8 +722,15 @@ type FunTcEnv(
 )
 
 
-FunTcEnv.new(modEnv: ModuleTcEnv, exnTy: Ty, retTy: Ty, assumps: Vec[Pred]) FunTcEnv:
+FunTcEnv.new(
+    modIdx: ModuleIdx,
+    modEnv: ModuleTcEnv,
+    exnTy: Ty,
+    retTy: Ty,
+    assumps: Vec[Pred],
+) FunTcEnv:
     FunTcEnv(
+        _modIdx = modIdx,
         _modEnv = modEnv,
         _termEnv = ScopeMap.empty(),
         _varGen = UVarGen.new(),

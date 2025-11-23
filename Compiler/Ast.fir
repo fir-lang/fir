@@ -873,7 +873,7 @@ type VarExpr(
     userTyArgs: Option[TyArgs],
 
     ## Inferred type arguments of the variable. Filled in by the type checker.
-    tyArgs: Vec[Type],
+    tyArgs: Vec[Ty],
 )
 
 

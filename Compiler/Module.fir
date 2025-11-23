@@ -124,16 +124,39 @@ Module.loc[Tokens[t]](self, t: t) Loc:
 
 Module.tyCon(self, tyIdx: TyDefIdx) TyCon:
     assert(self._idx == tyIdx._mod)
-    let tcEnv = self._tcEnv.unwrap()
-    let item = tcEnv._cons.get(tyIdx._name).unwrap()
+
+    let tcEnv = self._tcEnv.unwrapOrElse(
+        ||: panic("Module.tyCon called before preparing type environments"),
+    )
+
+    # `TyDefIdx`s are assigned by the name resolver after finding the
+    # definition, so it's a bug if a `TyDefIdx` is not in the environment.
+    let item = tcEnv._cons.get(tyIdx._name).unwrapOrElse(
+        ||:
+            panic(
+                "BUG: Module.tyCon TyDefIdx is not in the module type checking environment",
+            ),
+    )
+
     assert(item.idx == tyIdx)
     item.info
 
 
 Module.scheme(self, varIdx: TopVarDefIdx) Scheme:
     assert(self._idx == varIdx._mod)
-    let tcEnv = self._tcEnv.unwrap()
-    let item = tcEnv._topSchemes.get(varIdx._name).unwrap()
+
+    let tcEnv = self._tcEnv.unwrapOrElse(
+        ||: panic("Module.scheme called before preparing type environments"),
+    )
+
+    # `TopVarDefIdx`s are assigned by the name resolver after finding the
+    # definition, so it's a bug if a `TopVarDefIdx` is not in the environment.
+    let item = tcEnv._topSchemes.get(varIdx._name).unwrapOrElse(
+        panic(
+            "BUG: Module.scheme TopVarDefIdx is not in the module type checking environment",
+        ),
+    )
+
     assert(item.idx == varIdx)
     item.info
 
