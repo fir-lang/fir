@@ -39,10 +39,17 @@ pub(super) fn check_expr(
             user_ty_args,
             ty_args,
         }) => {
-            debug_assert!(ty_args.is_empty());
+            assert!(ty_args.is_empty());
 
             // Check if local.
             if let Some(ty) = tc_state.env.get(var) {
+                if !user_ty_args.is_empty() {
+                    panic!(
+                        "{}: Local variables can't have type parameters, but `{}` is passed type arguments",
+                        loc_display(&expr.loc),
+                        var
+                    );
+                }
                 return (
                     unify_expected_ty(
                         ty.clone(),
