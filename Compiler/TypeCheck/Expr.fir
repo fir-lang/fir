@@ -126,7 +126,14 @@ _checkVarExpr(
                     ),
                 )
 
-                panic("TODO")
+                let ty = scheme.instantiateWithTys(
+                    userTyArgsConverted,
+                    env._preds,
+                    exprLoc,
+                )
+
+                varExpr.tyArgs = userTyArgsConverted
+                ty
             else:
                 let tyAndVars = scheme.instantiate(
                     level,
@@ -137,4 +144,4 @@ _checkVarExpr(
                 varExpr.tyArgs = Vec.fromIter(tyAndVars.vars.iter().map(Ty.UVar))
                 tyAndVars.ty
 
-            panic("TODO")
+            (ty = ty, binds = HashMap.empty())
