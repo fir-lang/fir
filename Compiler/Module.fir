@@ -85,7 +85,7 @@ type Module(
     # modules.
 
     ## Term environment of the module, used for name resolving.
-    _termEnv: HashMap[Str, VarDefIdx],
+    _termEnv: HashMap[Str, TopVarDefIdx],
 
     ## Associated item environment of the module, used for name resolving.
     _assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]],
@@ -127,6 +127,14 @@ Module.tyCon(self, tyIdx: TyDefIdx) TyCon:
     let tcEnv = self._tcEnv.unwrap()
     let item = tcEnv._cons.get(tyIdx._name).unwrap()
     assert(item.idx == tyIdx)
+    item.info
+
+
+Module.scheme(self, varIdx: TopVarDefIdx) Scheme:
+    assert(self._idx == varIdx._mod)
+    let tcEnv = self._tcEnv.unwrap()
+    let item = tcEnv._topSchemes.get(varIdx._name).unwrap()
+    assert(item.idx == varIdx)
     item.info
 
 

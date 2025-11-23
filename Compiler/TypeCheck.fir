@@ -534,7 +534,7 @@ addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
                 let importedModTcEnv = importedMod._tcEnv.unwrap()
 
                 # Import top-level functions.
-                for topFun: HashMapEntry[Str, TcItem[VarDefIdx, Scheme]] in
+                for topFun: HashMapEntry[Str, TcItem[TopVarDefIdx, Scheme]] in
                         importedModTcEnv._topSchemes.iter():
                     match modTcEnv._topSchemes.get(topFun.key):
                         Option.Some(existingItem):
@@ -619,7 +619,7 @@ type ModuleTcEnv(
     _cons: HashMap[Str, TcItem[TyDefIdx, TyCon]],
 
     ## Top-level function schemes.
-    _topSchemes: HashMap[Str, TcItem[VarDefIdx, Scheme]],
+    _topSchemes: HashMap[Str, TcItem[TopVarDefIdx, Scheme]],
 
     ## Associated function schemes.
     _assocFnSchemes: HashMap[Str, HashMap[Str, TcItem[AssocVarDefIdx, Scheme]]],

@@ -1,7 +1,7 @@
-import [Compiler/Ast,]
+import [Compiler/Ast]
 
 
-checkExpr(expr: Expr, env: FunTcEnv) (ty: Ty, binds: HashMap[LocalId, Ty]):
+checkExpr(expr: Expr, pgm: Program, env: FunTcEnv) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
     match expr:
         Expr.Var(VarExpr(id, userTyArgs, tyArgs)):
             assert(tyArgs.isEmpty())
@@ -11,7 +11,9 @@ checkExpr(expr: Expr, env: FunTcEnv) (ty: Ty, binds: HashMap[LocalId, Ty]):
                     assert(userTyArgs is Option.None)
                     (ty = env.local(id.name), binds = HashMap.empty())
 
-                VarDefIdx.Top(topVarIdx): panic("TODO")
+                VarDefIdx.Top(topVarIdx):
+                    let scheme = pgm.scheme(topVarIdx)
+                    panic("TODO")
 
         Expr.ConstrSelect(..): panic("TODO")
 

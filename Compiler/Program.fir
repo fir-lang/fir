@@ -32,6 +32,11 @@ Program.tyCon(self, tyIdx: TyDefIdx) TyCon:
     mod.tyCon(tyIdx)
 
 
+Program.scheme(self, varIdx: TopVarDefIdx) Scheme:
+    let mod = self._modules.get(varIdx._mod._idx)
+    mod.scheme(varIdx)
+
+
 ## Load a module, or return it from the cache if it's already loaded.
 ##
 ## Follows imports in the module to transitively import all referred modules.
