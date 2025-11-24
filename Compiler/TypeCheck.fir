@@ -379,143 +379,206 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
     let mod = pgm._modules.get(modIdx._idx)
     let tcEnv = mod._tcEnv.unwrap()
 
-    for topFun: FunDecl in mod._funItems.values():
-        let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
+    for funDecl: FunDecl in mod._funItems.values():
+        _addFunDeclScheme(funDecl, pgm, modIdx)
 
-        let funPreds: Vec[Pred] = convertAndBindContext(
-            mod,
-            varMap,
-            topFun.sig.typeParams,
-            topFun.sig.context.map(|ctx: Context|: ctx.preds).unwrapOr(
-                Vec.empty(),
-            ),
-            TyVarConversion.ToQVar,
-        )
+    for tyDecl: TypeDecl in mod._tyItems.values():
+        _addTySchemes(tyDecl, pgm, modIdx)
 
-        let numQVars = topFun.sig.typeParams.len()
 
-        # Not specifying the exception type is the same as having a fresh
-        # type variable for the exception type.
-        if topFun.sig.exceptions is Option.None:
-            numQVars += 1
+_addFunDeclScheme(topFun: FunDecl, pgm: Program, modIdx: ModuleIdx) / TypeError:
+    let mod = pgm.module(modIdx)
+    let tcEnv = mod._tcEnv.unwrap()
 
-        let schemeQVars: Vec[QVar] = Vec.withCapacity(numQVars)
+    let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
 
-        for tyParam: TypeParam in topFun.sig.typeParams.iter():
-            schemeQVars.push(QVar(id = tyParam.name, kind = tyParam.kind))
+    let funPreds: Vec[Pred] = convertAndBindContext(
+        mod,
+        varMap,
+        topFun.sig.typeParams,
+        topFun.sig.context.map(|ctx: Context|: ctx.preds).unwrapOr(Vec.empty()),
+        TyVarConversion.ToQVar,
+    )
 
-        if topFun.sig.exceptions is Option.None:
-            # The name we invent for the exception type does not matter as
-            # it can't be used in the function body. It's also OK to not
-            # bind it in `convertAndBindContext` above for the same reason.
-            schemeQVars.push(
-                QVar(id = LocalId(name = "?exn"), kind = Kind.Star),
-            )
+    let numQVars = topFun.sig.typeParams.len()
 
-        let argTys: Vec[Ty] = Vec.fromIter(
-            topFun.sig.params.iter().map(
-                |param: FunArg| Ty:
-                    let ty = param.ty.unwrap()
-                    convertAstTy(mod, varMap, ty),
-            ),
-        )
+    # Not specifying the exception type is the same as having a fresh type
+    # variable for the exception type.
+    if topFun.sig.exceptions is Option.None:
+        numQVars += 1
 
-        match topFun.sig.self_:
-            SelfParam.No: ()
-            SelfParam.Implicit:
-                # Parent type should have no type arguments.
-                match topFun.parentTy:
-                    Option.None:
-                        # TODO: location should be the `self` location, but we
-                        # don't have easy access to it yet.
-                        throw(
-                            TypeError(
-                                loc = mod.tokenLoc(topFun.name.token),
-                                msg =
-                                    "Function with \`self\` parameter should be an associated type or method",
-                            ),
-                        )
-                    Option.Some(parentTy):
-                        let parentTyDef = parentTy.def()
-                        let parentTyCon = pgm.tyCon(parentTyDef)
-                        if not parentTyCon.tyParams.isEmpty():
-                            throw(
-                                TypeError(
-                                    loc = mod.tokenLoc(topFun.name.token),
-                                    msg =
-                                        "Function \`self\` type needs type annotation",
-                                ),
-                            )
-                        argTys.insert(0, Ty.Con(id = parentTyDef))
-            SelfParam.Explicit(ty):
-                argTys.insert(0, convertAstTy(mod, varMap, ty))
+    let schemeQVars: Vec[QVar] = Vec.withCapacity(numQVars)
 
-        let retTy: Ty = match topFun.sig.returnTy:
-            Option.None: Ty.unit()
-            Option.Some(retTy): convertAstTy(mod, varMap, retTy)
+    for tyParam: TypeParam in topFun.sig.typeParams.iter():
+        schemeQVars.push(QVar(id = tyParam.name, kind = tyParam.kind))
 
-        let exnTy: Ty = match topFun.sig.exceptions:
-            Option.None: Ty.QVar(schemeQVars.last().unwrap())
-            Option.Some(retTy): convertAstTy(mod, varMap, retTy)
+    if topFun.sig.exceptions is Option.None:
+        # The name we invent for the exception type does not matter as it can't
+        # be used in the function body. It's also OK to not bind it in
+        # `convertAndBindContext` above for the same reason.
+        schemeQVars.push(QVar(id = LocalId(name = "?exn"), kind = Kind.Star))
 
-        assert(varMap.lenScopes() == 1)
+    let argTys: Vec[Ty] = Vec.fromIter(
+        topFun.sig.params.iter().map(
+            |param: FunArg| Ty:
+                let ty = param.ty.unwrap()
+                convertAstTy(mod, varMap, ty),
+        ),
+    )
 
-        let funTy = Ty.Fun(
-            args = FunArgs.Positional(argTys),
-            ret = retTy,
-            exn = Option.Some(exnTy),
-        )
-
-        let scheme = Scheme(
-            qvars = schemeQVars,
-            preds = funPreds,
-            ty = funTy,
-            loc = mod.loc(topFun),
-        )
-
-        let funName = mod.idText(topFun.name)
-
-        match topFun.parentTy:
-            Option.Some(parentTy):
-                let parentTyName = parentTy.name
-
-                let assocFunMap = match tcEnv._assocFnSchemes.get(parentTyName):
-                    Option.Some(methods): methods
-                    Option.None:
-                        let methods: HashMap[Str, TcItem[AssocVarDefIdx, Scheme]] = HashMap
-                            .withCapacity(10)
-                        tcEnv._assocFnSchemes.insert(parentTyName, methods)
-                        methods
-
-                let old = assocFunMap.insert(
-                    funName,
-                    TcItem(
-                        idx =
-                            mod._assocTermEnv.get(parentTyName).unwrap().get(
-                                funName,
-                            ).unwrap(),
-                        info = scheme,
-                        imports = HashSet.[modIdx],
-                    ),
-                )
-
-            Option.None:
-                let old = tcEnv._topSchemes.insert(
-                    funName,
-                    TcItem(
-                        idx = mod._termEnv.get(funName).unwrap(),
-                        info = scheme,
-                        imports = HashSet.[modIdx],
-                    ),
-                )
-                if old is Option.Some(..):
+    match topFun.sig.self_:
+        SelfParam.No: ()
+        SelfParam.Implicit:
+            # Parent type should have no type arguments.
+            match topFun.parentTy:
+                Option.None:
+                    # TODO: location should be the `self` location, but we don't
+                    # have easy access to it yet.
                     throw(
                         TypeError(
                             loc = mod.tokenLoc(topFun.name.token),
                             msg =
-                                "Top-level function \``funName`\` defined multiple times",
+                                "Function with \`self\` parameter should be an associated type or method",
                         ),
                     )
+                Option.Some(parentTy):
+                    let parentTyDef = parentTy.def()
+                    let parentTyCon = pgm.tyCon(parentTyDef)
+                    if not parentTyCon.tyParams.isEmpty():
+                        throw(
+                            TypeError(
+                                loc = mod.tokenLoc(topFun.name.token),
+                                msg =
+                                    "Function \`self\` type needs type annotation",
+                            ),
+                        )
+                    argTys.insert(0, Ty.Con(id = parentTyDef))
+        SelfParam.Explicit(ty): argTys.insert(0, convertAstTy(mod, varMap, ty))
+
+    let retTy: Ty = match topFun.sig.returnTy:
+        Option.None: Ty.unit()
+        Option.Some(retTy): convertAstTy(mod, varMap, retTy)
+
+    let exnTy: Ty = match topFun.sig.exceptions:
+        Option.None: Ty.QVar(schemeQVars.last().unwrap())
+        Option.Some(retTy): convertAstTy(mod, varMap, retTy)
+
+    assert(varMap.lenScopes() == 1)
+
+    let funTy = Ty.Fun(
+        args = FunArgs.Positional(argTys),
+        ret = retTy,
+        exn = Option.Some(exnTy),
+    )
+
+    let scheme = Scheme(
+        qvars = schemeQVars,
+        preds = funPreds,
+        ty = funTy,
+        loc = mod.loc(topFun),
+    )
+
+    let funName = mod.idText(topFun.name)
+
+    match topFun.parentTy:
+        Option.Some(parentTy):
+            let parentTyName = parentTy.name
+
+            let assocFunMap = match tcEnv._assocFnSchemes.get(parentTyName):
+                Option.Some(methods): methods
+                Option.None:
+                    let methods: HashMap[Str, TcItem[AssocVarDefIdx, Scheme]] = HashMap
+                        .withCapacity(10)
+                    tcEnv._assocFnSchemes.insert(parentTyName, methods)
+                    methods
+
+            let old = assocFunMap.insert(
+                funName,
+                TcItem(
+                    idx =
+                        mod._assocTermEnv.get(parentTyName).unwrap().get(
+                            funName,
+                        ).unwrap(),
+                    info = scheme,
+                    imports = HashSet.[modIdx],
+                ),
+            )
+
+        Option.None:
+            let old = tcEnv._topSchemes.insert(
+                funName,
+                TcItem(
+                    idx = mod._termEnv.get(funName).unwrap(),
+                    info = scheme,
+                    imports = HashSet.[modIdx],
+                ),
+            )
+            if old is Option.Some(..):
+                throw(
+                    TypeError(
+                        loc = mod.tokenLoc(topFun.name.token),
+                        msg =
+                            "Top-level function \``funName`\` defined multiple times",
+                    ),
+                )
+
+
+_addTySchemes(tyDecl: TypeDecl, pgm: Program, modIdx: ModuleIdx) / TypeError:
+    let rhs = match tyDecl.rhs:
+        Option.None: return
+        Option.Some(rhs): rhs
+
+    let mod = pgm.module(modIdx)
+
+    let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
+
+    # Bind type parameters in the context for constructor schemes.
+
+    # If this fails then the kind inference is buggy:
+    assert(tyDecl.typeParams.len() == tyDecl.typeParamKinds.len())
+
+    for typeParamIdx: U32 in range(u32(0), tyDecl.typeParams.len()):
+        let paramNameStr = mod.idText(tyDecl.typeParams.get(typeParamIdx))
+        varMap.insert(
+            paramNameStr,
+            Ty.QVar(
+                QVar(
+                    id = LocalId(name = paramNameStr),
+                    kind = tyDecl.typeParamKinds.get(typeParamIdx),
+                ),
+            ),
+        )
+
+    # Return type of constructors.
+    let tyNameStr = mod.idText(tyDecl.name)
+    let tyDefIdx = mod._tyEnv.get(tyNameStr).unwrap()
+    let ret = if tyDecl.typeParams.isEmpty():
+        Ty.Con(id = tyDefIdx)
+    else:
+        Ty.App(
+            conId = tyDefIdx,
+            args =
+                Vec.fromIter(
+                    range(u32(0), tyDecl.typeParams.len()).map(
+                        |typeParamIdx: U32| Ty:
+                            let paramNameStr = mod.idText(
+                                tyDecl.typeParams.get(typeParamIdx),
+                            )
+                            Ty.QVar(
+                                QVar(
+                                    id = LocalId(name = paramNameStr),
+                                    kind =
+                                        tyDecl.typeParamKinds.get(typeParamIdx),
+                                ),
+                            ),
+                    ),
+                ),
+        )
+
+    match rhs:
+        TypeDeclRhs.Sum(cons): print("TODO: TypeDeclRhs.Sum")
+
+        TypeDeclRhs.Product(fields): print("TODO: TypeDeclRhs.Product")
 
 
 ## Update SCC modules with imported top-level and associated function schemes.

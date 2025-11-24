@@ -30,7 +30,8 @@ checkExpr(
         Expr.Var(expr):
             _checkVarExpr(expr, pgm, env, expectedTy, level, loopStack)
 
-        Expr.ConstrSelect(..): panic("TODO")
+        Expr.ConstrSelect(expr):
+            _checkConExpr(expr, pgm, env, expectedTy, level, loopStack)
 
         Expr.FieldSelect(..): panic("TODO")
 
@@ -145,3 +146,14 @@ _checkVarExpr(
                 tyAndVars.ty
 
             (ty = ty, binds = HashMap.empty())
+
+
+_checkConExpr(
+    con: Constructor,
+    pgm: Program,
+    env: FunTcEnv,
+    expectedTy: Option[Ty],
+    level: U32,
+    loopStack: Option[Vec[LocalId]],
+) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
+    panic("TODO")

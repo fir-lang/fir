@@ -15,7 +15,6 @@ mod ty_map;
 mod unification;
 
 pub use crate::utils::loc_display;
-use convert::convert_fields;
 use convert::*;
 use instantiation::normalize_instantiation_types;
 use stmt::check_stmts;
@@ -841,10 +840,8 @@ fn collect_schemes(
                     );
                 }
 
-                let ty_vars: Set<Id> = ty_decl.node.type_params.iter().cloned().collect();
-
                 // Return type of constructors.
-                let ret = if ty_vars.is_empty() {
+                let ret = if ty_decl.node.type_params.is_empty() {
                     Ty::Con(ty_decl.node.name.clone(), Kind::Star)
                 } else {
                     Ty::App(
