@@ -19,7 +19,7 @@ pub struct Scheme {
     pub(super) quantified_vars: Vec<(Id, Kind)>,
 
     /// Predicates.
-    pub(super) preds: Set<Pred>,
+    pub(super) preds: Vec<Pred>,
 
     /// The generalized type.
     // TODO: Should we have separate fields for arguments types and return type?
@@ -31,7 +31,7 @@ pub struct Scheme {
 }
 
 /// A type checking type.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
     Con(Id, Kind),
@@ -88,7 +88,7 @@ pub enum RecordOrVariant {
     Variant,
 }
 
-#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq)]
 pub enum FunArgs {
     Positional(Vec<Ty>),
     Named(TreeMap<Id, Ty>),
@@ -234,14 +234,14 @@ pub(super) struct ConShape {
 
 /// Types of fields of value constructors. Types may contain quantified types of the type.
 // TODO: Why do we need this? Why not use the type scheme from the env?
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) enum ConFields {
     Unnamed(Vec<Ty>),
     Named(TreeMap<Id, Ty>),
 }
 
 /// A predicate, e.g. `Iterator[coll, item]`.
-#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) struct Pred {
     /// Trait of the predicate.
     ///
@@ -262,7 +262,7 @@ impl Scheme {
         &self,
         level: u32,
         var_gen: &mut TyVarGen,
-        preds: &mut Set<Pred>,
+        preds: &mut Vec<Pred>,
         loc: &ast::Loc,
     ) -> (Ty, Vec<TyVarRef>) {
         // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
@@ -292,7 +292,7 @@ impl Scheme {
                     .collect(),
                 loc: loc.clone(),
             };
-            preds.insert(pred);
+            preds.push(pred);
         }
 
         (self.ty.subst_qvars(&var_map), instantiations)
@@ -301,7 +301,7 @@ impl Scheme {
     pub(super) fn instantiate_with_tys(
         &self,
         arg_tys: &[Ty],
-        preds: &mut Set<Pred>,
+        preds: &mut Vec<Pred>,
         loc: &ast::Loc,
     ) -> Ty {
         assert!(self.quantified_vars.len() == arg_tys.len());
@@ -324,7 +324,7 @@ impl Scheme {
                     .collect(),
                 loc: loc.clone(),
             };
-            preds.insert(pred);
+            preds.push(pred);
         }
 
         self.ty.subst_qvars(&var_map)
@@ -403,10 +403,10 @@ impl Scheme {
             other.quantified_vars,
         );
 
-        let mut left_preds: Vec<Pred> = self.preds.iter().cloned().collect();
+        let mut left_preds: Vec<Pred> = self.preds.to_vec();
         left_preds.sort();
 
-        let mut right_preds: Vec<Pred> = other.preds.iter().cloned().collect();
+        let mut right_preds: Vec<Pred> = other.preds.to_vec();
         right_preds.sort();
 
         if left_preds.len() != right_preds.len() {

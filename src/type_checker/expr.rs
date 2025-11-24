@@ -678,7 +678,7 @@ pub(super) fn check_expr(
                             tc_state
                                 .var_gen
                                 .new_var(level, Kind::Star, expr.loc.clone());
-                        tc_state.preds.insert(Pred {
+                        tc_state.preds.push(Pred {
                             trait_: Ty::to_str_id(),
                             params: vec![Ty::Var(expr_var.clone())],
                             loc: expr.loc.clone(),
@@ -1123,7 +1123,7 @@ pub(super) fn check_expr(
 
             check_stmts(tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
 
-            let new_preds: Set<Pred> = replace(tc_state.preds, old_preds);
+            let new_preds: Vec<Pred> = replace(tc_state.preds, old_preds);
             crate::type_checker::resolve_preds(
                 tc_state.trait_env,
                 tc_state.assumps,

@@ -170,9 +170,8 @@ pub(super) fn convert_and_bind_context(
     tys: &mut TyMap,
     context_ast: &ast::Context,
     conversion: TyVarConversion,
-) -> Set<Pred> {
-    let mut preds_converted: Set<Pred> =
-        Set::with_capacity_and_hasher(context_ast.preds.len(), Default::default());
+) -> Vec<Pred> {
+    let mut preds_converted: Vec<Pred> = Vec::with_capacity(context_ast.preds.len());
 
     // Bind type parameters.
     for (id, kind) in &context_ast.type_params {
@@ -204,7 +203,7 @@ pub(super) fn convert_and_bind_context(
                 ty
             ),
         };
-        preds_converted.insert(pred);
+        preds_converted.push(pred);
     }
 
     preds_converted

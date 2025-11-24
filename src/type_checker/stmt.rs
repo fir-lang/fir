@@ -342,7 +342,7 @@ fn check_stmt(
             *tc_ty = Some(item_ty_var.clone());
 
             // Add predicate `Iterator[iter, item]`.
-            tc_state.preds.insert(Pred {
+            tc_state.preds.push(Pred {
                 trait_: SmolStr::new_static("Iterator"),
                 params: vec![
                     Ty::Var(iterator_ty_var.clone()),
