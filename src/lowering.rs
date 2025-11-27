@@ -28,8 +28,6 @@ pub struct LoweredPgm {
     pub array_u8_con_idx: HeapObjIdx,
     pub array_u32_con_idx: HeapObjIdx,
     pub array_u64_con_idx: HeapObjIdx,
-    pub result_err_cons: Map<Vec<mono::Type>, HeapObjIdx>,
-    pub result_ok_cons: Map<Vec<mono::Type>, HeapObjIdx>,
     pub unit_con_idx: HeapObjIdx,
 }
 
@@ -206,14 +204,12 @@ pub enum BuiltinFunDecl {
     ThrowUnchecked,
 
     /// `prim try(cb: Fn() a / exn) Result[exn, a] / exn?` (`exn?` is implicit)
-    ///
-    /// We don't store the `exn?` type parameter as this function never throws.
     Try {
-        /// Type of exceptions to catch.
-        exn: mono::Type,
+        /// Tag of the `Result.Ok` constructor allocated by the `try` on success.
+        ok_con: HeapObjIdx,
 
-        /// The return type of the callback.
-        a: mono::Type,
+        //// Tag of the `Result.Err` constructor allocated by the `try` on failure.
+        err_con: HeapObjIdx,
     },
 
     ArrayNew {
@@ -757,14 +753,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 args: vec![],
             })])
             .unwrap(),
-        result_err_cons: sum_con_nums
-            .get_mut(&SmolStr::new_static("Result"))
-            .and_then(|r| r.get(&SmolStr::new_static("Err")).cloned())
-            .unwrap_or_default(),
-        result_ok_cons: sum_con_nums
-            .get_mut(&SmolStr::new_static("Result"))
-            .and_then(|r| r.get(&SmolStr::new_static("Ok")).cloned())
-            .unwrap_or_default(),
         unit_con_idx: HeapObjIdx(u32::MAX), // updated below
     };
 
@@ -946,11 +934,26 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     "try" => {
                         // prim try(cb: Fn() a / exn) Result[exn, a]
                         assert_eq!(fun_ty_args.len(), 3); // a, exn, exn? (implicit)
-                        let a = fun_ty_args[0].clone();
-                        let exn = fun_ty_args[1].clone();
+                        let a = &fun_ty_args[0];
+                        let exn = &fun_ty_args[1];
+                        let result = indices
+                            .sum_cons
+                            .get(&SmolStr::new_static("Result"))
+                            .unwrap();
+                        let ty_args = vec![exn.clone(), a.clone()];
+                        let ok_con = *result
+                            .get(&SmolStr::new_static("Ok"))
+                            .unwrap()
+                            .get(&ty_args)
+                            .unwrap();
+                        let err_con = *result
+                            .get(&SmolStr::new_static("Err"))
+                            .unwrap()
+                            .get(&ty_args)
+                            .unwrap();
                         lowered_pgm
                             .funs
-                            .push(Fun::Builtin(BuiltinFunDecl::Try { exn, a }));
+                            .push(Fun::Builtin(BuiltinFunDecl::Try { ok_con, err_con }));
                     }
 
                     "throwUnchecked" => {

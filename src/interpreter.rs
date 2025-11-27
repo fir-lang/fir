@@ -9,7 +9,6 @@ use heap::Heap;
 use crate::ast::{self, Id, L, Loc};
 use crate::collections::Map;
 use crate::lowering::*;
-use crate::mono_ast as mono;
 use crate::record_collector::RecordShape;
 use crate::utils::loc_display;
 
@@ -35,12 +34,6 @@ struct Pgm {
     array_u8_con_idx: HeapObjIdx,
     array_u32_con_idx: HeapObjIdx,
     array_u64_con_idx: HeapObjIdx,
-
-    /// To allocate return value of `try`: `Result.Ok` tags, indexed by type arguments.
-    result_ok_cons: Map<Vec<mono::Type>, HeapObjIdx>,
-
-    /// To allocate return value of `try`: `Result.Err` tags, indexed by type arguments.
-    result_err_cons: Map<Vec<mono::Type>, HeapObjIdx>,
 }
 
 /// A call stack frame.
@@ -71,8 +64,6 @@ impl Pgm {
             array_u8_con_idx,
             array_u32_con_idx,
             array_u64_con_idx,
-            result_err_cons,
-            result_ok_cons,
             unit_con_idx,
         } = lowered_pgm;
 
@@ -119,8 +110,6 @@ impl Pgm {
             array_u8_con_idx,
             array_u32_con_idx,
             array_u64_con_idx,
-            result_err_cons,
-            result_ok_cons,
         }
     }
 }
@@ -1510,7 +1499,7 @@ fn call_builtin_fun<W: Write>(
             FunRet::Unwind(exn)
         }
 
-        BuiltinFunDecl::Try { exn, a } => {
+        BuiltinFunDecl::Try { ok_con, err_con } => {
             debug_assert_eq!(args.len(), 1);
             let cb = args[0];
 
@@ -1518,20 +1507,8 @@ fn call_builtin_fun<W: Write>(
             // we don't pass any arguments.
             let (val, con_idx) = match call_closure(w, pgm, heap, &mut [], cb, &[], loc, call_stack)
             {
-                ControlFlow::Val(val) => (
-                    val,
-                    pgm.result_ok_cons
-                        .get(&vec![exn.clone(), a.clone()])
-                        .unwrap(),
-                ),
-
-                ControlFlow::Unwind(val) => (
-                    val,
-                    pgm.result_err_cons
-                        .get(&vec![exn.clone(), a.clone()])
-                        .unwrap(),
-                ),
-
+                ControlFlow::Val(val) => (val, *ok_con),
+                ControlFlow::Unwind(val) => (val, *err_con),
                 ControlFlow::Break(_) | ControlFlow::Continue(_) | ControlFlow::Ret(_) => panic!(),
             };
 
