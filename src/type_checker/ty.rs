@@ -232,14 +232,6 @@ pub(super) struct ConShape {
     pub(super) name: Option<Id>,
 }
 
-/// Types of fields of value constructors. Types may contain quantified types of the type.
-// TODO: Why do we need this? Why not use the type scheme from the env?
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(super) enum ConFields {
-    Unnamed(Vec<Ty>),
-    Named(TreeMap<Id, Ty>),
-}
-
 /// A predicate, e.g. `Iterator[coll, item]`.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) struct Pred {

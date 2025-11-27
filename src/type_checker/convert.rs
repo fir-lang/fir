@@ -140,16 +140,16 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
     Ty::App(ty_con.id.clone(), converted_args, Kind::Star)
 }
 
-pub(super) fn convert_fields(tys: &TyMap, fields: &ast::ConstructorFields) -> Option<ConFields> {
+pub(super) fn convert_fields(tys: &TyMap, fields: &ast::ConstructorFields) -> Option<FunArgs> {
     match fields {
         ast::ConstructorFields::Empty => None,
-        ast::ConstructorFields::Named(named_fields) => Some(ConFields::Named(
+        ast::ConstructorFields::Named(named_fields) => Some(FunArgs::Named(
             named_fields
                 .iter()
                 .map(|(name, ty)| (name.clone(), convert_ast_ty(tys, &ty.node, &ty.loc)))
                 .collect(),
         )),
-        ast::ConstructorFields::Unnamed(fields) => Some(ConFields::Unnamed(
+        ast::ConstructorFields::Unnamed(fields) => Some(FunArgs::Positional(
             fields
                 .iter()
                 .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
