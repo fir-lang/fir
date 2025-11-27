@@ -22,16 +22,19 @@ tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
     (tokens = tokens, error = Option.None)
 
 
-# This is mainly for compatibility with the interpreter, to make it easier to test the compiler.
-#
-# In the interpreter we combine some of the tokens to make it easier to parse as LR(1).
-#
-# In the compiler we don't use LR(1), and PEG can do arbitrary lookahead (by trying to parse the
-# lookahead and backtracking when failing), so technically we shouldn't need this. We may want to
-# remove this once the compiler works and we no longer need the interpreter.
-#
-# This also skips comment tokens as the interpreter doesn't generate comment tokens.
-_combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
+## This is for testing the generated tokens against the interpreter's tokens, to
+## make it easier to test the compiler.
+##
+## In the interpreter we combine some of the tokens to make Fir syntax easier to
+## parse as LR(1).
+##
+## In the compiler we don't use LR(1), and PEG can do arbitrary lookahead, so we
+## don't need this. We will remove this once the compiler works and we no longer
+## need the interpreter.
+##
+## This also skips comment tokens as the interpreter doesn't generate comment
+## tokens.
+generateInterpreterTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
     let newTokens = Vec.withCapacity(tokens.len())
 
     let i = u32(0)
@@ -123,8 +126,6 @@ _combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
 
 
 ## Entry point to tokenize a file and print generated tokens.
-##
-## Used in tests to compare generated tokens with the interpreter's tokens.
 lexerDumpTokens():
     let args = getArgs()
 
@@ -134,16 +135,35 @@ lexerDumpTokens():
     let file = args.get(1)
     let fileContents = readFileUtf8(file)
     let (tokens, error) = tokenize(file, fileContents)
-    tokens = _combineTokens(fileContents, tokens)
     if error is Option.Some(error):
         print("ERROR: `error`")
     for token: Token in tokens.iter():
         print("`token.line + 1`:`token.col + 1`: `token.kind`")
 
 
-lexerTokenizeForTesting(file: Str, fileContents: Str) Vec[Token]:
+## Entry point to tokenize a file and print generated interpreter tokens.
+##
+## This is used by the test script in `Compiler/tests/tokenize.sh` which
+## compares generated tokens of the compiler and interpreter.
+## 
+## This function has the `lexer` prefix in the name because we have a similar
+## function in the scanner, and we don't have module namespaces in the
+## interpreter.
+lexerDumpInterpreterTokens():
+    let args = getArgs()
+
+    if args.len() != 2:
+        panic(
+            "USAGE: fir Compiler/Lexer.fir --main lexerDumpInterpreterTokens -- <file>",
+        )
+
+    let file = args.get(1)
+    let fileContents = readFileUtf8(file)
     let (tokens, error) = tokenize(file, fileContents)
-    _combineTokens(fileContents, tokens)
+    if error is Option.Some(error):
+        print("ERROR: `error`")
+    for token: Token in generateInterpreterTokens(fileContents, tokens).iter():
+        print("`token.line + 1`:`token.col + 1`: `token.kind`")
 
 
 type Lexer(
