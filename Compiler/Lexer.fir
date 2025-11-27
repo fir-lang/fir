@@ -22,16 +22,19 @@ tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
     (tokens = tokens, error = Option.None)
 
 
-# This is mainly for compatibility with the interpreter, to make it easier to test the compiler.
-#
-# In the interpreter we combine some of the tokens to make it easier to parse as LR(1).
-#
-# In the compiler we don't use LR(1), and PEG can do arbitrary lookahead (by trying to parse the
-# lookahead and backtracking when failing), so technically we shouldn't need this. We may want to
-# remove this once the compiler works and we no longer need the interpreter.
-#
-# This also skips comment tokens as the interpreter doesn't generate comment tokens.
-_combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
+## This is for testing the generated tokens against the interpreter's tokens, to
+## make it easier to test the compiler.
+##
+## In the interpreter we combine some of the tokens to make Fir syntax easier to
+## parse as LR(1).
+##
+## In the compiler we don't use LR(1), and PEG can do arbitrary lookahead, so we
+## don't need this. We will remove this once the compiler works and we no longer
+## need the interpreter.
+##
+## This also skips comment tokens as the interpreter doesn't generate comment
+## tokens.
+generateInterpreterTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
     let newTokens = Vec.withCapacity(tokens.len())
 
     let i = u32(0)
@@ -43,10 +46,11 @@ _combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
                 i += 1
                 continue
 
-            TokenKind.TildeUpperId:
-                if i + 2 < tokens.len()
-                        and tokens.get(i + 1).kind is TokenKind.Dot
-                        and tokens.get(i + 2)
+            TokenKind.Tilde:
+                if i + 3 < tokens.len()
+                        and tokens.get(i + 1).kind is TokenKind.UpperId
+                        and tokens.get(i + 2).kind is TokenKind.Dot
+                        and tokens.get(i + 3)
                             is Token(
                                 kind = TokenKind.UpperId,
                                 byteIdx = byteIdxRight,
@@ -66,7 +70,30 @@ _combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
                             col = token.col,
                         ),
                     )
-                    i += 3
+                    i += 4
+                    continue
+                elif i + 1 < tokens.len()
+                        and tokens.get(i + 1)
+                            is Token(
+                                kind = TokenKind.UpperId,
+                                byteIdx = byteIdxRight,
+                                text = textRight,
+                                ..
+                            ):
+                    newTokens.push(
+                        Token(
+                            kind = TokenKind.TildeUpperId,
+                            text =
+                                contents.substr(
+                                    token.byteIdx,
+                                    byteIdxRight + textRight.len(),
+                                ),
+                            byteIdx = token.byteIdx,
+                            line = token.line,
+                            col = token.col,
+                        ),
+                    )
+                    i += 2
                     continue
 
             TokenKind.UpperId:
@@ -123,27 +150,44 @@ _combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
 
 
 ## Entry point to tokenize a file and print generated tokens.
-##
-## Used in tests to compare generated tokens with the interpreter's tokens.
 lexerDumpTokens():
     let args = getArgs()
 
     if args.len() != 2:
-        panic("USAGE: fir compiler/Lexer.fir --main lexerDumpTokens -- <file>")
+        panic("USAGE: fir Compiler/Lexer.fir --main lexerDumpTokens -- <file>")
 
     let file = args.get(1)
     let fileContents = readFileUtf8(file)
     let (tokens, error) = tokenize(file, fileContents)
-    tokens = _combineTokens(fileContents, tokens)
     if error is Option.Some(error):
         print("ERROR: `error`")
     for token: Token in tokens.iter():
         print("`token.line + 1`:`token.col + 1`: `token.kind`")
 
 
-lexerTokenizeForTesting(file: Str, fileContents: Str) Vec[Token]:
+## Entry point to tokenize a file and print generated interpreter tokens.
+##
+## This is used by the test script in `Compiler/tests/tokenize.sh` which
+## compares generated tokens of the compiler and interpreter.
+## 
+## This function has the `lexer` prefix in the name because we have a similar
+## function in the scanner, and we don't have module namespaces in the
+## interpreter.
+lexerDumpInterpreterTokens():
+    let args = getArgs()
+
+    if args.len() != 2:
+        panic(
+            "USAGE: fir Compiler/Lexer.fir --main lexerDumpInterpreterTokens -- <file>",
+        )
+
+    let file = args.get(1)
+    let fileContents = readFileUtf8(file)
     let (tokens, error) = tokenize(file, fileContents)
-    _combineTokens(fileContents, tokens)
+    if error is Option.Some(error):
+        print("ERROR: `error`")
+    for token: Token in generateInterpreterTokens(fileContents, tokens).iter():
+        print("`token.line + 1`:`token.col + 1`: `token.kind`")
 
 
 type Lexer(
@@ -697,6 +741,13 @@ Lexer._next(self) Option[Token] / Error:
             Token(kind = TokenKind.Dollar, text = "$", byteIdx, line, col),
         )
 
+    if input.startsWith("~"):
+        self._byteIdx += 1
+        self._col += 1
+        return Option.Some(
+            Token(kind = TokenKind.Tilde, text = "~", byteIdx, line, col),
+        )
+
     # ------------------------------------------------------------------------------------------
     # Literals
 
@@ -776,32 +827,6 @@ Lexer._next(self) Option[Token] / Error:
         )
 
     # ------------------------------------------------------------------------------------------
-
-    if input.startsWith("~"):
-        let idStart = self._byteIdx
-        self._byteIdx += 1
-        self._col += 1
-        if self._byteIdx < self._input.len()
-                and self._nextChar().isAsciiUppercase():
-            self._byteIdx += 1
-            self._col += 1
-            while self._byteIdx < self._input.len()
-                    and _isIdCont(self._nextChar()):
-                self._byteIdx += 1
-                self._col += 1
-            return Option.Some(
-                Token(
-                    kind = TokenKind.TildeUpperId,
-                    text = self._input.substr(idStart, self._byteIdx),
-                    byteIdx,
-                    line,
-                    col,
-                ),
-            )
-        else:
-            return Option.Some(
-                Token(kind = TokenKind.Tilde, text = "~", byteIdx, line, col,),
-            )
 
     let c = self._nextChar()
 

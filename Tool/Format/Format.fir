@@ -609,7 +609,14 @@ VarExpr.format(self, tokens: Array[Token]) Doc:
 
 
 Constructor.format(self, tokens: Array[Token]) Doc:
-    let doc = formatToken(self.ty.token, tokens)
+    let doc = Doc.empty()
+
+    if self.variant:
+        let tilde = prevNonTrivia(self.ty.token, tokens).unwrap()
+        assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
+        doc += formatToken(tilde, tokens)
+
+    doc += formatToken(self.ty.token, tokens)
 
     if self.constr is Option.Some(con):
         let dot = nextNonTrivia(self.ty.token, tokens).unwrap()

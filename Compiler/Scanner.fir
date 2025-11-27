@@ -315,22 +315,36 @@ dedent(loc: (line: U32, col: U32)) Token:
 ## Entry point to scan a file print generated tokens.
 ##
 ## Used in tests to compare generated tokens with the interpreter's tokens.
-scannerDumpTokens():
+## 
+## This function has the `scanner` prefix in the name because we have a similar
+## function in the lexer, and we don't have module namespaces in the
+## interpreter.
+scannerDumpInterpreterTokens():
     let args = getArgs()
 
     if args.len() != 2:
         panic(
-            "USAGE: fir compiler/Scanner.fir --main scannerDumpTokens -- <file>",
+            "USAGE: fir Compiler/Scanner.fir --main scannerDumpInterpreterTokens -- <file>",
         )
 
     let file = args.get(1)
     let fileContents = readFileUtf8(file)
-    let tokens = lexerTokenizeForTesting(file, fileContents)
-    let tokens = match try(||: scan[row[]](tokens)): # Explicitly close the variant (issue #49).
+    let (tokens, error) = tokenize(file, fileContents)
 
+    if error is Option.Some(error):
+        print("ERROR: `error`")
+
+    # Explicitly close the variant below (issue #49).
+    let tokens = match try(
+                    ||:
+                        scan[row[]](
+                            generateInterpreterTokens(fileContents, tokens),
+                        ),
+                ):
         Result.Err(~ScannerError(line, col, msg)):
             panic("`line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens
+
     for token: Token in tokens.iter():
         print("`token.line + 1`:`token.col + 1`: `token.kind`")
 
@@ -339,8 +353,9 @@ scannerDumpTokens():
 ##
 ## This mainly checks the comment tokens as that's where things get tricky.
 ##
-## When generating indentation tokens we ignore comments, but we still add them to the tokens as
-## tools need comment tokens. This pass makes sure the comment tokens are added at the right places.
+## When generating indentation tokens we ignore comments, but we still add them
+## to the tokens as tools need comment tokens. This pass makes sure the comment
+## tokens are added at the right places.
 sanityCheckTokens(tokens: Vec[Token]):
     if tokens.isEmpty():
         return

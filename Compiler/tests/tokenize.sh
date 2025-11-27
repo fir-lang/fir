@@ -20,7 +20,7 @@ source "${SCRIPT_DIR}/common.sh"
 
 for f in "${files[@]}"; do
     echo $f
-    compiler_output=$(./target/release/fir Compiler/Lexer.fir --main lexerDumpTokens -- "$f")
+    compiler_output=$(./target/release/fir Compiler/Lexer.fir --main lexerDumpInterpreterTokens -- "$f")
     interpreter_output=$(./target/release/fir --tokenize "$f")
     diff -u <(echo "$interpreter_output") <(echo "$compiler_output")
     if [ $? -ne 0 ]; then

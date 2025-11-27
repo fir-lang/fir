@@ -1951,7 +1951,7 @@ prefixExpr(state: ParserState[Token]) Expr / U32:
                             )
                 if pfx is Option.Some(pfx):
                     match pfx:
-                        ExprPrefix.Tilde(token): ()
+                        ExprPrefix.Tilde(token): panic("TODO")
                         ExprPrefix.Minus(token):
                             ret = Expr.UnOp(
                                 UnOpExpr(
@@ -2837,9 +2837,14 @@ constructor(state: ParserState[Token]) Constructor / U32:
         Result.Ok(value): return value
     let altResult = try(
         ||:
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Tilde, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             let ty = state.nextCursor()
             if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.TildeUpperId, ..):
+                    and sym is Token(kind = TokenKind.UpperId, ..):
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
@@ -2998,21 +3003,6 @@ parenExpr(state: ParserState[Token]) Named[Expr] / U32:
 
 exprPrefix(state: ParserState[Token]) ExprPrefix / U32:
     let cursor0 = state._cursor
-    let altResult = try(
-        ||:
-            let cur = state.nextCursor()
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Tilde, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
-            let value = do:
-                ExprPrefix.Tilde(TokenIdx(idx = cur))
-            value,
-    )
-    match altResult:
-        Result.Err(err): state._cursor = cursor0
-        Result.Ok(value): return value
     let altResult = try(
         ||:
             let cur = state.nextCursor()
