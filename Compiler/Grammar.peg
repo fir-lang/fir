@@ -14,7 +14,6 @@ type NonTerminal = NonTerminal
 Terminals:
     "LowerId" = Token(kind = TokenKind.LowerId, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
-    "TildeUpperId" = Token(kind = TokenKind.TildeUpperId, ..)
     "and" = Token(kind = TokenKind.And, ..)
     "break" = Token(kind = TokenKind.Break, ..)
     "continue" = Token(kind = TokenKind.Continue, ..)
@@ -456,8 +455,7 @@ prefixExpr Expr:
         if pfx is Option.Some(pfx):
             match pfx:
                 ExprPrefix.Tilde(token):
-                    # panic("TODO")
-                    () # TODO
+                    panic("TODO")
 
                 ExprPrefix.Minus(token):
                     ret = Expr.UnOp(UnOpExpr(
@@ -704,7 +702,6 @@ seqElem SeqElem:
                 SeqElem(key = Option.Some(e1), value = e2)
 
 
-# TODO: With PEG we don't need to combine tilde with the upper ids, get rid of TildeUpperId.
 constructor Constructor:
     ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
@@ -716,7 +713,7 @@ constructor Constructor:
             _firstToken = TokenIdx(idx = ty),
         )
 
-    ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
+    "~" ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.True,
             ty = newTyId(ty, state._tokens),
@@ -746,7 +743,7 @@ parenExpr Named[Expr]:
 
 
 exprPrefix ExprPrefix:
-    cur=^ "~": ExprPrefix.Tilde(TokenIdx(idx = cur))
+    # cur=^ "~": ExprPrefix.Tilde(TokenIdx(idx = cur))
     cur=^ "-": ExprPrefix.Minus(TokenIdx(idx = cur))
     cur=^ "not": ExprPrefix.Not(TokenIdx(idx = cur))
 

@@ -48,4 +48,4 @@ main():
 
 
 showUsageAndExit() a:
-    panic("USAGE: fir compiler/Parser.fir -- <file> [--print]")
+    panic("USAGE: fir Compiler/Parser.fir -- <file> [--print]")

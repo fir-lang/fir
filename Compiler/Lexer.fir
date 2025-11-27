@@ -46,10 +46,11 @@ generateInterpreterTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
                 i += 1
                 continue
 
-            TokenKind.TildeUpperId:
-                if i + 2 < tokens.len()
-                        and tokens.get(i + 1).kind is TokenKind.Dot
-                        and tokens.get(i + 2)
+            TokenKind.Tilde:
+                if i + 3 < tokens.len()
+                        and tokens.get(i + 1).kind is TokenKind.UpperId
+                        and tokens.get(i + 2).kind is TokenKind.Dot
+                        and tokens.get(i + 3)
                             is Token(
                                 kind = TokenKind.UpperId,
                                 byteIdx = byteIdxRight,
@@ -69,7 +70,30 @@ generateInterpreterTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
                             col = token.col,
                         ),
                     )
-                    i += 3
+                    i += 4
+                    continue
+                elif i + 1 < tokens.len()
+                        and tokens.get(i + 1)
+                            is Token(
+                                kind = TokenKind.UpperId,
+                                byteIdx = byteIdxRight,
+                                text = textRight,
+                                ..
+                            ):
+                    newTokens.push(
+                        Token(
+                            kind = TokenKind.TildeUpperId,
+                            text =
+                                contents.substr(
+                                    token.byteIdx,
+                                    byteIdxRight + textRight.len(),
+                                ),
+                            byteIdx = token.byteIdx,
+                            line = token.line,
+                            col = token.col,
+                        ),
+                    )
+                    i += 2
                     continue
 
             TokenKind.UpperId:
@@ -130,7 +154,7 @@ lexerDumpTokens():
     let args = getArgs()
 
     if args.len() != 2:
-        panic("USAGE: fir compiler/Lexer.fir --main lexerDumpTokens -- <file>")
+        panic("USAGE: fir Compiler/Lexer.fir --main lexerDumpTokens -- <file>")
 
     let file = args.get(1)
     let fileContents = readFileUtf8(file)
@@ -717,6 +741,13 @@ Lexer._next(self) Option[Token] / Error:
             Token(kind = TokenKind.Dollar, text = "$", byteIdx, line, col),
         )
 
+    if input.startsWith("~"):
+        self._byteIdx += 1
+        self._col += 1
+        return Option.Some(
+            Token(kind = TokenKind.Tilde, text = "~", byteIdx, line, col),
+        )
+
     # ------------------------------------------------------------------------------------------
     # Literals
 
@@ -796,32 +827,6 @@ Lexer._next(self) Option[Token] / Error:
         )
 
     # ------------------------------------------------------------------------------------------
-
-    if input.startsWith("~"):
-        let idStart = self._byteIdx
-        self._byteIdx += 1
-        self._col += 1
-        if self._byteIdx < self._input.len()
-                and self._nextChar().isAsciiUppercase():
-            self._byteIdx += 1
-            self._col += 1
-            while self._byteIdx < self._input.len()
-                    and _isIdCont(self._nextChar()):
-                self._byteIdx += 1
-                self._col += 1
-            return Option.Some(
-                Token(
-                    kind = TokenKind.TildeUpperId,
-                    text = self._input.substr(idStart, self._byteIdx),
-                    byteIdx,
-                    line,
-                    col,
-                ),
-            )
-        else:
-            return Option.Some(
-                Token(kind = TokenKind.Tilde, text = "~", byteIdx, line, col,),
-            )
 
     let c = self._nextChar()
 
