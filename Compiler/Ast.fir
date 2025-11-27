@@ -724,7 +724,7 @@ type Constructor(
     userTyArgs: Option[TyArgs],
 
     ## Inferred type arguments of the constructor's type. Filled in by the type checker.
-    tyArgs: Vec[Type],
+    tyArgs: Vec[Ty],
 
     # In variant constructors we'll see a '~' before `ty`, so we can't use `ty` as the first token.
     _firstToken: TokenIdx,

@@ -156,4 +156,44 @@ _checkConExpr(
     level: U32,
     loopStack: Option[Vec[LocalId]],
 ) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
+    assert(con.tyArgs.isEmpty())
+
+    let scheme: Scheme = match con.constr:
+        Option.Some(con): panic("TODO")
+
+        Option.None: panic("TODO")
+
+    let conTy: Ty = match con.userTyArgs:
+        Option.None:
+            let (ty, vars) = scheme.instantiate(
+                level,
+                env._varGen,
+                env._preds,
+                pgm.module(env._modIdx).loc(con),
+            )
+
+            con.tyArgs = Vec.fromIter(
+                vars.iter().map(|var_: UVar| Ty: Ty.UVar(var_)),
+            )
+
+            if con.variant:
+                ()
+            else:
+                ()
+
+            ty
+
+        Option.Some(args):
+            assert(not args.args.isEmpty())
+            panic("TODO")
+
     panic("TODO")
+
+
+# ty -> [labelOf(ty): ty, ..r] (r is fresh)
+#
+# Somewhat hackily, we also convert function types that return named types to
+# function types that return variants instead, to allow type checking
+# `~Foo(args)` by first converting `Foo`'s type to a function type, and then
+# applying.
+# makeVariant()
