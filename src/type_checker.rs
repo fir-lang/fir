@@ -867,16 +867,10 @@ fn collect_schemes(
                     ast::TypeDeclRhs::Sum(cons) => {
                         for con in cons {
                             let fields = &con.fields;
-                            // TODO: loc should be con loc, add loc to cons
                             let ty = match convert_fields(tys, fields) {
                                 None => ret.clone(),
-                                Some(ConFields::Unnamed(tys)) => Ty::Fun {
-                                    args: FunArgs::Positional(tys),
-                                    ret: Box::new(ret.clone()),
-                                    exceptions: None,
-                                },
-                                Some(ConFields::Named(tys)) => Ty::Fun {
-                                    args: FunArgs::Named(tys),
+                                Some(args) => Ty::Fun {
+                                    args,
                                     ret: Box::new(ret.clone()),
                                     exceptions: None,
                                 },
@@ -910,13 +904,8 @@ fn collect_schemes(
                     ast::TypeDeclRhs::Product(fields) => {
                         let ty = match convert_fields(tys, fields) {
                             None => ret,
-                            Some(ConFields::Unnamed(tys)) => Ty::Fun {
-                                args: FunArgs::Positional(tys),
-                                ret: Box::new(ret.clone()),
-                                exceptions: None,
-                            },
-                            Some(ConFields::Named(tys)) => Ty::Fun {
-                                args: FunArgs::Named(tys),
+                            Some(args) => Ty::Fun {
+                                args,
                                 ret: Box::new(ret.clone()),
                                 exceptions: None,
                             },
