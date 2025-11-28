@@ -118,7 +118,7 @@ _checkVarExpr(
 
                 let userTyArgsConverted: Vec[Ty] = Vec.fromIter(
                     userTyArgs.args.iter().map(
-                        |ty: Type| Ty:
+                        \(ty: Type) Ty:
                             convertAstTy(
                                 pgm.module(env._modIdx),
                                 env._termEnv,
@@ -173,7 +173,7 @@ _checkConExpr(
             )
 
             con.tyArgs = Vec.fromIter(
-                vars.iter().map(|var_: UVar| Ty: Ty.UVar(var_)),
+                vars.iter().map(\(var_: UVar) Ty: Ty.UVar(var_)),
             )
 
             if con.variant:

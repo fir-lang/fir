@@ -15,7 +15,7 @@ main():
     t1.foo()
 
     # Test standard library `Option.map` colliding with `Iterator.map`
-    print(Option.Some(u32(123)).map(|i: U32| Str: i.toStr()))
+    print(Option.Some(u32(123)).map(\(i: U32) Str: i.toStr()))
 
 # expected stdout:
 # (associated) T1.foo(a = 1)

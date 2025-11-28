@@ -29,14 +29,14 @@ genModule(modStr: Str):
     if error is Option.Some(error):
         panic(error.toStr())
 
-    tokens = match try(||: scan[row[]](tokens)):
+    tokens = match try(\(): scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("Scanner error: `line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens
 
     let parserState = ParserState.new(tokens)
 
-    let tree = match try(||: module(parserState)):
+    let tree = match try(\(): module(parserState)):
         Result.Err(err):
             panic("Unable to parse module: unexpected `tokens.get(err)`",)
         Result.Ok(tree): tree

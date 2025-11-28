@@ -27,14 +27,14 @@ gen(item: Str):
     if error is Option.Some(error):
         panic(error.toStr())
 
-    tokens = match try(||: scan[row[]](tokens)):
+    tokens = match try(\(): scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("Scanner error: `line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens
 
     let parserState = ParserState.new(tokens)
 
-    let tree = match try(||: typeDecl(parserState)):
+    let tree = match try(\(): typeDecl(parserState)):
         Result.Err(err):
             panic(
                 "Unable to parse item as type decl: unexpected `tokens.get(err)`",
@@ -65,7 +65,7 @@ genTree(typeDecl: TypeDecl, tokens: Vec[Token]) Doc:
         preds = _brackets(
             _interleave(
                 typeDecl.typeParams,
-                |param|:
+                \(param):
                     Doc.str("Eq[")
                         + Doc.str(tokens.get(param.token.idx).text)
                         + Doc.char(']'),
@@ -78,7 +78,7 @@ genTree(typeDecl: TypeDecl, tokens: Vec[Token]) Doc:
         typeParamsDoc = _brackets(
             _interleave(
                 typeDecl.typeParams,
-                |param|: Doc.str(tokens.get(param.token.idx).text),
+                \(param): Doc.str(tokens.get(param.token.idx).text),
                 Doc.str(", "),
             ),
         )

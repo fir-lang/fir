@@ -25,7 +25,7 @@ runParser(
         panic(error.toStr())
 
     if runScan:
-        tokens = match try(||: scan[row[]](tokens)):
+        tokens = match try(\(): scan[row[]](tokens)):
             Result.Err(~ScannerError(line, col, msg)):
                 throw(
                     TestError.Other("scanner error: `line + 1`:`col + 1`: `msg`"),
@@ -34,7 +34,7 @@ runParser(
 
     let parserState = ParserState.new(tokens)
 
-    let tree = match try(||: parseFn(parserState)):
+    let tree = match try(\(): parseFn(parserState)):
         Result.Err(err): throw(TestError.ParseError(err))
         Result.Ok(tree): tree
 
@@ -55,7 +55,7 @@ runTest[ToStr[nt]](
     parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
 ) / exn:
     print(testName)
-    match try(||: runParser(input, parseFn, Bool.False)):
+    match try(\(): runParser(input, parseFn, Bool.False)):
         Result.Ok(tree): print(tree.toDoc().render(80))
         Result.Err(err): print("ERR: `err`")
     print("")
@@ -69,7 +69,7 @@ runTest_[ToStr[nt]](
     parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
 ) / exn:
     print(input)
-    match try(||: runParser(input, parseFn, Bool.False)):
+    match try(\(): runParser(input, parseFn, Bool.False)):
         Result.Ok(tree): print(tree.toDoc().render(80))
         Result.Err(err): print("ERR: `err`")
     print("")
@@ -81,7 +81,7 @@ runTestScanner_[ToStr[nt]](
     parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
 ) / exn:
     print(input)
-    match try(||: runParser(input, parseFn, Bool.True)):
+    match try(\(): runParser(input, parseFn, Bool.True)):
         Result.Ok(tree): print(tree.toDoc().render(80))
         Result.Err(err): print("ERR: `err`")
     print("")
@@ -92,7 +92,7 @@ runTestIndent[ToStr[nt]](
     parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
 ) Bool / exn:
     print(input)
-    let result = match try(||: runParser(input, parseFn, Bool.True)):
+    let result = match try(\(): runParser(input, parseFn, Bool.True)):
         Result.Ok(tree):
             print(tree.toDoc().render(80))
             Bool.True

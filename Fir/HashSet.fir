@@ -20,11 +20,11 @@ HashSet.isEmpty(self: HashSet[k]) Bool:
 
 
 HashSet.fromIter[Iterator[iter, k, exn], Eq[k], Hash[k]](iter: iter) HashSet[k] / exn:
-    HashSet(_map = HashMap.fromIter(iter.map(|k|: (key = k, value = ()))))
+    HashSet(_map = HashMap.fromIter(iter.map(\(k): (key = k, value = ()))))
 
 
 HashSet.iter(self: HashSet[k]) Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn]:
-    self._map.iter().map(|kv| k: kv.key)
+    self._map.iter().map(\(kv) k: kv.key)
 
 
 ## Returns whether the value is newly inserted.
@@ -37,11 +37,11 @@ HashSet.contains[Hash[k], Eq[k]](self: HashSet[k], key: k) Bool:
 
 
 HashSet.difference[Hash[k], Eq[k]](self: HashSet[k], other: HashSet[k]) Filter[Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn], k, exn]:
-    self.iter().filter(|k: k|: not other.contains(k))
+    self.iter().filter(\(k: k): not other.contains(k))
 
 
 HashSet.intersection[Hash[k], Eq[k]](self: HashSet[k], other: HashSet[k]) Filter[Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn], k, exn]:
-    self.iter().filter(|k: k|: other.contains(k))
+    self.iter().filter(\(k: k): other.contains(k))
 
 
 impl[Hash[k], Eq[k]] Eq[HashSet[k]]:

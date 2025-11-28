@@ -55,7 +55,7 @@ VarId.resolve(self, def: VarDefIdx):
 
 VarId.def(self) VarDefIdx:
     self._resolved.unwrapOrElse(
-        ||: panic("Term id (\``self.name`\`) is not resolved yet"),
+        \(): panic("Term id (\``self.name`\`) is not resolved yet"),
     )
 
 
@@ -93,7 +93,7 @@ TyId.resolve(self, def: TyDefIdx):
 
 TyId.def(self) TyDefIdx:
     self._resolved.unwrapOrElse(
-        ||: panic("Type id (\``self.name`\`) is not resolved yet"),
+        \(): panic("Type id (\``self.name`\`) is not resolved yet"),
     )
 
 

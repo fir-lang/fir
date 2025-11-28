@@ -24,7 +24,7 @@ HashMap.empty() HashMap[k, v]:
 
 HashMap.withCapacity(cap: U32) HashMap[k, v]:
     let elems: Array[Option[Elem[k, v]]] = Array.fromIter(
-        repeatWith(||: Option.None),
+        repeatWith(\(): Option.None),
         cap,
     )
     HashMap(
@@ -63,7 +63,7 @@ HashMap._grow[Eq[k], Hash[k]](self: HashMap[k, v]):
         currentCap * u32(2)
 
     let newElems: Array[Option[Elem[k, v]]] = Array.fromIter(
-        repeatWith(||: Option.None),
+        repeatWith(\(): Option.None),
         newCap,
     )
 
@@ -92,11 +92,11 @@ HashMap.iter(self: HashMap[k, v]) HashMapIter[k, v]:
 
 
 HashMap.keys(self: HashMap[k, v]) Map[HashMapIter[k, v], HashMapEntry[k, v], k, exn] / exn:
-    HashMapIter.new(self).map(|entry: HashMapEntry[k, v]|: entry.key)
+    HashMapIter.new(self).map(\(entry: HashMapEntry[k, v]): entry.key)
 
 
 HashMap.values(self: HashMap[k, v]) Map[HashMapIter[k, v], HashMapEntry[k, v], v, exn] / exn:
-    HashMapIter.new(self).map(|entry: HashMapEntry[k, v]|: entry.value)
+    HashMapIter.new(self).map(\(entry: HashMapEntry[k, v]): entry.value)
 
 
 # Insert new value, return old value.

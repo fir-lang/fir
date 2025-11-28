@@ -128,7 +128,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
                     imports.push(
                         Vec.fromIter(
                             path.iter().map(
-                                |id: Id| Str: tokens.get(id.token.idx).text,
+                                \(id: Id) Str: tokens.get(id.token.idx).text,
                             ),
                         ),
                     )
@@ -172,12 +172,12 @@ _parseFile(path: Str) (decls: Vec[TopDecl], tokens: Array[Token]):
         panic("`path`:`error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
 
     # Explicitly close the variant with `row[]`. (#49)
-    let tokens = match try(||: scan[row[]](tokens)):
+    let tokens = match try(\(): scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("`path`:`line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens
 
-    match try(||: module(ParserState.new(tokens))):
+    match try(\(): module(ParserState.new(tokens))):
         Result.Err(cursor):
             match tokens.getOpt(cursor):
                 Option.None: panic("`path`: unexpected end of input")

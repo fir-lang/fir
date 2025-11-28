@@ -113,7 +113,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
                 (args1 = FunArgs.Named(args1), args2 = FunArgs.Named(args2)):
                     for arg1: HashMapEntry[LocalId, Ty] in args1.iter():
                         let arg2 = args2.get(arg1.key).unwrapOrElse(
-                            ||:
+                            \():
                                 throw(
                                     TypeError(
                                         loc,
@@ -151,14 +151,14 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
                     labels = labels1,
                     extension = extension1,
                     kind = kind1,
-                    isRow = isRow1
+                    isRow = isRow1,
                 ),
             ty2 =
                 Ty.Anonymous(
                     labels = labels2,
                     extension = extension2,
                     kind = kind2,
-                    isRow = isRow2
+                    isRow = isRow2,
                 ),
         ):
             # Kind mismatches can happen when try to unify a record with a
@@ -415,14 +415,14 @@ unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) Bool:
                     labels = labels1,
                     extension = extension1,
                     kind = kind1,
-                    isRow = isRow1
+                    isRow = isRow1,
                 ),
             ty2 =
                 Ty.Anonymous(
                     labels = labels2,
                     extension = extension2,
                     kind = kind2,
-                    isRow = isRow2
+                    isRow = isRow2,
                 ),
         ):
             # Kind mismatches can happen when try to unify a record with a
@@ -516,7 +516,7 @@ linkExtension(
 ) UVar:
     let extensionLabels: HashMap[LocalId, Ty] = HashMap.fromIter(
         extraLabels.iter().map(
-            |label: LocalId|:
+            \(label: LocalId):
                 (key = label, value = labelValues.get(label).unwrap()),
         ),
     )

@@ -1,10 +1,10 @@
 main():
-    let c1 = ||:
+    let c1 = \():
         printStr("Hi")
 
     let val = "captured"
 
-    let c2 = ||:
+    let c2 = \():
         printStr(val)
 
     c1()
@@ -12,7 +12,7 @@ main():
 
     val = "not captured"
 
-    c2 = ||:
+    c2 = \():
         c2()
         c1()
 

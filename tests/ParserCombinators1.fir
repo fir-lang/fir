@@ -14,7 +14,7 @@ type Parser[input, output](
 
 ## Match a single token in the input.
 Parser.match_(f: Fn(input) Option[output] / ParseError) Parser[input, output]:
-    Parser(f = |input, pos|:
+    Parser(f = \(input, pos):
         if pos >= input.len():
             throw(ParseError.EndOfInput)
         match f(input.get(pos)):
@@ -25,7 +25,7 @@ Parser.match_(f: Fn(input) Option[output] / ParseError) Parser[input, output]:
 
 ## Match a character in the input.
 Parser.char(c: Char) Parser[Char, ()]:
-    Parser.match_(|input|:
+    Parser.match_(\(input):
         if input == c:
             Option.Some(())
         else:
@@ -33,8 +33,8 @@ Parser.char(c: Char) Parser[Char, ()]:
 
 ## Make the parser optional.
 Parser.opt(self: Parser[input, output]) Parser[input, Option[output]]:
-    Parser(f = |input, pos|:
-        match try(||: self.f(input, pos)):
+    Parser(f = \(input, pos):
+        match try(\(): self.f(input, pos)):
             Result.Ok((output, nextPos)):
                 (output = Option.Some(output), nextPos = nextPos)
             Result.Err(_):
@@ -43,15 +43,15 @@ Parser.opt(self: Parser[input, output]) Parser[input, Option[output]]:
 
 ## Parse `p2` after `self`, return outputs of both.
 Parser.seq(self: Parser[input, output1], p2: Parser[input, output2]) Parser[input, (first: output1, second: output2)]:
-    Parser(f = |input, pos|:
+    Parser(f = \(input, pos):
         let res1 = self.f(input, pos)
         let res2 = p2.f(input, res1.nextPos)
         (output = (first = res1.output, second = res2.output), nextPos = res2.nextPos))
 
 ## Parse `self`, if fails, parse `p2`.
 Parser.alt(self: Parser[input, output], p2: Parser[input, output]) Parser[input, output]:
-    Parser(f = |input, pos|:
-        match try(||: self.f(input, pos)):
+    Parser(f = \(input, pos):
+        match try(\(): self.f(input, pos)):
             Result.Ok(res): res
             Result.Err(_): p2.f(input, pos))
 
@@ -66,26 +66,26 @@ strToVec(s: Str) Vec[Char]:
 
 main():
     let a = Parser.char('a')
-    print(try(||: a.parse(strToVec("a")).output))
-    print(try(||: a.parse(strToVec("b")).output))
+    print(try(\(): a.parse(strToVec("a")).output))
+    print(try(\(): a.parse(strToVec("b")).output))
 
     print("---")
     let seq = Parser.char('a').seq(Parser.char('b'))
-    match try(||: seq.parse(strToVec("ab")).output):
+    match try(\(): seq.parse(strToVec("ab")).output):
         Result.Ok(_): print("OK")
         Result.Err(err): print(err)
-    match try(||: seq.parse(strToVec("ac")).output):
+    match try(\(): seq.parse(strToVec("ac")).output):
         Result.Ok(_): print("OK")
         Result.Err(err): print(err)
-    match try(||: seq.parse(strToVec("a")).output):
+    match try(\(): seq.parse(strToVec("a")).output):
         Result.Ok(_): print("OK")
         Result.Err(err): print(err)
 
     print("---")
     let alt = Parser.char('a').alt(Parser.char('b'))
-    print(try(||: alt.parse(strToVec("a")).output))
-    print(try(||: alt.parse(strToVec("b")).output))
-    print(try(||: alt.parse(strToVec("c")).output))
+    print(try(\(): alt.parse(strToVec("a")).output))
+    print(try(\(): alt.parse(strToVec("b")).output))
+    print(try(\(): alt.parse(strToVec("c")).output))
 
 # expected stdout:
 # Result.Ok(())

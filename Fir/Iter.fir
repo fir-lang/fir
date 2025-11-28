@@ -469,7 +469,7 @@ impl[Iterator[iter, item, exn]] Iterator[Take[iter, item, exn], item, exn]:
 
     size(self: Take[iter, item, exn]) Option[U32] / exn2:
         self.iter.size[iter, item, exn, exn2]().map(
-            |size: U32|:
+            \(size: U32):
                 if size >= self.n:
                     self.n
                 else:

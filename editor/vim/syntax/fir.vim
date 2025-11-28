@@ -46,6 +46,7 @@ syntax match firChar /'\(.\|\\.\)'/ contains=@NONE
 syntax match firInterpolation contained "`\([^`]\+\)`" extend
 
 syntax match firParenStart "("
+syntax match firClosureStart "\\("
 syntax match firParenEnd ")"
 syntax match firBracketStart "\["
 syntax match firBracketEnd "\]"
@@ -81,6 +82,7 @@ highlight default link firOperator Operator
 highlight default link firComma Delimiter
 highlight default link firColon Delimiter
 highlight default link firParenStart Delimiter
+highlight default link firClosureStart Delimiter
 highlight default link firParenEnd Delimiter
 highlight default link firBraceStart Delimiter
 highlight default link firBraceEnd Delimiter

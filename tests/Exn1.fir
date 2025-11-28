@@ -29,7 +29,7 @@ type Break:
 
 forEachWithControlFlow(vec: Vec[t], f: Fn(t) () / [Break, ..r]) Result[[..r], ()] / [..r]:
     for t in vec.iter():
-        match try(|| () / [Break, ..r]: f(t)):
+        match try(\() () / [Break, ..r]: f(t)):
             Result.Err(~Break.Break): break
             Result.Err(other): return Result.Err(other)
             Result.Ok(()): ()
@@ -51,17 +51,17 @@ main():
     vec.push(2)
     vec.push(3)
 
-    match try(|| () / [OddNumberError]: forEach(vec, throwOnOdd)):
+    match try(\() () / [OddNumberError]: forEach(vec, throwOnOdd)):
         Result.Err(~OddNumberError(i = i)): printStr("Odd number: `i.toStr()`")
         Result.Ok(()): ()
 
     printStr("---")
 
-    forEachWithControlFlow(vec, |i: U32| () / [Break]: printStr(i.toStr()))
+    forEachWithControlFlow(vec, \(i: U32) () / [Break]: printStr(i.toStr()))
 
     printStr("---")
 
-    forEachWithControlFlow(vec, |i: U32| () / [Break]:
+    forEachWithControlFlow(vec, \(i: U32) () / [Break]:
         printStr(i.toStr())
         if i & 0b1 == 0:
             throw(~Break.Break))

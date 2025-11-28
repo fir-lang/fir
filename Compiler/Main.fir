@@ -34,7 +34,7 @@ main():
     pgm.loadCachedModule(parts)
     resolveNames(pgm)
 
-    match try(||: prepTcEnvs(pgm)):
+    match try(\(): prepTcEnvs(pgm)):
         Result.Ok(()): ()
         Result.Err(err):
             print(err.toDoc().render(80))

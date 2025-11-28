@@ -24,7 +24,7 @@ formatModuleStr(moduleName: Str, moduleContents: Str) Str:
         print("ERROR: `error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
 
     # Explicitly close the variant with `row[]` (issue #49).
-    let tokens = match try(||: scan[row[]](tokens)):
+    let tokens = match try(\(): scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("`line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens
@@ -34,7 +34,7 @@ formatModuleStr(moduleName: Str, moduleContents: Str) Str:
 
     let parserState = ParserState.new(tokens)
 
-    let tree = match try(||: module(parserState)):
+    let tree = match try(\(): module(parserState)):
         Result.Err(cursor):
             if cursor == tokens.len():
                 panic("Parse error: unexpected end of input")
@@ -493,7 +493,7 @@ TraitDecl.format(self, tokens: Array[Token]) Doc:
                 + formatToken(colon, tokens)
                 + Doc.hardLine()
                 + join(
-                    self.items.iter().map(|decl: FunDecl|: decl.format(tokens)),
+                    self.items.iter().map(\(decl: FunDecl): decl.format(tokens)),
                     Doc.hardLine() + Doc.hardLine(),
                 ),
         )
@@ -562,7 +562,7 @@ ImplDecl.format(self, tokens: Array[Token]) Doc:
     docRest += formatToken(colon, tokens) + Doc.hardLine()
 
     docRest += join(
-        self.items.iter().map(|decl: FunDecl|: decl.format(tokens)),
+        self.items.iter().map(\(decl: FunDecl): decl.format(tokens)),
         Doc.hardLine() + Doc.hardLine(),
     )
 
@@ -946,36 +946,43 @@ FnExpr.format(self, tokens: Array[Token]) Doc:
     # assert(self.sig.context.preds.isEmpty)
     # assert(self.sig.self_ is SelfParam.No)
 
-    let pipe1 = self.firstToken()
-    let doc0 = formatToken(pipe1, tokens)
+    let lparen = self.firstToken()
+    assert(tokens.get(lparen.idx).kind is TokenKind.BackslashLParen)
+
+    let doc0 = formatToken(lparen, tokens)
 
     let docRest = Doc.empty()
-    let lastToken = pipe1
+    let lastToken = lparen
 
-    if not (tokens.get(pipe1.idx).kind is TokenKind.PipePipe):
-        for param: FunArg in self.sig.params.iter():
-            docRest += formatToken(param.name.token, tokens)
-            lastToken = param.name.token
+    let trailingComma = Bool.False
+    for param: FunArg in self.sig.params.iter():
+        if trailingComma:
+            docRest += Doc.blank(1)
+            trailingComma = Bool.False
 
-            if param.ty is Option.Some(ty):
-                let colon = nextNonTrivia(param.name.token, tokens).unwrap()
-                assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+        docRest += formatToken(param.name.token, tokens)
+        lastToken = param.name.token
 
-                docRest += formatToken(colon, tokens)
-                    + Doc.blank(1)
-                    + ty.format(tokens)
-                lastToken = ty.lastToken()
+        if param.ty is Option.Some(ty):
+            let colon = nextNonTrivia(param.name.token, tokens).unwrap()
+            assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-                if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)
-                        and tokens.get(next.idx).kind is TokenKind.Comma:
-                    docRest += formatToken(next, tokens) + Doc.blank(1)
-                    lastToken = next
+            docRest += formatToken(colon, tokens)
+                + Doc.blank(1)
+                + ty.format(tokens)
+            lastToken = ty.lastToken()
 
-        let pipe2 = nextNonTrivia(lastToken, tokens).unwrap()
-        assert(tokens.get(pipe2.idx).kind is TokenKind.Pipe)
+            if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)
+                    and tokens.get(next.idx).kind is TokenKind.Comma:
+                trailingComma = Bool.True
+                docRest += formatToken(next, tokens)
+                lastToken = next
 
-        docRest += formatToken(pipe2, tokens)
-        lastToken = pipe2
+    let rparen = nextNonTrivia(lastToken, tokens).unwrap()
+    assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+
+    docRest += formatToken(rparen, tokens)
+    lastToken = rparen
 
     if self.sig.returnTy is Option.Some(ret):
         docRest += Doc.blank(1) + ret.format(tokens)
@@ -1494,8 +1501,8 @@ ConstrPat.format(self, tokens: Array[Token]) Doc:
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
 
         args += formatToken(dotdot, tokens)
-
-    # Note: trailing commas are not accepted in con pats, see #203.
+    elif self.fields.len() != 0 and not trailingComma:
+        args += Doc.whenNotFlat(Doc.char(','))
 
     let rparen = self.lastToken()
     Doc.grouped(

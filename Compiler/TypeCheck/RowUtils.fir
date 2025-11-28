@@ -12,7 +12,7 @@ collectRows(
 ) (rows: HashMap[LocalId, Ty], extension: Option[Ty]):
     let allLabels: HashMap[LocalId, Ty] = HashMap.fromIter(
         labels.iter().map(
-            |label: HashMapEntry[LocalId, Ty]|:
+            \(label: HashMapEntry[LocalId, Ty]):
                 (key = label.key, value = label.value.deepNormalize()),
         ),
     )

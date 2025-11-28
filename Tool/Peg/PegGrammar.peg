@@ -25,6 +25,7 @@ Terminals:
     "_" = Token(kind = TokenKind.Underscore, ..)
     "-" = Token(kind = TokenKind.Minus, ..)
     "=" = Token(kind = TokenKind.Eq, ..)
+    "\\(" = Token(kind = TokenKind.BackslashLParen, ..)
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
     "." = Token(kind = TokenKind.Dot, ..)
@@ -111,6 +112,7 @@ inlineTokenTree:
     inlineTokenTreeSingle*
 
 inlineTokenTreeSingle:
+    "\\(" indentedTokenTree ")"
     "(" indentedTokenTree ")"
     "row(" indentedTokenTree ")"
     "[" indentedTokenTree "]"
@@ -130,6 +132,7 @@ indentedTokenTree:
     indentedTokenTreeSingle*
 
 indentedTokenTreeSingle:
+    "\\(" indentedTokenTree ")"
     "(" indentedTokenTree ")"
     "row(" indentedTokenTree ")"
     "[" indentedTokenTree "]"
