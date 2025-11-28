@@ -954,7 +954,12 @@ FnExpr.format(self, tokens: Array[Token]) Doc:
     let docRest = Doc.empty()
     let lastToken = lparen
 
+    let trailingComma = Bool.False
     for param: FunArg in self.sig.params.iter():
+        if trailingComma:
+            docRest += Doc.blank(1)
+            trailingComma = Bool.False
+
         docRest += formatToken(param.name.token, tokens)
         lastToken = param.name.token
 
@@ -969,7 +974,8 @@ FnExpr.format(self, tokens: Array[Token]) Doc:
 
             if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)
                     and tokens.get(next.idx).kind is TokenKind.Comma:
-                docRest += formatToken(next, tokens) + Doc.blank(1)
+                trailingComma = Bool.True
+                docRest += formatToken(next, tokens)
                 lastToken = next
 
     let rparen = nextNonTrivia(lastToken, tokens).unwrap()
