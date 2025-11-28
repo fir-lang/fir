@@ -4,7 +4,7 @@ test() Str / U32:
 main():
     printStr(try(test).toStr())
 
-    let x: Result[U32, U32] = try(||: throw(u32(456)))
+    let x: Result[U32, U32] = try(\(): throw(u32(456)))
     printStr(x.toStr())
 
 # expected stdout:

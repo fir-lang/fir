@@ -8,9 +8,9 @@ test(f: Fn() U32 / [Err]):
     ()
 
 main():
-    test(||: throw(~Foo.Foo))
+    test(\(): throw(~Foo.Foo))
 
 # args: --typecheck
 # expected exit status: 101
 # expected stderr:
-# tests/ClosuresFail2.fir:11:14: Unable to unify variant with constructors {"Foo"} with variant with constructors {"Err"}
+# tests/ClosuresFail2.fir:11:15: Unable to unify variant with constructors {"Foo"} with variant with constructors {"Err"}

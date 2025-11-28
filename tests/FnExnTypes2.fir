@@ -2,8 +2,8 @@ foo(f: Fn() () / exn1) () / exn1:
     f()
 
 main():
-    foo(||: print("Hi"))
-    foo(||: throw("Hi"))
+    foo(\(): print("Hi"))
+    foo(\(): throw("Hi"))
 
 # expected exit status: 101
 # expected stderr:

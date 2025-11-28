@@ -159,7 +159,7 @@ parseWithExn(vec: Vec[Str], parseFn: Fn(Str) a / exn) Vec[a] / exn:
 
 
 parseU32UsingExnVersion(s: Str) Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]:
-    try(||: parseU32Exn(s))
+    try(\(): parseU32Exn(s))
 
 
 parseU32UsingResultVersion(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
