@@ -5,7 +5,7 @@ TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
         TypeDeclRhs.Sum(decls):
             Doc.char(':')
                 + Doc.hardLine()
-                + join(decls.iter().map(||: decl.format(tokens)), Doc.hardLine())
+                + joi(decls.iter().map(\(): decl.format(tokens)), Doc.hardLine())
                 + Doc.hardLine()
         TypeDeclRhs.Product(fields):
             fields.format(tokens)
@@ -18,6 +18,6 @@ TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
 #         TypeDeclRhs.Sum(decls):
 #             Doc.char(':')
 #                 + Doc.hardLine()
-#                 + join(decls.iter().map(||: decl.format(tokens)), Doc.hardLine())
+#                 + joi(decls.iter().map(\(): decl.format(tokens)), Doc.hardLine())
 #                 + Doc.hardLine()
 #         TypeDeclRhs.Product(fields): fields.format(tokens)
