@@ -147,7 +147,7 @@ f():
 #                                                             1 & 3 or 4 * 5 == 6
 #                                                             x
 #                                                                 is Option.Some(
-#                                                                     foo
+#                                                                     foo,
 #                                                                 )
 #                                                                 and y is Blah.A
 #                                                                 and z is a
@@ -170,7 +170,7 @@ f():
 #                                                                         == 6
 #                                                                 x
 #                                                                     is Option.Some(
-#                                                                         foo
+#                                                                         foo,
 #                                                                     )
 #                                                                     and y
 #                                                                         is Blah.A

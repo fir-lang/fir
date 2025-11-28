@@ -151,14 +151,14 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
                     labels = labels1,
                     extension = extension1,
                     kind = kind1,
-                    isRow = isRow1
+                    isRow = isRow1,
                 ),
             ty2 =
                 Ty.Anonymous(
                     labels = labels2,
                     extension = extension2,
                     kind = kind2,
-                    isRow = isRow2
+                    isRow = isRow2,
                 ),
         ):
             # Kind mismatches can happen when try to unify a record with a
@@ -415,14 +415,14 @@ unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) Bool:
                     labels = labels1,
                     extension = extension1,
                     kind = kind1,
-                    isRow = isRow1
+                    isRow = isRow1,
                 ),
             ty2 =
                 Ty.Anonymous(
                     labels = labels2,
                     extension = extension2,
                     kind = kind2,
-                    isRow = isRow2
+                    isRow = isRow2,
                 ),
         ):
             # Kind mismatches can happen when try to unify a record with a

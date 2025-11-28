@@ -155,7 +155,7 @@ convertParseTree(tree: ParseTree[Token, NonTerminal]) Grammar:
     if grammar.get(0)
             is ParseTree.NonTerminal(
                 kind = NonTerminal.ImportDecl,
-                nodes = importDeclNodes
+                nodes = importDeclNodes,
             ):
         let importStr = StrBuf.withCapacity(50)
         for pathTree: ParseTree[Token, NonTerminal] in importDeclNodes.iter():
@@ -257,7 +257,7 @@ convertAlt(nodes: Vec[ParseTree[Token, NonTerminal]]) Alt:
         if symbolTree
                 is ParseTree.NonTerminal(
                     kind = NonTerminal.NonTerminalRhs,
-                    nodes = rhsNodes
+                    nodes = rhsNodes,
                 ):
             if rhsNodes.isEmpty():
                 return Alt(symbols, rhs = Option.None)

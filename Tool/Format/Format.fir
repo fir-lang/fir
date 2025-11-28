@@ -1494,8 +1494,8 @@ ConstrPat.format(self, tokens: Array[Token]) Doc:
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
 
         args += formatToken(dotdot, tokens)
-
-    # Note: trailing commas are not accepted in con pats, see #203.
+    elif self.fields.len() != 0 and not trailingComma:
+        args += Doc.whenNotFlat(Doc.char(','))
 
     let rparen = self.lastToken()
     Doc.grouped(
