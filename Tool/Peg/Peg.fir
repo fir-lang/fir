@@ -21,7 +21,7 @@ main():
     if error is Option.Some(error):
         panic(error.toStr())
 
-    let tokens = match try(||: scan[row[]](tokens)):
+    let tokens = match try(\(): scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("Unable to scan file: `line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens
@@ -31,7 +31,7 @@ main():
 
     let parserState = ParserState.new(tokens)
 
-    let grammar = match try(||: grammar(parserState)):
+    let grammar = match try(\(): grammar(parserState)):
         Result.Err(cursor):
             if cursor == tokens.len():
                 panic("Unexpected end of input")
@@ -493,7 +493,7 @@ generateNonTerminal(
     doc += Doc.str("let cursor0 = state._cursor") + Doc.hardLine()
 
     for alt: Alt in decl.alts.iter():
-        let altResultDoc = Doc.str("let altResult = try(||:") + Doc.hardLine()
+        let altResultDoc = Doc.str("let altResult = try(\\():") + Doc.hardLine()
 
         # TODO: Count the non-ignored symbols, allocate vector (or maybe array) with the right size.
         # TODO: Update the symbol code generator to only push to `nodes` when the production doesn't
@@ -547,7 +547,7 @@ generateNonTerminal(
 
         altResultDoc = altResultDoc.nest(4)
 
-        # Terminate `try(||: ...)`.
+        # Terminate `try(\(): ...)`.
         altResultDoc += Doc.hardLine() + Doc.str(")") + Doc.hardLine()
 
         doc += altResultDoc
@@ -614,7 +614,7 @@ generateSymbolParser(
     match symbol:
         Symbol.Terminal(terminal):
             let patToks = terminalPats.get(terminal).unwrapOrElse(
-                ||: panic("Unknown terminal: `terminal`"),
+                \(): panic("Unknown terminal: `terminal`"),
             )
 
             let doc = Doc.empty()
@@ -779,7 +779,7 @@ generateSymbolParser(
                         Doc.empty())
                     + Doc.nested(
                         4,
-                        Doc.str("let symResult = try(||:")
+                        Doc.str("let symResult = try(\\():")
                             + Doc.hardLine()
                             + generateSymbolParser(
                                 symbol,
@@ -902,7 +902,7 @@ generateSymbolParser(
             doc
                 + Doc.nested(
                     4,
-                    Doc.str("let symResult = try(||:")
+                    Doc.str("let symResult = try(\\():")
                         + Doc.hardLine()
                         + generateSymbolParser(symbol, terminalPats, cont)
                         + Doc.hardLine()
@@ -937,7 +937,7 @@ generateSymbolParser(
                 + Doc.hardLine()
                 + Doc.nested(
                     4,
-                    Doc.str("let symResult = try(||:")
+                    Doc.str("let symResult = try(\\():")
                         + Doc.hardLine()
                         + generateSymbolParser(
                             symbol,

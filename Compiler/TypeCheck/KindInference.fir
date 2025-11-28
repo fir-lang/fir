@@ -122,7 +122,7 @@ _addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
         # Drop function context variables added above.
         let keysToDrop: Vec[Str] = Vec.fromIter(
             traitContextVarKinds.keys().filter(
-                |key: Str| Bool: not traitContextVars.contains(key),
+                \(key: Str) Bool: not traitContextVars.contains(key),
             ),
         )
 
@@ -132,7 +132,7 @@ _addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
     let traitContextVarKinds = traitContextVarKinds.orderedEntries()
     trait_.typeParamKinds = Vec.fromIter(
         traitContextVarKinds.iter().map(
-            |entry: HashMapEntry[Str, Option[Kind]]| Kind:
+            \(entry: HashMapEntry[Str, Option[Kind]]) Kind:
                 entry.value.unwrapOr(Kind.Star),
         ),
     )
@@ -163,7 +163,7 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
 
         let keysToDrop: Vec[Str] = Vec.fromIter(
             implContextVarKinds.keys().filter(
-                |key: Str| Bool: not implContextVars.containsKey(key),
+                \(key: Str) Bool: not implContextVars.containsKey(key),
             ),
         )
 
@@ -308,7 +308,7 @@ OrderedHashMap.containsKey[Hash[k], Eq[k]](self: OrderedHashMap[k, v], key: k) B
 
 
 OrderedHashMap.get[Hash[k], Eq[k]](self: OrderedHashMap[k, v], key: k) Option[v]:
-    self._map.get(key).map(|v: InsertionOrder[v]| v: v.thing)
+    self._map.get(key).map(\(v: InsertionOrder[v]) v: v.thing)
 
 
 OrderedHashMap.insert[Hash[k], Eq[k]](
@@ -318,12 +318,12 @@ OrderedHashMap.insert[Hash[k], Eq[k]](
 ) Option[v]:
     let insertionOrder = self._map.len()
     let value = InsertionOrder(insertionOrder, thing = value)
-    self._map.insert(key, value).map(|v|: v.thing)
+    self._map.insert(key, value).map(\(v): v.thing)
 
 
 OrderedHashMap.remove[Hash[k], Eq[k]](self: OrderedHashMap[k, v], key: k) Option[v]:
     let insertionOrder = self._map.len()
-    self._map.remove(key).map(|v|: v.thing)
+    self._map.remove(key).map(\(v): v.thing)
 
 
 OrderedHashMap.orderedEntries(self: OrderedHashMap[k, v]) Vec[HashMapEntry[k, v]]:
@@ -332,13 +332,13 @@ OrderedHashMap.orderedEntries(self: OrderedHashMap[k, v]) Vec[HashMapEntry[k, v]
     )
 
     vec.sortBy(
-        |v1: HashMapEntry[k, InsertionOrder[v]], v2: HashMapEntry[k, InsertionOrder[v]]| Ordering:
+        \(v1: HashMapEntry[k, InsertionOrder[v]], v2: HashMapEntry[k, InsertionOrder[v]]) Ordering:
             v1.value.insertionOrder.cmp(v2.value.insertionOrder),
     )
 
     Vec.fromIter(
         vec.iter().map(
-            |v: HashMapEntry[k, InsertionOrder[v]]| HashMapEntry[k, v]:
+            \(v: HashMapEntry[k, InsertionOrder[v]]) HashMapEntry[k, v]:
                 HashMapEntry(key = v.key, value = v.value.thing),
         ),
     )

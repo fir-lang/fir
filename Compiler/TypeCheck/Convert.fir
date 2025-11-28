@@ -14,7 +14,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
         Type.Var(var_):
             let varText = module.idText(var_)
             vars.get(varText).unwrapOrElse(
-                ||:
+                \():
                     throw(
                         TypeError(loc, msg = "Unbound type variable `varText`",),
                     ),
@@ -26,7 +26,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
             for namedField: Named[Type] in fields.iter():
                 let name = module.idText(
                     namedField.name.unwrapOrElse(
-                        ||:
+                        \():
                             throw(
                                 TypeError(
                                     loc,
@@ -48,10 +48,10 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                     )
 
             let extension = extension.map(
-                |extId|:
+                \(extId):
                     let extIdText = module.idText(extId)
                     vars.get(extIdText).unwrapOrElse(
-                        ||:
+                        \():
                             throw(
                                 TypeError(
                                     loc,
@@ -80,10 +80,10 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                     )
 
             let extension = extension.map(
-                |extId|:
+                \(extId):
                     let extIdText = module.idText(extId)
                     vars.get(extIdText).unwrapOrElse(
-                        ||:
+                        \():
                             throw(
                                 TypeError(
                                     loc,
@@ -104,7 +104,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
             let args = FunArgs.Positional(
                 Vec.fromIter(
                     args.iter().map(
-                        |ty: Type| Ty: convertAstTy(module, vars, ty),
+                        \(ty: Type) Ty: convertAstTy(module, vars, ty),
                     ),
                 ),
             )
@@ -114,7 +114,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                 Option.Some(ret): convertAstTy(module, vars, ret)
 
             let exceptions = exceptions.unwrapOrElse(
-                ||:
+                \():
                     throw(
                         TypeError(
                             loc,
@@ -158,7 +158,7 @@ convertNamedTy(
 
     let convertedArgs: Vec[Ty] = Vec.fromIter(
         tyArgs.unwrap().args.iter().map(
-            |astTy: Type| Ty: convertAstTy(module, vars, astTy),
+            \(astTy: Type) Ty: convertAstTy(module, vars, astTy),
         ),
     )
 

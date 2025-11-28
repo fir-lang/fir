@@ -28,12 +28,12 @@ main():
         print("ERROR: `error`")
 
     # Explicitly close the variant with `row[]`. (#49)
-    let tokens = match try(||: scan[row[]](tokens)):
+    let tokens = match try(\(): scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("`line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens
 
-    let mod = match try(||: module(ParserState.new(tokens))):
+    let mod = match try(\(): module(ParserState.new(tokens))):
         Result.Err(cursor):
             if cursor == tokens.len():
                 panic("Parse error: unexpected end of input")

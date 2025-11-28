@@ -91,6 +91,7 @@ type TokenKind:
     LBrace
     LBracket
     LBracketRow
+    BackslashLParen
     LParen
     LParenRow
     RBrace
@@ -261,6 +262,7 @@ impl ToStr[TokenKind]:
             TokenKind.Let: "Let"
             TokenKind.Loop: "Loop"
             TokenKind.LowerId: "LowerId"
+            TokenKind.BackslashLParen: "BlackslashLParen"
             TokenKind.LParen: "LParen"
             TokenKind.LParenRow: "LParenRow"
             TokenKind.Match: "Match"
@@ -351,6 +353,7 @@ impl Eq[TokenKind]:
             (left = TokenKind.Let, right = TokenKind.Let): Bool.True
             (left = TokenKind.Loop, right = TokenKind.Loop): Bool.True
             (left = TokenKind.LowerId, right = TokenKind.LowerId): Bool.True
+            (left = TokenKind.BackslashLParen, right = TokenKind.BackslashLParen): Bool.True
             (left = TokenKind.LParen, right = TokenKind.LParen): Bool.True
             (left = TokenKind.LParenRow, right = TokenKind.LParenRow): Bool.True
             (left = TokenKind.Match, right = TokenKind.Match): Bool.True

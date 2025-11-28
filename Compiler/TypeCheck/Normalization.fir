@@ -24,7 +24,9 @@ Ty.deepNormalize(self) Ty:
             Ty.App(
                 conId,
                 args =
-                    Vec.fromIter(args.iter().map(|arg: Ty|: arg.deepNormalize())),
+                    Vec.fromIter(
+                        args.iter().map(\(arg: Ty): arg.deepNormalize()),
+                    ),
             )
 
         Ty.QVar(_): panic("QVar in deepNormalize")
@@ -46,14 +48,14 @@ Ty.deepNormalize(self) Ty:
                         FunArgs.Positional(tys):
                             FunArgs.Positional(
                                 Vec.fromIter(
-                                    tys.iter().map(|ty: Ty|: ty.deepNormalize()),
+                                    tys.iter().map(\(ty: Ty): ty.deepNormalize()),
                                 ),
                             )
                         FunArgs.Named(tys):
                             FunArgs.Named(
                                 HashMap.fromIter(
                                     tys.iter().map(
-                                        |ty: HashMapEntry[LocalId, Ty]|:
+                                        \(ty: HashMapEntry[LocalId, Ty]):
                                             (
                                                 key = ty.key,
                                                 value = ty.value.deepNormalize(),
@@ -62,7 +64,7 @@ Ty.deepNormalize(self) Ty:
                                 ),
                             ),
                 ret = ret.deepNormalize(),
-                exn = exn.map(|ty: Ty|: ty.deepNormalize()),
+                exn = exn.map(\(ty: Ty): ty.deepNormalize()),
             )
 
         Ty.Anonymous(labels, extension, kind, isRow):
@@ -70,14 +72,14 @@ Ty.deepNormalize(self) Ty:
                 labels =
                     HashMap.fromIter(
                         labels.iter().map(
-                            |label: HashMapEntry[LocalId, Ty]|:
+                            \(label: HashMapEntry[LocalId, Ty]):
                                 (
                                     key = label.key,
                                     value = label.value.deepNormalize(),
                                 ),
                         ),
                     ),
-                extension = extension.map(|ty: Ty|: ty.deepNormalize()),
+                extension = extension.map(\(ty: Ty): ty.deepNormalize()),
                 kind,
                 isRow,
             )

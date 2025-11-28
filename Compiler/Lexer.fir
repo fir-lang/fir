@@ -720,11 +720,11 @@ Lexer._next(self) Option[Token] / Error:
             Token(kind = TokenKind.Slash, text = "/", byteIdx, line, col),
         )
 
-    if input.startsWith("\\"):
-        self._byteIdx += 1
-        self._col += 1
+    if input.startsWith("\\("):
+        self._byteIdx += 2
+        self._col += 2
         return Option.Some(
-            Token(kind = TokenKind.Backslash, text = "\\", byteIdx, line, col),
+            Token(kind = TokenKind.BackslashLParen, text = "\\(", byteIdx, line, col),
         )
 
     if input.startsWith("?"):
