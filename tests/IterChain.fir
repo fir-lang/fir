@@ -14,12 +14,12 @@ main():
 
     print("---")
 
-    let iter = onceWith(||:
+    let iter = onceWith(\():
             print("OnceWith 1")
             'a'
         )
         .chain(empty())
-        .chain(onceWith(||:
+        .chain(onceWith(\():
             print("OnceWith 2")
             'b'
         ))

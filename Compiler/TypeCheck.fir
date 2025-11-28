@@ -105,7 +105,7 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                             tyParams =
                                 Vec.fromIter(
                                     range(u32(0), tyDecl.typeParams.len()).map(
-                                        |i: U32| TyParam:
+                                        \(i: U32) TyParam:
                                             TyParam(
                                                 name =
                                                     LocalId(
@@ -141,7 +141,7 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                                 Vec.fromIter(
                                     range(u32(0), traitDecl.typeParams.len())
                                         .map(
-                                        |i: U32| TyParam:
+                                        \(i: U32) TyParam:
                                             TyParam(
                                                 name =
                                                     LocalId(
@@ -228,7 +228,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                         Option.Some(TypeDeclRhs.Sum(cons)):
                             Vec.fromIter(
                                 cons.iter().map(
-                                    |con: ConDecl| Str: mod.idText(con.name),
+                                    \(con: ConDecl) Str: mod.idText(con.name),
                                 ),
                             )
                         Option.Some(TypeDeclRhs.Product(_fields)):
@@ -253,7 +253,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             varMap,
             Vec.fromIter(
                 range(u32(0), traitDecl.typeParams.len()).map(
-                    |i: U32| TypeParam:
+                    \(i: U32) TypeParam:
                         TypeParam(
                             name =
                                 LocalId(
@@ -326,7 +326,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
             let argTys: Vec[Ty] = Vec.fromIter(
                 method.sig.params.iter().map(
-                    |param: FunArg| Ty:
+                    \(param: FunArg) Ty:
                         let ty = param.ty.unwrap()
                         convertAstTy(mod, varMap, ty),
                 ),
@@ -385,7 +385,7 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
             mod,
             varMap,
             topFun.sig.typeParams,
-            topFun.sig.context.map(|ctx: Context|: ctx.preds).unwrapOr(
+            topFun.sig.context.map(\(ctx: Context): ctx.preds).unwrapOr(
                 Vec.empty(),
             ),
             TyVarConversion.ToQVar,
@@ -413,7 +413,7 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
         let argTys: Vec[Ty] = Vec.fromIter(
             topFun.sig.params.iter().map(
-                |param: FunArg| Ty:
+                \(param: FunArg) Ty:
                     let ty = param.ty.unwrap()
                     convertAstTy(mod, varMap, ty),
             ),

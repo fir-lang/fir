@@ -179,7 +179,7 @@ _prepRenamingEnvs(pgm: Program):
     print(sccs.toDoc().render(80))
 
     let sccEnvs: Vec[Option[_SccEnv]] = Vec.fromIter(
-        repeatWith(||: Option.None).take(sccs.len()),
+        repeatWith(\(): Option.None).take(sccs.len()),
     )
 
     let sccImports = _makeSccDepGraph(pgm, sccs)
@@ -204,7 +204,7 @@ _prepRenamingEnvs(pgm: Program):
 
 _makeSccDepGraph(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[U32]]:
     let sccImports: Vec[HashSet[U32]] = Vec.fromIter(
-        repeatWith(||: HashSet.withCapacity(10)).take(sccs.len()),
+        repeatWith(\(): HashSet.withCapacity(10)).take(sccs.len()),
     )
 
     for sccIdx: U32 in range(u32(0), sccs.len()):
@@ -371,7 +371,7 @@ _sccs(pgm: Program) Vec[HashSet[ModuleIdx]]:
     # nodes, we use an `Array` to map module ids to things.
     let nodes: Array[_SccNode] = Array.fromIter(
         range(u32(0), pgm._modules.len()).map(
-            |i: U32|:
+            \(i: U32):
                 _SccNode(
                     moduleIdx = ModuleIdx(_idx = i),
                     index = Option.None,

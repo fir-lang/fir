@@ -39,6 +39,7 @@ Terminals:
     "while" = Token(kind = TokenKind.While, ..)
     "row[" = Token(kind = TokenKind.LBracketRow, ..)
     "row(" = Token(kind = TokenKind.LParenRow, ..)
+    "\\(" = Token(kind = TokenKind.BackslashLParen, ..)
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
     "[" = Token(kind = TokenKind.LBracket, ..)
@@ -61,7 +62,6 @@ Terminals:
     "/" = Token(kind = TokenKind.Slash, ..)
     "*" = Token(kind = TokenKind.Star, ..)
     "|" = Token(kind = TokenKind.Pipe, ..)
-    "||" = Token(kind = TokenKind.PipePipe, ..)
     "&" = Token(kind = TokenKind.Amp, ..)
     "/" = Token(kind = TokenKind.Slash, ..)
     "_" = Token(kind = TokenKind.Underscore, ..)
@@ -170,7 +170,7 @@ recordTypeStart (start: TokenIdx, isRow: Bool):
 
 recordTypeCont Option[Id]:
     "," id=(_".." ^ _"LowerId")?:
-        id.map(|id: U32|: newId(id))
+        id.map(\(id: U32): newId(id))
 
 
 # - []
@@ -216,7 +216,7 @@ variantTypeStart (start: TokenIdx, isRow: Bool):
 
 variantTypeCont Option[Id]:
     "," id=(_".." ^ _"LowerId")?:
-        id.map(|id: U32|: newId(id))
+        id.map(\(id: U32): newId(id))
 
 
 recordTypeFields Vec[Named[Type]]:
@@ -316,7 +316,7 @@ typeDecl TypeDecl:
 typeParams Vec[Id]:
     id0=^ "LowerId" ids=(_"," ^ _"LowerId")* ","?:
         let vec: Vec[Id] =
-            Vec.fromIter(once(newId(id0)).chain(ids.iter().map(|id: U32|: newId(id))))
+            Vec.fromIter(once(newId(id0)).chain(ids.iter().map(\(id: U32): newId(id))))
         vec
 
 
@@ -352,7 +352,7 @@ conFields (fields: ConFields, lastToken: TokenIdx):
 # A constructor field with optional name: `Type` or `foo: Type`.
 conField (name: Option[Id], ty: Type):
     name=(^ _"LowerId" _":")? ty=type_:
-        (name = name.map(|name: U32|: newId(name)), ty = ty)
+        (name = name.map(\(name: U32): newId(name)), ty = ty)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -386,7 +386,7 @@ blockExpr Expr:
             _firstToken = TokenIdx(idx = cur),
             branches =
                 Vec.fromIter(once(IfBranch(guard = cond0, body = body0))
-                    .chain(conds.iter().map(|branch: (cond: Expr, body: Vec[Stmt])|: IfBranch(guard = branch.cond, body = branch.body)))
+                    .chain(conds.iter().map(\(branch: (cond: Expr, body: Vec[Stmt])): IfBranch(guard = branch.cond, body = branch.body)))
                     ),
             elseBranch = else_,
         ))
@@ -394,24 +394,7 @@ blockExpr Expr:
     cur=^ "do" ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
         Expr.Do(DoExpr(body, _firstToken = TokenIdx(idx = cur)))
 
-    cur=^ "||" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
-        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
-        Expr.Fn_(FnExpr(
-            sig = FunSig(
-                typeParams = Vec.empty(),
-                context = Option.None,
-                self_ = SelfParam.No,
-                params = Vec.empty(),
-                exceptions = ret.exn,
-                returnTy = ret.ret,
-            ),
-            body,
-            idx = 0,
-            _firstToken = TokenIdx(idx = cur),
-        ))
-
-
-    cur=^ "|" args=fnArgs? "|" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+    cur=^ "\\(" args=fnArgs? ")" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
@@ -551,23 +534,7 @@ simpleExpr Expr:
     cur=^ "return" expr=inlineExpr?:
         Expr.Return(ReturnExpr(expr, _firstToken = TokenIdx(idx = cur)))
 
-    cur=^ "||" ret=returnTy? ":" body=inlineExpr:
-        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
-        Expr.Fn_(FnExpr(
-            sig = FunSig(
-                typeParams = Vec.empty(),
-                context = Option.None,
-                self_ = SelfParam.No,
-                params = Vec.empty(),
-                exceptions = ret.exn,
-                returnTy = ret.ret,
-            ),
-            body = Vec.[Stmt.Expr(body)],
-            idx = 0,
-            _firstToken = TokenIdx(idx = cur),
-        ))
-
-    cur=^ "|" args=fnArgs? "|" ret=returnTy? ":" body=inlineExpr:
+    cur=^ "\\(" args=fnArgs? ")" ret=returnTy? ":" body=inlineExpr:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
@@ -707,7 +674,7 @@ constructor Constructor:
         Constructor(
             variant = Bool.False,
             ty = newTyId(ty, state._tokens),
-            constr = con.map(|con: U32|: newId(con)),
+            constr = con.map(\(con: U32): newId(con)),
             userTyArgs,
             tyArgs = Vec.empty(),
             _firstToken = TokenIdx(idx = ty),
@@ -717,7 +684,7 @@ constructor Constructor:
         Constructor(
             variant = Bool.True,
             ty = newTyId(ty, state._tokens),
-            constr = con.map(|con: U32|: newId(con)),
+            constr = con.map(\(con: U32): newId(con)),
             userTyArgs,
             tyArgs = Vec.empty(),
             _firstToken = TokenIdx(idx = ty),
@@ -784,7 +751,7 @@ fnArgs Vec[FunArg]:
     v0=^ "LowerId" ty0=(_":" type_)? vs=("," v=^ "LowerId" ty=(_":" type_)?)* ","?:
         let vec: Vec[FunArg] =
             Vec.fromIter(once(FunArg(name = newId(v0), ty = ty0))
-                .chain(vs.iter().map(|v: (v: U32, ty: Option[Type])|: FunArg(name = newId(v.v), ty = v.ty)))
+                .chain(vs.iter().map(\(v: (v: U32, ty: Option[Type])): FunArg(name = newId(v.v), ty = v.ty)))
                 )
         vec
 
@@ -796,14 +763,14 @@ fnArgs Vec[FunArg]:
 stmt Stmt:
     cur=^ "break" labelLoc=^ label="label"? "NEWLINE":
         Stmt.Break(BreakStmt(
-            label = label.map(|l: Token|: newId(labelLoc)),
+            label = label.map(\(l: Token): newId(labelLoc)),
             level = 0,
             _firstToken = TokenIdx(idx = cur),
         ))
 
     cur=^ "continue" labelLoc=^ label="label"? "NEWLINE":
         Stmt.Continue(ContinueStmt(
-            label = label.map(|l: Token|: newId(labelLoc)),
+            label = label.map(\(l: Token): newId(labelLoc)),
             level = 0,
             _firstToken = TokenIdx(idx = cur),
         ))
@@ -894,13 +861,13 @@ simplePat Pat:
 
             fields = match fs:
                 Option.None: Vec.empty()
-                Option.Some((pats, ..)): pats.map(|ps|: ps.fields).unwrapOr(Vec.empty()),
+                Option.Some((pats, ..)): pats.map(\(ps): ps.fields).unwrapOr(Vec.empty()),
 
             ignoreRest = match fs:
                 Option.None:
                     Bool.False
                 Option.Some((pats, ..)):
-                    pats.map(|ps|: ps.ignoreRest).unwrapOr(Bool.False),
+                    pats.map(\(ps): ps.ignoreRest).unwrapOr(Bool.False),
 
             _lastToken = match fs:
                 Option.None: con.lastToken()
@@ -910,8 +877,8 @@ simplePat Pat:
     # Records
     first=^ "(" pats=conFieldPats? last=^ ")":
         Pat.Record(RecordPat(
-            fields = pats.map(|ps|: ps.fields).unwrapOr(Vec.empty()),
-            ignoreRest = pats.map(|ps|: ps.ignoreRest).unwrapOr(Bool.False),
+            fields = pats.map(\(ps): ps.fields).unwrapOr(Vec.empty()),
+            ignoreRest = pats.map(\(ps): ps.ignoreRest).unwrapOr(Bool.False),
             inferredTy = Option.None,
             _firstToken = TokenIdx(idx = first),
             _lastToken = TokenIdx(idx = last),
@@ -1007,7 +974,7 @@ topFunSig (parentTy: Option[TyId], name: Id, sig: FunSig):
     parentTy=(^ _"UpperId" _".")? name=^ "LowerId" ctx=context? params=paramList ret=returnTy?:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         (
-            parentTy = parentTy.map(|id: U32|: newTyId(id, state._tokens)),
+            parentTy = parentTy.map(\(id: U32): newTyId(id, state._tokens)),
             name = newId(name),
             sig = FunSig(
                 typeParams = Vec.empty(),
@@ -1097,7 +1064,7 @@ funDecl FunDecl:
     prim_=^ primKw="prim"? sig=funSig _"NEWLINE":
         # TODO: Add prim to FunDecl
         FunDecl(
-            prim_ = primKw.map(|kw|: TokenIdx(idx = prim_)),
+            prim_ = primKw.map(\(kw): TokenIdx(idx = prim_)),
             parentTy = Option.None,
             name = sig.id,
             sig = sig.sig,

@@ -62,13 +62,13 @@ main():
     print(parseSum(strs))
 
     strs.push("a")
-    match try(||: parseSumPropagateErrors(strs)):
+    match try(\(): parseSumPropagateErrors(strs)):
         Result.Ok(sum): print(sum)
         Result.Err(~Overflow): print("Overflow")
         Result.Err(~EmptyInput): print("EmptyInput")
         Result.Err(~InvalidDigit): print("InvalidDigit")
 
-    match try(||: parseSumHandleInvalidDigits(strs)):
+    match try(\(): parseSumHandleInvalidDigits(strs)):
         Result.Ok(sum): print(sum)
         Result.Err(~Overflow): print("Overflow")
         Result.Err(~EmptyInput): print("EmptyInput")

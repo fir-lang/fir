@@ -57,7 +57,7 @@ main():
     strings.push("4b")
     strings.push("")
 
-    let ret = try(|| () / [EmptyInput, Overflow]:
+    let ret = try(\() () / [EmptyInput, Overflow]:
         for x: U32 in strings.iter().map(parseU32Exn).mapResult(handleInvalidDigit):
             printStr(x.toStr()))
 

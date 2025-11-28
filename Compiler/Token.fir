@@ -91,6 +91,7 @@ type TokenKind:
     LBrace
     LBracket
     LBracketRow
+    BackslashLParen
     LParen
     LParenRow
     RBrace
@@ -123,7 +124,6 @@ type TokenKind:
     Minus
     MinusEq
     Pipe
-    PipePipe
     Plus
     PlusEq
     Question
@@ -261,6 +261,7 @@ impl ToStr[TokenKind]:
             TokenKind.Let: "Let"
             TokenKind.Loop: "Loop"
             TokenKind.LowerId: "LowerId"
+            TokenKind.BackslashLParen: "BackslashLParen"
             TokenKind.LParen: "LParen"
             TokenKind.LParenRow: "LParenRow"
             TokenKind.Match: "Match"
@@ -270,7 +271,6 @@ impl ToStr[TokenKind]:
             TokenKind.Not: "Not"
             TokenKind.Or: "Or"
             TokenKind.Pipe: "Pipe"
-            TokenKind.PipePipe: "PipePipe"
             TokenKind.Plus: "Plus"
             TokenKind.PlusEq: "PlusEq"
             TokenKind.Prim: "Prim"
@@ -351,6 +351,10 @@ impl Eq[TokenKind]:
             (left = TokenKind.Let, right = TokenKind.Let): Bool.True
             (left = TokenKind.Loop, right = TokenKind.Loop): Bool.True
             (left = TokenKind.LowerId, right = TokenKind.LowerId): Bool.True
+            (
+                left = TokenKind.BackslashLParen,
+                right = TokenKind.BackslashLParen,
+            ): Bool.True
             (left = TokenKind.LParen, right = TokenKind.LParen): Bool.True
             (left = TokenKind.LParenRow, right = TokenKind.LParenRow): Bool.True
             (left = TokenKind.Match, right = TokenKind.Match): Bool.True
@@ -360,7 +364,6 @@ impl Eq[TokenKind]:
             (left = TokenKind.Not, right = TokenKind.Not): Bool.True
             (left = TokenKind.Or, right = TokenKind.Or): Bool.True
             (left = TokenKind.Pipe, right = TokenKind.Pipe): Bool.True
-            (left = TokenKind.PipePipe, right = TokenKind.PipePipe): Bool.True
             (left = TokenKind.Plus, right = TokenKind.Plus): Bool.True
             (left = TokenKind.PlusEq, right = TokenKind.PlusEq): Bool.True
             (left = TokenKind.Prim, right = TokenKind.Prim): Bool.True

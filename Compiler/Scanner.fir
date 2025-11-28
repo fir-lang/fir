@@ -86,7 +86,7 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
         newTokens.push(t)
 
         match t.kind:
-            TokenKind.LParen | TokenKind.LParenRow:
+            TokenKind.LParen | TokenKind.LParenRow | TokenKind.BackslashLParen:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Paren)
 
             TokenKind.LBracket
@@ -196,7 +196,7 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                             ),
                         )
 
-            TokenKind.LParen | TokenKind.LParenRow:
+            TokenKind.LParen | TokenKind.LParenRow | TokenKind.BackslashLParen:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Paren)
 
             TokenKind.LBracket
@@ -336,7 +336,7 @@ scannerDumpInterpreterTokens():
 
     # Explicitly close the variant below (issue #49).
     let tokens = match try(
-                    ||:
+                    \():
                         scan[row[]](
                             generateInterpreterTokens(fileContents, tokens),
                         ),

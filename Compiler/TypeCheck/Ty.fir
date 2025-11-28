@@ -302,7 +302,9 @@ Scheme.instantiate(
             trait_ = pred.trait_,
             params =
                 Vec.fromIter(
-                    pred.params.iter().map(|param: Ty|: param.substQVars(varMap)),
+                    pred.params.iter().map(
+                        \(param: Ty): param.substQVars(varMap),
+                    ),
                 ),
             loc,
         )
@@ -354,12 +356,12 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
             Ty.App(
                 conId,
                 args =
-                    Vec.fromIter(args.iter().map(|ty: Ty|: ty.substQVars(vars))),
+                    Vec.fromIter(args.iter().map(\(ty: Ty): ty.substQVars(vars))),
             )
 
         Ty.QVar(QVar(id, ..)):
             vars.get(id).unwrapOrElse(
-                ||: panic("Ty.substQVars: unbound QVar `id.name`"),
+                \(): panic("Ty.substQVars: unbound QVar `id.name`"),
             )
 
         Ty.Fun(args, ret, exn):
@@ -369,14 +371,16 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                         FunArgs.Positional(tys):
                             FunArgs.Positional(
                                 Vec.fromIter(
-                                    tys.iter().map(|ty: Ty|: ty.substQVars(vars)),
+                                    tys.iter().map(
+                                        \(ty: Ty): ty.substQVars(vars),
+                                    ),
                                 ),
                             )
                         FunArgs.Named(tys):
                             FunArgs.Named(
                                 HashMap.fromIter(
                                     tys.iter().map(
-                                        |entry: HashMapEntry[LocalId, Ty]|:
+                                        \(entry: HashMapEntry[LocalId, Ty]):
                                             (
                                                 key = entry.key,
                                                 value =
@@ -386,7 +390,7 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                                 ),
                             ),
                 ret = ret.substQVars(vars),
-                exn = exn.map(|exn: Ty|: exn.substQVars(vars)),
+                exn = exn.map(\(exn: Ty): exn.substQVars(vars)),
             )
 
         Ty.Anonymous(labels, extension, kind, isRow):
@@ -394,14 +398,14 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                 labels =
                     HashMap.fromIter(
                         labels.iter().map(
-                            |entry: HashMapEntry[LocalId, Ty]|:
+                            \(entry: HashMapEntry[LocalId, Ty]):
                                 (
                                     key = entry.key,
                                     value = entry.value.substQVars(vars),
                                 ),
                         ),
                     ),
-                extension = extension.map(|ty: Ty|: ty.substQVars(vars)),
+                extension = extension.map(\(ty: Ty): ty.substQVars(vars)),
                 kind,
                 isRow,
             )

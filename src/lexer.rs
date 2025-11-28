@@ -55,6 +55,7 @@ lexgen::lexer! {
         "while" = TokenKind::While,
 
         // Delimiters
+        "\\(" = TokenKind::BackslashLParen,
         "(" = TokenKind::LParen,
         "row(" = TokenKind::LParenRow,
         ")" = TokenKind::RParen,
@@ -88,7 +89,6 @@ lexgen::lexer! {
         "&" = TokenKind::Amp,
         "&&" = TokenKind::AmpAmp,
         "|" = TokenKind::Pipe,
-        "||" = TokenKind::PipePipe,
         "<" = TokenKind::LAngle,
         "<<" = TokenKind::DoubleLAngle,
         "<=" = TokenKind::LAngleEq,

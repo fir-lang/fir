@@ -1,5 +1,5 @@
 main():
-    let iter = repeatWith(|| Vec[U32]: Vec.withCapacity(10))
+    let iter = repeatWith(\() Vec[U32]: Vec.withCapacity(10))
     let vs: Vec[Vec[U32]] = Vec.empty()
     for i in range(u32(0), u32(10)):
         let v: Vec[U32] = iter.next().unwrap()

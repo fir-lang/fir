@@ -82,7 +82,7 @@ pub fn scan_indented<I>(
         new_tokens.push((l, t, r));
 
         match kind {
-            TokenKind::LParen | TokenKind::LParenRow => {
+            TokenKind::LParen | TokenKind::LParenRow | TokenKind::BackslashLParen => {
                 scan_non_indented(tokens, module, new_tokens, NonIndentedDelimKind::Paren);
                 last_loc = new_tokens.last().unwrap().2;
             }
@@ -213,7 +213,7 @@ pub fn scan_non_indented<I>(
                 }
             },
 
-            TokenKind::LParen | TokenKind::LParenRow => {
+            TokenKind::LParen | TokenKind::LParenRow | TokenKind::BackslashLParen => {
                 scan_non_indented(tokens, module, new_tokens, NonIndentedDelimKind::Paren);
             }
 
