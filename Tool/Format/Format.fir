@@ -947,12 +947,12 @@ FnExpr.format(self, tokens: Array[Token]) Doc:
     # assert(self.sig.self_ is SelfParam.No)
 
     let lparen = self.firstToken()
-    assert(tokens.get(rparen.idx).kind is TokenKind.BacklashLParen)
+    assert(tokens.get(lparen.idx).kind is TokenKind.BackslashLParen)
 
     let doc0 = formatToken(lparen, tokens)
 
     let docRest = Doc.empty()
-    let lastToken = pipe1
+    let lastToken = lparen
 
     for param: FunArg in self.sig.params.iter():
         docRest += formatToken(param.name.token, tokens)
@@ -972,11 +972,11 @@ FnExpr.format(self, tokens: Array[Token]) Doc:
                 docRest += formatToken(next, tokens) + Doc.blank(1)
                 lastToken = next
 
-        let rparen = nextNonTrivia(lastToken, tokens).unwrap()
-        assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+    let rparen = nextNonTrivia(lastToken, tokens).unwrap()
+    assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-        docRest += formatToken(rparen, tokens)
-        lastToken = rparen
+    docRest += formatToken(rparen, tokens)
+    lastToken = rparen
 
     if self.sig.returnTy is Option.Some(ret):
         docRest += Doc.blank(1) + ret.format(tokens)

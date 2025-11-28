@@ -724,7 +724,13 @@ Lexer._next(self) Option[Token] / Error:
         self._byteIdx += 2
         self._col += 2
         return Option.Some(
-            Token(kind = TokenKind.BackslashLParen, text = "\\(", byteIdx, line, col),
+            Token(
+                kind = TokenKind.BackslashLParen,
+                text = "\\(",
+                byteIdx,
+                line,
+                col,
+            ),
         )
 
     if input.startsWith("?"):
