@@ -98,6 +98,7 @@ pub enum TokenKind {
     LBrace,
     RBrace,
     SingleQuote,
+    BackslashLParen,
 
     // Punctuation
     Colon,
@@ -124,7 +125,6 @@ pub enum TokenKind {
     MinusEq,
     Percent,
     Pipe,
-    PipePipe,
     Plus,
     PlusEq,
     RAngle,
