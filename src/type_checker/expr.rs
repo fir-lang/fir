@@ -1193,10 +1193,10 @@ pub(super) fn check_expr(
 
             let iter_expr = if elems.is_empty() {
                 ast::L {
-                    loc: ast::Loc::dummy(),
+                    loc: loc.clone(),
                     node: ast::Expr::Call(ast::CallExpr {
                         fun: Box::new(ast::L {
-                            loc: ast::Loc::dummy(),
+                            loc: loc.clone(),
                             node: ast::Expr::Var(ast::VarExpr {
                                 id: SmolStr::new("empty"),
                                 user_ty_args: vec![],
@@ -1228,7 +1228,7 @@ pub(super) fn check_expr(
                 for (k, v) in elems.iter() {
                     let elem = match k {
                         Some(k) => ast::L {
-                            loc: ast::Loc::dummy(),
+                            loc: loc.clone(),
                             node: ast::Expr::Record(vec![
                                 ast::Named {
                                     name: Some(SmolStr::new("key")),
@@ -1243,10 +1243,10 @@ pub(super) fn check_expr(
                         None => v.clone(),
                     };
                     elem_iters.push(ast::L {
-                        loc: ast::Loc::dummy(),
+                        loc: loc.clone(),
                         node: ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
-                                loc: ast::Loc::dummy(),
+                                loc: loc.clone(),
                                 node: ast::Expr::Var(ast::VarExpr {
                                     id: SmolStr::new_static("once"),
                                     user_ty_args: vec![],
@@ -1264,10 +1264,10 @@ pub(super) fn check_expr(
                 let mut iter = elem_iters.into_iter();
                 let init = iter.next().unwrap();
                 iter.fold(init, |elem, next| ast::L {
-                    loc: ast::Loc::dummy(),
+                    loc: loc.clone(),
                     node: ast::Expr::Call(ast::CallExpr {
                         fun: Box::new(ast::L {
-                            loc: ast::Loc::dummy(),
+                            loc: loc.clone(),
                             node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
                                 object: Box::new(elem),
                                 field: SmolStr::new_static("chain"),
@@ -1285,7 +1285,7 @@ pub(super) fn check_expr(
             let desugared = match iter_ty {
                 Some(iter_ty) => {
                     let field_select_expr = ast::L {
-                        loc: ast::Loc::dummy(),
+                        loc: loc.clone(),
                         node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
                             ty: iter_ty,
                             ty_user_ty_args: vec![],
@@ -1296,7 +1296,7 @@ pub(super) fn check_expr(
                     };
 
                     ast::L {
-                        loc: ast::Loc::dummy(),
+                        loc: loc.clone(),
                         node: ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(field_select_expr),
                             args: vec![ast::CallArg {
@@ -1313,7 +1313,7 @@ pub(super) fn check_expr(
                         match expected_ty.con(tc_state.tys.tys.cons()) {
                             Some((con, _)) => {
                                 let field_select_expr = ast::L {
-                                    loc: ast::Loc::dummy(),
+                                    loc: loc.clone(),
                                     node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
                                         ty: con,
                                         ty_user_ty_args: vec![],
@@ -1324,7 +1324,7 @@ pub(super) fn check_expr(
                                 };
 
                                 ast::L {
-                                    loc: ast::Loc::dummy(),
+                                    loc: loc.clone(),
                                     node: ast::Expr::Call(ast::CallExpr {
                                         fun: Box::new(field_select_expr),
                                         args: vec![ast::CallArg {
@@ -1698,8 +1698,8 @@ fn select_method(
 // ty -> [labelOf(ty): ty, ..r] (r is fresh)
 //
 // Somewhat hackily, we also convert function types that return named types to function types that
-// return variants instead, to allow type checking `~Foo(args)` by first converting `~Foo`'s type to
-// a function type, and then applying.
+// return variants instead, to allow type checking `~Foo(args)` by first converting `Foo`'s type a
+// function type that returns a variant, and then applying.
 pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &ast::Loc) -> Ty {
     let con = match ty.normalize(tc_state.tys.tys.cons()) {
         Ty::Con(con, _) | Ty::App(con, _, _) => con,
@@ -1723,6 +1723,7 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
     let row_ext = tc_state
         .var_gen
         .new_var(level, Kind::Row(RecordOrVariant::Variant), loc.clone());
+
     Ty::Anonymous {
         labels: [(con, ty)].into_iter().collect(),
         extension: Some(Box::new(Ty::Var(row_ext))),
