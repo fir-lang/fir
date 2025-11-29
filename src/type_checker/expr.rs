@@ -1698,8 +1698,8 @@ fn select_method(
 // ty -> [labelOf(ty): ty, ..r] (r is fresh)
 //
 // Somewhat hackily, we also convert function types that return named types to function types that
-// return variants instead, to allow type checking `~Foo(args)` by first converting `Foo`'s type to
-// a function type, and then applying.
+// return variants instead, to allow type checking `~Foo(args)` by first converting `Foo`'s type a
+// function type that returns a variant, and then applying.
 pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &ast::Loc) -> Ty {
     let con = match ty.normalize(tc_state.tys.tys.cons()) {
         Ty::Con(con, _) | Ty::App(con, _, _) => con,
