@@ -82,9 +82,10 @@ _checkVarExpr(
     level: U32,
     loopStack: Option[Vec[LocalId]],
 ) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
+    let mod = pgm.module(env._modIdx)
     let id = varExpr.id
     let userTyArgs = varExpr.userTyArgs
-    let exprLoc = pgm._modules.get(env._modIdx._idx).loc(varExpr)
+    let exprLoc = mod.loc(varExpr)
 
     assert(varExpr.tyArgs.isEmpty())
 
@@ -118,12 +119,7 @@ _checkVarExpr(
 
                 let userTyArgsConverted: Vec[Ty] = Vec.fromIter(
                     userTyArgs.args.iter().map(
-                        \(ty: Type) Ty:
-                            convertAstTy(
-                                pgm.module(env._modIdx),
-                                env._termEnv,
-                                ty,
-                            ),
+                        \(ty: Type) Ty: convertAstTy(mod, env._termEnv, ty,),
                     ),
                 )
 
@@ -158,10 +154,37 @@ _checkConExpr(
 ) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
     assert(con.tyArgs.isEmpty())
 
-    let scheme: Scheme = match con.constr:
-        Option.Some(con): panic("TODO")
+    let mod = pgm.module(env._modIdx)
 
-        Option.None: panic("TODO")
+    let tyCon = pgm.tyCon(con.ty.def())
+    let tyConUseSiteName = mod.tokenText(con.ty.token)
+
+    let details = match tyCon.details:
+        TyConDetails.Trait(..):
+            throw(
+                TypeError(
+                    loc = mod.loc(con),
+                    msg = "Type in constructor selection is a trait",
+                ),
+            )
+
+        TyConDetails.Type(details): details
+
+    # TODO: This does not support renaming constructors
+    let conName = con.constr.map(\(id): mod.idText(id)).unwrapOrElse(
+        \(): tyCon.name,
+    )
+
+    let scheme = details.cons.get(conName).unwrapOrElse(
+        \():
+            throw(
+                TypeError(
+                    loc = mod.loc(con),
+                    msg =
+                        "Type `tyConUseSiteName` does not have constructor `conName`",
+                ),
+            ),
+    )
 
     let conTy: Ty = match con.userTyArgs:
         Option.None:
@@ -169,12 +192,10 @@ _checkConExpr(
                 level,
                 env._varGen,
                 env._preds,
-                pgm.module(env._modIdx).loc(con),
+                mod.loc(con),
             )
 
-            con.tyArgs = Vec.fromIter(
-                vars.iter().map(\(var_: UVar) Ty: Ty.UVar(var_)),
-            )
+            con.tyArgs = Vec.fromIter(vars.iter().map(Ty.UVar))
 
             if con.variant:
                 ()
