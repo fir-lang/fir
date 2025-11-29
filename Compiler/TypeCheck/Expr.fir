@@ -211,10 +211,54 @@ _checkConExpr(
     panic("TODO")
 
 
+# This function is ported from the interpreter and it's not quite right.
+#
+# In the interpreter we parse `~C(...)` as a constructor application, rather
+# than a variant expression. The fact that this is a variant is reflected in the
+# constructor AST.
+#
+# So we type check `App(~C, ...)` instead of `Var(App(C, ...))`, and then apply
+# it to the arguments, and the return type should be a variant of `C`, not just
+# `C`.
+#
+# In the compiler we should parse this as `Var(App(Con(...), ...))`, and then
+# have an "inject" function that takes a type (other than a function type) and
+# convert it to a variant.
+#
+# Relevant issue: #238.
+#
+# Original documentation below:
+#
 # ty -> [labelOf(ty): ty, ..r] (r is fresh)
 #
 # Somewhat hackily, we also convert function types that return named types to
 # function types that return variants instead, to allow type checking
 # `~Foo(args)` by first converting `Foo`'s type to a function type, and then
 # applying.
-# makeVariant()
+makeVariant(varGen: UVarGen, ty: Ty, level: U32, loc: Loc) Ty:
+    let con = match ty.normalize():
+        Ty.Con(id = con, ..) | Ty.App(conId = con, ..): con
+
+        Ty.Fun(args, ret, exn):
+            # This part is also ported from the interpreter and while it's not
+            # wrong it's also too flexible/permissive. When the type is a
+            # function type the return type must be a `Con` or `App`, so we
+            # don't need a recursive call, which would handle `Fun`s in return
+            # type position.
+            return Ty.Fun(args, ret = makeVariant(varGen, ret, level, loc), exn,)
+
+        _: panic("Type in variant is not a constructor")
+
+    let rowExt = varGen.newVar(level, Kind.Row(RecordOrVariant.Variant), loc)
+
+    # We want variant constructors to `TyDefIdx`, but record fields will be
+    # anonymous. So we probably want two different `Ty`s instead of just
+    # `Anonymous`?
+    # Ty.Anonymous(
+    #     labels = HashMap.[(key = con, value = ty)],
+    #     extension = Option.Some(Ty.UVar(rowExt)),
+    #     kind = RecordOrVariant.Variant,
+    #     isRow = Bool.False,
+    # )
+
+    panic("TODO")
