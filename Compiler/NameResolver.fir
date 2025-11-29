@@ -283,11 +283,7 @@ _makeSccEnv(
         let tokens = mod._tokens
 
         for ty: HashMapEntry[Str, TypeDecl] in mod._tyItems.iter():
-            let tyDefIdx = TyDefIdx(
-                _mod = modIdx,
-                _name = ty.key,
-                _kind = TyDefKind.Type,
-            )
+            let tyDefIdx = TyDefIdx(_mod = modIdx, _name = ty.key,)
 
             let old = typeEnv.insert(ty.key, tyDefIdx)
             if old is Option.Some(_):
@@ -296,11 +292,7 @@ _makeSccEnv(
                 )
 
         for trait_: HashMapEntry[Str, TraitDecl] in mod._traitItems.iter():
-            let traitDefIdx = TyDefIdx(
-                _mod = modIdx,
-                _name = trait_.key,
-                _kind = TyDefKind.Trait,
-            )
+            let traitDefIdx = TyDefIdx(_mod = modIdx, _name = trait_.key,)
             let old = typeEnv.insert(trait_.key, traitDefIdx)
             if old is Option.Some(_):
                 panic(
