@@ -116,7 +116,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, main: &str) {
 fn add_exception_types(module: &mut ast::Module, main: &str) {
     for decl in module {
         match &mut decl.node {
-            ast::TopDecl::Fun(ast::L { node: fun, .. }) => {
+            ast::TopDecl::Fun(ast::L { node: fun, loc }) => {
                 if fun.sig.exceptions.is_none() {
                     if fun.name.node == main {
                         fun.sig.exceptions = Some(ast::L {
@@ -125,7 +125,7 @@ fn add_exception_types(module: &mut ast::Module, main: &str) {
                                 extension: None,
                                 is_row: false,
                             },
-                            loc: ast::Loc::dummy(),
+                            loc: loc.clone(),
                         });
                     } else {
                         fun.sig.exceptions = Some(exn_type(
