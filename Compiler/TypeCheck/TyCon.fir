@@ -36,7 +36,7 @@ type TyConDetails:
 
 
 TyConDetails.placeholder() TyConDetails:
-    TyConDetails.Type(TypeDetails(cons = Vec.empty(), sum = Bool.False))
+    TyConDetails.Type(TypeDetails(cons = HashMap.empty(), sum = Bool.False))
 
 
 #[derive(ToDoc)]
@@ -65,8 +65,8 @@ type TraitMethod(
 
 #[derive(ToDoc)]
 type TypeDetails(
-    ## Names of value constructors of the type.
-    cons: Vec[Str],
+    ## Value constructors of the type.
+    cons: HashMap[Str, Scheme],
 
     ## Whether the type is a sum type.
     ##
