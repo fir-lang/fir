@@ -243,14 +243,14 @@ makeVariant(varGen: UVarGen, ty: Ty, level: U32, loc: Loc) Ty:
     match ty.normalize():
         Ty.Con(id, ..):
             Ty.Variant(
-                cons = HashMap.[(key = id, value = Vec.empty())],
+                cons = HashMap.[id = Vec.empty()],
                 extension,
                 isRow = Bool.False,
             )
 
         Ty.App(conId, args):
             Ty.Variant(
-                cons = HashMap.[(key = conId, value = args)],
+                cons = HashMap.[conId = args],
                 extension,
                 isRow = Bool.False,
             )
