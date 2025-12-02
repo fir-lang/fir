@@ -4,6 +4,7 @@ import [
 ]
 
 
+#|
 collectRows(
     ty: Ty,
     tyKind: RecordOrVariant,
@@ -52,3 +53,4 @@ collectRows(
             other: return (rows = allLabels, extension = Option.Some(other))
 
     (rows = allLabels, extension = Option.None)
+|#

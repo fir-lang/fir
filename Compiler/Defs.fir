@@ -175,6 +175,11 @@ impl Eq[TyDefIdx]:
         self._mod == other._mod and self._name == other._name
 
 
+impl Hash[TyDefIdx]:
+    hash(self: TyDefIdx) U32:
+        self._mod.hash() + self._name.hash()
+
+
 # ------------------------------------------------------------------------------
 # Generated ToDoc implementations
 

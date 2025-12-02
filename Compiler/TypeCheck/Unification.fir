@@ -145,6 +145,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
 
             unify(ret1, ret2, varGen, level, loc)
 
+        #|
         (
             ty1 =
                 Ty.Anonymous(
@@ -277,6 +278,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
 
                 (ext1 = Option.Some(ext1), ext2 = Option.Some(ext2)):
                     unify(ext1, ext2, varGen, level, loc)
+        |#
 
         _:
             throw(
@@ -409,6 +411,7 @@ unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) Bool:
 
             unifyOneWay(ret1, ret2, varGen, level, loc)
 
+        #|
         (
             ty1 =
                 Ty.Anonymous(
@@ -493,6 +496,7 @@ unifyOneWay(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) Bool:
 
                 (ext1 = Option.Some(ext1), ext2 = Option.Some(ext2)):
                     unifyOneWay(ext1, ext2, varGen, level, loc)
+        |#
 
         _: Bool.False
 
@@ -505,6 +509,7 @@ linkVar(var_: UVar, ty: Ty):
     var_.setLink(ty)
 
 
+#|
 linkExtension(
     kind: RecordOrVariant,
     extraLabels: HashSet[LocalId],
@@ -532,7 +537,7 @@ linkExtension(
 
     uvar.setLink(newExtensionTy)
     newExtensionVar
-
+|#
 
 Ty.pruneLevel(self, maxLevel: U32):
     match self:
@@ -563,7 +568,15 @@ Ty.pruneLevel(self, maxLevel: U32):
             if exn is Option.Some(exn):
                 exn.pruneLevel(maxLevel)
 
-        Ty.Anonymous(labels, extension, ..):
+        Ty.Variant(cons, extension, ..):
+            for tys: Vec[Ty] in cons.values():
+                for ty: Ty in tys.iter():
+                    ty.pruneLevel(maxLevel)
+
+            if extension is Option.Some(extension):
+                extension.pruneLevel(maxLevel)
+
+        Ty.Record(labels, extension, ..):
             for ty: Ty in labels.values():
                 ty.pruneLevel(maxLevel)
 

@@ -236,8 +236,24 @@ _checkConExpr(
 # `~Foo(args)` by first converting `Foo`'s type to a function type, and then
 # applying.
 makeVariant(varGen: UVarGen, ty: Ty, level: U32, loc: Loc) Ty:
-    let con = match ty.normalize():
-        Ty.Con(id = con, ..) | Ty.App(conId = con, ..): con
+    let extension = Option.Some(
+        Ty.UVar(varGen.newVar(level, Kind.Row(RecordOrVariant.Variant), loc)),
+    )
+
+    match ty.normalize():
+        Ty.Con(id, ..):
+            Ty.Variant(
+                cons = HashMap.[(key = id, value = Vec.empty())],
+                extension,
+                isRow = Bool.False,
+            )
+
+        Ty.App(conId, args):
+            Ty.Variant(
+                cons = HashMap.[(key = conId, value = args)],
+                extension,
+                isRow = Bool.False,
+            )
 
         Ty.Fun(args, ret, exn):
             # This part is also ported from the interpreter and while it's not
@@ -245,20 +261,6 @@ makeVariant(varGen: UVarGen, ty: Ty, level: U32, loc: Loc) Ty:
             # function type the return type must be a `Con` or `App`, so we
             # don't need a recursive call, which would handle `Fun`s in return
             # type position.
-            return Ty.Fun(args, ret = makeVariant(varGen, ret, level, loc), exn,)
+            return Ty.Fun(args, ret = makeVariant(varGen, ret, level, loc), exn)
 
         _: panic("Type in variant is not a constructor")
-
-    let rowExt = varGen.newVar(level, Kind.Row(RecordOrVariant.Variant), loc)
-
-    # We want variant constructors to `TyDefIdx`, but record fields will be
-    # anonymous. So we probably want two different `Ty`s instead of just
-    # `Anonymous`?
-    # Ty.Anonymous(
-    #     labels = HashMap.[(key = con, value = ty)],
-    #     extension = Option.Some(Ty.UVar(rowExt)),
-    #     kind = RecordOrVariant.Variant,
-    #     isRow = Bool.False,
-    # )
-
-    panic("TODO")

@@ -51,18 +51,36 @@ type Ty:
         exn: Option[Ty],
     )
 
-    ## An anonymous record or variant type or row type. E.g. `(a: Str, ..r)`,
-    ## `[Err1(Str), ..r]`.
-    Anonymous(
-        labels: HashMap[LocalId, Ty],
-
-        ## Row extension. When available, this will be one of:
+    ## A variant: `[Str, Option[U32], ..r]`.
+    Variant(
+        ## Maps type constructors in the variant to their arguments.
         ##
-        ## - `Ty.Var`: a unification variable.
-        ## - `Ty.Con`: a rigid type variable.
+        ## The arguments may be emtpy, e.g. for `Bool`.
+        ##
+        ## This representation means we don't allow the same type constructor
+        ## with multiple arguments, e.g. `[Vec[U32], Vec[U64]]` is not allowed.
+        ##
+        ## I think we could easily support this in generated code, but I'm not
+        ## sure if it's useful, and this representation is easier to deal with
+        ## in the type checker.
+        cons: HashMap[TyDefIdx, Vec[Ty]],
+
+        ## Row extension. When available, this will be one of: `Ty.RVar` or
+        ## `Ty.UVar`.
         extension: Option[Ty],
 
-        kind: RecordOrVariant,
+        ## Whether this is a row type. A row type has its own kind `row`. When
+        ## not a row, the type has kind `*`.
+        isRow: Bool,
+    )
+
+    ## A record: `(a: Str, b: Option[U32], ..r)`.
+    Record(
+        labels: HashMap[LocalId, Ty],
+
+        ## Row extension. When available, this will be one of: `Ty.RVar` or
+        ## `Ty.UVar`.
+        extension: Option[Ty],
 
         ## Whether this is a row type. A row type has its own kind `row`. When
         ## not a row, the type has kind `*`.
@@ -179,37 +197,36 @@ Ty.kind(self) Kind:
     match self:
         Ty.Con(..) | Ty.App(..) | Ty.Fun(..): Kind.Star
 
-        Ty.QVar(QVar(kind, ..)) | Ty.RVar(RVar(kind, ..)): kind
+        Ty.QVar(QVar(kind, ..))
+            | Ty.RVar(RVar(kind, ..))
+            | Ty.UVar(UVar(kind, ..)): kind
 
-        Ty.UVar(uvar): uvar.kind
+        Ty.Variant(isRow, ..):
+            if isRow:
+                Kind.Row(RecordOrVariant.Variant)
+            else:
+                Kind.Star
 
-        Ty.Anonymous(kind, ..): Kind.Row(kind)
+        Ty.Record(isRow, ..):
+            if isRow:
+                Kind.Row(RecordOrVariant.Record)
+            else:
+                Kind.Star
 
 
 Ty.unit() Ty:
-    Ty.Anonymous(
+    Ty.Record(
         labels = HashMap.empty(),
         extension = Option.None,
-        kind = RecordOrVariant.Record,
         isRow = Bool.False,
     )
 
 
 Ty.emptyVariant() Ty:
-    Ty.Anonymous(
-        labels = HashMap.empty(),
+    Ty.Variant(
+        cons = HashMap.empty(),
         extension = Option.None,
-        kind = RecordOrVariant.Variant,
         isRow = Bool.False,
-    )
-
-
-Ty.unitRow(kind: RecordOrVariant) Ty:
-    Ty.Anonymous(
-        labels = HashMap.empty(),
-        extension = Option.None,
-        kind,
-        isRow = Bool.True,
     )
 
 
@@ -419,8 +436,30 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                 exn = exn.map(\(exn: Ty): exn.substQVars(vars)),
             )
 
-        Ty.Anonymous(labels, extension, kind, isRow):
-            Ty.Anonymous(
+        Ty.Variant(cons, extension, isRow):
+            Ty.Variant(
+                cons =
+                    HashMap.fromIter(
+                        cons.iter().map(
+                            \(entry: HashMapEntry[TyDefIdx, Vec[Ty]]) (key: TyDefIdx, value: Vec[Ty]):
+                                (
+                                    key = entry.key,
+                                    value =
+                                        Vec.fromIter(
+                                            entry.value.iter().map(
+                                                \(ty: Ty) Ty:
+                                                    ty.substQVars(vars),
+                                            ),
+                                        ),
+                                ),
+                        ),
+                    ),
+                extension = extension.map(\(ty: Ty): ty.substQVars(vars)),
+                isRow,
+            )
+
+        Ty.Record(labels, extension, isRow):
+            Ty.Record(
                 labels =
                     HashMap.fromIter(
                         labels.iter().map(
@@ -432,7 +471,6 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                         ),
                     ),
                 extension = extension.map(\(ty: Ty): ty.substQVars(vars)),
-                kind,
                 isRow,
             )
 
@@ -443,83 +481,7 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
 
 impl ToDoc[Ty]:
     toDoc(self: Ty) Doc:
-        match self:
-            Ty.Con(id):
-                let args = Doc.break_(0)
-                args += Doc.grouped(
-                    Doc.str("id =") + Doc.nested(4, Doc.break_(1) + id.toDoc()),
-                )
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.str("Ty.Con") + Doc.char('(') + args
-            Ty.App(conId, args):
-                let args = Doc.break_(0)
-                args += Doc.grouped(
-                    Doc.str("conId =")
-                        + Doc.nested(4, Doc.break_(1) + conId.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("args =")
-                        + Doc.nested(4, Doc.break_(1) + args.toDoc()),
-                )
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.str("Ty.App") + Doc.char('(') + args
-            Ty.QVar(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Ty.QVar") + Doc.char('(') + args)
-            Ty.UVar(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Ty.UVar") + Doc.char('(') + args)
-            Ty.RVar(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Ty.RVar") + Doc.char('(') + args)
-            Ty.Fun(args, ret, exn):
-                let args = Doc.break_(0)
-                args += Doc.grouped(
-                    Doc.str("args =")
-                        + Doc.nested(4, Doc.break_(1) + args.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("ret =")
-                        + Doc.nested(4, Doc.break_(1) + ret.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("exn =")
-                        + Doc.nested(4, Doc.break_(1) + exn.toDoc()),
-                )
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.str("Ty.Fun") + Doc.char('(') + args
-            Ty.Anonymous(labels, extension, kind, isRow):
-                let args = Doc.break_(0)
-                args += Doc.grouped(
-                    Doc.str("labels =")
-                        + Doc.nested(4, Doc.break_(1) + labels.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("extension =")
-                        + Doc.nested(4, Doc.break_(1) + extension.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("kind =")
-                        + Doc.nested(4, Doc.break_(1) + kind.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("isRow =")
-                        + Doc.nested(4, Doc.break_(1) + isRow.toDoc()),
-                )
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.str("Ty.Anonymous") + Doc.char('(') + args
+        panic("TODO")
 
 
 impl ToDoc[QVar]:
