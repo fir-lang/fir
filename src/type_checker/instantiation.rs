@@ -220,5 +220,9 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             normalize_pat(&mut pat1.node, cons);
             normalize_pat(&mut pat2.node, cons);
         }
+
+        ast::Pat::Variant(p) => {
+            normalize_pat(&mut p.node, cons);
+        }
     }
 }

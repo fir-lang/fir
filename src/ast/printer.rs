@@ -925,6 +925,11 @@ impl Pat {
                 pat2.node.print(buffer);
                 buffer.push(')');
             }
+
+            Pat::Variant(pat) => {
+                buffer.push('~');
+                pat.node.print(buffer);
+            }
         }
     }
 }

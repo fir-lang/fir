@@ -1034,7 +1034,10 @@ Pat: Pat = {
             Box::new(L::new(module, l1, r1, p1)),
             Box::new(L::new(module, l2, r2, p2)),
         )
-    }
+    },
+
+    "~" <l:@L> <pat:Pat> <r:@R> =>
+        Pat::Variant(Box::new(L::new(module, l, r, pat))),
 }
 
 Constructor: Constructor = {

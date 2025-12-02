@@ -1148,6 +1148,10 @@ fn mono_pat(
                 .collect(),
             ty: mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
         }),
+
+        ast::Pat::Variant(pat) => {
+            mono::Pat::Variant(mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm, locals))
+        }
     }
 }
 

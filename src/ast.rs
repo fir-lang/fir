@@ -367,6 +367,9 @@ pub enum Pat {
 
     /// Or pattern: `<pat1> | <pat2>`.
     Or(Box<L<Pat>>, Box<L<Pat>>),
+
+    /// A variant pattern: `~"Hi"`, `~Option.Some(123)`.
+    Variant(Box<L<Pat>>),
 }
 
 #[derive(Debug, Clone)]

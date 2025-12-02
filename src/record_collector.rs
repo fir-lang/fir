@@ -229,6 +229,10 @@ fn visit_pat(pat: &mono::Pat, records: &mut Set<RecordShape>) {
             visit_pat(&pat1.node, records);
             visit_pat(&pat2.node, records);
         }
+
+        mono::Pat::Variant(pat) => {
+            visit_pat(&pat.node, records);
+        }
     }
 }
 

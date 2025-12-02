@@ -275,6 +275,11 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
 
             pat1_ty
         }
+
+        ast::Pat::Variant(p) => {
+            let pat_ty = check_pat(tc_state, p, level);
+            crate::type_checker::expr::make_variant(tc_state, pat_ty, level, &p.loc)
+        }
     }
 }
 

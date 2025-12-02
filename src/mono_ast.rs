@@ -138,6 +138,7 @@ pub enum Pat {
     Str(String),
     Char(char),
     Or(Box<L<Pat>>, Box<L<Pat>>),
+    Variant(Box<L<Pat>>),
 }
 
 #[derive(Debug, Clone)]

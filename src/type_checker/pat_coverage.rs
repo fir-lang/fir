@@ -83,6 +83,10 @@ impl PatCoverage {
             }
 
             ast::Pat::Str(_) | ast::Pat::Char(_) => {}
+
+            ast::Pat::Variant(p) => {
+                self.add(&p.node);
+            }
         }
     }
 

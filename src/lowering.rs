@@ -490,6 +490,7 @@ pub enum Pat {
     Str(String),
     Char(char),
     Or(Box<L<Pat>>, Box<L<Pat>>),
+    Variant(Box<L<Pat>>),
 }
 
 #[derive(Debug, Clone)]
@@ -2143,6 +2144,10 @@ fn lower_pat(
             Box::new(lower_l_pat(p1, indices, scope, mapped_binders)),
             Box::new(lower_l_pat(p2, indices, scope, mapped_binders)),
         ),
+
+        mono::Pat::Variant(p) => {
+            Pat::Variant(Box::new(lower_l_pat(p, indices, scope, mapped_binders)))
+        }
     }
 }
 

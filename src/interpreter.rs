@@ -1090,6 +1090,8 @@ fn try_bind_pat(
 
             true
         }
+
+        Pat::Variant(p) => try_bind_pat(pgm, heap, p, locals, value),
     }
 }
 
