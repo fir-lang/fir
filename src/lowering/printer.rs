@@ -428,6 +428,11 @@ impl Expr {
                     buffer.push('\n');
                 }
             }
+
+            Expr::Variant(expr) => {
+                buffer.push('~');
+                expr.node.print(buffer, indent);
+            }
         }
     }
 }

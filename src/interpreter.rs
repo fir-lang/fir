@@ -938,6 +938,16 @@ fn eval<W: Write>(
         }
 
         Expr::Do(stmts) => exec(w, pgm, heap, locals, stmts, call_stack),
+
+        Expr::Variant(expr) => {
+            // TODO: Simply evaluating the expression (as before) won't work as we can now have
+            // unboxed values in variants, e.g. integers.
+            // eval(w, pgm, heap, locals, &expr.node, &expr.loc, call_stack)
+            // We need to add a tag word, but because we can't represent a Fir value as multiple
+            // interpreter values, the integer will need to be boxed.
+            // Or we could implement multi-values now.
+            todo!()
+        }
     }
 }
 

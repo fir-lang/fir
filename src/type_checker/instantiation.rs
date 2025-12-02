@@ -177,6 +177,10 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         }
 
         ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
+
+        ast::Expr::Variant(expr) => {
+            normalize_expr(&mut expr.node, cons);
+        }
     }
 }
 

@@ -193,7 +193,6 @@ pub(super) fn check_expr(
         ast::Expr::MethodSelect(_) => panic!("MethodSelect in type checker"),
 
         ast::Expr::ConstrSelect(ast::Constructor {
-            variant,
             ty,
             constr,
             user_ty_args,
@@ -227,25 +226,18 @@ pub(super) fn check_expr(
                 }),
             };
 
-            let variant = *variant;
-
             let con_ty = if user_ty_args.is_empty() {
                 let (con_ty, con_ty_args) =
                     scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::ConstrSelect(ast::Constructor {
-                    variant,
                     ty: ty.clone(),
                     constr: constr.clone(),
                     user_ty_args: vec![],
                     ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
                 });
 
-                if variant {
-                    make_variant(tc_state, con_ty, level, &loc)
-                } else {
-                    con_ty
-                }
+                con_ty
             } else {
                 if scheme.quantified_vars.len() != user_ty_args.len() {
                     panic!(
@@ -268,18 +260,13 @@ pub(super) fn check_expr(
                     scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::ConstrSelect(ast::Constructor {
-                    variant,
                     ty: ty.clone(),
                     constr: constr.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
                 });
 
-                if variant {
-                    make_variant(tc_state, con_ty, level, &loc)
-                } else {
-                    con_ty
-                }
+                con_ty
             };
 
             (
@@ -1345,6 +1332,10 @@ pub(super) fn check_expr(
 
             check_expr(tc_state, expr, expected_ty, level, loop_stack)
         }
+
+        ast::Expr::Variant(expr) => {
+            todo!();
+        }
     }
 }
 
@@ -1693,41 +1684,4 @@ fn select_method(
     }
 
     candidates.pop()
-}
-
-// ty -> [labelOf(ty): ty, ..r] (r is fresh)
-//
-// Somewhat hackily, we also convert function types that return named types to function types that
-// return variants instead, to allow type checking `~Foo(args)` by first converting `Foo`'s type a
-// function type that returns a variant, and then applying.
-pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &ast::Loc) -> Ty {
-    let con = match ty.normalize(tc_state.tys.tys.cons()) {
-        Ty::Con(con, _) | Ty::App(con, _, _) => con,
-
-        Ty::Fun {
-            args,
-            ret,
-            exceptions,
-        } => {
-            let ret = make_variant(tc_state, *ret, level, loc);
-            return Ty::Fun {
-                args,
-                ret: Box::new(ret),
-                exceptions,
-            };
-        }
-
-        ty => panic!("Type in variant is not a constructor: {ty}"),
-    };
-
-    let row_ext = tc_state
-        .var_gen
-        .new_var(level, Kind::Row(RecordOrVariant::Variant), loc.clone());
-
-    Ty::Anonymous {
-        labels: [(con, ty)].into_iter().collect(),
-        extension: Some(Box::new(Ty::Var(row_ext))),
-        kind: RecordOrVariant::Variant,
-        is_row: false,
-    }
 }

@@ -8,19 +8,7 @@ pub struct Token {
 
 impl Token {
     pub fn smol_str(&self) -> SmolStr {
-        match self.kind {
-            // Drop the '~' in tokens that merged with a prefix '~' to avoid LR(1) issues in the
-            // parser.
-            //
-            // We don't drop the brackets as those tokens are generated in a later pass after
-            // lexing, and text does not include the brackets.
-            TokenKind::TildeUpperId
-            | TokenKind::TildeUpperIdPath
-            | TokenKind::TildeUpperIdLBracket
-            | TokenKind::TildeUpperIdPathLBracket => SmolStr::new(&self.text[1..]),
-
-            _ => self.text.clone(),
-        }
+        self.text.clone()
     }
 }
 
@@ -42,16 +30,6 @@ pub enum TokenKind {
     ///
     /// This starts an iterator syntax.
     UpperIdDotLBracket,
-
-    /// An identifier starting with a '~' followed by uppercase letter.
-    TildeUpperId,
-
-    /// `'~' UpperId '.' UpperId`, without spaces in between.
-    TildeUpperIdPath,
-
-    TildeUpperIdPathLBracket,
-
-    TildeUpperIdLBracket,
 
     /// An identifier starting with a lowercase letter.
     LowerId,

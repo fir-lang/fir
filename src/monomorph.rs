@@ -513,7 +513,6 @@ fn mono_expr(
         }
 
         ast::Expr::ConstrSelect(ast::Constructor {
-            variant,
             ty,
             constr,
             user_ty_args: _,
@@ -529,7 +528,6 @@ fn mono_expr(
 
                 let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
                 mono::Expr::ConstrSelect(mono::Constructor {
-                    variant: *variant,
                     ty: mono_ty_id,
                     constr: Some(constr.clone()),
                     ty_args: mono_ty_args,
@@ -549,7 +547,6 @@ fn mono_expr(
                 let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
 
                 mono::Expr::ConstrSelect(mono::Constructor {
-                    variant: *variant,
                     ty: mono_ty_id,
                     constr: None,
                     ty_args: mono_ty_args,
@@ -800,6 +797,10 @@ fn mono_expr(
         }
 
         ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
+
+        ast::Expr::Variant(expr) => {
+            mono::Expr::Variant(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
+        }
     }
 }
 
@@ -1099,7 +1100,6 @@ fn mono_pat(
         ast::Pat::Constr(ast::ConstrPattern {
             constr:
                 ast::Constructor {
-                    variant,
                     ty,
                     constr,
                     user_ty_args: _,
@@ -1129,7 +1129,6 @@ fn mono_pat(
 
             mono::Pat::Constr(mono::ConstrPattern {
                 constr: mono::Constructor {
-                    variant: *variant,
                     ty: mono_ty_id,
                     constr: constr.clone(),
                     ty_args: mono_ty_args,
