@@ -1335,37 +1335,7 @@ pub(super) fn check_expr(
 
         ast::Expr::Variant(expr) => {
             let (expr_ty, binders) = check_expr(tc_state, expr, None, level, loop_stack);
-
-            let con = match &expr_ty {
-                Ty::Con(con, kind) => {
-                    assert_eq!(*kind, Kind::Star);
-                    con.clone()
-                }
-
-                Ty::App(con, _args, kind) => {
-                    assert_eq!(*kind, Kind::Star);
-                    con.clone()
-                }
-
-                other => panic!(
-                    "{}: Uncool variant expression type {}, expected a type constructor (Option, Bool, etc.)",
-                    loc_display(&expr.loc),
-                    other,
-                ),
-            };
-
-            let row_ext =
-                tc_state
-                    .var_gen
-                    .new_var(level, Kind::Row(RecordOrVariant::Variant), loc.clone());
-
-            let variant_ty = Ty::Anonymous {
-                labels: [(con, expr_ty)].into_iter().collect(),
-                extension: Some(Box::new(Ty::Var(row_ext))),
-                kind: RecordOrVariant::Variant,
-                is_row: false,
-            };
-
+            let variant_ty = make_variant(tc_state, expr_ty, level, &expr.loc);
             (
                 unify_expected_ty(
                     variant_ty,
@@ -1726,4 +1696,40 @@ fn select_method(
     }
 
     candidates.pop()
+}
+
+pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &ast::Loc) -> Ty {
+    let con = match ty.normalize(tc_state.tys.tys.cons()) {
+        Ty::Con(con, _) | Ty::App(con, _, _) => con,
+
+        Ty::Fun {
+            args,
+            ret,
+            exceptions,
+        } => {
+            let ret = make_variant(tc_state, *ret, level, loc);
+            return Ty::Fun {
+                args,
+                ret: Box::new(ret),
+                exceptions,
+            };
+        }
+
+        ty => panic!(
+            "{}: Type in variant is not a constructor: {}",
+            loc_display(loc),
+            ty
+        ),
+    };
+
+    let row_ext = tc_state
+        .var_gen
+        .new_var(level, Kind::Row(RecordOrVariant::Variant), loc.clone());
+
+    Ty::Anonymous {
+        labels: [(con, ty)].into_iter().collect(),
+        extension: Some(Box::new(Ty::Var(row_ext))),
+        kind: RecordOrVariant::Variant,
+        is_row: false,
+    }
 }
