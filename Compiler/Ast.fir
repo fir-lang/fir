@@ -79,6 +79,14 @@ type TypeDecl(
 )
 
 
+impl Tokens[TypeDecl]:
+    firstToken(self: TypeDecl) TokenIdx:
+        self.prim_.unwrapOr(self.name.token)
+
+    lastToken(self: TypeDecl) TokenIdx:
+        panic("TOOD")
+
+
 ## Constructors of a type declaration.
 #[derive(ToDoc)]
 type TypeDeclRhs:
@@ -96,6 +104,14 @@ type ConDecl(
     fields: ConFields,
     _lastToken: TokenIdx,
 )
+
+
+impl Tokens[ConDecl]:
+    firstToken(self: ConDecl) TokenIdx:
+        self.name.token
+
+    lastToken(self: ConDecl) TokenIdx:
+        self._lastToken
 
 
 #[derive(ToDoc)]
@@ -724,7 +740,7 @@ type Constructor(
     userTyArgs: Option[TyArgs],
 
     ## Inferred type arguments of the constructor's type. Filled in by the type checker.
-    tyArgs: Vec[Type],
+    tyArgs: Vec[Ty],
 
     # In variant constructors we'll see a '~' before `ty`, so we can't use `ty` as the first token.
     _firstToken: TokenIdx,
@@ -873,7 +889,7 @@ type VarExpr(
     userTyArgs: Option[TyArgs],
 
     ## Inferred type arguments of the variable. Filled in by the type checker.
-    tyArgs: Vec[Type],
+    tyArgs: Vec[Ty],
 )
 
 
