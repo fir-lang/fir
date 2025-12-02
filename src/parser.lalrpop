@@ -58,6 +58,7 @@ extern {
         ">>" => Token { kind: TokenKind::DoubleRAngle, .. },
         ">=" => Token { kind: TokenKind::RAngleEq, .. },
         "/" => Token { kind: TokenKind::Slash, .. },
+        "~" => Token { kind: TokenKind::Tilde, .. },
         INDENT => Token { kind: TokenKind::Indent, .. },
         DEDENT => Token { kind: TokenKind::Dedent, .. },
         NEWLINE => Token { kind: TokenKind::Newline, .. },
@@ -796,6 +797,9 @@ InlineExpr: Expr = {
 
     "-" <l:@L> <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Neg, expr: Box::new(L::new(module, l, r, expr)) }),
+
+    "~" <l:@L> <expr:InlineExpr> <r:@R> =>
+        Expr::Variant(Box::new(L::new(module, l, r, expr))),
 
     #[precedence(level = "4")]
     #[assoc(side = "left")]

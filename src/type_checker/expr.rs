@@ -1334,7 +1334,49 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::Variant(expr) => {
-            todo!();
+            let (expr_ty, binders) = check_expr(tc_state, expr, None, level, loop_stack);
+
+            let con = match &expr_ty {
+                Ty::Con(con, kind) => {
+                    assert_eq!(*kind, Kind::Star);
+                    con.clone()
+                }
+
+                Ty::App(con, _args, kind) => {
+                    assert_eq!(*kind, Kind::Star);
+                    con.clone()
+                }
+
+                other => panic!(
+                    "{}: Uncool variant expression type {}, expected a type constructor (Option, Bool, etc.)",
+                    loc_display(&expr.loc),
+                    other,
+                ),
+            };
+
+            let row_ext =
+                tc_state
+                    .var_gen
+                    .new_var(level, Kind::Row(RecordOrVariant::Variant), loc.clone());
+
+            let variant_ty = Ty::Anonymous {
+                labels: [(con, expr_ty)].into_iter().collect(),
+                extension: Some(Box::new(Ty::Var(row_ext))),
+                kind: RecordOrVariant::Variant,
+                is_row: false,
+            };
+
+            (
+                unify_expected_ty(
+                    variant_ty,
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                binders,
+            )
         }
     }
 }
