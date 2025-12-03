@@ -1769,6 +1769,26 @@ findCommentBefore(token: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
     commentStart
 
 
+findCommentAfter(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
+    let token = tokens.get(tokenIdx.idx)
+    let tokenLastLine = token.rightLoc().line
+    let trailingTokenIdx = tokenIdx.idx + 1
+
+    while tokens.getOpt(trailingTokenIdx) is Option.Some(nextToken):
+        if nextToken.kind
+                is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+            trailingTokenIdx += 1
+            continue
+
+        if not (nextToken.kind is TokenKind.Comment):
+            return Option.Some(TokenIdx(idx = trailingTokenIdx))
+
+        if nextToken.line != tokenLastLine:
+            break
+
+    Option.None
+
+
 ## Whether the given token only has trivia tokens before it.
 ##
 ## Reminder: trivia is whitespace, indentation, and comments.
@@ -1832,3 +1852,15 @@ prevNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
             return Option.Some(TokenIdx(idx = idx))
 
     Option.None
+
+
+## Add the comma token `comma` as trailing comma.
+##
+## Trailing commas are omitted when they don't have associated comments and the
+## code is flattened.
+addTrailingComma(doc: Doc, comma: TokenIdx, tokens: Array[Token]) Doc:
+    if (findCommentBefore(comma, tokens) is Option.Some(_))
+            or (findCommentAfter(comma, tokens) is Option.Some(_)):
+        doc + formatToken(comma, tokens)
+    else:
+        doc + Doc.whenNotFlat(Doc.char(','))
