@@ -1356,13 +1356,17 @@ pub(super) fn check_match_expr(
     level: u32,
     loop_stack: &mut Vec<Option<Id>>,
 ) -> Vec<Ty> {
+    use crate::type_checker::pat_coverage::*;
+
     let ast::MatchExpr { scrutinee, alts } = expr;
 
     let (scrut_ty, _) = check_expr(tc_state, scrutinee, None, level, loop_stack);
 
     let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
 
-    let mut covered_pats = crate::type_checker::pat_coverage::PatCoverage::new();
+    let mut covered_pats = PatCoverage::new();
+
+    PatMatrix::from_match_arms(alts, &scrut_ty).check_coverage(tc_state, loc);
 
     for ast::Alt {
         pattern,

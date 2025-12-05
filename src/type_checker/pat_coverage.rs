@@ -442,26 +442,70 @@ ty = [Point]
 
 The type below implements the matrix + the focus operations.
 */
-#[allow(unused)]
 #[derive(Debug)]
-struct PatMatrix {
-    rows: Vec<Vec<ast::Pat>>,
+pub(crate) struct PatMatrix {
+    rows: Vec<Vec<ast::L<ast::Pat>>>,
     field_tys: Vec<Ty>,
 }
 
 impl PatMatrix {
-    #[allow(unused)]
+    pub(crate) fn from_match_arms(arms: &[ast::Alt], scrut_ty: &Ty) -> PatMatrix {
+        let mut rows: Vec<Vec<ast::L<ast::Pat>>> = Vec::with_capacity(arms.len());
+        for arm in arms {
+            if arm.guard.is_some() {
+                continue;
+            }
+            rows.push(vec![arm.pattern.clone()]);
+        }
+        PatMatrix {
+            rows,
+            field_tys: vec![scrut_ty.clone()],
+        }
+    }
+
+    pub(crate) fn check_coverage(&self, tc_state: &TcFunState, loc: &ast::Loc) -> bool {
+        let next_ty = match self.field_tys.get(0) {
+            Some(next_ty) => next_ty,
+            None => return true,
+        };
+
+        let (field_ty_con_id, _field_ty_con_ty_args) =
+            next_ty.con(tc_state.tys.tys.cons()).unwrap();
+
+        // TODO: This doesn't handle: integers, strings, characters
+        let field_con_details = tc_state
+            .tys
+            .tys
+            .get_con(&field_ty_con_id)
+            .unwrap()
+            .con_details()
+            .unwrap();
+
+        // Check that every constructor of `next_ty` is covered.
+        for con in field_con_details.cons.iter() {
+            let con_name = con
+                .name
+                .clone()
+                .unwrap_or_else(|| panic!("{}", crate::utils::loc_display(loc)));
+            let matrix = self.focus_con(&field_ty_con_id, &con_name, tc_state);
+            if !matrix.check_coverage(tc_state, loc) {
+                return false;
+            }
+        }
+
+        true
+    }
+
     fn num_fields(&self) -> usize {
         self.field_tys.len()
     }
 
-    #[allow(unused)]
     fn focus_con(&self, con_ty_id: &Id, con_id: &Id, tc_state: &TcFunState) -> PatMatrix {
         assert!(self.num_fields() > 0);
 
-        let (field_ty_con, field_ty_con_ty_args) =
+        let (field_ty_con_id, field_ty_con_ty_args) =
             self.field_tys[0].con(tc_state.tys.tys.cons()).unwrap();
-        assert_eq!(con_ty_id, &field_ty_con);
+        assert_eq!(con_ty_id, &field_ty_con_id);
 
         // Get constructor field types from the constructor's type scheme.
         let con_scheme = tc_state
@@ -480,7 +524,7 @@ impl PatMatrix {
         // Constructors can't have predicates.
         assert!(preds.is_empty());
 
-        let (args, ret): (FunArgs, Ty) = match con_fn_ty {
+        let (args, _): (FunArgs, Ty) = match con_fn_ty {
             Ty::Fun {
                 args,
                 ret,
@@ -503,13 +547,13 @@ impl PatMatrix {
             }
         };
 
-        let mut new_rows: Vec<Vec<ast::Pat>> = vec![];
+        let mut new_rows: Vec<Vec<ast::L<ast::Pat>>> = vec![];
 
         // Add the current column's fields.
         for row in self.rows.iter() {
-            let mut work: Vec<ast::Pat> = vec![row[0].clone()];
+            let mut work: Vec<ast::L<ast::Pat>> = vec![row[0].clone()];
             while let Some(pat) = work.pop() {
-                match pat {
+                match pat.node {
                     ast::Pat::Constr(ast::ConstrPattern {
                         constr: ast::Constructor { ty, constr, .. },
                         fields,
@@ -521,43 +565,44 @@ impl PatMatrix {
                             continue;
                         }
 
-                        let mut fields_positional: Vec<ast::Pat> =
-                            if !fields.is_empty() && fields[0].name.is_some() {
-                                let mut fields_vec: Vec<(Id, ast::Pat)> = fields
-                                    .iter()
-                                    .map(|named_field| {
-                                        (
-                                            named_field.name.clone().unwrap(),
-                                            named_field.node.node.clone(),
-                                        )
-                                    })
-                                    .collect();
+                        let mut fields_positional: Vec<ast::L<ast::Pat>> = if !fields.is_empty()
+                            && fields[0].name.is_some()
+                        {
+                            let mut fields_vec: Vec<(Id, ast::L<ast::Pat>)> = fields
+                                .iter()
+                                .map(|named_field| {
+                                    (named_field.name.clone().unwrap(), named_field.node.clone())
+                                })
+                                .collect();
 
-                                // The pattern may be missing some of the fields in the constructor.
-                                // Add ignore pats for those.
-                                let field_pat_names: Set<&Id> = fields
-                                    .iter()
-                                    .map(|field| field.name.as_ref().unwrap())
-                                    .collect();
+                            // The pattern may be missing some of the fields in the constructor.
+                            // Add ignore pats for those.
+                            let field_pat_names: Set<&Id> = fields
+                                .iter()
+                                .map(|field| field.name.as_ref().unwrap())
+                                .collect();
 
-                                for (arg_name, _) in args.as_named().iter() {
-                                    if !field_pat_names.contains(arg_name) {
-                                        fields_vec.push((arg_name.clone(), ast::Pat::Ignore));
-                                    }
+                            for (arg_name, _) in args.as_named().iter() {
+                                if !field_pat_names.contains(arg_name) {
+                                    fields_vec.push((
+                                        arg_name.clone(),
+                                        ast::L::new_dummy(ast::Pat::Ignore),
+                                    ));
                                 }
+                            }
 
-                                fields_vec.sort_by_key(|(id, _)| id.clone());
-                                fields_vec.into_iter().map(|(_, pat)| pat).collect()
-                            } else {
-                                fields
-                                    .iter()
-                                    .map(|named_field| named_field.node.node.clone())
-                                    .chain(
-                                        (0..args_positional.len() - fields.len())
-                                            .map(|_| ast::Pat::Ignore),
-                                    )
-                                    .collect()
-                            };
+                            fields_vec.sort_by_key(|(id, _)| id.clone());
+                            fields_vec.into_iter().map(|(_, pat)| pat).collect()
+                        } else {
+                            fields
+                                .iter()
+                                .map(|named_field| named_field.node.clone())
+                                .chain(
+                                    (0..args_positional.len() - fields.len())
+                                        .map(|_| ast::L::new_dummy(ast::Pat::Ignore)),
+                                )
+                                .collect()
+                        };
 
                         fields_positional.extend(row[1..].iter().cloned());
 
@@ -576,8 +621,8 @@ impl PatMatrix {
                     }
 
                     ast::Pat::Or(pat1, pat2) => {
-                        work.push(pat1.node.clone());
-                        work.push(pat2.node.clone());
+                        work.push((*pat1).clone());
+                        work.push((*pat2).clone());
                     }
                 }
             }
