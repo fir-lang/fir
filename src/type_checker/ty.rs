@@ -95,8 +95,19 @@ pub enum FunArgs {
 }
 
 impl FunArgs {
+    pub fn empty() -> FunArgs {
+        FunArgs::Positional(vec![])
+    }
+
     pub fn is_named(&self) -> bool {
         matches!(self, FunArgs::Named(_))
+    }
+
+    pub fn as_named(&self) -> &TreeMap<Id, Ty> {
+        match self {
+            FunArgs::Positional(_) => panic!(),
+            FunArgs::Named(named) => named,
+        }
     }
 
     pub fn len(&self) -> usize {

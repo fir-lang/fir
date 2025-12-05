@@ -369,3 +369,226 @@ impl Fields {
         self.unnamed.get(idx)
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+Before creating the matrix:
+
+- Flatten all or patterns
+- Sort all named fields
+- Add all missing fields as underscore patterns
+
+Note that these can be done lazily, as we create the next matrix from the current matrix + the
+constructor to focus on.
+
+Example:
+
+match f():
+    (a = Option.Some(123), b = Point(x = 0, y = 0)): ...
+    (a = Option.None, ..): ...
+    other: ...
+
+==>
+
+match f():
+    (Option.Some(123), Point(0, 0)): ...
+    (Option.None, _): ...
+    (_, _): ...
+
+Then create the matrix:
+
+fields = Vec.[
+    Vec.[`Option.Some(123)`, `Point(0, 0)`],
+    Vec.[`Option.None`, _],
+    Vec.[_, _],
+]
+
+ty = [Option[U32], Point]
+
+For all values of the first field, all values of the rest of the fields should be fully covered.
+
+Values of the first field: `Option.Some(...)` and `Option.None`. Focus on `Option.None`:
+
+fields = Vec.[
+    Vec.[_],
+    Vec.[_],
+]
+
+ty = [Point]
+
+Covered fully by the first pattern.
+
+Focus on `Option.Some`:
+
+fields = Vec.[
+    Vec.[`123`, `Point(0, 0)`],
+    Vec.[_, _],
+]
+
+ty = [U32, Point]
+
+The first pattern cannot fully cover `U32` (only `_` can).
+
+In the second pattern, we check that all of the rest of the patterns are fully covered. Matrix:
+
+fields = Vec.[
+    Vec.[_],
+]
+
+ty = [Point]
+
+---
+
+The type below implements the matrix + the focus operations.
+*/
+#[allow(unused)]
+#[derive(Debug)]
+struct PatMatrix {
+    fields: Vec<Vec<ast::Pat>>,
+    field_tys: Vec<Ty>,
+}
+
+impl PatMatrix {
+    #[allow(unused)]
+    fn num_fields(&self) -> usize {
+        self.field_tys.len()
+    }
+
+    #[allow(unused)]
+    fn focus_con(&self, con_ty_id: &Id, con_id: &Id, tc_state: &TcFunState) -> PatMatrix {
+        assert!(self.num_fields() > 0);
+
+        let (field_ty_con, field_ty_con_ty_args) =
+            self.field_tys[0].con(tc_state.tys.tys.cons()).unwrap();
+        assert_eq!(con_ty_id, &field_ty_con);
+
+        // Get constructor field types from the constructor's type scheme.
+        let con_scheme = tc_state
+            .tys
+            .associated_fn_schemes
+            .get(con_ty_id)
+            .unwrap()
+            .get(con_id)
+            .unwrap();
+
+        let mut preds = vec![];
+
+        let con_fn_ty =
+            con_scheme.instantiate_with_tys(&field_ty_con_ty_args, &mut preds, &ast::Loc::dummy());
+
+        // Constructors can't have predicates.
+        assert!(preds.is_empty());
+
+        let (args, ret): (FunArgs, Ty) = match con_fn_ty {
+            Ty::Fun {
+                args,
+                ret,
+                exceptions,
+            } => {
+                // Constructors don't have exception types.
+                assert!(exceptions.is_none());
+                (args, *ret)
+            }
+
+            other => (FunArgs::empty(), other),
+        };
+
+        let args_positional: Vec<Ty> = match &args {
+            FunArgs::Positional(args) => args.clone(),
+            FunArgs::Named(named_args) => {
+                let mut args_vec: Vec<(&Id, &Ty)> = named_args.iter().collect();
+                args_vec.sort_by_key(|(id, _)| *id);
+                args_vec.into_iter().map(|(_, ty)| ty.clone()).collect()
+            }
+        };
+
+        let mut new_rows: Vec<Vec<ast::Pat>> = vec![];
+
+        // Add the current column's fields.
+        for row in self.fields.iter() {
+            let mut work: Vec<ast::Pat> = vec![row[0].clone()];
+            while let Some(pat) = work.pop() {
+                match pat {
+                    ast::Pat::Constr(ast::ConstrPattern {
+                        constr: ast::Constructor { ty, constr, .. },
+                        fields,
+                        ignore_rest: _,
+                    }) => {
+                        // Note: `ty` may not be the same as `con_ty_id` when checking variant
+                        // patterns. We need to compare both type and constructor names.
+                        if !(ty == *con_ty_id && Some(con_id) == constr.as_ref()) {
+                            continue;
+                        }
+
+                        let mut fields_positional: Vec<ast::Pat> =
+                            if !fields.is_empty() && fields[0].name.is_some() {
+                                let mut fields_vec: Vec<(Id, ast::Pat)> = fields
+                                    .iter()
+                                    .map(|named_field| {
+                                        (
+                                            named_field.name.clone().unwrap(),
+                                            named_field.node.node.clone(),
+                                        )
+                                    })
+                                    .collect();
+
+                                // The pattern may be missing some of the fields in the constructor.
+                                // Add ignore pats for those.
+                                let field_pat_names: Set<&Id> = fields
+                                    .iter()
+                                    .map(|field| field.name.as_ref().unwrap())
+                                    .collect();
+
+                                for (arg_name, _) in args.as_named().iter() {
+                                    if !field_pat_names.contains(arg_name) {
+                                        fields_vec.push((arg_name.clone(), ast::Pat::Ignore));
+                                    }
+                                }
+
+                                fields_vec.sort_by_key(|(id, _)| id.clone());
+                                fields_vec.into_iter().map(|(_, pat)| pat).collect()
+                            } else {
+                                fields
+                                    .iter()
+                                    .map(|named_field| named_field.node.node.clone())
+                                    .chain(
+                                        (0..args_positional.len() - fields.len())
+                                            .map(|_| ast::Pat::Ignore),
+                                    )
+                                    .collect()
+                            };
+
+                        fields_positional.extend(row[1..].iter().cloned());
+
+                        new_rows.push(fields_positional);
+                    }
+
+                    ast::Pat::Record(_) => todo!(),
+
+                    ast::Pat::Var(_) | ast::Pat::Ignore => {
+                        // All fields are fully covered.
+                    }
+
+                    ast::Pat::Str(_) | ast::Pat::Char(_) => {
+                        // Not necessarily a type error or bug (in the type checker), we may be
+                        // checking a variant.
+                    }
+
+                    ast::Pat::Or(pat1, pat2) => {
+                        work.push(pat1.node.clone());
+                        work.push(pat2.node.clone());
+                    }
+                }
+            }
+        }
+
+        let mut new_field_tys: Vec<Ty> = args_positional;
+        new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
+
+        PatMatrix {
+            fields: new_rows,
+            field_tys: new_field_tys,
+        }
+    }
+}
