@@ -477,22 +477,22 @@ impl PatMatrix {
         // dbg!(self);
 
         let next_ty = match self.field_tys.get(0) {
-            Some(next_ty) => next_ty,
+            Some(next_ty) => next_ty.deep_normalize(tc_state.tys.tys.cons()),
             None => return true,
         };
 
-        match next_ty.deep_normalize(tc_state.tys.tys.cons()) {
+        match &next_ty {
             Ty::Con(field_ty_con_id, _) | Ty::App(field_ty_con_id, _, _)
-                if field_ty_con_id == SmolStr::new_static("Str")
-                    || field_ty_con_id == SmolStr::new_static("Char")
-                    || field_ty_con_id == SmolStr::new_static("U8")
-                    || field_ty_con_id == SmolStr::new_static("I8")
-                    || field_ty_con_id == SmolStr::new_static("U16")
-                    || field_ty_con_id == SmolStr::new_static("I16")
-                    || field_ty_con_id == SmolStr::new_static("U32")
-                    || field_ty_con_id == SmolStr::new_static("I32")
-                    || field_ty_con_id == SmolStr::new_static("U64")
-                    || field_ty_con_id == SmolStr::new_static("I64") =>
+                if field_ty_con_id == &SmolStr::new_static("Str")
+                    || field_ty_con_id == &SmolStr::new_static("Char")
+                    || field_ty_con_id == &SmolStr::new_static("U8")
+                    || field_ty_con_id == &SmolStr::new_static("I8")
+                    || field_ty_con_id == &SmolStr::new_static("U16")
+                    || field_ty_con_id == &SmolStr::new_static("I16")
+                    || field_ty_con_id == &SmolStr::new_static("U32")
+                    || field_ty_con_id == &SmolStr::new_static("I32")
+                    || field_ty_con_id == &SmolStr::new_static("U64")
+                    || field_ty_con_id == &SmolStr::new_static("I64") =>
             {
                 self.focus_wildcard().check_coverage(tc_state, loc)
             }
@@ -523,8 +523,152 @@ impl PatMatrix {
                 true
             }
 
-            Ty::Anonymous { .. } => {
-                todo!()
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind: RecordOrVariant::Variant,
+                is_row,
+            } => {
+                assert!(!is_row);
+
+                let (labels, extension) = row_utils::collect_rows(
+                    tc_state.tys.tys.cons(),
+                    &next_ty,
+                    RecordOrVariant::Variant,
+                    &labels,
+                    extension.clone(),
+                );
+
+                // Check coverage of each of the types in the variant, in the current matrix.
+                for ty in labels.values() {
+                    // This is a bit hacky and slow, we can refactor this later.
+                    // We want to check the current matrix with a given current type, and a list of
+                    // types (field_tys) for the rest of the field types.
+                    let mut ty_field_tys: Vec<Ty> = Vec::with_capacity(self.field_tys.len());
+                    ty_field_tys.push(ty.clone());
+                    ty_field_tys.extend(self.field_tys.iter().skip(1).cloned());
+                    let ty_matrix = PatMatrix {
+                        rows: self.rows.clone(),
+                        field_tys: ty_field_tys,
+                    };
+                    if !ty_matrix.check_coverage(tc_state, loc) {
+                        return false;
+                    }
+                }
+
+                // If variant can have more things, we need a wildcard at this position.
+                if extension.is_some() {
+                    if !self.focus_wildcard().check_coverage(tc_state, loc) {
+                        return false;
+                    }
+                }
+
+                true
+            }
+
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind: RecordOrVariant::Record,
+                is_row,
+            } => {
+                assert!(!is_row);
+
+                let (labels, extension) = row_utils::collect_rows(
+                    tc_state.tys.tys.cons(),
+                    &next_ty,
+                    RecordOrVariant::Variant,
+                    &labels,
+                    extension.clone(),
+                );
+
+                let mut labels_vec: Vec<(SmolStr, Ty)> = labels.into_iter().collect();
+                labels_vec.sort_by_key(|(key, _)| key.clone());
+
+                let mut new_rows: Vec<Vec<ast::L<ast::Pat>>> = vec![];
+
+                // Add the current column's fields.
+                for row in self.rows.iter() {
+                    let mut work: Vec<ast::L<ast::Pat>> = vec![row[0].clone()];
+                    while let Some(pat) = work.pop() {
+                        match pat.node {
+                            ast::Pat::Record(ast::RecordPattern {
+                                fields: pat_fields,
+                                ignore_rest: _,
+                                ..
+                            }) => {
+                                let mut fields_positional: Vec<ast::L<ast::Pat>> =
+                                    if !pat_fields.is_empty() && pat_fields[0].name.is_some() {
+                                        let mut fields_vec: Vec<(Id, ast::L<ast::Pat>)> =
+                                            pat_fields
+                                                .iter()
+                                                .map(|named_field| {
+                                                    (
+                                                        named_field.name.clone().unwrap(),
+                                                        named_field.node.clone(),
+                                                    )
+                                                })
+                                                .collect();
+
+                                        // The pattern may be missing some of the fields in the constructor.
+                                        // Add ignore pats for those.
+                                        let field_pat_names: Set<&Id> = pat_fields
+                                            .iter()
+                                            .map(|field| field.name.as_ref().unwrap())
+                                            .collect();
+
+                                        for arg in pat_fields.iter() {
+                                            let arg_name = arg.name.as_ref().unwrap();
+                                            if !field_pat_names.contains(arg_name) {
+                                                fields_vec.push((
+                                                    arg_name.clone(),
+                                                    ast::L::new_dummy(ast::Pat::Ignore),
+                                                ));
+                                            }
+                                        }
+
+                                        fields_vec.sort_by_key(|(id, _)| id.clone());
+                                        fields_vec.into_iter().map(|(_, pat)| pat).collect()
+                                    } else {
+                                        pat_fields
+                                            .iter()
+                                            .map(|named_field| named_field.node.clone())
+                                            .chain(
+                                                (0..labels_vec.len() - pat_fields.len())
+                                                    .map(|_| ast::L::new_dummy(ast::Pat::Ignore)),
+                                            )
+                                            .collect()
+                                    };
+
+                                fields_positional.extend(row[1..].iter().cloned());
+
+                                new_rows.push(fields_positional);
+                            }
+
+                            ast::Pat::Or(pat1, pat2) => {
+                                work.push((*pat1).clone());
+                                work.push((*pat2).clone());
+                            }
+
+                            ast::Pat::Var(_) | ast::Pat::Ignore => {}
+
+                            ast::Pat::Constr(_) | ast::Pat::Str(_) | ast::Pat::Char(_) => {
+                                // type error
+                                panic!();
+                            }
+                        }
+                    }
+                }
+
+                let mut new_field_tys: Vec<Ty> =
+                    labels_vec.iter().map(|(_name, ty)| ty.clone()).collect();
+                new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
+
+                PatMatrix {
+                    rows: new_rows,
+                    field_tys: new_field_tys,
+                }
+                .check_coverage(tc_state, loc)
             }
 
             Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => {
