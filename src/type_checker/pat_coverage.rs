@@ -474,7 +474,7 @@ impl PatMatrix {
     // We can't check RHSs before checking coverage though, because binder types will be refined
     // based on coverage.
     pub(crate) fn check_coverage(&self, tc_state: &TcFunState, loc: &ast::Loc) -> bool {
-        dbg!(self);
+        // dbg!(self);
 
         let next_ty = match self.field_tys.get(0) {
             Some(next_ty) => next_ty,
@@ -513,7 +513,7 @@ impl PatMatrix {
                         .name
                         .clone()
                         .unwrap_or_else(|| panic!("{}", crate::utils::loc_display(loc)));
-                    println!("  Checking con {}", con_name);
+                    // println!("  Checking con {}", con_name);
                     let matrix = self.focus_con(&field_ty_con_id, &con_name, tc_state);
                     if matrix.rows.is_empty() || !matrix.check_coverage(tc_state, loc) {
                         return false;
