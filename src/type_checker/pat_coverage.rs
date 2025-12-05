@@ -445,7 +445,7 @@ The type below implements the matrix + the focus operations.
 #[allow(unused)]
 #[derive(Debug)]
 struct PatMatrix {
-    fields: Vec<Vec<ast::Pat>>,
+    rows: Vec<Vec<ast::Pat>>,
     field_tys: Vec<Ty>,
 }
 
@@ -506,7 +506,7 @@ impl PatMatrix {
         let mut new_rows: Vec<Vec<ast::Pat>> = vec![];
 
         // Add the current column's fields.
-        for row in self.fields.iter() {
+        for row in self.rows.iter() {
             let mut work: Vec<ast::Pat> = vec![row[0].clone()];
             while let Some(pat) = work.pop() {
                 match pat {
@@ -587,7 +587,7 @@ impl PatMatrix {
         new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
 
         PatMatrix {
-            fields: new_rows,
+            rows: new_rows,
             field_tys: new_field_tys,
         }
     }
