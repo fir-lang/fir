@@ -572,6 +572,12 @@ impl PatMatrix {
                 kind: RecordOrVariant::Record,
                 is_row,
             } => {
+                // Note: the code below is basically `focus_record`. We should probably move it to
+                // its own function.
+                //
+                // There's some duplication in here and `focus_con`, but also lots of small
+                // different parts. Not sure if we should have a function used by both.
+
                 assert!(!is_row);
 
                 let (labels, extension) = row_utils::collect_rows(
