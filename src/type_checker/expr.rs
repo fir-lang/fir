@@ -1366,7 +1366,12 @@ pub(super) fn check_match_expr(
 
     let mut covered_pats = PatCoverage::new();
 
-    PatMatrix::from_match_arms(alts, &scrut_ty).check_coverage(tc_state, loc);
+    if !PatMatrix::from_match_arms(alts, &scrut_ty).check_coverage(tc_state, loc) {
+        println!(
+            "{}: New coverage checker: unexhaustive pattern match",
+            loc_display(loc)
+        );
+    }
 
     for ast::Alt {
         pattern,

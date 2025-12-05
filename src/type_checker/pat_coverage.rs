@@ -4,6 +4,8 @@ use crate::type_checker::{FunArgs, TcFunState, Ty, TyMap, row_utils};
 
 use super::RecordOrVariant;
 
+use smol_str::SmolStr;
+
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct PatCoverage {
     cons: Map<Con, Fields>,
@@ -463,37 +465,69 @@ impl PatMatrix {
         }
     }
 
+    // Entry point here.
+    //
+    // The scrutinee type should be deeply normalized. *I think* (but I'm not sure) we also want to
+    // check all pattern types before calling this, to do the unifications before analyzing
+    // scrutinee type deeply.
+    //
+    // We can't check RHSs before checking coverage though, because binder types will be refined
+    // based on coverage.
     pub(crate) fn check_coverage(&self, tc_state: &TcFunState, loc: &ast::Loc) -> bool {
         let next_ty = match self.field_tys.get(0) {
             Some(next_ty) => next_ty,
             None => return true,
         };
 
-        let (field_ty_con_id, _field_ty_con_ty_args) =
-            next_ty.con(tc_state.tys.tys.cons()).unwrap();
+        match next_ty.deep_normalize(tc_state.tys.tys.cons()) {
+            Ty::Con(field_ty_con_id, _) | Ty::App(field_ty_con_id, _, _)
+                if field_ty_con_id == SmolStr::new_static("Str")
+                    || field_ty_con_id == SmolStr::new_static("Char")
+                    || field_ty_con_id == SmolStr::new_static("U8")
+                    || field_ty_con_id == SmolStr::new_static("I8")
+                    || field_ty_con_id == SmolStr::new_static("U16")
+                    || field_ty_con_id == SmolStr::new_static("I16")
+                    || field_ty_con_id == SmolStr::new_static("U32")
+                    || field_ty_con_id == SmolStr::new_static("I32")
+                    || field_ty_con_id == SmolStr::new_static("U64")
+                    || field_ty_con_id == SmolStr::new_static("I64") =>
+            {
+                self.focus_wildcard().check_coverage(tc_state, loc)
+            }
 
-        // TODO: This doesn't handle: integers, strings, characters
-        let field_con_details = tc_state
-            .tys
-            .tys
-            .get_con(&field_ty_con_id)
-            .unwrap()
-            .con_details()
-            .unwrap();
+            Ty::Con(field_ty_con_id, _) | Ty::App(field_ty_con_id, _, _) => {
+                // TODO: This doesn't handle: integers, strings, characters
+                let field_con_details = tc_state
+                    .tys
+                    .tys
+                    .get_con(&field_ty_con_id)
+                    .unwrap()
+                    .con_details()
+                    .unwrap();
 
-        // Check that every constructor of `next_ty` is covered.
-        for con in field_con_details.cons.iter() {
-            let con_name = con
-                .name
-                .clone()
-                .unwrap_or_else(|| panic!("{}", crate::utils::loc_display(loc)));
-            let matrix = self.focus_con(&field_ty_con_id, &con_name, tc_state);
-            if !matrix.check_coverage(tc_state, loc) {
-                return false;
+                // Check that every constructor of `next_ty` is covered.
+                for con in field_con_details.cons.iter() {
+                    let con_name = con
+                        .name
+                        .clone()
+                        .unwrap_or_else(|| panic!("{}", crate::utils::loc_display(loc)));
+                    let matrix = self.focus_con(&field_ty_con_id, &con_name, tc_state);
+                    if !matrix.check_coverage(tc_state, loc) {
+                        return false;
+                    }
+                }
+
+                true
+            }
+
+            Ty::Anonymous { .. } => {
+                todo!()
+            }
+
+            Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => {
+                self.focus_wildcard().check_coverage(tc_state, loc)
             }
         }
-
-        true
     }
 
     fn num_fields(&self) -> usize {
@@ -630,6 +664,23 @@ impl PatMatrix {
 
         let mut new_field_tys: Vec<Ty> = args_positional;
         new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
+
+        PatMatrix {
+            rows: new_rows,
+            field_tys: new_field_tys,
+        }
+    }
+
+    fn focus_wildcard(&self) -> PatMatrix {
+        let mut new_rows: Vec<Vec<ast::L<ast::Pat>>> = vec![];
+
+        for row in self.rows.iter() {
+            if matches!(row[0].node, ast::Pat::Var(_) | ast::Pat::Ignore) {
+                new_rows.push(row.iter().skip(1).cloned().collect());
+            }
+        }
+
+        let new_field_tys: Vec<Ty> = self.field_tys.iter().skip(1).cloned().collect();
 
         PatMatrix {
             rows: new_rows,
