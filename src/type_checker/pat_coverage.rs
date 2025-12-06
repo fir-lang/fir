@@ -456,6 +456,8 @@ impl PatMatrix {
         let mut rows: Vec<Vec<ast::L<ast::Pat>>> = Vec::with_capacity(arms.len());
         for arm in arms {
             if arm.guard.is_some() {
+                // TODO: Alternatives with guards can't add to coverage, but their binders still
+                // need refinement.
                 continue;
             }
             rows.push(vec![arm.pattern.clone()]);
@@ -659,15 +661,22 @@ impl PatMatrix {
                                 work.push((*pat2).clone());
                             }
 
-                            ast::Pat::Var(_) | ast::Pat::Ignore => {}
+                            ast::Pat::Var(_) | ast::Pat::Ignore => {
+                                let mut fields_positional: Vec<ast::L<ast::Pat>> = vec![];
+                                for _ in labels_vec.iter() {
+                                    fields_positional.push(ast::L::new_dummy(ast::Pat::Ignore));
+                                }
+                                fields_positional.extend(row[1..].iter().cloned());
+                                new_rows.push(fields_positional);
+                            }
 
                             ast::Pat::Constr(_) | ast::Pat::Str(_) | ast::Pat::Char(_) => {
                                 // type error
                                 panic!();
                             }
-                        }
-                    }
-                }
+                        } // match pat
+                    } // pats in the row
+                } // rows
 
                 let mut new_field_tys: Vec<Ty> =
                     labels_vec.iter().map(|(_name, ty)| ty.clone()).collect();
