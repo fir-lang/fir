@@ -627,11 +627,10 @@ impl PatMatrix {
                                             .map(|field| field.name.as_ref().unwrap())
                                             .collect();
 
-                                        for arg in pat_fields.iter() {
-                                            let arg_name = arg.name.as_ref().unwrap();
-                                            if !field_pat_names.contains(arg_name) {
+                                        for (label, _) in labels_vec.iter() {
+                                            if !field_pat_names.contains(label) {
                                                 fields_vec.push((
-                                                    arg_name.clone(),
+                                                    label.clone(),
                                                     ast::L::new_dummy(ast::Pat::Ignore),
                                                 ));
                                             }

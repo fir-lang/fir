@@ -34,7 +34,6 @@ main():
         (right = Option.None, ..): ()
 
 # args: --no-prelude --typecheck
-# expected exit status: 101
 # expected stdout:
 # pat_coverage_tests/PatCoverage3.fir:11:5: New coverage checker: unexhaustive pattern match
 # pat_coverage_tests/PatCoverage3.fir:15:5: New coverage checker: unexhaustive pattern match
@@ -44,5 +43,4 @@ main():
 # expected stderr:
 # pat_coverage_tests/PatCoverage3.fir:26:5: Unexhaustive pattern match
 # pat_coverage_tests/PatCoverage3.fir:29:5: Unexhaustive pattern match
-# index out of bounds: the len is 0 but the index is 0
 
