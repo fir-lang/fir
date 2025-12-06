@@ -20,10 +20,5 @@ main():
         Option.Some(Bool.True | Bool.False) | Option.None: ()
 
 # args: --no-prelude --typecheck
-# expected stdout:
-# pat_coverage_tests/PatCoverage1.fir:6:5: New coverage checker: unexhaustive pattern match
-# pat_coverage_tests/PatCoverage1.fir:9:5: New coverage checker: unexhaustive pattern match
+# expected stderr: pat_coverage_tests/PatCoverageOr1.fir:16:5: Unexhaustive pattern match
 
-# expected stderr:
-# pat_coverage_tests/PatCoverage1.fir:6:5: Unexhaustive pattern match
-# pat_coverage_tests/PatCoverage1.fir:9:5: Unexhaustive pattern match

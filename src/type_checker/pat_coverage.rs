@@ -1,6 +1,6 @@
 use crate::ast::{self, Id, Loc};
 use crate::collections::{Map, Set};
-use crate::type_checker::{FunArgs, TcFunState, Ty, TyMap, row_utils};
+use crate::type_checker::{FunArgs, Scheme, TcFunState, Ty, TyMap, row_utils};
 
 use super::RecordOrVariant;
 
@@ -509,12 +509,10 @@ impl PatMatrix {
 
                 // Check that every constructor of `next_ty` is covered.
                 for con in field_con_details.cons.iter() {
-                    let con_name = con
-                        .name
-                        .clone()
-                        .unwrap_or_else(|| panic!("{}", crate::utils::loc_display(loc)));
-                    // println!("  Checking con {}", con_name);
-                    let matrix = self.focus_con(&field_ty_con_id, &con_name, tc_state);
+                    let matrix = match &con.name {
+                        Some(con_name) => self.focus_sum_con(&field_ty_con_id, &con_name, tc_state),
+                        None => self.focus_product_con(&field_ty_con_id, tc_state),
+                    };
                     if matrix.rows.is_empty() || !matrix.check_coverage(tc_state, loc) {
                         return false;
                     }
@@ -687,12 +685,16 @@ impl PatMatrix {
         self.field_tys.len()
     }
 
-    fn focus_con(&self, con_ty_id: &Id, con_id: &Id, tc_state: &TcFunState) -> PatMatrix {
+    fn focus_product_con(&self, con_ty_id: &Id, tc_state: &TcFunState) -> PatMatrix {
         assert!(self.num_fields() > 0);
+        let con_scheme = tc_state.tys.top_schemes.get(con_ty_id).unwrap();
+        self.focus_con_scheme(con_ty_id, None, con_scheme, tc_state)
+    }
 
-        let (field_ty_con_id, field_ty_con_ty_args) =
-            self.field_tys[0].con(tc_state.tys.tys.cons()).unwrap();
-        assert_eq!(con_ty_id, &field_ty_con_id);
+    fn focus_sum_con(&self, con_ty_id: &Id, con_id: &Id, tc_state: &TcFunState) -> PatMatrix {
+        // println!("focus {}.{}", con_ty_id, con_id);
+
+        assert!(self.num_fields() > 0);
 
         // Get constructor field types from the constructor's type scheme.
         let con_scheme = tc_state
@@ -702,6 +704,20 @@ impl PatMatrix {
             .unwrap()
             .get(con_id)
             .unwrap();
+
+        self.focus_con_scheme(con_ty_id, Some(con_id), con_scheme, tc_state)
+    }
+
+    fn focus_con_scheme(
+        &self,
+        con_ty_id: &Id,
+        con_id: Option<&Id>,
+        con_scheme: &Scheme,
+        tc_state: &TcFunState,
+    ) -> PatMatrix {
+        let (field_ty_con_id, field_ty_con_ty_args) =
+            self.field_tys[0].con(tc_state.tys.tys.cons()).unwrap();
+        assert_eq!(con_ty_id, &field_ty_con_id);
 
         let mut preds = vec![];
 
@@ -748,7 +764,7 @@ impl PatMatrix {
                     }) => {
                         // Note: `ty` may not be the same as `con_ty_id` when checking variant
                         // patterns. We need to compare both type and constructor names.
-                        if !(ty == *con_ty_id && Some(con_id) == constr.as_ref()) {
+                        if !(ty == *con_ty_id && con_id == constr.as_ref()) {
                             continue;
                         }
 
