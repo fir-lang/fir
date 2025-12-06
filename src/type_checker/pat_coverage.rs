@@ -1,6 +1,7 @@
 use crate::ast::{self, Id, Loc};
 use crate::collections::{Map, Set};
 use crate::type_checker::{FunArgs, Scheme, TcFunState, Ty, TyMap, row_utils};
+use crate::utils::loc_display;
 
 use super::RecordOrVariant;
 
@@ -459,10 +460,16 @@ impl PatMatrix {
             }
             rows.push(vec![arm.pattern.clone()]);
         }
-        PatMatrix {
-            rows,
-            field_tys: vec![scrut_ty.clone()],
+        PatMatrix::new(rows, vec![scrut_ty.clone()])
+    }
+
+    fn new(rows: Vec<Vec<ast::L<ast::Pat>>>, field_tys: Vec<Ty>) -> PatMatrix {
+        if cfg!(debug_assertions) {
+            for row in rows.iter() {
+                assert_eq!(row.len(), field_tys.len());
+            }
         }
+        PatMatrix { rows, field_tys }
     }
 
     // Entry point here.
@@ -510,8 +517,10 @@ impl PatMatrix {
                 // Check that every constructor of `next_ty` is covered.
                 for con in field_con_details.cons.iter() {
                     let matrix = match &con.name {
-                        Some(con_name) => self.focus_sum_con(&field_ty_con_id, &con_name, tc_state),
-                        None => self.focus_product_con(&field_ty_con_id, tc_state),
+                        Some(con_name) => {
+                            self.focus_sum_con(&field_ty_con_id, &con_name, tc_state, loc)
+                        }
+                        None => self.focus_product_con(&field_ty_con_id, tc_state, loc),
                     };
                     if matrix.rows.is_empty() || !matrix.check_coverage(tc_state, loc) {
                         return false;
@@ -545,10 +554,7 @@ impl PatMatrix {
                     let mut ty_field_tys: Vec<Ty> = Vec::with_capacity(self.field_tys.len());
                     ty_field_tys.push(ty.clone());
                     ty_field_tys.extend(self.field_tys.iter().skip(1).cloned());
-                    let ty_matrix = PatMatrix {
-                        rows: self.rows.clone(),
-                        field_tys: ty_field_tys,
-                    };
+                    let ty_matrix = PatMatrix::new(self.rows.clone(), ty_field_tys);
                     if !ty_matrix.check_coverage(tc_state, loc) {
                         return false;
                     }
@@ -668,11 +674,7 @@ impl PatMatrix {
                     labels_vec.iter().map(|(_name, ty)| ty.clone()).collect();
                 new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
 
-                PatMatrix {
-                    rows: new_rows,
-                    field_tys: new_field_tys,
-                }
-                .check_coverage(tc_state, loc)
+                PatMatrix::new(new_rows, new_field_tys).check_coverage(tc_state, loc)
             }
 
             Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => {
@@ -685,13 +687,24 @@ impl PatMatrix {
         self.field_tys.len()
     }
 
-    fn focus_product_con(&self, con_ty_id: &Id, tc_state: &TcFunState) -> PatMatrix {
+    fn focus_product_con(
+        &self,
+        con_ty_id: &Id,
+        tc_state: &TcFunState,
+        loc: &ast::Loc,
+    ) -> PatMatrix {
         assert!(self.num_fields() > 0);
         let con_scheme = tc_state.tys.top_schemes.get(con_ty_id).unwrap();
-        self.focus_con_scheme(con_ty_id, None, con_scheme, tc_state)
+        self.focus_con_scheme(con_ty_id, None, con_scheme, tc_state, loc)
     }
 
-    fn focus_sum_con(&self, con_ty_id: &Id, con_id: &Id, tc_state: &TcFunState) -> PatMatrix {
+    fn focus_sum_con(
+        &self,
+        con_ty_id: &Id,
+        con_id: &Id,
+        tc_state: &TcFunState,
+        loc: &ast::Loc,
+    ) -> PatMatrix {
         // println!("focus {}.{}", con_ty_id, con_id);
 
         assert!(self.num_fields() > 0);
@@ -705,7 +718,7 @@ impl PatMatrix {
             .get(con_id)
             .unwrap();
 
-        self.focus_con_scheme(con_ty_id, Some(con_id), con_scheme, tc_state)
+        self.focus_con_scheme(con_ty_id, Some(con_id), con_scheme, tc_state, loc)
     }
 
     fn focus_con_scheme(
@@ -714,6 +727,7 @@ impl PatMatrix {
         con_id: Option<&Id>,
         con_scheme: &Scheme,
         tc_state: &TcFunState,
+        #[allow(unused)] loc: &ast::Loc,
     ) -> PatMatrix {
         let (field_ty_con_id, field_ty_con_ty_args) =
             self.field_tys[0].con(tc_state.tys.tys.cons()).unwrap();
@@ -741,6 +755,8 @@ impl PatMatrix {
             other => (FunArgs::empty(), other),
         };
 
+        // println!("con_ty_id = {}, con_id = {:?}, args = {:?}", con_ty_id, con_id, args);
+
         let args_positional: Vec<Ty> = match &args {
             FunArgs::Positional(args) => args.clone(),
             FunArgs::Named(named_args) => {
@@ -754,6 +770,7 @@ impl PatMatrix {
 
         // Add the current column's fields.
         for row in self.rows.iter() {
+            // assert!(!row.is_empty(), "empty row at {}", loc_display(loc));
             let mut work: Vec<ast::L<ast::Pat>> = vec![row[0].clone()];
             while let Some(pat) = work.pop() {
                 match pat.node {
@@ -816,10 +833,11 @@ impl PatMatrix {
 
                     ast::Pat::Var(_) | ast::Pat::Ignore => {
                         // All fields are fully covered.
-                        let fields_positional: Vec<ast::L<ast::Pat>> =
+                        let mut fields_positional: Vec<ast::L<ast::Pat>> =
                             std::iter::repeat_with(|| ast::L::new_dummy(ast::Pat::Ignore))
                                 .take(args_positional.len())
                                 .collect();
+                        fields_positional.extend(row[1..].iter().cloned());
                         new_rows.push(fields_positional);
                     }
 
@@ -839,10 +857,7 @@ impl PatMatrix {
         let mut new_field_tys: Vec<Ty> = args_positional;
         new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
 
-        PatMatrix {
-            rows: new_rows,
-            field_tys: new_field_tys,
-        }
+        PatMatrix::new(new_rows, new_field_tys)
     }
 
     fn focus_wildcard(&self) -> PatMatrix {
@@ -856,9 +871,6 @@ impl PatMatrix {
 
         let new_field_tys: Vec<Ty> = self.field_tys.iter().skip(1).cloned().collect();
 
-        PatMatrix {
-            rows: new_rows,
-            field_tys: new_field_tys,
-        }
+        PatMatrix::new(new_rows, new_field_tys)
     }
 }
