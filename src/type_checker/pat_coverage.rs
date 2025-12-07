@@ -466,7 +466,7 @@ impl std::fmt::Display for PatMatrix {
                 }
                 let field_ty = &self.field_tys[field_idx];
                 let pat = &row[field_idx];
-                write!(f, "{}:{}", field_ty, pat.node)?;
+                write!(f, "{}:{}", pat.node, field_ty)?;
             }
             write!(f, "]")?;
         }
