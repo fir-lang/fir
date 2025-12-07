@@ -1404,7 +1404,7 @@ pub(super) fn check_match_expr(
             rhs,
         },
         alt_scope,
-    ) in alts.into_iter().zip(alt_envs.into_iter())
+    ) in alts.iter_mut().zip(alt_envs.into_iter())
     {
         tc_state.env.push_scope(alt_scope);
 

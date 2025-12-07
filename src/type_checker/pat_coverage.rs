@@ -623,7 +623,8 @@ impl PatMatrix {
 
                 assert!(!is_row);
 
-                let (labels, extension) = row_utils::collect_rows(
+                // Row extensions don't matter for exhaustiveness as extra fields are not matched.
+                let (labels, _extension) = row_utils::collect_rows(
                     tc_state.tys.tys.cons(),
                     &next_ty,
                     RecordOrVariant::Variant,
