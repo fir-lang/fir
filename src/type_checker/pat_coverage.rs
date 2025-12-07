@@ -803,10 +803,16 @@ impl PatMatrix {
 
         // println!("con_ty_id = {}, con_id = {:?}, args = {:?}", con_ty_id, con_id, args);
 
+        let named_args;
+
         let args_positional: Vec<Ty> = match &args {
-            FunArgs::Positional(args) => args.clone(),
-            FunArgs::Named(named_args) => {
-                let mut args_vec: Vec<(&Id, &Ty)> = named_args.iter().collect();
+            FunArgs::Positional(args) => {
+                named_args = false;
+                args.clone()
+            }
+            FunArgs::Named(args) => {
+                named_args = true;
+                let mut args_vec: Vec<(&Id, &Ty)> = args.iter().collect();
                 args_vec.sort_by_key(|(id, _)| *id);
                 args_vec.into_iter().map(|(_, ty)| ty.clone()).collect()
             }
@@ -832,21 +838,30 @@ impl PatMatrix {
                             continue;
                         }
 
-                        let mut fields_positional: Vec<ast::L<ast::Pat>> = if !fields.is_empty()
-                            && fields[0].name.is_some()
-                        {
+                        // The pattern may be missing some of the fields in the constructor.
+                        // Add ignore pats for those.
+                        let mut field_pat_names: Set<&Id> = Default::default();
+
+                        let mut fields_positional: Vec<ast::L<ast::Pat>> = if named_args {
                             let mut fields_vec: Vec<(Id, ast::L<ast::Pat>)> = fields
                                 .iter()
                                 .map(|named_field| {
-                                    (named_field.name.clone().unwrap(), named_field.node.clone())
+                                    let name = match &named_field.name {
+                                        Some(name) => name,
+                                        None => {
+                                            // Con takes named params, but pat has positional. The
+                                            // pat should be variable with the same name as the
+                                            // field. (type checker checks this)
+                                            match &named_field.node.node {
+                                                ast::Pat::Var(ast::VarPat { var, ty: _ }) => var,
+                                                _ => panic!(),
+                                            }
+                                        }
+                                    };
+                                    let new = field_pat_names.insert(name);
+                                    assert!(new);
+                                    (name.clone(), named_field.node.clone())
                                 })
-                                .collect();
-
-                            // The pattern may be missing some of the fields in the constructor.
-                            // Add ignore pats for those.
-                            let field_pat_names: Set<&Id> = fields
-                                .iter()
-                                .map(|field| field.name.as_ref().unwrap())
                                 .collect();
 
                             for (arg_name, _) in args.as_named().iter() {
