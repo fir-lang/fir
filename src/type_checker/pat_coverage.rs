@@ -445,7 +445,7 @@ ty = [Point]
 
 The type below implements the matrix + the focus operations.
 */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct PatMatrix {
     rows: Vec<Vec<ast::L<ast::Pat>>>,
     field_tys: Vec<Ty>,
@@ -509,6 +509,10 @@ impl PatMatrix {
         // dbg!(self);
         // println!("{}", self);
 
+        if self.rows.is_empty() {
+            return self.field_tys.is_empty();
+        }
+
         let next_ty = match self.field_tys.get(0) {
             Some(next_ty) => next_ty.deep_normalize(tc_state.tys.tys.cons()),
             None => return true,
@@ -542,14 +546,22 @@ impl PatMatrix {
 
                 // Check that every constructor of `next_ty` is covered.
                 for con in field_con_details.cons.iter() {
-                    let matrix = match &con.name {
+                    let matrices = match &con.name {
                         Some(con_name) => {
                             self.focus_sum_con(&field_ty_con_id, &con_name, tc_state, loc)
                         }
                         None => self.focus_product_con(&field_ty_con_id, tc_state, loc),
                     };
-                    if matrix.rows.is_empty() || !matrix.check_coverage(tc_state, loc) {
+                    if matrices.is_empty() {
+                        // Constructor not handled.
                         return false;
+                    }
+                    for matrix in matrices {
+                        // There should be at least one row that is empty.
+                        // Empty matrix = constructor is not matched.
+                        if !matrix.check_coverage(tc_state, loc) {
+                            return false;
+                        }
                     }
                 }
 
@@ -724,7 +736,7 @@ impl PatMatrix {
         con_ty_id: &Id,
         tc_state: &TcFunState,
         loc: &ast::Loc,
-    ) -> PatMatrix {
+    ) -> Vec<PatMatrix> {
         assert!(self.num_fields() > 0);
         let con_scheme = tc_state.tys.top_schemes.get(con_ty_id).unwrap();
         self.focus_con_scheme(con_ty_id, None, con_scheme, tc_state, loc)
@@ -736,7 +748,7 @@ impl PatMatrix {
         con_id: &Id,
         tc_state: &TcFunState,
         loc: &ast::Loc,
-    ) -> PatMatrix {
+    ) -> Vec<PatMatrix> {
         // println!("focus {}.{}", con_ty_id, con_id);
 
         assert!(self.num_fields() > 0);
@@ -760,9 +772,10 @@ impl PatMatrix {
         con_scheme: &Scheme,
         tc_state: &TcFunState,
         #[allow(unused)] loc: &ast::Loc,
-    ) -> PatMatrix {
+    ) -> Vec<PatMatrix> {
         let (field_ty_con_id, field_ty_con_ty_args) =
             self.field_tys[0].con(tc_state.tys.tys.cons()).unwrap();
+
         assert_eq!(con_ty_id, &field_ty_con_id);
 
         let mut preds = vec![];
@@ -799,6 +812,7 @@ impl PatMatrix {
         };
 
         let mut new_rows: Vec<Vec<ast::L<ast::Pat>>> = vec![];
+        let mut new_skip_rows: Vec<Vec<ast::L<ast::Pat>>> = vec![];
 
         // Add the current column's fields.
         for row in self.rows.iter() {
@@ -865,12 +879,7 @@ impl PatMatrix {
 
                     ast::Pat::Var(_) | ast::Pat::Ignore => {
                         // All fields are fully covered.
-                        let mut fields_positional: Vec<ast::L<ast::Pat>> =
-                            std::iter::repeat_with(|| ast::L::new_dummy(ast::Pat::Ignore))
-                                .take(args_positional.len())
-                                .collect();
-                        fields_positional.extend(row[1..].iter().cloned());
-                        new_rows.push(fields_positional);
+                        new_skip_rows.push(row[1..].to_vec());
                     }
 
                     ast::Pat::Str(_) | ast::Pat::Char(_) => {
@@ -886,10 +895,24 @@ impl PatMatrix {
             }
         }
 
-        let mut new_field_tys: Vec<Ty> = args_positional;
-        new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
+        // Field types when the first fields are wildcards. This is used for the rows where the
+        // first columns are wildcards.
+        let skip_field_tys: Vec<Ty> = self.field_tys.iter().skip(1).cloned().collect();
 
-        PatMatrix::new(new_rows, new_field_tys)
+        // Field types when the first fields are replaced by the constructor's fields. This is used
+        // for the rows where the first columns are not wildcards.
+        let mut new_field_tys: Vec<Ty> = args_positional;
+        new_field_tys.extend(skip_field_tys.iter().cloned());
+
+        // Empty matrices means the constructor is not handled.
+        let mut matrices = Vec::with_capacity(2);
+        if !new_rows.is_empty() {
+            matrices.push(PatMatrix::new(new_rows, new_field_tys));
+        }
+        if !new_skip_rows.is_empty() {
+            matrices.push(PatMatrix::new(new_skip_rows, skip_field_tys));
+        }
+        matrices
     }
 
     fn focus_wildcard(&self) -> PatMatrix {
