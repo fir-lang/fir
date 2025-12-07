@@ -451,6 +451,29 @@ pub(crate) struct PatMatrix {
     field_tys: Vec<Ty>,
 }
 
+impl std::fmt::Display for PatMatrix {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for row_idx in 0..self.rows.len() {
+            write!(f, "row{}=[", row_idx)?;
+            if row_idx != 0 {
+                writeln!(f)?;
+            }
+            let row = &self.rows[row_idx];
+            assert_eq!(row.len(), self.field_tys.len());
+            for field_idx in 0..row.len() {
+                if field_idx != 0 {
+                    write!(f, ", ")?;
+                }
+                let field_ty = &self.field_tys[field_idx];
+                let pat = &row[field_idx];
+                write!(f, "{}:{}", field_ty, pat.node)?;
+            }
+            write!(f, "]")?;
+        }
+        Ok(())
+    }
+}
+
 impl PatMatrix {
     pub(crate) fn from_match_arms(arms: &[ast::Alt], scrut_ty: &Ty) -> PatMatrix {
         let mut rows: Vec<Vec<ast::L<ast::Pat>>> = Vec::with_capacity(arms.len());
@@ -484,6 +507,7 @@ impl PatMatrix {
     // based on coverage.
     pub(crate) fn check_coverage(&self, tc_state: &TcFunState, loc: &ast::Loc) -> bool {
         // dbg!(self);
+        // println!("{}", self);
 
         let next_ty = match self.field_tys.get(0) {
             Some(next_ty) => next_ty.deep_normalize(tc_state.tys.tys.cons()),
