@@ -1,20 +1,39 @@
 #|
 This example used to loop. When we have a matrix like:
 
-      [ [ Recursive:_, ...] ]
+      [ [ Recursive:_, ... ] ]
 
-We check all constructors or `Recrusive`. When checking a constructor against a
-wildcard pattern like `_` or a variable, we then expand it to
+We check all constructors or `Recursive`. When checking a constructor against a
+wildcard pattern like `_` or a variable, we then expand the `_` as:
 
-      [ [ Recursive:Recursive.A,    ...]
-        [ Recursive:Recursive.B(_), ...] ]
+      [ [ Recursive:Recursive.A,    ... ]
+        [ Recursive:Recursive.B(_), ... ] ]
 
 We then check the constructor `A` which is covered. When checking `B` though, we
-focus filter the rows as usual and get:
+filter the rows as usual and get:
 
       [ [ Recursive:_, ... ] ]
 
 Which takes us to the original matrix, so we loop.
+
+The reason for this is to handle cases like:
+
+    match x:
+        (Recursive.A, p1): ...
+        (Recursive.B(Recursive.A), p2): ...
+        (_, p3): ...
+
+Here when checking `A`, we want the matrix:
+
+      [ [ p1 ]
+        [ p3 ] ]
+
+And when checking `B`, we want:
+
+      [ [ Recursive:Recursive.A, p2 ]
+        [ Recursive:_,           p3 ] ]
+
+But the second row causes looping.
 |#
 
 type Recursive:
