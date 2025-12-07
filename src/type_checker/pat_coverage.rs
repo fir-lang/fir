@@ -1,6 +1,7 @@
 use crate::ast::{self, Id, Loc};
 use crate::collections::{Map, Set};
 use crate::type_checker::{FunArgs, Scheme, TcFunState, Ty, TyMap, row_utils};
+#[allow(unused)]
 use crate::utils::loc_display;
 
 use super::RecordOrVariant;
@@ -460,12 +461,11 @@ impl std::fmt::Display for PatMatrix {
             }
             let row = &self.rows[row_idx];
             assert_eq!(row.len(), self.field_tys.len());
-            for field_idx in 0..row.len() {
+            for (field_idx, pat) in row.iter().enumerate() {
                 if field_idx != 0 {
                     write!(f, ", ")?;
                 }
                 let field_ty = &self.field_tys[field_idx];
-                let pat = &row[field_idx];
                 write!(f, "{}:{}", pat.node, field_ty)?;
             }
             write!(f, "]")?;
@@ -513,7 +513,7 @@ impl PatMatrix {
             return self.field_tys.is_empty();
         }
 
-        let next_ty = match self.field_tys.get(0) {
+        let next_ty = match self.field_tys.first() {
             Some(next_ty) => next_ty.deep_normalize(tc_state.tys.tys.cons()),
             None => return true,
         };
@@ -539,7 +539,7 @@ impl PatMatrix {
                 let field_con_details = tc_state
                     .tys
                     .tys
-                    .get_con(&field_ty_con_id)
+                    .get_con(field_ty_con_id)
                     .unwrap()
                     .con_details()
                     .unwrap();
@@ -548,20 +548,23 @@ impl PatMatrix {
                 for con in field_con_details.cons.iter() {
                     let matrices = match &con.name {
                         Some(con_name) => {
-                            self.focus_sum_con(&field_ty_con_id, &con_name, tc_state, loc)
+                            self.focus_sum_con(field_ty_con_id, con_name, tc_state, loc)
                         }
-                        None => self.focus_product_con(&field_ty_con_id, tc_state, loc),
+                        None => self.focus_product_con(field_ty_con_id, tc_state, loc),
                     };
                     if matrices.is_empty() {
                         // Constructor not handled.
                         return false;
                     }
+                    // At least one of the matrices should fully cover the patterns.
+                    // Instead of stopping after the first matrix that covers everything, we check
+                    // all of the matrices to refine variables.
+                    let mut covers = false;
                     for matrix in matrices {
-                        // There should be at least one row that is empty.
-                        // Empty matrix = constructor is not matched.
-                        if !matrix.check_coverage(tc_state, loc) {
-                            return false;
-                        }
+                        covers |= matrix.check_coverage(tc_state, loc);
+                    }
+                    if !covers {
+                        return false;
                     }
                 }
 
@@ -580,7 +583,7 @@ impl PatMatrix {
                     tc_state.tys.tys.cons(),
                     &next_ty,
                     RecordOrVariant::Variant,
-                    &labels,
+                    labels,
                     extension.clone(),
                 );
 
@@ -599,10 +602,8 @@ impl PatMatrix {
                 }
 
                 // If variant can have more things, we need a wildcard at this position.
-                if extension.is_some() {
-                    if !self.focus_wildcard().check_coverage(tc_state, loc) {
-                        return false;
-                    }
+                if extension.is_some() && !self.focus_wildcard().check_coverage(tc_state, loc) {
+                    return false;
                 }
 
                 true
@@ -626,7 +627,7 @@ impl PatMatrix {
                     tc_state.tys.tys.cons(),
                     &next_ty,
                     RecordOrVariant::Variant,
-                    &labels,
+                    labels,
                     extension.clone(),
                 );
 
