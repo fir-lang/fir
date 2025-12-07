@@ -1364,20 +1364,14 @@ pub(super) fn check_match_expr(
 
     let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
 
-    let mut covered_pats = PatCoverage::new();
+    let mut alt_envs: Vec<Map<Id, Ty>> = Vec::with_capacity(alts.len());
 
-    if !PatMatrix::from_match_arms(alts, &scrut_ty).check_coverage(tc_state, loc) {
-        println!(
-            "{}: New coverage checker: unexhaustive pattern match",
-            loc_display(loc)
-        );
-    }
-
+    // Type check patterns first so that the coverage checker can assume patterns are well-typed.
     for ast::Alt {
         pattern,
-        guard,
-        rhs,
-    } in alts
+        guard: _, // checked below to use refined binders in guards
+        rhs: _,
+    } in alts.iter_mut()
     {
         tc_state.env.enter();
 
@@ -1391,8 +1385,32 @@ pub(super) fn check_match_expr(
             &pattern.loc,
         );
 
+        alt_envs.push(tc_state.env.exit());
+    }
+
+    let mut covered_pats = PatCoverage::new();
+
+    if !PatMatrix::from_match_arms(alts, &scrut_ty).check_coverage(tc_state, loc) {
+        println!(
+            "{}: New coverage checker: unexhaustive pattern match",
+            loc_display(loc)
+        );
+    }
+
+    for (
+        ast::Alt {
+            pattern,
+            guard,
+            rhs,
+        },
+        alt_scope,
+    ) in alts.into_iter().zip(alt_envs.into_iter())
+    {
+        tc_state.env.push_scope(alt_scope);
+
         refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
 
+        // Guards are checked here to use refined binders in the guards.
         if let Some(guard) = guard {
             let (_, guard_binders) =
                 check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_stack);
