@@ -376,76 +376,6 @@ impl Fields {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-Before creating the matrix:
-
-- Flatten all or patterns
-- Sort all named fields
-- Add all missing fields as underscore patterns
-
-Note that these can be done lazily, as we create the next matrix from the current matrix + the
-constructor to focus on.
-
-Example:
-
-match f():
-    (a = Option.Some(123), b = Point(x = 0, y = 0)): ...
-    (a = Option.None, ..): ...
-    other: ...
-
-==>
-
-match f():
-    (Option.Some(123), Point(0, 0)): ...
-    (Option.None, _): ...
-    (_, _): ...
-
-Then create the matrix:
-
-fields = Vec.[
-    Vec.[`Option.Some(123)`, `Point(0, 0)`],
-    Vec.[`Option.None`, _],
-    Vec.[_, _],
-]
-
-ty = [Option[U32], Point]
-
-For all values of the first field, all values of the rest of the fields should be fully covered.
-
-Values of the first field: `Option.Some(...)` and `Option.None`. Focus on `Option.None`:
-
-fields = Vec.[
-    Vec.[_],
-    Vec.[_],
-]
-
-ty = [Point]
-
-Covered fully by the first pattern.
-
-Focus on `Option.Some`:
-
-fields = Vec.[
-    Vec.[`123`, `Point(0, 0)`],
-    Vec.[_, _],
-]
-
-ty = [U32, Point]
-
-The first pattern cannot fully cover `U32` (only `_` can).
-
-In the second pattern, we check that all of the rest of the patterns are fully covered. Matrix:
-
-fields = Vec.[
-    Vec.[_],
-]
-
-ty = [Point]
-
----
-
-The type below implements the matrix + the focus operations.
-*/
 #[derive(Debug, Clone)]
 pub(crate) struct PatMatrix {
     rows: Vec<Row>,
@@ -516,13 +446,6 @@ impl PatMatrix {
     }
 
     // Entry point here.
-    //
-    // The scrutinee type should be deeply normalized. *I think* (but I'm not sure) we also want to
-    // check all pattern types before calling this, to do the unifications before analyzing
-    // scrutinee type deeply.
-    //
-    // We can't check RHSs before checking coverage though, because binder types will be refined
-    // based on coverage.
     #[allow(clippy::only_used_in_recursion)]
     pub(crate) fn check_coverage(&self, tc_state: &TcFunState, loc: &ast::Loc, level: u32) -> bool {
         // dbg!(self);
