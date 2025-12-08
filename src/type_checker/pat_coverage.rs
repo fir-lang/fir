@@ -449,9 +449,19 @@ impl PatMatrix {
 
     // Entry point here.
     #[allow(clippy::only_used_in_recursion)]
-    pub(crate) fn check_coverage(&self, tc_state: &TcFunState, loc: &ast::Loc, level: u32) -> bool {
+    pub(crate) fn check_coverage(
+        &self,
+        tc_state: &TcFunState,
+        loc: &ast::Loc,
+        trace: &mut Vec<String>,
+    ) -> bool {
         // dbg!(self);
-        // print!("{}", indent(&self.to_string(), level * 4));
+
+        // if !trace.is_empty() {
+        //     println!();
+        // }
+        // print!("{}", indent(&trace.join(", "), trace.len() * 4));
+        // print!("{}", indent(&self.to_string(), trace.len() * 4));
 
         if self.rows.is_empty() {
             return self.field_tys.is_empty();
@@ -475,8 +485,9 @@ impl PatMatrix {
                     || field_ty_con_id == &SmolStr::new_static("U64")
                     || field_ty_con_id == &SmolStr::new_static("I64") =>
             {
-                self.focus_wildcard()
-                    .check_coverage(tc_state, loc, level + 1)
+                with_trace(trace, field_ty_con_id.to_string(), |trace| {
+                    self.focus_wildcard().check_coverage(tc_state, loc, trace)
+                })
             }
 
             Ty::Con(field_ty_con_id, _) | Ty::App(field_ty_con_id, _, _) => {
@@ -505,8 +516,14 @@ impl PatMatrix {
                     // Instead of stopping after the first matrix that covers everything, we check
                     // all of the matrices to refine variables.
                     let mut covers = false;
+                    let s = match &con.name {
+                        Some(con) => format!("{}.{}", field_ty_con_id, con),
+                        None => field_ty_con_id.to_string(),
+                    };
                     for matrix in matrices {
-                        covers |= matrix.check_coverage(tc_state, loc, level + 1);
+                        covers |= with_trace(trace, s.clone(), |trace| {
+                            matrix.check_coverage(tc_state, loc, trace)
+                        });
                     }
                     if !covers {
                         return false;
@@ -541,16 +558,18 @@ impl PatMatrix {
                     ty_field_tys.push(ty.clone());
                     ty_field_tys.extend(self.field_tys.iter().skip(1).cloned());
                     let ty_matrix = PatMatrix::new(self.rows.clone(), ty_field_tys);
-                    if !ty_matrix.check_coverage(tc_state, loc, level + 1) {
+                    if !with_trace(trace, ty.to_string(), |trace| {
+                        ty_matrix.check_coverage(tc_state, loc, trace)
+                    }) {
                         return false;
                     }
                 }
 
                 // If variant can have more things, we need a wildcard at this position.
                 if extension.is_some()
-                    && !self
-                        .focus_wildcard()
-                        .check_coverage(tc_state, loc, level + 1)
+                    && !with_trace(trace, "extra rows".to_string(), |trace| {
+                        self.focus_wildcard().check_coverage(tc_state, loc, trace)
+                    })
                 {
                     return false;
                 }
@@ -675,12 +694,15 @@ impl PatMatrix {
                     labels_vec.iter().map(|(_name, ty)| ty.clone()).collect();
                 new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
 
-                PatMatrix::new(new_rows, new_field_tys).check_coverage(tc_state, loc, level + 1)
+                with_trace(trace, "flattened".to_string(), |trace| {
+                    PatMatrix::new(new_rows, new_field_tys).check_coverage(tc_state, loc, trace)
+                })
             }
 
             Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => {
-                self.focus_wildcard()
-                    .check_coverage(tc_state, loc, level + 1)
+                with_trace(trace, "wildcard".to_string(), |trace| {
+                    self.focus_wildcard().check_coverage(tc_state, loc, trace)
+                })
             }
         }
     }
@@ -913,7 +935,7 @@ impl PatMatrix {
 }
 
 #[allow(unused)]
-fn indent(s: &str, indent: u32) -> String {
+fn indent(s: &str, indent: usize) -> String {
     let mut ret = String::new();
     for line in s.lines() {
         for _ in 0..indent {
@@ -922,5 +944,13 @@ fn indent(s: &str, indent: u32) -> String {
         ret.push_str(line);
         ret.push('\n');
     }
+    ret
+}
+
+#[allow(unused)]
+fn with_trace<T, F: FnOnce(&mut Vec<String>) -> T>(trace: &mut Vec<String>, s: String, cb: F) -> T {
+    trace.push(s);
+    let ret = cb(trace);
+    trace.pop();
     ret
 }
