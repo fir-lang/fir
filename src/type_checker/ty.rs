@@ -1086,19 +1086,14 @@ impl fmt::Display for Ty {
             Ty::Anonymous {
                 labels,
                 extension,
-                kind,
+                kind: RecordOrVariant::Record,
                 is_row,
             } => {
-                let (left_delim, right_delim) = match kind {
-                    RecordOrVariant::Record => ('(', ')'),
-                    RecordOrVariant::Variant => ('[', ']'),
-                };
-
                 if is_row {
                     write!(f, "row")?;
                 }
 
-                write!(f, "{left_delim}")?;
+                write!(f, "(")?;
                 for (i, (label_id, label_ty)) in labels.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
@@ -1111,7 +1106,33 @@ impl fmt::Display for Ty {
                     }
                     write!(f, "..{ext}")?;
                 }
-                write!(f, "{right_delim}")
+                write!(f, ")")
+            }
+
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind: RecordOrVariant::Variant,
+                is_row,
+            } => {
+                if is_row {
+                    write!(f, "row")?;
+                }
+
+                write!(f, "[")?;
+                for (i, label_ty) in labels.values().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{label_ty}")?;
+                }
+                if let Some(ext) = extension {
+                    if !labels.is_empty() {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "..{ext}")?;
+                }
+                write!(f, "]")
             }
 
             Ty::QVar(id, _) => write!(f, "{id}"),

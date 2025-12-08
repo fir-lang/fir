@@ -455,10 +455,10 @@ pub(crate) struct PatMatrix {
 impl std::fmt::Display for PatMatrix {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for row_idx in 0..self.rows.len() {
-            write!(f, "row{}=[", row_idx)?;
             if row_idx != 0 {
                 writeln!(f)?;
             }
+            write!(f, "row{}=[", row_idx)?;
             let row = &self.rows[row_idx];
             assert_eq!(row.len(), self.field_tys.len());
             for (field_idx, pat) in row.iter().enumerate() {
@@ -505,9 +505,10 @@ impl PatMatrix {
     //
     // We can't check RHSs before checking coverage though, because binder types will be refined
     // based on coverage.
-    pub(crate) fn check_coverage(&self, tc_state: &TcFunState, loc: &ast::Loc) -> bool {
+    #[allow(clippy::only_used_in_recursion)]
+    pub(crate) fn check_coverage(&self, tc_state: &TcFunState, loc: &ast::Loc, level: u32) -> bool {
         // dbg!(self);
-        // println!("{}", self);
+        // print!("{}", indent(&self.to_string(), level * 4));
 
         if self.rows.is_empty() {
             return self.field_tys.is_empty();
@@ -531,7 +532,8 @@ impl PatMatrix {
                     || field_ty_con_id == &SmolStr::new_static("U64")
                     || field_ty_con_id == &SmolStr::new_static("I64") =>
             {
-                self.focus_wildcard().check_coverage(tc_state, loc)
+                self.focus_wildcard()
+                    .check_coverage(tc_state, loc, level + 1)
             }
 
             Ty::Con(field_ty_con_id, _) | Ty::App(field_ty_con_id, _, _) => {
@@ -561,7 +563,7 @@ impl PatMatrix {
                     // all of the matrices to refine variables.
                     let mut covers = false;
                     for matrix in matrices {
-                        covers |= matrix.check_coverage(tc_state, loc);
+                        covers |= matrix.check_coverage(tc_state, loc, level + 1);
                     }
                     if !covers {
                         return false;
@@ -596,13 +598,17 @@ impl PatMatrix {
                     ty_field_tys.push(ty.clone());
                     ty_field_tys.extend(self.field_tys.iter().skip(1).cloned());
                     let ty_matrix = PatMatrix::new(self.rows.clone(), ty_field_tys);
-                    if !ty_matrix.check_coverage(tc_state, loc) {
+                    if !ty_matrix.check_coverage(tc_state, loc, level + 1) {
                         return false;
                     }
                 }
 
                 // If variant can have more things, we need a wildcard at this position.
-                if extension.is_some() && !self.focus_wildcard().check_coverage(tc_state, loc) {
+                if extension.is_some()
+                    && !self
+                        .focus_wildcard()
+                        .check_coverage(tc_state, loc, level + 1)
+                {
                     return false;
                 }
 
@@ -720,11 +726,12 @@ impl PatMatrix {
                     labels_vec.iter().map(|(_name, ty)| ty.clone()).collect();
                 new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
 
-                PatMatrix::new(new_rows, new_field_tys).check_coverage(tc_state, loc)
+                PatMatrix::new(new_rows, new_field_tys).check_coverage(tc_state, loc, level + 1)
             }
 
             Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => {
-                self.focus_wildcard().check_coverage(tc_state, loc)
+                self.focus_wildcard()
+                    .check_coverage(tc_state, loc, level + 1)
             }
         }
     }
@@ -945,4 +952,17 @@ impl PatMatrix {
 
         PatMatrix::new(new_rows, new_field_tys)
     }
+}
+
+#[allow(unused)]
+fn indent(s: &str, indent: u32) -> String {
+    let mut ret = String::new();
+    for line in s.lines() {
+        for _ in 0..indent {
+            ret.push(' ');
+        }
+        ret.push_str(line);
+        ret.push('\n');
+    }
+    ret
 }
