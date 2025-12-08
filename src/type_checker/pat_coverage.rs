@@ -399,12 +399,14 @@ impl Row {
 
 impl std::fmt::Display for PatMatrix {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[")?;
         for row_idx in 0..self.rows.len() {
             if row_idx != 0 {
                 writeln!(f)?;
+                write!(f, " ")?;
             }
             let row = &self.rows[row_idx];
-            write!(f, "row{}=[", row.arm_index)?;
+            write!(f, "arm{}=[", row.arm_index)?;
             assert_eq!(row.len(), self.field_tys.len());
             for (field_idx, pat) in row.pats.iter().enumerate() {
                 if field_idx != 0 {
@@ -415,7 +417,7 @@ impl std::fmt::Display for PatMatrix {
             }
             write!(f, "]")?;
         }
-        Ok(())
+        write!(f, "]")
     }
 }
 
