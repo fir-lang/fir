@@ -448,8 +448,23 @@ The type below implements the matrix + the focus operations.
 */
 #[derive(Debug, Clone)]
 pub(crate) struct PatMatrix {
-    rows: Vec<Vec<ast::L<ast::Pat>>>,
+    rows: Vec<Row>,
     field_tys: Vec<Ty>,
+}
+
+#[derive(Debug, Clone)]
+struct Row {
+    /// `match` arm index the row is generated from.
+    arm_index: ArmIndex,
+    pats: Vec<ast::L<ast::Pat>>,
+}
+
+type ArmIndex = u32;
+
+impl Row {
+    fn len(&self) -> usize {
+        self.pats.len()
+    }
 }
 
 impl std::fmt::Display for PatMatrix {
@@ -458,10 +473,10 @@ impl std::fmt::Display for PatMatrix {
             if row_idx != 0 {
                 writeln!(f)?;
             }
-            write!(f, "row{}=[", row_idx)?;
             let row = &self.rows[row_idx];
+            write!(f, "row{}=[", row.arm_index)?;
             assert_eq!(row.len(), self.field_tys.len());
-            for (field_idx, pat) in row.iter().enumerate() {
+            for (field_idx, pat) in row.pats.iter().enumerate() {
                 if field_idx != 0 {
                     write!(f, ", ")?;
                 }
@@ -476,19 +491,22 @@ impl std::fmt::Display for PatMatrix {
 
 impl PatMatrix {
     pub(crate) fn from_match_arms(arms: &[ast::Alt], scrut_ty: &Ty) -> PatMatrix {
-        let mut rows: Vec<Vec<ast::L<ast::Pat>>> = Vec::with_capacity(arms.len());
-        for arm in arms {
+        let mut rows: Vec<Row> = Vec::with_capacity(arms.len());
+        for (arm_index, arm) in arms.iter().enumerate() {
             if arm.guard.is_some() {
                 // TODO: Alternatives with guards can't add to coverage, but their binders still
                 // need refinement.
                 continue;
             }
-            rows.push(vec![arm.pattern.clone()]);
+            rows.push(Row {
+                arm_index: arm_index as u32,
+                pats: vec![arm.pattern.clone()],
+            });
         }
         PatMatrix::new(rows, vec![scrut_ty.clone()])
     }
 
-    fn new(rows: Vec<Vec<ast::L<ast::Pat>>>, field_tys: Vec<Ty>) -> PatMatrix {
+    fn new(rows: Vec<Row>, field_tys: Vec<Ty>) -> PatMatrix {
         if cfg!(debug_assertions) {
             for row in rows.iter() {
                 assert_eq!(row.len(), field_tys.len());
@@ -641,11 +659,11 @@ impl PatMatrix {
                 let mut labels_vec: Vec<(SmolStr, Ty)> = labels.into_iter().collect();
                 labels_vec.sort_by_key(|(key, _)| key.clone());
 
-                let mut new_rows: Vec<Vec<ast::L<ast::Pat>>> = vec![];
+                let mut new_rows: Vec<Row> = vec![];
 
                 // Add the current column's fields.
                 for row in self.rows.iter() {
-                    let mut work: Vec<ast::L<ast::Pat>> = vec![row[0].clone()];
+                    let mut work: Vec<ast::L<ast::Pat>> = vec![row.pats[0].clone()];
                     while let Some(pat) = work.pop() {
                         match pat.node {
                             ast::Pat::Record(ast::RecordPattern {
@@ -695,9 +713,12 @@ impl PatMatrix {
                                             .collect()
                                     };
 
-                                fields_positional.extend(row[1..].iter().cloned());
+                                fields_positional.extend(row.pats[1..].iter().cloned());
 
-                                new_rows.push(fields_positional);
+                                new_rows.push(Row {
+                                    arm_index: row.arm_index,
+                                    pats: fields_positional,
+                                });
                             }
 
                             ast::Pat::Or(pat1, pat2) => {
@@ -710,8 +731,11 @@ impl PatMatrix {
                                 for _ in labels_vec.iter() {
                                     fields_positional.push(ast::L::new_dummy(ast::Pat::Ignore));
                                 }
-                                fields_positional.extend(row[1..].iter().cloned());
-                                new_rows.push(fields_positional);
+                                fields_positional.extend(row.pats[1..].iter().cloned());
+                                new_rows.push(Row {
+                                    arm_index: row.arm_index,
+                                    pats: fields_positional,
+                                });
                             }
 
                             ast::Pat::Constr(_) | ast::Pat::Str(_) | ast::Pat::Char(_) => {
@@ -826,13 +850,13 @@ impl PatMatrix {
             }
         };
 
-        let mut new_rows: Vec<Vec<ast::L<ast::Pat>>> = vec![];
-        let mut new_skip_rows: Vec<Vec<ast::L<ast::Pat>>> = vec![];
+        let mut new_rows: Vec<Row> = vec![];
+        let mut new_skip_rows: Vec<Row> = vec![];
 
         // Add the current column's fields.
         for row in self.rows.iter() {
             // assert!(!row.is_empty(), "empty row at {}", loc_display(loc));
-            let mut work: Vec<ast::L<ast::Pat>> = vec![row[0].clone()];
+            let mut work: Vec<ast::L<ast::Pat>> = vec![row.pats[0].clone()];
             while let Some(pat) = work.pop() {
                 match pat.node {
                     ast::Pat::Constr(ast::ConstrPattern {
@@ -894,16 +918,22 @@ impl PatMatrix {
                                 .collect()
                         };
 
-                        fields_positional.extend(row[1..].iter().cloned());
+                        fields_positional.extend(row.pats[1..].iter().cloned());
 
-                        new_rows.push(fields_positional);
+                        new_rows.push(Row {
+                            arm_index: row.arm_index,
+                            pats: fields_positional,
+                        });
                     }
 
                     ast::Pat::Record(_) => todo!(),
 
                     ast::Pat::Var(_) | ast::Pat::Ignore => {
                         // All fields are fully covered.
-                        new_skip_rows.push(row[1..].to_vec());
+                        new_skip_rows.push(Row {
+                            arm_index: row.arm_index,
+                            pats: row.pats[1..].to_vec(),
+                        });
                     }
 
                     ast::Pat::Str(_) | ast::Pat::Char(_) => {
@@ -940,11 +970,14 @@ impl PatMatrix {
     }
 
     fn focus_wildcard(&self) -> PatMatrix {
-        let mut new_rows: Vec<Vec<ast::L<ast::Pat>>> = vec![];
+        let mut new_rows: Vec<Row> = vec![];
 
         for row in self.rows.iter() {
-            if matches!(row[0].node, ast::Pat::Var(_) | ast::Pat::Ignore) {
-                new_rows.push(row.iter().skip(1).cloned().collect());
+            if matches!(row.pats[0].node, ast::Pat::Var(_) | ast::Pat::Ignore) {
+                new_rows.push(Row {
+                    arm_index: row.arm_index,
+                    pats: row.pats.iter().skip(1).cloned().collect(),
+                });
             }
         }
 
