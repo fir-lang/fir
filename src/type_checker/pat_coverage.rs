@@ -595,7 +595,7 @@ impl PatMatrix {
                 let (labels, _extension) = row_utils::collect_rows(
                     tc_state.tys.tys.cons(),
                     &next_ty,
-                    RecordOrVariant::Variant,
+                    RecordOrVariant::Record,
                     labels,
                     extension.clone(),
                 );
