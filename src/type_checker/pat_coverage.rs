@@ -376,8 +376,22 @@ impl Fields {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Entry point.
+pub(crate) fn check_coverage(
+    arms: &[ast::Alt],
+    scrut_ty: &Ty,
+    tc_state: &TcFunState,
+    loc: &ast::Loc,
+) -> bool {
+    PatMatrix::from_match_arms(arms, scrut_ty).check_coverage(
+        tc_state,
+        loc,
+        &mut Vec::with_capacity(10),
+    )
+}
+
 #[derive(Debug, Clone)]
-pub(crate) struct PatMatrix {
+struct PatMatrix {
     rows: Vec<Row>,
     field_tys: Vec<Ty>,
 }
@@ -398,7 +412,7 @@ impl Row {
 }
 
 impl PatMatrix {
-    pub(crate) fn from_match_arms(arms: &[ast::Alt], scrut_ty: &Ty) -> PatMatrix {
+    fn from_match_arms(arms: &[ast::Alt], scrut_ty: &Ty) -> PatMatrix {
         let mut rows: Vec<Row> = Vec::with_capacity(arms.len());
         for (arm_index, arm) in arms.iter().enumerate() {
             if arm.guard.is_some() {
@@ -439,7 +453,7 @@ impl PatMatrix {
 
     // Entry point here.
     #[allow(clippy::only_used_in_recursion)]
-    pub(crate) fn check_coverage(
+    fn check_coverage(
         &self,
         tc_state: &TcFunState,
         loc: &ast::Loc,

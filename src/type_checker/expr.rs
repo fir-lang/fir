@@ -1390,11 +1390,7 @@ pub(super) fn check_match_expr(
 
     let mut covered_pats = PatCoverage::new();
 
-    if !PatMatrix::from_match_arms(alts, &scrut_ty).check_coverage(
-        tc_state,
-        loc,
-        &mut Vec::with_capacity(10),
-    ) {
+    if !check_coverage(alts, &scrut_ty, tc_state, loc) {
         println!(
             "{}: New coverage checker: unexhaustive pattern match",
             loc_display(loc)
