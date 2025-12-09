@@ -397,30 +397,6 @@ impl Row {
     }
 }
 
-impl std::fmt::Display for PatMatrix {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[")?;
-        for row_idx in 0..self.rows.len() {
-            if row_idx != 0 {
-                writeln!(f)?;
-                write!(f, " ")?;
-            }
-            let row = &self.rows[row_idx];
-            write!(f, "arm{}=[", row.arm_index)?;
-            assert_eq!(row.len(), self.field_tys.len());
-            for (field_idx, pat) in row.pats.iter().enumerate() {
-                if field_idx != 0 {
-                    write!(f, ", ")?;
-                }
-                let field_ty = &self.field_tys[field_idx];
-                write!(f, "{}:{}", pat.node, field_ty)?;
-            }
-            write!(f, "]")?;
-        }
-        write!(f, "]")
-    }
-}
-
 impl PatMatrix {
     pub(crate) fn from_match_arms(arms: &[ast::Alt], scrut_ty: &Ty) -> PatMatrix {
         let mut rows: Vec<Row> = Vec::with_capacity(arms.len());
@@ -520,7 +496,6 @@ impl PatMatrix {
             }
 
             Ty::Con(field_ty_con_id, _) | Ty::App(field_ty_con_id, _, _) => {
-                // TODO: This doesn't handle: integers, strings, characters
                 let field_con_details = tc_state
                     .tys
                     .tys
@@ -717,7 +692,7 @@ impl PatMatrix {
                 with_trace(trace, "flattened".to_string(), |trace| {
                     PatMatrix::new(new_rows, new_field_tys).check_coverage(tc_state, loc, trace)
                 })
-            }
+            } // Ty::Anonymous(kind: Record)
 
             Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => {
                 with_trace(trace, "wildcard".to_string(), |trace| {
@@ -749,8 +724,6 @@ impl PatMatrix {
         tc_state: &TcFunState,
         loc: &ast::Loc,
     ) -> PatMatrix {
-        // println!("focus {}.{}", con_ty_id, con_id);
-
         assert!(self.num_fields() > 0);
 
         // Get constructor field types from the constructor's type scheme.
@@ -891,8 +864,6 @@ impl PatMatrix {
                         });
                     }
 
-                    ast::Pat::Record(_) => todo!(),
-
                     ast::Pat::Var(_) | ast::Pat::Ignore => {
                         // All fields are fully covered.
                         let mut fields_positional: Vec<ast::L<ast::Pat>> =
@@ -906,7 +877,7 @@ impl PatMatrix {
                         });
                     }
 
-                    ast::Pat::Str(_) | ast::Pat::Char(_) => {
+                    ast::Pat::Record(_) | ast::Pat::Str(_) | ast::Pat::Char(_) => {
                         // Not necessarily a type error or bug (in the type checker), we may be
                         // checking a variant.
                     }
@@ -915,9 +886,9 @@ impl PatMatrix {
                         work.push((*pat1).clone());
                         work.push((*pat2).clone());
                     }
-                }
-            }
-        }
+                } // match pat
+            } // pats in the rw
+        } // row
 
         let mut new_field_tys: Vec<Ty> = args_positional;
         new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
@@ -940,6 +911,33 @@ impl PatMatrix {
         let new_field_tys: Vec<Ty> = self.field_tys.iter().skip(1).cloned().collect();
 
         PatMatrix::new(new_rows, new_field_tys)
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Debug helpers
+
+impl std::fmt::Display for PatMatrix {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[")?;
+        for row_idx in 0..self.rows.len() {
+            if row_idx != 0 {
+                writeln!(f)?;
+                write!(f, " ")?;
+            }
+            let row = &self.rows[row_idx];
+            write!(f, "arm{}=[", row.arm_index)?;
+            assert_eq!(row.len(), self.field_tys.len());
+            for (field_idx, pat) in row.pats.iter().enumerate() {
+                if field_idx != 0 {
+                    write!(f, ", ")?;
+                }
+                let field_ty = &self.field_tys[field_idx];
+                write!(f, "{}:{}", pat.node, field_ty)?;
+            }
+            write!(f, "]")?;
+        }
+        write!(f, "]")
     }
 }
 
