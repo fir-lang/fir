@@ -447,6 +447,20 @@ impl PatMatrix {
         PatMatrix { rows, field_tys }
     }
 
+    fn skip_col(&self) -> PatMatrix {
+        PatMatrix {
+            rows: self
+                .rows
+                .iter()
+                .map(|row| Row {
+                    arm_index: row.arm_index,
+                    pats: row.pats.iter().skip(1).cloned().collect(),
+                })
+                .collect(),
+            field_tys: self.field_tys.iter().skip(1).cloned().collect(),
+        }
+    }
+
     // Entry point here.
     #[allow(clippy::only_used_in_recursion)]
     pub(crate) fn check_coverage(
@@ -463,8 +477,23 @@ impl PatMatrix {
         // print!("{}", indent(&trace.join(", "), trace.len() * 4));
         // print!("{}", indent(&self.to_string(), trace.len() * 4));
 
-        if self.rows.is_empty() {
-            return self.field_tys.is_empty();
+        if self.field_tys.is_empty() {
+            return true;
+        }
+
+        // If all of the rows have a wildcard as the next pattern, skip the column to avoid
+        // recursing when the type being matched is recursive.
+        let all_wildcards = self.rows.iter().all(|row| {
+            matches!(
+                row.pats.first().as_ref().unwrap().node,
+                ast::Pat::Var(_) | ast::Pat::Ignore
+            )
+        });
+
+        if all_wildcards {
+            return with_trace(trace, "_".to_string(), |trace| {
+                self.skip_col().check_coverage(tc_state, loc, trace)
+            });
         }
 
         let next_ty = match self.field_tys.first() {
@@ -502,30 +531,21 @@ impl PatMatrix {
 
                 // Check that every constructor of `next_ty` is covered.
                 for con in field_con_details.cons.iter() {
-                    let matrices = match &con.name {
+                    let matrix = match &con.name {
                         Some(con_name) => {
                             self.focus_sum_con(field_ty_con_id, con_name, tc_state, loc)
                         }
                         None => self.focus_product_con(field_ty_con_id, tc_state, loc),
                     };
-                    if matrices.is_empty() {
-                        // Constructor not handled.
-                        return false;
-                    }
-                    // At least one of the matrices should fully cover the patterns.
-                    // Instead of stopping after the first matrix that covers everything, we check
-                    // all of the matrices to refine variables.
-                    let mut covers = false;
                     let s = match &con.name {
                         Some(con) => format!("{}.{}", field_ty_con_id, con),
                         None => field_ty_con_id.to_string(),
                     };
-                    for matrix in matrices {
-                        covers |= with_trace(trace, s.clone(), |trace| {
+                    if matrix.rows.is_empty()
+                        || !with_trace(trace, s, |trace| {
                             matrix.check_coverage(tc_state, loc, trace)
-                        });
-                    }
-                    if !covers {
+                        })
+                    {
                         return false;
                     }
                 }
@@ -716,7 +736,7 @@ impl PatMatrix {
         con_ty_id: &Id,
         tc_state: &TcFunState,
         loc: &ast::Loc,
-    ) -> Vec<PatMatrix> {
+    ) -> PatMatrix {
         assert!(self.num_fields() > 0);
         let con_scheme = tc_state.tys.top_schemes.get(con_ty_id).unwrap();
         self.focus_con_scheme(con_ty_id, None, con_scheme, tc_state, loc)
@@ -728,7 +748,7 @@ impl PatMatrix {
         con_id: &Id,
         tc_state: &TcFunState,
         loc: &ast::Loc,
-    ) -> Vec<PatMatrix> {
+    ) -> PatMatrix {
         // println!("focus {}.{}", con_ty_id, con_id);
 
         assert!(self.num_fields() > 0);
@@ -752,10 +772,9 @@ impl PatMatrix {
         con_scheme: &Scheme,
         tc_state: &TcFunState,
         #[allow(unused)] loc: &ast::Loc,
-    ) -> Vec<PatMatrix> {
+    ) -> PatMatrix {
         let (field_ty_con_id, field_ty_con_ty_args) =
             self.field_tys[0].con(tc_state.tys.tys.cons()).unwrap();
-
         assert_eq!(con_ty_id, &field_ty_con_id);
 
         let mut preds = vec![];
@@ -798,7 +817,6 @@ impl PatMatrix {
         };
 
         let mut new_rows: Vec<Row> = vec![];
-        let mut new_skip_rows: Vec<Row> = vec![];
 
         // Add the current column's fields.
         for row in self.rows.iter() {
@@ -877,9 +895,14 @@ impl PatMatrix {
 
                     ast::Pat::Var(_) | ast::Pat::Ignore => {
                         // All fields are fully covered.
-                        new_skip_rows.push(Row {
+                        let mut fields_positional: Vec<ast::L<ast::Pat>> =
+                            std::iter::repeat_with(|| ast::L::new_dummy(ast::Pat::Ignore))
+                                .take(args_positional.len())
+                                .collect();
+                        fields_positional.extend(row.pats[1..].iter().cloned());
+                        new_rows.push(Row {
                             arm_index: row.arm_index,
-                            pats: row.pats[1..].to_vec(),
+                            pats: fields_positional,
                         });
                     }
 
@@ -896,24 +919,10 @@ impl PatMatrix {
             }
         }
 
-        // Field types when the first fields are wildcards. This is used for the rows where the
-        // first columns are wildcards.
-        let skip_field_tys: Vec<Ty> = self.field_tys.iter().skip(1).cloned().collect();
-
-        // Field types when the first fields are replaced by the constructor's fields. This is used
-        // for the rows where the first columns are not wildcards.
         let mut new_field_tys: Vec<Ty> = args_positional;
-        new_field_tys.extend(skip_field_tys.iter().cloned());
+        new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
 
-        // Empty matrices means the constructor is not handled.
-        let mut matrices = Vec::with_capacity(2);
-        if !new_rows.is_empty() {
-            matrices.push(PatMatrix::new(new_rows, new_field_tys));
-        }
-        if !new_skip_rows.is_empty() {
-            matrices.push(PatMatrix::new(new_skip_rows, skip_field_tys));
-        }
-        matrices
+        PatMatrix::new(new_rows, new_field_tys)
     }
 
     fn focus_wildcard(&self) -> PatMatrix {
