@@ -437,20 +437,6 @@ impl PatMatrix {
         PatMatrix { rows, field_tys }
     }
 
-    fn skip_col(&self) -> PatMatrix {
-        PatMatrix {
-            rows: self
-                .rows
-                .iter()
-                .map(|row| Row {
-                    arm_index: row.arm_index,
-                    pats: row.pats.iter().skip(1).cloned().collect(),
-                })
-                .collect(),
-            field_tys: self.field_tys.iter().skip(1).cloned().collect(),
-        }
-    }
-
     // Entry point here.
     #[allow(clippy::only_used_in_recursion)]
     fn check_coverage(
@@ -473,16 +459,9 @@ impl PatMatrix {
 
         // If all of the rows have a wildcard as the next pattern, skip the column to avoid
         // recursing when the type being matched is recursive.
-        let all_wildcards = self.rows.iter().all(|row| {
-            matches!(
-                row.pats.first().as_ref().unwrap().node,
-                ast::Pat::Var(_) | ast::Pat::Ignore
-            )
-        });
-
-        if all_wildcards {
+        if let Some(matrix) = self.skip_col() {
             return with_trace(trace, "_".to_string(), |trace| {
-                self.skip_col().check_coverage(tc_state, loc, trace)
+                matrix.check_coverage(tc_state, loc, trace)
             });
         }
 
@@ -505,7 +484,7 @@ impl PatMatrix {
                     || field_ty_con_id == &SmolStr::new_static("I64") =>
             {
                 with_trace(trace, field_ty_con_id.to_string(), |trace| {
-                    self.focus_wildcard().check_coverage(tc_state, loc, trace)
+                    self.skip_wildcards().check_coverage(tc_state, loc, trace)
                 })
             }
 
@@ -577,7 +556,7 @@ impl PatMatrix {
                 // If variant can have more things, we need a wildcard at this position.
                 if extension.is_some()
                     && !with_trace(trace, "extra rows".to_string(), |trace| {
-                        self.focus_wildcard().check_coverage(tc_state, loc, trace)
+                        self.skip_wildcards().check_coverage(tc_state, loc, trace)
                     })
                 {
                     return false;
@@ -710,7 +689,7 @@ impl PatMatrix {
 
             Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => {
                 with_trace(trace, "wildcard".to_string(), |trace| {
-                    self.focus_wildcard().check_coverage(tc_state, loc, trace)
+                    self.skip_wildcards().check_coverage(tc_state, loc, trace)
                 })
             }
         }
@@ -910,7 +889,23 @@ impl PatMatrix {
         PatMatrix::new(new_rows, new_field_tys)
     }
 
-    fn focus_wildcard(&self) -> PatMatrix {
+    /// Skip the current column in the matrix if all of the patterns in the column are wildcards.
+    fn skip_col(&self) -> Option<PatMatrix> {
+        let skipped = self.skip_wildcards();
+        if skipped.rows.len() == self.rows.len() {
+            // All rows had a wildcard in the first column.
+            Some(skipped)
+        } else {
+            None
+        }
+    }
+
+    /// Filter rows with wildcard (variable or underscore) patterns and skip the column.
+    ///
+    /// This should be used when matching an abstract type (a type variable), or a type that can't
+    /// be exhaustively matched (e.g. strings, integers), as those can only be matched with a
+    /// wildcard pattern.
+    fn skip_wildcards(&self) -> PatMatrix {
         let mut new_rows: Vec<Row> = vec![];
 
         for row in self.rows.iter() {
