@@ -148,7 +148,8 @@ impl PatMatrix {
                         break;
                     }
                 }
-                return true;
+                // There should be at least one non-guarded arm.
+                return self.rows.iter().any(|row| !row.guarded);
             }
         };
 
