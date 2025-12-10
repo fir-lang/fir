@@ -390,6 +390,13 @@ pub(crate) fn check_coverage(
     )
 }
 
+/// Invariants:
+///
+/// - There will be at least one row.
+/// - Number of columns in the rows will be the same as number of field types.
+///
+/// These invariants are checked in `PatMatrix::new`. `PatMatrix::new_opt` returns `None` when there
+/// are no rows.
 #[derive(Debug, Clone)]
 struct PatMatrix {
     rows: Vec<Row>,
