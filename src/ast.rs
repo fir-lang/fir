@@ -67,6 +67,13 @@ impl<T> L<T> {
         }
     }
 
+    pub fn new_dummy(node: T) -> Self {
+        L {
+            loc: Loc::dummy(),
+            node,
+        }
+    }
+
     pub fn map<T2, F>(self, f: F) -> L<T2>
     where
         F: FnOnce(T) -> T2,
