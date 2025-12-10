@@ -382,12 +382,15 @@ pub(crate) fn check_coverage(
     scrut_ty: &Ty,
     tc_state: &TcFunState,
     loc: &ast::Loc,
-) -> bool {
-    PatMatrix::from_match_arms(arms, scrut_ty).check_coverage(
+) -> (bool, CoverageInfo) {
+    let mut info = CoverageInfo::from_match_arms(arms);
+    let exhaustive = PatMatrix::from_match_arms(arms, scrut_ty).check_coverage(
         tc_state,
         loc,
+        &mut info,
         &mut Vec::with_capacity(10),
-    )
+    );
+    (exhaustive, info)
 }
 
 /// Invariants:
@@ -409,12 +412,40 @@ struct Row {
     arm_index: ArmIndex,
     pats: Vec<ast::L<ast::Pat>>,
     bound_vars: Map<Id, Vec<Ty>>,
+    guarded: bool,
 }
 
 #[derive(Debug, Clone)]
-struct CoverageInfo {
-    // TODO: This should keep bound vars in arms that handle a list of patterns, to be used in type
-    // refinement.
+pub(crate) struct CoverageInfo {
+    /// Maps arm indices to variables bound in the arms.
+    pub(crate) bound_vars: Vec<Map<Id, Set<Ty>>>,
+
+    /// Maps arm indices to whether its useful.
+    pub(crate) usefulness: Vec<bool>,
+}
+
+impl CoverageInfo {
+    fn from_match_arms(arms: &[ast::Alt]) -> Self {
+        CoverageInfo {
+            bound_vars: vec![Default::default(); arms.len()],
+            usefulness: vec![false; arms.len()],
+        }
+    }
+
+    fn mark_useful(&mut self, arm_idx: ArmIndex, bound_vars: &Map<Id, Vec<Ty>>) {
+        for (var, tys) in bound_vars.iter() {
+            self.bound_vars[arm_idx as usize]
+                .entry(var.clone())
+                .or_default()
+                .extend(tys.iter().cloned());
+        }
+
+        self.usefulness[arm_idx as usize] = true;
+    }
+
+    pub(crate) fn is_useful(&self, arm_idx: ArmIndex) -> bool {
+        self.usefulness[arm_idx as usize]
+    }
 }
 
 type ArmIndex = u32;
@@ -433,15 +464,11 @@ impl PatMatrix {
     fn from_match_arms(arms: &[ast::Alt], scrut_ty: &Ty) -> PatMatrix {
         let mut rows: Vec<Row> = Vec::with_capacity(arms.len());
         for (arm_index, arm) in arms.iter().enumerate() {
-            if arm.guard.is_some() {
-                // TODO: Alternatives with guards can't add to coverage, but their binders still
-                // need refinement.
-                continue;
-            }
             rows.push(Row {
                 arm_index: arm_index as u32,
                 pats: vec![arm.pattern.clone()],
                 bound_vars: Default::default(),
+                guarded: arm.guard.is_some(),
             });
         }
         PatMatrix::new(rows, vec![scrut_ty.clone()])
@@ -471,6 +498,7 @@ impl PatMatrix {
         &self,
         tc_state: &TcFunState,
         loc: &ast::Loc,
+        info: &mut CoverageInfo,
         trace: &mut Vec<String>,
     ) -> bool {
         // dbg!(self);
@@ -483,38 +511,26 @@ impl PatMatrix {
 
         let next_ty = match self.field_tys.first() {
             Some(next_ty) => next_ty.deep_normalize(tc_state.tys.tys.cons()),
-            None => return true,
+            None => {
+                for row in self.rows.iter() {
+                    info.mark_useful(row.arm_index, &row.bound_vars);
+                    if !row.guarded {
+                        break;
+                    }
+                }
+                return true;
+            }
         };
 
         // If all of the rows have a wildcard as the next pattern, skip the column to avoid
         // recursing when the type being matched is recursive.
         if let Some(matrix) = self.skip_col(&next_ty) {
             return with_trace(trace, "_".to_string(), |trace| {
-                matrix.check_coverage(tc_state, loc, trace)
+                matrix.check_coverage(tc_state, loc, info, trace)
             });
         }
 
         match &next_ty {
-            Ty::Con(field_ty_con_id, _) | Ty::App(field_ty_con_id, _, _)
-                if field_ty_con_id == &SmolStr::new_static("Str")
-                    || field_ty_con_id == &SmolStr::new_static("Char")
-                    || field_ty_con_id == &SmolStr::new_static("U8")
-                    || field_ty_con_id == &SmolStr::new_static("I8")
-                    || field_ty_con_id == &SmolStr::new_static("U16")
-                    || field_ty_con_id == &SmolStr::new_static("I16")
-                    || field_ty_con_id == &SmolStr::new_static("U32")
-                    || field_ty_con_id == &SmolStr::new_static("I32")
-                    || field_ty_con_id == &SmolStr::new_static("U64")
-                    || field_ty_con_id == &SmolStr::new_static("I64") =>
-            {
-                match self.skip_wildcards(&next_ty) {
-                    Some(skipped) => with_trace(trace, field_ty_con_id.to_string(), |trace| {
-                        skipped.check_coverage(tc_state, loc, trace)
-                    }),
-                    None => false,
-                }
-            }
-
             Ty::Con(field_ty_con_id, _) | Ty::App(field_ty_con_id, _, _) => {
                 let field_con_details = tc_state
                     .tys
@@ -523,6 +539,8 @@ impl PatMatrix {
                     .unwrap()
                     .con_details()
                     .unwrap();
+
+                let mut exhaustive = true;
 
                 // Check that every constructor of `next_ty` is covered.
                 for con in field_con_details.cons.iter() {
@@ -539,20 +557,20 @@ impl PatMatrix {
                     match matrix {
                         Some(matrix) => {
                             if !with_trace(trace, s, |trace| {
-                                matrix.check_coverage(tc_state, loc, trace)
+                                matrix.check_coverage(tc_state, loc, info, trace)
                             }) {
                                 // This constructor is handled, but the rest of the fields are not.
-                                return false;
+                                exhaustive = false;
                             }
                         }
                         None => {
                             // Constructor is not handled.
-                            return false;
+                            exhaustive = false;
                         }
                     }
                 }
 
-                true
+                exhaustive
             }
 
             Ty::Anonymous {
@@ -571,6 +589,8 @@ impl PatMatrix {
                     extension.clone(),
                 );
 
+                let mut exhaustive = true;
+
                 // Check coverage of each of the types in the variant, in the current matrix.
                 for ty in labels.values() {
                     // This is a bit hacky and slow, we can refactor this later.
@@ -581,9 +601,9 @@ impl PatMatrix {
                     ty_field_tys.extend(self.field_tys.iter().skip(1).cloned());
                     let ty_matrix = PatMatrix::new(self.rows.clone(), ty_field_tys);
                     if !with_trace(trace, ty.to_string(), |trace| {
-                        ty_matrix.check_coverage(tc_state, loc, trace)
+                        ty_matrix.check_coverage(tc_state, loc, info, trace)
                     }) {
-                        return false;
+                        exhaustive = false;
                     }
                 }
 
@@ -592,16 +612,16 @@ impl PatMatrix {
                     match self.skip_wildcards(&next_ty) {
                         Some(skipped) => {
                             if !with_trace(trace, "extra rows".to_string(), |trace| {
-                                skipped.check_coverage(tc_state, loc, trace)
+                                skipped.check_coverage(tc_state, loc, info, trace)
                             }) {
-                                return false;
+                                exhaustive = false;
                             }
                         }
-                        None => return false,
+                        None => exhaustive = false,
                     }
                 }
 
-                true
+                exhaustive
             }
 
             Ty::Anonymous {
@@ -690,6 +710,7 @@ impl PatMatrix {
                                     arm_index: row.arm_index,
                                     pats: fields_positional,
                                     bound_vars: row.bound_vars.clone(),
+                                    guarded: row.guarded,
                                 });
                             } // ast::Pat::Record
 
@@ -708,6 +729,7 @@ impl PatMatrix {
                                     arm_index: row.arm_index,
                                     pats: fields_positional,
                                     bound_vars: row.bound_vars.clone(),
+                                    guarded: row.guarded,
                                 };
                                 row.bind(var.var.clone(), next_ty.clone());
                                 new_rows.push(row);
@@ -723,6 +745,7 @@ impl PatMatrix {
                                     arm_index: row.arm_index,
                                     pats: fields_positional,
                                     bound_vars: row.bound_vars.clone(),
+                                    guarded: row.guarded,
                                 });
                             }
 
@@ -739,13 +762,14 @@ impl PatMatrix {
                 new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
 
                 with_trace(trace, "flattened".to_string(), |trace| {
-                    PatMatrix::new(new_rows, new_field_tys).check_coverage(tc_state, loc, trace)
+                    PatMatrix::new(new_rows, new_field_tys)
+                        .check_coverage(tc_state, loc, info, trace)
                 })
             } // Ty::Anonymous(kind: Record)
 
             Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => match self.skip_wildcards(&next_ty) {
                 Some(skipped) => with_trace(trace, "wildcard".to_string(), |trace| {
-                    skipped.check_coverage(tc_state, loc, trace)
+                    skipped.check_coverage(tc_state, loc, info, trace)
                 }),
                 None => false,
             },
@@ -915,6 +939,7 @@ impl PatMatrix {
                             arm_index: row.arm_index,
                             pats: fields_positional,
                             bound_vars: row.bound_vars.clone(),
+                            guarded: row.guarded,
                         });
                     }
 
@@ -929,12 +954,13 @@ impl PatMatrix {
                             arm_index: row.arm_index,
                             pats: fields_positional,
                             bound_vars: row.bound_vars.clone(),
+                            guarded: row.guarded,
                         };
                         row.bind(var.var.clone(), ty.clone());
                         new_rows.push(row);
                     }
 
-                    ast::Pat::Ignore => {
+                    ast::Pat::Ignore | ast::Pat::Record(_) => {
                         // All fields are fully covered.
                         let mut fields_positional: Vec<ast::L<ast::Pat>> =
                             std::iter::repeat_with(|| ast::L::new_dummy(ast::Pat::Ignore))
@@ -945,12 +971,25 @@ impl PatMatrix {
                             arm_index: row.arm_index,
                             pats: fields_positional,
                             bound_vars: row.bound_vars.clone(),
+                            guarded: row.guarded,
                         });
                     }
 
-                    ast::Pat::Record(_) | ast::Pat::Str(_) | ast::Pat::Char(_) => {
+                    ast::Pat::Str(_) | ast::Pat::Char(_) => {
                         // Not necessarily a type error or bug (in the type checker), we may be
                         // checking a variant.
+                        let mut fields_positional: Vec<ast::L<ast::Pat>> =
+                            std::iter::repeat_with(|| ast::L::new_dummy(ast::Pat::Ignore))
+                                .take(args_positional.len())
+                                .collect();
+                        fields_positional.extend(row.pats[1..].iter().cloned());
+                        new_rows.push(Row {
+                            arm_index: row.arm_index,
+                            pats: fields_positional,
+                            bound_vars: row.bound_vars.clone(),
+                            // Treat literal patterns as match-all with guards.
+                            guarded: true,
+                        });
                     }
 
                     ast::Pat::Or(pat1, pat2) => {
@@ -996,6 +1035,7 @@ impl PatMatrix {
                         arm_index: row.arm_index,
                         pats: row.pats.iter().skip(1).cloned().collect(),
                         bound_vars: row.bound_vars.clone(),
+                        guarded: row.guarded,
                     };
                     row.bind(var.var.clone(), ty.clone());
                     new_rows.push(row);
@@ -1006,6 +1046,7 @@ impl PatMatrix {
                         arm_index: row.arm_index,
                         pats: row.pats.iter().skip(1).cloned().collect(),
                         bound_vars: row.bound_vars.clone(),
+                        guarded: row.guarded,
                     });
                 }
 

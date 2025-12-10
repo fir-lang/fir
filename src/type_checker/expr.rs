@@ -1390,7 +1390,17 @@ pub(super) fn check_match_expr(
 
     let mut covered_pats = PatCoverage::new();
 
-    if !check_coverage(alts, &scrut_ty, tc_state, loc) {
+    let (exhaustive, info) = check_coverage(alts, &scrut_ty, tc_state, loc);
+
+    // dbg!(&info);
+
+    for (arm_idx, arm) in alts.iter().enumerate() {
+        if !info.is_useful(arm_idx as u32) {
+            println!("{}: Redundant branch", loc_display(&arm.pattern.loc));
+        }
+    }
+
+    if !exhaustive {
         println!(
             "{}: New coverage checker: unexhaustive pattern match",
             loc_display(loc)

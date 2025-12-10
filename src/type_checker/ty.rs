@@ -31,7 +31,7 @@ pub struct Scheme {
 }
 
 /// A type checking type.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
     Con(Id, Kind),
@@ -88,7 +88,7 @@ pub enum RecordOrVariant {
     Variant,
 }
 
-#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum FunArgs {
     Positional(Vec<Ty>),
     Named(TreeMap<Id, Ty>),
