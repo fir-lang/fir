@@ -193,8 +193,9 @@ pub(super) fn unify(
             },
         ) => {
             // Kind mismatches can happen when try to unify a record with a variant (e.g. pass a
-            // record when a variant is expected), and fail.
-            if kind1 != kind2 {
+            // record when a variant is expected), and fail. Similary we can pass `row[]` when `[]`
+            // is expected (or the other way around).
+            if kind1 != kind2 || is_row_1 != is_row_2 {
                 panic!(
                     "{}: Unable to unify {} {} with {} {}",
                     loc_display(loc),
@@ -204,10 +205,6 @@ pub(super) fn unify(
                     ty2,
                 );
             }
-
-            // If we checked the kinds in type applications properly, we should only try to unify
-            // rows with rows and stars with stars.
-            assert_eq!(is_row_1, is_row_2);
 
             let (labels1, mut extension1) =
                 collect_rows(cons, &ty1, *kind1, labels1, extension1.clone());
