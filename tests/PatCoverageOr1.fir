@@ -20,4 +20,4 @@ main():
         Option.Some(Bool.True | Bool.False) | Option.None: ()
 
 # args: --no-prelude --typecheck
-# expected stderr: pat_coverage_tests/PatCoverageOr1.fir:16:5: Unexhaustive pattern match
+# expected stderr: tests/PatCoverageOr1.fir:16:5: Unexhaustive pattern match

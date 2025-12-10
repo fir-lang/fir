@@ -35,7 +35,7 @@ main():
 
 # args: --no-prelude --typecheck
 # expected stderr:
-# pat_coverage_tests/PatCoverage3.fir:11:5: Unexhaustive pattern match
-# pat_coverage_tests/PatCoverage3.fir:15:5: Unexhaustive pattern match
-# pat_coverage_tests/PatCoverage3.fir:26:5: Unexhaustive pattern match
-# pat_coverage_tests/PatCoverage3.fir:29:5: Unexhaustive pattern match
+# tests/PatCoverage3.fir:11:5: Unexhaustive pattern match
+# tests/PatCoverage3.fir:15:5: Unexhaustive pattern match
+# tests/PatCoverage3.fir:26:5: Unexhaustive pattern match
+# tests/PatCoverage3.fir:29:5: Unexhaustive pattern match

@@ -25,5 +25,5 @@ main():
 
 # args: --no-prelude --typecheck
 # expected stderr:
-# pat_coverage_tests/PatCoverage1.fir:6:5: Unexhaustive pattern match
-# pat_coverage_tests/PatCoverage1.fir:9:5: Unexhaustive pattern match
+# tests/PatCoverage1.fir:6:5: Unexhaustive pattern match
+# tests/PatCoverage1.fir:9:5: Unexhaustive pattern match
