@@ -2,7 +2,7 @@ use crate::ast::{self, Id};
 use crate::collections::*;
 use crate::interpolation::StrPart;
 use crate::type_checker::convert::convert_ast_ty;
-use crate::type_checker::pat::{check_pat, refine_pat_binders};
+use crate::type_checker::pat::check_pat;
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{try_unify_one_way, unify, unify_expected_ty};
@@ -1388,8 +1388,6 @@ pub(super) fn check_match_expr(
         alt_envs.push(tc_state.env.exit());
     }
 
-    let mut covered_pats = PatCoverage::new();
-
     let (exhaustive, info) = check_coverage(alts, &scrut_ty, tc_state, loc);
 
     for (arm_idx, arm) in alts.iter().enumerate() {
@@ -1406,17 +1404,20 @@ pub(super) fn check_match_expr(
     }
 
     for (
-        ast::Alt {
-            pattern,
-            guard,
-            rhs,
-        },
-        alt_scope,
-    ) in alts.iter_mut().zip(alt_envs.into_iter())
+        alt_idx,
+        (
+            ast::Alt {
+                pattern: _,
+                guard,
+                rhs,
+            },
+            mut alt_scope,
+        ),
+    ) in alts.iter_mut().zip(alt_envs.into_iter()).enumerate()
     {
-        tc_state.env.push_scope(alt_scope);
+        refine_binders(&mut alt_scope, &info.bound_vars[alt_idx]);
 
-        refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
+        tc_state.env.push_scope(alt_scope);
 
         // Guards are checked here to use refined binders in the guards.
         if let Some(guard) = guard {
@@ -1430,15 +1431,6 @@ pub(super) fn check_match_expr(
         rhs_tys.push(check_stmts(tc_state, rhs, expected_ty, level, loop_stack));
 
         tc_state.env.exit();
-
-        if guard.is_none() {
-            covered_pats.add(&pattern.node);
-        }
-    }
-
-    let exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, loc);
-    if !exhaustive {
-        eprintln!("{}: Unexhaustive pattern match", loc_display(loc));
     }
 
     rhs_tys
@@ -1764,5 +1756,51 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
         extension: Some(Box::new(Ty::Var(row_ext))),
         kind: RecordOrVariant::Variant,
         is_row: false,
+    }
+}
+
+fn refine_binders(scope: &mut Map<Id, Ty>, binders: &Map<Id, Set<Ty>>) {
+    if cfg!(debug_assertions) {
+        let scope_vars: Set<&Id> = scope.keys().collect();
+        let binders_vars: Set<&Id> = binders.keys().collect();
+        assert_eq!(scope_vars, binders_vars);
+    }
+
+    for (var, tys) in binders.iter() {
+        // println!("{} --> {:?}", var, tys);
+        // assert!(&tys.is_empty());
+
+        if tys.len() == 1 {
+            scope.insert(var.clone(), tys.iter().next().unwrap().clone());
+        } else {
+            let mut labels: TreeMap<Id, Ty> = Default::default();
+            let mut extension: Option<Box<Ty>> = None;
+
+            for ty in tys.iter() {
+                match ty {
+                    Ty::Con(con, _) | Ty::App(con, _, _) => {
+                        let old = labels.insert(con.clone(), ty.clone());
+                        assert_eq!(old, None);
+                    }
+
+                    Ty::Var(_) | Ty::QVar(_, _) => {
+                        // Get the row type from the non-refined binding.
+                        extension = Some(Box::new(ty.clone()));
+                    }
+
+                    Ty::Fun { .. } | Ty::Anonymous { .. } => todo!(),
+                }
+            }
+
+            scope.insert(
+                var.clone(),
+                Ty::Anonymous {
+                    labels,
+                    extension,
+                    kind: RecordOrVariant::Variant,
+                    is_row: false,
+                },
+            );
+        }
     }
 }
