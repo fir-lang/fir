@@ -429,12 +429,21 @@ impl PatMatrix {
     }
 
     fn new(rows: Vec<Row>, field_tys: Vec<Ty>) -> PatMatrix {
+        assert!(!rows.is_empty());
         if cfg!(debug_assertions) {
             for row in rows.iter() {
                 assert_eq!(row.len(), field_tys.len());
             }
         }
         PatMatrix { rows, field_tys }
+    }
+
+    fn new_opt(rows: Vec<Row>, field_tys: Vec<Ty>) -> Option<PatMatrix> {
+        if rows.is_empty() {
+            None
+        } else {
+            Some(PatMatrix::new(rows, field_tys))
+        }
     }
 
     // Entry point here.
@@ -483,9 +492,12 @@ impl PatMatrix {
                     || field_ty_con_id == &SmolStr::new_static("U64")
                     || field_ty_con_id == &SmolStr::new_static("I64") =>
             {
-                with_trace(trace, field_ty_con_id.to_string(), |trace| {
-                    self.skip_wildcards().check_coverage(tc_state, loc, trace)
-                })
+                match self.skip_wildcards() {
+                    Some(skipped) => with_trace(trace, field_ty_con_id.to_string(), |trace| {
+                        skipped.check_coverage(tc_state, loc, trace)
+                    }),
+                    None => false,
+                }
             }
 
             Ty::Con(field_ty_con_id, _) | Ty::App(field_ty_con_id, _, _) => {
@@ -509,12 +521,19 @@ impl PatMatrix {
                         Some(con) => format!("{}.{}", field_ty_con_id, con),
                         None => field_ty_con_id.to_string(),
                     };
-                    if matrix.rows.is_empty()
-                        || !with_trace(trace, s, |trace| {
-                            matrix.check_coverage(tc_state, loc, trace)
-                        })
-                    {
-                        return false;
+                    match matrix {
+                        Some(matrix) => {
+                            if !with_trace(trace, s, |trace| {
+                                matrix.check_coverage(tc_state, loc, trace)
+                            }) {
+                                // This constructor is handled, but the rest of the fields are not.
+                                return false;
+                            }
+                        }
+                        None => {
+                            // Constructor is not handled.
+                            return false;
+                        }
                     }
                 }
 
@@ -554,12 +573,17 @@ impl PatMatrix {
                 }
 
                 // If variant can have more things, we need a wildcard at this position.
-                if extension.is_some()
-                    && !with_trace(trace, "extra rows".to_string(), |trace| {
-                        self.skip_wildcards().check_coverage(tc_state, loc, trace)
-                    })
-                {
-                    return false;
+                if extension.is_some() {
+                    match self.skip_wildcards() {
+                        Some(skipped) => {
+                            if !with_trace(trace, "extra rows".to_string(), |trace| {
+                                skipped.check_coverage(tc_state, loc, trace)
+                            }) {
+                                return false;
+                            }
+                        }
+                        None => return false,
+                    }
                 }
 
                 true
@@ -687,11 +711,12 @@ impl PatMatrix {
                 })
             } // Ty::Anonymous(kind: Record)
 
-            Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => {
-                with_trace(trace, "wildcard".to_string(), |trace| {
-                    self.skip_wildcards().check_coverage(tc_state, loc, trace)
-                })
-            }
+            Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => match self.skip_wildcards() {
+                Some(skipped) => with_trace(trace, "wildcard".to_string(), |trace| {
+                    skipped.check_coverage(tc_state, loc, trace)
+                }),
+                None => false,
+            },
         }
     }
 
@@ -704,7 +729,7 @@ impl PatMatrix {
         con_ty_id: &Id,
         tc_state: &TcFunState,
         loc: &ast::Loc,
-    ) -> PatMatrix {
+    ) -> Option<PatMatrix> {
         assert!(self.num_fields() > 0);
         let con_scheme = tc_state.tys.top_schemes.get(con_ty_id).unwrap();
         self.focus_con_scheme(con_ty_id, None, con_scheme, tc_state, loc)
@@ -716,7 +741,7 @@ impl PatMatrix {
         con_id: &Id,
         tc_state: &TcFunState,
         loc: &ast::Loc,
-    ) -> PatMatrix {
+    ) -> Option<PatMatrix> {
         assert!(self.num_fields() > 0);
 
         // Get constructor field types from the constructor's type scheme.
@@ -738,7 +763,7 @@ impl PatMatrix {
         con_scheme: &Scheme,
         tc_state: &TcFunState,
         #[allow(unused)] loc: &ast::Loc,
-    ) -> PatMatrix {
+    ) -> Option<PatMatrix> {
         let (field_ty_con_id, field_ty_con_ty_args) =
             self.field_tys[0].con(tc_state.tys.tys.cons()).unwrap();
         assert_eq!(con_ty_id, &field_ty_con_id);
@@ -886,14 +911,14 @@ impl PatMatrix {
         let mut new_field_tys: Vec<Ty> = args_positional;
         new_field_tys.extend(self.field_tys.iter().skip(1).cloned());
 
-        PatMatrix::new(new_rows, new_field_tys)
+        PatMatrix::new_opt(new_rows, new_field_tys)
     }
 
     /// Skip the current column in the matrix if all of the patterns in the column are wildcards.
     fn skip_col(&self) -> Option<PatMatrix> {
-        let skipped = self.skip_wildcards();
-        if skipped.rows.len() == self.rows.len() {
-            // All rows had a wildcard in the first column.
+        if let Some(skipped) = self.skip_wildcards()
+            && skipped.rows.len() == self.rows.len()
+        {
             Some(skipped)
         } else {
             None
@@ -905,7 +930,10 @@ impl PatMatrix {
     /// This should be used when matching an abstract type (a type variable), or a type that can't
     /// be exhaustively matched (e.g. strings, integers), as those can only be matched with a
     /// wildcard pattern.
-    fn skip_wildcards(&self) -> PatMatrix {
+    ///
+    /// `None` return value means there were no rows with a wildcard pattern on the first column, so
+    /// we weren't able to really "skip".
+    fn skip_wildcards(&self) -> Option<PatMatrix> {
         let mut new_rows: Vec<Row> = vec![];
 
         for row in self.rows.iter() {
@@ -919,7 +947,7 @@ impl PatMatrix {
 
         let new_field_tys: Vec<Ty> = self.field_tys.iter().skip(1).cloned().collect();
 
-        PatMatrix::new(new_rows, new_field_tys)
+        PatMatrix::new_opt(new_rows, new_field_tys)
     }
 }
 
