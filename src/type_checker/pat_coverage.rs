@@ -411,7 +411,7 @@ struct Row {
     /// `match` arm index the row is generated from.
     arm_index: ArmIndex,
     pats: Vec<ast::L<ast::Pat>>,
-    bound_vars: Map<Id, Vec<Ty>>,
+    bound_vars: Map<Id, Set<Ty>>,
     guarded: bool,
 }
 
@@ -432,7 +432,7 @@ impl CoverageInfo {
         }
     }
 
-    fn mark_useful(&mut self, arm_idx: ArmIndex, bound_vars: &Map<Id, Vec<Ty>>) {
+    fn mark_useful(&mut self, arm_idx: ArmIndex, bound_vars: &Map<Id, Set<Ty>>) {
         for (var, tys) in bound_vars.iter() {
             self.bound_vars[arm_idx as usize]
                 .entry(var.clone())
@@ -456,7 +456,7 @@ impl Row {
     }
 
     fn bind(&mut self, var: Id, ty: Ty) {
-        self.bound_vars.entry(var).or_default().push(ty);
+        self.bound_vars.entry(var).or_default().insert(ty);
     }
 }
 
@@ -501,8 +501,6 @@ impl PatMatrix {
         info: &mut CoverageInfo,
         trace: &mut Vec<String>,
     ) -> bool {
-        // dbg!(self);
-
         // if !trace.is_empty() {
         //     println!();
         // }
@@ -1081,9 +1079,31 @@ impl std::fmt::Display for PatMatrix {
                 let field_ty = &self.field_tys[field_idx];
                 write!(f, "{}:{}", pat.node, field_ty)?;
             }
-            write!(f, "] # bound vars = {:?}", row.bound_vars)?;
+            write!(f, "] vars={}", BoundVarsDisplay(&row.bound_vars))?;
         }
         write!(f, "]")
+    }
+}
+
+struct BoundVarsDisplay<'a>(&'a Map<Id, Set<Ty>>);
+
+impl<'a> std::fmt::Display for BoundVarsDisplay<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{")?;
+        for (var_idx, (var, tys)) in self.0.iter().enumerate() {
+            if var_idx != 0 {
+                write!(f, ", ")?;
+            }
+            write!(f, "{}: [", var)?;
+            for (ty_idx, ty) in tys.iter().enumerate() {
+                if ty_idx != 0 {
+                    write!(f, ", ")?;
+                }
+                write!(f, "{}", ty)?;
+            }
+            write!(f, "]")?;
+        }
+        write!(f, "}}")
     }
 }
 
