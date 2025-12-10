@@ -1397,17 +1397,14 @@ pub(super) fn check_match_expr(
     }
 
     if !exhaustive {
-        eprintln!(
-            "{}: Unexhaustive pattern match",
-            loc_display(loc)
-        );
+        eprintln!("{}: Unexhaustive pattern match", loc_display(loc));
     }
 
     for (
         alt_idx,
         (
             ast::Alt {
-                pattern: _,
+                pattern,
                 guard,
                 rhs,
             },
@@ -1415,7 +1412,7 @@ pub(super) fn check_match_expr(
         ),
     ) in alts.iter_mut().zip(alt_envs.into_iter()).enumerate()
     {
-        refine_binders(&mut alt_scope, &info.bound_vars[alt_idx]);
+        refine_binders(&mut alt_scope, &info.bound_vars[alt_idx], &pattern.loc);
 
         tc_state.env.push_scope(alt_scope);
 
@@ -1759,7 +1756,7 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
     }
 }
 
-fn refine_binders(scope: &mut Map<Id, Ty>, binders: &Map<Id, Set<Ty>>) {
+fn refine_binders(scope: &mut Map<Id, Ty>, binders: &Map<Id, Set<Ty>>, loc: &ast::Loc) {
     if cfg!(debug_assertions) {
         let scope_vars: Set<&Id> = scope.keys().collect();
         let binders_vars: Set<&Id> = binders.keys().collect();
@@ -1771,6 +1768,7 @@ fn refine_binders(scope: &mut Map<Id, Ty>, binders: &Map<Id, Set<Ty>>) {
         // assert!(&tys.is_empty());
 
         if tys.len() == 1 {
+            // println!("{} --> {}", var, tys.iter().next().unwrap().clone());
             scope.insert(var.clone(), tys.iter().next().unwrap().clone());
         } else {
             let mut labels: TreeMap<Id, Ty> = Default::default();
@@ -1788,19 +1786,36 @@ fn refine_binders(scope: &mut Map<Id, Ty>, binders: &Map<Id, Set<Ty>>) {
                         extension = Some(Box::new(ty.clone()));
                     }
 
-                    Ty::Fun { .. } | Ty::Anonymous { .. } => todo!(),
+                    Ty::Anonymous {
+                        labels,
+                        extension: new_extension,
+                        kind: RecordOrVariant::Variant,
+                        is_row,
+                    } => {
+                        // This part is quite hacky and possibly wrong: because we only refine
+                        // variants, and we can't ahve nested variants, and we check one type at a
+                        // time when checking variant coverage, this case can only mean `[..r]` (for
+                        // some `r`), and matching it means the value being matched can have the
+                        // extension.
+                        assert!(!is_row);
+                        assert!(labels.is_empty());
+                        extension = new_extension.clone();
+                    }
+
+                    Ty::Fun { .. } | Ty::Anonymous { .. } => panic!("{}: {}", loc_display(loc), ty),
                 }
             }
 
-            scope.insert(
-                var.clone(),
-                Ty::Anonymous {
-                    labels,
-                    extension,
-                    kind: RecordOrVariant::Variant,
-                    is_row: false,
-                },
-            );
+            let new_ty = Ty::Anonymous {
+                labels,
+                extension,
+                kind: RecordOrVariant::Variant,
+                is_row: false,
+            };
+
+            // println!("{} --> {}", var, new_ty);
+
+            scope.insert(var.clone(), new_ty);
         }
     }
 }
