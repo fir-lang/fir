@@ -113,26 +113,17 @@ pub(crate) fn apply_con_ty(
             (**con_ty_ret).clone()
         }
 
-        Ty::Con(_, _) => {
+        Ty::Var(_) | Ty::Con(_, _) | Ty::App(_, _, _) | Ty::Anonymous { .. } | Ty::QVar(_, _) => {
             if args.is_empty() {
                 return con_ty.clone();
             }
+            // We don't have higher-kinded types, so this case means we've applied arguments to a
+            // `*` type.
             panic!(
-                "{}: Constructor doesn't take arguments, but applied {} arguments",
-                loc_display(loc),
-                args.len(),
-            );
-        }
-
-        Ty::Var(_) | Ty::App(_, _, _) | Ty::Anonymous { .. } | Ty::QVar(_, _) => {
-            if args.is_empty() {
-                return con_ty.clone();
-            }
-            panic!(
-                "{}: BUG: ty = {:?}, args = {:?}",
+                "{}: Type {} doesn't take arugments, but applied {} arguments",
                 loc_display(loc),
                 con_ty,
-                args
+                args.len(),
             )
         }
     }

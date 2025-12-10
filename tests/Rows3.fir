@@ -108,9 +108,9 @@ type SimpleError:
     Error([A, B, C])
     NotError(I32)
 
-f12(a: SimpleError) Result[[C], I32]:
+f12(a: SimpleError) Result[C, I32]:
     match a:
-        SimpleError.Error(~A.A | ~B.B): Result.Err(~C.C)
+        SimpleError.Error(~A.A | ~B.B): Result.Err(C.C)
         SimpleError.Error(other): Result.Err(other)
         SimpleError.NotError(i): Result.Ok(i)
 
