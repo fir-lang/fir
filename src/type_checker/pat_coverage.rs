@@ -469,9 +469,10 @@ impl PatMatrix {
         // print!("{}", indent(&trace.join(", "), trace.len() * 4));
         // print!("{}", indent(&self.to_string(), trace.len() * 4));
 
-        if self.field_tys.is_empty() {
-            return true;
-        }
+        let next_ty = match self.field_tys.first() {
+            Some(next_ty) => next_ty.deep_normalize(tc_state.tys.tys.cons()),
+            None => return true,
+        };
 
         // If all of the rows have a wildcard as the next pattern, skip the column to avoid
         // recursing when the type being matched is recursive.
@@ -480,11 +481,6 @@ impl PatMatrix {
                 matrix.check_coverage(tc_state, loc, trace)
             });
         }
-
-        let next_ty = match self.field_tys.first() {
-            Some(next_ty) => next_ty.deep_normalize(tc_state.tys.tys.cons()),
-            None => return true,
-        };
 
         match &next_ty {
             Ty::Con(field_ty_con_id, _) | Ty::App(field_ty_con_id, _, _)
