@@ -27,6 +27,7 @@ impl[Eq[t]] Eq[Option[t]]:
         match (l = self, r = other):
             (l = Option.None, r = Option.None): Bool.True
             (l = Option.Some(l0), r = Option.Some(r0)): l0 == r0
+            _: Bool.False
 
 
 impl[Eq[t]] Eq[Option[t]]:

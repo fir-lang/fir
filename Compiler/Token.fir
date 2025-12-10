@@ -410,3 +410,4 @@ impl Eq[IntKind]:
             (left = IntKind.U8, right = IntKind.U8): Bool.True
             (left = IntKind.I32, right = IntKind.I32): Bool.True
             (left = IntKind.U32, right = IntKind.U32): Bool.True
+            _: Bool.False

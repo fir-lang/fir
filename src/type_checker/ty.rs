@@ -31,7 +31,7 @@ pub struct Scheme {
 }
 
 /// A type checking type.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
     Con(Id, Kind),
@@ -88,15 +88,26 @@ pub enum RecordOrVariant {
     Variant,
 }
 
-#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum FunArgs {
     Positional(Vec<Ty>),
     Named(TreeMap<Id, Ty>),
 }
 
 impl FunArgs {
+    pub fn empty() -> FunArgs {
+        FunArgs::Positional(vec![])
+    }
+
     pub fn is_named(&self) -> bool {
         matches!(self, FunArgs::Named(_))
+    }
+
+    pub fn as_named(&self) -> &TreeMap<Id, Ty> {
+        match self {
+            FunArgs::Positional(_) => panic!(),
+            FunArgs::Named(named) => named,
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -1075,19 +1086,14 @@ impl fmt::Display for Ty {
             Ty::Anonymous {
                 labels,
                 extension,
-                kind,
+                kind: RecordOrVariant::Record,
                 is_row,
             } => {
-                let (left_delim, right_delim) = match kind {
-                    RecordOrVariant::Record => ('(', ')'),
-                    RecordOrVariant::Variant => ('[', ']'),
-                };
-
                 if is_row {
                     write!(f, "row")?;
                 }
 
-                write!(f, "{left_delim}")?;
+                write!(f, "(")?;
                 for (i, (label_id, label_ty)) in labels.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
@@ -1100,7 +1106,33 @@ impl fmt::Display for Ty {
                     }
                     write!(f, "..{ext}")?;
                 }
-                write!(f, "{right_delim}")
+                write!(f, ")")
+            }
+
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind: RecordOrVariant::Variant,
+                is_row,
+            } => {
+                if is_row {
+                    write!(f, "row")?;
+                }
+
+                write!(f, "[")?;
+                for (i, label_ty) in labels.values().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{label_ty}")?;
+                }
+                if let Some(ext) = extension {
+                    if !labels.is_empty() {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "..{ext}")?;
+                }
+                write!(f, "]")
             }
 
             Ty::QVar(id, _) => write!(f, "{id}"),
