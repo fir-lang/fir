@@ -238,8 +238,13 @@ impl PatMatrix {
                 }
 
                 // If variant can have more things, we need a wildcard at this position.
-                if extension.is_some() {
-                    match self.skip_wildcards(&next_ty) {
+                if let Some(extension) = &extension {
+                    match self.skip_wildcards(&Ty::Anonymous {
+                        labels: Default::default(),
+                        extension: Some(Box::new(extension.clone())),
+                        kind: RecordOrVariant::Variant,
+                        is_row: false,
+                    }) {
                         Some(skipped) => {
                             if !with_trace(trace, "extra rows".to_string(), |trace| {
                                 skipped.check_coverage(tc_state, loc, info, trace)
