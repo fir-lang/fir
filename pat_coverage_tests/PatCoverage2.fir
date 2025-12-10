@@ -46,17 +46,9 @@ main():
         Option.Some(Bool.False): ()
 
 # args: --no-prelude --typecheck
-# expected stdout:
-# pat_coverage_tests/PatCoverage2.fir:13:5: New coverage checker: unexhaustive pattern match
-# pat_coverage_tests/PatCoverage2.fir:16:5: New coverage checker: unexhaustive pattern match
-# pat_coverage_tests/PatCoverage2.fir:19:5: New coverage checker: unexhaustive pattern match
-# pat_coverage_tests/PatCoverage2.fir:30:5: New coverage checker: unexhaustive pattern match
-# pat_coverage_tests/PatCoverage2.fir:34:5: New coverage checker: unexhaustive pattern match
-
 # expected stderr:
 # pat_coverage_tests/PatCoverage2.fir:13:5: Unexhaustive pattern match
 # pat_coverage_tests/PatCoverage2.fir:16:5: Unexhaustive pattern match
 # pat_coverage_tests/PatCoverage2.fir:19:5: Unexhaustive pattern match
 # pat_coverage_tests/PatCoverage2.fir:30:5: Unexhaustive pattern match
 # pat_coverage_tests/PatCoverage2.fir:34:5: Unexhaustive pattern match
-

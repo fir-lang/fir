@@ -1392,13 +1392,13 @@ pub(super) fn check_match_expr(
 
     for (arm_idx, arm) in alts.iter().enumerate() {
         if !info.is_useful(arm_idx as u32) {
-            println!("{}: Redundant branch", loc_display(&arm.pattern.loc));
+            eprintln!("{}: Redundant branch", loc_display(&arm.pattern.loc));
         }
     }
 
     if !exhaustive {
-        println!(
-            "{}: New coverage checker: unexhaustive pattern match",
+        eprintln!(
+            "{}: Unexhaustive pattern match",
             loc_display(loc)
         );
     }
