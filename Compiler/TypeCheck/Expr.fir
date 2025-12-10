@@ -37,8 +37,6 @@ checkExpr(
 
         Expr.MethodSelect(..): panic("TODO")
 
-        Expr.ConstrSelect(..): panic("TODO")
-
         Expr.AssocFnSelect(..): panic("TODO")
 
         Expr.Call(..): panic("TODO")
