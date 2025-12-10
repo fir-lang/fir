@@ -408,6 +408,13 @@ struct Row {
     /// `match` arm index the row is generated from.
     arm_index: ArmIndex,
     pats: Vec<ast::L<ast::Pat>>,
+    bound_vars: Map<Id, Vec<Ty>>,
+}
+
+#[derive(Debug, Clone)]
+struct CoverageInfo {
+    // TODO: This should keep bound vars in arms that handle a list of patterns, to be used in type
+    // refinement.
 }
 
 type ArmIndex = u32;
@@ -415,6 +422,10 @@ type ArmIndex = u32;
 impl Row {
     fn len(&self) -> usize {
         self.pats.len()
+    }
+
+    fn bind(&mut self, var: Id, ty: Ty) {
+        self.bound_vars.entry(var).or_default().push(ty);
     }
 }
 
@@ -430,6 +441,7 @@ impl PatMatrix {
             rows.push(Row {
                 arm_index: arm_index as u32,
                 pats: vec![arm.pattern.clone()],
+                bound_vars: Default::default(),
             });
         }
         PatMatrix::new(rows, vec![scrut_ty.clone()])
@@ -476,7 +488,7 @@ impl PatMatrix {
 
         // If all of the rows have a wildcard as the next pattern, skip the column to avoid
         // recursing when the type being matched is recursive.
-        if let Some(matrix) = self.skip_col() {
+        if let Some(matrix) = self.skip_col(&next_ty) {
             return with_trace(trace, "_".to_string(), |trace| {
                 matrix.check_coverage(tc_state, loc, trace)
             });
@@ -495,7 +507,7 @@ impl PatMatrix {
                     || field_ty_con_id == &SmolStr::new_static("U64")
                     || field_ty_con_id == &SmolStr::new_static("I64") =>
             {
-                match self.skip_wildcards() {
+                match self.skip_wildcards(&next_ty) {
                     Some(skipped) => with_trace(trace, field_ty_con_id.to_string(), |trace| {
                         skipped.check_coverage(tc_state, loc, trace)
                     }),
@@ -516,9 +528,9 @@ impl PatMatrix {
                 for con in field_con_details.cons.iter() {
                     let matrix = match &con.name {
                         Some(con_name) => {
-                            self.focus_sum_con(field_ty_con_id, con_name, tc_state, loc)
+                            self.focus_sum_con(&next_ty, field_ty_con_id, con_name, tc_state, loc)
                         }
-                        None => self.focus_product_con(field_ty_con_id, tc_state, loc),
+                        None => self.focus_product_con(&next_ty, field_ty_con_id, tc_state, loc),
                     };
                     let s = match &con.name {
                         Some(con) => format!("{}.{}", field_ty_con_id, con),
@@ -577,7 +589,7 @@ impl PatMatrix {
 
                 // If variant can have more things, we need a wildcard at this position.
                 if extension.is_some() {
-                    match self.skip_wildcards() {
+                    match self.skip_wildcards(&next_ty) {
                         Some(skipped) => {
                             if !with_trace(trace, "extra rows".to_string(), |trace| {
                                 skipped.check_coverage(tc_state, loc, trace)
@@ -677,15 +689,31 @@ impl PatMatrix {
                                 new_rows.push(Row {
                                     arm_index: row.arm_index,
                                     pats: fields_positional,
+                                    bound_vars: row.bound_vars.clone(),
                                 });
-                            }
+                            } // ast::Pat::Record
 
                             ast::Pat::Or(pat1, pat2) => {
                                 work.push((*pat1).clone());
                                 work.push((*pat2).clone());
                             }
 
-                            ast::Pat::Var(_) | ast::Pat::Ignore => {
+                            ast::Pat::Var(var) => {
+                                let mut fields_positional: Vec<ast::L<ast::Pat>> = vec![];
+                                for _ in labels_vec.iter() {
+                                    fields_positional.push(ast::L::new_dummy(ast::Pat::Ignore));
+                                }
+                                fields_positional.extend(row.pats[1..].iter().cloned());
+                                let mut row = Row {
+                                    arm_index: row.arm_index,
+                                    pats: fields_positional,
+                                    bound_vars: row.bound_vars.clone(),
+                                };
+                                row.bind(var.var.clone(), next_ty.clone());
+                                new_rows.push(row);
+                            }
+
+                            ast::Pat::Ignore => {
                                 let mut fields_positional: Vec<ast::L<ast::Pat>> = vec![];
                                 for _ in labels_vec.iter() {
                                     fields_positional.push(ast::L::new_dummy(ast::Pat::Ignore));
@@ -694,6 +722,7 @@ impl PatMatrix {
                                 new_rows.push(Row {
                                     arm_index: row.arm_index,
                                     pats: fields_positional,
+                                    bound_vars: row.bound_vars.clone(),
                                 });
                             }
 
@@ -714,7 +743,7 @@ impl PatMatrix {
                 })
             } // Ty::Anonymous(kind: Record)
 
-            Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => match self.skip_wildcards() {
+            Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => match self.skip_wildcards(&next_ty) {
                 Some(skipped) => with_trace(trace, "wildcard".to_string(), |trace| {
                     skipped.check_coverage(tc_state, loc, trace)
                 }),
@@ -729,17 +758,19 @@ impl PatMatrix {
 
     fn focus_product_con(
         &self,
+        ty: &Ty,
         con_ty_id: &Id,
         tc_state: &TcFunState,
         loc: &ast::Loc,
     ) -> Option<PatMatrix> {
         assert!(self.num_fields() > 0);
         let con_scheme = tc_state.tys.top_schemes.get(con_ty_id).unwrap();
-        self.focus_con_scheme(con_ty_id, None, con_scheme, tc_state, loc)
+        self.focus_con_scheme(ty, con_ty_id, None, con_scheme, tc_state, loc)
     }
 
     fn focus_sum_con(
         &self,
+        ty: &Ty,
         con_ty_id: &Id,
         con_id: &Id,
         tc_state: &TcFunState,
@@ -756,11 +787,12 @@ impl PatMatrix {
             .get(con_id)
             .unwrap();
 
-        self.focus_con_scheme(con_ty_id, Some(con_id), con_scheme, tc_state, loc)
+        self.focus_con_scheme(ty, con_ty_id, Some(con_id), con_scheme, tc_state, loc)
     }
 
     fn focus_con_scheme(
         &self,
+        ty: &Ty,
         con_ty_id: &Id,
         con_id: Option<&Id>,
         con_scheme: &Scheme,
@@ -882,10 +914,27 @@ impl PatMatrix {
                         new_rows.push(Row {
                             arm_index: row.arm_index,
                             pats: fields_positional,
+                            bound_vars: row.bound_vars.clone(),
                         });
                     }
 
-                    ast::Pat::Var(_) | ast::Pat::Ignore => {
+                    ast::Pat::Var(var) => {
+                        // All fields are fully covered.
+                        let mut fields_positional: Vec<ast::L<ast::Pat>> =
+                            std::iter::repeat_with(|| ast::L::new_dummy(ast::Pat::Ignore))
+                                .take(args_positional.len())
+                                .collect();
+                        fields_positional.extend(row.pats[1..].iter().cloned());
+                        let mut row = Row {
+                            arm_index: row.arm_index,
+                            pats: fields_positional,
+                            bound_vars: row.bound_vars.clone(),
+                        };
+                        row.bind(var.var.clone(), ty.clone());
+                        new_rows.push(row);
+                    }
+
+                    ast::Pat::Ignore => {
                         // All fields are fully covered.
                         let mut fields_positional: Vec<ast::L<ast::Pat>> =
                             std::iter::repeat_with(|| ast::L::new_dummy(ast::Pat::Ignore))
@@ -895,6 +944,7 @@ impl PatMatrix {
                         new_rows.push(Row {
                             arm_index: row.arm_index,
                             pats: fields_positional,
+                            bound_vars: row.bound_vars.clone(),
                         });
                     }
 
@@ -908,7 +958,7 @@ impl PatMatrix {
                         work.push((*pat2).clone());
                     }
                 } // match pat
-            } // pats in the rw
+            } // pats in the row
         } // row
 
         let mut new_field_tys: Vec<Ty> = args_positional;
@@ -918,8 +968,8 @@ impl PatMatrix {
     }
 
     /// Skip the current column in the matrix if all of the patterns in the column are wildcards.
-    fn skip_col(&self) -> Option<PatMatrix> {
-        if let Some(skipped) = self.skip_wildcards()
+    fn skip_col(&self, ty: &Ty) -> Option<PatMatrix> {
+        if let Some(skipped) = self.skip_wildcards(ty)
             && skipped.rows.len() == self.rows.len()
         {
             Some(skipped)
@@ -936,15 +986,30 @@ impl PatMatrix {
     ///
     /// `None` return value means there were no rows with a wildcard pattern on the first column, so
     /// we weren't able to really "skip".
-    fn skip_wildcards(&self) -> Option<PatMatrix> {
+    fn skip_wildcards(&self, ty: &Ty) -> Option<PatMatrix> {
         let mut new_rows: Vec<Row> = vec![];
 
         for row in self.rows.iter() {
-            if matches!(row.pats[0].node, ast::Pat::Var(_) | ast::Pat::Ignore) {
-                new_rows.push(Row {
-                    arm_index: row.arm_index,
-                    pats: row.pats.iter().skip(1).cloned().collect(),
-                });
+            match &row.pats[0].node {
+                ast::Pat::Var(var) => {
+                    let mut row = Row {
+                        arm_index: row.arm_index,
+                        pats: row.pats.iter().skip(1).cloned().collect(),
+                        bound_vars: row.bound_vars.clone(),
+                    };
+                    row.bind(var.var.clone(), ty.clone());
+                    new_rows.push(row);
+                }
+
+                ast::Pat::Ignore => {
+                    new_rows.push(Row {
+                        arm_index: row.arm_index,
+                        pats: row.pats.iter().skip(1).cloned().collect(),
+                        bound_vars: row.bound_vars.clone(),
+                    });
+                }
+
+                _ => {}
             }
         }
 
@@ -975,7 +1040,7 @@ impl std::fmt::Display for PatMatrix {
                 let field_ty = &self.field_tys[field_idx];
                 write!(f, "{}:{}", pat.node, field_ty)?;
             }
-            write!(f, "]")?;
+            write!(f, "] # bound vars = {:?}", row.bound_vars)?;
         }
         write!(f, "]")
     }
