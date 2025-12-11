@@ -538,21 +538,6 @@ impl Expr {
                 }
             }
 
-            Expr::UnOp(UnOpExpr { op, expr }) => {
-                match op {
-                    UnOp::Not => buffer.push_str("not "),
-                    UnOp::Neg => buffer.push('-'),
-                }
-                let parens = expr_parens(&expr.node);
-                if parens {
-                    buffer.push('(');
-                }
-                expr.node.print(buffer, 0);
-                if parens {
-                    buffer.push(')');
-                }
-            }
-
             Expr::Record(fields) => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {

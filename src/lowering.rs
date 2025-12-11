@@ -4,7 +4,7 @@
 pub mod printer;
 
 use crate::collections::*;
-use crate::mono_ast::{self as mono, AssignOp, Id, L, Loc, Named, UnOp};
+use crate::mono_ast::{self as mono, AssignOp, Id, L, Loc, Named};
 use crate::record_collector::{RecordShape, collect_records};
 
 use smol_str::SmolStr;
@@ -1826,11 +1826,6 @@ fn lower_expr(
         ),
 
         mono::Expr::BinOp(_) => panic!("Non-desugared BinOp"),
-
-        mono::Expr::UnOp(mono::UnOpExpr { op, expr: _ }) => match op {
-            UnOp::Neg => panic!("Neg unop wasn't desugred"),
-            UnOp::Not => panic!("Not unop wasn't desugared"),
-        },
 
         mono::Expr::Record(fields) => {
             let idx = *indices

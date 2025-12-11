@@ -1,6 +1,6 @@
 pub mod printer;
 
-pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, L, Loc, Named, UnOp};
+pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, L, Loc, Named};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -210,7 +210,6 @@ pub enum Expr {
     Str(Vec<StringPart>),
     Char(char),
     BinOp(BinOpExpr),
-    UnOp(UnOpExpr),
     Record(Vec<Named<L<Expr>>>),
     Return(Box<L<Expr>>),
     Match(MatchExpr),
@@ -264,12 +263,6 @@ pub struct BinOpExpr {
     pub left: Box<L<Expr>>,
     pub right: Box<L<Expr>>,
     pub op: BinOp,
-}
-
-#[derive(Debug, Clone)]
-pub struct UnOpExpr {
-    pub op: UnOp,
-    pub expr: Box<L<Expr>>,
 }
 
 #[derive(Debug, Clone)]

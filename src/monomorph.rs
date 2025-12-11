@@ -659,10 +659,10 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => mono::Expr::UnOp(mono::UnOpExpr {
-            op: op.clone(),
-            expr: mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals),
-        }),
+        ast::Expr::UnOp(ast::UnOpExpr { op, expr: _ }) => match op {
+            ast::UnOp::Neg => panic!("Neg unop wasn't desugred"),
+            ast::UnOp::Not => panic!("Not unop wasn't desugared"),
+        },
 
         ast::Expr::Record(fields) => mono::Expr::Record(
             fields

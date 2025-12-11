@@ -275,10 +275,6 @@ fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>) {
             visit_expr(&right.node, records);
         }
 
-        mono::Expr::UnOp(mono::UnOpExpr { op: _, expr }) => {
-            visit_expr(&expr.node, records);
-        }
-
         mono::Expr::Record(fields) => {
             for field in fields {
                 visit_expr(&field.node.node, records);
