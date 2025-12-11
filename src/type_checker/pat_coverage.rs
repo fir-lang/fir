@@ -385,13 +385,12 @@ impl PatMatrix {
                                 });
                             }
 
-                            ast::Pat::Constr(_) | ast::Pat::Str(_) | ast::Pat::Char(_) => {
+                            ast::Pat::Constr(_)
+                            | ast::Pat::Str(_)
+                            | ast::Pat::Char(_)
+                            | ast::Pat::Variant(_) => {
                                 // type error
                                 panic!();
-                            }
-
-                            ast::Pat::Variant(_) => {
-                                todo!()
                             }
                         } // match pat
                     } // pats in the row
