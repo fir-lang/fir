@@ -18,7 +18,9 @@ extern {
     type Location = Loc;
     type Error = LexerError<Infallible>;
 
-    enum Token { UpperId => Token { kind: TokenKind::UpperId, .. }, UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
+    enum Token {
+        UpperId => Token { kind: TokenKind::UpperId, .. },
+        UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
         UpperIdLBracket => Token { kind: TokenKind::UpperIdLBracket, .. },
         UpperIdPathLBracket => Token { kind: TokenKind::UpperIdPathLBracket, .. },
         UpperIdDotLBracket => Token { kind: TokenKind::UpperIdDotLBracket, .. },
