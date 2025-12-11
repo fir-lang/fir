@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: c5b477c74e2c06ccabb510f93f9fe5d2ab12889751a16d45ef3b597a415a8e0b
+// sha3: b277918806c687380fe1984aa5b6c732bc2dd284fc5e0eecc18170c9bb4f3c6c
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -47145,8 +47145,8 @@ fn __action106<'a>(
 )]
 fn __action107<'a>(
     module: &'a Rc<str>,
-    (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> Expr {
@@ -47164,8 +47164,8 @@ fn __action107<'a>(
 )]
 fn __action108<'a>(
     module: &'a Rc<str>,
-    (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> Expr {
@@ -47183,8 +47183,8 @@ fn __action108<'a>(
 )]
 fn __action109<'a>(
     module: &'a Rc<str>,
-    (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> Expr {
@@ -47976,8 +47976,8 @@ fn __action155<'a>(
 )]
 fn __action156<'a>(
     module: &'a Rc<str>,
-    (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, pat, _): (Loc, Pat, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> Pat {
@@ -52997,11 +52997,11 @@ fn __action459<'a>(
     __1: (Loc, Expr, Loc),
     __2: (Loc, Loc, Loc),
 ) -> Expr {
-    let __start0 = __0.2;
-    let __end0 = __1.0;
+    let __start0 = __0.0;
+    let __end0 = __0.0;
     let __temp0 = __action235(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action107(module, __0, __temp0, __1, __2)
+    __action107(module, __temp0, __0, __1, __2)
 }
 
 #[allow(unused_variables)]
@@ -53016,11 +53016,11 @@ fn __action460<'a>(
     __1: (Loc, Expr, Loc),
     __2: (Loc, Loc, Loc),
 ) -> Expr {
-    let __start0 = __0.2;
-    let __end0 = __1.0;
+    let __start0 = __0.0;
+    let __end0 = __0.0;
     let __temp0 = __action235(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action108(module, __0, __temp0, __1, __2)
+    __action108(module, __temp0, __0, __1, __2)
 }
 
 #[allow(unused_variables)]
@@ -53035,11 +53035,11 @@ fn __action461<'a>(
     __1: (Loc, Expr, Loc),
     __2: (Loc, Loc, Loc),
 ) -> Expr {
-    let __start0 = __0.2;
-    let __end0 = __1.0;
+    let __start0 = __0.0;
+    let __end0 = __0.0;
     let __temp0 = __action235(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action109(module, __0, __temp0, __1, __2)
+    __action109(module, __temp0, __0, __1, __2)
 }
 
 #[allow(unused_variables)]
@@ -53630,11 +53630,11 @@ fn __action490<'a>(
     __1: (Loc, Pat, Loc),
     __2: (Loc, Loc, Loc),
 ) -> Pat {
-    let __start0 = __0.2;
-    let __end0 = __1.0;
+    let __start0 = __0.0;
+    let __end0 = __0.0;
     let __temp0 = __action235(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action156(module, __0, __temp0, __1, __2)
+    __action156(module, __temp0, __0, __1, __2)
 }
 
 #[allow(unused_variables)]

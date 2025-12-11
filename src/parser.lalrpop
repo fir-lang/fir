@@ -792,13 +792,13 @@ InlineExpr: Expr = {
     },
 
     #[precedence(level = "2")]
-    "not" <l:@L> <expr:InlineExpr> <r:@R> =>
+    <l:@L> "not" <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
 
-    "-" <l:@L> <expr:InlineExpr> <r:@R> =>
+    <l:@L> "-" <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Neg, expr: Box::new(L::new(module, l, r, expr)) }),
 
-    "~" <l:@L> <expr:InlineExpr> <r:@R> =>
+    <l:@L> "~" <expr:InlineExpr> <r:@R> =>
         Expr::Variant(Box::new(L::new(module, l, r, expr))),
 
     #[precedence(level = "4")]
@@ -1036,7 +1036,7 @@ Pat: Pat = {
         )
     },
 
-    "~" <l:@L> <pat:Pat> <r:@R> =>
+    <l:@L> "~" <pat:Pat> <r:@R> =>
         Pat::Variant(Box::new(L::new(module, l, r, pat))),
 }
 

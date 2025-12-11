@@ -1333,8 +1333,8 @@ pub(super) fn check_expr(
             check_expr(tc_state, expr, expected_ty, level, loop_stack)
         }
 
-        ast::Expr::Variant(expr) => {
-            let (expr_ty, binders) = check_expr(tc_state, expr, None, level, loop_stack);
+        ast::Expr::Variant(var_expr) => {
+            let (expr_ty, binders) = check_expr(tc_state, var_expr, None, level, loop_stack);
             let variant_ty = make_variant(tc_state, expr_ty, level, &expr.loc);
             (
                 unify_expected_ty(
@@ -1725,19 +1725,6 @@ fn select_method(
 pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &ast::Loc) -> Ty {
     let con = match ty.normalize(tc_state.tys.tys.cons()) {
         Ty::Con(con, _) | Ty::App(con, _, _) => con,
-
-        Ty::Fun {
-            args,
-            ret,
-            exceptions,
-        } => {
-            let ret = make_variant(tc_state, *ret, level, loc);
-            return Ty::Fun {
-                args,
-                ret: Box::new(ret),
-                exceptions,
-            };
-        }
 
         ty => panic!(
             "{}: Type in variant is not a constructor: {}",

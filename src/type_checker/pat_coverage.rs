@@ -637,8 +637,8 @@ impl PatMatrix {
                         work.push((*pat2).clone());
                     }
 
-                    ast::Pat::Variant(_) => {
-                        todo!()
+                    ast::Pat::Variant(pat) => {
+                        work.push((*pat).clone());
                     }
                 } // match pat
             } // pats in the row
