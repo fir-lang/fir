@@ -1040,6 +1040,15 @@ Pat: Pat = {
             Box::new(L::new(module, l2, r2, p2)),
         )
     },
+
+    #[precedence(level = "2")]
+    <pat:LPat> "as" <id:LowerId> => {
+        Pat::As(AsPat {
+            pat: Box::new(pat),
+            var: id.smol_str(),
+            ty: None,
+        })
+    },
 }
 
 Constructor: Constructor = {
