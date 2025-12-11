@@ -1981,16 +1981,10 @@ fn lower_expr(
 
         mono::Expr::Is(mono::IsExpr { expr, pat }) => {
             scope.bounds.enter();
-            let (expr, _pat_vars_1) = lower_l_expr(expr, closures, indices, scope);
+            let (expr, _pat_vars_1) = lower_bl_expr(expr, closures, indices, scope);
             let pat = lower_l_pat(pat, indices, scope, &mut Default::default());
             let pat_vars_2 = scope.bounds.exit();
-            (
-                Expr::Is(IsExpr {
-                    expr: Box::new(expr),
-                    pat,
-                }),
-                pat_vars_2,
-            )
+            (Expr::Is(IsExpr { expr, pat }), pat_vars_2)
         }
 
         mono::Expr::Do(stmts) => {
@@ -2136,8 +2130,8 @@ fn lower_pat(
         mono::Pat::Char(char) => Pat::Char(*char),
 
         mono::Pat::Or(p1, p2) => Pat::Or(
-            Box::new(lower_l_pat(p1, indices, scope, mapped_binders)),
-            Box::new(lower_l_pat(p2, indices, scope, mapped_binders)),
+            lower_bl_pat(p1, indices, scope, mapped_binders),
+            lower_bl_pat(p2, indices, scope, mapped_binders),
         ),
 
         mono::Pat::Variant(p) => {
@@ -2153,6 +2147,15 @@ fn lower_nl_pat(
     mapped_binders: &mut Map<Id, LocalIdx>,
 ) -> Named<L<Pat>> {
     pat.map_as_ref(|pat| lower_l_pat(pat, indices, scope, mapped_binders))
+}
+
+fn lower_bl_pat(
+    pat: &L<mono::Pat>,
+    indices: &Indices,
+    scope: &mut FunScope,
+    mapped_binders: &mut Map<Id, LocalIdx>,
+) -> Box<L<Pat>> {
+    Box::new(lower_l_pat(pat, indices, scope, mapped_binders))
 }
 
 fn lower_l_pat(
