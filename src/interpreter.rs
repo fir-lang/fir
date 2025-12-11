@@ -287,7 +287,7 @@ fn call_ast_fun<W: Write>(
     loc: &Loc,
     call_stack: &mut Vec<Frame>,
 ) -> FunRet {
-    assert_eq!(
+    debug_assert_eq!(
         fun.params.len(),
         args.len(),
         "{}, fun: {}",
@@ -326,7 +326,7 @@ fn call_closure<W: Write>(
             let fun = &pgm.funs[top_fun_idx as usize];
             let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
             for arg in args {
-                assert!(arg.name.is_none());
+                debug_assert!(arg.name.is_none());
                 arg_values.push(val!(eval(
                     w,
                     pgm,
@@ -373,7 +373,7 @@ fn call_closure<W: Write>(
             }
 
             // Copy closure arguments into locals.
-            assert_eq!(args.len(), closure.params.len());
+            debug_assert_eq!(args.len(), closure.params.len());
 
             for (i, arg_val) in args.iter().enumerate() {
                 let arg_val = val!(eval(
@@ -425,9 +425,9 @@ fn allocate_object_from_idx<W: Write>(
     match fields {
         ConFields::Unnamed(num_fields) => {
             // Evaluate in program order and store in the same order.
-            assert_eq!(num_fields.len(), args.len());
+            debug_assert_eq!(num_fields.len(), args.len());
             for arg in args {
-                assert!(arg.name.is_none());
+                debug_assert!(arg.name.is_none());
                 arg_values.push(val!(eval(
                     w,
                     pgm,
@@ -456,7 +456,7 @@ fn allocate_object_from_idx<W: Write>(
                     call_stack
                 ));
                 let old = named_values.insert(name.clone(), value);
-                assert!(old.is_none());
+                debug_assert!(old.is_none());
             }
             for (name, _) in field_names {
                 arg_values.push(*named_values.get(name).unwrap());
