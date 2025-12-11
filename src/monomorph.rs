@@ -791,7 +791,7 @@ fn mono_expr(
         }
 
         ast::Expr::Is(ast::IsExpr { expr, pat }) => mono::Expr::Is(mono::IsExpr {
-            expr: Box::new(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals)),
+            expr: mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals),
             pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
         }),
 
