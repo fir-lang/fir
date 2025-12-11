@@ -896,7 +896,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         .get(&RecordShape::UnnamedFields { arity: 0 })
         .unwrap_or_else(|| panic!("Unit record not defined {record_indices:#?}"));
 
-    let mut indices = Indices {
+    let indices = Indices {
         product_cons: product_con_nums,
         sum_cons: sum_con_nums,
         funs: fun_nums,
@@ -913,7 +913,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     fun_decl,
                     idx,
                     fun_ty_args,
-                    &mut indices,
+                    &indices,
                     &mut lowered_pgm.closures,
                 );
                 lowered_pgm.funs.push(Fun::Source(source_fun));
@@ -996,7 +996,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         fun_decl,
                         idx,
                         fun_ty_args,
-                        &mut indices,
+                        &indices,
                         &mut lowered_pgm.closures,
                     );
                     lowered_pgm.funs.push(Fun::Source(source_fun));
@@ -1555,7 +1555,7 @@ fn lower_source_con(
 fn lower_stmt(
     stmt: &mono::Stmt,
     closures: &mut Vec<Closure>,
-    indices: &mut Indices,
+    indices: &Indices,
     scope: &mut FunScope,
 ) -> Stmt {
     match stmt {
@@ -1652,7 +1652,7 @@ fn lower_stmt(
 fn lower_l_stmt(
     stmt: &L<mono::Stmt>,
     closures: &mut Vec<Closure>,
-    indices: &mut Indices,
+    indices: &Indices,
     scope: &mut FunScope,
 ) -> L<Stmt> {
     stmt.map_as_ref(|stmt| lower_stmt(stmt, closures, indices, scope))
@@ -1662,7 +1662,7 @@ fn lower_expr(
     expr: &mono::Expr,
     loc: &mono::Loc,
     closures: &mut Vec<Closure>,
-    indices: &mut Indices,
+    indices: &Indices,
     scope: &mut FunScope,
 ) -> (Expr, Map<Id, LocalIdx>) {
     match expr {
@@ -2009,7 +2009,7 @@ fn lower_expr(
 fn lower_nl_expr(
     named_expr: &Named<L<mono::Expr>>,
     closures: &mut Vec<Closure>,
-    indices: &mut Indices,
+    indices: &Indices,
     scope: &mut FunScope,
 ) -> (Named<L<Expr>>, Map<Id, LocalIdx>) {
     let (expr, pat_vars) = lower_l_expr(&named_expr.node, closures, indices, scope);
@@ -2025,7 +2025,7 @@ fn lower_nl_expr(
 fn lower_l_expr(
     l_expr: &L<mono::Expr>,
     closures: &mut Vec<Closure>,
-    indices: &mut Indices,
+    indices: &Indices,
     scope: &mut FunScope,
 ) -> (L<Expr>, Map<Id, LocalIdx>) {
     let (expr, pat_vars) = lower_expr(&l_expr.node, &l_expr.loc, closures, indices, scope);
@@ -2041,7 +2041,7 @@ fn lower_l_expr(
 fn lower_bl_expr(
     bl_expr: &L<mono::Expr>,
     closures: &mut Vec<Closure>,
-    indices: &mut Indices,
+    indices: &Indices,
     scope: &mut FunScope,
 ) -> (Box<L<Expr>>, Map<Id, LocalIdx>) {
     let (expr, pat_vars) = lower_l_expr(bl_expr, closures, indices, scope);
@@ -2050,7 +2050,7 @@ fn lower_bl_expr(
 
 fn lower_pat(
     pat: &mono::Pat,
-    indices: &mut Indices,
+    indices: &Indices,
     scope: &mut FunScope,
 
     // This map is to map binders in alternatives of or patterns to the same local.
@@ -2139,7 +2139,7 @@ fn lower_pat(
 
 fn lower_nl_pat(
     pat: &Named<L<mono::Pat>>,
-    indices: &mut Indices,
+    indices: &Indices,
     scope: &mut FunScope,
     mapped_binders: &mut Map<Id, LocalIdx>,
 ) -> Named<L<Pat>> {
@@ -2148,7 +2148,7 @@ fn lower_nl_pat(
 
 fn lower_l_pat(
     pat: &L<mono::Pat>,
-    indices: &mut Indices,
+    indices: &Indices,
     scope: &mut FunScope,
     mapped_binders: &mut Map<Id, LocalIdx>,
 ) -> L<Pat> {
@@ -2159,7 +2159,7 @@ fn lower_source_fun(
     fun: &mono::FunDecl,
     idx: FunIdx,
     ty_args: &[mono::Type],
-    indices: &mut Indices,
+    indices: &Indices,
     closures: &mut Vec<Closure>,
 ) -> SourceFunDecl {
     let mut locals: Vec<LocalInfo> = vec![];
