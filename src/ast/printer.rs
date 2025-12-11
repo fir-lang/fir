@@ -930,6 +930,12 @@ impl Pat {
                 buffer.push('~');
                 pat.node.print(buffer);
             }
+
+            Pat::As(AsPat { pat, var, ty: _ }) => {
+                pat.node.print(buffer);
+                buffer.push_str(" as ");
+                buffer.push_str(var.as_str());
+            }
         }
     }
 }

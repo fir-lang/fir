@@ -1086,6 +1086,16 @@ fn mono_pat(
             })
         }
 
+        ast::Pat::As(ast::AsPat { pat, var, ty }) => {
+            let mono_ty = mono_tc_ty(ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+            locals.insert(var.clone());
+            mono::Pat::As(mono::AsPat {
+                pat: mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
+                var: var.clone(),
+                ty: mono_ty,
+            })
+        }
+
         ast::Pat::Ignore => mono::Pat::Ignore,
 
         ast::Pat::Str(str) => mono::Pat::Str(str.clone()),

@@ -1004,6 +1004,11 @@ fn try_bind_pat(
             true
         }
 
+        Pat::As(pat, var) => {
+            locals[var.as_usize()] = value;
+            try_bind_pat(pgm, heap, pat, locals, value)
+        }
+
         Pat::Ignore => true,
 
         Pat::Str(str) => {

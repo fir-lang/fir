@@ -484,6 +484,7 @@ pub struct IsExpr {
 #[derive(Debug, Clone)]
 pub enum Pat {
     Var(LocalIdx),
+    As(Box<L<Pat>>, LocalIdx),
     Constr(ConstrPattern),
     Record(RecordPattern),
     Ignore,
@@ -2084,6 +2085,26 @@ fn lower_pat(
                 Pat::Var(var_idx)
             }
         },
+
+        mono::Pat::As(mono::AsPat { pat, var, ty }) => {
+            let var_idx = match mapped_binders.get(var) {
+                Some(idx) => *idx,
+                None => {
+                    let var_idx = LocalIdx(scope.locals.len() as u32);
+                    scope.locals.push(LocalInfo {
+                        name: var.clone(),
+                        ty: ty.clone(),
+                    });
+                    scope.bounds.insert(var.clone(), var_idx);
+                    mapped_binders.insert(var.clone(), var_idx);
+                    var_idx
+                }
+            };
+            Pat::As(
+                Box::new(lower_l_pat(pat, indices, scope, mapped_binders)),
+                var_idx,
+            )
+        }
 
         mono::Pat::Constr(mono::ConstrPattern {
             constr:

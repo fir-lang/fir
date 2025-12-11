@@ -18,6 +18,10 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             fresh_ty
         }
 
+        ast::Pat::As(ast::AsPat { pat, var, ty }) => {
+            todo!()
+        }
+
         ast::Pat::Ignore => Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone())),
 
         ast::Pat::Constr(ast::ConstrPattern {

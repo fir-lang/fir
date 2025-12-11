@@ -190,6 +190,11 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             *ty = Some(ty.as_ref().unwrap().deep_normalize(cons));
         }
 
+        ast::Pat::As(ast::AsPat { pat, var: _, ty }) => {
+            normalize_pat(&mut pat.node, cons);
+            *ty = Some(ty.as_ref().unwrap().deep_normalize(cons));
+        }
+
         ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) => {}
 
         ast::Pat::Constr(ast::ConstrPattern {

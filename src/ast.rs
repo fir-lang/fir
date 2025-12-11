@@ -358,6 +358,9 @@ pub enum Pat {
     /// Matches anything, binds it to variable.
     Var(VarPat),
 
+    /// As pattern: `<pat> as <var>`.
+    As(AsPat),
+
     /// Matches a constructor.
     Constr(ConstrPattern),
 
@@ -381,6 +384,16 @@ pub enum Pat {
 
 #[derive(Debug, Clone)]
 pub struct VarPat {
+    pub var: Id,
+
+    /// Inferred type of the binder. Filled in by the type checker.
+    pub ty: Option<Ty>,
+}
+
+#[derive(Debug, Clone)]
+pub struct AsPat {
+    pub pat: Box<L<Pat>>,
+
     pub var: Id,
 
     /// Inferred type of the binder. Filled in by the type checker.

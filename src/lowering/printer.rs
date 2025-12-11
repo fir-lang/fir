@@ -442,6 +442,11 @@ impl Pat {
         match self {
             Pat::Var(idx) => write!(buffer, "local{}", idx.0).unwrap(),
 
+            Pat::As(pat, idx) => {
+                pat.node.print(buffer);
+                write!(buffer, " as local{}", idx.0).unwrap();
+            }
+
             Pat::Constr(ConstrPattern { constr, fields }) => {
                 write!(buffer, "con{}(", constr.0).unwrap();
                 for (i, field) in fields.iter().enumerate() {

@@ -212,6 +212,10 @@ fn visit_pat(pat: &mono::Pat, records: &mut Set<RecordShape>) {
     match pat {
         mono::Pat::Var(_) | mono::Pat::Ignore | mono::Pat::Str(_) | mono::Pat::Char(_) => {}
 
+        mono::Pat::As(mono::AsPat { pat, var: _, ty: _ }) => {
+            visit_pat(&pat.node, records);
+        }
+
         mono::Pat::Constr(mono::ConstrPattern { constr: _, fields }) => {
             for field in fields {
                 visit_pat(&field.node.node, records);
