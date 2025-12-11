@@ -940,12 +940,16 @@ fn eval<W: Write>(
         Expr::Do(stmts) => exec(w, pgm, heap, locals, stmts, call_stack),
 
         Expr::Variant(expr) => {
-            // TODO: Simply evaluating the expression (as before) won't work as we can now have
-            // unboxed values in variants, e.g. integers.
+            // Note: the interpreter can only deal with variants of boxed types. If `expr` is an
+            // unboxed type things will go wrong.
+            //
+            // We can't check expr types here, so we just assume that `expr` doesn't evaluate to an
+            // unboxed value, without checking.
+            //
+            // It should be checked in an earlier pass that the `expr` here is not a value type.
+            //
+            // Also note: currently the only value types are integer types.
             eval(w, pgm, heap, locals, &expr.node, &expr.loc, call_stack)
-            // We need to add a tag word, but because we can't represent a Fir value as multiple
-            // interpreter values, the integer will need to be boxed.
-            // Or we could implement multi-values now.
         }
     }
 }
@@ -1091,7 +1095,11 @@ fn try_bind_pat(
             true
         }
 
-        Pat::Variant(p) => try_bind_pat(pgm, heap, p, locals, value),
+        Pat::Variant(p) => {
+            // `p` needs to match a boxed type, but we can't check this here (e.g. in an `assert`).
+            // See the documentation in `Expr::Variant` evaluator.
+            try_bind_pat(pgm, heap, p, locals, value)
+        }
     }
 }
 
