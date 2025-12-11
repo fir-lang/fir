@@ -385,7 +385,10 @@ impl PatMatrix {
                                 });
                             }
 
-                            ast::Pat::Constr(_) | ast::Pat::Str(_) | ast::Pat::Char(_) => {
+                            ast::Pat::Constr(_)
+                            | ast::Pat::Str(_)
+                            | ast::Pat::Char(_)
+                            | ast::Pat::Variant(_) => {
                                 // type error
                                 panic!();
                             }
@@ -631,6 +634,10 @@ impl PatMatrix {
                     ast::Pat::Or(pat1, pat2) => {
                         work.push((*pat1).clone());
                         work.push((*pat2).clone());
+                    }
+
+                    ast::Pat::Variant(pat) => {
+                        work.push((*pat).clone());
                     }
                 } // match pat
             } // pats in the row

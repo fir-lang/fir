@@ -229,6 +229,10 @@ fn visit_pat(pat: &mono::Pat, records: &mut Set<RecordShape>) {
             visit_pat(&pat1.node, records);
             visit_pat(&pat2.node, records);
         }
+
+        mono::Pat::Variant(pat) => {
+            visit_pat(&pat.node, records);
+        }
     }
 }
 
@@ -330,6 +334,10 @@ fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>) {
             for stmt in stmts {
                 visit_stmt(&stmt.node, records);
             }
+        }
+
+        mono::Expr::Variant(expr) => {
+            visit_expr(&expr.node, records);
         }
     }
 }

@@ -417,6 +417,7 @@ pub enum Expr {
     ClosureAlloc(ClosureIdx),
     Is(IsExpr),
     Do(Vec<L<Stmt>>),
+    Variant(Box<L<Expr>>),
 }
 
 #[derive(Debug, Clone)]
@@ -489,6 +490,7 @@ pub enum Pat {
     Str(String),
     Char(char),
     Or(Box<L<Pat>>, Box<L<Pat>>),
+    Variant(Box<L<Pat>>),
 }
 
 #[derive(Debug, Clone)]
@@ -1674,7 +1676,6 @@ fn lower_expr(
         ),
 
         mono::Expr::ConstrSelect(mono::Constructor {
-            variant: _,
             ty,
             constr,
             ty_args,
@@ -2003,6 +2004,11 @@ fn lower_expr(
             scope.bounds.exit();
             (expr, Default::default())
         }
+
+        mono::Expr::Variant(expr) => {
+            let (expr, vars) = lower_bl_expr(expr, closures, indices, scope);
+            (Expr::Variant(expr), vars)
+        }
     }
 }
 
@@ -2077,7 +2083,6 @@ fn lower_pat(
         mono::Pat::Constr(mono::ConstrPattern {
             constr:
                 mono::Constructor {
-                    variant: _,
                     ty,
                     constr,
                     ty_args,
@@ -2134,6 +2139,10 @@ fn lower_pat(
             Box::new(lower_l_pat(p1, indices, scope, mapped_binders)),
             Box::new(lower_l_pat(p2, indices, scope, mapped_binders)),
         ),
+
+        mono::Pat::Variant(p) => {
+            Pat::Variant(Box::new(lower_l_pat(p, indices, scope, mapped_binders)))
+        }
     }
 }
 

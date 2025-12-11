@@ -18,14 +18,12 @@ extern {
     type Location = Loc;
     type Error = LexerError<Infallible>;
 
-    enum Token { UpperId => Token { kind: TokenKind::UpperId, .. }, UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
+    enum Token {
+        UpperId => Token { kind: TokenKind::UpperId, .. },
+        UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
         UpperIdLBracket => Token { kind: TokenKind::UpperIdLBracket, .. },
         UpperIdPathLBracket => Token { kind: TokenKind::UpperIdPathLBracket, .. },
         UpperIdDotLBracket => Token { kind: TokenKind::UpperIdDotLBracket, .. },
-        TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
-        TildeUpperIdPath => Token { kind: TokenKind::TildeUpperIdPath, .. },
-        TildeUpperIdLBracket => Token { kind: TokenKind::TildeUpperIdLBracket, .. },
-        TildeUpperIdPathLBracket => Token { kind: TokenKind::TildeUpperIdPathLBracket, .. },
 
         LowerId => Token { kind: TokenKind::LowerId, .. },
         Label => Token { kind: TokenKind::Label, .. },
@@ -62,6 +60,7 @@ extern {
         ">>" => Token { kind: TokenKind::DoubleRAngle, .. },
         ">=" => Token { kind: TokenKind::RAngleEq, .. },
         "/" => Token { kind: TokenKind::Slash, .. },
+        "~" => Token { kind: TokenKind::Tilde, .. },
         INDENT => Token { kind: TokenKind::Indent, .. },
         DEDENT => Token { kind: TokenKind::Dedent, .. },
         NEWLINE => Token { kind: TokenKind::Newline, .. },
@@ -527,7 +526,6 @@ Stmt: Stmt = {
         Stmt::While(WhileStmt {
             label,
             cond: L::new(module, l, r, Expr::ConstrSelect(Constructor {
-                variant: false,
                 ty: SmolStr::new_static("Bool"),
                 constr: Some(SmolStr::new_static("True")),
                 user_ty_args: vec![],
@@ -657,43 +655,23 @@ InlineExpr: Expr = {
     },
 
     <id:UpperId> =>
-        Expr::ConstrSelect(Constructor { variant: false, ty: id.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] }),
-
-    <id:TildeUpperId> =>
-        Expr::ConstrSelect(Constructor { variant: true, ty: id.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] }),
+        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] }),
 
     <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
-        Expr::ConstrSelect(Constructor { variant: false, ty: id.smol_str(), constr: None, user_ty_args, ty_args: vec![] }),
-
-    <id:TildeUpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
-        Expr::ConstrSelect(Constructor { variant: true, ty: id.smol_str(), constr: None, user_ty_args, ty_args: vec![] }),
+        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, user_ty_args, ty_args: vec![] }),
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(Constructor { variant: false, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] })
-    },
-
-    <path:TildeUpperIdPath> => {
-        let mut parts = path_parts(&path.smol_str());
-        let constr = parts.pop().unwrap();
-        let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(Constructor { variant: true, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] })
+        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] })
     },
 
     <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(Constructor { variant: false, ty, constr: Some(constr), user_ty_args, ty_args: vec![] })
-    },
-
-    <path:TildeUpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
-        let mut parts = path_parts(&path.smol_str());
-        let constr = parts.pop().unwrap();
-        let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(Constructor { variant: true, ty, constr: Some(constr), user_ty_args, ty_args: vec![] })
+        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), user_ty_args, ty_args: vec![] })
     },
 
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
@@ -790,7 +768,7 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>
         match expr {
-            Expr::ConstrSelect(Constructor { variant: false, ty: id, constr: None, user_ty_args: ty_user_ty_args, ty_args: _ }) =>
+            Expr::ConstrSelect(Constructor { ty: id, constr: None, user_ty_args: ty_user_ty_args, ty_args: _ }) =>
                 Expr::AssocFnSelect(AssocFnSelectExpr {
                     ty: id,
                     ty_user_ty_args,
@@ -816,11 +794,14 @@ InlineExpr: Expr = {
     },
 
     #[precedence(level = "2")]
-    "not" <l:@L> <expr:InlineExpr> <r:@R> =>
+    <l:@L> "not" <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
 
-    "-" <l:@L> <expr:InlineExpr> <r:@R> =>
+    <l:@L> "-" <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Neg, expr: Box::new(L::new(module, l, r, expr)) }),
+
+    <l:@L> "~" <expr:InlineExpr> <r:@R> =>
+        Expr::Variant(Box::new(L::new(module, l, r, expr))),
 
     #[precedence(level = "4")]
     #[assoc(side = "left")]
@@ -1048,6 +1029,9 @@ Pat: Pat = {
 
     <char:CharLit> => Pat::Char(parse_char_lit(&char.text)),
 
+    <l:@L> "~" <pat:Pat> <r:@R> =>
+        Pat::Variant(Box::new(L::new(module, l, r, pat))),
+
     #[precedence(level = "1")]
     #[assoc(side = "right")]
     <l1:@L> <p1:Pat> <r1:@R> "|" <l2:@L> <p2:Pat> <r2:@L> => {
@@ -1055,28 +1039,18 @@ Pat: Pat = {
             Box::new(L::new(module, l1, r1, p1)),
             Box::new(L::new(module, l2, r2, p2)),
         )
-    }
+    },
 }
 
 Constructor: Constructor = {
     <ty:UpperId> =>
-        Constructor { variant: false, ty: ty.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] },
+        Constructor { ty: ty.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] },
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Constructor { variant: false, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] }
-    },
-
-    <ty:TildeUpperId> =>
-        Constructor { variant: true, ty: ty.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] },
-
-    <path:TildeUpperIdPath> => {
-        let mut parts = path_parts(&path.smol_str());
-        let constr = parts.pop().unwrap();
-        let ty = parts.pop().unwrap();
-        Constructor { variant: true, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] }
+        Constructor { ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] }
     },
 }
 
