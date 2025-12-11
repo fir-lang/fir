@@ -46,56 +46,6 @@ generateInterpreterTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
                 i += 1
                 continue
 
-            TokenKind.Tilde:
-                if i + 3 < tokens.len()
-                        and tokens.get(i + 1).kind is TokenKind.UpperId
-                        and tokens.get(i + 2).kind is TokenKind.Dot
-                        and tokens.get(i + 3)
-                            is Token(
-                                kind = TokenKind.UpperId,
-                                byteIdx = byteIdxRight,
-                                text = textRight,
-                                ..
-                            ):
-                    newTokens.push(
-                        Token(
-                            kind = TokenKind.TildeUpperIdPath,
-                            text =
-                                contents.substr(
-                                    token.byteIdx,
-                                    byteIdxRight + textRight.len(),
-                                ),
-                            byteIdx = token.byteIdx,
-                            line = token.line,
-                            col = token.col,
-                        ),
-                    )
-                    i += 4
-                    continue
-                elif i + 1 < tokens.len()
-                        and tokens.get(i + 1)
-                            is Token(
-                                kind = TokenKind.UpperId,
-                                byteIdx = byteIdxRight,
-                                text = textRight,
-                                ..
-                            ):
-                    newTokens.push(
-                        Token(
-                            kind = TokenKind.TildeUpperId,
-                            text =
-                                contents.substr(
-                                    token.byteIdx,
-                                    byteIdxRight + textRight.len(),
-                                ),
-                            byteIdx = token.byteIdx,
-                            line = token.line,
-                            col = token.col,
-                        ),
-                    )
-                    i += 2
-                    continue
-
             TokenKind.UpperId:
                 if i + 2 < tokens.len():
                     if tokens.get(i + 1).kind is TokenKind.Dot:

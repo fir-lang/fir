@@ -42,12 +42,6 @@ type TokenKind:
     # Two upper-case identifiers connected with a dot, e.g. `Option.None`.
     UpperIdPath
 
-    # '~' followed by an upper-case identifier. E.g. `~Foo`.
-    TildeUpperId
-
-    # '~' followed by an upper-case identifier path. E.g. `~Option.None`.
-    TildeUpperIdPath
-
     # An upper-case identifier followed by `.[`, e.g. in `Foo.[...]`.
     #
     # This starts an iterator syntax.
@@ -287,8 +281,6 @@ impl ToStr[TokenKind]:
             TokenKind.StarEq: "StarEq"
             TokenKind.Str: "Str"
             TokenKind.Tilde: "Tilde"
-            TokenKind.TildeUpperId: "TildeUpperId"
-            TokenKind.TildeUpperIdPath: "TildeUpperIdPath"
             TokenKind.Trait: "Trait"
             TokenKind.Type: "Type"
             TokenKind.Underscore: "Underscore"
@@ -380,12 +372,6 @@ impl Eq[TokenKind]:
             (left = TokenKind.StarEq, right = TokenKind.StarEq): Bool.True
             (left = TokenKind.Str, right = TokenKind.Str): Bool.True
             (left = TokenKind.Tilde, right = TokenKind.Tilde): Bool.True
-            (left = TokenKind.TildeUpperId, right = TokenKind.TildeUpperId):
-                Bool.True
-            (
-                left = TokenKind.TildeUpperIdPath,
-                right = TokenKind.TildeUpperIdPath,
-            ): Bool.True
             (left = TokenKind.Trait, right = TokenKind.Trait): Bool.True
             (left = TokenKind.Type, right = TokenKind.Type): Bool.True
             (left = TokenKind.Underscore, right = TokenKind.Underscore):
