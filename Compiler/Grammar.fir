@@ -1875,7 +1875,7 @@ prefixExpr(state: ParserState[Token]) Expr / U32:
                             )
                 if pfx is Option.Some(pfx):
                     match pfx:
-                        ExprPrefix.Tilde(token): panic("TODO")
+                        ExprPrefix.Tilde(token): ret = Expr.Variant(ret)
                         ExprPrefix.Minus(token):
                             ret = Expr.UnOp(
                                 UnOpExpr(
@@ -2697,70 +2697,6 @@ constructor(state: ParserState[Token]) Constructor / U32:
                     Option.Some(ok)
             let value = do:
                 Constructor(
-                    variant = Bool.False,
-                    ty = newTyId(ty, state._tokens),
-                    constr = con.map(\(con: U32): newId(con)),
-                    userTyArgs,
-                    tyArgs = Vec.empty(),
-                    _firstToken = TokenIdx(idx = ty),
-                )
-            value,
-    )
-    match altResult:
-        Result.Err(err): state._cursor = cursor0
-        Result.Ok(value): return value
-    let altResult = try(
-        \():
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Tilde, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
-            let ty = state.nextCursor()
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.UpperId, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
-            let optionalCursor0 = state._cursor
-            let symResult = try(
-                \():
-                    if state.peek() is Option.Some(sym)
-                            and sym is Token(kind = TokenKind.Dot, ..):
-                        state._cursor += 1
-                    else:
-                        throw(state.updateErrorCursor(state._cursor))
-                    let con = state.nextCursor()
-                    if state.peek() is Option.Some(sym)
-                            and sym is Token(kind = TokenKind.UpperId, ..):
-                        state._cursor += 1
-                    else:
-                        throw(state.updateErrorCursor(state._cursor))
-                    con,
-            )
-            let con = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
-            let optionalCursor0 = state._cursor
-            let symResult = try(
-                \():
-                    let userTyArgs = tyArgs(state)
-                    userTyArgs,
-            )
-            let userTyArgs = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
-            let value = do:
-                Constructor(
-                    variant = Bool.True,
                     ty = newTyId(ty, state._tokens),
                     constr = con.map(\(con: U32): newId(con)),
                     userTyArgs,
@@ -2877,6 +2813,21 @@ parenExpr(state: ParserState[Token]) Named[Expr] / U32:
 
 exprPrefix(state: ParserState[Token]) ExprPrefix / U32:
     let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let cur = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Tilde, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let value = do:
+                ExprPrefix.Tilde(TokenIdx(idx = cur))
+            value,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(value): return value
     let altResult = try(
         \():
             let cur = state.nextCursor()
@@ -3948,6 +3899,21 @@ pat(state: ParserState[Token]) Pat / U32:
 
 simplePat(state: ParserState[Token]) Pat / U32:
     let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Tilde, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let pat = simplePat(state)
+            let value = do:
+                Pat.Variant(pat)
+            value,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(value): return value
     let altResult = try(
         \():
             let var_ = state.nextCursor()

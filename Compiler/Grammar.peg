@@ -438,7 +438,7 @@ prefixExpr Expr:
         if pfx is Option.Some(pfx):
             match pfx:
                 ExprPrefix.Tilde(token):
-                    panic("TODO")
+                    ret = Expr.Variant(ret)
 
                 ExprPrefix.Minus(token):
                     ret = Expr.UnOp(UnOpExpr(
@@ -672,17 +672,6 @@ seqElem SeqElem:
 constructor Constructor:
     ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
-            variant = Bool.False,
-            ty = newTyId(ty, state._tokens),
-            constr = con.map(\(con: U32): newId(con)),
-            userTyArgs,
-            tyArgs = Vec.empty(),
-            _firstToken = TokenIdx(idx = ty),
-        )
-
-    "~" ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
-        Constructor(
-            variant = Bool.True,
             ty = newTyId(ty, state._tokens),
             constr = con.map(\(con: U32): newId(con)),
             userTyArgs,
@@ -710,7 +699,7 @@ parenExpr Named[Expr]:
 
 
 exprPrefix ExprPrefix:
-    # cur=^ "~": ExprPrefix.Tilde(TokenIdx(idx = cur))
+    cur=^ "~": ExprPrefix.Tilde(TokenIdx(idx = cur))
     cur=^ "-": ExprPrefix.Minus(TokenIdx(idx = cur))
     cur=^ "not": ExprPrefix.Not(TokenIdx(idx = cur))
 
@@ -850,6 +839,10 @@ pat Pat:
 
 
 simplePat Pat:
+    # Variant
+    "~" pat=simplePat:
+        Pat.Variant(pat)
+
     # Variables
     var_=^ "LowerId":
         Pat.Var(VarPat(var_ = newId(var_), ty = Option.None))
