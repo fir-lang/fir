@@ -330,7 +330,7 @@ Scheme.instantiate(
     (ty = self.ty.substQVars(varMap), vars = instantiations)
 
 
-Scheme.instantiateWithTys(self, argTys: Vec[Ty], preds: Vec[Pred], loc: Loc,) Ty:
+Scheme.instantiateWithTys(self, argTys: Vec[Ty], preds: Vec[Pred], loc: Loc) Ty:
     assert(self.qvars.len() == argTys.len())
 
     # Maps `QVar`s to unification variables.
