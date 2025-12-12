@@ -1383,37 +1383,6 @@ fn resolve_preds(
                 }
             }
 
-            if pred.trait_ == "Boxed" {
-                match &pred.params[0] {
-                    Ty::Con(con, _)
-                        if con != "I8"
-                    && con != "U8"
-                    && con != "I16"
-                    && con != "U16"
-                    && con != "I32"
-                    && con != "U32"
-                    && con != "I64"
-                    && con != "U64"
-                    // Hack: we can't distinguish rigid type variables from type constructor in the
-                    // interpreter. It's a lot of work to refactor this now and we do it right in the
-                    // compiler. For now check the first letter of the identifier to distinguish type
-                    // constructors from rigid type variables. We only want to solve `Unboxed` for type
-                    // constructor that are not one of the hard-coded unboxed type constructors listed
-                    // above.
-                    && con.chars().next().unwrap().is_uppercase() =>
-                    {
-                        continue;
-                    }
-
-                    Ty::App(_, _, _) => {
-                        // We don't have any unboxed types that take arguments.
-                        continue;
-                    }
-
-                    _ => {}
-                }
-            }
-
             for assump in assumps {
                 // We can't use set lookup as locs will be different.
                 if assump.trait_ == pred.trait_ && assump.params == pred.params {

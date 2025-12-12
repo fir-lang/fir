@@ -1335,12 +1335,6 @@ pub(super) fn check_expr(
 
         ast::Expr::Variant(var_expr) => {
             let (expr_ty, binders) = check_expr(tc_state, var_expr, None, level, loop_stack);
-            let pred = Pred {
-                trait_: SmolStr::new_static("Boxed"),
-                params: vec![expr_ty.clone()],
-                loc: expr.loc.clone(),
-            };
-            tc_state.preds.push(pred);
             let variant_ty = make_variant(tc_state, expr_ty, level, &expr.loc);
             (
                 unify_expected_ty(
@@ -1730,7 +1724,13 @@ fn select_method(
 
 pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &ast::Loc) -> Ty {
     let con = match ty.normalize(tc_state.tys.tys.cons()) {
-        Ty::Con(con, _) | Ty::App(con, _, _) => con,
+        // Hack below: check first letter of the identifier to rigit type variables from type
+        // constructors.
+        //
+        // Compiler doesn't have this issue as it has a `QVar` constructor.
+        Ty::Con(con, _) if con.chars().next().unwrap().is_uppercase() => con,
+
+        Ty::App(con, _, _) => con,
 
         ty => panic!(
             "{}: Type in variant is not a constructor: {}",
@@ -1738,6 +1738,21 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
             ty
         ),
     };
+
+    if con == "I8"
+        || con == "U8"
+        || con == "I16"
+        || con == "U16"
+        || con == "I32"
+        || con == "U32"
+        || con == "I64"
+        || con == "U64"
+    {
+        panic!(
+            "{}: Integers can't be made variants in the interpreter",
+            loc_display(loc)
+        );
+    }
 
     let row_ext = tc_state
         .var_gen
