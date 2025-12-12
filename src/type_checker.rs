@@ -1393,6 +1393,13 @@ fn resolve_preds(
                 && con != "U32"
                 && con != "I64"
                 && con != "U64"
+                // Hack: we can't distinguish rigid type variables from type constructor in the
+                // interpreter. It's a lot of work to refactor this now and we do it right in the
+                // compiler. For now check the first letter of the identifier to distinguish type
+                // constructors from rigid type variables. We only want to solve `Unboxed` for type
+                // constructor that are not one of the hard-coded unboxed type constructors listed
+                // above.
+                && con.chars().next().unwrap().is_uppercase()
             {
                 continue;
             }

@@ -27,6 +27,12 @@ trait RecRow[t]
 trait VarRow[t]
 
 
+# A trait solved for all types other than unboxed types.
+#
+# Used in variant expressions.
+trait Boxed[t]
+
+
 # The `+` operator.
 trait Add[t]:
     __add(self: t, other: t) t
