@@ -1383,23 +1383,18 @@ fn resolve_preds(
                 }
             }
 
-            if pred.trait_ == "Boxed" {
-                match &pred.params[0] {
-                    Ty::Con(con, _) => {
-                        if con != "I8"
-                            && con != "U8"
-                            && con != "I16"
-                            && con != "U16"
-                            && con != "I32"
-                            && con != "U32"
-                            && con != "I64"
-                            && con != "U64"
-                        {
-                            continue;
-                        }
-                    }
-                    _ => {}
-                }
+            if pred.trait_ == "Boxed"
+                && let Ty::Con(con, _) = &pred.params[0]
+                && con != "I8"
+                && con != "U8"
+                && con != "I16"
+                && con != "U16"
+                && con != "I32"
+                && con != "U32"
+                && con != "I64"
+                && con != "U64"
+            {
+                continue;
             }
 
             for assump in assumps {
