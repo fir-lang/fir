@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: 44c7f442b0bf8acae5d8fd8d2743525fdf0f91d2b433c61dcc04c256aadc2d4d
+// sha3: 6949a127e3edc6730a34d740e674d83f46e567965fb2afb3f43438608674269c
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -47643,8 +47643,8 @@ fn __action110<'a>(
 )]
 fn __action111<'a>(
     module: &'a Rc<str>,
-    (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> Expr {
@@ -47662,8 +47662,8 @@ fn __action111<'a>(
 )]
 fn __action112<'a>(
     module: &'a Rc<str>,
-    (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> Expr {
@@ -53502,11 +53502,11 @@ fn __action463<'a>(
     __1: (Loc, Expr, Loc),
     __2: (Loc, Loc, Loc),
 ) -> Expr {
-    let __start0 = __0.2;
-    let __end0 = __1.0;
+    let __start0 = __0.0;
+    let __end0 = __0.0;
     let __temp0 = __action239(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action111(module, __0, __temp0, __1, __2)
+    __action111(module, __temp0, __0, __1, __2)
 }
 
 #[allow(unused_variables)]
@@ -53521,11 +53521,11 @@ fn __action464<'a>(
     __1: (Loc, Expr, Loc),
     __2: (Loc, Loc, Loc),
 ) -> Expr {
-    let __start0 = __0.2;
-    let __end0 = __1.0;
+    let __start0 = __0.0;
+    let __end0 = __0.0;
     let __temp0 = __action239(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action112(module, __0, __temp0, __1, __2)
+    __action112(module, __temp0, __0, __1, __2)
 }
 
 #[allow(unused_variables)]
