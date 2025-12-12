@@ -1011,13 +1011,17 @@ fn try_bind_pat(
         Pat::Ignore => true,
 
         Pat::Str(str) => {
-            debug_assert!(heap[value] == pgm.str_con_idx.as_u64());
+            if heap[value] != pgm.str_con_idx.as_u64() {
+                return false;
+            }
             let value_bytes = heap.str_bytes(value);
             value_bytes == str.as_bytes()
         }
 
         Pat::Char(char) => {
-            debug_assert_eq!(heap[value], pgm.char_con_idx.as_u64());
+            if heap[value] != pgm.char_con_idx.as_u64() {
+                return false;
+            }
             heap[value + 1] == u64::from(*char as u32)
         }
 
