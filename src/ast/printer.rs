@@ -826,6 +826,11 @@ impl Expr {
                 }
                 buffer.push(']');
             }
+
+            Expr::Variant(expr) => {
+                buffer.push('~');
+                expr.node.print(buffer, indent);
+            }
         }
     }
 }
@@ -920,15 +925,17 @@ impl Pat {
                 pat2.node.print(buffer);
                 buffer.push(')');
             }
+
+            Pat::Variant(pat) => {
+                buffer.push('~');
+                pat.node.print(buffer);
+            }
         }
     }
 }
 
 impl Constructor {
     pub fn print(&self, buffer: &mut String) {
-        if self.variant {
-            buffer.push('~');
-        }
         buffer.push_str(&self.ty);
         if let Some(constr) = &self.constr {
             buffer.push('.');

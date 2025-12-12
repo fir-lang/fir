@@ -628,6 +628,9 @@ type Pat:
     ## Or pattern: `<pat1> | <pat2> | ...`. At least two patterns.
     Or(Vec[Pat])
 
+    ## Variant pattern: `~"hi"`, `~Option.Some(_)`.
+    Variant(Pat)
+
 
 impl Tokens[Pat]:
     firstToken(self: Pat) TokenIdx:
@@ -642,6 +645,8 @@ impl Tokens[Pat]:
 
             Pat.Or(ps): ps.get(0).firstToken()
 
+            Pat.Variant(pat): pat.firstToken()
+
     lastToken(self: Pat) TokenIdx:
         match self:
             Pat.Var(pat): pat.lastToken()
@@ -653,6 +658,8 @@ impl Tokens[Pat]:
             Pat.Ignore(tok) | Pat.Str(_, tok) | Pat.Char(_, tok): tok
 
             Pat.Or(ps): ps.last().unwrap().lastToken()
+
+            Pat.Variant(pat): pat.lastToken()
 
 
 #[derive(ToDoc)]
@@ -710,8 +717,6 @@ impl Tokens[RecordPat]:
 ## A sum or product constructor, in patterns and expressions.
 #[derive(ToDoc)]
 type Constructor(
-    variant: Bool,
-
     ## Type of the constructor.
     ty: TyId,
 
@@ -814,6 +819,9 @@ type Expr:
     # A parenthesized expression.
     Paren(ParenExpr)
 
+    # A variant: `~"hi"`, `Option.Some(123)`.
+    Variant(Expr)
+
 
 impl Tokens[Expr]:
     firstToken(self: Expr) TokenIdx:
@@ -839,6 +847,7 @@ impl Tokens[Expr]:
             Expr.Do(e): e.firstToken()
             Expr.Seq(e): e.firstToken()
             Expr.Paren(e): e.firstToken()
+            Expr.Variant(e): e.firstToken()
 
     lastToken(self: Expr) TokenIdx:
         match self:
@@ -863,6 +872,7 @@ impl Tokens[Expr]:
             Expr.Do(e): e.lastToken()
             Expr.Seq(e): e.lastToken()
             Expr.Paren(e): e.lastToken()
+            Expr.Variant(e): e.lastToken()
 
 
 #[derive(ToDoc)]
@@ -2136,6 +2146,11 @@ impl ToDoc[Pat]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("Pat.Or") + Doc.char('(') + args)
+            Pat.Variant(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Pat.Variant") + Doc.char('(') + args)
 
 
 impl ToDoc[VarPat]:
@@ -2212,11 +2227,6 @@ impl ToDoc[RecordPat]:
 impl ToDoc[Constructor]:
     toDoc(self: Constructor) Doc:
         let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("variant =")
-                + Doc.nested(4, Doc.break_(1) + self.variant.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + self.ty.toDoc()),
         )
@@ -2352,6 +2362,11 @@ impl ToDoc[Expr]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("Expr.Paren") + Doc.char('(') + args)
+            Expr.Variant(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Expr.Variant") + Doc.char('(') + args)
 
 
 impl ToDoc[VarExpr]:

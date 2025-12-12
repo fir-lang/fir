@@ -938,6 +938,19 @@ fn eval<W: Write>(
         }
 
         Expr::Do(stmts) => exec(w, pgm, heap, locals, stmts, call_stack),
+
+        Expr::Variant(expr) => {
+            // Note: the interpreter can only deal with variants of boxed types. If `expr` is an
+            // unboxed type things will go wrong.
+            //
+            // We can't check expr types here, so we just assume that `expr` doesn't evaluate to an
+            // unboxed value, without checking.
+            //
+            // It should be checked in an earlier pass that the `expr` here is not a value type.
+            //
+            // Also note: currently the only value types are integer types.
+            eval(w, pgm, heap, locals, &expr.node, &expr.loc, call_stack)
+        }
     }
 }
 
@@ -998,13 +1011,17 @@ fn try_bind_pat(
         Pat::Ignore => true,
 
         Pat::Str(str) => {
-            debug_assert!(heap[value] == pgm.str_con_idx.as_u64());
+            if heap[value] != pgm.str_con_idx.as_u64() {
+                return false;
+            }
             let value_bytes = heap.str_bytes(value);
             value_bytes == str.as_bytes()
         }
 
         Pat::Char(char) => {
-            debug_assert_eq!(heap[value], pgm.char_con_idx.as_u64());
+            if heap[value] != pgm.char_con_idx.as_u64() {
+                return false;
+            }
             heap[value + 1] == u64::from(*char as u32)
         }
 
@@ -1080,6 +1097,12 @@ fn try_bind_pat(
             }
 
             true
+        }
+
+        Pat::Variant(p) => {
+            // `p` needs to match a boxed type, but we can't check this here (e.g. in an `assert`).
+            // See the documentation in `Expr::Variant` evaluator.
+            try_bind_pat(pgm, heap, p, locals, value)
         }
     }
 }

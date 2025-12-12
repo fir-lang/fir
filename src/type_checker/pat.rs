@@ -23,7 +23,6 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
         ast::Pat::Constr(ast::ConstrPattern {
             constr:
                 ast::Constructor {
-                    variant,
                     ty: pat_ty_name,
                     constr: pat_con_name,
                     user_ty_args,
@@ -144,7 +143,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 })
                 .collect();
 
-            let mut ty = apply_con_ty(
+            apply_con_ty(
                 &con_ty,
                 &pat_field_tys,
                 tc_state.tys.tys.cons(),
@@ -152,13 +151,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 level,
                 &pat.loc,
                 *ignore_rest,
-            );
-
-            if *variant {
-                ty = crate::type_checker::expr::make_variant(tc_state, ty, level, &pat.loc);
-            }
-
-            ty
+            )
         }
 
         ast::Pat::Record(ast::RecordPattern {
@@ -277,6 +270,11 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             );
 
             pat1_ty
+        }
+
+        ast::Pat::Variant(var_pat) => {
+            let pat_ty = check_pat(tc_state, var_pat, level);
+            crate::type_checker::expr::make_variant(tc_state, pat_ty, level, &pat.loc)
         }
     }
 }

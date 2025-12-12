@@ -138,6 +138,7 @@ pub enum Pat {
     Str(String),
     Char(char),
     Or(Box<L<Pat>>, Box<L<Pat>>),
+    Variant(Box<L<Pat>>),
 }
 
 #[derive(Debug, Clone)]
@@ -156,7 +157,6 @@ pub struct ConstrPattern {
 
 #[derive(Debug, Clone)]
 pub struct Constructor {
-    pub variant: bool,
     pub ty: Id,
     pub constr: Option<Id>,
     pub ty_args: Vec<Type>,
@@ -217,6 +217,7 @@ pub enum Expr {
     Fn(FnExpr),
     Is(IsExpr),
     Do(Vec<L<Stmt>>),
+    Variant(Box<L<Expr>>),
 }
 
 #[derive(Debug, Clone)]
