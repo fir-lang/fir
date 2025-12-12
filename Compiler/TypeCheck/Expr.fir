@@ -71,6 +71,8 @@ checkExpr(
 
         Expr.Paren(..): panic("TODO")
 
+        Expr.Variant(..): panic("TODO")
+
 
 _checkVarExpr(
     varExpr: VarExpr,
@@ -194,11 +196,6 @@ _checkConExpr(
             )
 
             con.tyArgs = Vec.fromIter(vars.iter().map(Ty.UVar))
-
-            if con.variant:
-                ()
-            else:
-                ()
 
             ty
 

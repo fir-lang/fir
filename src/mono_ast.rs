@@ -1,6 +1,6 @@
 pub mod printer;
 
-pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, L, Loc, Named, UnOp};
+pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, L, Loc, Named};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -138,6 +138,7 @@ pub enum Pat {
     Str(String),
     Char(char),
     Or(Box<L<Pat>>, Box<L<Pat>>),
+    Variant(Box<L<Pat>>),
 }
 
 #[derive(Debug, Clone)]
@@ -156,7 +157,6 @@ pub struct ConstrPattern {
 
 #[derive(Debug, Clone)]
 pub struct Constructor {
-    pub variant: bool,
     pub ty: Id,
     pub constr: Option<Id>,
     pub ty_args: Vec<Type>,
@@ -210,7 +210,6 @@ pub enum Expr {
     Str(Vec<StringPart>),
     Char(char),
     BinOp(BinOpExpr),
-    UnOp(UnOpExpr),
     Record(Vec<Named<L<Expr>>>),
     Return(Box<L<Expr>>),
     Match(MatchExpr),
@@ -218,6 +217,7 @@ pub enum Expr {
     Fn(FnExpr),
     Is(IsExpr),
     Do(Vec<L<Stmt>>),
+    Variant(Box<L<Expr>>),
 }
 
 #[derive(Debug, Clone)]
@@ -264,12 +264,6 @@ pub struct BinOpExpr {
     pub left: Box<L<Expr>>,
     pub right: Box<L<Expr>>,
     pub op: BinOp,
-}
-
-#[derive(Debug, Clone)]
-pub struct UnOpExpr {
-    pub op: UnOp,
-    pub expr: Box<L<Expr>>,
 }
 
 #[derive(Debug, Clone)]

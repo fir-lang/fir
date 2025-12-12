@@ -597,6 +597,11 @@ Expr.format(self, tokens: Array[Token]) Doc:
             Expr.Seq(e): e.format(tokens)
             Expr.Paren(e): e.format(tokens)
 
+            Expr.Variant(e):
+                let tilde = prevNonTrivia(e.firstToken(), tokens).unwrap()
+                assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
+                formatToken(tilde, tokens) + e.format(tokens)
+
             Expr.MethodSelect(e):
                 # These expressions are intoruduced by the type checker, which we don't run when
                 # formatting.
@@ -609,14 +614,7 @@ VarExpr.format(self, tokens: Array[Token]) Doc:
 
 
 Constructor.format(self, tokens: Array[Token]) Doc:
-    let doc = Doc.empty()
-
-    if self.variant:
-        let tilde = prevNonTrivia(self.ty.token, tokens).unwrap()
-        assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
-        doc += formatToken(tilde, tokens)
-
-    doc += formatToken(self.ty.token, tokens)
+    let doc = formatToken(self.ty.token, tokens)
 
     if self.constr is Option.Some(con):
         let dot = nextNonTrivia(self.ty.token, tokens).unwrap()
@@ -1460,6 +1458,11 @@ Pat.format(self, tokens: Array[Token]) Doc:
                     + p.format(tokens)
 
             Doc.grouped(doc0 + docRest.nest(4))
+
+        Pat.Variant(p):
+            let tilde = prevNonTrivia(p.firstToken(), tokens).unwrap()
+            assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
+            formatToken(tilde, tokens) + p.format(tokens)
 
 
 VarPat.format(self, tokens: Array[Token]) Doc:

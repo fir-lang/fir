@@ -538,21 +538,6 @@ impl Expr {
                 }
             }
 
-            Expr::UnOp(UnOpExpr { op, expr }) => {
-                match op {
-                    UnOp::Not => buffer.push_str("not "),
-                    UnOp::Neg => buffer.push('-'),
-                }
-                let parens = expr_parens(&expr.node);
-                if parens {
-                    buffer.push('(');
-                }
-                expr.node.print(buffer, 0);
-                if parens {
-                    buffer.push(')');
-                }
-            }
-
             Expr::Record(fields) => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {
@@ -698,6 +683,11 @@ impl Expr {
                     buffer.push('\n');
                 }
             }
+
+            Expr::Variant(expr) => {
+                buffer.push('~');
+                expr.node.print(buffer, indent);
+            }
         }
     }
 }
@@ -768,15 +758,17 @@ impl Pat {
                 pat2.node.print(buffer);
                 buffer.push(')');
             }
+
+            Pat::Variant(pat) => {
+                buffer.push('~');
+                pat.node.print(buffer);
+            }
         }
     }
 }
 
 impl Constructor {
     pub fn print(&self, buffer: &mut String) {
-        if self.variant {
-            buffer.push('~');
-        }
         buffer.push_str(&self.ty);
         if let Some(constr) = &self.constr {
             buffer.push('.');

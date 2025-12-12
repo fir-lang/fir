@@ -133,6 +133,9 @@ trait Visitor[v]:
     visitParenExpr(self: v, e: ParenExpr):
         defaultVisitParen(self, e)
 
+    visitVariantExpr(self: v, e: Expr):
+        defaultVisitVariant(self, e)
+
     # ----------------------------------------------------------------
     # Stmts
 
@@ -189,6 +192,9 @@ trait Visitor[v]:
 
     visitOrPat(self: v, ps: Vec[Pat]):
         defaultVisitOrPat(self, ps)
+
+    visitVariantPat(self: v, p: Pat):
+        defaultVisitVariantPat(self, p)
 
     # ----------------------------------------------------------------
     # Types
@@ -312,6 +318,7 @@ defaultVisitExpr[Visitor[v]](v: v, expr: Expr):
         Expr.Do(e): v.visitDoExpr(e)
         Expr.Seq(e): v.visitSeqExpr(e)
         Expr.Paren(e): v.visitParenExpr(e)
+        Expr.Variant(e): v.visitVariantExpr(e)
 
 
 defaultVisitStmt[Visitor[v]](v: v, stmt: Stmt):
@@ -335,6 +342,7 @@ defaultVisitPat[Visitor[v]](v: v, pat: Pat):
         Pat.Str(s, t): v.visitStrPat(s, t)
         Pat.Char(c, t): v.visitCharPat(c, t)
         Pat.Or(ps): v.visitOrPat(ps)
+        Pat.Variant(ps): v.visitVariantPat(ps)
 
 
 defaultVisitType[Visitor[v]](v: v, ty: Type):
@@ -445,6 +453,10 @@ defaultVisitParen[Visitor[v]](v: v, e: ParenExpr):
     v.visitExpr(e.expr)
 
 
+defaultVisitVariant[Visitor[v]](v: v, e: Expr):
+    v.visitExpr(e)
+
+
 defaultVisitConstructor[Visitor[v]](v: v, c: Constructor):
     v.visitTyId(c.ty)
     if c.userTyArgs is Option.Some(args):
@@ -509,6 +521,10 @@ defaultVisitRecordPat[Visitor[v]](v: v, s: RecordPat):
 defaultVisitOrPat[Visitor[v]](v: v, ps: Vec[Pat]):
     for p: Pat in ps.iter():
         v.visitPat(p)
+
+
+defaultVisitVariantPat[Visitor[v]](v: v, p: Pat):
+    v.visitPat(p)
 
 
 defaultVisitNamedType[Visitor[v]](v: v, t: NamedType):

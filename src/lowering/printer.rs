@@ -428,6 +428,11 @@ impl Expr {
                     buffer.push('\n');
                 }
             }
+
+            Expr::Variant(expr) => {
+                buffer.push('~');
+                expr.node.print(buffer, indent);
+            }
         }
     }
 }
@@ -485,6 +490,11 @@ impl Pat {
                 p1.node.print(buffer);
                 buffer.push_str(" | ");
                 p2.node.print(buffer);
+            }
+
+            Pat::Variant(p) => {
+                buffer.push('~');
+                p.node.print(buffer);
             }
         }
     }

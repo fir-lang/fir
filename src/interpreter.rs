@@ -287,7 +287,7 @@ fn call_ast_fun<W: Write>(
     loc: &Loc,
     call_stack: &mut Vec<Frame>,
 ) -> FunRet {
-    assert_eq!(
+    debug_assert_eq!(
         fun.params.len(),
         args.len(),
         "{}, fun: {}",
@@ -326,7 +326,7 @@ fn call_closure<W: Write>(
             let fun = &pgm.funs[top_fun_idx as usize];
             let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
             for arg in args {
-                assert!(arg.name.is_none());
+                debug_assert!(arg.name.is_none());
                 arg_values.push(val!(eval(
                     w,
                     pgm,
@@ -373,7 +373,7 @@ fn call_closure<W: Write>(
             }
 
             // Copy closure arguments into locals.
-            assert_eq!(args.len(), closure.params.len());
+            debug_assert_eq!(args.len(), closure.params.len());
 
             for (i, arg_val) in args.iter().enumerate() {
                 let arg_val = val!(eval(
@@ -425,9 +425,9 @@ fn allocate_object_from_idx<W: Write>(
     match fields {
         ConFields::Unnamed(num_fields) => {
             // Evaluate in program order and store in the same order.
-            assert_eq!(num_fields.len(), args.len());
+            debug_assert_eq!(num_fields.len(), args.len());
             for arg in args {
-                assert!(arg.name.is_none());
+                debug_assert!(arg.name.is_none());
                 arg_values.push(val!(eval(
                     w,
                     pgm,
@@ -456,7 +456,7 @@ fn allocate_object_from_idx<W: Write>(
                     call_stack
                 ));
                 let old = named_values.insert(name.clone(), value);
-                assert!(old.is_none());
+                debug_assert!(old.is_none());
             }
             for (name, _) in field_names {
                 arg_values.push(*named_values.get(name).unwrap());
@@ -938,6 +938,19 @@ fn eval<W: Write>(
         }
 
         Expr::Do(stmts) => exec(w, pgm, heap, locals, stmts, call_stack),
+
+        Expr::Variant(expr) => {
+            // Note: the interpreter can only deal with variants of boxed types. If `expr` is an
+            // unboxed type things will go wrong.
+            //
+            // We can't check expr types here, so we just assume that `expr` doesn't evaluate to an
+            // unboxed value, without checking.
+            //
+            // It should be checked in an earlier pass that the `expr` here is not a value type.
+            //
+            // Also note: currently the only value types are integer types.
+            eval(w, pgm, heap, locals, &expr.node, &expr.loc, call_stack)
+        }
     }
 }
 
@@ -998,13 +1011,17 @@ fn try_bind_pat(
         Pat::Ignore => true,
 
         Pat::Str(str) => {
-            debug_assert!(heap[value] == pgm.str_con_idx.as_u64());
+            if heap[value] != pgm.str_con_idx.as_u64() {
+                return false;
+            }
             let value_bytes = heap.str_bytes(value);
             value_bytes == str.as_bytes()
         }
 
         Pat::Char(char) => {
-            debug_assert_eq!(heap[value], pgm.char_con_idx.as_u64());
+            if heap[value] != pgm.char_con_idx.as_u64() {
+                return false;
+            }
             heap[value + 1] == u64::from(*char as u32)
         }
 
@@ -1080,6 +1097,12 @@ fn try_bind_pat(
             }
 
             true
+        }
+
+        Pat::Variant(p) => {
+            // `p` needs to match a boxed type, but we can't check this here (e.g. in an `assert`).
+            // See the documentation in `Expr::Variant` evaluator.
+            try_bind_pat(pgm, heap, p, locals, value)
         }
     }
 }

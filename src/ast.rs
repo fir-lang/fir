@@ -374,6 +374,9 @@ pub enum Pat {
 
     /// Or pattern: `<pat1> | <pat2>`.
     Or(Box<L<Pat>>, Box<L<Pat>>),
+
+    /// A variant pattern: `~"Hi"`, `~Option.Some(123)`.
+    Variant(Box<L<Pat>>),
 }
 
 #[derive(Debug, Clone)]
@@ -403,7 +406,6 @@ pub struct RecordPattern {
 
 #[derive(Debug, Clone)]
 pub struct Constructor {
-    pub variant: bool,
     pub ty: Id,
     pub constr: Option<Id>,
 
@@ -536,6 +538,9 @@ pub enum Expr {
         ty: Option<Id>,
         elems: Vec<(Option<L<Expr>>, L<Expr>)>,
     },
+
+    /// A variant: `~Option.Some(123)`, `~123`.
+    Variant(Box<L<Expr>>),
 }
 
 #[derive(Debug, Clone)]
@@ -1139,6 +1144,10 @@ impl Expr {
                     }
                     v.node.subst_ty_ids(substs);
                 }
+            }
+
+            Expr::Variant(expr) => {
+                expr.node.subst_ty_ids(substs);
             }
         }
     }
