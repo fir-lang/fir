@@ -1335,6 +1335,12 @@ pub(super) fn check_expr(
 
         ast::Expr::Variant(var_expr) => {
             let (expr_ty, binders) = check_expr(tc_state, var_expr, None, level, loop_stack);
+            let pred = Pred {
+                trait_: SmolStr::new_static("Boxed"),
+                params: vec![expr_ty.clone()],
+                loc: expr.loc.clone(),
+            };
+            tc_state.preds.push(pred);
             let variant_ty = make_variant(tc_state, expr_ty, level, &expr.loc);
             (
                 unify_expected_ty(

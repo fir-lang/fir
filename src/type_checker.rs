@@ -1383,6 +1383,25 @@ fn resolve_preds(
                 }
             }
 
+            if pred.trait_ == "Boxed" {
+                match &pred.params[0] {
+                    Ty::Con(con, _) => {
+                        if con != "I8"
+                            && con != "U8"
+                            && con != "I16"
+                            && con != "U16"
+                            && con != "I32"
+                            && con != "U32"
+                            && con != "I64"
+                            && con != "U64"
+                        {
+                            continue;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+
             for assump in assumps {
                 // We can't use set lookup as locs will be different.
                 if assump.trait_ == pred.trait_ && assump.params == pred.params {
