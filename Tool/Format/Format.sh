@@ -14,11 +14,11 @@ for file in "$@"; do
 
   output_file="$file.formatted"
 
-  if ! ./target/release/fir Tool/Format/Format.fir -- "$file" > "$output_file"; then
+  if ./target/release/fir Tool/Format/Format.fir -- "$file" > "$output_file"; then
+    mv "$output_file" "$file"
+  else
     script_failed=1
   fi
-
-  mv "$output_file" "$file"
 done
 
 exit "$script_failed"
