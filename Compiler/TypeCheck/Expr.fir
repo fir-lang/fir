@@ -27,11 +27,10 @@ checkExpr(
     loopStack: Option[Vec[LocalId]],
 ) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
     match expr:
-        Expr.Var(expr):
-            _checkVarExpr(expr, pgm, env, expectedTy, level, loopStack)
+        Expr.Var(expr): _checkVarExpr(expr, pgm, env, expectedTy, level)
 
         Expr.ConstrSelect(expr):
-            _checkConExpr(expr, pgm, env, expectedTy, level, loopStack)
+            _checkConExpr(expr, pgm, env, expectedTy, level)
 
         Expr.FieldSelect(..): panic("TODO")
 
@@ -69,7 +68,8 @@ checkExpr(
 
         Expr.Seq(..): panic("TODO")
 
-        Expr.Paren(..): panic("TODO")
+        Expr.Paren(expr):
+            _checkParenExpr(expr, pgm, env, expectedTy, level, loopStack)
 
         Expr.Variant(..): panic("TODO")
 
@@ -80,7 +80,6 @@ _checkVarExpr(
     env: FunTcEnv,
     expectedTy: Option[Ty],
     level: U32,
-    loopStack: Option[Vec[LocalId]],
 ) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
     let mod = pgm.module(env._modIdx)
     let id = varExpr.id
@@ -150,7 +149,6 @@ _checkConExpr(
     env: FunTcEnv,
     expectedTy: Option[Ty],
     level: U32,
-    loopStack: Option[Vec[LocalId]],
 ) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
     assert(con.tyArgs.isEmpty())
 
@@ -234,3 +232,14 @@ makeVariant(varGen: UVarGen, ty: Ty, level: U32, loc: Loc) Ty / TypeError:
             )
 
         _: throw(TypeError(loc, msg = "Type in variant is not a constructor",))
+
+
+_checkParenExpr(
+    expr: ParenExpr,
+    pgm: Program,
+    env: FunTcEnv,
+    expectedTy: Option[Ty],
+    level: U32,
+    loopStack: Option[Vec[LocalId]],
+) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
+    checkExpr(expr.expr, pgm, env, expectedTy, level, loopStack)
