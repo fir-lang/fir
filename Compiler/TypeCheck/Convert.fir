@@ -61,23 +61,47 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                     ),
             )
 
-            Ty.Anonymous(labels, extension, kind = RecordOrVariant.Record, isRow)
+            Ty.Record(labels, extension, isRow)
 
         Type.Variant(VariantType(alts, extension, isRow, ..)):
-            let labels: HashMap[LocalId, Ty] = HashMap.withCapacity(alts.len())
+            let cons: HashMap[TyDefIdx, Vec[Ty]] = HashMap.withCapacity(
+                alts.len(),
+            )
 
             for alt: NamedType in alts.iter():
                 let ty = convertNamedTy(module, vars, alt, loc)
-                let tyNameText = alt.name.name
-                let old = labels.insert(LocalId(name = tyNameText), ty)
-                if old is Option.Some(_):
-                    throw(
-                        TypeError(
-                            loc,
-                            msg =
-                                "Type `tyNameText` used multiple times in variant type",
-                        ),
-                    )
+
+                match ty:
+                    Ty.Con(id):
+                        let old = cons.insert(id, Vec.empty())
+                        if old is Option.Some(_):
+                            throw(
+                                TypeError(
+                                    loc,
+                                    msg =
+                                        "Type `alt.name.name` used multiple times in variant type",
+                                ),
+                            )
+
+                    Ty.App(conId, args):
+                        let old = cons.insert(conId, Vec.empty())
+                        if old is Option.Some(_):
+                            throw(
+                                TypeError(
+                                    loc,
+                                    msg =
+                                        "Type `alt.name.name` used multiple times in variant type",
+                                ),
+                            )
+
+                    other:
+                        throw(
+                            TypeError(
+                                loc,
+                                msg =
+                                    "Variants can't have type variables, functions, records, variants as alternatives",
+                            ),
+                        )
 
             let extension = extension.map(
                 \(extId):
@@ -93,12 +117,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                     ),
             )
 
-            Ty.Anonymous(
-                labels,
-                extension,
-                kind = RecordOrVariant.Variant,
-                isRow,
-            )
+            Ty.Variant(cons, extension, isRow,)
 
         Type.Fn_(FnType(args, ret, exceptions, ..)):
             let args = FunArgs.Positional(
@@ -163,6 +182,38 @@ convertNamedTy(
     )
 
     Ty.App(conId = tyDefIdx, args = convertedArgs)
+
+
+convertFields(module: Module, vars: ScopeMap[Str, Ty], fields: ConFields) Option[FunArgs] / TypeError:
+    match fields:
+        ConFields.Empty: Option.None
+
+        ConFields.Named(namedFields):
+            Option.Some(
+                FunArgs.Named(
+                    HashMap.fromIter(
+                        namedFields.iter().map(
+                            \(field: NamedField) (key: LocalId, value: Ty):
+                                (
+                                    key =
+                                        LocalId(name = module.idText(field.name)),
+                                    value = convertAstTy(module, vars, field.ty),
+                                ),
+                        ),
+                    ),
+                ),
+            )
+
+        ConFields.Unnamed(fields):
+            Option.Some(
+                FunArgs.Positional(
+                    Vec.fromIter(
+                        fields.iter().map(
+                            \(ty: Type) Ty: convertAstTy(module, vars, ty),
+                        ),
+                    ),
+                ),
+            )
 
 
 type TyVarConversion:

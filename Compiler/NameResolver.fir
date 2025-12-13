@@ -15,7 +15,14 @@ resolveNames(pgm: Program):
     _prepRenamingEnvs(pgm)
 
     for module: Module in pgm._modules.iter():
-        let termEnv = ScopeMap.fromMap(module._termEnv)
+        let termEnv = ScopeMap.fromMap(
+            HashMap.fromIter(
+                module._termEnv.iter().map(
+                    \(entry: HashMapEntry[Str, TopVarDefIdx]):
+                        (key = entry.key, value = VarDefIdx.Top(entry.value)),
+                ),
+            ),
+        )
 
         let visitor = _NameResolverVisitor(
             _moduleFilePath = module._filePath,
@@ -220,14 +227,14 @@ _makeSccDepGraph(pgm: Program, sccs: Vec[HashSet[ModuleIdx]]) Vec[HashSet[U32]]:
 
 
 type _SccEnv(
-    _termEnv: HashMap[Str, VarDefIdx],
+    _termEnv: HashMap[Str, TopVarDefIdx],
     _assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]],
     _tyEnv: HashMap[Str, TyDefIdx],
 )
 
 
 _SccEnv.merge(self, other: _SccEnv):
-    for term: HashMapEntry[Str, VarDefIdx] in other._termEnv.iter():
+    for term: HashMapEntry[Str, TopVarDefIdx] in other._termEnv.iter():
         let old = self._termEnv.insert(term.key, term.value)
         if old is Option.Some(oldImport) and oldImport != term.value:
             panic("Variable `term.key` defined multiple times in SCC")
@@ -264,7 +271,7 @@ _makeSccEnv(
     if sccEnvs.get(sccIdx) is Option.Some(env):
         return env
 
-    let termEnv: HashMap[Str, VarDefIdx] = HashMap.withCapacity(50)
+    let termEnv: HashMap[Str, TopVarDefIdx] = HashMap.withCapacity(50)
     let assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]] = HashMap
         .withCapacity(25)
     let typeEnv: HashMap[Str, TyDefIdx] = HashMap.withCapacity(25)
@@ -276,11 +283,7 @@ _makeSccEnv(
         let tokens = mod._tokens
 
         for ty: HashMapEntry[Str, TypeDecl] in mod._tyItems.iter():
-            let tyDefIdx = TyDefIdx(
-                _mod = modIdx,
-                _name = ty.key,
-                _kind = TyDefKind.Type,
-            )
+            let tyDefIdx = TyDefIdx(_mod = modIdx, _name = ty.key,)
 
             let old = typeEnv.insert(ty.key, tyDefIdx)
             if old is Option.Some(_):
@@ -289,11 +292,7 @@ _makeSccEnv(
                 )
 
         for trait_: HashMapEntry[Str, TraitDecl] in mod._traitItems.iter():
-            let traitDefIdx = TyDefIdx(
-                _mod = modIdx,
-                _name = trait_.key,
-                _kind = TyDefKind.Trait,
-            )
+            let traitDefIdx = TyDefIdx(_mod = modIdx, _name = trait_.key,)
             let old = typeEnv.insert(trait_.key, traitDefIdx)
             if old is Option.Some(_):
                 panic(
@@ -301,9 +300,8 @@ _makeSccEnv(
                 )
 
         for fun: HashMapEntry[Str, FunDecl] in mod._funItems.iter():
-            let varDefIdx = VarDefIdx.Top(
-                TopVarDefIdx(_mod = modIdx, _name = fun.key),
-            )
+            let varDefIdx = TopVarDefIdx(_mod = modIdx, _name = fun.key)
+
             let old = termEnv.insert(fun.key, varDefIdx)
             if old is Option.Some(_):
                 panic(

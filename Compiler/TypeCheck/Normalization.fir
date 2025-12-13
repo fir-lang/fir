@@ -67,8 +67,29 @@ Ty.deepNormalize(self) Ty:
                 exn = exn.map(\(ty: Ty): ty.deepNormalize()),
             )
 
-        Ty.Anonymous(labels, extension, kind, isRow):
-            Ty.Anonymous(
+        Ty.Variant(cons, extension, isRow):
+            Ty.Variant(
+                cons =
+                    HashMap.fromIter(
+                        cons.iter().map(
+                            \(label: HashMapEntry[TyDefIdx, Vec[Ty]]) (key: TyDefIdx, value: Vec[Ty]):
+                                (
+                                    key = label.key,
+                                    value =
+                                        Vec.fromIter(
+                                            label.value.iter().map(
+                                                \(ty: Ty) Ty: ty.deepNormalize(),
+                                            ),
+                                        ),
+                                ),
+                        ),
+                    ),
+                extension = extension.map(\(ty: Ty): ty.deepNormalize()),
+                isRow,
+            )
+
+        Ty.Record(labels, extension, isRow):
+            Ty.Record(
                 labels =
                     HashMap.fromIter(
                         labels.iter().map(
@@ -80,6 +101,5 @@ Ty.deepNormalize(self) Ty:
                         ),
                     ),
                 extension = extension.map(\(ty: Ty): ty.deepNormalize()),
-                kind,
                 isRow,
             )
