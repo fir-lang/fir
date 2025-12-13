@@ -134,8 +134,7 @@ ParserState.getErrorCursor(self: ParserState[t]) Option[U32]:
 ParserState.peek[TriviaTokens[t]](self: ParserState[t]) Option[t]:
     loop:
         match self._tokens.getOpt(self._cursor):
-            Option.Some(t)
-                    if t.isTrivia():
+            Option.Some(t) if t.isTrivia():
                 self._cursor += 1
                 continue
 
