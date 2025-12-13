@@ -175,7 +175,7 @@ _parseFile(path: Str) (decls: Vec[TopDecl], tokens: Array[Token]):
     let tokens = match try(\(): scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("`path`:`line + 1`:`col + 1`: `msg`")
-        Result.Ok(tokens): tokens
+        Result.Ok(tokens): tokens.takeArray()
 
     match try(\(): module(ParserState.new(tokens))):
         Result.Err(cursor):
@@ -185,7 +185,7 @@ _parseFile(path: Str) (decls: Vec[TopDecl], tokens: Array[Token]):
                     panic(
                         "`path`:`token.line + 1`:`token.col + 1`: unexpected token `token`",
                     )
-        Result.Ok(mod): (decls = mod, tokens = tokens.takeArray())
+        Result.Ok(mod): (decls = mod, tokens = tokens)
 
 
 _modulePathToFilePath(path: Vec[Str]) Str:

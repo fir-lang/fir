@@ -404,6 +404,7 @@ blockExpr Expr:
                 params = args.unwrapOr(Vec.empty()),
                 exceptions = ret.exn,
                 returnTy = ret.ret,
+                lparen = TokenIdx(idx = cur),
             ),
             body,
             idx = 0,
@@ -544,6 +545,7 @@ simpleExpr Expr:
                 params = args.unwrapOr(Vec.empty()),
                 exceptions = ret.exn,
                 returnTy = ret.ret,
+                lparen = TokenIdx(idx = cur),
             ),
             body = Vec.[Stmt.Expr(body)],
             idx = 0,
@@ -863,7 +865,7 @@ simplePat Pat:
                     pats.map(\(ps): ps.ignoreRest).unwrapOr(Bool.False),
 
             _lastToken = match fs:
-                Option.None: con.lastToken()
+                Option.None: con.lastToken(state._tokens)
                 Option.Some((last, ..)): TokenIdx(idx = last),
         ))
 
@@ -964,7 +966,7 @@ topFunDecl FunDecl:
 
 
 topFunSig (parentTy: Option[TyId], name: Id, sig: FunSig):
-    parentTy=(^ _"UpperId" _".")? name=^ "LowerId" ctx=context? params=paramList ret=returnTy?:
+    parentTy=(^ _"UpperId" _".")? name=^ "LowerId" ctx=context? lparen=^ params=paramList ret=returnTy?:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         (
             parentTy = parentTy.map(\(id: U32): newTyId(id, state._tokens)),
@@ -976,6 +978,7 @@ topFunSig (parentTy: Option[TyId], name: Id, sig: FunSig):
                 params,
                 exceptions = ret.exn,
                 returnTy = ret.ret,
+                lparen = TokenIdx(idx = lparen),
             ),
         )
 
@@ -1084,7 +1087,7 @@ funDeclRhs Vec[Stmt]:
 
 
 funSig (id: Id, sig: FunSig):
-    id=^ "LowerId" ctx=context? params=paramList ret=returnTy?:
+    id=^ "LowerId" ctx=context? lparen=^ params=paramList ret=returnTy?:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         (
             id = newId(id),
@@ -1095,5 +1098,6 @@ funSig (id: Id, sig: FunSig):
                 params,
                 exceptions = ret.exn,
                 returnTy = ret.ret,
+                lparen = TokenIdx(idx = lparen),
             ),
         )

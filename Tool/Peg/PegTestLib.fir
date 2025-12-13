@@ -24,13 +24,15 @@ runParser(
     if error is Option.Some(error):
         panic(error.toStr())
 
-    if runScan:
-        tokens = match try(\(): scan[row[]](tokens)):
+    let tokens = if runScan:
+        match try(\(): scan[row[]](tokens)):
             Result.Err(~ScannerError(line, col, msg)):
                 throw(
                     TestError.Other("scanner error: `line + 1`:`col + 1`: `msg`"),
                 )
-            Result.Ok(tokens): tokens
+            Result.Ok(tokens): tokens.takeArray()
+    else:
+        tokens.takeArray()
 
     let parserState = ParserState.new(tokens)
 

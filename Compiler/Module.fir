@@ -119,7 +119,7 @@ Module.tokenLoc(self, token: TokenIdx) Loc:
 
 
 Module.loc[Tokens[t]](self, t: t) Loc:
-    self.tokenLoc(t.firstToken())
+    self.tokenLoc(t.firstToken(self._tokens))
 
 
 Module.tyCon(self, tyIdx: TyDefIdx) TyCon:

@@ -88,12 +88,16 @@ ParseTree.asNonTerminal[Eq[nt], ToStr[nt]](self: ParseTree[t, nt], kind_: nt) Ve
 
 # --------------------------------------------------------------------------------------------------
 
+
+## This trait used by the PEG runtime library (below) to skip tokens that the
+## generated parsers don't care about.
 trait TriviaTokens[t]:
+    ## Whether the parser should ignore the token.
     isTrivia(self: t) Bool
 
 
 type ParserState[t](
-    _tokens: Vec[t],
+    _tokens: Array[t],
     _cursor: U32,
     _errorCursor: Option[U32],
 )
@@ -114,7 +118,7 @@ ParserState.cloneFrom(self: ParserState[t], other: ParserState[t]):
     self._errorCursor = other._errorCursor
 
 
-ParserState.new(tokens: Vec[t]) ParserState[t]:
+ParserState.new(tokens: Array[t]) ParserState[t]:
     ParserState(_tokens = tokens, _cursor = 0, _errorCursor = Option.None,)
 
 

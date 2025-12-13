@@ -27,10 +27,10 @@ gen(item: Str):
     if error is Option.Some(error):
         panic(error.toStr())
 
-    tokens = match try(\(): scan[row[]](tokens)):
+    let tokens = match try(\(): scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("Scanner error: `line + 1`:`col + 1`: `msg`")
-        Result.Ok(tokens): tokens
+        Result.Ok(tokens): tokens.takeArray()
 
     let parserState = ParserState.new(tokens)
 
@@ -49,7 +49,7 @@ gen(item: Str):
     print(genTree(tree, tokens).render(80))
 
 
-genTree(typeDecl: TypeDecl, tokens: Vec[Token]) Doc:
+genTree(typeDecl: TypeDecl, tokens: Array[Token]) Doc:
     let typeName = tokens.get(typeDecl.name.token.idx).text
 
     let methodBody = match typeDecl.rhs:
@@ -109,7 +109,7 @@ genTree(typeDecl: TypeDecl, tokens: Vec[Token]) Doc:
     )
 
 
-genSumAlts(typeName: Str, decls: Vec[ConDecl], tokens: Vec[Token]) Doc:
+genSumAlts(typeName: Str, decls: Vec[ConDecl], tokens: Array[Token]) Doc:
     let alts = Doc.empty()
     let i = u32(0)
     for conDecl: ConDecl in decls.iter():
@@ -129,7 +129,12 @@ genSumAlts(typeName: Str, decls: Vec[ConDecl], tokens: Vec[Token]) Doc:
     )
 
 
-genConPat(varPrefix: Char, typeName: Str, conDecl: ConDecl, tokens: Vec[Token]) Doc:
+genConPat(
+    varPrefix: Char,
+    typeName: Str,
+    conDecl: ConDecl,
+    tokens: Array[Token],
+) Doc:
     let fieldPats = match conDecl.fields:
         ConFields.Empty:
             return Doc.str(typeName)
@@ -148,7 +153,11 @@ genConPat(varPrefix: Char, typeName: Str, conDecl: ConDecl, tokens: Vec[Token]) 
         + Doc.char(')')
 
 
-genNamedFieldPats(varPrefix: Char, fields: Vec[NamedField], tokens: Vec[Token],) Doc:
+genNamedFieldPats(
+    varPrefix: Char,
+    fields: Vec[NamedField],
+    tokens: Array[Token],
+) Doc:
     let doc = Doc.empty()
     for i: U32 in range(u32(0), fields.len()):
         if i != 0:
@@ -201,7 +210,7 @@ genSumRhs(typeName: Str, conDecl: ConDecl) Doc:
     rhs
 
 
-genProduct(typeName: Str, fields: ConFields, tokens: Vec[Token]) Doc:
+genProduct(typeName: Str, fields: ConFields, tokens: Array[Token]) Doc:
     match fields:
         ConFields.Empty: Doc.empty()
 

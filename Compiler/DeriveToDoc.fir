@@ -29,10 +29,10 @@ genModule(modStr: Str):
     if error is Option.Some(error):
         panic(error.toStr())
 
-    tokens = match try(\(): scan[row[]](tokens)):
+    let tokens = match try(\(): scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("Scanner error: `line + 1`:`col + 1`: `msg`")
-        Result.Ok(tokens): tokens
+        Result.Ok(tokens): tokens.takeArray()
 
     let parserState = ParserState.new(tokens)
 
@@ -47,9 +47,7 @@ genModule(modStr: Str):
         )
 
     # print(genModule_(tree, tokens.takeArray()).render(80))
-    print(
-        formatModuleStr("test", genModule_(tree, tokens.takeArray()).render(80)),
-    )
+    print(formatModuleStr("test", genModule_(tree, tokens).render(80)),)
 
 
 genModule_(module: Vec[TopDecl], tokens: Array[Token]) Doc:

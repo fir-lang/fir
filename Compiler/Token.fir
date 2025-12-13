@@ -22,6 +22,52 @@ Token.rightLoc(self) (line: U32, col: U32):
     (line = line, col = col)
 
 
+Token.isSpaceOrComment(self: Token) Bool:
+    self.kind.isSpaceOrComment()
+
+
+Token.isSpace(self: Token) Bool:
+    self.kind.isSpace()
+
+
+#[derive(ToDoc)]
+type TokenIdx(
+    idx: U32,
+)
+
+
+impl Step[TokenIdx]:
+    step(self: TokenIdx) TokenIdx:
+        TokenIdx(idx = self.idx + 1)
+
+
+impl Ord[TokenIdx]:
+    cmp(self: TokenIdx, other: TokenIdx) Ordering:
+        self.idx.cmp(other.idx)
+
+
+nextNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
+    let idx = tokenIdx.idx + 1
+    while tokens.getOpt(idx) is Option.Some(next):
+        if next.isSpaceOrComment():
+            idx += 1
+        else:
+            return Option.Some(TokenIdx(idx = idx))
+
+    Option.None
+
+
+prevNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
+    let idx = tokenIdx.idx
+    while idx != 0:
+        idx -= 1
+        let token = tokens.get(idx)
+        if not token.isSpaceOrComment():
+            return Option.Some(TokenIdx(idx = idx))
+
+    Option.None
+
+
 type TokenKind:
     # This includes all kinds of comments: single or multi-line, documentation or not.
     #
@@ -146,6 +192,14 @@ type TokenKind:
 impl TriviaTokens[Token]:
     isTrivia(self: Token) Bool:
         self.kind is TokenKind.Comment
+
+
+TokenKind.isSpaceOrComment(self: TokenKind) Bool:
+    self.isSpace() or (self is TokenKind.Comment)
+
+
+TokenKind.isSpace(self: TokenKind) Bool:
+    self is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent
 
 
 #[derive(ToDoc)]

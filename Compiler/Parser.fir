@@ -31,7 +31,7 @@ main():
     let tokens = match try(\(): scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("`line + 1`:`col + 1`: `msg`")
-        Result.Ok(tokens): tokens
+        Result.Ok(tokens): tokens.takeArray()
 
     let mod = match try(\(): module(ParserState.new(tokens))):
         Result.Err(cursor):

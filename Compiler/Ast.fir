@@ -4,26 +4,10 @@ import [
 ]
 
 
-#[derive(ToDoc)]
-type TokenIdx(
-    idx: U32,
-)
-
-
-impl Step[TokenIdx]:
-    step(self: TokenIdx) TokenIdx:
-        TokenIdx(idx = self.idx + 1)
-
-
-impl Ord[TokenIdx]:
-    cmp(self: TokenIdx, other: TokenIdx) Ordering:
-        self.idx.cmp(other.idx)
-
-
 trait Tokens[t]:
-    firstToken(self: t) TokenIdx
+    firstToken(self: t, tokens: Array[Token]) TokenIdx
 
-    lastToken(self: t) TokenIdx
+    lastToken(self: t, tokens: Array[Token]) TokenIdx
 
 
 #[derive(ToDoc)]
@@ -33,10 +17,10 @@ type Id(
 
 
 impl Tokens[Id]:
-    firstToken(self: Id) TokenIdx:
+    firstToken(self: Id, tokens: Array[Token]) TokenIdx:
         self.token
 
-    lastToken(self: Id) TokenIdx:
+    lastToken(self: Id, tokens: Array[Token]) TokenIdx:
         self.token
 
 
@@ -80,10 +64,10 @@ type TypeDecl(
 
 
 impl Tokens[TypeDecl]:
-    firstToken(self: TypeDecl) TokenIdx:
+    firstToken(self: TypeDecl, tokens: Array[Token]) TokenIdx:
         self.prim_.unwrapOr(self.name.token)
 
-    lastToken(self: TypeDecl) TokenIdx:
+    lastToken(self: TypeDecl, tokens: Array[Token]) TokenIdx:
         panic("TOOD")
 
 
@@ -107,10 +91,10 @@ type ConDecl(
 
 
 impl Tokens[ConDecl]:
-    firstToken(self: ConDecl) TokenIdx:
+    firstToken(self: ConDecl, tokens: Array[Token]) TokenIdx:
         self.name.token
 
-    lastToken(self: ConDecl) TokenIdx:
+    lastToken(self: ConDecl, tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -148,7 +132,7 @@ type FunDecl(
 
 
 impl Tokens[FunDecl]:
-    firstToken(self: FunDecl) TokenIdx:
+    firstToken(self: FunDecl, tokens: Array[Token]) TokenIdx:
         if self.prim_ is Option.Some(t):
             return t
 
@@ -157,8 +141,10 @@ impl Tokens[FunDecl]:
 
         self.name.token
 
-    lastToken(self: FunDecl) TokenIdx:
-        panic("TODO")
+    lastToken(self: FunDecl, tokens: Array[Token]) TokenIdx:
+        match self.body:
+            Option.Some(stmts): stmts.last().unwrap().lastToken(tokens)
+            Option.None: self.sig.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -171,7 +157,37 @@ type FunSig(
     params: Vec[FunArg],
     returnTy: Option[Type],
     exceptions: Option[Type],
+
+    ## The '(' token of the argument list. We need to store at least one token
+    ## in this node as the minimal node (without context, with empty argument
+    ## list, and without return or exception types) won't have any other AST
+    ## nodes.
+    lparen: TokenIdx,
 )
+
+
+impl Tokens[FunSig]:
+    firstToken(self: FunSig, tokens: Array[Token]) TokenIdx:
+        if self.context is Option.Some(context):
+            return context.firstToken(tokens)
+
+        self.lparen
+
+    lastToken(self: FunSig, tokens: Array[Token]) TokenIdx:
+        if self.exceptions is Option.Some(exceptions):
+            return exceptions.lastToken(tokens)
+
+        if self.returnTy is Option.Some(returnTy):
+            return returnTy.lastToken(tokens)
+
+        let token = self.params.last().map(
+            \(lastParam): lastParam.lastToken(tokens),
+        ).unwrapOr(self.lparen)
+
+        let rparen = nextNonTrivia(token, tokens).unwrap()
+        assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+
+        rparen
 
 
 #[derive(ToDoc)]
@@ -179,6 +195,14 @@ type FunArg(
     name: Id,
     ty: Option[Type],
 )
+
+
+impl Tokens[FunArg]:
+    firstToken(self: FunArg, tokens: Array[Token]) TokenIdx:
+        self.name.token
+
+    lastToken(self: FunArg, tokens: Array[Token]) TokenIdx:
+        self.ty.map(\(ty): ty.lastToken(tokens)).unwrapOr(self.name.token)
 
 
 #[derive(ToDoc)]
@@ -269,21 +293,21 @@ type Type:
 
 
 impl Tokens[Type]:
-    firstToken(self: Type) TokenIdx:
+    firstToken(self: Type, tokens: Array[Token]) TokenIdx:
         match self:
-            Type.Named(ty): ty.firstToken()
+            Type.Named(ty): ty.firstToken(tokens)
             Type.Var(id): id.token
-            Type.Record(ty): ty.firstToken()
-            Type.Variant(ty): ty.firstToken()
-            Type.Fn_(ty): ty.firstToken()
+            Type.Record(ty): ty.firstToken(tokens)
+            Type.Variant(ty): ty.firstToken(tokens)
+            Type.Fn_(ty): ty.firstToken(tokens)
 
-    lastToken(self: Type) TokenIdx:
+    lastToken(self: Type, tokens: Array[Token]) TokenIdx:
         match self:
-            Type.Named(ty): ty.lastToken()
+            Type.Named(ty): ty.lastToken(tokens)
             Type.Var(id): id.token
-            Type.Record(ty): ty.lastToken()
-            Type.Variant(ty): ty.lastToken()
-            Type.Fn_(ty): ty.lastToken()
+            Type.Record(ty): ty.lastToken(tokens)
+            Type.Variant(ty): ty.lastToken(tokens)
+            Type.Fn_(ty): ty.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -301,10 +325,10 @@ type RecordType(
 
 
 impl Tokens[RecordType]:
-    firstToken(self: RecordType) TokenIdx:
+    firstToken(self: RecordType, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: RecordType) TokenIdx:
+    lastToken(self: RecordType, tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -323,10 +347,10 @@ type VariantType(
 
 
 impl Tokens[VariantType]:
-    firstToken(self: VariantType) TokenIdx:
+    firstToken(self: VariantType, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: VariantType) TokenIdx:
+    lastToken(self: VariantType, tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -350,15 +374,15 @@ type FnType(
 
 
 impl Tokens[FnType]:
-    firstToken(self: FnType) TokenIdx:
+    firstToken(self: FnType, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: FnType) TokenIdx:
+    lastToken(self: FnType, tokens: Array[Token]) TokenIdx:
         if self.exceptions is Option.Some(ty):
-            return ty.lastToken()
+            return ty.lastToken(tokens)
 
         if self.ret is Option.Some(ty):
-            return ty.lastToken()
+            return ty.lastToken(tokens)
 
         self._rparen
 
@@ -387,10 +411,10 @@ type TypeParam(
 
 
 impl Tokens[Context]:
-    firstToken(self: Context) TokenIdx:
+    firstToken(self: Context, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: Context) TokenIdx:
+    lastToken(self: Context, tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -412,12 +436,12 @@ NamedType.numTyArgs(self) U32:
 
 
 impl Tokens[NamedType]:
-    firstToken(self: NamedType) TokenIdx:
+    firstToken(self: NamedType, tokens: Array[Token]) TokenIdx:
         self.name.token
 
-    lastToken(self: NamedType) TokenIdx:
+    lastToken(self: NamedType, tokens: Array[Token]) TokenIdx:
         match self.args:
-            Option.Some(args): args.lastToken()
+            Option.Some(args): args.lastToken(tokens)
             Option.None: self.name.token
 
 
@@ -429,13 +453,13 @@ type Named[t](
 
 
 impl[Tokens[t]] Tokens[Named[t]]:
-    firstToken(self: Named[t]) TokenIdx:
+    firstToken(self: Named[t], tokens: Array[Token]) TokenIdx:
         match self.name:
             Option.Some(name): name.token
-            Option.None: self.node.firstToken()
+            Option.None: self.node.firstToken(tokens)
 
-    lastToken(self: Named[t]) TokenIdx:
-        self.node.lastToken()
+    lastToken(self: Named[t], tokens: Array[Token]) TokenIdx:
+        self.node.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -451,27 +475,27 @@ type Stmt:
 
 
 impl Tokens[Stmt]:
-    firstToken(self: Stmt) TokenIdx:
+    firstToken(self: Stmt, tokens: Array[Token]) TokenIdx:
         match self:
-            Stmt.Let(e): e.firstToken()
-            Stmt.Assign(e): e.firstToken()
-            Stmt.Expr(e): e.firstToken()
-            Stmt.For(e): e.firstToken()
-            Stmt.While(e): e.firstToken()
-            Stmt.Loop(e): e.firstToken()
-            Stmt.Break(e): e.firstToken()
-            Stmt.Continue(e): e.firstToken()
+            Stmt.Let(e): e.firstToken(tokens)
+            Stmt.Assign(e): e.firstToken(tokens)
+            Stmt.Expr(e): e.firstToken(tokens)
+            Stmt.For(e): e.firstToken(tokens)
+            Stmt.While(e): e.firstToken(tokens)
+            Stmt.Loop(e): e.firstToken(tokens)
+            Stmt.Break(e): e.firstToken(tokens)
+            Stmt.Continue(e): e.firstToken(tokens)
 
-    lastToken(self: Stmt) TokenIdx:
+    lastToken(self: Stmt, tokens: Array[Token]) TokenIdx:
         match self:
-            Stmt.Let(e): e.lastToken()
-            Stmt.Assign(e): e.lastToken()
-            Stmt.Expr(e): e.lastToken()
-            Stmt.For(e): e.lastToken()
-            Stmt.While(e): e.lastToken()
-            Stmt.Loop(e): e.lastToken()
-            Stmt.Break(e): e.lastToken()
-            Stmt.Continue(e): e.lastToken()
+            Stmt.Let(e): e.lastToken(tokens)
+            Stmt.Assign(e): e.lastToken(tokens)
+            Stmt.Expr(e): e.lastToken(tokens)
+            Stmt.For(e): e.lastToken(tokens)
+            Stmt.While(e): e.lastToken(tokens)
+            Stmt.Loop(e): e.lastToken(tokens)
+            Stmt.Break(e): e.lastToken(tokens)
+            Stmt.Continue(e): e.lastToken(tokens)
 
 
 ## A let statement: `let x: T = expr`.
@@ -485,11 +509,11 @@ type LetStmt(
 
 
 impl Tokens[LetStmt]:
-    firstToken(self: LetStmt) TokenIdx:
+    firstToken(self: LetStmt, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: LetStmt) TokenIdx:
-        self.rhs.lastToken()
+    lastToken(self: LetStmt, tokens: Array[Token]) TokenIdx:
+        self.rhs.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -501,11 +525,11 @@ type AssignStmt(
 
 
 impl Tokens[AssignStmt]:
-    firstToken(self: AssignStmt) TokenIdx:
-        self.lhs.firstToken()
+    firstToken(self: AssignStmt, tokens: Array[Token]) TokenIdx:
+        self.lhs.firstToken(tokens)
 
-    lastToken(self: AssignStmt) TokenIdx:
-        self.rhs.lastToken()
+    lastToken(self: AssignStmt, tokens: Array[Token]) TokenIdx:
+        self.rhs.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -540,11 +564,11 @@ type ForStmt(
 
 
 impl Tokens[ForStmt]:
-    firstToken(self: ForStmt) TokenIdx:
+    firstToken(self: ForStmt, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: ForStmt) TokenIdx:
-        self.body.last().unwrap().lastToken()
+    lastToken(self: ForStmt, tokens: Array[Token]) TokenIdx:
+        self.body.last().unwrap().lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -557,11 +581,11 @@ type WhileStmt(
 
 
 impl Tokens[WhileStmt]:
-    firstToken(self: WhileStmt) TokenIdx:
+    firstToken(self: WhileStmt, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: WhileStmt) TokenIdx:
-        self.body.last().unwrap().lastToken()
+    lastToken(self: WhileStmt, tokens: Array[Token]) TokenIdx:
+        self.body.last().unwrap().lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -572,11 +596,11 @@ type LoopStmt(
 
 
 impl Tokens[LoopStmt]:
-    firstToken(self: LoopStmt) TokenIdx:
+    firstToken(self: LoopStmt, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: LoopStmt) TokenIdx:
-        self.body.last().unwrap().lastToken()
+    lastToken(self: LoopStmt, tokens: Array[Token]) TokenIdx:
+        self.body.last().unwrap().lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -592,12 +616,12 @@ type BreakStmt(
 
 
 impl Tokens[BreakStmt]:
-    firstToken(self: BreakStmt) TokenIdx:
+    firstToken(self: BreakStmt, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: BreakStmt) TokenIdx:
+    lastToken(self: BreakStmt, tokens: Array[Token]) TokenIdx:
         match self.label:
-            Option.Some(id): id.lastToken()
+            Option.Some(id): id.lastToken(tokens)
             Option.None: self._firstToken
 
 
@@ -613,12 +637,12 @@ type ContinueStmt(
 
 
 impl Tokens[ContinueStmt]:
-    firstToken(self: ContinueStmt) TokenIdx:
+    firstToken(self: ContinueStmt, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: ContinueStmt) TokenIdx:
+    lastToken(self: ContinueStmt, tokens: Array[Token]) TokenIdx:
         match self.label:
-            Option.Some(id): id.lastToken()
+            Option.Some(id): id.lastToken(tokens)
             Option.None: self._firstToken
 
 
@@ -649,33 +673,33 @@ type Pat:
 
 
 impl Tokens[Pat]:
-    firstToken(self: Pat) TokenIdx:
+    firstToken(self: Pat, tokens: Array[Token]) TokenIdx:
         match self:
-            Pat.Var(pat): pat.firstToken()
+            Pat.Var(pat): pat.firstToken(tokens)
 
-            Pat.Constr(pat): pat.firstToken()
+            Pat.Constr(pat): pat.firstToken(tokens)
 
-            Pat.Record(pat): pat.firstToken()
+            Pat.Record(pat): pat.firstToken(tokens)
 
             Pat.Ignore(tok) | Pat.Str(_, tok) | Pat.Char(_, tok): tok
 
-            Pat.Or(ps): ps.get(0).firstToken()
+            Pat.Or(ps): ps.get(0).firstToken(tokens)
 
-            Pat.Variant(pat): pat.firstToken()
+            Pat.Variant(pat): pat.firstToken(tokens)
 
-    lastToken(self: Pat) TokenIdx:
+    lastToken(self: Pat, tokens: Array[Token]) TokenIdx:
         match self:
-            Pat.Var(pat): pat.lastToken()
+            Pat.Var(pat): pat.lastToken(tokens)
 
-            Pat.Constr(pat): pat.lastToken()
+            Pat.Constr(pat): pat.lastToken(tokens)
 
-            Pat.Record(pat): pat.lastToken()
+            Pat.Record(pat): pat.lastToken(tokens)
 
             Pat.Ignore(tok) | Pat.Str(_, tok) | Pat.Char(_, tok): tok
 
-            Pat.Or(ps): ps.last().unwrap().lastToken()
+            Pat.Or(ps): ps.last().unwrap().lastToken(tokens)
 
-            Pat.Variant(pat): pat.lastToken()
+            Pat.Variant(pat): pat.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -688,11 +712,11 @@ type VarPat(
 
 
 impl Tokens[VarPat]:
-    firstToken(self: VarPat) TokenIdx:
-        self.var_.firstToken()
+    firstToken(self: VarPat, tokens: Array[Token]) TokenIdx:
+        self.var_.firstToken(tokens)
 
-    lastToken(self: VarPat) TokenIdx:
-        self.var_.lastToken()
+    lastToken(self: VarPat, tokens: Array[Token]) TokenIdx:
+        self.var_.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -705,10 +729,10 @@ type ConstrPat(
 
 
 impl Tokens[ConstrPat]:
-    firstToken(self: ConstrPat) TokenIdx:
-        self.constr.firstToken()
+    firstToken(self: ConstrPat, tokens: Array[Token]) TokenIdx:
+        self.constr.firstToken(tokens)
 
-    lastToken(self: ConstrPat) TokenIdx:
+    lastToken(self: ConstrPat, tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -723,10 +747,10 @@ type RecordPat(
 
 
 impl Tokens[RecordPat]:
-    firstToken(self: RecordPat) TokenIdx:
+    firstToken(self: RecordPat, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: RecordPat) TokenIdx:
+    lastToken(self: RecordPat, tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -753,12 +777,12 @@ type Constructor(
 
 
 impl Tokens[Constructor]:
-    firstToken(self: Constructor) TokenIdx:
+    firstToken(self: Constructor, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: Constructor) TokenIdx:
+    lastToken(self: Constructor, tokens: Array[Token]) TokenIdx:
         match self.userTyArgs:
-            Option.Some(tyArgs): tyArgs.lastToken()
+            Option.Some(tyArgs): tyArgs.lastToken(tokens)
             Option.None:
                 match self.constr:
                     Option.Some(con): con.token
@@ -840,55 +864,55 @@ type Expr:
 
 
 impl Tokens[Expr]:
-    firstToken(self: Expr) TokenIdx:
+    firstToken(self: Expr, tokens: Array[Token]) TokenIdx:
         match self:
-            Expr.Var(e): e.firstToken()
-            Expr.ConstrSelect(e): e.firstToken()
-            Expr.FieldSelect(e): e.firstToken()
-            Expr.MethodSelect(e): e.firstToken()
-            Expr.AssocFnSelect(e): e.firstToken()
-            Expr.Call(e): e.firstToken()
-            Expr.Int(e): e.firstToken()
-            Expr.Str(e): e.firstToken()
-            Expr.Char(e): e.firstToken()
+            Expr.Var(e): e.firstToken(tokens)
+            Expr.ConstrSelect(e): e.firstToken(tokens)
+            Expr.FieldSelect(e): e.firstToken(tokens)
+            Expr.MethodSelect(e): e.firstToken(tokens)
+            Expr.AssocFnSelect(e): e.firstToken(tokens)
+            Expr.Call(e): e.firstToken(tokens)
+            Expr.Int(e): e.firstToken(tokens)
+            Expr.Str(e): e.firstToken(tokens)
+            Expr.Char(e): e.firstToken(tokens)
             Expr.Self(t): t
-            Expr.BinOp(e): e.firstToken()
-            Expr.UnOp(e): e.firstToken()
-            Expr.Record(e): e.firstToken()
-            Expr.Return(e): e.firstToken()
-            Expr.Match(e): e.firstToken()
-            Expr.If(e): e.firstToken()
-            Expr.Fn_(e): e.firstToken()
-            Expr.Is(e): e.firstToken()
-            Expr.Do(e): e.firstToken()
-            Expr.Seq(e): e.firstToken()
-            Expr.Paren(e): e.firstToken()
-            Expr.Variant(e): e.firstToken()
+            Expr.BinOp(e): e.firstToken(tokens)
+            Expr.UnOp(e): e.firstToken(tokens)
+            Expr.Record(e): e.firstToken(tokens)
+            Expr.Return(e): e.firstToken(tokens)
+            Expr.Match(e): e.firstToken(tokens)
+            Expr.If(e): e.firstToken(tokens)
+            Expr.Fn_(e): e.firstToken(tokens)
+            Expr.Is(e): e.firstToken(tokens)
+            Expr.Do(e): e.firstToken(tokens)
+            Expr.Seq(e): e.firstToken(tokens)
+            Expr.Paren(e): e.firstToken(tokens)
+            Expr.Variant(e): e.firstToken(tokens)
 
-    lastToken(self: Expr) TokenIdx:
+    lastToken(self: Expr, tokens: Array[Token]) TokenIdx:
         match self:
-            Expr.Var(e): e.lastToken()
-            Expr.ConstrSelect(e): e.lastToken()
-            Expr.FieldSelect(e): e.lastToken()
-            Expr.MethodSelect(e): e.lastToken()
-            Expr.AssocFnSelect(e): e.lastToken()
-            Expr.Call(e): e.lastToken()
-            Expr.Int(e): e.lastToken()
-            Expr.Str(e): e.lastToken()
-            Expr.Char(e): e.lastToken()
+            Expr.Var(e): e.lastToken(tokens)
+            Expr.ConstrSelect(e): e.lastToken(tokens)
+            Expr.FieldSelect(e): e.lastToken(tokens)
+            Expr.MethodSelect(e): e.lastToken(tokens)
+            Expr.AssocFnSelect(e): e.lastToken(tokens)
+            Expr.Call(e): e.lastToken(tokens)
+            Expr.Int(e): e.lastToken(tokens)
+            Expr.Str(e): e.lastToken(tokens)
+            Expr.Char(e): e.lastToken(tokens)
             Expr.Self(t): t
-            Expr.BinOp(e): e.lastToken()
-            Expr.UnOp(e): e.lastToken()
-            Expr.Record(e): e.lastToken()
-            Expr.Return(e): e.lastToken()
-            Expr.Match(e): e.lastToken()
-            Expr.If(e): e.lastToken()
-            Expr.Fn_(e): e.lastToken()
-            Expr.Is(e): e.lastToken()
-            Expr.Do(e): e.lastToken()
-            Expr.Seq(e): e.lastToken()
-            Expr.Paren(e): e.lastToken()
-            Expr.Variant(e): e.lastToken()
+            Expr.BinOp(e): e.lastToken(tokens)
+            Expr.UnOp(e): e.lastToken(tokens)
+            Expr.Record(e): e.lastToken(tokens)
+            Expr.Return(e): e.lastToken(tokens)
+            Expr.Match(e): e.lastToken(tokens)
+            Expr.If(e): e.lastToken(tokens)
+            Expr.Fn_(e): e.lastToken(tokens)
+            Expr.Is(e): e.lastToken(tokens)
+            Expr.Do(e): e.lastToken(tokens)
+            Expr.Seq(e): e.lastToken(tokens)
+            Expr.Paren(e): e.lastToken(tokens)
+            Expr.Variant(e): e.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -904,12 +928,12 @@ type VarExpr(
 
 
 impl Tokens[VarExpr]:
-    firstToken(self: VarExpr) TokenIdx:
+    firstToken(self: VarExpr, tokens: Array[Token]) TokenIdx:
         self.id.token
 
-    lastToken(self: VarExpr) TokenIdx:
+    lastToken(self: VarExpr, tokens: Array[Token]) TokenIdx:
         match self.userTyArgs:
-            Option.Some(tyArgs): tyArgs.lastToken()
+            Option.Some(tyArgs): tyArgs.lastToken(tokens)
             Option.None: self.id.token
 
 
@@ -926,10 +950,10 @@ type TyArgs(
 
 
 impl Tokens[TyArgs]:
-    firstToken(self: TyArgs) TokenIdx:
+    firstToken(self: TyArgs, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: TyArgs) TokenIdx:
+    lastToken(self: TyArgs, tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -948,13 +972,13 @@ type FieldSelectExpr(
 
 
 impl Tokens[FieldSelectExpr]:
-    firstToken(self: FieldSelectExpr) TokenIdx:
-        self.object.firstToken()
+    firstToken(self: FieldSelectExpr, tokens: Array[Token]) TokenIdx:
+        self.object.firstToken(tokens)
 
-    lastToken(self: FieldSelectExpr) TokenIdx:
+    lastToken(self: FieldSelectExpr, tokens: Array[Token]) TokenIdx:
         match self.userTyArgs:
-            Option.Some(tyArgs): tyArgs.lastToken()
-            Option.None: self.field.lastToken()
+            Option.Some(tyArgs): tyArgs.lastToken(tokens)
+            Option.None: self.field.lastToken(tokens)
 
 
 ## A method selection: `<expr>.method`.
@@ -1008,10 +1032,10 @@ type MethodSelectExpr(
 
 
 impl Tokens[MethodSelectExpr]:
-    firstToken(self: MethodSelectExpr) TokenIdx:
-        self.object.firstToken()
+    firstToken(self: MethodSelectExpr, tokens: Array[Token]) TokenIdx:
+        self.object.firstToken(tokens)
 
-    lastToken(self: MethodSelectExpr) TokenIdx:
+    lastToken(self: MethodSelectExpr, tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -1040,10 +1064,10 @@ type AssocFnSelectExpr(
 
 
 impl Tokens[AssocFnSelectExpr]:
-    firstToken(self: AssocFnSelectExpr) TokenIdx:
+    firstToken(self: AssocFnSelectExpr, tokens: Array[Token]) TokenIdx:
         self.ty.token
 
-    lastToken(self: AssocFnSelectExpr) TokenIdx:
+    lastToken(self: AssocFnSelectExpr, tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -1056,10 +1080,10 @@ type CallExpr(
 
 
 impl Tokens[CallExpr]:
-    firstToken(self: CallExpr) TokenIdx:
-        self.fun.firstToken()
+    firstToken(self: CallExpr, tokens: Array[Token]) TokenIdx:
+        self.fun.firstToken(tokens)
 
-    lastToken(self: CallExpr) TokenIdx:
+    lastToken(self: CallExpr, tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -1087,10 +1111,10 @@ type IntExpr(
 
 
 impl Tokens[IntExpr]:
-    firstToken(self: IntExpr) TokenIdx:
+    firstToken(self: IntExpr, tokens: Array[Token]) TokenIdx:
         self.token
 
-    lastToken(self: IntExpr) TokenIdx:
+    lastToken(self: IntExpr, tokens: Array[Token]) TokenIdx:
         self.token
 
 
@@ -1102,10 +1126,10 @@ type StrExpr(
 
 
 impl Tokens[StrExpr]:
-    firstToken(self: StrExpr) TokenIdx:
+    firstToken(self: StrExpr, tokens: Array[Token]) TokenIdx:
         self.token
 
-    lastToken(self: StrExpr) TokenIdx:
+    lastToken(self: StrExpr, tokens: Array[Token]) TokenIdx:
         self.token
 
 
@@ -1123,10 +1147,10 @@ type CharExpr(
 
 
 impl Tokens[CharExpr]:
-    firstToken(self: CharExpr) TokenIdx:
+    firstToken(self: CharExpr, tokens: Array[Token]) TokenIdx:
         self.token
 
-    lastToken(self: CharExpr) TokenIdx:
+    lastToken(self: CharExpr, tokens: Array[Token]) TokenIdx:
         self.token
 
 
@@ -1139,11 +1163,11 @@ type BinOpExpr(
 
 
 impl Tokens[BinOpExpr]:
-    firstToken(self: BinOpExpr) TokenIdx:
-        self.left.firstToken()
+    firstToken(self: BinOpExpr, tokens: Array[Token]) TokenIdx:
+        self.left.firstToken(tokens)
 
-    lastToken(self: BinOpExpr) TokenIdx:
-        self.right.lastToken()
+    lastToken(self: BinOpExpr, tokens: Array[Token]) TokenIdx:
+        self.right.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -1175,11 +1199,11 @@ type UnOpExpr(
 
 
 impl Tokens[UnOpExpr]:
-    firstToken(self: UnOpExpr) TokenIdx:
+    firstToken(self: UnOpExpr, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: UnOpExpr) TokenIdx:
-        self.expr.lastToken()
+    lastToken(self: UnOpExpr, tokens: Array[Token]) TokenIdx:
+        self.expr.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -1191,10 +1215,10 @@ type RecordExpr(
 
 
 impl Tokens[RecordExpr]:
-    firstToken(self: RecordExpr) TokenIdx:
+    firstToken(self: RecordExpr, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: RecordExpr) TokenIdx:
+    lastToken(self: RecordExpr, tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -1206,12 +1230,12 @@ type ReturnExpr(
 
 
 impl Tokens[ReturnExpr]:
-    firstToken(self: ReturnExpr) TokenIdx:
+    firstToken(self: ReturnExpr, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: ReturnExpr) TokenIdx:
+    lastToken(self: ReturnExpr, tokens: Array[Token]) TokenIdx:
         match self.expr:
-            Option.Some(expr): expr.lastToken()
+            Option.Some(expr): expr.lastToken(tokens)
             Option.None: self._firstToken
 
 
@@ -1224,11 +1248,11 @@ type MatchExpr(
 
 
 impl Tokens[MatchExpr]:
-    firstToken(self: MatchExpr) TokenIdx:
+    firstToken(self: MatchExpr, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: MatchExpr) TokenIdx:
-        self.alts.last().unwrap().lastToken()
+    lastToken(self: MatchExpr, tokens: Array[Token]) TokenIdx:
+        self.alts.last().unwrap().lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -1240,11 +1264,11 @@ type Alt(
 
 
 impl Tokens[Alt]:
-    firstToken(self: Alt) TokenIdx:
-        self.pattern.firstToken()
+    firstToken(self: Alt, tokens: Array[Token]) TokenIdx:
+        self.pattern.firstToken(tokens)
 
-    lastToken(self: Alt) TokenIdx:
-        self.rhs.last().unwrap().lastToken()
+    lastToken(self: Alt, tokens: Array[Token]) TokenIdx:
+        self.rhs.last().unwrap().lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -1264,14 +1288,14 @@ type IfBranch(
 
 
 impl Tokens[IfExpr]:
-    firstToken(self: IfExpr) TokenIdx:
+    firstToken(self: IfExpr, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: IfExpr) TokenIdx:
+    lastToken(self: IfExpr, tokens: Array[Token]) TokenIdx:
         if self.elseBranch is Option.Some(block):
-            return block.last().unwrap().lastToken()
+            return block.last().unwrap().lastToken(tokens)
 
-        self.branches.last().unwrap().body.last().unwrap().lastToken()
+        self.branches.last().unwrap().body.last().unwrap().lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -1284,11 +1308,11 @@ type FnExpr(
 
 
 impl Tokens[FnExpr]:
-    firstToken(self: FnExpr) TokenIdx:
+    firstToken(self: FnExpr, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: FnExpr) TokenIdx:
-        self.body.last().unwrap().lastToken()
+    lastToken(self: FnExpr, tokens: Array[Token]) TokenIdx:
+        self.body.last().unwrap().lastToken(tokens)
 
 
 # <expr> is <pat>
@@ -1300,11 +1324,11 @@ type IsExpr(
 
 
 impl Tokens[IsExpr]:
-    firstToken(self: IsExpr) TokenIdx:
-        self.expr.firstToken()
+    firstToken(self: IsExpr, tokens: Array[Token]) TokenIdx:
+        self.expr.firstToken(tokens)
 
-    lastToken(self: IsExpr) TokenIdx:
-        self.pat.lastToken()
+    lastToken(self: IsExpr, tokens: Array[Token]) TokenIdx:
+        self.pat.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -1315,11 +1339,11 @@ type DoExpr(
 
 
 impl Tokens[DoExpr]:
-    firstToken(self: DoExpr) TokenIdx:
+    firstToken(self: DoExpr, tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: DoExpr) TokenIdx:
-        self.body.last().unwrap().lastToken()
+    lastToken(self: DoExpr, tokens: Array[Token]) TokenIdx:
+        self.body.last().unwrap().lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -1345,12 +1369,12 @@ type SeqElem(
 
 
 impl Tokens[SeqExpr]:
-    firstToken(self: SeqExpr) TokenIdx:
+    firstToken(self: SeqExpr, tokens: Array[Token]) TokenIdx:
         match self.ty:
-            Option.Some(ty): ty.firstToken()
+            Option.Some(ty): ty.firstToken(tokens)
             Option.None: self._lbracket
 
-    lastToken(self: SeqExpr) TokenIdx:
+    lastToken(self: SeqExpr, tokens: Array[Token]) TokenIdx:
         self._rbracket
 
 
@@ -1363,10 +1387,10 @@ type ParenExpr(
 
 
 impl Tokens[ParenExpr]:
-    firstToken(self: ParenExpr) TokenIdx:
+    firstToken(self: ParenExpr, tokens: Array[Token]) TokenIdx:
         self._lparen
 
-    lastToken(self: ParenExpr) TokenIdx:
+    lastToken(self: ParenExpr, tokens: Array[Token]) TokenIdx:
         self._rparen
 
 
