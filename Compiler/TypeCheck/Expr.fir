@@ -24,7 +24,7 @@ checkExpr(
     env: FunTcEnv,
     expectedTy: Option[Ty],
     level: U32,
-    loopStack: Option[Vec[LocalId]],
+    loopStack: Vec[Option[LocalId]],
 ) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
     match expr:
         Expr.Var(expr): _checkVarExpr(expr, pgm, env, expectedTy, level)
@@ -240,6 +240,6 @@ _checkParenExpr(
     env: FunTcEnv,
     expectedTy: Option[Ty],
     level: U32,
-    loopStack: Option[Vec[LocalId]],
+    loopStack: Vec[Option[LocalId]],
 ) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
     checkExpr(expr.expr, pgm, env, expectedTy, level, loopStack)
