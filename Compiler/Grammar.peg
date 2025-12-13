@@ -863,7 +863,7 @@ simplePat Pat:
                     pats.map(\(ps): ps.ignoreRest).unwrapOr(Bool.False),
 
             _lastToken = match fs:
-                Option.None: con.lastToken()
+                Option.None: con.lastToken(state._tokens)
                 Option.Some((last, ..)): TokenIdx(idx = last),
         ))
 

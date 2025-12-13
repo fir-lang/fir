@@ -3989,7 +3989,7 @@ simplePat(state: ParserState[Token]) Pat / U32:
                                     ),
                         _lastToken =
                             match fs:
-                                Option.None: con.lastToken()
+                                Option.None: con.lastToken(state._tokens)
                                 Option.Some((last, ..)): TokenIdx(idx = last),
                     ),
                 )

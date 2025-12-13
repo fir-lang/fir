@@ -97,7 +97,7 @@ trait TriviaTokens[t]:
 
 
 type ParserState[t](
-    _tokens: Vec[t],
+    _tokens: Array[t],
     _cursor: U32,
     _errorCursor: Option[U32],
 )
@@ -118,7 +118,7 @@ ParserState.cloneFrom(self: ParserState[t], other: ParserState[t]):
     self._errorCursor = other._errorCursor
 
 
-ParserState.new(tokens: Vec[t]) ParserState[t]:
+ParserState.new(tokens: Array[t]) ParserState[t]:
     ParserState(_tokens = tokens, _cursor = 0, _errorCursor = Option.None,)
 
 

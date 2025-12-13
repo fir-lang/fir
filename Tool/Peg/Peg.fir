@@ -24,7 +24,7 @@ main():
     let tokens = match try(\(): scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("Unable to scan file: `line + 1`:`col + 1`: `msg`")
-        Result.Ok(tokens): tokens
+        Result.Ok(tokens): tokens.takeArray()
 
     if tokens.len() == 0:
         panic("Empty file")

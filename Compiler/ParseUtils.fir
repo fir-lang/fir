@@ -63,7 +63,7 @@ newId(cursor: U32) Id:
     Id(token = TokenIdx(idx = cursor))
 
 
-newVarId(cursor: U32, tokens: Vec[Token]) VarId:
+newVarId(cursor: U32, tokens: Array[Token]) VarId:
     VarId(
         token = TokenIdx(idx = cursor),
         name = tokens.get(cursor).text,
@@ -71,7 +71,7 @@ newVarId(cursor: U32, tokens: Vec[Token]) VarId:
     )
 
 
-newAssocId(cursor: U32, tokens: Vec[Token]) AssocVarId:
+newAssocId(cursor: U32, tokens: Array[Token]) AssocVarId:
     AssocVarId(
         token = TokenIdx(idx = cursor),
         name = tokens.get(cursor).text,
@@ -79,7 +79,7 @@ newAssocId(cursor: U32, tokens: Vec[Token]) AssocVarId:
     )
 
 
-newTyId(cursor: U32, tokens: Vec[Token]) TyId:
+newTyId(cursor: U32, tokens: Array[Token]) TyId:
     TyId(
         token = TokenIdx(idx = cursor),
         name = tokens.get(cursor).text,
