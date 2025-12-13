@@ -263,7 +263,21 @@ _checkFieldSelectExpr(
                         loc = mod.loc(expr),
                     ),
                 )
-            panic("TODO")
+            let (rows, extension = _) = collectRecordFields(
+                ty,
+                labels,
+                extension,
+            )
+            let fieldText = mod.idText(expr.field)
+            match rows.get(LocalId(name = fieldText)):
+                Option.Some(fieldTy): (ty = fieldTy, binds = HashMap.empty())
+                Option.None:
+                    throw(
+                        TypeError(
+                            msg = "Record does not have field `fieldText`",
+                            loc = mod.loc(expr),
+                        ),
+                    )
 
         other: panic("TODO")
 
