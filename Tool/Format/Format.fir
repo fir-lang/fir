@@ -1802,25 +1802,3 @@ commentAtStart(tokenIdx: TokenIdx, tokens: Array[Token]) Bool:
         return Bool.True
 
     tokens.get(idx).line != tokens.get(tokenIdx.idx).line
-
-
-nextNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
-    let idx = tokenIdx.idx + 1
-    while tokens.getOpt(idx) is Option.Some(next):
-        if next.isSpaceOrComment():
-            idx += 1
-        else:
-            return Option.Some(TokenIdx(idx = idx))
-
-    Option.None
-
-
-prevNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
-    let idx = tokenIdx.idx
-    while idx != 0:
-        idx -= 1
-        let token = tokens.get(idx)
-        if not token.isSpaceOrComment():
-            return Option.Some(TokenIdx(idx = idx))
-
-    Option.None

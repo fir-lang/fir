@@ -1783,6 +1783,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
                                 params = args.unwrapOr(Vec.empty()),
                                 exceptions = ret.exn,
                                 returnTy = ret.ret,
+                                lparen = TokenIdx(idx = cur),
                             ),
                         body,
                         idx = 0,
@@ -2331,6 +2332,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                                 params = args.unwrapOr(Vec.empty()),
                                 exceptions = ret.exn,
                                 returnTy = ret.ret,
+                                lparen = TokenIdx(idx = cur),
                             ),
                         body = Vec.[Stmt.Expr(body)],
                         idx = 0,
@@ -4498,6 +4500,7 @@ topFunSig(state: ParserState[Token]) (parentTy: Option[TyId], name: Id, sig: Fun
                 Result.Ok(ok):
                     ()
                     Option.Some(ok)
+            let lparen = state.nextCursor()
             let params = paramList(state)
             let optionalCursor0 = state._cursor
             let symResult = try(
@@ -4526,6 +4529,7 @@ topFunSig(state: ParserState[Token]) (parentTy: Option[TyId], name: Id, sig: Fun
                             params,
                             exceptions = ret.exn,
                             returnTy = ret.ret,
+                            lparen = TokenIdx(idx = lparen),
                         ),
                 )
             value,
@@ -5155,6 +5159,7 @@ funSig(state: ParserState[Token]) (id: Id, sig: FunSig) / U32:
                 Result.Ok(ok):
                     ()
                     Option.Some(ok)
+            let lparen = state.nextCursor()
             let params = paramList(state)
             let optionalCursor0 = state._cursor
             let symResult = try(
@@ -5181,6 +5186,7 @@ funSig(state: ParserState[Token]) (id: Id, sig: FunSig) / U32:
                             params,
                             exceptions = ret.exn,
                             returnTy = ret.ret,
+                            lparen = TokenIdx(idx = lparen),
                         ),
                 )
             value,

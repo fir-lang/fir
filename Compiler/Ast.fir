@@ -4,22 +4,6 @@ import [
 ]
 
 
-#[derive(ToDoc)]
-type TokenIdx(
-    idx: U32,
-)
-
-
-impl Step[TokenIdx]:
-    step(self: TokenIdx) TokenIdx:
-        TokenIdx(idx = self.idx + 1)
-
-
-impl Ord[TokenIdx]:
-    cmp(self: TokenIdx, other: TokenIdx) Ordering:
-        self.idx.cmp(other.idx)
-
-
 trait Tokens[t]:
     firstToken(self: t, tokens: Array[Token]) TokenIdx
 
@@ -142,7 +126,9 @@ impl Tokens[FunDecl]:
         self.name.token
 
     lastToken(self: FunDecl, tokens: Array[Token]) TokenIdx:
-        panic("TODO")
+        match self.body:
+            Option.Some(stmts): stmts.last().unwrap().lastToken(tokens)
+            Option.None: self.sig.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -155,7 +141,37 @@ type FunSig(
     params: Vec[FunArg],
     returnTy: Option[Type],
     exceptions: Option[Type],
+
+    ## The '(' token of the argument list. We need to store at least one token
+    ## in this node as the minimal node (without context, with empty argument
+    ## list, and without return or exception types) won't have any other AST
+    ## nodes.
+    lparen: TokenIdx,
 )
+
+
+impl Tokens[FunSig]:
+    firstToken(self: FunSig, tokens: Array[Token]) TokenIdx:
+        if self.context is Option.Some(context):
+            return context.firstToken(tokens)
+
+        self.lparen
+
+    lastToken(self: FunSig, tokens: Array[Token]) TokenIdx:
+        if self.exceptions is Option.Some(exceptions):
+            return exceptions.lastToken(tokens)
+
+        if self.returnTy is Option.Some(returnTy):
+            return returnTy.lastToken(tokens)
+
+        let token = self.params.last().map(
+            \(lastParam): lastParam.lastToken(tokens),
+        ).unwrapOr(self.lparen)
+
+        let rparen = nextNonTrivia(token, tokens).unwrap()
+        assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+
+        rparen
 
 
 #[derive(ToDoc)]
@@ -163,6 +179,14 @@ type FunArg(
     name: Id,
     ty: Option[Type],
 )
+
+
+impl Tokens[FunArg]:
+    firstToken(self: FunArg, tokens: Array[Token]) TokenIdx:
+        self.name.token
+
+    lastToken(self: FunArg, tokens: Array[Token]) TokenIdx:
+        self.ty.map(\(ty): ty.lastToken(tokens)).unwrapOr(self.name.token)
 
 
 #[derive(ToDoc)]

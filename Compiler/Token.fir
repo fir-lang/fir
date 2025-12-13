@@ -30,6 +30,44 @@ Token.isSpace(self: Token) Bool:
     self.kind.isSpace()
 
 
+#[derive(ToDoc)]
+type TokenIdx(
+    idx: U32,
+)
+
+
+impl Step[TokenIdx]:
+    step(self: TokenIdx) TokenIdx:
+        TokenIdx(idx = self.idx + 1)
+
+
+impl Ord[TokenIdx]:
+    cmp(self: TokenIdx, other: TokenIdx) Ordering:
+        self.idx.cmp(other.idx)
+
+
+nextNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
+    let idx = tokenIdx.idx + 1
+    while tokens.getOpt(idx) is Option.Some(next):
+        if next.isSpaceOrComment():
+            idx += 1
+        else:
+            return Option.Some(TokenIdx(idx = idx))
+
+    Option.None
+
+
+prevNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
+    let idx = tokenIdx.idx
+    while idx != 0:
+        idx -= 1
+        let token = tokens.get(idx)
+        if not token.isSpaceOrComment():
+            return Option.Some(TokenIdx(idx = idx))
+
+    Option.None
+
+
 type TokenKind:
     # This includes all kinds of comments: single or multi-line, documentation or not.
     #
