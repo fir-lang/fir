@@ -309,11 +309,36 @@ dedent(loc: (line: U32, col: U32)) Token:
 
 # --------------------------------------------------------------------------------------------------
 
+## Entry point to scan a file and print generated tokens.
+scannerDumpTokens():
+    let args = getArgs()
 
-## Entry point to scan a file print generated tokens.
+    if args.len() != 2:
+        panic(
+            "USAGE: fir Compiler/Scanner.fir --main scannerDumpTokens -- <file>",
+        )
+
+    let file = args.get(1)
+    let fileContents = readFileUtf8(file)
+    let (tokens, error) = tokenize(file, fileContents)
+
+    if error is Option.Some(error):
+        print("ERROR: `error`")
+
+    # Explicitly close the variant below (issue #49).
+    let tokens = match try(\(): scan[row[]](tokens),):
+        Result.Err(~ScannerError(line, col, msg)):
+            panic("`line + 1`:`col + 1`: `msg`")
+        Result.Ok(tokens): tokens
+
+    for token: Token in tokens.iter():
+        print("`token.line + 1`:`token.col + 1`: `token.kind`")
+
+
+## Entry point to scan a file and print generated interpreter tokens.
 ##
 ## Used in tests to compare generated tokens with the interpreter's tokens.
-## 
+##
 ## This function has the `scanner` prefix in the name because we have a similar
 ## function in the lexer, and we don't have module namespaces in the
 ## interpreter.

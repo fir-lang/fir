@@ -51,20 +51,14 @@ generateInterpreterTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
                     if tokens.get(i + 1).kind is TokenKind.Dot:
                         let next = tokens.get(i + 2)
 
-                        if next
-                                is Token(
-                                    kind = TokenKind.UpperId,
-                                    byteIdx = byteIdxRight,
-                                    text = textRight,
-                                    ..
-                                ):
+                        if next.kind is TokenKind.UpperId:
                             newTokens.push(
                                 Token(
                                     kind = TokenKind.UpperIdPath,
                                     text =
                                         contents.substr(
                                             token.byteIdx,
-                                            byteIdxRight + textRight.len(),
+                                            next.byteIdx + next.text.len(),
                                         ),
                                     byteIdx = token.byteIdx,
                                     line = token.line,
@@ -81,7 +75,7 @@ generateInterpreterTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
                                     text =
                                         contents.substr(
                                             token.byteIdx,
-                                            token.byteIdx + 2,
+                                            next.byteIdx + next.text.len(),
                                         ),
                                     byteIdx = token.byteIdx,
                                     line = token.line,
