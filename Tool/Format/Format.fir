@@ -872,7 +872,7 @@ Alt.format(self, tokens: Array[Token]) Doc:
             + formatToken(if_, tokens)
             + Doc.blank(1)
             + guard.format(tokens)
-        docRest = Doc.nested(4, docRest)
+        docRest = Doc.nested(4, docRest).group()
 
     let body = formatStmts(self.rhs, tokens)
 

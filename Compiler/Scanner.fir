@@ -99,8 +99,7 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                     Option.Some(tNext):
                         scanIndented(tokens, newTokens, tNext.col)
                         match next(tokens, newTokens):
-                            Option.Some(tNext)
-                                    if tNext.kind is TokenKind.RBrace:
+                            Option.Some(tNext) if tNext.kind is TokenKind.RBrace:
                                 newTokens.push(tNext)
                             _:
                                 throw(
@@ -208,8 +207,7 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 let tNext = peek(tokens, newTokens).unwrap()
                 scanIndented(tokens, newTokens, tNext.col)
                 match next(tokens, newTokens):
-                    Option.Some(t)
-                            if t.kind is TokenKind.RBrace:
+                    Option.Some(t) if t.kind is TokenKind.RBrace:
                         newTokens.push(t)
                     _:
                         throw(
