@@ -1610,8 +1610,7 @@ formatLeadingComments_(
     for commentTokenIdx: TokenIdx in range(commentStart, commentEnd):
         let commentToken = tokens.get(commentTokenIdx.idx)
 
-        if commentToken.kind
-                is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+        if commentToken.isSpace():
             continue
 
         # Keep empty lines between comments.
@@ -1639,8 +1638,7 @@ formatTrailingComments(tokenIdx: TokenIdx, tokens: Array[Token]) Doc:
     let tokenLastLine = token.rightLoc().line
     let trailingTokenIdx = tokenIdx.idx + 1
     while tokens.getOpt(trailingTokenIdx) is Option.Some(nextToken):
-        if nextToken.kind
-                is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+        if nextToken.isSpace():
             trailingTokenIdx += 1
             continue
 
@@ -1757,7 +1755,7 @@ findCommentBefore(token: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
     while idx != 0:
         let prev = tokens.get(idx - 1)
 
-        if prev.kind is TokenKind.Newline | TokenKind.Dedent | TokenKind.Indent:
+        if prev.isSpace():
             idx -= 1
         elif prev.kind is TokenKind.Comment:
             let prevIdx = TokenIdx(idx = idx - 1)
@@ -1786,22 +1784,13 @@ commentAtStart(tokenIdx: TokenIdx, tokens: Array[Token]) Bool:
     while idx != 0:
         let prev = tokens.get(idx)
 
-        if prev.kind
-                is TokenKind.Comment
-                    | TokenKind.Newline
-                    | TokenKind.Indent
-                    | TokenKind.Dedent:
+        if prev.isSpaceOrComment():
             idx -= 1
             continue
 
         break
 
-    if idx == 0
-            and (tokens.get(idx).kind
-                is TokenKind.Comment
-                    | TokenKind.Newline
-                    | TokenKind.Indent
-                    | TokenKind.Dedent):
+    if idx == 0 and tokens.get(idx).isSpaceOrComment():
         return Bool.True
 
     tokens.get(idx).line != tokens.get(tokenIdx.idx).line
@@ -1810,11 +1799,7 @@ commentAtStart(tokenIdx: TokenIdx, tokens: Array[Token]) Bool:
 nextNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
     let idx = tokenIdx.idx + 1
     while tokens.getOpt(idx) is Option.Some(next):
-        if next.kind
-                is TokenKind.Comment
-                    | TokenKind.Newline
-                    | TokenKind.Indent
-                    | TokenKind.Dedent:
+        if next.isSpaceOrComment():
             idx += 1
         else:
             return Option.Some(TokenIdx(idx = idx))
@@ -1827,11 +1812,7 @@ prevNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
     while idx != 0:
         idx -= 1
         let token = tokens.get(idx)
-        if not (token.kind
-                is TokenKind.Comment
-                    | TokenKind.Newline
-                    | TokenKind.Indent
-                    | TokenKind.Dedent):
+        if not token.isSpaceOrComment():
             return Option.Some(TokenIdx(idx = idx))
 
     Option.None

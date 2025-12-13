@@ -22,6 +22,14 @@ Token.rightLoc(self) (line: U32, col: U32):
     (line = line, col = col)
 
 
+Token.isSpaceOrComment(self: Token) Bool:
+    self.kind.isSpaceOrComment()
+
+
+Token.isSpace(self: Token) Bool:
+    self.kind.isSpace()
+
+
 type TokenKind:
     # This includes all kinds of comments: single or multi-line, documentation or not.
     #
@@ -146,6 +154,14 @@ type TokenKind:
 impl TriviaTokens[Token]:
     isTrivia(self: Token) Bool:
         self.kind is TokenKind.Comment
+
+
+TokenKind.isSpaceOrComment(self: TokenKind) Bool:
+    self.isSpace() or (self is TokenKind.Comment)
+
+
+TokenKind.isSpace(self: TokenKind) Bool:
+    self is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent
 
 
 #[derive(ToDoc)]
