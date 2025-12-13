@@ -32,7 +32,8 @@ checkExpr(
         Expr.ConstrSelect(expr):
             _checkConExpr(expr, pgm, env, expectedTy, level)
 
-        Expr.FieldSelect(..): panic("TODO")
+        Expr.FieldSelect(expr):
+            _checkFieldSelectExpr(expr, pgm, env, expectedTy, level, loopStack)
 
         Expr.MethodSelect(..): panic("TODO")
 
@@ -232,6 +233,39 @@ makeVariant(varGen: UVarGen, ty: Ty, level: U32, loc: Loc) Ty / TypeError:
             )
 
         _: throw(TypeError(loc, msg = "Type in variant is not a constructor",))
+
+
+_checkFieldSelectExpr(
+    expr: FieldSelectExpr,
+    pgm: Program,
+    env: FunTcEnv,
+    expectedTy: Option[Ty],
+    level: U32,
+    loopStack: Vec[Option[LocalId]],
+) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
+    let mod = pgm.module(env._modIdx)
+    let (ty, binds = _) = checkExpr(
+        expr.object,
+        pgm,
+        env,
+        Option.None,
+        level,
+        loopStack,
+    )
+    let ty = ty.normalize()
+    match ty:
+        Ty.Record(labels, extension, isRow):
+            assert(isRow == Bool.False)
+            if expr.userTyArgs is Option.Some(_):
+                throw(
+                    TypeError(
+                        msg = "Record field with type arguments",
+                        loc = mod.loc(expr),
+                    ),
+                )
+            panic("TODO")
+
+        other: panic("TODO")
 
 
 _checkParenExpr(
