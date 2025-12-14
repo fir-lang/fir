@@ -14,7 +14,7 @@ use crate::utils::loc_display;
 
 use std::cmp::Ordering;
 use std::io::Write;
-use std::ops::Rem;
+use std::ops::{Neg, Rem};
 
 // Just lowered program with some extra cached stuff for easy access.
 struct Pgm {
@@ -1543,6 +1543,26 @@ fn call_builtin_fun<W: Write>(
             } else {
                 pgm.false_alloc
             })
+        }
+
+        BuiltinFunDecl::I32AsU32 => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(u32_as_val(val_as_i32(args[0]) as u32))
+        }
+
+        BuiltinFunDecl::I32Abs => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(i32_as_val(val_as_i32(args[0]).abs()))
+        }
+
+        BuiltinFunDecl::I8Neg => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(i8_as_val(val_as_i8(args[0]).neg()))
+        }
+
+        BuiltinFunDecl::I32Neg => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(i32_as_val(val_as_i32(args[0]).neg()))
         }
 
         BuiltinFunDecl::ThrowUnchecked => {

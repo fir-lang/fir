@@ -201,6 +201,10 @@ pub enum BuiltinFunDecl {
     U8Rem,
     I32Rem,
     U32Rem,
+    I32AsU32,
+    I32Abs,
+    I8Neg,
+    I32Neg,
 
     /// `prim throwUnchecked(exn: exn) a / exn?` (`exn?` is implicit)
     ///
@@ -1540,6 +1544,43 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             lowered_pgm
                                 .funs
                                 .push(Fun::Builtin(BuiltinFunDecl::ArrayCopyWithin { t }));
+                        }
+
+                        ("I32", "asU32") => {
+                            assert_eq!(fun_ty_args.len(), 1); // exception (implicit)
+                            lowered_pgm
+                                .funs
+                                .push(Fun::Builtin(BuiltinFunDecl::I32AsU32));
+                        }
+
+                        ("I32", "abs") => {
+                            assert_eq!(fun_ty_args.len(), 1); // exception (implicit)
+                            lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::I32Abs));
+                        }
+
+                        ("Neg", "__neg") => {
+                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                            match &fun_ty_args[0] {
+                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                    match name.as_str() {
+                                        "I8" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::I8Neg));
+                                        }
+
+                                        "I32" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::I32Neg));
+                                        }
+
+                                        _ => panic!(),
+                                    }
+                                }
+
+                                _ => panic!(),
+                            }
                         }
 
                         (_, _) => todo!("Built-in function {}.{}", ty, fun),
