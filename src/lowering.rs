@@ -197,6 +197,10 @@ pub enum BuiltinFunDecl {
     I32Eq,
     U32Eq,
     U32Mod,
+    I8Rem,
+    U8Rem,
+    I32Rem,
+    U32Rem,
 
     /// `prim throwUnchecked(exn: exn) a / exn?` (`exn?` is implicit)
     ///
@@ -1220,6 +1224,42 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                             lowered_pgm
                                                 .funs
                                                 .push(Fun::Builtin(BuiltinFunDecl::U32Shl));
+                                        }
+
+                                        _ => panic!(),
+                                    }
+                                }
+                                _ => panic!(),
+                            }
+                        }
+
+                        ("Rem", "rem") => {
+                            assert_eq!(fun_ty_args.len(), 2); // self, exception
+                            match &fun_ty_args[0] {
+                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                    match name.as_str() {
+                                        "I8" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::I8Rem));
+                                        }
+
+                                        "U8" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::U8Rem));
+                                        }
+
+                                        "I32" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::I32Rem));
+                                        }
+
+                                        "U32" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::U32Rem));
                                         }
 
                                         _ => panic!(),

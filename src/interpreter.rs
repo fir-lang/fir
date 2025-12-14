@@ -14,6 +14,7 @@ use crate::utils::loc_display;
 
 use std::cmp::Ordering;
 use std::io::Write;
+use std::ops::Rem;
 
 // Just lowered program with some extra cached stuff for easy access.
 struct Pgm {
@@ -1328,6 +1329,34 @@ fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
             FunRet::Val(u32_as_val(val_as_u32(i1) << val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::I8Rem => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1).rem(val_as_i8(i2))))
+        }
+
+        BuiltinFunDecl::U8Rem => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1).rem(val_as_u8(i2))))
+        }
+
+        BuiltinFunDecl::I32Rem => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1).rem(val_as_i32(i2))))
+        }
+
+        BuiltinFunDecl::U32Rem => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1).rem(val_as_u32(i2))))
         }
 
         BuiltinFunDecl::I8Cmp => {

@@ -27,32 +27,32 @@ trait RecRow[t]
 trait VarRow[t]
 
 
-# The `+` operator.
+## The `+` operator.
 trait Add[t]:
     __add(self: t, other: t) t
 
 
-# The `-` operator.
+## The `-` operator.
 trait Sub[t]:
     __sub(self: t, other: t) t
 
 
-# The unary `-` operator.
+## The unary `-` operator.
 trait Neg[t]:
     __neg(self: t) t
 
 
-# The `*` operator.
+## The `*` operator.
 trait Mul[t]:
     __mul(self: t, other: t) t
 
 
-# The `/` operator.
+## The `/` operator.
 trait Div[t]:
     __div(self: t, other: t) t
 
 
-# The `==` operator.
+## The `==` operator.
 trait Eq[t]:
     __eq(self: t, other: t) Bool
 
@@ -60,29 +60,39 @@ trait Eq[t]:
         not self.__eq(other)
 
 
-# The `|` operator.
+## The `|` operator.
 trait BitOr[t]:
     __bitor(self: t, other: t) t
 
 
-# The `^` operator.
+## The `^` operator.
 trait BitXor[t]:
     __bitxor(self: t, other: t) t
 
 
-# The `&` operator.
+## The `&` operator.
 trait BitAnd[t]:
     __bitand(self: t, other: t) t
 
 
-# The `<<` operator.
+## The `<<` operator.
 trait Shl[t]:
     __shl(self: t, other: t) t
 
 
-# The `>>` operator.
+## The `>>` operator.
 trait Shr[t]:
     __shr(self: t, other: t) t
+
+
+## The remainder operation: `n % d == n - ((n / d) * d)`.
+##
+## For signed numbers, the result will have the same sign as the dividend.
+##
+## For now this doesn't have a syntax. In the future we will probably desugar
+## `%` to this.
+trait Rem[t]:
+    rem(self: t, divisor: t) t
 
 
 trait Ord[t]:

@@ -51,6 +51,10 @@ impl Neg[I32]:
     prim __neg(self: I32) I32
 
 
+impl Rem[I32]:
+    prim rem(self: I32, divisor: I32) I32
+
+
 impl ToStr[I32]:
     prim toStr(self: I32) Str
 
@@ -119,6 +123,10 @@ impl Shl[U32]:
 
 impl Shr[U32]:
     prim __shr(self: U32, shift: U32) U32
+
+
+impl Rem[U32]:
+    prim rem(self: U32, divisor: U32) U32
 
 
 impl ToStr[U32]:
@@ -191,6 +199,10 @@ impl Neg[I8]:
     prim __neg(self: I8) I8
 
 
+impl Rem[I8]:
+    prim rem(self: I8, divisor: I8) I8
+
+
 impl ToStr[I8]:
     prim toStr(self: I8) Str
 
@@ -259,6 +271,10 @@ impl Shl[U8]:
 
 impl Shr[U8]:
     prim __shr(self: U8, shift: U8) U8
+
+
+impl Rem[U8]:
+    prim rem(self: U8, divisor: U8) U8
 
 
 impl ToStr[U8]:
