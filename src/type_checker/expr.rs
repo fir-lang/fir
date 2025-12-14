@@ -553,6 +553,8 @@ pub(super) fn check_expr(
                     Some(Ty::Con(con, _kind)) if con == "U8" => ast::IntKind::U8,
                     Some(Ty::Con(con, _kind)) if con == "I32" => ast::IntKind::I32,
                     Some(Ty::Con(con, _kind)) if con == "U32" => ast::IntKind::U32,
+                    Some(Ty::Con(con, _kind)) if con == "I64" => ast::IntKind::I64,
+                    Some(Ty::Con(con, _kind)) if con == "U64" => ast::IntKind::U64,
 
                     None | Some(Ty::Var(_)) => {
                         // Try defaulting as i32.
@@ -644,6 +646,48 @@ pub(super) fn check_expr(
                     (
                         unify_expected_ty(
                             Ty::Con("U32".into(), Kind::Star),
+                            expected_ty,
+                            tc_state.tys.tys.cons(),
+                            tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        ),
+                        Default::default(),
+                    )
+                }
+
+                ast::IntKind::I64 => {
+                    *parsed = i64::from_str_radix(text, *radix).unwrap_or_else(|err| {
+                        panic!(
+                            "{}: Integer cannot be parsed as I64: {:?}",
+                            loc_display(&expr.loc),
+                            err
+                        )
+                    }) as u32 as u64;
+                    (
+                        unify_expected_ty(
+                            Ty::Con("I64".into(), Kind::Star),
+                            expected_ty,
+                            tc_state.tys.tys.cons(),
+                            tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        ),
+                        Default::default(),
+                    )
+                }
+
+                ast::IntKind::U64 => {
+                    *parsed = u64::from_str_radix(text, *radix).unwrap_or_else(|err| {
+                        panic!(
+                            "{}: Integer cannot be parsed as U64: {:?}",
+                            loc_display(&expr.loc),
+                            err
+                        )
+                    });
+                    (
+                        unify_expected_ty(
+                            Ty::Con("U64".into(), Kind::Star),
                             expected_ty,
                             tc_state.tys.tys.cons(),
                             tc_state.var_gen,

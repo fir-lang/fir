@@ -4,6 +4,27 @@ prim type I64
 prim type U64
 
 
+impl Add[U64]:
+    prim __add(self: U64, other: U64) U64
+
+
+impl Mul[U64]:
+    prim __mul(self: U64, other: U64) U64
+
+
+impl Ord[U64]:
+    prim cmp(self: U64, other: U64) Ordering
+
+
+impl ToStr[U64]:
+    prim toStr(self: U64) Str
+
+
+impl Step[U64]:
+    step(self: U64) U64:
+        self + 1
+
+
 prim type I32
 
 
@@ -322,6 +343,9 @@ prim U32.asU8(self: U32) U8
 
 
 prim U32.asI32(self: U32) I32
+
+
+prim U32.asU64(self: U32) U64
 
 
 prim I32.asI8(self: I32) I8
