@@ -4,6 +4,27 @@ prim type I64
 prim type U64
 
 
+impl Add[U64]:
+    prim __add(self: U64, other: U64) U64
+
+
+impl Mul[U64]:
+    prim __mul(self: U64, other: U64) U64
+
+
+impl Ord[U64]:
+    prim cmp(self: U64, other: U64) Ordering
+
+
+impl ToStr[U64]:
+    prim toStr(self: U64) Str
+
+
+impl Step[U64]:
+    step(self: U64) U64:
+        self + 1
+
+
 prim type I32
 
 
@@ -49,6 +70,10 @@ impl Shr[I32]:
 
 impl Neg[I32]:
     prim __neg(self: I32) I32
+
+
+impl Rem[I32]:
+    prim rem(self: I32, divisor: I32) I32
 
 
 impl ToStr[I32]:
@@ -121,6 +146,10 @@ impl Shr[U32]:
     prim __shr(self: U32, shift: U32) U32
 
 
+impl Rem[U32]:
+    prim rem(self: U32, divisor: U32) U32
+
+
 impl ToStr[U32]:
     prim toStr(self: U32) Str
 
@@ -189,6 +218,10 @@ impl Shr[I8]:
 
 impl Neg[I8]:
     prim __neg(self: I8) I8
+
+
+impl Rem[I8]:
+    prim rem(self: I8, divisor: I8) I8
 
 
 impl ToStr[I8]:
@@ -261,6 +294,10 @@ impl Shr[U8]:
     prim __shr(self: U8, shift: U8) U8
 
 
+impl Rem[U8]:
+    prim rem(self: U8, divisor: U8) U8
+
+
 impl ToStr[U8]:
     prim toStr(self: U8) Str
 
@@ -306,6 +343,9 @@ prim U32.asU8(self: U32) U8
 
 
 prim U32.asI32(self: U32) I32
+
+
+prim U32.asU64(self: U32) U64
 
 
 prim I32.asI8(self: I32) I8

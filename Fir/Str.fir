@@ -96,6 +96,15 @@ Str.splitWhitespace(self) SplitWhitespace:
     SplitWhitespace(_str = self, _idx = 0)
 
 
+## Note: unlike `splitWhitespace` this iterator can yield empty strings.
+##
+## The invariant is: if `str.splitChar(c) == parts` then `parts.join(c) == str`.
+##
+## (TODO: Implement `join`.)
+Str.splitChar(self, char: Char) SplitChar:
+    SplitChar(_str = self, _idx = 0, _char = char, _done = Bool.False)
+
+
 Str.lines(self) Lines:
     Lines(_str = self, _idx = 0)
 
@@ -270,6 +279,48 @@ impl Iterator[SplitWhitespace, Str, exn]:
 
         self._idx = wordEnd
         Option.Some(self._str.substr(wordStart, wordEnd))
+
+
+type SplitChar(
+    _str: Str,
+    _idx: U32,
+    _char: Char,
+    _done: Bool,
+)
+
+
+impl Iterator[SplitChar, Str, exn]:
+    next(self: SplitChar) Option[Str] / exn:
+        #|
+        Note: when the input is "a" and char is ' ' we yield ["a"]. When the
+        input is "a ", we need to yield ["a", ""].
+
+        The idea is that we should be able to join the returned elements with
+        the split char and get the original string.
+
+        So when we return the whole rest of the string (because there's no more
+        split chars), we stop. Otherwise we need to yield at least once.
+        |#
+
+        if self._done:
+            return Option.None
+
+        if self._idx == self._str.len():
+            self._done = Bool.True
+            return Option.Some("")
+
+        let charIdxIter = self._str.substr(self._idx, self._str.len())
+            .charIndices()
+
+        for (char, idx): (char: Char, idx: U32) in charIdxIter:
+            if char == self._char:
+                let word = self._str.substr(self._idx, self._idx + idx)
+                self._idx += idx + char.lenUtf8()
+                return Option.Some(word)
+
+        let word = self._str.substr(self._idx, self._str.len())
+        self._done = Bool.True
+        Option.Some(word)
 
 
 type Lines(

@@ -469,6 +469,8 @@ impl Expr {
                 }
                 buffer.push_str(text);
                 match suffix {
+                    Some(IntKind::I64) => buffer.push_str("I64"),
+                    Some(IntKind::U64) => buffer.push_str("U64"),
                     Some(IntKind::I32) => buffer.push_str("I32"),
                     Some(IntKind::U32) => buffer.push_str("U32"),
                     Some(IntKind::I8) => buffer.push_str("I8"),

@@ -164,10 +164,12 @@ pub enum BuiltinFunDecl {
     ToStrU8,
     ToStrI32,
     ToStrU32,
+    ToStrU64,
     U8AsI8,
     U8AsU32,
     U32AsU8,
     U32AsI32,
+    U32AsU64,
     I8Shl,
     U8Shl,
     I32Shl,
@@ -176,10 +178,12 @@ pub enum BuiltinFunDecl {
     U8Cmp,
     I32Cmp,
     U32Cmp,
+    U64Cmp,
     I8Add,
     U8Add,
     I32Add,
     U32Add,
+    U64Add,
     I8Sub,
     U8Sub,
     I32Sub,
@@ -188,6 +192,7 @@ pub enum BuiltinFunDecl {
     U8Mul,
     I32Mul,
     U32Mul,
+    U64Mul,
     I8Div,
     U8Div,
     I32Div,
@@ -197,6 +202,14 @@ pub enum BuiltinFunDecl {
     I32Eq,
     U32Eq,
     U32Mod,
+    I8Rem,
+    U8Rem,
+    I32Rem,
+    U32Rem,
+    I32AsU32,
+    I32Abs,
+    I8Neg,
+    I32Neg,
 
     /// `prim throwUnchecked(exn: exn) a / exn?` (`exn?` is implicit)
     ///
@@ -1159,6 +1172,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                                 .funs
                                                 .push(Fun::Builtin(BuiltinFunDecl::ToStrU32));
                                         }
+                                        "U64" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrU64));
+                                        }
                                         _ => panic!(),
                                     }
                                 }
@@ -1176,6 +1195,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             lowered_pgm
                                 .funs
                                 .push(Fun::Builtin(BuiltinFunDecl::U32AsI32));
+                        }
+
+                        ("U32", "asU64") => {
+                            assert_eq!(fun_ty_args.len(), 1); // exception
+                            lowered_pgm
+                                .funs
+                                .push(Fun::Builtin(BuiltinFunDecl::U32AsU64));
                         }
 
                         ("U32", "mod") => {
@@ -1229,6 +1255,42 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             }
                         }
 
+                        ("Rem", "rem") => {
+                            assert_eq!(fun_ty_args.len(), 2); // self, exception
+                            match &fun_ty_args[0] {
+                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                    match name.as_str() {
+                                        "I8" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::I8Rem));
+                                        }
+
+                                        "U8" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::U8Rem));
+                                        }
+
+                                        "I32" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::I32Rem));
+                                        }
+
+                                        "U32" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::U32Rem));
+                                        }
+
+                                        _ => panic!(),
+                                    }
+                                }
+                                _ => panic!(),
+                            }
+                        }
+
                         ("Ord", "cmp") => {
                             assert_eq!(fun_ty_args.len(), 2); // self, exception
                             match &fun_ty_args[0] {
@@ -1256,6 +1318,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                             lowered_pgm
                                                 .funs
                                                 .push(Fun::Builtin(BuiltinFunDecl::U32Cmp));
+                                        }
+
+                                        "U64" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::U64Cmp));
                                         }
 
                                         _ => panic!(),
@@ -1292,6 +1360,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                             lowered_pgm
                                                 .funs
                                                 .push(Fun::Builtin(BuiltinFunDecl::U32Add));
+                                        }
+
+                                        "U64" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::U64Add));
                                         }
 
                                         _ => panic!(),
@@ -1366,6 +1440,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                             lowered_pgm
                                                 .funs
                                                 .push(Fun::Builtin(BuiltinFunDecl::U32Mul));
+                                        }
+
+                                        "U64" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::U64Mul));
                                         }
 
                                         _ => panic!(),
@@ -1500,6 +1580,43 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             lowered_pgm
                                 .funs
                                 .push(Fun::Builtin(BuiltinFunDecl::ArrayCopyWithin { t }));
+                        }
+
+                        ("I32", "asU32") => {
+                            assert_eq!(fun_ty_args.len(), 1); // exception (implicit)
+                            lowered_pgm
+                                .funs
+                                .push(Fun::Builtin(BuiltinFunDecl::I32AsU32));
+                        }
+
+                        ("I32", "abs") => {
+                            assert_eq!(fun_ty_args.len(), 1); // exception (implicit)
+                            lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::I32Abs));
+                        }
+
+                        ("Neg", "__neg") => {
+                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                            match &fun_ty_args[0] {
+                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                    match name.as_str() {
+                                        "I8" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::I8Neg));
+                                        }
+
+                                        "I32" => {
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::I32Neg));
+                                        }
+
+                                        _ => panic!(),
+                                    }
+                                }
+
+                                _ => panic!(),
+                            }
                         }
 
                         (_, _) => todo!("Built-in function {}.{}", ty, fun),

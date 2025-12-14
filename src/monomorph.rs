@@ -611,6 +611,8 @@ fn mono_expr(
                 ast::IntKind::U8 => "U8",
                 ast::IntKind::I32 => "I32",
                 ast::IntKind::U32 => "U32",
+                ast::IntKind::I64 => "I64",
+                ast::IntKind::U64 => "U64",
             };
             let ty_decl = poly_pgm.ty.get(ty_decl_id).unwrap();
             mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm);

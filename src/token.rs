@@ -132,4 +132,6 @@ pub enum IntKind {
     U8,
     I32,
     U32,
+    I64,
+    U64,
 }
