@@ -66,7 +66,7 @@ pub enum Ty {
 
     /// An anonymous record or variant type or row type. E.g. `(a: Str, ..r)`, `[Err1(Str), ..r]`.
     Anonymous {
-        labels: TreeMap<Id, Ty>,
+        labels: OrdMap<Id, Ty>,
 
         /// Row extension. When available, this will be one of:
         ///
@@ -91,7 +91,7 @@ pub enum RecordOrVariant {
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum FunArgs {
     Positional(Vec<Ty>),
-    Named(TreeMap<Id, Ty>),
+    Named(OrdMap<Id, Ty>),
 }
 
 impl FunArgs {
@@ -103,7 +103,7 @@ impl FunArgs {
         matches!(self, FunArgs::Named(_))
     }
 
-    pub fn as_named(&self) -> &TreeMap<Id, Ty> {
+    pub fn as_named(&self) -> &OrdMap<Id, Ty> {
         match self {
             FunArgs::Positional(_) => panic!(),
             FunArgs::Named(named) => named,
@@ -205,7 +205,7 @@ pub(super) enum TyConDetails {
 #[derive(Debug, Clone)]
 pub(super) struct TraitDetails {
     /// Methods of the trait, with optional default implementations.
-    pub(super) methods: Map<Id, TraitMethod>,
+    pub(super) methods: HashMap<Id, TraitMethod>,
     /*
     /// Types implementing the trait.
     ///
@@ -272,7 +272,7 @@ impl Scheme {
         // handle shadowing here.
 
         // Maps `QVar`s to instantiations.
-        let mut var_map: Map<Id, Ty> = Default::default();
+        let mut var_map: HashMap<Id, Ty> = Default::default();
 
         // Instantiated type parameters, in the same order as `self.quantified_vars`.
         let mut instantiations: Vec<TyVarRef> = Vec::with_capacity(self.quantified_vars.len());
@@ -309,8 +309,8 @@ impl Scheme {
     ) -> Ty {
         assert!(self.quantified_vars.len() == arg_tys.len());
 
-        let mut var_map: Map<Id, Ty> =
-            Map::with_capacity_and_hasher(self.quantified_vars.len(), Default::default());
+        let mut var_map: HashMap<Id, Ty> =
+            HashMap::with_capacity_and_hasher(self.quantified_vars.len(), Default::default());
 
         for ((qvar, _), arg) in self.quantified_vars.iter().zip(arg_tys.iter()) {
             var_map.insert(qvar.clone(), arg.clone());
@@ -376,7 +376,7 @@ impl Scheme {
         }
 
         // Map quantified variables to their indices.
-        let left_vars: Map<Id, u32> = self
+        let left_vars: HashMap<Id, u32> = self
             .quantified_vars
             .iter()
             .enumerate()
@@ -391,7 +391,7 @@ impl Scheme {
             self.quantified_vars,
         );
 
-        let right_vars: Map<Id, u32> = other
+        let right_vars: HashMap<Id, u32> = other
             .quantified_vars
             .iter()
             .enumerate()
@@ -433,7 +433,7 @@ impl Scheme {
 
     /// Rename the quantified variables in the scheme, adding the unique number to the names.
     pub(super) fn rename_qvars(&self, uniq: u32) -> Scheme {
-        let mut subst_map: Map<Id, Ty> = Default::default();
+        let mut subst_map: HashMap<Id, Ty> = Default::default();
 
         let new_quantified_vars: Vec<(Id, Kind)> = self
             .quantified_vars
@@ -470,8 +470,8 @@ fn ty_eq_modulo_alpha(
     cons: &ScopeMap<Id, TyCon>,
     ty1: &Ty,
     ty2: &Ty,
-    ty1_qvars: &Map<Id, u32>,
-    ty2_qvars: &Map<Id, u32>,
+    ty1_qvars: &HashMap<Id, u32>,
+    ty2_qvars: &HashMap<Id, u32>,
     loc: &ast::Loc,
 ) -> bool {
     let ty1_normalized = ty1.normalize(cons);
@@ -528,7 +528,7 @@ fn ty_eq_modulo_alpha(
                 extension2.clone(),
             );
 
-            if labels1.keys().collect::<Set<_>>() != labels2.keys().collect() {
+            if labels1.keys().collect::<HashSet<_>>() != labels2.keys().collect() {
                 return false;
             }
 
@@ -602,8 +602,8 @@ fn ty_eq_modulo_alpha(
                 }
 
                 (FunArgs::Named(args1), FunArgs::Named(args2)) => {
-                    let names1: Set<&Id> = args1.keys().collect();
-                    let names2: Set<&Id> = args2.keys().collect();
+                    let names1: HashSet<&Id> = args1.keys().collect();
+                    let names2: HashSet<&Id> = args2.keys().collect();
 
                     if names1 != names2 {
                         return false;
@@ -762,7 +762,7 @@ impl Ty {
         }
     }
 
-    pub(super) fn subst_qvars(&self, vars: &Map<Id, Ty>) -> Ty {
+    pub(super) fn subst_qvars(&self, vars: &HashMap<Id, Ty>) -> Ty {
         match self {
             Ty::Con(con, kind) => Ty::Con(con.clone(), kind.clone()),
 

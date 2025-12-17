@@ -7,16 +7,16 @@ use crate::token::IntKind;
 #[derive(Debug, Default)]
 pub struct MonoPgm {
     // Fun name -> type args -> decl
-    pub funs: Map<Id, Map<Vec<Type>, FunDecl>>,
+    pub funs: HashMap<Id, HashMap<Vec<Type>, FunDecl>>,
 
     // Type name -> method name -> type args -> decl
     // For now, this also includes trait and normal methods. This means we don't allow having an
     // associated function and a method with the same name on the same type with same type
     // arguments.
-    pub associated: Map<Id, Map<Id, Map<Vec<Type>, FunDecl>>>,
+    pub associated: HashMap<Id, HashMap<Id, HashMap<Vec<Type>, FunDecl>>>,
 
     // Type name -> type args -> decl
-    pub ty: Map<Id, Map<Vec<Type>, TypeDecl>>,
+    pub ty: HashMap<Id, HashMap<Vec<Type>, TypeDecl>>,
 }
 
 #[derive(Debug, Clone)]
@@ -72,7 +72,7 @@ pub struct FnType {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum FunArgs {
     Positional(Vec<Type>),
-    Named(TreeMap<Id, Type>),
+    Named(OrdMap<Id, Type>),
 }
 
 #[derive(Debug, Clone)]

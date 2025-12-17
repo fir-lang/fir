@@ -34,12 +34,12 @@ pub struct PgmTypes {
     /// Type schemes of top-level functions.
     ///
     /// These functions don't take a `self` parameter and can't be called as methods.
-    pub top_schemes: Map<Id, Scheme>,
+    pub top_schemes: HashMap<Id, Scheme>,
 
     /// Type schemes of associated functions.
     ///
     /// These include methods (associated functions with a `self` parameter).
-    pub associated_fn_schemes: Map<Id, Map<Id, Scheme>>,
+    pub associated_fn_schemes: HashMap<Id, HashMap<Id, Scheme>>,
 
     /// Type schemes of methods.
     ///
@@ -52,7 +52,7 @@ pub struct PgmTypes {
     ///
     /// Because these schemes are only used in method call syntax, the keys are not type names but
     /// method names. The values are type schemes of methods with the name.
-    pub method_schemes: Map<Id, Vec<(Id, Scheme)>>,
+    pub method_schemes: HashMap<Id, Vec<(Id, Scheme)>>,
 
     /// Type constructor details.
     pub tys: TyMap,
@@ -363,8 +363,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 let _trait_context: Vec<Pred> =
                     convert_and_bind_context(&mut tys, &trait_context_ast, TyVarConversion::ToQVar);
 
-                let mut methods: Map<Id, TraitMethod> =
-                    Map::with_capacity_and_hasher(trait_decl.node.items.len(), Default::default());
+                let mut methods: HashMap<Id, TraitMethod> = HashMap::with_capacity_and_hasher(
+                    trait_decl.node.items.len(),
+                    Default::default(),
+                );
 
                 for fun in &trait_decl.node.items {
                     // New scope for function context.
@@ -521,7 +523,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             let mut impl_fun_decl = trait_method_decl.fun_decl.clone();
 
             // Map type parameters of the trait to the impl types.
-            let substs: Map<Id, ast::Type> = trait_type_params
+            let substs: HashMap<Id, ast::Type> = trait_type_params
                 .iter()
                 .map(|(param, _param_kind)| param.clone())
                 .zip(impl_decl.tys.iter().map(|ty| ty.node.clone()))
@@ -553,13 +555,13 @@ fn collect_schemes(
     module: &ast::Module,
     tys: &mut TyMap,
 ) -> (
-    Map<Id, Scheme>,
-    Map<Id, Map<Id, Scheme>>,
-    Map<Id, Vec<(Id, Scheme)>>,
+    HashMap<Id, Scheme>,
+    HashMap<Id, HashMap<Id, Scheme>>,
+    HashMap<Id, Vec<(Id, Scheme)>>,
 ) {
-    let mut top_schemes: Map<Id, Scheme> = Default::default();
-    let mut associated_fn_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
-    let mut method_schemes: Map<Id, Vec<(Id, Scheme)>> = Default::default();
+    let mut top_schemes: HashMap<Id, Scheme> = Default::default();
+    let mut associated_fn_schemes: HashMap<Id, HashMap<Id, Scheme>> = Default::default();
+    let mut method_schemes: HashMap<Id, Vec<(Id, Scheme)>> = Default::default();
 
     // Unique variable generator, used in substitutions to rename domain variables before
     // substitution to avoid capturing.
@@ -1283,8 +1285,8 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     }
 
     // Check that all methods without default implementations are implemented.
-    let trait_method_ids: Set<&Id> = trait_details.methods.keys().collect();
-    let mut implemented_method_ids: Set<&Id> = Default::default();
+    let trait_method_ids: HashSet<&Id> = trait_details.methods.keys().collect();
+    let mut implemented_method_ids: HashSet<&Id> = Default::default();
     for fun in &impl_.node.items {
         let fun_id = &fun.node.name.node;
         match (

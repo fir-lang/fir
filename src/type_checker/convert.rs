@@ -19,7 +19,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             extension,
             is_row,
         } => {
-            let mut ty_fields: TreeMap<Id, Ty> = TreeMap::new();
+            let mut ty_fields: OrdMap<Id, Ty> = OrdMap::new();
 
             for ast::Named { name, node } in fields {
                 let name = name.as_ref().unwrap_or_else(|| {
@@ -55,7 +55,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             extension,
             is_row,
         } => {
-            let mut ty_alts: TreeMap<Id, Ty> = TreeMap::new();
+            let mut ty_alts: OrdMap<Id, Ty> = OrdMap::new();
 
             for alt in alts {
                 let ty = convert_named_ty(tys, alt, loc);

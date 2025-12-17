@@ -11,18 +11,18 @@ use smol_str::SmolStr;
 /// The program in front-end syntax, converted to a graph for efficient and easy lookups.
 #[derive(Debug)]
 struct PolyPgm {
-    traits: Map<Id, PolyTrait>,
+    traits: HashMap<Id, PolyTrait>,
 
     /// Top-level functions, e.g. `foo(x: U32): ...`.
-    top: Map<Id, ast::FunDecl>,
+    top: HashMap<Id, ast::FunDecl>,
 
     /// Associated functions without `self` arguments, e.g. `Type.foo(x: U32): ...`.
-    associated: Map<Id, Map<Id, ast::FunDecl>>,
+    associated: HashMap<Id, HashMap<Id, ast::FunDecl>>,
 
     /// Associated functions with `self` arguments, e.g. `Type.bar(self, x: U32): ...`.
-    method: Map<Id, Map<Id, ast::FunDecl>>,
+    method: HashMap<Id, HashMap<Id, ast::FunDecl>>,
 
-    ty: Map<Id, ast::TypeDecl>,
+    ty: HashMap<Id, ast::TypeDecl>,
 }
 
 /// A trait, with implementations.
@@ -56,11 +56,11 @@ struct PolyTraitImpl {
 }
 
 fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
-    let mut traits: Map<Id, PolyTrait> = Default::default();
-    let mut top: Map<Id, ast::FunDecl> = Default::default();
-    let mut associated: Map<Id, Map<Id, ast::FunDecl>> = Default::default();
-    let mut method: Map<Id, Map<Id, ast::FunDecl>> = Default::default();
-    let mut ty: Map<Id, ast::TypeDecl> = Default::default();
+    let mut traits: HashMap<Id, PolyTrait> = Default::default();
+    let mut top: HashMap<Id, ast::FunDecl> = Default::default();
+    let mut associated: HashMap<Id, HashMap<Id, ast::FunDecl>> = Default::default();
+    let mut method: HashMap<Id, HashMap<Id, ast::FunDecl>> = Default::default();
+    let mut ty: HashMap<Id, ast::TypeDecl> = Default::default();
 
     for decl in pgm {
         match decl {
@@ -217,7 +217,7 @@ fn mono_top_fn(
 ) {
     assert_eq!(fun_decl.sig.context.type_params.len(), ty_args.len());
 
-    let ty_map: Map<Id, mono::Type> = fun_decl
+    let ty_map: HashMap<Id, mono::Type> = fun_decl
         .sig
         .context
         .type_params
@@ -337,7 +337,7 @@ fn mono_top_fn(
 
 fn mono_stmt(
     stmt: &ast::Stmt,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
@@ -440,7 +440,7 @@ fn mono_stmt(
 // ty_map: maps type variables in scope to their mono types.
 fn mono_expr(
     expr: &ast::Expr,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
@@ -947,7 +947,7 @@ fn mono_method(
     if let Some(method_map) = poly_pgm.method.get(method_ty_id) {
         let method: &ast::FunDecl = method_map.get(method_id).unwrap();
 
-        let ty_map: Map<Id, mono::Type> = method
+        let ty_map: HashMap<Id, mono::Type> = method
             .sig
             .context
             .type_params
@@ -1036,7 +1036,7 @@ fn mono_method(
 
 fn mono_l_stmts(
     lstmts: &[ast::L<ast::Stmt>],
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
@@ -1051,7 +1051,7 @@ fn mono_l_stmts(
 
 fn mono_bl_expr(
     expr: &ast::L<ast::Expr>,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
@@ -1063,7 +1063,7 @@ fn mono_bl_expr(
 
 fn mono_l_expr(
     expr: &ast::L<ast::Expr>,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
@@ -1073,7 +1073,7 @@ fn mono_l_expr(
 
 fn mono_pat(
     pat: &ast::Pat,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
@@ -1159,7 +1159,7 @@ fn mono_pat(
 
 fn mono_l_pat(
     pat: &ast::L<ast::Pat>,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
@@ -1169,7 +1169,7 @@ fn mono_l_pat(
 
 fn mono_bl_pat(
     pat: &ast::L<ast::Pat>,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
@@ -1179,7 +1179,7 @@ fn mono_bl_pat(
 
 fn mono_named_l_pat(
     pat: &Named<ast::L<ast::Pat>>,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
@@ -1189,7 +1189,7 @@ fn mono_named_l_pat(
 
 fn mono_self_param(
     self_: &ast::SelfParam,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::SelfParam {
@@ -1204,7 +1204,7 @@ fn mono_self_param(
 
 fn mono_l_ty(
     ty: &ast::L<ast::Type>,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> ast::L<mono::Type> {
@@ -1213,7 +1213,7 @@ fn mono_l_ty(
 
 fn mono_opt_l_ty(
     ty: &Option<ast::L<ast::Type>>,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> Option<ast::L<mono::Type>> {
@@ -1227,10 +1227,10 @@ fn mono_opt_l_ty(
 fn match_trait_impl(
     ty_args: &[mono::Type],
     trait_impl: &PolyTraitImpl,
-) -> Option<Map<Id, mono::Type>> {
+) -> Option<HashMap<Id, mono::Type>> {
     debug_assert_eq!(ty_args.len(), trait_impl.tys.len(), "{ty_args:?}");
 
-    let mut substs: Map<Id, mono::Type> = Default::default();
+    let mut substs: HashMap<Id, mono::Type> = Default::default();
     for (trait_ty, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
         if !match_(trait_ty, ty_arg, &mut substs) {
             return None;
@@ -1240,7 +1240,7 @@ fn match_trait_impl(
     Some(substs)
 }
 
-fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::Type>) -> bool {
+fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut HashMap<Id, mono::Type>) -> bool {
     match (trait_ty, arg_ty) {
         (ast::Type::Named(trait_named_ty), mono::Type::Named(arg_named_ty)) => {
             match_named_ty(trait_named_ty, arg_named_ty, substs)
@@ -1254,12 +1254,12 @@ fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::
             },
             mono::Type::Record { fields: fields2 },
         ) => {
-            let fields1_map: Map<&Id, &ast::Type> = fields1
+            let fields1_map: HashMap<&Id, &ast::Type> = fields1
                 .iter()
                 .map(|field| (field.name.as_ref().unwrap(), &field.node))
                 .collect();
 
-            let mut fields2_map: Map<&Id, &mono::Type> = fields2
+            let mut fields2_map: HashMap<&Id, &mono::Type> = fields2
                 .iter()
                 .map(|field| (field.name.as_ref().unwrap(), &field.node))
                 .collect();
@@ -1304,13 +1304,13 @@ fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::
             },
             mono::Type::Variant { alts: alts2 },
         ) => {
-            let mut labels1_map: Map<Id, ast::NamedType> = Default::default();
+            let mut labels1_map: HashMap<Id, ast::NamedType> = Default::default();
             for alt1_ty in alts1 {
                 let old = labels1_map.insert(alt1_ty.name.clone(), alt1_ty.clone());
                 assert!(old.is_none());
             }
 
-            let mut labels2_map: Map<Id, mono::NamedType> = Default::default();
+            let mut labels2_map: HashMap<Id, mono::NamedType> = Default::default();
             for alt2_ty in alts2 {
                 let old = labels2_map.insert(alt2_ty.name.clone(), alt2_ty.clone());
                 assert!(old.is_none());
@@ -1355,7 +1355,7 @@ fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::
 fn match_named_ty(
     trait_ty: &ast::NamedType,
     arg_ty: &mono::NamedType,
-    substs: &mut Map<Id, mono::Type>,
+    substs: &mut HashMap<Id, mono::Type>,
 ) -> bool {
     if trait_ty.name != arg_ty.name {
         return false;
@@ -1377,7 +1377,7 @@ fn match_named_ty(
 /// Monomorphise a type-checking type.
 fn mono_tc_ty(
     ty: &Ty,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::Type {
@@ -1536,7 +1536,7 @@ fn mono_tc_ty(
 
 fn mono_ast_ty(
     ty: &ast::Type,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::Type {
@@ -1563,7 +1563,7 @@ fn mono_ast_ty(
         } => {
             assert!(!*is_row);
 
-            let mut names: Set<&Id> = Default::default();
+            let mut names: HashSet<&Id> = Default::default();
             for field in fields {
                 if let Some(name) = &field.name {
                     let new = names.insert(name);
@@ -1601,7 +1601,7 @@ fn mono_ast_ty(
         } => {
             assert!(!*is_row);
 
-            let mut labels: Set<&Id> = Default::default();
+            let mut labels: HashSet<&Id> = Default::default();
             for ast::NamedType { name, .. } in alts {
                 let new = labels.insert(name);
                 if !new {
@@ -1685,7 +1685,7 @@ fn mono_ty_decl(
     );
 
     // Maps type parameters of the type to type arguments.
-    let ty_map: Map<Id, mono::Type> = ty_decl
+    let ty_map: HashMap<Id, mono::Type> = ty_decl
         .type_params
         .iter()
         .cloned()
@@ -1718,7 +1718,7 @@ fn mono_ty_decl(
 
 fn mono_constr(
     constr: &ast::ConstructorDecl,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::ConstructorDecl {
@@ -1730,7 +1730,7 @@ fn mono_constr(
 
 fn mono_fields(
     fields: &ast::ConstructorFields,
-    ty_map: &Map<Id, mono::Type>,
+    ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::ConstructorFields {

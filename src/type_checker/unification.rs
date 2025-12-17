@@ -84,8 +84,8 @@ pub(super) fn unify(
                 }
 
                 (FunArgs::Named(args1), FunArgs::Named(args2)) => {
-                    let arg_names_1: Set<&Id> = args1.keys().collect();
-                    let arg_names_2: Set<&Id> = args2.keys().collect();
+                    let arg_names_1: HashSet<&Id> = args1.keys().collect();
+                    let arg_names_2: HashSet<&Id> = args2.keys().collect();
                     if arg_names_1 != arg_names_2 {
                         panic!(
                             "{}: Unable to unify functions with different named arguments",
@@ -211,12 +211,12 @@ pub(super) fn unify(
             let (labels2, mut extension2) =
                 collect_rows(cons, &ty2, *kind2, labels2, extension2.clone());
 
-            let keys1: Set<&Id> = labels1.keys().collect();
-            let keys2: Set<&Id> = labels2.keys().collect();
+            let keys1: HashSet<&Id> = labels1.keys().collect();
+            let keys2: HashSet<&Id> = labels2.keys().collect();
 
             // Extra labels in one type will be added to the extension of the other.
-            let extras1: Set<&&Id> = keys1.difference(&keys2).collect();
-            let extras2: Set<&&Id> = keys2.difference(&keys1).collect();
+            let extras1: HashSet<&&Id> = keys1.difference(&keys2).collect();
+            let extras2: HashSet<&&Id> = keys2.difference(&keys1).collect();
 
             // Unify common labels.
             for key in keys1.intersection(&keys2) {
@@ -373,8 +373,8 @@ pub(super) fn try_unify_one_way(
                 }
 
                 (FunArgs::Named(args1), FunArgs::Named(args2)) => {
-                    let arg_names_1: Set<&Id> = args1.keys().collect();
-                    let arg_names_2: Set<&Id> = args2.keys().collect();
+                    let arg_names_1: HashSet<&Id> = args1.keys().collect();
+                    let arg_names_2: HashSet<&Id> = args2.keys().collect();
                     if arg_names_1 != arg_names_2 {
                         return false;
                     }
@@ -464,12 +464,12 @@ pub(super) fn try_unify_one_way(
             let (labels2, extension2) =
                 collect_rows(cons, &ty2, *kind2, labels2, extension2.clone());
 
-            let keys1: Set<&Id> = labels1.keys().collect();
-            let keys2: Set<&Id> = labels2.keys().collect();
+            let keys1: HashSet<&Id> = labels1.keys().collect();
+            let keys2: HashSet<&Id> = labels2.keys().collect();
 
             // Extra labels in one type will be added to the extension of the other.
-            let extras1: Set<&&Id> = keys1.difference(&keys2).collect();
-            let extras2: Set<&&Id> = keys2.difference(&keys1).collect();
+            let extras1: HashSet<&&Id> = keys1.difference(&keys2).collect();
+            let extras2: HashSet<&&Id> = keys2.difference(&keys1).collect();
 
             // Unify common labels.
             for key in keys1.intersection(&keys2) {
@@ -525,14 +525,14 @@ pub(super) fn try_unify_one_way(
 
 fn link_extension(
     kind: RecordOrVariant,
-    extra_labels: &Set<&&Id>,
-    label_values: &TreeMap<Id, Ty>,
+    extra_labels: &HashSet<&&Id>,
+    label_values: &OrdMap<Id, Ty>,
     var: &TyVarRef,
     var_gen: &mut TyVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> TyVarRef {
-    let extension_labels: TreeMap<Id, Ty> = extra_labels
+    let extension_labels: OrdMap<Id, Ty> = extra_labels
         .iter()
         .map(|extra_field| {
             (

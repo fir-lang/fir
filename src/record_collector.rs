@@ -1,4 +1,4 @@
-use crate::collections::Set;
+use crate::collections::HashSet;
 use crate::mono_ast as mono;
 
 use smol_str::SmolStr;
@@ -23,7 +23,7 @@ impl RecordShape {
         }
 
         if things[0].name.is_some() {
-            let mut names: Set<SmolStr> = Default::default();
+            let mut names: HashSet<SmolStr> = Default::default();
             for thing in things {
                 let new = names.insert(thing.name.clone().unwrap());
                 assert!(new);
@@ -39,8 +39,8 @@ impl RecordShape {
     }
 }
 
-pub fn collect_records(pgm: &mono::MonoPgm) -> Set<RecordShape> {
-    let mut records: Set<RecordShape> = Default::default();
+pub fn collect_records(pgm: &mono::MonoPgm) -> HashSet<RecordShape> {
+    let mut records: HashSet<RecordShape> = Default::default();
 
     for ty_map in pgm.funs.values() {
         for (tys, fun) in ty_map {
@@ -74,7 +74,7 @@ pub fn collect_records(pgm: &mono::MonoPgm) -> Set<RecordShape> {
     records
 }
 
-fn visit_ty_decl(ty_decl: &mono::TypeDecl, records: &mut Set<RecordShape>) {
+fn visit_ty_decl(ty_decl: &mono::TypeDecl, records: &mut HashSet<RecordShape>) {
     match &ty_decl.rhs {
         None => {}
 
@@ -90,7 +90,7 @@ fn visit_ty_decl(ty_decl: &mono::TypeDecl, records: &mut Set<RecordShape>) {
     }
 }
 
-fn visit_fun_decl(fun_decl: &mono::FunDecl, records: &mut Set<RecordShape>) {
+fn visit_fun_decl(fun_decl: &mono::FunDecl, records: &mut HashSet<RecordShape>) {
     visit_fun_sig(&fun_decl.sig, records);
 
     if let Some(body) = &fun_decl.body {
@@ -100,7 +100,7 @@ fn visit_fun_decl(fun_decl: &mono::FunDecl, records: &mut Set<RecordShape>) {
     }
 }
 
-fn visit_fun_sig(sig: &mono::FunSig, records: &mut Set<RecordShape>) {
+fn visit_fun_sig(sig: &mono::FunSig, records: &mut HashSet<RecordShape>) {
     for (_param_name, param_ty) in &sig.params {
         visit_ty(&param_ty.node, records);
     }
@@ -110,7 +110,7 @@ fn visit_fun_sig(sig: &mono::FunSig, records: &mut Set<RecordShape>) {
     }
 }
 
-fn visit_fields(fields: &mono::ConstructorFields, records: &mut Set<RecordShape>) {
+fn visit_fields(fields: &mono::ConstructorFields, records: &mut HashSet<RecordShape>) {
     match fields {
         mono::ConstructorFields::Empty => {}
 
@@ -124,7 +124,7 @@ fn visit_fields(fields: &mono::ConstructorFields, records: &mut Set<RecordShape>
     }
 }
 
-fn visit_ty(ty: &mono::Type, records: &mut Set<RecordShape>) {
+fn visit_ty(ty: &mono::Type, records: &mut HashSet<RecordShape>) {
     match ty {
         mono::Type::Named(mono::NamedType { name: _, args }) => {
             args.iter().for_each(|arg| visit_ty(arg, records))
@@ -163,7 +163,7 @@ fn visit_ty(ty: &mono::Type, records: &mut Set<RecordShape>) {
     }
 }
 
-fn visit_stmt(stmt: &mono::Stmt, records: &mut Set<RecordShape>) {
+fn visit_stmt(stmt: &mono::Stmt, records: &mut HashSet<RecordShape>) {
     match stmt {
         mono::Stmt::Break { .. } | mono::Stmt::Continue { .. } => {}
 
@@ -208,7 +208,7 @@ fn visit_stmt(stmt: &mono::Stmt, records: &mut Set<RecordShape>) {
     }
 }
 
-fn visit_pat(pat: &mono::Pat, records: &mut Set<RecordShape>) {
+fn visit_pat(pat: &mono::Pat, records: &mut HashSet<RecordShape>) {
     match pat {
         mono::Pat::Var(_) | mono::Pat::Ignore | mono::Pat::Str(_) | mono::Pat::Char(_) => {}
 
@@ -236,7 +236,7 @@ fn visit_pat(pat: &mono::Pat, records: &mut Set<RecordShape>) {
     }
 }
 
-fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>) {
+fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordShape>) {
     match expr {
         mono::Expr::LocalVar(_)
         | mono::Expr::TopVar(_)

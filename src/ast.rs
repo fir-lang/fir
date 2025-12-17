@@ -2,7 +2,7 @@
 
 pub mod printer;
 
-use crate::collections::Map;
+use crate::collections::HashMap;
 use crate::interpolation::StrPart;
 pub use crate::token::IntKind;
 use crate::type_checker::{Kind, Ty};
@@ -800,7 +800,7 @@ impl Type {
         self.subst_ids(&[(var.clone(), ty.clone())].into_iter().collect())
     }
 
-    pub fn subst_ids(&self, substs: &Map<Id, Type>) -> Type {
+    pub fn subst_ids(&self, substs: &HashMap<Id, Type>) -> Type {
         match self {
             Type::Named(NamedType { name, args }) => Type::Named(NamedType {
                 name: match substs.get(name) {
@@ -942,7 +942,7 @@ impl Type {
 }
 
 impl Stmt {
-    pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
+    pub fn subst_ty_ids(&mut self, substs: &HashMap<Id, Type>) {
         match self {
             Stmt::Let(LetStmt { lhs: _, ty, rhs }) => {
                 if let Some(ty) = ty {
@@ -995,7 +995,7 @@ impl Stmt {
 }
 
 impl Expr {
-    pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
+    pub fn subst_ty_ids(&mut self, substs: &HashMap<Id, Type>) {
         match self {
             Expr::ConstrSelect(_) | Expr::Int(_) | Expr::Char(_) | Expr::Self_ => {}
 
@@ -1154,7 +1154,7 @@ impl Expr {
 }
 
 impl FunSig {
-    pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
+    pub fn subst_ty_ids(&mut self, substs: &HashMap<Id, Type>) {
         match &mut self.self_ {
             SelfParam::No => {}
             SelfParam::Implicit => {

@@ -35,7 +35,7 @@ fn add_missing_type_params_fun(
 ) {
     assert!(sig.context.type_params.is_empty());
 
-    let bound_vars: Set<Id> = tvs.keys().cloned().collect();
+    let bound_vars: HashSet<Id> = tvs.keys().cloned().collect();
 
     for pred in &sig.context.preds {
         collect_tvs(&pred.node, &pred.loc, tvs);
@@ -108,7 +108,7 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
     assert!(decl.type_param_kinds.is_empty());
 
     let mut trait_context_var_kinds: OrderMap<Id, Option<Kind>> = Default::default();
-    let mut trait_context_vars: Set<Id> = Default::default();
+    let mut trait_context_vars: HashSet<Id> = Default::default();
 
     for param in &decl.type_params {
         trait_context_var_kinds.insert(param.node.clone(), None);

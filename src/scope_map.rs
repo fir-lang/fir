@@ -1,12 +1,12 @@
 #![allow(unused)]
 
-use crate::collections::Map;
+use crate::collections::HashMap;
 
 use std::borrow::Borrow;
 use std::hash::Hash;
 
 #[derive(Debug)]
-pub struct ScopeMap<K, V>(Vec<Map<K, V>>);
+pub struct ScopeMap<K, V>(Vec<HashMap<K, V>>);
 
 impl<K, V> Default for ScopeMap<K, V> {
     fn default() -> Self {
@@ -19,7 +19,7 @@ impl<K, V> ScopeMap<K, V> {
         Self::from_map(Default::default())
     }
 
-    pub fn from_map(map: Map<K, V>) -> Self {
+    pub fn from_map(map: HashMap<K, V>) -> Self {
         ScopeMap(vec![map])
     }
 
@@ -28,7 +28,7 @@ impl<K, V> ScopeMap<K, V> {
     }
 
     /// Exit the current scope. Panics if we're not in a scope.
-    pub fn exit(&mut self) -> Map<K, V> {
+    pub fn exit(&mut self) -> HashMap<K, V> {
         self.0.pop().unwrap()
     }
 
@@ -37,7 +37,7 @@ impl<K, V> ScopeMap<K, V> {
         self.0.push(Default::default());
     }
 
-    pub fn push_scope(&mut self, scope: Map<K, V>) {
+    pub fn push_scope(&mut self, scope: HashMap<K, V>) {
         self.0.push(scope)
     }
 }

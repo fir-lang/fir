@@ -6,10 +6,10 @@ pub(crate) fn collect_rows(
     cons: &ScopeMap<Id, TyCon>,
     ty: &Ty, // record or variant, used in errors
     ty_kind: RecordOrVariant,
-    labels: &TreeMap<Id, Ty>,
+    labels: &OrdMap<Id, Ty>,
     mut extension: Option<Box<Ty>>,
-) -> (TreeMap<Id, Ty>, Option<Ty>) {
-    let mut all_labels: TreeMap<Id, Ty> = labels
+) -> (OrdMap<Id, Ty>, Option<Ty>) {
+    let mut all_labels: OrdMap<Id, Ty> = labels
         .iter()
         .map(|(id, ty)| (id.clone(), ty.deep_normalize(cons)))
         .collect();
