@@ -135,7 +135,7 @@ fn visit_ty(ty: &mono::Type, records: &mut HashSet<RecordShape>) {
         }
 
         mono::Type::Variant { alts } => {
-            for mono::NamedType { name: _, args } in alts {
+            for mono::NamedType { name: _, args } in alts.values() {
                 args.iter().for_each(|arg| visit_ty(arg, records))
             }
         }

@@ -1713,7 +1713,9 @@ fn lower_stmt(
                     item_ty.clone(),
                     // exception type passed as empty variant by monomorphiser
                     // TODO: Maybe store exception type in the statement.
-                    mono::Type::Variant { alts: vec![] },
+                    mono::Type::Variant {
+                        alts: Default::default(),
+                    },
                 ])
                 .unwrap();
 
@@ -2385,7 +2387,9 @@ fn lower_source_fun(
             .as_ref()
             .map(|ty| Ty::from_mono_ty(&ty.node))
             .unwrap_or(Ty {
-                mono_ty: mono::Type::Variant { alts: vec![] },
+                mono_ty: mono::Type::Variant {
+                    alts: Default::default(),
+                },
                 repr: Repr::U64, // TODO: should this be void?
             }),
     }

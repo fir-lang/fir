@@ -398,7 +398,9 @@ fn mono_stmt(
                 &[
                     mono_iter_ty.clone(),
                     mono_item_ty.clone(),
-                    mono::Type::Variant { alts: vec![] },
+                    mono::Type::Variant {
+                        alts: Default::default(),
+                    },
                 ],
                 poly_pgm,
                 mono_pgm,
@@ -1310,8 +1312,8 @@ fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut HashMap<Id, mo
                 assert!(old.is_none());
             }
 
-            let mut labels2_map: HashMap<Id, mono::NamedType> = Default::default();
-            for alt2_ty in alts2 {
+            let mut labels2_map: OrdMap<Id, mono::NamedType> = Default::default();
+            for alt2_ty in alts2.values() {
                 let old = labels2_map.insert(alt2_ty.name.clone(), alt2_ty.clone());
                 assert!(old.is_none());
             }
@@ -1331,9 +1333,7 @@ fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut HashMap<Id, mo
                 None => return labels2_map.is_empty(),
             };
 
-            let mut alts: Vec<mono::NamedType> = labels2_map.into_values().collect();
-            alts.sort_by_key(|alt| alt.name.clone());
-            substs.insert(ext_var.clone(), mono::Type::Variant { alts });
+            substs.insert(ext_var.clone(), mono::Type::Variant { alts: labels2_map });
 
             true
         }
@@ -1387,7 +1387,9 @@ fn mono_tc_ty(
         Ty::Var(var) => match var.kind() {
             Kind::Star => mono::Type::Record { fields: vec![] },
             Kind::Row(RecordOrVariant::Record) => mono::Type::Record { fields: vec![] },
-            Kind::Row(RecordOrVariant::Variant) => mono::Type::Variant { alts: vec![] },
+            Kind::Row(RecordOrVariant::Variant) => mono::Type::Variant {
+                alts: Default::default(),
+            },
         },
 
         Ty::Con(con, _kind) => {
@@ -1497,12 +1499,18 @@ fn mono_tc_ty(
             }
 
             crate::type_checker::RecordOrVariant::Variant => {
-                let mut all_alts: Vec<mono::NamedType> = vec![];
+                let mut all_alts: OrdMap<Id, mono::NamedType> = Default::default();
 
-                for ty in labels.values() {
+                for (id, ty) in labels.iter() {
                     let ty = mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm);
                     match ty {
-                        mono::Type::Named(named_ty) => all_alts.push(named_ty),
+                        mono::Type::Named(named_ty) => {
+                            let old = all_alts.insert(id.clone(), named_ty.clone());
+                            assert!(match old {
+                                Some(old) => old == named_ty,
+                                None => true,
+                            });
+                        }
                         _ => panic!(),
                     }
                 }
@@ -1513,7 +1521,8 @@ fn mono_tc_ty(
                             let ext = ty_map.get(con).unwrap();
                             match ext {
                                 mono::Type::Variant { alts } => {
-                                    all_alts.extend(alts.iter().cloned());
+                                    all_alts
+                                        .extend(alts.iter().map(|(k, v)| (k.clone(), v.clone())));
                                 }
                                 _ => panic!(),
                             }
@@ -1527,7 +1536,6 @@ fn mono_tc_ty(
                     }
                 }
 
-                all_alts.sort_by_key(|alt| alt.name.clone());
                 mono::Type::Variant { alts: all_alts }
             }
         },
@@ -1609,21 +1617,26 @@ fn mono_ast_ty(
                 }
             }
 
-            let mut alts: Vec<mono::NamedType> = alts
+            let mut alts: OrdMap<Id, mono::NamedType> = alts
                 .iter()
-                .map(|ast::NamedType { name, args }| mono::NamedType {
-                    name: name.clone(),
-                    args: args
-                        .iter()
-                        .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm))
-                        .collect(),
+                .map(|ast::NamedType { name, args }| {
+                    (
+                        name.clone(),
+                        mono::NamedType {
+                            name: name.clone(),
+                            args: args
+                                .iter()
+                                .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm))
+                                .collect(),
+                        },
+                    )
                 })
                 .collect();
 
             if let Some(extension) = extension {
                 match ty_map.get(extension) {
                     Some(mono::Type::Variant { alts: extra_alts }) => {
-                        alts.extend(extra_alts.iter().cloned());
+                        alts.extend(extra_alts.iter().map(|(k, v)| (k.clone(), v.clone())));
                     }
                     Some(other) => panic!("Variant extension is not a variant: {other:?}"),
                     None => panic!(
@@ -1633,7 +1646,6 @@ fn mono_ast_ty(
                 }
             }
 
-            alts.sort_by_key(|alt| alt.name.clone());
             mono::Type::Variant { alts }
         }
 

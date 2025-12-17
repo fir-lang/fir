@@ -48,10 +48,16 @@ pub enum ConstructorFields {
 pub enum Type {
     Named(NamedType),
 
-    Record { fields: Vec<Named<Type>> },
+    Record {
+        fields: Vec<Named<Type>>,
+    },
 
-    // NB. Alts should be sorted by label.
-    Variant { alts: Vec<NamedType> },
+    Variant {
+        // Keys should be the same as named type's type constructor.
+        //
+        // This is a map instead of set to avoid making `Type` `Ord` or `Hash`.
+        alts: OrdMap<Id, NamedType>,
+    },
 
     Fn(FnType),
 }
