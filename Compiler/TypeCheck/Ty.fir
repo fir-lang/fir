@@ -230,6 +230,14 @@ Ty.emptyVariant() Ty:
     )
 
 
+Ty.unitRecordRow() Ty:
+    Ty.Record(
+        labels = HashMap.empty(),
+        extension = Option.None,
+        isRow = Bool.True,
+    )
+
+
 # ------------------------------------------------------------------------------
 # Type schemes and instantiation
 
