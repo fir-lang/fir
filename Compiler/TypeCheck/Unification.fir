@@ -264,53 +264,42 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
                 (ext1 = Option.Some(ext1), ext2 = Option.Some(ext2)):
                     unify(ext1, ext2, varGen, level, loc)
 
-        #|
         (
             ty1 =
-                Ty.Anonymous(
-                    labels = labels1,
-                    extension = extension1,
-                    kind = kind1,
-                    isRow = isRow1,
+                Ty.Variant(cons = cons1, extension = extension1, isRow = isRow1,
                 ),
             ty2 =
-                Ty.Anonymous(
-                    labels = labels2,
-                    extension = extension2,
-                    kind = kind2,
-                    isRow = isRow2,
+                Ty.Variant(cons = cons2, extension = extension2, isRow = isRow2,
                 ),
         ):
-            # Kind mismatches can happen when try to unify a record with a
-            # variant (e.g. pass a record when a variant is expected), and fail.
-            if kind1 != kind2:
+            if isRow1 != isRow2:
                 throw(
                     TypeError(
                         loc,
-                        msg = "Unable to unify `kind1` `ty1` with `kind2` `ty2`",
+                        msg = "Unable to unify row and non-row variants",
                     ),
                 )
 
-            # If we checked the kinds in type applications properly, we should
-            # only try to unify rows with rows and stars with stars.
-            assert(isRow1 == isRow2)
+            let (cons = cons1, extension = extension1) = collectVariantCons(
+                ty1,
+                cons1,
+                extension1,
+            )
 
-            let rows1 = collectRows(ty1, kind1, labels1, extension1)
-            let labels1 = rows1.rows
-            let extension1 = rows1.extension
+            let (cons = cons2, extension = extension2) = collectVariantCons(
+                ty2,
+                cons2,
+                extension2,
+            )
 
-            let rows2 = collectRows(ty2, kind2, labels2, extension2)
-            let labels2 = rows2.rows
-            let extension2 = rows2.extension
-
-            let keys1: HashSet[LocalId] = HashSet.fromIter(labels1.keys())
-            let keys2: HashSet[LocalId] = HashSet.fromIter(labels2.keys())
+            let keys1: HashSet[TyDefIdx] = HashSet.fromIter(cons1.keys())
+            let keys2: HashSet[TyDefIdx] = HashSet.fromIter(cons2.keys())
 
             # Unify common labels.
-            for key: LocalId in keys1.intersection(keys2):
+            for key: TyDefIdx in keys1.intersection(keys2):
                 unify(
-                    labels1.get(key).unwrap(),
-                    labels2.get(key).unwrap(),
+                    Ty.app(key, cons1.get(key).unwrap()),
+                    Ty.app(key, cons2.get(key).unwrap()),
                     varGen,
                     level,
                     loc,
@@ -318,20 +307,13 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
 
             # Extra labels in one type will be added to the extension of the
             # other.
-            let extras1: HashSet[LocalId] = HashSet.fromIter(
+            let extras1: HashSet[TyDefIdx] = HashSet.fromIter(
                 keys1.difference(keys2),
             )
-            let extras2: HashSet[LocalId] = HashSet.fromIter(
+
+            let extras2: HashSet[TyDefIdx] = HashSet.fromIter(
                 keys2.difference(keys1),
             )
-
-            let kindStr = match kind1:
-                RecordOrVariant.Record: "record"
-                RecordOrVariant.Variant: "variant"
-
-            let labelStr = match kind1:
-                RecordOrVariant.Record: "field"
-                RecordOrVariant.Variant: "constructor"
 
             # Add extras to rows.
             if not extras1.isEmpty():
@@ -340,10 +322,9 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
                         # TODO: Not sure about level
                         extension2 = Option.Some(
                             Ty.UVar(
-                                linkExtension(
-                                    kind2,
+                                linkVariantExtension(
                                     extras1,
-                                    labels1,
+                                    cons1,
                                     uvar,
                                     varGen,
                                     level,
@@ -351,14 +332,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
                                 ),
                             ),
                         )
-                    _:
-                        throw(
-                            TypeError(
-                                loc,
-                                msg =
-                                    "Unable to unify `kindStr` with `labelStr`s `keys1` with `kindStr` with `labelStr`s `keys2`",
-                            ),
-                        )
+                    _: throw(TypeError(loc, msg = "Unable to unify variants",),)
 
             if not extras2.isEmpty():
                 match extension1:
@@ -366,10 +340,9 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
                         # TODO: Not sure about level
                         extension1 = Option.Some(
                             Ty.UVar(
-                                linkExtension(
-                                    kind1,
+                                linkVariantExtension(
                                     extras2,
-                                    labels2,
+                                    cons2,
                                     uvar,
                                     varGen,
                                     level,
@@ -377,27 +350,19 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
                                 ),
                             ),
                         )
-                    _:
-                        throw(
-                            TypeError(
-                                loc,
-                                msg =
-                                    "Unable to unify `kindStr` with `labelStr`s `keys1` with `kindStr` with `labelStr`s `keys2`",
-                            ),
-                        )
+                    _: throw(TypeError(loc, msg = "Unable to unify variants",),)
 
             match (ext1 = extension1, ext2 = extension2):
                 (ext1 = Option.None, ext2 = Option.None): ()
 
                 (ext1 = Option.Some(ext1), ext2 = Option.None):
-                    unify(ext1, Ty.unitRow(kind1), varGen, level, loc)
+                    unify(ext1, Ty.emptyVariantRow(), varGen, level, loc)
 
                 (ext1 = Option.None, ext2 = Option.Some(ext2)):
-                    unify(ext2, Ty.unitRow(kind2), varGen, level, loc)
+                    unify(ext2, Ty.emptyVariantRow(), varGen, level, loc)
 
                 (ext1 = Option.Some(ext1), ext2 = Option.Some(ext2)):
                     unify(ext1, ext2, varGen, level, loc)
-        |#
 
         _:
             throw(
@@ -742,35 +707,36 @@ linkRecordExtension(
     newExtensionVar
 
 
-#|
-linkExtension(
-    kind: RecordOrVariant,
-    extraLabels: HashSet[LocalId],
-    labelValues: HashMap[LocalId, Ty],
+linkVariantExtension(
+    extraCons: HashSet[TyDefIdx],
+    cons: HashMap[TyDefIdx, Vec[Ty]],
     uvar: UVar,
     varGen: UVarGen,
     level: U32,
     loc: Loc,
 ) UVar:
-    let extensionLabels: HashMap[LocalId, Ty] = HashMap.fromIter(
-        extraLabels.iter().map(
-            \(label: LocalId):
-                (key = label, value = labelValues.get(label).unwrap()),
+    let extensionCons: HashMap[TyDefIdx, Vec[Ty]] = HashMap.fromIter(
+        extraCons.iter().map(
+            \(label: TyDefIdx): (key = label, value = cons.get(label).unwrap()),
         ),
     )
 
     # TODO: Not sure about the level.
-    let newExtensionVar = varGen.newVar(level, Kind.Row(kind), loc)
-    let newExtensionTy = Ty.Anonymous(
-        labels = extensionLabels,
+    let newExtensionVar = varGen.newVar(
+        level,
+        Kind.Row(RecordOrVariant.Variant),
+        loc,
+    )
+
+    let newExtensionTy = Ty.Variant(
+        cons = extensionCons,
         extension = Option.Some(Ty.UVar(newExtensionVar)),
-        kind,
         isRow = Bool.True,
     )
 
     uvar.setLink(newExtensionTy)
     newExtensionVar
-|#
+
 
 Ty.pruneLevel(self, maxLevel: U32):
     match self:

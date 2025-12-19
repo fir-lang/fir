@@ -88,6 +88,13 @@ type Ty:
     )
 
 
+Ty.app(id: TyDefIdx, args: Vec[Ty]) Ty:
+    if args.isEmpty():
+        Ty.Con(id)
+    else:
+        Ty.App(conId = id, args)
+
+
 ## Only in type schemes: a quantified type variable.
 ##
 ## When instantiated, these become unification variables (`Ty.UVar`).
@@ -233,6 +240,14 @@ Ty.emptyVariant() Ty:
 Ty.unitRecordRow() Ty:
     Ty.Record(
         labels = HashMap.empty(),
+        extension = Option.None,
+        isRow = Bool.True,
+    )
+
+
+Ty.emptyVariantRow() Ty:
+    Ty.Variant(
+        cons = HashMap.empty(),
         extension = Option.None,
         isRow = Bool.True,
     )
