@@ -60,6 +60,10 @@ compiler_update_goldens:
 format_repo:
     ./Tool/Format/FormatRepo.sh
 
+# Note: This command is not ideal for using outside of CI as it updates the
+# files in-place relies on `git status` to report formatting changes. In the
+# future we probably want a flag in the formatter to signal changes via the
+# exit code.
 check_fir_formatting: format_repo
     git -P diff
     ! git status --porcelain | grep -q '^ M'
@@ -106,7 +110,6 @@ check_generated_files: update_generated_files
 #
 # - wasm-bindgen 0.2.100
 # - wasm-opt version 123 (version_123-209-g99cf92269)
-
 build_site: generate_parser
     #!/usr/bin/env bash
 

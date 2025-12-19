@@ -6,10 +6,10 @@ pub use crate::scope_map::{ScopeMap, ScopeSet};
 
 pub use ordermap::{OrderMap, OrderSet};
 
-pub type Map<K, V> = fnv::FnvHashMap<K, V>;
+pub type HashMap<K, V> = fnv::FnvHashMap<K, V>;
 
-pub type Set<K> = fnv::FnvHashSet<K>;
+pub type HashSet<K> = fnv::FnvHashSet<K>;
 
-pub type TreeMap<K, V> = std::collections::BTreeMap<K, V>;
+pub type OrdMap<K, V> = std::collections::BTreeMap<K, V>;
 
-pub type TreeSet<K> = std::collections::BTreeSet<K>;
+pub type OrdSet<K> = std::collections::BTreeSet<K>;

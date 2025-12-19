@@ -65,7 +65,7 @@ use crate::type_checker::unification::try_unify_one_way;
 use crate::utils::loc_display;
 
 /// Maps trait ids to implementations.
-pub type TraitEnv = Map<Id, Vec<TraitImpl>>;
+pub type TraitEnv = HashMap<Id, Vec<TraitImpl>>;
 
 #[derive(Debug)]
 pub struct TraitImpl {
@@ -166,7 +166,7 @@ impl TraitImpl {
         }
 
         // Maps `QVar`s to instantiations.
-        let var_map: Map<Id, Ty> = self
+        let var_map: HashMap<Id, Ty> = self
             .qvars
             .iter()
             .map(|(qvar, kind)| {

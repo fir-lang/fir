@@ -547,11 +547,11 @@ pub struct ClosureFv {
 
 #[derive(Debug)]
 struct Indices {
-    product_cons: Map<Id, Map<Vec<mono::Type>, HeapObjIdx>>,
-    sum_cons: Map<Id, Map<Id, Map<Vec<mono::Type>, HeapObjIdx>>>,
-    funs: Map<Id, Map<Vec<mono::Type>, FunIdx>>,
-    assoc_funs: Map<Id, Map<Id, Map<Vec<mono::Type>, FunIdx>>>,
-    records: Map<RecordShape, HeapObjIdx>,
+    product_cons: HashMap<Id, HashMap<Vec<mono::Type>, HeapObjIdx>>,
+    sum_cons: HashMap<Id, HashMap<Id, HashMap<Vec<mono::Type>, HeapObjIdx>>>,
+    funs: HashMap<Id, HashMap<Vec<mono::Type>, FunIdx>>,
+    assoc_funs: HashMap<Id, HashMap<Id, HashMap<Vec<mono::Type>, FunIdx>>>,
+    records: HashMap<RecordShape, HeapObjIdx>,
 }
 
 #[derive(Debug, Default)]
@@ -566,7 +566,7 @@ pub struct FunScope {
     ///
     /// When seeing a free variable, check this map first to see if we've assigned an index to the
     /// free variable before.
-    captured_vars: Map<Id, ClosureFv>,
+    captured_vars: HashMap<Id, ClosureFv>,
 
     /// Variables bound in the current function.
     ///
@@ -624,10 +624,13 @@ impl FunScope {
 
 pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     // Number all declarations first, then lower the program.
-    let mut product_con_nums: Map<Id, Map<Vec<mono::Type>, HeapObjIdx>> = Default::default();
-    let mut sum_con_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, HeapObjIdx>>> = Default::default();
-    let mut fun_nums: Map<Id, Map<Vec<mono::Type>, FunIdx>> = Default::default();
-    let mut assoc_fun_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, FunIdx>>> = Default::default();
+    let mut product_con_nums: HashMap<Id, HashMap<Vec<mono::Type>, HeapObjIdx>> =
+        Default::default();
+    let mut sum_con_nums: HashMap<Id, HashMap<Id, HashMap<Vec<mono::Type>, HeapObjIdx>>> =
+        Default::default();
+    let mut fun_nums: HashMap<Id, HashMap<Vec<mono::Type>, FunIdx>> = Default::default();
+    let mut assoc_fun_nums: HashMap<Id, HashMap<Id, HashMap<Vec<mono::Type>, FunIdx>>> =
+        Default::default();
 
     // Number type declarations.
     let mut next_con_idx = FIRST_FREE_CON_IDX;
@@ -899,7 +902,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     // TODO: Unit should be defined already as it's the return type of `main`?
     record_shapes.insert(RecordShape::UnnamedFields { arity: 0 });
 
-    let mut record_indices: Map<RecordShape, HeapObjIdx> = Default::default();
+    let mut record_indices: HashMap<RecordShape, HeapObjIdx> = Default::default();
     for record_shape in record_shapes {
         let idx = next_con_idx;
         next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
@@ -1710,7 +1713,9 @@ fn lower_stmt(
                     item_ty.clone(),
                     // exception type passed as empty variant by monomorphiser
                     // TODO: Maybe store exception type in the statement.
-                    mono::Type::Variant { alts: vec![] },
+                    mono::Type::Variant {
+                        alts: Default::default(),
+                    },
                 ])
                 .unwrap();
 
@@ -1783,7 +1788,7 @@ fn lower_expr(
     closures: &mut Vec<Closure>,
     indices: &Indices,
     scope: &mut FunScope,
-) -> (Expr, Map<Id, LocalIdx>) {
+) -> (Expr, HashMap<Id, LocalIdx>) {
     match expr {
         mono::Expr::LocalVar(var) => (Expr::LocalVar(scope.use_var(var, loc)), Default::default()),
 
@@ -2128,7 +2133,7 @@ fn lower_nl_expr(
     closures: &mut Vec<Closure>,
     indices: &Indices,
     scope: &mut FunScope,
-) -> (Named<L<Expr>>, Map<Id, LocalIdx>) {
+) -> (Named<L<Expr>>, HashMap<Id, LocalIdx>) {
     let (expr, pat_vars) = lower_l_expr(&named_expr.node, closures, indices, scope);
     (
         Named {
@@ -2144,7 +2149,7 @@ fn lower_l_expr(
     closures: &mut Vec<Closure>,
     indices: &Indices,
     scope: &mut FunScope,
-) -> (L<Expr>, Map<Id, LocalIdx>) {
+) -> (L<Expr>, HashMap<Id, LocalIdx>) {
     let (expr, pat_vars) = lower_expr(&l_expr.node, &l_expr.loc, closures, indices, scope);
     (
         L {
@@ -2160,7 +2165,7 @@ fn lower_bl_expr(
     closures: &mut Vec<Closure>,
     indices: &Indices,
     scope: &mut FunScope,
-) -> (Box<L<Expr>>, Map<Id, LocalIdx>) {
+) -> (Box<L<Expr>>, HashMap<Id, LocalIdx>) {
     let (expr, pat_vars) = lower_l_expr(bl_expr, closures, indices, scope);
     (Box::new(expr), pat_vars)
 }
@@ -2174,7 +2179,7 @@ fn lower_pat(
     //
     // Only in or pattern alternatives we allow same binders, so if we see a binder for the second
     // time, we must be checking another alternative of an or pattern.
-    mapped_binders: &mut Map<Id, LocalIdx>,
+    mapped_binders: &mut HashMap<Id, LocalIdx>,
 ) -> Pat {
     match pat {
         mono::Pat::Var(mono::VarPat { var, ty }) => match mapped_binders.get(var) {
@@ -2261,7 +2266,7 @@ fn lower_nl_pat(
     pat: &Named<L<mono::Pat>>,
     indices: &Indices,
     scope: &mut FunScope,
-    mapped_binders: &mut Map<Id, LocalIdx>,
+    mapped_binders: &mut HashMap<Id, LocalIdx>,
 ) -> Named<L<Pat>> {
     pat.map_as_ref(|pat| lower_l_pat(pat, indices, scope, mapped_binders))
 }
@@ -2270,7 +2275,7 @@ fn lower_bl_pat(
     pat: &L<mono::Pat>,
     indices: &Indices,
     scope: &mut FunScope,
-    mapped_binders: &mut Map<Id, LocalIdx>,
+    mapped_binders: &mut HashMap<Id, LocalIdx>,
 ) -> Box<L<Pat>> {
     Box::new(lower_l_pat(pat, indices, scope, mapped_binders))
 }
@@ -2279,7 +2284,7 @@ fn lower_l_pat(
     pat: &L<mono::Pat>,
     indices: &Indices,
     scope: &mut FunScope,
-    mapped_binders: &mut Map<Id, LocalIdx>,
+    mapped_binders: &mut HashMap<Id, LocalIdx>,
 ) -> L<Pat> {
     pat.map_as_ref(|pat| lower_pat(pat, indices, scope, mapped_binders))
 }
@@ -2382,7 +2387,9 @@ fn lower_source_fun(
             .as_ref()
             .map(|ty| Ty::from_mono_ty(&ty.node))
             .unwrap_or(Ty {
-                mono_ty: mono::Type::Variant { alts: vec![] },
+                mono_ty: mono::Type::Variant {
+                    alts: Default::default(),
+                },
                 repr: Repr::U64, // TODO: should this be void?
             }),
     }

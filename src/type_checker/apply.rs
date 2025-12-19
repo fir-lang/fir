@@ -46,7 +46,7 @@ pub(crate) fn apply_con_ty(
                 }
 
                 FunArgs::Named(con_ty_args) => {
-                    let mut arg_names: Set<&Id> = Default::default();
+                    let mut arg_names: HashSet<&Id> = Default::default();
 
                     for arg in args {
                         let name = match arg.name.as_ref() {
@@ -74,7 +74,7 @@ pub(crate) fn apply_con_ty(
                         }
                     }
 
-                    let con_ty_arg_names: Set<&Id> = con_ty_args.keys().collect();
+                    let con_ty_arg_names: HashSet<&Id> = con_ty_args.keys().collect();
                     if !ignore_extra && con_ty_arg_names != arg_names {
                         let con_args_str = con_ty_arg_names
                             .iter()

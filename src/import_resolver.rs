@@ -1,5 +1,5 @@
 use crate::ast::{self, Id};
-use crate::collections::Set;
+use crate::collections::HashSet;
 
 use std::path::PathBuf;
 
@@ -17,7 +17,7 @@ use smol_str::SmolStr;
 /// resolved to a file at the root.
 pub fn resolve_imports(module: ast::Module, import_prelude: bool) -> ast::Module {
     let mut new_module: Vec<ast::L<ast::TopDecl>> = vec![];
-    let mut imported_modules: Set<Vec<Id>> = Default::default();
+    let mut imported_modules: HashSet<Vec<Id>> = Default::default();
 
     resolve_imports_(module, &mut new_module, &mut imported_modules);
 
@@ -41,7 +41,7 @@ type Path = Vec<Id>;
 fn resolve_imports_(
     module: ast::Module,
     new_module: &mut ast::Module,
-    imported_modules: &mut Set<Path>,
+    imported_modules: &mut HashSet<Path>,
 ) {
     for decl in module {
         match &decl.node {

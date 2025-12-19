@@ -30,7 +30,7 @@ pub(super) fn check_expr(
     expected_ty: Option<&Ty>,
     level: u32,
     loop_stack: &mut Vec<Option<Id>>,
-) -> (Ty, Map<Id, Ty>) {
+) -> (Ty, HashMap<Id, Ty>) {
     let loc = expr.loc.clone();
 
     match &mut expr.node {
@@ -484,8 +484,8 @@ pub(super) fn check_expr(
                                 }
                             }
 
-                            let param_names: Set<&Id> = param_tys.keys().collect();
-                            let arg_names: Set<&Id> =
+                            let param_names: HashSet<&Id> = param_tys.keys().collect();
+                            let arg_names: HashSet<&Id> =
                                 args.iter().map(|arg| arg.name.as_ref().unwrap()).collect();
 
                             if param_names != arg_names {
@@ -791,8 +791,8 @@ pub(super) fn check_expr(
                         check_expr(tc_state, right, Some(&bool_ty), level, loop_stack);
                     tc_state.env.exit();
 
-                    let left_binder_vars: Set<&Id> = left_binders.keys().collect();
-                    let right_binder_vars: Set<&Id> = right_binders.keys().collect();
+                    let left_binder_vars: HashSet<&Id> = left_binders.keys().collect();
+                    let right_binder_vars: HashSet<&Id> = right_binders.keys().collect();
                     if !left_binder_vars.is_disjoint(&right_binder_vars) {
                         let intersection: Vec<Id> = left_binder_vars
                             .intersection(&right_binder_vars)
@@ -916,7 +916,7 @@ pub(super) fn check_expr(
             }
 
             // TODO: For now only supporting named fields.
-            let mut field_names: Set<&Id> = Default::default();
+            let mut field_names: HashSet<&Id> = Default::default();
             for field in fields.iter() {
                 match &field.name {
                     Some(name) => {
@@ -946,7 +946,7 @@ pub(super) fn check_expr(
                 }
             });
 
-            let mut record_fields: TreeMap<Id, Ty> = TreeMap::new();
+            let mut record_fields: OrdMap<Id, Ty> = OrdMap::new();
             for field in fields.iter_mut() {
                 let field_name = field.name.as_ref().unwrap();
                 let expected_ty = expected_fields
@@ -1191,7 +1191,7 @@ pub(super) fn check_expr(
             let (expr_ty, _) = check_expr(tc_state, expr, None, level, loop_stack);
             tc_state.env.enter();
             let pat_ty = check_pat(tc_state, pat, level);
-            let pat_binders: Map<Id, Ty> = tc_state.env.exit();
+            let pat_binders: HashMap<Id, Ty> = tc_state.env.exit();
             unify(
                 &pat_ty,
                 &expr_ty,
@@ -1411,7 +1411,7 @@ pub(super) fn check_match_expr(
 
     let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
 
-    let mut alt_envs: Vec<Map<Id, Ty>> = Vec::with_capacity(alts.len());
+    let mut alt_envs: Vec<HashMap<Id, Ty>> = Vec::with_capacity(alts.len());
 
     // Type check patterns first so that the coverage checker can assume patterns are well-typed.
     for ast::Alt {
@@ -1810,10 +1810,10 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
     }
 }
 
-fn refine_binders(scope: &mut Map<Id, Ty>, binders: &Map<Id, Set<Ty>>, loc: &ast::Loc) {
+fn refine_binders(scope: &mut HashMap<Id, Ty>, binders: &HashMap<Id, HashSet<Ty>>, loc: &ast::Loc) {
     if cfg!(debug_assertions) {
-        let scope_vars: Set<&Id> = scope.keys().collect();
-        let binders_vars: Set<&Id> = binders.keys().collect();
+        let scope_vars: HashSet<&Id> = scope.keys().collect();
+        let binders_vars: HashSet<&Id> = binders.keys().collect();
         assert_eq!(scope_vars, binders_vars);
     }
 
@@ -1825,7 +1825,7 @@ fn refine_binders(scope: &mut Map<Id, Ty>, binders: &Map<Id, Set<Ty>>, loc: &ast
             // println!("{} --> {}", var, tys.iter().next().unwrap().clone());
             scope.insert(var.clone(), tys.iter().next().unwrap().clone());
         } else {
-            let mut labels: TreeMap<Id, Ty> = Default::default();
+            let mut labels: OrdMap<Id, Ty> = Default::default();
             let mut extension: Option<Box<Ty>> = None;
 
             for ty in tys.iter() {

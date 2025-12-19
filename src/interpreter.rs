@@ -7,7 +7,7 @@ mod heap;
 use heap::Heap;
 
 use crate::ast::{self, Id, L, Loc};
-use crate::collections::Map;
+use crate::collections::HashMap;
 use crate::lowering::*;
 use crate::record_collector::RecordShape;
 use crate::utils::loc_display;
@@ -444,7 +444,7 @@ fn allocate_object_from_idx<W: Write>(
         ConFields::Named(field_names) => {
             // Evalaute in program order, store based on the order of the names
             // in the type.
-            let mut named_values: Map<Id, u64> = Default::default();
+            let mut named_values: HashMap<Id, u64> = Default::default();
             for arg in args {
                 let name = arg.name.as_ref().unwrap().clone();
                 let value = val!(eval(
@@ -892,7 +892,7 @@ fn eval<W: Write>(
             heap[record] = idx.as_u64();
 
             if !fields.is_empty() && fields[0].name.is_some() {
-                let name_indices: Map<Id, usize> = match shape {
+                let name_indices: HashMap<Id, usize> = match shape {
                     RecordShape::UnnamedFields { .. } => panic!(),
                     RecordShape::NamedFields { fields } => fields
                         .iter()

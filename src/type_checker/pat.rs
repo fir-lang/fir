@@ -221,8 +221,8 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             let pat2_binders = tc_state.env.exit();
 
             // Check that patterns bind the same variables.
-            let pat1_binder_keys: Set<&Id> = pat1_binders.keys().collect();
-            let pat2_binder_keys: Set<&Id> = pat2_binders.keys().collect();
+            let pat1_binder_keys: HashSet<&Id> = pat1_binders.keys().collect();
+            let pat2_binder_keys: HashSet<&Id> = pat2_binders.keys().collect();
 
             if pat1_binder_keys != pat2_binder_keys {
                 let mut left_vars: Vec<Id> =

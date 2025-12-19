@@ -1,5 +1,5 @@
 use crate::ast::{self, Id};
-use crate::collections::{Map, Set};
+use crate::collections::{HashMap, HashSet};
 use crate::type_checker::{FunArgs, Scheme, TcFunState, Ty, row_utils};
 #[allow(unused)]
 use crate::utils::loc_display;
@@ -43,14 +43,14 @@ struct Row {
     /// `match` arm index the row is generated from.
     arm_index: ArmIndex,
     pats: Vec<ast::L<ast::Pat>>,
-    bound_vars: Map<Id, Set<Ty>>,
+    bound_vars: HashMap<Id, HashSet<Ty>>,
     guarded: bool,
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct CoverageInfo {
     /// Maps arm indices to variables bound in the arms.
-    pub(crate) bound_vars: Vec<Map<Id, Set<Ty>>>,
+    pub(crate) bound_vars: Vec<HashMap<Id, HashSet<Ty>>>,
 
     /// Maps arm indices to whether its useful.
     pub(crate) usefulness: Vec<bool>,
@@ -64,7 +64,7 @@ impl CoverageInfo {
         }
     }
 
-    fn mark_useful(&mut self, arm_idx: ArmIndex, bound_vars: &Map<Id, Set<Ty>>) {
+    fn mark_useful(&mut self, arm_idx: ArmIndex, bound_vars: &HashMap<Id, HashSet<Ty>>) {
         for (var, tys) in bound_vars.iter() {
             self.bound_vars[arm_idx as usize]
                 .entry(var.clone())
@@ -313,7 +313,7 @@ impl PatMatrix {
 
                                         // The pattern may be missing some of the fields in the constructor.
                                         // Add ignore pats for those.
-                                        let field_pat_names: Set<&Id> = pat_fields
+                                        let field_pat_names: HashSet<&Id> = pat_fields
                                             .iter()
                                             .map(|field| field.name.as_ref().unwrap())
                                             .collect();
@@ -526,7 +526,7 @@ impl PatMatrix {
 
                         // The pattern may be missing some of the fields in the constructor.
                         // Add ignore pats for those.
-                        let mut field_pat_names: Set<&Id> = Default::default();
+                        let mut field_pat_names: HashSet<&Id> = Default::default();
 
                         let mut fields_positional: Vec<ast::L<ast::Pat>> = if named_args {
                             let mut fields_vec: Vec<(Id, ast::L<ast::Pat>)> = fields
@@ -730,7 +730,7 @@ impl std::fmt::Display for PatMatrix {
     }
 }
 
-struct BoundVarsDisplay<'a>(&'a Map<Id, Set<Ty>>);
+struct BoundVarsDisplay<'a>(&'a HashMap<Id, HashSet<Ty>>);
 
 impl<'a> std::fmt::Display for BoundVarsDisplay<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

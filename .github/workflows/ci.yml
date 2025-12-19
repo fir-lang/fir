@@ -37,7 +37,7 @@ jobs:
         run: sudo apt install -y just
 
       - name: 'Check Fir formatting'
-        run: just format_repo
+        run: just check_fir_formatting
 
   check_lints:
     name: Check lints

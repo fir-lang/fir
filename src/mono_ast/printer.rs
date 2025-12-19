@@ -169,7 +169,7 @@ impl Type {
 
             Type::Variant { alts } => {
                 buffer.push('[');
-                for (i, ty) in alts.iter().enumerate() {
+                for (i, ty) in alts.values().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
                     }
