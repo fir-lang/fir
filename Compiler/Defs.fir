@@ -161,42 +161,17 @@ type TyDefIdx(
 
     ## Name of the type in `_mod`.
     _name: Str,
-
-    ## Kind of the definition: type or trait.
-    _kind: TyDefKind,
 )
-
-
-#[derive(ToDoc)]
-type TyDefKind:
-    Type
-    Trait
 
 
 impl Eq[TyDefIdx]:
     __eq(self: TyDefIdx, other: TyDefIdx) Bool:
-        self._mod == other._mod
-            and self._name == other._name
-            and self._kind == other._kind
-
-
-impl Eq[TyDefKind]:
-    __eq(self: TyDefKind, other: TyDefKind) Bool:
-        match self:
-            TyDefKind.Type: other is TyDefKind.Type
-            TyDefKind.Trait: other is TyDefKind.Trait
+        self._mod == other._mod and self._name == other._name
 
 
 impl Hash[TyDefIdx]:
     hash(self: TyDefIdx) U32:
-        self._mod.hash() + self._name.hash() + self._kind.hash()
-
-
-impl Hash[TyDefKind]:
-    hash(self: TyDefKind) U32:
-        match self:
-            TyDefKind.Type: 1
-            TyDefKind.Trait: 2
+        self._mod.hash() + self._name.hash()
 
 
 # ------------------------------------------------------------------------------
@@ -329,19 +304,8 @@ impl ToDoc[TyDefIdx]:
                 + Doc.nested(4, Doc.break_(1) + self._name.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_kind =")
-                + Doc.nested(4, Doc.break_(1) + self._kind.toDoc()),
-        )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("TyDefIdx") + Doc.char('(') + args)
-
-
-impl ToDoc[TyDefKind]:
-    toDoc(self: TyDefKind) Doc:
-        match self:
-            TyDefKind.Type: Doc.str("TyDefKind.Type")
-            TyDefKind.Trait: Doc.str("TyDefKind.Trait")
 
 
 # ------------------------------------------------------------------------------
