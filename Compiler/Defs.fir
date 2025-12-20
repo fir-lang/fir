@@ -187,6 +187,18 @@ impl Eq[TyDefKind]:
             TyDefKind.Trait: other is TyDefKind.Trait
 
 
+impl Hash[TyDefIdx]:
+    hash(self: TyDefIdx) U32:
+        self._mod.hash() + self._name.hash() + self._kind.hash()
+
+
+impl Hash[TyDefKind]:
+    hash(self: TyDefKind) U32:
+        match self:
+            TyDefKind.Type: 1
+            TyDefKind.Trait: 2
+
+
 # ------------------------------------------------------------------------------
 # Generated ToDoc implementations
 
