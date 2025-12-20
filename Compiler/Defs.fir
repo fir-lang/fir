@@ -180,6 +180,11 @@ impl Hash[TyDefIdx]:
         self._mod.hash() + self._name.hash()
 
 
+impl Hash[TyDefIdx]:
+    hash(self: TyDefIdx) U32:
+        self._mod.hash() + self._name.hash()
+
+
 # ------------------------------------------------------------------------------
 # Generated ToDoc implementations
 
