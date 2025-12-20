@@ -53,6 +53,12 @@ VarId.resolve(self, def: VarDefIdx):
     self._resolved = Option.Some(def)
 
 
+VarId.def(self) VarDefIdx:
+    self._resolved.unwrapOrElse(
+        \(): panic("Term id (\``self.name`\`) is not resolved yet"),
+    )
+
+
 #[derive(ToDoc)]
 type AssocVarId(
     ## Index of the associated member identifier's token in its module.
