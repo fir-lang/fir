@@ -63,6 +63,14 @@ type TypeDecl(
 )
 
 
+impl Tokens[TypeDecl]:
+    firstToken(self: TypeDecl, tokens: Array[Token]) TokenIdx:
+        self.prim_.unwrapOr(self.name.token)
+
+    lastToken(self: TypeDecl, tokens: Array[Token]) TokenIdx:
+        panic("TOOD")
+
+
 ## Constructors of a type declaration.
 #[derive(ToDoc)]
 type TypeDeclRhs:
@@ -80,6 +88,14 @@ type ConDecl(
     fields: ConFields,
     _lastToken: TokenIdx,
 )
+
+
+impl Tokens[ConDecl]:
+    firstToken(self: ConDecl, tokens: Array[Token]) TokenIdx:
+        self.name.token
+
+    lastToken(self: ConDecl, tokens: Array[Token]) TokenIdx:
+        self._lastToken
 
 
 #[derive(ToDoc)]

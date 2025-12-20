@@ -221,31 +221,101 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
     for tyDecl: TypeDecl in mod._tyItems.values():
         let tyDeclName = mod.idText(tyDecl.name)
         let tyCon = tcEnv._cons.get(tyDeclName).unwrap()
-        let details = TyConDetails.Type(
-            TypeDetails(
-                cons =
-                    match tyDecl.rhs:
-                        Option.Some(TypeDeclRhs.Sum(cons)):
-                            Vec.fromIter(
-                                cons.iter().map(
-                                    \(con: ConDecl) Str: mod.idText(con.name),
+        let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
+
+        assert(tyDecl.typeParams.len() == tyDecl.typeParamKinds.len())
+
+        let typeContext: Vec[Pred] = convertAndBindContext(
+            mod,
+            varMap,
+            Vec.fromIter(
+                range(u32(0), tyDecl.typeParams.len()).map(
+                    \(i):
+                        TypeParam(
+                            name =
+                                LocalId(
+                                    name = mod.idText(tyDecl.typeParams.get(i)),
                                 ),
-                            )
-                        Option.Some(TypeDeclRhs.Product(_fields)):
-                            Vec.[tyDeclName]
-                        Option.None: Vec.[],
+                            kind = tyDecl.typeParamKinds.get(i),
+                        ),
+                ),
+            ),
+            Vec.empty(),
+            TyVarConversion.ToQVar,
+        )
+
+        assert(typeContext.isEmpty())
+
+        let schemes: HashMap[Str, Scheme] = HashMap.empty()
+
+        # Return type of constructors.
+        let tyNameStr = mod.idText(tyDecl.name)
+        let tyDefIdx = mod._tyEnv.get(tyNameStr).unwrap()
+        let qvars = Vec.fromIter(
+            range(u32(0), tyDecl.typeParams.len()).map(
+                \(typeParamIdx):
+                    let paramNameStr = mod.idText(
+                        tyDecl.typeParams.get(typeParamIdx),
+                    )
+                    QVar(
+                        id = LocalId(name = paramNameStr),
+                        kind = tyDecl.typeParamKinds.get(typeParamIdx),
+                    ),
+            ),
+        )
+
+        let ret = if tyDecl.typeParams.isEmpty():
+            Ty.Con(id = tyDefIdx)
+        else:
+            Ty.App(
+                conId = tyDefIdx,
+                args = Vec.fromIter(qvars.iter().map(Ty.QVar)),
+            )
+
+        match tyDecl.rhs:
+            Option.Some(TypeDeclRhs.Sum(cons)):
+                for con: ConDecl in cons.iter():
+                    let conName = mod.idText(con.name)
+                    let ty = match convertFields(mod, varMap, con.fields):
+                        Option.None: ret
+                        Option.Some(args): Ty.Fun(args, ret, exn = Option.None)
+                    let scheme = Scheme(
+                        qvars,
+                        preds = Vec.empty(),
+                        ty,
+                        loc = mod.loc(con),
+                    )
+                    let old = schemes.insert(conName, scheme)
+                    assert(old is Option.None)
+
+            Option.Some(TypeDeclRhs.Product(fields)):
+                let ty = match convertFields(mod, varMap, fields):
+                    Option.None: ret
+                    Option.Some(args): Ty.Fun(args, ret, exn = Option.None)
+                let scheme = Scheme(
+                    qvars,
+                    preds = Vec.empty(),
+                    ty,
+                    loc = mod.loc(tyDecl),
+                )
+                let old = schemes.insert(tyNameStr, scheme)
+                assert(old is Option.None)
+
+            Option.None: ()
+
+        tyCon.info.details = TyConDetails.Type(
+            TypeDetails(
+                cons = schemes,
                 sum =
                     not (tyDecl.rhs is Option.Some(TypeDeclRhs.Product(_fields))),
             ),
         )
-        tyCon.info.details = details
 
     for traitDecl: TraitDecl in mod._traitItems.values():
         let tyDeclName = mod.idText(traitDecl.name)
         let tyCon = tcEnv._cons.get(tyDeclName).unwrap()
         let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
 
-        # TODO: This doesn't hold, need to add kinds.
         assert(traitDecl.typeParams.len() == traitDecl.typeParamKinds.len())
 
         let traitContext: Vec[Pred] = convertAndBindContext(

@@ -184,6 +184,38 @@ convertNamedTy(
     Ty.App(conId = tyDefIdx, args = convertedArgs)
 
 
+convertFields(module: Module, vars: ScopeMap[Str, Ty], fields: ConFields) Option[FunArgs] / TypeError:
+    match fields:
+        ConFields.Empty: Option.None
+
+        ConFields.Named(namedFields):
+            Option.Some(
+                FunArgs.Named(
+                    HashMap.fromIter(
+                        namedFields.iter().map(
+                            \(field: NamedField) (key: LocalId, value: Ty):
+                                (
+                                    key =
+                                        LocalId(name = module.idText(field.name)),
+                                    value = convertAstTy(module, vars, field.ty),
+                                ),
+                        ),
+                    ),
+                ),
+            )
+
+        ConFields.Unnamed(fields):
+            Option.Some(
+                FunArgs.Positional(
+                    Vec.fromIter(
+                        fields.iter().map(
+                            \(ty: Type) Ty: convertAstTy(module, vars, ty),
+                        ),
+                    ),
+                ),
+            )
+
+
 type TyVarConversion:
     ToRVar
     ToQVar
