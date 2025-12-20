@@ -27,9 +27,18 @@ Program.new() Program:
     Program(_modules = Vec.empty(), _depGraph = Option.None,)
 
 
+Program.module(self, modIdx: ModuleIdx) Module:
+    self._modules.get(modIdx._idx)
+
+
 Program.tyCon(self, tyIdx: TyDefIdx) TyCon:
     let mod = self._modules.get(tyIdx._mod._idx)
     mod.tyCon(tyIdx)
+
+
+Program.scheme(self, varIdx: TopVarDefIdx) Scheme:
+    let mod = self._modules.get(varIdx._mod._idx)
+    mod.scheme(varIdx)
 
 
 ## Load a module, or return it from the cache if it's already loaded.
