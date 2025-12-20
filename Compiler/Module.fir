@@ -85,7 +85,7 @@ type Module(
     # modules.
 
     ## Term environment of the module, used for name resolving.
-    _termEnv: HashMap[Str, VarDefIdx],
+    _termEnv: HashMap[Str, TopVarDefIdx],
 
     ## Associated item environment of the module, used for name resolving.
     _assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]],
