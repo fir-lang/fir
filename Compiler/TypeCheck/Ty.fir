@@ -353,6 +353,32 @@ Scheme.instantiate(
     (ty = self.ty.substQVars(varMap), vars = instantiations)
 
 
+Scheme.instantiateWithTys(self, argTys: Vec[Ty], preds: Vec[Pred], loc: Loc) Ty:
+    assert(self.qvars.len() == argTys.len())
+
+    # Maps `QVar`s to unification variables.
+    let varMap = HashMap[LocalId, Ty].withCapacity(self.qvars.len())
+
+    for argIdx: U32 in range(u32(0), argTys.len()):
+        varMap.insert(self.qvars.get(argIdx).id, argTys.get(argIdx))
+
+    # Generate predicates.
+    for pred: Pred in self.preds.iter():
+        let instantiatedPred = Pred(
+            trait_ = pred.trait_,
+            params =
+                Vec.fromIter(
+                    pred.params.iter().map(
+                        \(param: Ty): param.substQVars(varMap),
+                    ),
+                ),
+            loc,
+        )
+        preds.push(instantiatedPred)
+
+    self.ty.substQVars(varMap)
+
+
 # ------------------------------------------------------------------------------
 # Predicates
 
