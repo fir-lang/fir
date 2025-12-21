@@ -317,7 +317,7 @@ fn call_closure<W: Write>(
     call_stack: &mut Vec<Frame>,
 ) -> ControlFlow {
     match HeapObjIdx(heap[fun] as u32) {
-        CONSTR_CON_IDX => {
+        CON_CON_IDX => {
             let con_idx = HeapObjIdx(heap[fun + 1] as u32);
             allocate_object_from_idx(w, pgm, heap, locals, con_idx, args, call_stack)
         }
@@ -637,17 +637,17 @@ fn eval<W: Write>(
 
         Expr::TopVar(fun_idx) => ControlFlow::Val(heap.allocate_fun(fun_idx.as_u64())),
 
-        Expr::Constr(con_idx) => {
+        Expr::Con(con_idx) => {
             let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
 
             if con.fields.is_empty() {
                 return ControlFlow::Val(con.alloc);
             }
 
-            ControlFlow::Val(heap.allocate_constr(con_idx.as_u64()))
+            ControlFlow::Val(heap.allocate_con(con_idx.as_u64()))
         }
 
-        Expr::FieldSelect(FieldSelectExpr { object, field }) => {
+        Expr::FieldSel(FieldSelExpr { object, field }) => {
             let object = val!(eval(
                 w,
                 pgm,
@@ -685,7 +685,7 @@ fn eval<W: Write>(
             ControlFlow::Val(heap[object + 1 + (field_idx as u64)])
         }
 
-        Expr::MethodSelect(MethodSelectExpr { object, fun_idx }) => {
+        Expr::MethodSel(MethodSelExpr { object, fun_idx }) => {
             let object = val!(eval(
                 w,
                 pgm,
@@ -698,19 +698,19 @@ fn eval<W: Write>(
             ControlFlow::Val(heap.allocate_method(object, fun_idx.as_u64()))
         }
 
-        Expr::AssocFnSelect(idx) => ControlFlow::Val(heap.allocate_fun(idx.as_u64())),
+        Expr::AssocFnSel(idx) => ControlFlow::Val(heap.allocate_fun(idx.as_u64())),
 
         Expr::Call(CallExpr { fun, args }) => {
             // See if `fun` is a method, associated function, or constructor to avoid closure
             // allocations.
             let fun: u64 = match &fun.node {
-                Expr::Constr(con_idx) => {
+                Expr::Con(con_idx) => {
                     return allocate_object_from_idx(
                         w, pgm, heap, locals, *con_idx, args, call_stack,
                     );
                 }
 
-                Expr::MethodSelect(MethodSelectExpr { object, fun_idx }) => {
+                Expr::MethodSel(MethodSelExpr { object, fun_idx }) => {
                     let object = val!(eval(
                         w,
                         pgm,
@@ -738,7 +738,7 @@ fn eval<W: Write>(
                         .into_control_flow();
                 }
 
-                Expr::AssocFnSelect(fun_idx) => {
+                Expr::AssocFnSel(fun_idx) => {
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
                     for arg in args {
                         arg_vals.push(val!(eval(
@@ -824,13 +824,8 @@ fn eval<W: Write>(
                 &scrutinee.loc,
                 call_stack
             ));
-            for Alt {
-                pattern,
-                guard,
-                rhs,
-            } in alts
-            {
-                if try_bind_pat(pgm, heap, pattern, locals, scrut) {
+            for Alt { pat, guard, rhs } in alts {
+                if try_bind_pat(pgm, heap, pat, locals, scrut) {
                     if let Some(guard) = guard {
                         let guard = val!(eval(
                             w,
@@ -969,7 +964,7 @@ fn assign<W: Write>(
             locals[local_idx.as_usize()] = val;
         }
 
-        Expr::FieldSelect(FieldSelectExpr { object, field }) => {
+        Expr::FieldSel(FieldSelExpr { object, field }) => {
             let object = val!(eval(
                 w,
                 pgm,
@@ -996,14 +991,8 @@ fn assign<W: Write>(
 ///
 /// `heap` argument is `mut` to be able to allocate `StrView`s in string prefix patterns. In the
 /// compiled version `StrView`s will be allocated on stack.
-fn try_bind_pat(
-    pgm: &Pgm,
-    heap: &mut Heap,
-    pattern: &L<Pat>,
-    locals: &mut [u64],
-    value: u64,
-) -> bool {
-    match &pattern.node {
+fn try_bind_pat(pgm: &Pgm, heap: &mut Heap, pat: &L<Pat>, locals: &mut [u64], value: u64) -> bool {
+    match &pat.node {
         Pat::Var(var) => {
             locals[var.as_usize()] = value;
             true
@@ -1031,8 +1020,8 @@ fn try_bind_pat(
                 || try_bind_pat(pgm, heap, pat2, locals, value)
         }
 
-        Pat::Constr(ConstrPattern {
-            constr: con_idx,
+        Pat::Con(ConPat {
+            con: con_idx,
             fields: field_pats,
         }) => {
             let value_tag = heap[value];
@@ -1056,7 +1045,7 @@ fn try_bind_pat(
             true
         }
 
-        Pat::Record(RecordPattern {
+        Pat::Record(RecordPat {
             fields: field_pats,
             idx,
         }) => {

@@ -176,10 +176,10 @@ TypeDecl: L<TypeDecl> = {
 
 TypeDeclRhs: TypeDeclRhs = {
     NEWLINE =>
-        TypeDeclRhs::Product(ConstructorFields::Empty),
+        TypeDeclRhs::Product(ConFields::Empty),
 
-    ":" NEWLINE INDENT <constrs:TypeConstrs> DEDENT =>
-        TypeDeclRhs::Sum(constrs),
+    ":" NEWLINE INDENT <cons:ConDecls> DEDENT =>
+        TypeDeclRhs::Sum(cons),
 
     <l:@L> "(" <fields:Sep<Field, ",">> ")" NEWLINE => {
         let fields = process_fields(fields, module, &l);
@@ -192,20 +192,20 @@ TypeParams: Vec<Id> = {
         params.into_iter().map(|id| id.smol_str()).collect(),
 }
 
-TypeConstrs: Vec<ConstructorDecl> = {
-    ConstructorDecl+
+ConDecls: Vec<ConDecl> = {
+    ConDecl+
 }
 
-ConstructorDecl: ConstructorDecl = {
+ConDecl: ConDecl = {
     <name:UpperId> NEWLINE =>
-        ConstructorDecl {
+        ConDecl {
             name: name.smol_str(),
-            fields: ConstructorFields::Empty,
+            fields: ConFields::Empty,
         },
 
     <l:@L> <name:UpperId> "(" <fields:Sep<Field, ",">> ")" NEWLINE => {
         let fields = process_fields(fields, module, &l);
-        ConstructorDecl {
+        ConDecl {
             name: name.smol_str(),
             fields,
         }
@@ -525,9 +525,9 @@ Stmt: Stmt = {
         let label = label.map(|l| SmolStr::new(&l.smol_str()[1..]));
         Stmt::While(WhileStmt {
             label,
-            cond: L::new(module, l, r, Expr::ConstrSelect(Constructor {
+            cond: L::new(module, l, r, Expr::ConSel(Con {
                 ty: SmolStr::new_static("Bool"),
-                constr: Some(SmolStr::new_static("True")),
+                con: Some(SmolStr::new_static("True")),
                 user_ty_args: vec![],
                 ty_args: vec![],
             })),
@@ -541,30 +541,30 @@ Alts: Vec<Alt> = {
 }
 
 Alt: Alt = {
-    <pattern:LPat> ":" NEWLINE INDENT <stmts:LStmts> DEDENT =>
+    <pat:LPat> ":" NEWLINE INDENT <stmts:LStmts> DEDENT =>
         Alt {
-            pattern,
+            pat,
             guard: None,
             rhs: stmts,
         },
 
-    <pattern:LPat> "if" <guard:LExpr> ":" NEWLINE INDENT <stmts:LStmts> DEDENT =>
+    <pat:LPat> "if" <guard:LExpr> ":" NEWLINE INDENT <stmts:LStmts> DEDENT =>
         Alt {
-            pattern,
+            pat,
             guard: Some(guard),
             rhs: stmts,
         },
 
-    <pattern:LPat> ":" <stmt:LStmt>  =>
+    <pat:LPat> ":" <stmt:LStmt>  =>
         Alt {
-            pattern,
+            pat,
             guard: None,
             rhs: vec![stmt],
         },
 
-    <pattern:LPat> "if" <guard:LExpr> ":" <stmt:LStmt>  =>
+    <pat:LPat> "if" <guard:LExpr> ":" <stmt:LStmt>  =>
         Alt {
-            pattern,
+            pat,
             guard: Some(guard),
             rhs: vec![stmt],
         },
@@ -655,23 +655,23 @@ InlineExpr: Expr = {
     },
 
     <id:UpperId> =>
-        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] }),
+        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![] }),
 
     <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
-        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, user_ty_args, ty_args: vec![] }),
+        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args, ty_args: vec![] }),
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
-        let constr = parts.pop().unwrap();
+        let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] })
+        Expr::ConSel(Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![] })
     },
 
     <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
         let mut parts = path_parts(&path.text);
-        let constr = parts.pop().unwrap();
+        let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), user_ty_args, ty_args: vec![] })
+        Expr::ConSel(Con { ty, con: Some(con), user_ty_args, ty_args: vec![] })
     },
 
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
@@ -768,8 +768,8 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>
         match expr {
-            Expr::ConstrSelect(Constructor { ty: id, constr: None, user_ty_args: ty_user_ty_args, ty_args: _ }) =>
-                Expr::AssocFnSelect(AssocFnSelectExpr {
+            Expr::ConSel(Con { ty: id, con: None, user_ty_args: ty_user_ty_args, ty_args: _ }) =>
+                Expr::AssocFnSel(AssocFnSelExpr {
                     ty: id,
                     ty_user_ty_args,
                     member: field.smol_str(),
@@ -777,7 +777,7 @@ InlineExpr: Expr = {
                     ty_args: vec![]
                 }),
 
-            _ => Expr::FieldSelect(FieldSelectExpr {
+            _ => Expr::FieldSel(FieldSelExpr {
                 object: Box::new(L::new(module, l, r, expr)),
                 field: field.smol_str(),
                 user_ty_args,
@@ -1013,10 +1013,10 @@ Pat: Pat = {
     #[precedence(level = "0")]
     <id:LowerId> => Pat::Var(VarPat { var: id.smol_str(), ty: None }),
 
-    <constr:ConstrPattern> => Pat::Constr(constr),
+    <con:ConPat> => Pat::Con(con),
 
     "(" <fields:FieldPats> ")" =>
-        Pat::Record(RecordPattern {
+        Pat::Record(RecordPat {
             fields: fields.0,
             ignore_rest: fields.1,
             inferred_ty: None,
@@ -1042,25 +1042,25 @@ Pat: Pat = {
     },
 }
 
-Constructor: Constructor = {
+Con: Con = {
     <ty:UpperId> =>
-        Constructor { ty: ty.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] },
+        Con { ty: ty.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![] },
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
-        let constr = parts.pop().unwrap();
+        let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Constructor { ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] }
+        Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![] }
     },
 }
 
-ConstrPattern: ConstrPattern = {
-    <constr:Constructor> =>
-        ConstrPattern { constr, fields: vec![], ignore_rest: false },
+ConPat: ConPat = {
+    <con:Con> =>
+        ConPat { con, fields: vec![], ignore_rest: false },
 
-    <constr:Constructor> "(" <fields:FieldPats> ")" =>
-        ConstrPattern {
-            constr,
+    <con:Con> "(" <fields:FieldPats> ")" =>
+        ConPat {
+            con,
             fields: fields.0,
             ignore_rest: fields.1,
         },

@@ -64,9 +64,9 @@ pub(crate) fn process_fields(
     fields: Vec<(Option<Id>, L<ast::Type>)>,
     module: &std::rc::Rc<str>,
     loc: &lexgen_util::Loc,
-) -> ast::ConstructorFields {
+) -> ast::ConFields {
     if fields.is_empty() {
-        return ast::ConstructorFields::Empty;
+        return ast::ConFields::Empty;
     }
 
     let mut found_named = false;
@@ -89,8 +89,8 @@ pub(crate) fn process_fields(
     }
 
     if found_named {
-        ast::ConstructorFields::Named(fields.into_iter().map(|(n, t)| (n.unwrap(), t)).collect())
+        ast::ConFields::Named(fields.into_iter().map(|(n, t)| (n.unwrap(), t)).collect())
     } else {
-        ast::ConstructorFields::Unnamed(fields.into_iter().map(|(_, t)| t).collect())
+        ast::ConFields::Unnamed(fields.into_iter().map(|(_, t)| t).collect())
     }
 }

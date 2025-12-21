@@ -122,7 +122,7 @@ pub(super) fn check_expr(
 
         // <object:Expr>.<field:Id>.
         // This updates the expression as `MethodSelect` if the `field` turns out to be a method.
-        ast::Expr::FieldSelect(ast::FieldSelectExpr {
+        ast::Expr::FieldSel(ast::FieldSelExpr {
             object,
             field,
             user_ty_args,
@@ -163,7 +163,7 @@ pub(super) fn check_expr(
                     }
 
                     other => {
-                        let (ty, new_expr) = check_field_select(
+                        let (ty, new_expr) = check_field_sel(
                             tc_state,
                             object,
                             field,
@@ -190,18 +190,18 @@ pub(super) fn check_expr(
             )
         }
 
-        ast::Expr::MethodSelect(_) => panic!("MethodSelect in type checker"),
+        ast::Expr::MethodSel(_) => panic!("MethodSel in type checker"),
 
-        ast::Expr::ConstrSelect(ast::Constructor {
+        ast::Expr::ConSel(ast::Con {
             ty,
-            constr,
+            con,
             user_ty_args,
             ty_args,
         }) => {
             assert!(ty_args.is_empty());
 
-            let scheme = match constr {
-                Some(constr) => tc_state
+            let scheme = match con {
+                Some(con) => tc_state
                     .tys
                     .associated_fn_schemes
                     .get(ty)
@@ -212,13 +212,13 @@ pub(super) fn check_expr(
                             ty
                         )
                     })
-                    .get(constr)
+                    .get(con)
                     .unwrap_or_else(|| {
                         panic!(
                             "{}: Type {} does not have the constructor {}",
                             loc_display(&expr.loc),
                             ty,
-                            constr
+                            con
                         )
                     }),
                 None => tc_state.tys.top_schemes.get(ty).unwrap_or_else(|| {
@@ -230,9 +230,9 @@ pub(super) fn check_expr(
                 let (con_ty, con_ty_args) =
                     scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
 
-                expr.node = ast::Expr::ConstrSelect(ast::Constructor {
+                expr.node = ast::Expr::ConSel(ast::Con {
                     ty: ty.clone(),
-                    constr: constr.clone(),
+                    con: con.clone(),
                     user_ty_args: vec![],
                     ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
                 });
@@ -244,8 +244,8 @@ pub(super) fn check_expr(
                         "{}: Constructor {}{}{} takes {} type arguments, but applied to {}",
                         loc_display(&expr.loc),
                         ty,
-                        if constr.is_some() { "." } else { "" },
-                        constr.as_ref().cloned().unwrap_or(SmolStr::new_static("")),
+                        if con.is_some() { "." } else { "" },
+                        con.as_ref().cloned().unwrap_or(SmolStr::new_static("")),
                         scheme.quantified_vars.len(),
                         user_ty_args.len()
                     );
@@ -259,9 +259,9 @@ pub(super) fn check_expr(
                 let con_ty =
                     scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
 
-                expr.node = ast::Expr::ConstrSelect(ast::Constructor {
+                expr.node = ast::Expr::ConSel(ast::Con {
                     ty: ty.clone(),
-                    constr: constr.clone(),
+                    con: con.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
                 });
@@ -282,7 +282,7 @@ pub(super) fn check_expr(
             )
         }
 
-        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+        ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
             ty,
             ty_user_ty_args,
             member,
@@ -364,7 +364,7 @@ pub(super) fn check_expr(
                     );
                 }
 
-                expr.node = ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                expr.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                     ty: ty.clone(),
                     ty_user_ty_args: vec![],
                     member: member.clone(),
@@ -388,7 +388,7 @@ pub(super) fn check_expr(
                 let method_ty =
                     scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
 
-                expr.node = ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                expr.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                     ty: ty.clone(),
                     ty_user_ty_args: vec![],
                     member: member.clone(),
@@ -719,7 +719,7 @@ pub(super) fn check_expr(
                         let expr_node = replace(&mut expr.node, ast::Expr::Self_);
                         expr.node = ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
-                                node: ast::Expr::MethodSelect(ast::MethodSelectExpr {
+                                node: ast::Expr::MethodSel(ast::MethodSelExpr {
                                     object: Box::new(ast::L {
                                         node: expr_node,
                                         loc: expr.loc.clone(),
@@ -837,7 +837,7 @@ pub(super) fn check_expr(
                 node: ast::Expr::Call(ast::CallExpr {
                     fun: Box::new(ast::L {
                         loc: left.loc.clone(),
-                        node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                        node: ast::Expr::FieldSel(ast::FieldSelExpr {
                             object: left.clone(),
                             field: SmolStr::new_static(method),
                             user_ty_args: vec![],
@@ -863,7 +863,7 @@ pub(super) fn check_expr(
                     node: ast::Expr::Call(ast::CallExpr {
                         fun: Box::new(ast::L {
                             loc: arg.loc.clone(),
-                            node: ast::Expr::MethodSelect(ast::MethodSelectExpr {
+                            node: ast::Expr::MethodSel(ast::MethodSelExpr {
                                 object: arg.clone(),
                                 object_ty: Some(Ty::bool()),
                                 method_ty_id: SmolStr::new_static("Bool"),
@@ -884,7 +884,7 @@ pub(super) fn check_expr(
                     node: ast::Expr::Call(ast::CallExpr {
                         fun: Box::new(ast::L {
                             loc: arg.loc.clone(),
-                            node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                            node: ast::Expr::FieldSel(ast::FieldSelExpr {
                                 object: arg.clone(),
                                 field: SmolStr::new_static("__neg"),
                                 user_ty_args: vec![],
@@ -1299,7 +1299,7 @@ pub(super) fn check_expr(
                     node: ast::Expr::Call(ast::CallExpr {
                         fun: Box::new(ast::L {
                             loc: loc.clone(),
-                            node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                            node: ast::Expr::FieldSel(ast::FieldSelExpr {
                                 object: Box::new(elem),
                                 field: SmolStr::new_static("chain"),
                                 user_ty_args: vec![],
@@ -1315,9 +1315,9 @@ pub(super) fn check_expr(
 
             let desugared = match iter_ty {
                 Some(iter_ty) => {
-                    let field_select_expr = ast::L {
+                    let field_sel_expr = ast::L {
                         loc: loc.clone(),
-                        node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                        node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                             ty: iter_ty,
                             ty_user_ty_args: vec![],
                             member: SmolStr::new_static("fromIter"),
@@ -1329,7 +1329,7 @@ pub(super) fn check_expr(
                     ast::L {
                         loc: loc.clone(),
                         node: ast::Expr::Call(ast::CallExpr {
-                            fun: Box::new(field_select_expr),
+                            fun: Box::new(field_sel_expr),
                             args: vec![ast::CallArg {
                                 name: None,
                                 expr: iter_expr,
@@ -1345,7 +1345,7 @@ pub(super) fn check_expr(
                             Some((con, _)) => {
                                 let field_select_expr = ast::L {
                                     loc: loc.clone(),
-                                    node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                                    node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                                         ty: con,
                                         ty_user_ty_args: vec![],
                                         member: SmolStr::new_static("fromIter"),
@@ -1415,21 +1415,21 @@ pub(super) fn check_match_expr(
 
     // Type check patterns first so that the coverage checker can assume patterns are well-typed.
     for ast::Alt {
-        pattern,
+        pat,
         guard: _, // checked below to use refined binders in guards
         rhs: _,
     } in alts.iter_mut()
     {
         tc_state.env.enter();
 
-        let pat_ty = check_pat(tc_state, pattern, level);
+        let pat_ty = check_pat(tc_state, pat, level);
         unify(
             &pat_ty,
             &scrut_ty,
             tc_state.tys.tys.cons(),
             tc_state.var_gen,
             level,
-            &pattern.loc,
+            &pat.loc,
         );
 
         alt_envs.push(tc_state.env.exit());
@@ -1439,7 +1439,7 @@ pub(super) fn check_match_expr(
 
     for (arm_idx, arm) in alts.iter().enumerate() {
         if !info.is_useful(arm_idx as u32) {
-            eprintln!("{}: Redundant branch", loc_display(&arm.pattern.loc));
+            eprintln!("{}: Redundant branch", loc_display(&arm.pat.loc));
         }
     }
 
@@ -1447,19 +1447,10 @@ pub(super) fn check_match_expr(
         eprintln!("{}: Unexhaustive pattern match", loc_display(loc));
     }
 
-    for (
-        alt_idx,
-        (
-            ast::Alt {
-                pattern,
-                guard,
-                rhs,
-            },
-            mut alt_scope,
-        ),
-    ) in alts.iter_mut().zip(alt_envs.into_iter()).enumerate()
+    for (alt_idx, (ast::Alt { pat, guard, rhs }, mut alt_scope)) in
+        alts.iter_mut().zip(alt_envs.into_iter()).enumerate()
     {
-        refine_binders(&mut alt_scope, &info.bound_vars[alt_idx], &pattern.loc);
+        refine_binders(&mut alt_scope, &info.bound_vars[alt_idx], &pat.loc);
 
         tc_state.env.push_scope(alt_scope);
 
@@ -1531,7 +1522,7 @@ pub(super) fn check_if_expr(
 /// Check a `FieldSelect` expr.
 ///
 /// Returns the type of the expression, with updated AST node for the expression.
-fn check_field_select(
+fn check_field_sel(
     tc_state: &mut TcFunState,
     object: &ast::L<ast::Expr>,
     field: &Id,
@@ -1549,7 +1540,7 @@ fn check_field_select(
                 }
                 return (
                     field_ty,
-                    ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                    ast::Expr::FieldSel(ast::FieldSelExpr {
                         object: Box::new(object.clone()),
                         field: field.clone(),
                         user_ty_args: vec![],
@@ -1565,7 +1556,7 @@ fn check_field_select(
                 }
                 return (
                     field_ty,
-                    ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                    ast::Expr::FieldSel(ast::FieldSelExpr {
                         object: Box::new(object.clone()),
                         field: field.clone(),
                         user_ty_args: vec![],
@@ -1638,7 +1629,7 @@ fn check_field_select(
                     ret,
                     exceptions,
                 },
-                ast::Expr::MethodSelect(ast::MethodSelectExpr {
+                ast::Expr::MethodSel(ast::MethodSelExpr {
                     object: Box::new(object.clone()),
                     object_ty: Some(object_ty.clone()),
                     method_ty_id,

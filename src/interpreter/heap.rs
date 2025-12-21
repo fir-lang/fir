@@ -1,5 +1,5 @@
 use crate::interpreter::*;
-use crate::lowering::{CONSTR_CON_IDX, FUN_CON_IDX, METHOD_CON_IDX, Repr};
+use crate::lowering::{CON_CON_IDX, FUN_CON_IDX, METHOD_CON_IDX, Repr};
 
 use bytemuck::{cast_slice, cast_slice_mut};
 
@@ -293,9 +293,9 @@ impl Heap {
         &cast_slice::<u64, u8>(&self.values)[byte_array_data as usize..][0..byte_array_len as usize]
     }
 
-    pub fn allocate_constr(&mut self, type_tag: u64) -> u64 {
+    pub fn allocate_con(&mut self, type_tag: u64) -> u64 {
         let alloc = self.allocate(2);
-        self[alloc] = CONSTR_CON_IDX.as_u64();
+        self[alloc] = CON_CON_IDX.as_u64();
         self[alloc + 1] = type_tag;
         alloc
     }

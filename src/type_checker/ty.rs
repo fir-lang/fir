@@ -1055,8 +1055,8 @@ impl TyConDetails {
 }
 
 impl ConShape {
-    pub(super) fn from_ast(con: &ast::ConstructorDecl) -> ConShape {
-        let ast::ConstructorDecl { name, fields: _ } = con;
+    pub(super) fn from_ast(con: &ast::ConDecl) -> ConShape {
+        let ast::ConDecl { name, fields: _ } = con;
         ConShape {
             name: Some(name.clone()),
         }

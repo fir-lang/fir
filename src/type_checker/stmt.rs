@@ -152,7 +152,7 @@ fn check_stmt(
                         node: ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
                                 loc: rhs.loc.clone(),
-                                node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                                node: ast::Expr::FieldSel(ast::FieldSelExpr {
                                     object: Box::new(ast::L {
                                         loc: stmt.loc.clone(),
                                         node: ast::Expr::Var(ast::VarExpr {
@@ -178,7 +178,7 @@ fn check_stmt(
                     check_expr(tc_state, rhs, None, level, loop_stack);
                 }
 
-                ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                ast::Expr::FieldSel(ast::FieldSelExpr {
                     object,
                     field,
                     user_ty_args,
@@ -258,7 +258,7 @@ fn check_stmt(
                         node: ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
                                 loc: rhs.loc.clone(),
-                                node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                                node: ast::Expr::FieldSel(ast::FieldSelExpr {
                                     object: Box::new(lhs.clone()),
                                     field: SmolStr::new_static(method),
                                     user_ty_args: vec![],

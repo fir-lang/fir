@@ -29,15 +29,14 @@ checkExpr(
     match expr:
         Expr.Var(expr): _checkVarExpr(expr, pgm, env, expectedTy, level)
 
-        Expr.ConstrSelect(expr):
-            _checkConExpr(expr, pgm, env, expectedTy, level)
+        Expr.ConSel(expr): _checkConExpr(expr, pgm, env, expectedTy, level)
 
-        Expr.FieldSelect(expr):
-            _checkFieldSelectExpr(expr, pgm, env, expectedTy, level, loopStack)
+        Expr.FieldSel(expr):
+            _checkFieldSelExpr(expr, pgm, env, expectedTy, level, loopStack)
 
-        Expr.MethodSelect(..): panic("TODO")
+        Expr.MethodSel(..): panic("TODO")
 
-        Expr.AssocFnSelect(..): panic("TODO")
+        Expr.AssocFnSel(..): panic("TODO")
 
         Expr.Call(..): panic("TODO")
 
@@ -145,7 +144,7 @@ _checkVarExpr(
 
 
 _checkConExpr(
-    con: Constructor,
+    con: Con,
     pgm: Program,
     env: FunTcEnv,
     expectedTy: Option[Ty],
@@ -170,7 +169,7 @@ _checkConExpr(
         TyConDetails.Type(details): details
 
     # TODO: This does not support renaming constructors
-    let conName = con.constr.map(\(id): mod.idText(id)).unwrapOr(tyCon.name)
+    let conName = con.con.map(\(id): mod.idText(id)).unwrapOr(tyCon.name)
 
     let scheme = details.cons.get(conName).unwrapOrElse(
         \():
@@ -235,8 +234,8 @@ makeVariant(varGen: UVarGen, ty: Ty, level: U32, loc: Loc) Ty / TypeError:
         _: throw(TypeError(loc, msg = "Type in variant is not a constructor",))
 
 
-_checkFieldSelectExpr(
-    expr: FieldSelectExpr,
+_checkFieldSelExpr(
+    expr: FieldSelExpr,
     pgm: Program,
     env: FunTcEnv,
     expectedTy: Option[Ty],

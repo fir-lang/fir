@@ -27,18 +27,18 @@ pub struct TypeDecl {
 
 #[derive(Debug, Clone)]
 pub enum TypeDeclRhs {
-    Sum(Vec<ConstructorDecl>),
-    Product(ConstructorFields),
+    Sum(Vec<ConDecl>),
+    Product(ConFields),
 }
 
 #[derive(Debug, Clone)]
-pub struct ConstructorDecl {
+pub struct ConDecl {
     pub name: Id,
-    pub fields: ConstructorFields,
+    pub fields: ConFields,
 }
 
 #[derive(Debug, Clone)]
-pub enum ConstructorFields {
+pub enum ConFields {
     Empty,
     Named(Vec<(Id, Type)>),
     Unnamed(Vec<Type>),
@@ -130,7 +130,7 @@ pub struct MatchExpr {
 
 #[derive(Debug, Clone)]
 pub struct Alt {
-    pub pattern: L<Pat>,
+    pub pat: L<Pat>,
     pub guard: Option<L<Expr>>,
     pub rhs: Vec<L<Stmt>>,
 }
@@ -138,8 +138,8 @@ pub struct Alt {
 #[derive(Debug, Clone)]
 pub enum Pat {
     Var(VarPat),
-    Constr(ConstrPattern),
-    Record(RecordPattern),
+    Con(ConPat),
+    Record(RecordPat),
     Ignore,
     Str(String),
     Char(char),
@@ -154,22 +154,22 @@ pub struct VarPat {
 }
 
 #[derive(Debug, Clone)]
-pub struct ConstrPattern {
-    pub constr: Constructor,
+pub struct ConPat {
+    pub con: Con,
 
     // Note: this does not need to bind or match all fields!
     pub fields: Vec<Named<L<Pat>>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Constructor {
+pub struct Con {
     pub ty: Id,
-    pub constr: Option<Id>,
+    pub con: Option<Id>,
     pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]
-pub struct RecordPattern {
+pub struct RecordPat {
     pub fields: Vec<Named<L<Pat>>>,
     pub ty: Type,
 }
@@ -205,12 +205,12 @@ pub struct WhileStmt {
 
 #[derive(Debug, Clone)]
 pub enum Expr {
-    LocalVar(Id),                     // a local variable
-    TopVar(VarExpr),                  // a top-level function reference
-    ConstrSelect(Constructor),        // a product or sum constructor
-    FieldSelect(FieldSelectExpr),     // <expr>.<id>
-    MethodSelect(MethodSelectExpr),   // <id>.<id>, with an object captured as receiver
-    AssocFnSelect(AssocFnSelectExpr), // <id>.<id>
+    LocalVar(Id),               // a local variable
+    TopVar(VarExpr),            // a top-level function reference
+    ConSel(Con),                // a product or sum constructor
+    FieldSel(FieldSelExpr),     // <expr>.<id>
+    MethodSel(MethodSelExpr),   // <id>.<id>, with an object captured as receiver
+    AssocFnSel(AssocFnSelExpr), // <id>.<id>
     Call(CallExpr),
     Int(IntExpr),
     Str(Vec<StringPart>),
@@ -245,13 +245,13 @@ pub struct CallArg {
 }
 
 #[derive(Debug, Clone)]
-pub struct FieldSelectExpr {
+pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
     pub field: Id,
 }
 
 #[derive(Debug, Clone)]
-pub struct MethodSelectExpr {
+pub struct MethodSelExpr {
     pub object: Box<L<Expr>>,
     pub method_ty_id: Id,
     pub method_id: Id,
@@ -259,7 +259,7 @@ pub struct MethodSelectExpr {
 }
 
 #[derive(Debug, Clone)]
-pub struct AssocFnSelectExpr {
+pub struct AssocFnSelExpr {
     pub ty: Id,
     pub member: Id,
     pub ty_args: Vec<Type>,

@@ -478,16 +478,16 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::FieldSelect(ast::FieldSelectExpr {
+        ast::Expr::FieldSel(ast::FieldSelExpr {
             object,
             field,
             user_ty_args: _,
-        }) => mono::Expr::FieldSelect(mono::FieldSelectExpr {
+        }) => mono::Expr::FieldSel(mono::FieldSelExpr {
             object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals),
             field: field.clone(),
         }),
 
-        ast::Expr::MethodSelect(ast::MethodSelectExpr {
+        ast::Expr::MethodSel(ast::MethodSelExpr {
             object,       // receiver
             object_ty,    // receiver type
             method_ty_id, // type that the method belongs to: `trait` or `type`
@@ -506,7 +506,7 @@ fn mono_expr(
             let _mono_object_ty =
                 mono_tc_ty(object_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
 
-            mono::Expr::MethodSelect(mono::MethodSelectExpr {
+            mono::Expr::MethodSel(mono::MethodSelExpr {
                 object: mono_object,
                 method_ty_id: method_ty_id.clone(),
                 method_id: method.clone(),
@@ -514,13 +514,13 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::ConstrSelect(ast::Constructor {
+        ast::Expr::ConSel(ast::Con {
             ty,
-            constr,
+            con,
             user_ty_args: _,
             ty_args,
-        }) => match constr {
-            Some(constr) => {
+        }) => match con {
+            Some(con) => {
                 let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
 
                 let mono_ty_args = ty_args
@@ -529,9 +529,9 @@ fn mono_expr(
                     .collect::<Vec<_>>();
 
                 let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
-                mono::Expr::ConstrSelect(mono::Constructor {
+                mono::Expr::ConSel(mono::Con {
                     ty: mono_ty_id,
-                    constr: Some(constr.clone()),
+                    con: Some(con.clone()),
                     ty_args: mono_ty_args,
                 })
             }
@@ -548,15 +548,15 @@ fn mono_expr(
 
                 let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
 
-                mono::Expr::ConstrSelect(mono::Constructor {
+                mono::Expr::ConSel(mono::Con {
                     ty: mono_ty_id,
-                    constr: None,
+                    con: None,
                     ty_args: mono_ty_args,
                 })
             }
         },
 
-        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+        ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
             ty,
             ty_user_ty_args: _,
             member,
@@ -582,7 +582,7 @@ fn mono_expr(
             {
                 mono_top_fn(fun_decl, &mono_ty_args, poly_pgm, mono_pgm);
 
-                return mono::Expr::AssocFnSelect(mono::AssocFnSelectExpr {
+                return mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
                     ty: ty.clone(),
                     member: member.clone(),
                     ty_args: mono_ty_args,
@@ -592,7 +592,7 @@ fn mono_expr(
             // Check traits.
             if poly_pgm.traits.contains_key(ty) {
                 mono_method(ty, member, &mono_ty_args, poly_pgm, mono_pgm, loc);
-                return mono::Expr::AssocFnSelect(mono::AssocFnSelectExpr {
+                return mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
                     ty: ty.clone(),
                     member: member.clone(),
                     ty_args: mono_ty_args,
@@ -684,24 +684,18 @@ fn mono_expr(
                 scrutinee: mono_bl_expr(scrutinee, ty_map, poly_pgm, mono_pgm, locals),
                 alts: alts
                     .iter()
-                    .map(
-                        |ast::Alt {
-                             pattern,
-                             guard,
-                             rhs,
-                         }| {
-                            locals.enter();
-                            let alt = mono::Alt {
-                                pattern: mono_l_pat(pattern, ty_map, poly_pgm, mono_pgm, locals),
-                                guard: guard.as_ref().map(|expr| {
-                                    mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals)
-                                }),
-                                rhs: mono_l_stmts(rhs, ty_map, poly_pgm, mono_pgm, locals),
-                            };
-                            locals.exit();
-                            alt
-                        },
-                    )
+                    .map(|ast::Alt { pat, guard, rhs }| {
+                        locals.enter();
+                        let alt = mono::Alt {
+                            pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
+                            guard: guard
+                                .as_ref()
+                                .map(|expr| mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals)),
+                            rhs: mono_l_stmts(rhs, ty_map, poly_pgm, mono_pgm, locals),
+                        };
+                        locals.exit();
+                        alt
+                    })
                     .collect(),
             })
         }
@@ -1101,11 +1095,11 @@ fn mono_pat(
             mono_bl_pat(pat2, ty_map, poly_pgm, mono_pgm, locals),
         ),
 
-        ast::Pat::Constr(ast::ConstrPattern {
-            constr:
-                ast::Constructor {
+        ast::Pat::Con(ast::ConPat {
+            con:
+                ast::Con {
                     ty,
-                    constr,
+                    con,
                     user_ty_args: _,
                     ty_args,
                 },
@@ -1131,21 +1125,21 @@ fn mono_pat(
                 .map(|field| mono_named_l_pat(field, ty_map, poly_pgm, mono_pgm, locals))
                 .collect();
 
-            mono::Pat::Constr(mono::ConstrPattern {
-                constr: mono::Constructor {
+            mono::Pat::Con(mono::ConPat {
+                con: mono::Con {
                     ty: mono_ty_id,
-                    constr: constr.clone(),
+                    con: con.clone(),
                     ty_args: mono_ty_args,
                 },
                 fields: mono_fields,
             })
         }
 
-        ast::Pat::Record(ast::RecordPattern {
+        ast::Pat::Record(ast::RecordPat {
             fields,
             ignore_rest: _,
             inferred_ty,
-        }) => mono::Pat::Record(mono::RecordPattern {
+        }) => mono::Pat::Record(mono::RecordPat {
             fields: fields
                 .iter()
                 .map(|named_pat| mono_named_l_pat(named_pat, ty_map, poly_pgm, mono_pgm, locals))
@@ -1705,10 +1699,9 @@ fn mono_ty_decl(
         .collect();
 
     let rhs: Option<mono::TypeDeclRhs> = ty_decl.rhs.as_ref().map(|rhs| match rhs {
-        ast::TypeDeclRhs::Sum(constrs) => mono::TypeDeclRhs::Sum(
-            constrs
-                .iter()
-                .map(|constr| mono_constr(constr, &ty_map, poly_pgm, mono_pgm))
+        ast::TypeDeclRhs::Sum(cons) => mono::TypeDeclRhs::Sum(
+            cons.iter()
+                .map(|con| mono_con(con, &ty_map, poly_pgm, mono_pgm))
                 .collect(),
         ),
 
@@ -1728,28 +1721,28 @@ fn mono_ty_decl(
     mono_ty_id
 }
 
-fn mono_constr(
-    constr: &ast::ConstructorDecl,
+fn mono_con(
+    con: &ast::ConDecl,
     ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-) -> mono::ConstructorDecl {
-    mono::ConstructorDecl {
-        name: constr.name.clone(),
-        fields: mono_fields(&constr.fields, ty_map, poly_pgm, mono_pgm),
+) -> mono::ConDecl {
+    mono::ConDecl {
+        name: con.name.clone(),
+        fields: mono_fields(&con.fields, ty_map, poly_pgm, mono_pgm),
     }
 }
 
 fn mono_fields(
-    fields: &ast::ConstructorFields,
+    fields: &ast::ConFields,
     ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-) -> mono::ConstructorFields {
+) -> mono::ConFields {
     match fields {
-        ast::ConstructorFields::Empty => mono::ConstructorFields::Empty,
+        ast::ConFields::Empty => mono::ConFields::Empty,
 
-        ast::ConstructorFields::Named(fields) => mono::ConstructorFields::Named(
+        ast::ConFields::Named(fields) => mono::ConFields::Named(
             fields
                 .iter()
                 .map(|(name, ty)| {
@@ -1761,7 +1754,7 @@ fn mono_fields(
                 .collect(),
         ),
 
-        ast::ConstructorFields::Unnamed(fields) => mono::ConstructorFields::Unnamed(
+        ast::ConFields::Unnamed(fields) => mono::ConFields::Unnamed(
             fields
                 .iter()
                 .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm))

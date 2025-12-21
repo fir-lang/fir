@@ -78,9 +78,9 @@ fn visit_ty_decl(ty_decl: &mono::TypeDecl, records: &mut HashSet<RecordShape>) {
     match &ty_decl.rhs {
         None => {}
 
-        Some(mono::TypeDeclRhs::Sum(constrs)) => {
-            for constr in constrs {
-                visit_fields(&constr.fields, records);
+        Some(mono::TypeDeclRhs::Sum(cons)) => {
+            for con in cons {
+                visit_fields(&con.fields, records);
             }
         }
 
@@ -110,17 +110,15 @@ fn visit_fun_sig(sig: &mono::FunSig, records: &mut HashSet<RecordShape>) {
     }
 }
 
-fn visit_fields(fields: &mono::ConstructorFields, records: &mut HashSet<RecordShape>) {
+fn visit_fields(fields: &mono::ConFields, records: &mut HashSet<RecordShape>) {
     match fields {
-        mono::ConstructorFields::Empty => {}
+        mono::ConFields::Empty => {}
 
-        mono::ConstructorFields::Named(named_fields) => named_fields
+        mono::ConFields::Named(named_fields) => named_fields
             .iter()
             .for_each(|(_name, ty)| visit_ty(ty, records)),
 
-        mono::ConstructorFields::Unnamed(fields) => {
-            fields.iter().for_each(|ty| visit_ty(ty, records))
-        }
+        mono::ConFields::Unnamed(fields) => fields.iter().for_each(|ty| visit_ty(ty, records)),
     }
 }
 
@@ -212,13 +210,13 @@ fn visit_pat(pat: &mono::Pat, records: &mut HashSet<RecordShape>) {
     match pat {
         mono::Pat::Var(_) | mono::Pat::Ignore | mono::Pat::Str(_) | mono::Pat::Char(_) => {}
 
-        mono::Pat::Constr(mono::ConstrPattern { constr: _, fields }) => {
+        mono::Pat::Con(mono::ConPat { con: _, fields }) => {
             for field in fields {
                 visit_pat(&field.node.node, records);
             }
         }
 
-        mono::Pat::Record(mono::RecordPattern { fields, ty }) => {
+        mono::Pat::Record(mono::RecordPat { fields, ty }) => {
             for field in fields {
                 visit_pat(&field.node.node, records);
             }
@@ -240,8 +238,8 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordShape>) {
     match expr {
         mono::Expr::LocalVar(_)
         | mono::Expr::TopVar(_)
-        | mono::Expr::ConstrSelect(_)
-        | mono::Expr::AssocFnSelect(_)
+        | mono::Expr::ConSel(_)
+        | mono::Expr::AssocFnSel(_)
         | mono::Expr::Int(_)
         | mono::Expr::Char(_) => {}
 
@@ -254,11 +252,11 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordShape>) {
             }
         }
 
-        mono::Expr::FieldSelect(mono::FieldSelectExpr { object, field: _ }) => {
+        mono::Expr::FieldSel(mono::FieldSelExpr { object, field: _ }) => {
             visit_expr(&object.node, records);
         }
 
-        mono::Expr::MethodSelect(mono::MethodSelectExpr {
+        mono::Expr::MethodSel(mono::MethodSelExpr {
             object,
             method_ty_id: _,
             method_id: _,
@@ -291,7 +289,7 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordShape>) {
         mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => {
             visit_expr(&scrutinee.node, records);
             for alt in alts {
-                visit_pat(&alt.pattern.node, records);
+                visit_pat(&alt.pat.node, records);
                 if let Some(guard) = &alt.guard {
                     visit_expr(&guard.node, records);
                 }
