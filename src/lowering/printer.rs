@@ -267,20 +267,20 @@ impl Expr {
 
             Expr::TopVar(idx) => write!(buffer, "fun{}", idx.0).unwrap(),
 
-            Expr::Constr(idx) => write!(buffer, "con{}", idx.0).unwrap(),
+            Expr::Con(idx) => write!(buffer, "con{}", idx.0).unwrap(),
 
-            Expr::FieldSelect(FieldSelectExpr { object, field }) => {
+            Expr::FieldSel(FieldSelExpr { object, field }) => {
                 object.node.print(buffer, indent);
                 buffer.push('.');
                 buffer.push_str(field);
             }
 
-            Expr::MethodSelect(MethodSelectExpr { object, fun_idx }) => {
+            Expr::MethodSel(MethodSelExpr { object, fun_idx }) => {
                 object.node.print(buffer, indent);
                 write!(buffer, ".fun{}", fun_idx.0).unwrap();
             }
 
-            Expr::AssocFnSelect(idx) => write!(buffer, "assocfun{}", idx.0).unwrap(),
+            Expr::AssocFnSel(idx) => write!(buffer, "assocfun{}", idx.0).unwrap(),
 
             Expr::Call(CallExpr { fun, args }) => {
                 fun.node.print(buffer, indent);
@@ -351,20 +351,12 @@ impl Expr {
                 buffer.push_str("match ");
                 scrutinee.node.print(buffer, indent);
                 buffer.push_str(":\n");
-                for (
-                    i,
-                    Alt {
-                        pattern,
-                        guard,
-                        rhs,
-                    },
-                ) in alts.iter().enumerate()
-                {
+                for (i, Alt { pat, guard, rhs }) in alts.iter().enumerate() {
                     if i != 0 {
                         buffer.push('\n');
                     }
                     buffer.push_str(&INDENTS[0..indent as usize + 2]);
-                    pattern.node.print(buffer);
+                    pat.node.print(buffer);
                     if let Some(guard) = guard {
                         buffer.push_str(" if ");
                         guard.node.print(buffer, indent + 8);
@@ -442,8 +434,8 @@ impl Pat {
         match self {
             Pat::Var(idx) => write!(buffer, "local{}", idx.0).unwrap(),
 
-            Pat::Constr(ConstrPattern { constr, fields }) => {
-                write!(buffer, "con{}(", constr.0).unwrap();
+            Pat::Con(ConPat { con, fields }) => {
+                write!(buffer, "con{}(", con.0).unwrap();
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
@@ -456,7 +448,7 @@ impl Pat {
                 buffer.push(')');
             }
 
-            Pat::Record(RecordPattern { fields, idx }) => {
+            Pat::Record(RecordPat { fields, idx }) => {
                 write!(buffer, "rec{}(", idx.0).unwrap();
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {

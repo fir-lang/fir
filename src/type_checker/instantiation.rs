@@ -55,8 +55,8 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
 fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
     match expr {
         ast::Expr::Var(ast::VarExpr { ty_args, .. })
-        | ast::Expr::ConstrSelect(ast::Constructor { ty_args, .. })
-        | ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr { ty_args, .. }) => ty_args
+        | ast::Expr::ConSel(ast::Con { ty_args, .. })
+        | ast::Expr::AssocFnSel(ast::AssocFnSelExpr { ty_args, .. }) => ty_args
             .iter_mut()
             .for_each(|ty| *ty = ty.deep_normalize(cons)),
 
@@ -67,7 +67,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             StrPart::Expr(expr) => normalize_expr(&mut expr.node, cons),
         }),
 
-        ast::Expr::FieldSelect(ast::FieldSelectExpr {
+        ast::Expr::FieldSel(ast::FieldSelExpr {
             object,
             field: _,
             user_ty_args,
@@ -76,7 +76,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             normalize_expr(&mut object.node, cons)
         }
 
-        ast::Expr::MethodSelect(ast::MethodSelectExpr {
+        ast::Expr::MethodSel(ast::MethodSelExpr {
             object,
             object_ty,
             method_ty_id: _,
@@ -120,13 +120,8 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
             normalize_expr(&mut scrutinee.node, cons);
-            for ast::Alt {
-                pattern,
-                guard,
-                rhs,
-            } in alts
-            {
-                normalize_pat(&mut pattern.node, cons);
+            for ast::Alt { pat, guard, rhs } in alts {
+                normalize_pat(&mut pat.node, cons);
                 if let Some(expr) = guard {
                     normalize_expr(&mut expr.node, cons);
                 }
@@ -192,8 +187,8 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
 
         ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) => {}
 
-        ast::Pat::Constr(ast::ConstrPattern {
-            constr: ast::Constructor { ty_args, .. },
+        ast::Pat::Con(ast::ConPat {
+            con: ast::Con { ty_args, .. },
             fields,
             ignore_rest: _,
         }) => {
@@ -205,7 +200,7 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             }
         }
 
-        ast::Pat::Record(ast::RecordPattern {
+        ast::Pat::Record(ast::RecordPat {
             fields,
             ignore_rest: _,
             inferred_ty,

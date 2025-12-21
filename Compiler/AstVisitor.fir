@@ -70,17 +70,17 @@ trait Visitor[v]:
     visitVarExpr(self: v, e: VarExpr):
         defaultVisitVarExpr(self, e)
 
-    visitConstrSelectExpr(self: v, e: Constructor):
-        self.visitConstructor(e)
+    visitConSelExpr(self: v, e: Con):
+        self.visitCon(e)
 
-    visitFieldSelectExpr(self: v, e: FieldSelectExpr):
-        defaultVisitFieldSelectExpr(self, e)
+    visitFieldSelExpr(self: v, e: FieldSelExpr):
+        defaultVisitFieldSelExpr(self, e)
 
-    visitMethodSelectExpr(self: v, e: MethodSelectExpr):
-        defaultVisitMethodSelectExpr(self, e)
+    visitMethodSelExpr(self: v, e: MethodSelExpr):
+        defaultVisitMethodSelExpr(self, e)
 
-    visitAssocFnSelectExpr(self: v, e: AssocFnSelectExpr):
-        defaultVisitAssocFnSelectExpr(self, e)
+    visitAssocFnSelExpr(self: v, e: AssocFnSelExpr):
+        defaultVisitAssocFnSelExpr(self, e)
 
     visitCallExpr(self: v, e: CallExpr):
         defaultVisitCallExpr(self, e)
@@ -175,8 +175,8 @@ trait Visitor[v]:
     visitVarPat(self: v, p: VarPat):
         ()
 
-    visitConstrPat(self: v, p: ConstrPat):
-        defaultVisitConstrPat(self, p)
+    visitConPat(self: v, p: ConPat):
+        defaultVisitConPat(self, p)
 
     visitRecordPat(self: v, p: RecordPat):
         defaultVisitRecordPat(self, p)
@@ -235,8 +235,8 @@ trait Visitor[v]:
     # ----------------------------------------------------------------
     # Shared things
 
-    visitConstructor(self: v, c: Constructor):
-        defaultVisitConstructor(self, c)
+    visitCon(self: v, c: Con):
+        defaultVisitCon(self, c)
 
 
 defaultVisitModule[Visitor[v]](v: v, module: Vec[TopDecl]):
@@ -298,10 +298,10 @@ defaultVisitConFields[Visitor[v]](v: v, fields: ConFields):
 defaultVisitExpr[Visitor[v]](v: v, expr: Expr):
     match expr:
         Expr.Var(e): v.visitVarExpr(e)
-        Expr.ConstrSelect(e): v.visitConstrSelectExpr(e)
-        Expr.FieldSelect(e): v.visitFieldSelectExpr(e)
-        Expr.MethodSelect(e): v.visitMethodSelectExpr(e)
-        Expr.AssocFnSelect(e): v.visitAssocFnSelectExpr(e)
+        Expr.ConSel(e): v.visitConSelExpr(e)
+        Expr.FieldSel(e): v.visitFieldSelExpr(e)
+        Expr.MethodSel(e): v.visitMethodSelExpr(e)
+        Expr.AssocFnSel(e): v.visitAssocFnSelExpr(e)
         Expr.Call(e): v.visitCallExpr(e)
         Expr.Int(e): v.visitIntExpr(e)
         Expr.Str(e): v.visitStrExpr(e)
@@ -336,7 +336,7 @@ defaultVisitStmt[Visitor[v]](v: v, stmt: Stmt):
 defaultVisitPat[Visitor[v]](v: v, pat: Pat):
     match pat:
         Pat.Var(p): v.visitVarPat(p)
-        Pat.Constr(p): v.visitConstrPat(p)
+        Pat.Con(p): v.visitConPat(p)
         Pat.Record(p): v.visitRecordPat(p)
         Pat.Ignore(p): v.visitIgnorePat(p)
         Pat.Str(s, t): v.visitStrPat(s, t)
@@ -360,20 +360,20 @@ defaultVisitVarExpr[Visitor[v]](v: v, e: VarExpr):
         v.visitTyArgs(args)
 
 
-defaultVisitFieldSelectExpr[Visitor[v]](v: v, e: FieldSelectExpr):
+defaultVisitFieldSelExpr[Visitor[v]](v: v, e: FieldSelExpr):
     # TODO: `field` field
     v.visitExpr(e.object)
     if e.userTyArgs is Option.Some(args):
         v.visitTyArgs(args)
 
 
-defaultVisitMethodSelectExpr[Visitor[v]](v: v, e: MethodSelectExpr):
+defaultVisitMethodSelExpr[Visitor[v]](v: v, e: MethodSelExpr):
     v.visitExpr(e.object)
     v.visitTyId(e.methodTyId)
     v.visitAssocVarId(e.method)
 
 
-defaultVisitAssocFnSelectExpr[Visitor[v]](v: v, e: AssocFnSelectExpr):
+defaultVisitAssocFnSelExpr[Visitor[v]](v: v, e: AssocFnSelExpr):
     v.visitTyId(e.ty)
     v.visitAssocVarId(e.member)
     if e.userTyArgs is Option.Some(args):
@@ -412,7 +412,7 @@ defaultVisitMatch[Visitor[v]](v: v, e: MatchExpr):
 
 
 defaultVisitAlt[Visitor[v]](v: v, e: Alt):
-    v.visitPat(e.pattern)
+    v.visitPat(e.pat)
     if e.guard is Option.Some(e):
         v.visitExpr(e)
     for stmt: Stmt in e.rhs.iter():
@@ -457,7 +457,7 @@ defaultVisitVariant[Visitor[v]](v: v, e: Expr):
     v.visitExpr(e)
 
 
-defaultVisitConstructor[Visitor[v]](v: v, c: Constructor):
+defaultVisitCon[Visitor[v]](v: v, c: Con):
     v.visitTyId(c.ty)
     if c.userTyArgs is Option.Some(args):
         v.visitTyArgs(args)
@@ -507,8 +507,8 @@ defaultVisitContinueStmt[Visitor[v]](v: v, s: ContinueStmt):
     ()
 
 
-defaultVisitConstrPat[Visitor[v]](v: v, s: ConstrPat):
-    v.visitConstructor(s.constr)
+defaultVisitConPat[Visitor[v]](v: v, s: ConPat):
+    v.visitCon(s.con)
     for field: Named[Pat] in s.fields.iter():
         v.visitPat(field.node)
 

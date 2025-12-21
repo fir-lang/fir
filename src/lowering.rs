@@ -31,7 +31,7 @@ pub struct LoweredPgm {
     pub unit_con_idx: HeapObjIdx,
 }
 
-pub const CONSTR_CON_IDX: HeapObjIdx = HeapObjIdx(0);
+pub const CON_CON_IDX: HeapObjIdx = HeapObjIdx(0);
 pub const FUN_CON_IDX: HeapObjIdx = HeapObjIdx(1);
 pub const METHOD_CON_IDX: HeapObjIdx = HeapObjIdx(2);
 pub const CLOSURE_CON_IDX: HeapObjIdx = HeapObjIdx(3);
@@ -300,7 +300,7 @@ pub enum BuiltinConDecl {
     /// Constructor closure, e.g. `Option.Some`, `Char`.
     ///
     /// Payload holds the constructor index (`ConIdx`).
-    Constr,
+    Con,
 
     /// Function closure, e.g. `id`, `Vec.withCapacity`.
     ///
@@ -412,12 +412,12 @@ pub struct WhileStmt {
 
 #[derive(Debug, Clone)]
 pub enum Expr {
-    LocalVar(LocalIdx),             // a local variable
-    TopVar(FunIdx),                 // a top-level function reference
-    Constr(HeapObjIdx),             // a product constructor
-    FieldSelect(FieldSelectExpr),   // <expr>.<id>
-    MethodSelect(MethodSelectExpr), // <id>.<id>, with an object captured as receiver
-    AssocFnSelect(FunIdx),          // <id>.<id>
+    LocalVar(LocalIdx),       // a local variable
+    TopVar(FunIdx),           // a top-level function reference
+    Con(HeapObjIdx),          // a product constructor
+    FieldSel(FieldSelExpr),   // <expr>.<id>
+    MethodSel(MethodSelExpr), // <id>.<id>, with an object captured as receiver
+    AssocFnSel(FunIdx),       // <id>.<id>
     Call(CallExpr),
     Int(u64), // two's complement representation, unsigned extended to u64
     Str(Vec<StringPart>),
@@ -434,13 +434,13 @@ pub enum Expr {
 }
 
 #[derive(Debug, Clone)]
-pub struct FieldSelectExpr {
+pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
     pub field: Id,
 }
 
 #[derive(Debug, Clone)]
-pub struct MethodSelectExpr {
+pub struct MethodSelExpr {
     pub object: Box<L<Expr>>,
     pub fun_idx: FunIdx,
 }
@@ -477,7 +477,7 @@ pub struct MatchExpr {
 
 #[derive(Debug, Clone)]
 pub struct Alt {
-    pub pattern: L<Pat>,
+    pub pat: L<Pat>,
     pub guard: Option<L<Expr>>,
     pub rhs: Vec<L<Stmt>>,
 }
@@ -497,8 +497,8 @@ pub struct IsExpr {
 #[derive(Debug, Clone)]
 pub enum Pat {
     Var(LocalIdx),
-    Constr(ConstrPattern),
-    Record(RecordPattern),
+    Con(ConPat),
+    Record(RecordPat),
     Ignore,
     Str(String),
     Char(char),
@@ -507,15 +507,15 @@ pub enum Pat {
 }
 
 #[derive(Debug, Clone)]
-pub struct ConstrPattern {
-    pub constr: HeapObjIdx,
+pub struct ConPat {
+    pub con: HeapObjIdx,
 
     // Note: this does not need to bind or match all fields!
     pub fields: Vec<Named<L<Pat>>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct RecordPattern {
+pub struct RecordPat {
     pub fields: Vec<Named<L<Pat>>>,
     pub idx: HeapObjIdx,
 }
@@ -780,7 +780,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     // Lower types. Add special built-ins first.
     lowered_pgm
         .heap_objs
-        .push(HeapObj::Builtin(BuiltinConDecl::Constr));
+        .push(HeapObj::Builtin(BuiltinConDecl::Con));
     lowered_pgm
         .heap_objs
         .push(HeapObj::Builtin(BuiltinConDecl::Fun));
@@ -796,7 +796,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             match &con_decl.rhs {
                 Some(rhs) => match rhs {
                     mono::TypeDeclRhs::Sum(cons) => {
-                        for mono::ConstructorDecl { name, fields } in cons {
+                        for mono::ConDecl { name, fields } in cons {
                             let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
                             let name = SmolStr::new(format!("{con_id}.{name}"));
                             lowered_pgm.heap_objs.push(lower_source_con(
@@ -1636,16 +1636,16 @@ fn lower_source_con(
     idx: HeapObjIdx,
     con_id: &SmolStr,
     con_ty_args: &[mono::Type],
-    fields: &mono::ConstructorFields,
+    fields: &mono::ConFields,
 ) -> HeapObj {
     HeapObj::Source(SourceConDecl {
         name: con_id.clone(),
         idx,
         ty_args: con_ty_args.to_vec(),
         fields: match fields {
-            mono::ConstructorFields::Empty => ConFields::Unnamed(vec![]),
+            mono::ConFields::Empty => ConFields::Unnamed(vec![]),
 
-            mono::ConstructorFields::Named(fields) => ConFields::Named(
+            mono::ConFields::Named(fields) => ConFields::Named(
                 fields
                     .iter()
                     .map(|(name, field_ty)| {
@@ -1660,7 +1660,7 @@ fn lower_source_con(
                     .collect(),
             ),
 
-            mono::ConstructorFields::Unnamed(fields) => ConFields::Unnamed(
+            mono::ConFields::Unnamed(fields) => ConFields::Unnamed(
                 fields
                     .iter()
                     .map(|field_ty| Ty {
@@ -1797,36 +1797,32 @@ fn lower_expr(
             Default::default(),
         ),
 
-        mono::Expr::ConstrSelect(mono::Constructor {
-            ty,
-            constr,
-            ty_args,
-        }) => (
-            match constr {
-                Some(constr) => Expr::Constr(
+        mono::Expr::ConSel(mono::Con { ty, con, ty_args }) => (
+            match con {
+                Some(con) => Expr::Con(
                     *indices
                         .sum_cons
                         .get(ty)
                         .unwrap()
-                        .get(constr)
+                        .get(con)
                         .unwrap()
                         .get(ty_args)
                         .unwrap(),
                 ),
-                None => Expr::Constr(*indices.product_cons.get(ty).unwrap().get(ty_args).unwrap()),
+                None => Expr::Con(*indices.product_cons.get(ty).unwrap().get(ty_args).unwrap()),
             },
             Default::default(),
         ),
 
-        mono::Expr::FieldSelect(mono::FieldSelectExpr { object, field }) => (
-            Expr::FieldSelect(FieldSelectExpr {
+        mono::Expr::FieldSel(mono::FieldSelExpr { object, field }) => (
+            Expr::FieldSel(FieldSelExpr {
                 object: lower_bl_expr(object, closures, indices, scope).0,
                 field: field.clone(),
             }),
             Default::default(),
         ),
 
-        mono::Expr::MethodSelect(mono::MethodSelectExpr {
+        mono::Expr::MethodSel(mono::MethodSelExpr {
             object,
             method_ty_id,
             method_id,
@@ -1842,7 +1838,7 @@ fn lower_expr(
                 .unwrap();
 
             (
-                Expr::MethodSelect(MethodSelectExpr {
+                Expr::MethodSel(MethodSelExpr {
                     object: lower_bl_expr(object, closures, indices, scope).0,
                     fun_idx,
                 }),
@@ -1850,12 +1846,12 @@ fn lower_expr(
             )
         }
 
-        mono::Expr::AssocFnSelect(mono::AssocFnSelectExpr {
+        mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
             ty,
             member,
             ty_args,
         }) => (
-            Expr::AssocFnSelect(
+            Expr::AssocFnSel(
                 *indices
                     .assoc_funs
                     .get(ty)
@@ -1903,7 +1899,7 @@ fn lower_expr(
             Expr::Call(CallExpr {
                 fun: Box::new(L {
                     loc: loc.clone(),
-                    node: Expr::Constr(
+                    node: Expr::Con(
                         *indices
                             .product_cons
                             .get(&SmolStr::new_static("Char"))
@@ -1978,35 +1974,29 @@ fn lower_expr(
 
             let alts = alts
                 .iter()
-                .map(
-                    |mono::Alt {
-                         pattern,
-                         guard,
-                         rhs,
-                     }| {
-                        scope.bounds.enter();
-                        let pattern = lower_l_pat(pattern, indices, scope, &mut Default::default());
-                        let guard = guard
-                            .as_ref()
-                            .map(|guard| lower_l_expr(guard, closures, indices, scope));
-                        if let Some((_guard, guard_vars)) = guard.as_ref() {
-                            scope.bounds.push_scope(guard_vars.clone());
-                        }
-                        let rhs = rhs
-                            .iter()
-                            .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
-                            .collect();
-                        if guard.is_some() {
-                            scope.bounds.exit(); // pop guard's variables
-                        }
-                        scope.bounds.exit(); // pop pattern's variables
-                        Alt {
-                            pattern,
-                            guard: guard.map(|(guard, _)| guard),
-                            rhs,
-                        }
-                    },
-                )
+                .map(|mono::Alt { pat, guard, rhs }| {
+                    scope.bounds.enter();
+                    let pat = lower_l_pat(pat, indices, scope, &mut Default::default());
+                    let guard = guard
+                        .as_ref()
+                        .map(|guard| lower_l_expr(guard, closures, indices, scope));
+                    if let Some((_guard, guard_vars)) = guard.as_ref() {
+                        scope.bounds.push_scope(guard_vars.clone());
+                    }
+                    let rhs = rhs
+                        .iter()
+                        .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
+                        .collect();
+                    if guard.is_some() {
+                        scope.bounds.exit(); // pop guard's variables
+                    }
+                    scope.bounds.exit(); // pop pattern's variables
+                    Alt {
+                        pat,
+                        guard: guard.map(|(guard, _)| guard),
+                        rhs,
+                    }
+                })
                 .collect();
 
             scope.bounds.exit(); // pop scrutinee's variables
@@ -2196,28 +2186,23 @@ fn lower_pat(
             }
         },
 
-        mono::Pat::Constr(mono::ConstrPattern {
-            constr:
-                mono::Constructor {
-                    ty,
-                    constr,
-                    ty_args,
-                },
+        mono::Pat::Con(mono::ConPat {
+            con: mono::Con { ty, con, ty_args },
             fields,
         }) => {
-            let con_idx: HeapObjIdx = match constr {
-                Some(constr) => *indices
+            let con_idx: HeapObjIdx = match con {
+                Some(con) => *indices
                     .sum_cons
                     .get(ty)
                     .unwrap()
-                    .get(constr)
+                    .get(con)
                     .unwrap()
                     .get(ty_args)
                     .unwrap(),
                 None => *indices.product_cons.get(ty).unwrap().get(ty_args).unwrap(),
             };
-            Pat::Constr(ConstrPattern {
-                constr: con_idx,
+            Pat::Con(ConPat {
+                con: con_idx,
                 fields: fields
                     .iter()
                     .map(|named_f| {
@@ -2227,7 +2212,7 @@ fn lower_pat(
             })
         }
 
-        mono::Pat::Record(mono::RecordPattern { fields, ty }) => {
+        mono::Pat::Record(mono::RecordPat { fields, ty }) => {
             let record_ty_fields = match ty {
                 mono::Type::Record { fields } => fields,
                 mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_) => panic!(),
@@ -2236,7 +2221,7 @@ fn lower_pat(
                 .records
                 .get(&RecordShape::from_named_things(record_ty_fields))
                 .unwrap();
-            Pat::Record(RecordPattern {
+            Pat::Record(RecordPat {
                 fields: fields
                     .iter()
                     .map(|field| lower_nl_pat(field, indices, scope, mapped_binders))

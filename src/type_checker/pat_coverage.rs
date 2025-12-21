@@ -98,7 +98,7 @@ impl PatMatrix {
         for (arm_index, arm) in arms.iter().enumerate() {
             rows.push(Row {
                 arm_index: arm_index as u32,
-                pats: vec![arm.pattern.clone()],
+                pats: vec![arm.pat.clone()],
                 bound_vars: Default::default(),
                 guarded: arm.guard.is_some(),
             });
@@ -293,7 +293,7 @@ impl PatMatrix {
                     let mut work: Vec<ast::L<ast::Pat>> = vec![row.pats[0].clone()];
                     while let Some(pat) = work.pop() {
                         match pat.node {
-                            ast::Pat::Record(ast::RecordPattern {
+                            ast::Pat::Record(ast::RecordPat {
                                 fields: pat_fields,
                                 ignore_rest: _,
                                 ..
@@ -385,7 +385,7 @@ impl PatMatrix {
                                 });
                             }
 
-                            ast::Pat::Constr(_)
+                            ast::Pat::Con(_)
                             | ast::Pat::Str(_)
                             | ast::Pat::Char(_)
                             | ast::Pat::Variant(_) => {
@@ -513,14 +513,14 @@ impl PatMatrix {
             let mut work: Vec<ast::L<ast::Pat>> = vec![row.pats[0].clone()];
             while let Some(pat) = work.pop() {
                 match pat.node {
-                    ast::Pat::Constr(ast::ConstrPattern {
-                        constr: ast::Constructor { ty, constr, .. },
+                    ast::Pat::Con(ast::ConPat {
+                        con: ast::Con { ty, con, .. },
                         fields,
                         ignore_rest: _,
                     }) => {
                         // Note: `ty` may not be the same as `con_ty_id` when checking variant
                         // patterns. We need to compare both type and constructor names.
-                        if !(ty == *con_ty_id && con_id == constr.as_ref()) {
+                        if !(ty == *con_ty_id && con_id == con.as_ref()) {
                             continue;
                         }
 

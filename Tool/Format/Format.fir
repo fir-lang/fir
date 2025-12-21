@@ -581,9 +581,9 @@ Expr.format(self, tokens: Array[Token]) Doc:
     Doc.group(
         match self:
             Expr.Var(e): e.format(tokens)
-            Expr.ConstrSelect(e): e.format(tokens)
-            Expr.FieldSelect(e): e.format(tokens)
-            Expr.AssocFnSelect(e): e.format(tokens)
+            Expr.ConSel(e): e.format(tokens)
+            Expr.FieldSel(e): e.format(tokens)
+            Expr.AssocFnSel(e): e.format(tokens)
             Expr.Call(e): e.format(tokens)
             Expr.Int(e): e.format(tokens)
             Expr.Str(e): e.format(tokens)
@@ -606,10 +606,10 @@ Expr.format(self, tokens: Array[Token]) Doc:
                 assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
                 formatToken(tilde, tokens) + e.format(tokens)
 
-            Expr.MethodSelect(e):
+            Expr.MethodSel(e):
                 # These expressions are intoruduced by the type checker, which we don't run when
                 # formatting.
-                panic("Expr.MethodSelect"),
+                panic("Expr.MethodSel"),
     )
 
 
@@ -617,10 +617,10 @@ VarExpr.format(self, tokens: Array[Token]) Doc:
     formatToken(self.id.token, tokens) + formatTyArgs(self.userTyArgs, tokens)
 
 
-Constructor.format(self, tokens: Array[Token]) Doc:
+Con.format(self, tokens: Array[Token]) Doc:
     let doc = formatToken(self.ty.token, tokens)
 
-    if self.constr is Option.Some(con):
+    if self.con is Option.Some(con):
         let dot = nextNonTrivia(self.ty.token, tokens).unwrap()
         assert(tokens.get(dot.idx).kind is TokenKind.Dot)
 
@@ -629,7 +629,7 @@ Constructor.format(self, tokens: Array[Token]) Doc:
     doc + formatTyArgs(self.userTyArgs, tokens)
 
 
-FieldSelectExpr.format(self, tokens: Array[Token]) Doc:
+FieldSelExpr.format(self, tokens: Array[Token]) Doc:
     #|
     Group sequence of selections so that we will format like one of the following:
 
@@ -650,7 +650,7 @@ FieldSelectExpr.format(self, tokens: Array[Token]) Doc:
     let fields: Vec[(field: Id, tyArgs: Option[TyArgs])] = Vec.withCapacity(1)
     loop:
         fields.push((field = selection.field, tyArgs = selection.userTyArgs))
-        if selection.object is Expr.FieldSelect(e):
+        if selection.object is Expr.FieldSel(e):
             selection = e
         else:
             break
@@ -671,7 +671,7 @@ FieldSelectExpr.format(self, tokens: Array[Token]) Doc:
     doc.group()
 
 
-AssocFnSelectExpr.format(self, tokens: Array[Token]) Doc:
+AssocFnSelExpr.format(self, tokens: Array[Token]) Doc:
     let dot = nextNonTrivia(self.ty.token, tokens).unwrap()
     assert(tokens.get(dot.idx).kind is TokenKind.Dot)
 
@@ -865,7 +865,7 @@ MatchExpr.format(self, tokens: Array[Token]) Doc:
 
 
 Alt.format(self, tokens: Array[Token]) Doc:
-    let doc0 = self.pattern.format(tokens)
+    let doc0 = self.pat.format(tokens)
     let docRest = Doc.empty()
 
     if self.guard is Option.Some(guard):
@@ -1444,7 +1444,7 @@ Pat.format(self, tokens: Array[Token]) Doc:
     match self:
         Pat.Var(p): p.format(tokens)
 
-        Pat.Constr(p): p.format(tokens)
+        Pat.Con(p): p.format(tokens)
 
         Pat.Record(p): p.format(tokens)
 
@@ -1476,13 +1476,13 @@ VarPat.format(self, tokens: Array[Token]) Doc:
     formatToken(self.var_.token, tokens)
 
 
-ConstrPat.format(self, tokens: Array[Token]) Doc:
-    let con = self.constr.format(tokens)
+ConPat.format(self, tokens: Array[Token]) Doc:
+    let con = self.con.format(tokens)
 
     if self.fields.isEmpty() and not self.ignoreRest:
         return con
 
-    let lparen = nextNonTrivia(self.constr.lastToken(tokens), tokens).unwrap()
+    let lparen = nextNonTrivia(self.con.lastToken(tokens), tokens).unwrap()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
     let args = formatToken(lparen, tokens) + Doc.break_(0)

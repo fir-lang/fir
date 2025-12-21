@@ -427,7 +427,7 @@ prefixExpr Expr:
         for suffix_ in suffix.iter():
             match suffix_:
                 ExprSuffix.Field(field, tyArgs):
-                    ret = Expr.FieldSelect(FieldSelectExpr(
+                    ret = Expr.FieldSel(FieldSelExpr(
                         object = ret,
                         field,
                         userTyArgs = tyArgs,
@@ -506,8 +506,8 @@ simpleExpr Expr:
         ))
 
     # Constructor selection, or sequence
-    con=constructor:
-        Expr.ConstrSelect(con)
+    con=con:
+        Expr.ConSel(con)
 
     # Records and parenthesized expressions: `(1 + 2)`, `(a, b)`, `(a = 1, b = 2)`.
     first=^ "(" exprs=(e0=parenExpr es=(_"," parenExpr)* comma=","?)? last=^ ")":
@@ -671,11 +671,11 @@ seqElem SeqElem:
                 SeqElem(key = Option.Some(e1), value = e2)
 
 
-constructor Constructor:
+con Con:
     ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
-        Constructor(
+        Con(
             ty = newTyId(ty, state._tokens),
-            constr = con.map(\(con: U32): newId(con)),
+            con = con.map(\(con: U32): newId(con)),
             userTyArgs,
             tyArgs = Vec.empty(),
             _firstToken = TokenIdx(idx = ty),
@@ -726,11 +726,11 @@ binOp BinOp:
 
 
 matchAlt Alt:
-    pattern=pat guard=altGuard? ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
-        Alt(pattern, guard, rhs = body)
+    pat=pat guard=altGuard? ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
+        Alt(pat, guard, rhs = body)
 
-    pattern=pat guard=altGuard? ":" body=stmt:
-        Alt(pattern, guard, rhs = Vec.[body])
+    pat=pat guard=altGuard? ":" body=stmt:
+        Alt(pat, guard, rhs = Vec.[body])
 
 
 altGuard Expr:
@@ -850,9 +850,9 @@ simplePat Pat:
         Pat.Var(VarPat(var_ = newId(var_), ty = Option.None))
 
     # Constructors
-    con=constructor fs=("(" pats=conFieldPats? last=^ ")")?:
-        Pat.Constr(ConstrPat(
-            constr = con,
+    con=con fs=("(" pats=conFieldPats? last=^ ")")?:
+        Pat.Con(ConPat(
+            con,
 
             fields = match fs:
                 Option.None: Vec.empty()

@@ -1863,8 +1863,8 @@ prefixExpr(state: ParserState[Token]) Expr / U32:
                 for suffix_ in suffix.iter():
                     match suffix_:
                         ExprSuffix.Field(field, tyArgs):
-                            ret = Expr.FieldSelect(
-                                FieldSelectExpr(
+                            ret = Expr.FieldSel(
+                                FieldSelExpr(
                                     object = ret,
                                     field,
                                     userTyArgs = tyArgs,
@@ -2134,9 +2134,9 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         Result.Ok(value): return value
     let altResult = try(
         \():
-            let con = constructor(state)
+            let con = con(state)
             let value = do:
-                Expr.ConstrSelect(con)
+                Expr.ConSel(con)
             value,
     )
     match altResult:
@@ -2651,7 +2651,7 @@ seqElem(state: ParserState[Token]) SeqElem / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-constructor(state: ParserState[Token]) Constructor / U32:
+con(state: ParserState[Token]) Con / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2698,9 +2698,9 @@ constructor(state: ParserState[Token]) Constructor / U32:
                     ()
                     Option.Some(ok)
             let value = do:
-                Constructor(
+                Con(
                     ty = newTyId(ty, state._tokens),
-                    constr = con.map(\(con: U32): newId(con)),
+                    con = con.map(\(con: U32): newId(con)),
                     userTyArgs,
                     tyArgs = Vec.empty(),
                     _firstToken = TokenIdx(idx = ty),
@@ -3096,7 +3096,7 @@ matchAlt(state: ParserState[Token]) Alt / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
-            let pattern = pat(state)
+            let pat = pat(state)
             let optionalCursor0 = state._cursor
             let symResult = try(
                 \():
@@ -3143,7 +3143,7 @@ matchAlt(state: ParserState[Token]) Alt / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                Alt(pattern, guard, rhs = body)
+                Alt(pat, guard, rhs = body)
             value,
     )
     match altResult:
@@ -3151,7 +3151,7 @@ matchAlt(state: ParserState[Token]) Alt / U32:
         Result.Ok(value): return value
     let altResult = try(
         \():
-            let pattern = pat(state)
+            let pat = pat(state)
             let optionalCursor0 = state._cursor
             let symResult = try(
                 \():
@@ -3172,7 +3172,7 @@ matchAlt(state: ParserState[Token]) Alt / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let body = stmt(state)
             let value = do:
-                Alt(pattern, guard, rhs = Vec.[body])
+                Alt(pat, guard, rhs = Vec.[body])
             value,
     )
     match altResult:
@@ -3933,7 +3933,7 @@ simplePat(state: ParserState[Token]) Pat / U32:
         Result.Ok(value): return value
     let altResult = try(
         \():
-            let con = constructor(state)
+            let con = con(state)
             let optionalCursor0 = state._cursor
             let symResult = try(
                 \():
@@ -3972,9 +3972,9 @@ simplePat(state: ParserState[Token]) Pat / U32:
                     ()
                     Option.Some(ok)
             let value = do:
-                Pat.Constr(
-                    ConstrPat(
-                        constr = con,
+                Pat.Con(
+                    ConPat(
+                        con,
                         fields =
                             match fs:
                                 Option.None: Vec.empty()

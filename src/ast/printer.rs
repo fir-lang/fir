@@ -51,18 +51,18 @@ impl TypeDecl {
 impl TypeDeclRhs {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            TypeDeclRhs::Sum(constrs) => {
+            TypeDeclRhs::Sum(cons) => {
                 buffer.push_str(":\n");
-                for (i, constr) in constrs.iter().enumerate() {
+                for (i, con) in cons.iter().enumerate() {
                     if i != 0 {
                         buffer.push('\n');
                     }
                     buffer.push_str(&INDENTS[0..indent as usize]);
-                    buffer.push_str(&constr.name);
-                    match &constr.fields {
-                        ConstructorFields::Empty => {}
+                    buffer.push_str(&con.name);
+                    match &con.fields {
+                        ConFields::Empty => {}
 
-                        ConstructorFields::Named(fields) => {
+                        ConFields::Named(fields) => {
                             buffer.push_str(":\n");
                             for (i, (field_name, field_ty)) in fields.iter().enumerate() {
                                 if i != 0 {
@@ -75,7 +75,7 @@ impl TypeDeclRhs {
                             }
                         }
 
-                        ConstructorFields::Unnamed(fields) => {
+                        ConFields::Unnamed(fields) => {
                             buffer.push('(');
                             for (i, field_ty) in fields.iter().enumerate() {
                                 if i != 0 {
@@ -90,9 +90,9 @@ impl TypeDeclRhs {
             }
 
             TypeDeclRhs::Product(fields) => match fields {
-                ConstructorFields::Empty => {}
+                ConFields::Empty => {}
 
-                ConstructorFields::Named(fields) => {
+                ConFields::Named(fields) => {
                     buffer.push_str(":\n");
                     for (i, (field_name, field_ty)) in fields.iter().enumerate() {
                         if i != 0 {
@@ -105,7 +105,7 @@ impl TypeDeclRhs {
                     }
                 }
 
-                ConstructorFields::Unnamed(fields) => {
+                ConFields::Unnamed(fields) => {
                     buffer.push('(');
                     for (i, field_ty) in fields.iter().enumerate() {
                         if i != 0 {
@@ -479,7 +479,7 @@ impl Expr {
                 print_ty_args(ty_args, buffer);
             }
 
-            Expr::FieldSelect(FieldSelectExpr {
+            Expr::FieldSel(FieldSelExpr {
                 object,
                 field,
                 user_ty_args,
@@ -490,7 +490,7 @@ impl Expr {
                 print_user_ty_args(user_ty_args, buffer);
             }
 
-            Expr::MethodSelect(MethodSelectExpr {
+            Expr::MethodSel(MethodSelExpr {
                 object,
                 object_ty: _,
                 method_ty_id,
@@ -505,11 +505,11 @@ impl Expr {
                 print_ty_args(ty_args, buffer);
             }
 
-            Expr::ConstrSelect(constr) => {
-                constr.print(buffer);
+            Expr::ConSel(con) => {
+                con.print(buffer);
             }
 
-            Expr::AssocFnSelect(AssocFnSelectExpr {
+            Expr::AssocFnSel(AssocFnSelExpr {
                 ty,
                 ty_user_ty_args,
                 member,
@@ -527,10 +527,7 @@ impl Expr {
             Expr::Call(CallExpr { fun, args }) => {
                 let parens = !matches!(
                     &fun.node,
-                    Expr::Var(_)
-                        | Expr::FieldSelect(_)
-                        | Expr::ConstrSelect(_)
-                        | Expr::MethodSelect(_)
+                    Expr::Var(_) | Expr::FieldSel(_) | Expr::ConSel(_) | Expr::MethodSel(_)
                 );
                 if parens {
                     buffer.push('(');
@@ -679,20 +676,12 @@ impl Expr {
                 buffer.push_str("match ");
                 scrutinee.node.print(buffer, 0);
                 buffer.push_str(":\n");
-                for (
-                    i,
-                    Alt {
-                        pattern,
-                        guard,
-                        rhs,
-                    },
-                ) in alts.iter().enumerate()
-                {
+                for (i, Alt { pat, guard, rhs }) in alts.iter().enumerate() {
                     if i != 0 {
                         buffer.push('\n');
                     }
                     buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    pattern.node.print(buffer);
+                    pat.node.print(buffer);
                     if let Some(guard) = guard {
                         buffer.push_str(" if ");
                         guard.node.print(buffer, indent + 8);
@@ -848,12 +837,12 @@ impl Pat {
                 }
             }
 
-            Pat::Constr(ConstrPattern {
-                constr,
+            Pat::Con(ConPat {
+                con,
                 fields,
                 ignore_rest,
             }) => {
-                constr.print(buffer);
+                con.print(buffer);
 
                 if !fields.is_empty() || *ignore_rest {
                     buffer.push('(');
@@ -877,7 +866,7 @@ impl Pat {
                 }
             }
 
-            Pat::Record(RecordPattern {
+            Pat::Record(RecordPat {
                 fields,
                 ignore_rest,
                 inferred_ty,
@@ -936,12 +925,12 @@ impl Pat {
     }
 }
 
-impl Constructor {
+impl Con {
     pub fn print(&self, buffer: &mut String) {
         buffer.push_str(&self.ty);
-        if let Some(constr) = &self.constr {
+        if let Some(con) = &self.con {
             buffer.push('.');
-            buffer.push_str(constr);
+            buffer.push_str(con);
         }
         print_ty_args(&self.ty_args, buffer);
     }
@@ -1009,10 +998,7 @@ fn print_ty_args(args: &[Ty], buffer: &mut String) {
 }
 
 fn expr_parens(expr: &Expr) -> bool {
-    !matches!(
-        expr,
-        Expr::Var(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
-    )
+    !matches!(expr, Expr::Var(_) | Expr::FieldSel(_) | Expr::ConSel(_))
 }
 
 const INDENTS: &str = "                                                  ";

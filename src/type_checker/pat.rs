@@ -20,11 +20,11 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
 
         ast::Pat::Ignore => Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone())),
 
-        ast::Pat::Constr(ast::ConstrPattern {
-            constr:
-                ast::Constructor {
+        ast::Pat::Con(ast::ConPat {
+            con:
+                ast::Con {
                     ty: pat_ty_name,
-                    constr: pat_con_name,
+                    con: pat_con_name,
                     user_ty_args,
                     ty_args,
                 },
@@ -154,7 +154,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             )
         }
 
-        ast::Pat::Record(ast::RecordPattern {
+        ast::Pat::Record(ast::RecordPat {
             fields,
             ignore_rest,
             inferred_ty,

@@ -54,7 +54,7 @@ main():
     for terminalDecl: TerminalDecl in grammar.terminalsDecl.terminals.iter():
         terminalPats.insert(
             terminalDecl.name.substr(1, terminalDecl.name.len() - 1),
-            terminalDecl.pattern,
+            terminalDecl.pat,
         )
 
     let nonTerminalNames: Vec[Str] = Vec.withCapacity(
@@ -223,10 +223,10 @@ convertTerminalsDecl(nodes: Vec[ParseTree[Token, NonTerminal]]) TerminalsDecl:
     for node: ParseTree[Token, NonTerminal] in nodes.iter():
         let node = node.asNonTerminal(NonTerminal.TerminalDecl)
         let name = node.get(0).asTerminal().text
-        let pattern: Vec[Token] = Vec.withCapacity(node.len() - 1)
+        let pat: Vec[Token] = Vec.withCapacity(node.len() - 1)
         for tok: ParseTree[Token, NonTerminal] in node.iter().skip(1):
-            pattern.push(tok.asTerminal())
-        terminals.push(TerminalDecl(name, pattern))
+            pat.push(tok.asTerminal())
+        terminals.push(TerminalDecl(name, pat))
 
     TerminalsDecl(terminals)
 
@@ -359,7 +359,7 @@ type TerminalsDecl(
 ## have syntax or type errors too.
 type TerminalDecl(
     name: Str,
-    pattern: Vec[Token],
+    pat: Vec[Token],
 )
 
 
