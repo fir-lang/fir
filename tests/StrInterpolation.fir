@@ -4,6 +4,12 @@ main():
     print("-`"~`f()`~"`-")
     print("-`"~`f()`~`f()`~"`-")
     print("-`do:
+        # Comment 1
+            #| Comment 2 |#
+                #| Nested #| Comment #| 3
+        |#
+    |#
+|#
         f()
     `-")
 
