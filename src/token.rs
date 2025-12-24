@@ -114,7 +114,6 @@ pub enum TokenKind {
     Tilde,
 
     // Literals
-    Str,
     Int,
     HexInt,
     BinInt,

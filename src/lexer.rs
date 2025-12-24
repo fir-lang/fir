@@ -182,7 +182,7 @@ lexgen::lexer! {
     rule StringSkipWhitespace {
         ' ' | '\t' | '\n' | '\r' => |lexer| lexer.continue_(),
 
-        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::Str),
+        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::EndStr),
 
         // TODO: This will consume backslash, backtick before switching.
         _ => |lexer| lexer.switch(LexerRule::String),
