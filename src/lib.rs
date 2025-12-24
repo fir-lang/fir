@@ -112,7 +112,7 @@ mod native {
         if opts.tokenize {
             let file_contents = std::fs::read_to_string(program).unwrap();
             for (l, t, _) in crate::lexer::lex(&file_contents, "test") {
-                println!("{}:{}: {:?} {:?}", l.line + 1, l.col + 1, t.kind, t.text);
+                println!("{}:{}: {:?}", l.line + 1, l.col + 1, t.kind);
             }
             return;
         }
@@ -123,7 +123,7 @@ mod native {
                 crate::lexer::lex(&file_contents, "test").into_iter(),
                 "test",
             ) {
-                println!("{}:{}: {:?} {:?}", l.line + 1, l.col + 1, t.kind, t.text);
+                println!("{}:{}: {:?}", l.line + 1, l.col + 1, t.kind);
             }
             return;
         }
