@@ -1,7 +1,7 @@
 #![allow(clippy::all)]
 
 use crate::ast::*;
-use crate::interpolation::{copy_update_escapes, parse_string_parts};
+use crate::interpolation::{str_parts, copy_update_escapes};
 use crate::parser_utils::*;
 use crate::token::*;
 
@@ -92,8 +92,12 @@ extern {
         IntLit => Token { kind: TokenKind::Int { .. }, .. },
         HexIntLit => Token { kind: TokenKind::HexInt { .. }, .. },
         BinIntLit => Token { kind: TokenKind::BinInt { .. }, .. },
-        StringLit => Token { kind: TokenKind::Str, .. },
         CharLit => Token { kind: TokenKind::Char, .. },
+
+        BeginStr => Token { kind: TokenKind::BeginStr, .. },
+        EndStr => Token { kind: TokenKind::EndStr, .. },
+        BeginInterpolation => Token { kind: TokenKind::BeginInterpolation, .. },
+        EndInterpolation => Token { kind: TokenKind::EndInterpolation, .. },
     }
 }
 
@@ -753,9 +757,8 @@ InlineExpr: Expr = {
         })
     },
 
-    <l:@L> <string:StringLit> => {
-        let l = Loc { line: l.line, col: l.col + 1, byte_idx: l.byte_idx + 1 };
-        Expr::Str(parse_string_parts(module, &string.text[1..string.text.len() - 1], l))
+    BeginStr <interpolations:(<BeginInterpolation> <LExpr> EndInterpolation)*> <end:EndStr> => {
+        Expr::Str(str_parts(interpolations, end))
     },
 
     <char:CharLit> => Expr::Char(parse_char_lit(&char.text)),
@@ -1024,8 +1027,12 @@ Pat: Pat = {
 
     "_" => Pat::Ignore,
 
-    <str:StringLit> =>
-        Pat::Str(copy_update_escapes(&str.text[1..str.text.len() - 1])),
+    BeginStr <end:EndStr> => {
+        // Drop "
+        let str = end.text.as_str();
+        let str = &str[..str.len() - 1];
+        Pat::Str(copy_update_escapes(str))
+    },
 
     <char:CharLit> => Pat::Char(parse_char_lit(&char.text)),
 

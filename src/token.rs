@@ -124,6 +124,12 @@ pub enum TokenKind {
     Indent,
     Dedent,
     Newline,
+
+    // Strings
+    BeginStr,
+    EndStr,
+    BeginInterpolation,
+    EndInterpolation,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

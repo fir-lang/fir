@@ -21,13 +21,15 @@ where
     new_tokens
 }
 
-/// Scan an indented block. Indented blocks start with:
+/// Scan an indented block. The token starting the indented block should already be consumed.
+/// Indented blocks start with:
 ///
 /// - `:` followed by a token in a new line
 /// - `{`
 ///
-/// In both cases, `start_loc` should be the location of the token of the first token of the block.
-/// I.e. not the location of `{` but the token after it.
+/// `start_loc` is used to determine the indentation amount of the block, and it should be the
+/// location of the token of the first token of the block. I.e. not the location of `{` or `:` but
+/// the location of the token after it.
 ///
 /// This function does not consume the token terminating the block, i.e. `}` or the dedented token.
 pub fn scan_indented<I>(
@@ -89,6 +91,16 @@ pub fn scan_indented<I>(
 
             TokenKind::LBracket | TokenKind::LBracketRow | TokenKind::UpperIdDotLBracket => {
                 scan_non_indented(tokens, module, new_tokens, NonIndentedDelimKind::Bracket);
+                last_loc = new_tokens.last().unwrap().2;
+            }
+
+            TokenKind::BeginInterpolation => {
+                scan_non_indented(
+                    tokens,
+                    module,
+                    new_tokens,
+                    NonIndentedDelimKind::Interpolation,
+                );
                 last_loc = new_tokens.last().unwrap().2;
             }
 
@@ -165,6 +177,7 @@ pub fn scan_indented<I>(
 pub enum NonIndentedDelimKind {
     Paren,
     Bracket,
+    Interpolation,
 }
 
 /// Scan a non-indented block: `(...)` or `[...]`.
@@ -188,7 +201,7 @@ pub fn scan_non_indented<I>(
                     // println!("Ending non-indented block at {}:{}", l.line + 1, l.col + 1);
                     return;
                 }
-                NonIndentedDelimKind::Bracket => {
+                _ => {
                     panic!(
                         "{}:{}:{}: ')' without matching '('",
                         module,
@@ -203,9 +216,21 @@ pub fn scan_non_indented<I>(
                     // println!("Ending non-indented block at {}:{}", l.line + 1, l.col + 1);
                     return;
                 }
-                NonIndentedDelimKind::Paren => {
+                _ => {
                     panic!(
                         "{}:{}:{}: ']' without matching '['",
+                        module,
+                        l.line + 1,
+                        l.col + 1
+                    );
+                }
+            },
+
+            TokenKind::EndInterpolation => match delim_kind {
+                NonIndentedDelimKind::Interpolation => return,
+                _ => {
+                    panic!(
+                        "{}:{}:{}: '`' without matching '`'",
                         module,
                         l.line + 1,
                         l.col + 1
@@ -219,6 +244,15 @@ pub fn scan_non_indented<I>(
 
             TokenKind::LBracket | TokenKind::LBracketRow | TokenKind::UpperIdDotLBracket => {
                 scan_non_indented(tokens, module, new_tokens, NonIndentedDelimKind::Bracket);
+            }
+
+            TokenKind::BeginInterpolation => {
+                scan_non_indented(
+                    tokens,
+                    module,
+                    new_tokens,
+                    NonIndentedDelimKind::Interpolation,
+                );
             }
 
             TokenKind::LBrace => {
