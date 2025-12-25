@@ -83,17 +83,9 @@ pub enum FunArgs {
 
 #[derive(Debug, Clone)]
 pub struct FunSig {
-    pub self_: SelfParam,
     pub params: Vec<(Id, L<Type>)>,
     pub return_ty: Option<L<Type>>,
     pub exceptions: Option<L<Type>>,
-}
-
-#[derive(Debug, Clone)]
-pub enum SelfParam {
-    No,
-    Implicit,
-    Explicit(L<Type>),
 }
 
 #[derive(Debug, Clone)]
@@ -107,7 +99,6 @@ pub struct FunDecl {
 #[derive(Debug, Clone)]
 pub enum Stmt {
     Let(LetStmt),
-    // LetFn(FunDecl),
     Assign(AssignStmt),
     Expr(L<Expr>),
     For(ForStmt),
