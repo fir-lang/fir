@@ -202,6 +202,7 @@ lexgen::lexer! {
                         lexer.continue_()
                     }
                     State::Init => {
+                        lexer.reset_match();
                         lexer.switch(LexerRule::Init)
                     }
                     State::String => {
