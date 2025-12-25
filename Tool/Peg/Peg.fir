@@ -53,7 +53,7 @@ main():
     )
     for terminalDecl: TerminalDecl in grammar.terminalsDecl.terminals.iter():
         terminalPats.insert(
-            terminalDecl.name.substr(1, terminalDecl.name.len() - 1),
+            terminalDecl.name,
             terminalDecl.pat,
         )
 
@@ -223,6 +223,7 @@ convertTerminalsDecl(nodes: Vec[ParseTree[Token, NonTerminal]]) TerminalsDecl:
     for node: ParseTree[Token, NonTerminal] in nodes.iter():
         let node = node.asNonTerminal(NonTerminal.TerminalDecl)
         let name = node.get(0).asTerminal().text
+        let name = name.substr(0, name.len() - 1)
         let pat: Vec[Token] = Vec.withCapacity(node.len() - 1)
         for tok: ParseTree[Token, NonTerminal] in node.iter().skip(1):
             pat.push(tok.asTerminal())
@@ -318,8 +319,8 @@ convertSymbolNonRec(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
         let terminal = nodes.get(0).asTerminal()
         match terminal.kind:
             TokenKind.LowerId: Symbol.NonTerminal(terminal.text)
-            TokenKind.Str:
-                Symbol.Terminal(terminal.text.substr(1, terminal.text.len() - 1))
+            TokenKind.EndStr:
+                Symbol.Terminal(terminal.text.substr(0, terminal.text.len() - 1))
             TokenKind.Caret: Symbol.Cursor
             _: panic("")
     else:

@@ -34,7 +34,8 @@ Terminals:
     "/" = Token(kind = TokenKind.Slash, ..)
     "$" = Token(kind = TokenKind.Dollar, ..)
     "^" = Token(kind = TokenKind.Caret, ..)
-    "Str" = Token(kind = TokenKind.Str, ..)
+    "BeginStr" = Token(kind = TokenKind.BeginStr, ..)
+    "EndStr" = Token(kind = TokenKind.EndStr, ..)
     "ANY" = Token(..)
 
     # For semantic actions:
@@ -66,7 +67,7 @@ terminalsDecl:
     (_"Terminals" _":" _"NEWLINE" _"INDENT" terminalDecl+ _"DEDENT")?
 
 terminalDecl:
-    "Str" _"=" (-"NEWLINE" "ANY")+ _"NEWLINE"
+    _"BeginStr" "EndStr" _"=" (-"NEWLINE" "ANY")+ _"NEWLINE"
 
 nonTerminalDecls:
     nonTerminalDecl*
@@ -90,10 +91,10 @@ symbolPrefix:
     "LowerId" _"="
 
 symbolNonRec:
-    "LowerId"           # non-terminal
-    "Str"               # terminal
-    _"(" symbol+ _")"   # group
-    "^"                 # current cursor location
+    "LowerId"                   # non-terminal
+    _"BeginStr" "EndStr"        # terminal
+    _"(" symbol+ _")"           # group
+    "^"                         # current cursor location
 
 symbolSuffix:
     "*"                 # zero or more
