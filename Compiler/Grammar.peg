@@ -625,10 +625,11 @@ simpleExpr Expr:
             token = TokenIdx(idx = cur),
         ))
 
-    cur=^ "BeginStr" interpolations=(begin="BeginInterpolation" expr=expr "EndInterpolation")* end="EndStr":
+    first=^ "BeginStr" interpolations=(begin="BeginInterpolation" expr=expr "EndInterpolation")* last=^ "EndStr":
         Expr.Str(StrExpr(
-            parts = strParts(interpolations, end),
-            token = TokenIdx(idx = cur),
+            parts = strParts(interpolations),
+            first = TokenIdx(idx = first),
+            last = TokenIdx(idx = last),
         ))
 
     cur=^ char="Char":
@@ -892,7 +893,7 @@ simplePat Pat:
         # Drop "
         let str = end.text
         let str = str.substr(0, str.len() - 1)
-        Pat.Str(copyUpdateEscapes(str), TokenIdx(idx = cur))
+        Pat.Str(str, TokenIdx(idx = cur))
 
     cur=^ char="Char":
         Pat.Char(parseCharLit(char.text), TokenIdx(idx = cur))

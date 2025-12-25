@@ -2443,7 +2443,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         Result.Ok(value): return value
     let altResult = try(
         \():
-            let cur = state.nextCursor()
+            let first = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.BeginStr, ..):
                 state._cursor += 1
@@ -2483,17 +2483,18 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                         interpolations.truncate(interpolationsLen0)
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
-            let end = if state.peek() is Option.Some(sym)
+            let last = state.nextCursor()
+            if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.EndStr, ..):
                 state._cursor += 1
-                sym
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
                 Expr.Str(
                     StrExpr(
-                        parts = strParts(interpolations, end),
-                        token = TokenIdx(idx = cur),
+                        parts = strParts(interpolations),
+                        first = TokenIdx(idx = first),
+                        last = TokenIdx(idx = last),
                     ),
                 )
             value,
@@ -4116,7 +4117,7 @@ simplePat(state: ParserState[Token]) Pat / U32:
             let value = do:
                 let str = end.text
                 let str = str.substr(0, str.len() - 1)
-                Pat.Str(copyUpdateEscapes(str), TokenIdx(idx = cur))
+                Pat.Str(str, TokenIdx(idx = cur))
             value,
     )
     match altResult:

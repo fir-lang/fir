@@ -1121,16 +1121,17 @@ impl Tokens[IntExpr]:
 #[derive(ToDoc)]
 type StrExpr(
     parts: Vec[StrPart],
-    token: TokenIdx,
+    first: TokenIdx,
+    last: TokenIdx
 )
 
 
 impl Tokens[StrExpr]:
     firstToken(self: StrExpr, tokens: Array[Token]) TokenIdx:
-        self.token
+        self.first
 
     lastToken(self: StrExpr, tokens: Array[Token]) TokenIdx:
-        self.token
+        self.last
 
 
 #[derive(ToDoc)]
@@ -2585,18 +2586,7 @@ impl ToDoc[IntExpr]:
 
 impl ToDoc[StrExpr]:
     toDoc(self: StrExpr) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("parts =")
-                + Doc.nested(4, Doc.break_(1) + self.parts.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("token =")
-                + Doc.nested(4, Doc.break_(1) + self.token.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("StrExpr") + Doc.char('(') + args)
+        panic("TODO")
 
 
 impl ToDoc[StrPart]:

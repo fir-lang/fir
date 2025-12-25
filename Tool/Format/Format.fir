@@ -742,7 +742,12 @@ IntExpr.format(self, tokens: Array[Token]) Doc:
 
 
 StrExpr.format(self, tokens: Array[Token]) Doc:
-    formatToken(self.token, tokens)
+    let doc = formatToken(self.first, tokens)
+    for part: StrPart in self.parts.iter():
+        match part:
+            StrPart.Str(str): doc += Doc.str(str)
+            StrPart.Expr(expr): doc += expr.format(tokens)
+    doc + formatToken(self.last, tokens)
 
 
 CharExpr.format(self, tokens: Array[Token]) Doc:
