@@ -625,7 +625,7 @@ simpleExpr Expr:
             token = TokenIdx(idx = cur),
         ))
 
-    cur=^ "BeginStr" interpolations=("BeginInterpolation" expr=expr end="EndInterpolation")* end="EndStr":
+    cur=^ "BeginStr" interpolations=(begin="BeginInterpolation" expr=expr "EndInterpolation")* end="EndStr":
         Expr.Str(StrExpr(
             parts = strParts(interpolations, end),
             token = TokenIdx(idx = cur),

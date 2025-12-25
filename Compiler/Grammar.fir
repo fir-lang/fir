@@ -2455,27 +2455,27 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                 let interpolationsLen0 = interpolations.len()
                 let symResult = try(
                     \():
-                        if state.peek() is Option.Some(sym)
+                        let begin = if state.peek() is Option.Some(sym)
                                 and sym
                                     is Token(
                                         kind = TokenKind.BeginInterpolation,
                                         ..
                                     ):
                             state._cursor += 1
+                            sym
                         else:
                             throw(state.updateErrorCursor(state._cursor))
                         let expr = expr(state)
-                        let end = if state.peek() is Option.Some(sym)
+                        if state.peek() is Option.Some(sym)
                                 and sym
                                     is Token(
                                         kind = TokenKind.EndInterpolation,
                                         ..
                                     ):
                             state._cursor += 1
-                            sym
                         else:
                             throw(state.updateErrorCursor(state._cursor))
-                        interpolations.push((expr = expr, end = end)),
+                        interpolations.push((begin = begin, expr = expr)),
                 )
                 match symResult:
                     Result.Err(err):

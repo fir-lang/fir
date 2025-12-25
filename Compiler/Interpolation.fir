@@ -1,10 +1,48 @@
 import [Compiler/Ast]
 
 
-strParts(interpolations: Vec[(expr: Expr, end: Token)], end: Token) Vec[StrPart]:
-    panic("TODO")
+strParts(interpolations: Vec[(begin: Token, expr: Expr)], end: Token) Vec[StrPart]:
+    let parts: Vec[StrPart] = Vec.withCapacity(u32(1) + (interpolations.len() * 2))
+
+    for part: (begin: Token, expr: Expr) in interpolations.iter():
+        # Drop the `
+        let str = part.begin.text
+        let str = str.substr(0, str.len() - 1)
+        parts.push(StrPart.Str(copyUpdateEscapes(str)))
+        parts.push(StrPart.Expr(part.expr))
+
+    # Drop the "
+    let str = end.text
+    let str = str.substr(0, str.len() - 1)
+    parts.push(StrPart.Str(copyUpdateEscapes(str)))
+
+    parts
 
 
-copyUpdateEscapes(s: Str) Str:
+copyUpdateEscapes(s: Str) Str / exn:
     let ret = StrBuf.withCapacity(s.len())
-    panic("TODO")
+    let chars: Peekable[CharIter, Char, exn] = s.chars().peekable()
+ 
+    while chars.next[Peekable[CharIter, Char, exn], Char, exn]() is Option.Some(char):
+        if char == '\\':
+            # Escape sequences are recognized by the lexer, so we know '\\' is
+            # followed by one of the characters below.
+            match chars.next().unwrap():
+                '\\': ret.push('\\')
+                'n': ret.push('\n')
+                't': ret.push('\t')
+                'r': ret.push('\r')
+                '"': ret.push('"')
+                '`': ret.push('`')
+                '\n':
+                    while chars.peek[CharIter, Char, exn]() is Option.Some(next):
+                        match next:
+                            ' ' | '\t' | '\n' | '\r':
+                                chars.next[Peekable[CharIter, Char, exn], Char, exn]()
+                            _:
+                                break
+                other: panic("Weird escape character: `other.asU32()`")
+        else:
+            ret.push(char)
+
+    ret.toStr()
