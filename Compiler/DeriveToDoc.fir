@@ -143,7 +143,7 @@ genSumBody(tyName: Id, cons: Vec[ConDecl], tokens: Array[Token]) Doc:
     for con: ConDecl in cons.iter():
         let tyStr = tokens.get(tyName.token.idx).text
         let conStr = tokens.get(con.name.token.idx).text
-        let conNameStr = "`tyStr`.`conNameStr`"
+        let conNameStr = "`tyStr`.`conStr`"
 
         let altHead = Doc.str(conNameStr)
 
