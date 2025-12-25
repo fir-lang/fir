@@ -746,7 +746,8 @@ StrExpr.format(self, tokens: Array[Token]) Doc:
     for part: StrPart in self.parts.iter():
         match part:
             StrPart.Str(str): doc += Doc.str(str)
-            StrPart.Expr(expr): doc += expr.format(tokens)
+            StrPart.Expr(expr):
+                doc += Doc.char('`') + expr.format(tokens) + Doc.char('`')
     doc + formatToken(self.last, tokens)
 
 
@@ -1453,7 +1454,10 @@ Pat.format(self, tokens: Array[Token]) Doc:
 
         Pat.Record(p): p.format(tokens)
 
-        Pat.Ignore(p) | Pat.Str(_, p) | Pat.Char(_, p): formatToken(p, tokens)
+        Pat.Ignore(p) | Pat.Char(_, p): formatToken(p, tokens)
+
+        Pat.Str(_, p):
+            formatToken(p, tokens) + formatToken(self.lastToken(tokens), tokens)
 
         Pat.Or(ps):
             # Same formatting as binary operators.

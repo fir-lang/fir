@@ -695,7 +695,11 @@ impl Tokens[Pat]:
 
             Pat.Record(pat): pat.lastToken(tokens)
 
-            Pat.Ignore(tok) | Pat.Str(_, tok) | Pat.Char(_, tok): tok
+            Pat.Ignore(tok) | Pat.Char(_, tok): tok
+
+            # A string pattern is always a `BEGIN_STR` and `END_STR`,
+            # interpolation not allowed.
+            Pat.Str(_, tok): TokenIdx(idx = tok.idx + 1)
 
             Pat.Or(ps): ps.last().unwrap().lastToken(tokens)
 
