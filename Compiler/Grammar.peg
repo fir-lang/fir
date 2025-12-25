@@ -1,4 +1,5 @@
 import [
+    Compiler/Interpolation,
     Compiler/ParseUtils,
     Compiler/Token,
     Tool/Peg/ParseTree,
@@ -74,12 +75,15 @@ Terminals:
     "Int" = Token(kind = TokenKind.Int, ..)
     "HexInt" = Token(kind = TokenKind.HexInt, ..)
     "BinInt" = Token(kind = TokenKind.BinInt, ..)
-    "Str" = Token(kind = TokenKind.Str, ..)
     "Char" = Token(kind = TokenKind.Char, ..)
     "NEWLINE" = Token(kind = TokenKind.Newline, ..)
     "INDENT" = Token(kind = TokenKind.Indent, ..)
     "DEDENT" = Token(kind = TokenKind.Dedent, ..)
     "label" = Token(kind = TokenKind.Label, ..)
+    "BeginStr" = Token(kind = TokenKind.BeginStr, ..)
+    "EndStr" = Token(kind = TokenKind.EndStr, ..)
+    "BeginInterpolation" = Token(kind = TokenKind.BeginInterpolation, ..)
+    "EndInterpolation" = Token(kind = TokenKind.EndInterpolation, ..)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -621,9 +625,9 @@ simpleExpr Expr:
             token = TokenIdx(idx = cur),
         ))
 
-    cur=^ str="Str":
+    cur=^ "BeginStr" interpolations=("BeginInterpolation" expr=expr end="EndInterpolation")* end="EndStr":
         Expr.Str(StrExpr(
-            parts = parseStrParts(str.text),
+            parts = strParts(interpolations, end),
             token = TokenIdx(idx = cur),
         ))
 
@@ -884,8 +888,11 @@ simplePat Pat:
         Pat.Ignore(TokenIdx(idx = cur))
 
     # Literals.
-    cur=^ str="Str":
-        Pat.Str(str.text, TokenIdx(idx = cur))
+    cur=^ _"BeginStr" end="EndStr":
+        # Drop "
+        let str = end.text
+        let str = str.substr(0, str.len() - 1)
+        Pat.Str(copyUpdateEscapes(str), TokenIdx(idx = cur))
 
     cur=^ char="Char":
         Pat.Char(parseCharLit(char.text), TokenIdx(idx = cur))

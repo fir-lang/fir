@@ -1,6 +1,7 @@
 # This is generated file, do not edit.
 
 import [
+    Compiler/Interpolation,
     Compiler/ParseUtils,
     Compiler/Token,
     Tool/Peg/ParseTree,
@@ -2443,8 +2444,47 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     let altResult = try(
         \():
             let cur = state.nextCursor()
-            let str = if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Str, ..):
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.BeginStr, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let zeroOrMoreCursor0 = state._cursor
+            let interpolations = Vec.empty()
+            loop:
+                let interpolationsLen0 = interpolations.len()
+                let symResult = try(
+                    \():
+                        if state.peek() is Option.Some(sym)
+                                and sym
+                                    is Token(
+                                        kind = TokenKind.BeginInterpolation,
+                                        ..
+                                    ):
+                            state._cursor += 1
+                        else:
+                            throw(state.updateErrorCursor(state._cursor))
+                        let expr = expr(state)
+                        let end = if state.peek() is Option.Some(sym)
+                                and sym
+                                    is Token(
+                                        kind = TokenKind.EndInterpolation,
+                                        ..
+                                    ):
+                            state._cursor += 1
+                            sym
+                        else:
+                            throw(state.updateErrorCursor(state._cursor))
+                        interpolations.push((expr = expr, end = end)),
+                )
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        interpolations.truncate(interpolationsLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
+            let end = if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.EndStr, ..):
                 state._cursor += 1
                 sym
             else:
@@ -2452,7 +2492,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
             let value = do:
                 Expr.Str(
                     StrExpr(
-                        parts = parseStrParts(str.text),
+                        parts = strParts(interpolations, end),
                         token = TokenIdx(idx = cur),
                     ),
                 )
@@ -4062,14 +4102,21 @@ simplePat(state: ParserState[Token]) Pat / U32:
     let altResult = try(
         \():
             let cur = state.nextCursor()
-            let str = if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Str, ..):
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.BeginStr, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let end = if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.EndStr, ..):
                 state._cursor += 1
                 sym
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                Pat.Str(str.text, TokenIdx(idx = cur))
+                let str = end.text
+                let str = str.substr(0, str.len() - 1)
+                Pat.Str(copyUpdateEscapes(str), TokenIdx(idx = cur))
             value,
     )
     match altResult:
