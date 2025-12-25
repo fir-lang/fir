@@ -46,6 +46,16 @@ impl Ord[TokenIdx]:
         self.idx.cmp(other.idx)
 
 
+impl ToDoc[TokenIdx]:
+    toDoc(self: TokenIdx) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("TokenIdx") + Doc.char('(') + args)
+
+
 nextNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
     let idx = tokenIdx.idx + 1
     while tokens.getOpt(idx) is Option.Some(next):

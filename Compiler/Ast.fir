@@ -1448,16 +1448,6 @@ impl Eq[BinOp]:
 # Implementations below are generated with `Compiler/DeriveToDoc`, do not edit.
 
 
-impl ToDoc[TokenIdx]:
-    toDoc(self: TokenIdx) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TokenIdx") + Doc.char('(') + args)
-
-
 impl ToDoc[Id]:
     toDoc(self: Id) Doc:
         let args = Doc.break_(0)
@@ -1627,6 +1617,11 @@ impl ToDoc[FunSig]:
     toDoc(self: FunSig) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("typeParams =")
+                + Doc.nested(4, Doc.break_(1) + self.typeParams.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("context =")
                 + Doc.nested(4, Doc.break_(1) + self.context.toDoc()),
         )
@@ -1642,13 +1637,18 @@ impl ToDoc[FunSig]:
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
+            Doc.str("returnTy =")
+                + Doc.nested(4, Doc.break_(1) + self.returnTy.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("exceptions =")
                 + Doc.nested(4, Doc.break_(1) + self.exceptions.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
-            Doc.str("returnTy =")
-                + Doc.nested(4, Doc.break_(1) + self.returnTy.toDoc()),
+            Doc.str("lparen =")
+                + Doc.nested(4, Doc.break_(1) + self.lparen.toDoc()),
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("FunSig") + Doc.char('(') + args)
@@ -1719,6 +1719,11 @@ impl ToDoc[TraitDecl]:
 impl ToDoc[ImplDecl]:
     toDoc(self: ImplDecl) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("typeParams =")
+                + Doc.nested(4, Doc.break_(1) + self.typeParams.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("context =")
                 + Doc.nested(4, Doc.break_(1) + self.context.toDoc()),
@@ -1869,7 +1874,6 @@ impl ToDoc[FnType]:
 impl ToDoc[Context]:
     toDoc(self: Context) Doc:
         let args = Doc.break_(0)
-        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("preds =")
                 + Doc.nested(4, Doc.break_(1) + self.preds.toDoc()),
@@ -2590,7 +2594,22 @@ impl ToDoc[IntExpr]:
 
 impl ToDoc[StrExpr]:
     toDoc(self: StrExpr) Doc:
-        panic("TODO")
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("parts =")
+                + Doc.nested(4, Doc.break_(1) + self.parts.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("first =")
+                + Doc.nested(4, Doc.break_(1) + self.first.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("last =") + Doc.nested(4, Doc.break_(1) + self.last.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("StrExpr") + Doc.char('(') + args)
 
 
 impl ToDoc[StrPart]:
