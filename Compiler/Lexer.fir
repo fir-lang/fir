@@ -12,6 +12,7 @@ tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
         _byteIdx = 0,
         _line = 0,
         _col = 0,
+        _stack = Vec.[State.Init],
     )
     loop:
         match try(lexer._next):
@@ -113,7 +114,7 @@ lexerDumpTokens():
 ##
 ## This is used by the test script in `Compiler/tests/tokenize.sh` which
 ## compares generated tokens of the compiler and interpreter.
-## 
+##
 ## This function has the `lexer` prefix in the name because we have a similar
 ## function in the scanner, and we don't have module namespaces in the
 ## interpreter.
@@ -140,7 +141,16 @@ type Lexer(
     _byteIdx: U32,
     _line: U32,
     _col: U32,
+    _stack: Vec[State],
 )
+
+
+type State:
+    ## Initial state tokenizes code.
+    Init
+
+    ## String state tokenizes string parts.
+    String
 
 
 Lexer._fail(self, msg: Str) a / Error:
@@ -157,7 +167,15 @@ Lexer._nextChar(self) Char:
     self._input.charAt(self._byteIdx)
 
 
+
 Lexer._next(self) Option[Token] / Error:
+    match self._stack.last():
+        Option.None: panic("BUG: Lexer state stack is empty")
+        Option.Some(State.Init): self._nextInit()
+        Option.Some(State.String): Option.Some(self._nextString())
+
+
+Lexer._nextInit(self) Option[Token] / Error:
     self._skipWhitespace()
 
     if self._byteIdx == self._input.len():
@@ -692,10 +710,27 @@ Lexer._next(self) Option[Token] / Error:
         )
 
     # ------------------------------------------------------------------------------------------
+    # Interpolation end
+
+    if input.startsWith("\`"):
+        # Pop `Init` state, continue with the string.
+        self._stack.pop()
+        self._byteIdx += 1
+        self._col += 1
+        return Option.Some(
+            Token(kind = TokenKind.EndInterpolation, text = "\`", byteIdx, line, col),
+        )
+
+    # ------------------------------------------------------------------------------------------
     # Literals
 
     if input.startsWith("\""):
-        return Option.Some(self._string())
+        # Tokenize the string contents on next iteration.
+        self._stack.push(State.String)
+        # `BeginStr` just includes the initial double quote.
+        self._byteIdx += 1
+        self._col += 1
+        return Option.Some(Token(kind = TokenKind.BeginStr, text = "\"", byteIdx, line, col))
 
     if input.startsWith("'"):
         match try(self._char):
@@ -827,23 +862,21 @@ Lexer._next(self) Option[Token] / Error:
     panic("TODO: `c` at `line + 1`:`col + 1`")
 
 
-# NB. Initial '"' should NOT be consumed.
-Lexer._string(self) Token / Error:
+# Tokenize a string literal contents. The initial double quote must be consumed.
+# This tokenizes the rest of it and consumes the closing double quote.
+Lexer._nextString(self) Token / Error:
     let startIdx = self._byteIdx
     let startLine = self._line
     let startCol = self._col
-
-    # Skip initial '#'
-    self._byteIdx += 1
-    self._col += 1
 
     while self._byteIdx < self._input.len():
         match self._nextChar():
             '"':
                 self._byteIdx += 1
                 self._col += 1
+                self._stack.pop()
                 return Token(
-                    kind = TokenKind.Str,
+                    kind = TokenKind.EndStr,
                     text = self._input.substr(startIdx, self._byteIdx),
                     byteIdx = startIdx,
                     line = startLine,
@@ -851,23 +884,17 @@ Lexer._string(self) Token / Error:
                 )
 
             '`':
-                # TODO: Allow nesting.
-                # Nesting needs to be handled in coordination with the parser,
-                # as the lexer cannot (or should not) keep track of the brackets
-                # and maintain a tree structure.
-                # This means we won't be able to tokenize files without the help.
+                # Tokenize code in the next iteration.
+                self._stack.push(State.Init)
                 self._byteIdx += 1
                 self._col += 1
-                while self._byteIdx < self._input.len():
-                    match self._nextChar():
-                        '`':
-                            self._byteIdx += 1
-                            self._col += 1
-                            break
-
-                        _:
-                            self._byteIdx += 1
-                            self._col += 1
+                return Token(
+                    kind = TokenKind.BeginInterpolation,
+                    text = self._input.substr(startIdx, self._byteIdx),
+                    byteIdx = startIdx,
+                    line = startLine,
+                    col = startCol,
+                )
 
             '\\':
                 self._byteIdx += 1
