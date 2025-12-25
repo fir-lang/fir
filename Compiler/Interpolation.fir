@@ -18,7 +18,8 @@ copyUpdateEscapes(s: Str) Str / exn:
     let ret = StrBuf.withCapacity(s.len())
     let chars: Peekable[CharIter, Char, exn] = s.chars().peekable()
 
-    while chars.next[Peekable[CharIter, Char, exn], Char, exn]() is Option.Some(char):
+    while chars.next[Peekable[CharIter, Char, exn], Char, exn]()
+            is Option.Some(char):
         if char == '\\':
             # Escape sequences are recognized by the lexer, so we know '\\' is
             # followed by one of the characters below.
@@ -33,9 +34,9 @@ copyUpdateEscapes(s: Str) Str / exn:
                     while chars.peek[CharIter, Char, exn]() is Option.Some(next):
                         match next:
                             ' ' | '\t' | '\n' | '\r':
-                                chars.next[Peekable[CharIter, Char, exn], Char, exn]()
-                            _:
-                                break
+                                chars
+                                    .next[Peekable[CharIter, Char, exn], Char, exn]()
+                            _: break
                 other: panic("Weird escape character: `other.asU32()`")
         else:
             ret.push(char)

@@ -41,9 +41,11 @@ runParser(
         Result.Ok(tree): tree
 
     if not parserState.allConsumed():
+        let numTokens = tokens.len()
+        let cursor = parserState._cursor
         throw(
             TestError.Other(
-                "parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `parserState._cursor`",
+                "parser didn't consume all input, input len = `numTokens`, cursor after parsing = `cursor`",
             ),
         )
 

@@ -771,8 +771,8 @@ BinOpExpr.format(self, tokens: Array[Token]) Doc:
         left = binop.left
     exprs.push(left)
 
-    let expr0 = exprs.pop().unwrap() # leftmost expr
-
+    # Leftmost expr
+    let expr0 = exprs.pop().unwrap()
 
     let doc0 = expr0.format(tokens)
     let op0 = nextNonTrivia(expr0.lastToken(tokens), tokens).unwrap()

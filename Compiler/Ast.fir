@@ -1126,7 +1126,7 @@ impl Tokens[IntExpr]:
 type StrExpr(
     parts: Vec[StrPart],
     first: TokenIdx,
-    last: TokenIdx
+    last: TokenIdx,
 )
 
 

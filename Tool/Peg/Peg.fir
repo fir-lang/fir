@@ -40,9 +40,11 @@ main():
         Result.Ok(tree):
             if not parserState.allConsumed():
                 print(tree.toDoc().render(80))
+                let cursor = parserState._cursor
+                let numTokens = tokens.len()
                 let lastToken = tokens.get(parserState._cursor)
                 panic(
-                    "Left over tokens (cursor = `parserState._cursor`, tokens = `tokens.len()`, last token = `lastToken`)",
+                    "Left over tokens (cursor = `cursor`, tokens = `numTokens`, last token = `lastToken`)",
                 )
 
             # print(result.tree.toDoc().render(80))
@@ -52,10 +54,7 @@ main():
         grammar.terminalsDecl.terminals.len() * 2,
     )
     for terminalDecl: TerminalDecl in grammar.terminalsDecl.terminals.iter():
-        terminalPats.insert(
-            terminalDecl.name,
-            terminalDecl.pat,
-        )
+        terminalPats.insert(terminalDecl.name, terminalDecl.pat)
 
     let nonTerminalNames: Vec[Str] = Vec.withCapacity(
         grammar.nonTerminalDecls.len(),
@@ -518,8 +517,9 @@ generateNonTerminal(
 
         let valueDoc = match alt.rhs:
             Option.None:
+                let ntName = capitalize(decl.name)
                 Doc.str(
-                    "ParseTree.NonTerminal(kind = `nonTerminalType`.`capitalize(decl.name)`, nodes)",
+                    "ParseTree.NonTerminal(kind = `nonTerminalType`.`ntName`, nodes)",
                 )
             Option.Some(semanticActionTokens):
                 let tokens = Vec.withCapacity(50)

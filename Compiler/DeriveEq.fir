@@ -42,8 +42,10 @@ gen(item: Str):
         Result.Ok(tree): tree
 
     if not parserState.allConsumed():
+        let inputLen = tokens.len()
+        let cursor = parserState._cursor
         panic(
-            "Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `parserState._cursor`",
+            "Parser didn't consume all input, input len = `inputLen`, cursor after parsing = `cursor`",
         )
 
     print(genTree(tree, tokens).render(80))

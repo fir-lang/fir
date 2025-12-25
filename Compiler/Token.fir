@@ -237,7 +237,10 @@ impl ToDoc[IntKind]:
 impl ToStr[Token]:
     toStr(self: Token) Str:
         let text = if self.kind
-                is TokenKind.EndStr | TokenKind.BeginInterpolation | TokenKind.Newline | TokenKind.Indent:
+                is TokenKind.EndStr
+                    | TokenKind.BeginInterpolation
+                    | TokenKind.Newline
+                    | TokenKind.Indent:
             _escape(self.text)
         else:
             self.text
@@ -444,8 +447,14 @@ impl Eq[TokenKind]:
             (left = TokenKind.StarEq, right = TokenKind.StarEq): Bool.True
             (left = TokenKind.BeginStr, right = TokenKind.BeginStr): Bool.True
             (left = TokenKind.EndStr, right = TokenKind.EndStr): Bool.True
-            (left = TokenKind.BeginInterpolation, right = TokenKind.BeginInterpolation): Bool.True
-            (left = TokenKind.EndInterpolation, right = TokenKind.EndInterpolation): Bool.True
+            (
+                left = TokenKind.BeginInterpolation,
+                right = TokenKind.BeginInterpolation,
+            ): Bool.True
+            (
+                left = TokenKind.EndInterpolation,
+                right = TokenKind.EndInterpolation,
+            ): Bool.True
             (left = TokenKind.Tilde, right = TokenKind.Tilde): Bool.True
             (left = TokenKind.Trait, right = TokenKind.Trait): Bool.True
             (left = TokenKind.Type, right = TokenKind.Type): Bool.True

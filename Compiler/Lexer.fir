@@ -167,7 +167,6 @@ Lexer._nextChar(self) Char:
     self._input.charAt(self._byteIdx)
 
 
-
 Lexer._next(self) Option[Token] / Error:
     match self._stack.last():
         Option.None: panic("BUG: Lexer state stack is empty")
@@ -718,7 +717,13 @@ Lexer._nextInit(self) Option[Token] / Error:
         self._byteIdx += 1
         self._col += 1
         return Option.Some(
-            Token(kind = TokenKind.EndInterpolation, text = "\`", byteIdx, line, col),
+            Token(
+                kind = TokenKind.EndInterpolation,
+                text = "\`",
+                byteIdx,
+                line,
+                col,
+            ),
         )
 
     # ------------------------------------------------------------------------------------------
@@ -727,10 +732,13 @@ Lexer._nextInit(self) Option[Token] / Error:
     if input.startsWith("\""):
         # Tokenize the string contents on next iteration.
         self._stack.push(State.String)
+
         # `BeginStr` just includes the initial double quote.
         self._byteIdx += 1
         self._col += 1
-        return Option.Some(Token(kind = TokenKind.BeginStr, text = "\"", byteIdx, line, col))
+        return Option.Some(
+            Token(kind = TokenKind.BeginStr, text = "\"", byteIdx, line, col),
+        )
 
     if input.startsWith("'"):
         match try(self._char):

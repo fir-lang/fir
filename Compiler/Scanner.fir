@@ -98,7 +98,11 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Bracket)
 
             TokenKind.BeginInterpolation:
-                scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Interpolation)
+                scanNonIndented(
+                    tokens,
+                    newTokens,
+                    NonIndentedDelimKind.Interpolation,
+                )
 
             TokenKind.LBrace:
                 match peek(tokens, newTokens):
@@ -224,7 +228,11 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Bracket)
 
             TokenKind.BeginInterpolation:
-                scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Interpolation)
+                scanNonIndented(
+                    tokens,
+                    newTokens,
+                    NonIndentedDelimKind.Interpolation,
+                )
 
             TokenKind.LBrace:
                 let tNext = peek(tokens, newTokens).unwrap()
@@ -414,4 +422,4 @@ sanityCheckTokens(tokens: Vec[Token]):
         let ok = t0.line < t1.line or (t0.line == t1.line and t0.col <= t1.col)
 
         if not ok:
-            panic("Token at index `i-1`=`t0`, index `i`=`t1`")
+            panic("Token at index `i - 1`=`t0`, index `i`=`t1`")

@@ -42,8 +42,10 @@ genModule(modStr: Str):
         Result.Ok(tree): tree
 
     if not parserState.allConsumed():
+        let inputLen = tokens.len()
+        let cursor = parserState._cursor
         panic(
-            "Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `parserState._cursor`",
+            "Parser didn't consume all input, input len = `inputLen`, cursor after parsing = `cursor`",
         )
 
     # print(genModule_(tree, tokens.takeArray()).render(80))
@@ -139,7 +141,9 @@ genSumBody(tyName: Id, cons: Vec[ConDecl], tokens: Array[Token]) Doc:
     let alts = Doc.empty()
 
     for con: ConDecl in cons.iter():
-        let conNameStr = "`tokens.get(tyName.token.idx).text`.`tokens.get(con.name.token.idx).text`"
+        let tyStr = tokens.get(tyName.token.idx).text
+        let conStr = tokens.get(con.name.token.idx).text
+        let conNameStr = "`tyStr`.`conNameStr`"
 
         let altHead = Doc.str(conNameStr)
 

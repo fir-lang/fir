@@ -65,7 +65,8 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
                     TypeError(
                         loc,
                         msg =
-                            "Unable to unify var with kind `var1.kind` with type with kind `ty2.kind()`",
+                            "Unable to unify var with kind `var1.kind` with type with kind `ty2
+                                .kind()`",
                     ),
                 )
 
@@ -77,7 +78,8 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
                     TypeError(
                         loc,
                         msg =
-                            "Unable to unify var with kind `var2.kind` with type with kind `ty1.kind()`",
+                            "Unable to unify var with kind `var2.kind` with type with kind `ty1
+                                .kind()`",
                     ),
                 )
 
