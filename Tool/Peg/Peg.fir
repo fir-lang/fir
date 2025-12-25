@@ -40,9 +40,11 @@ main():
         Result.Ok(tree):
             if not parserState.allConsumed():
                 print(tree.toDoc().render(80))
+                let cursor = parserState._cursor
+                let numTokens = tokens.len()
                 let lastToken = tokens.get(parserState._cursor)
                 panic(
-                    "Left over tokens (cursor = `parserState._cursor`, tokens = `tokens.len()`, last token = `lastToken`)",
+                    "Left over tokens (cursor = `cursor`, tokens = `numTokens`, last token = `lastToken`)",
                 )
 
             # print(result.tree.toDoc().render(80))
@@ -52,10 +54,7 @@ main():
         grammar.terminalsDecl.terminals.len() * 2,
     )
     for terminalDecl: TerminalDecl in grammar.terminalsDecl.terminals.iter():
-        terminalPats.insert(
-            terminalDecl.name.substr(1, terminalDecl.name.len() - 1),
-            terminalDecl.pat,
-        )
+        terminalPats.insert(terminalDecl.name, terminalDecl.pat)
 
     let nonTerminalNames: Vec[Str] = Vec.withCapacity(
         grammar.nonTerminalDecls.len(),
@@ -223,6 +222,7 @@ convertTerminalsDecl(nodes: Vec[ParseTree[Token, NonTerminal]]) TerminalsDecl:
     for node: ParseTree[Token, NonTerminal] in nodes.iter():
         let node = node.asNonTerminal(NonTerminal.TerminalDecl)
         let name = node.get(0).asTerminal().text
+        let name = name.substr(0, name.len() - 1)
         let pat: Vec[Token] = Vec.withCapacity(node.len() - 1)
         for tok: ParseTree[Token, NonTerminal] in node.iter().skip(1):
             pat.push(tok.asTerminal())
@@ -318,8 +318,8 @@ convertSymbolNonRec(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
         let terminal = nodes.get(0).asTerminal()
         match terminal.kind:
             TokenKind.LowerId: Symbol.NonTerminal(terminal.text)
-            TokenKind.Str:
-                Symbol.Terminal(terminal.text.substr(1, terminal.text.len() - 1))
+            TokenKind.EndStr:
+                Symbol.Terminal(terminal.text.substr(0, terminal.text.len() - 1))
             TokenKind.Caret: Symbol.Cursor
             _: panic("")
     else:
@@ -517,8 +517,9 @@ generateNonTerminal(
 
         let valueDoc = match alt.rhs:
             Option.None:
+                let ntName = capitalize(decl.name)
                 Doc.str(
-                    "ParseTree.NonTerminal(kind = `nonTerminalType`.`capitalize(decl.name)`, nodes)",
+                    "ParseTree.NonTerminal(kind = `nonTerminalType`.`ntName`, nodes)",
                 )
             Option.Some(semanticActionTokens):
                 let tokens = Vec.withCapacity(50)

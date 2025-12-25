@@ -695,7 +695,11 @@ impl Tokens[Pat]:
 
             Pat.Record(pat): pat.lastToken(tokens)
 
-            Pat.Ignore(tok) | Pat.Str(_, tok) | Pat.Char(_, tok): tok
+            Pat.Ignore(tok) | Pat.Char(_, tok): tok
+
+            # A string pattern is always a `BEGIN_STR` and `END_STR`,
+            # interpolation not allowed.
+            Pat.Str(_, tok): TokenIdx(idx = tok.idx + 1)
 
             Pat.Or(ps): ps.last().unwrap().lastToken(tokens)
 
@@ -1121,16 +1125,17 @@ impl Tokens[IntExpr]:
 #[derive(ToDoc)]
 type StrExpr(
     parts: Vec[StrPart],
-    token: TokenIdx,
+    first: TokenIdx,
+    last: TokenIdx,
 )
 
 
 impl Tokens[StrExpr]:
     firstToken(self: StrExpr, tokens: Array[Token]) TokenIdx:
-        self.token
+        self.first
 
     lastToken(self: StrExpr, tokens: Array[Token]) TokenIdx:
-        self.token
+        self.last
 
 
 #[derive(ToDoc)]
@@ -2596,8 +2601,12 @@ impl ToDoc[StrExpr]:
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
-            Doc.str("token =")
-                + Doc.nested(4, Doc.break_(1) + self.token.toDoc()),
+            Doc.str("first =")
+                + Doc.nested(4, Doc.break_(1) + self.first.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("last =") + Doc.nested(4, Doc.break_(1) + self.last.toDoc()),
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("StrExpr") + Doc.char('(') + args)

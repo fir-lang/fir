@@ -38,15 +38,18 @@ scan(tokens: Vec[Token]) Vec[Token] / [ScannerError, ..exn]:
     newTokens
 
 
-## Scan an indented block. Indented blocks start with:
+## Scan an indented block. The token starting the indented block should already
+## be consumed. Indented blocks start with:
 ##
 ## - `:` followed by a token in a new line
 ## - `{`
 ##
-## In both cases, `blockCol` should be the column number of the first token in the indented block.
-## I.e. the column of NOT the `{` but the first non-trivia token after it.
+## `start_loc` is used to determine the indentation amount of the block, and it
+## should be the location of the token of the first token of the block. I.e. not
+## the location of `{` or `:` but the location of the token after it.
 ##
-## This function does not consume the token terminating the block, i.e. `}` or the dedented token.
+## This function does not consume the token terminating the block, i.e. `}` or
+## the dedented token.
 scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
     tokens: Peekable[iter, Token, [ScannerError, ..exn]],
     newTokens: Vec[Token],
@@ -93,6 +96,13 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 | TokenKind.LBracketRow
                 | TokenKind.UpperIdDotLBracket:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Bracket)
+
+            TokenKind.BeginInterpolation:
+                scanNonIndented(
+                    tokens,
+                    newTokens,
+                    NonIndentedDelimKind.Interpolation,
+                )
 
             TokenKind.LBrace:
                 match peek(tokens, newTokens):
@@ -152,6 +162,7 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
 type NonIndentedDelimKind:
     Paren
     Bracket
+    Interpolation
 
 
 ## Scan a non-indented block: `(...)` or `[...]`.
@@ -173,7 +184,7 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 match delimKind:
                     NonIndentedDelimKind.Paren: return
 
-                    NonIndentedDelimKind.Bracket:
+                    _:
                         throw(
                             ~ScannerError(
                                 line = t.line,
@@ -186,12 +197,25 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 match delimKind:
                     NonIndentedDelimKind.Bracket: return
 
-                    NonIndentedDelimKind.Paren:
+                    _:
                         throw(
                             ~ScannerError(
                                 line = t.line,
                                 col = t.col,
                                 msg = "']' without matching '['",
+                            ),
+                        )
+
+            TokenKind.EndInterpolation:
+                match delimKind:
+                    NonIndentedDelimKind.Interpolation: return
+
+                    _:
+                        throw(
+                            ~ScannerError(
+                                line = t.line,
+                                col = t.col,
+                                msg = "'\`' without matching '\`'",
                             ),
                         )
 
@@ -202,6 +226,13 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 | TokenKind.LBracketRow
                 | TokenKind.UpperIdDotLBracket:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Bracket)
+
+            TokenKind.BeginInterpolation:
+                scanNonIndented(
+                    tokens,
+                    newTokens,
+                    NonIndentedDelimKind.Interpolation,
+                )
 
             TokenKind.LBrace:
                 let tNext = peek(tokens, newTokens).unwrap()
@@ -391,4 +422,4 @@ sanityCheckTokens(tokens: Vec[Token]):
         let ok = t0.line < t1.line or (t0.line == t1.line and t0.col <= t1.col)
 
         if not ok:
-            panic("Token at index `i-1`=`t0`, index `i`=`t1`")
+            panic("Token at index `i - 1`=`t0`, index `i`=`t1`")

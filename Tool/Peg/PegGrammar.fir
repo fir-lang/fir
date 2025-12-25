@@ -475,7 +475,12 @@ terminalDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
         \():
             let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
             if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Str, ..):
+                    and sym is Token(kind = TokenKind.BeginStr, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.EndStr, ..):
                 nodes.push(ParseTree.Terminal(sym))
                 state._cursor += 1
             else:
@@ -806,7 +811,12 @@ symbolNonRec(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
         \():
             let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
             if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Str, ..):
+                    and sym is Token(kind = TokenKind.BeginStr, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.EndStr, ..):
                 nodes.push(ParseTree.Terminal(sym))
                 state._cursor += 1
             else:

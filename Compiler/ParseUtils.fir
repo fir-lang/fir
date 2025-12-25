@@ -54,11 +54,6 @@ parseCharLit(text: Str) Char:
         char
 
 
-parseStrParts(text: Str) Vec[StrPart]:
-    # TODO
-    Vec.empty()
-
-
 newId(cursor: U32) Id:
     Id(token = TokenIdx(idx = cursor))
 

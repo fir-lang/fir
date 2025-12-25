@@ -742,7 +742,13 @@ IntExpr.format(self, tokens: Array[Token]) Doc:
 
 
 StrExpr.format(self, tokens: Array[Token]) Doc:
-    formatToken(self.token, tokens)
+    let doc = formatToken(self.first, tokens)
+    for part: StrPart in self.parts.iter():
+        match part:
+            StrPart.Str(str): doc += Doc.str(str)
+            StrPart.Expr(expr):
+                doc += Doc.char('`') + expr.format(tokens) + Doc.char('`')
+    doc + formatToken(self.last, tokens)
 
 
 CharExpr.format(self, tokens: Array[Token]) Doc:
@@ -765,8 +771,8 @@ BinOpExpr.format(self, tokens: Array[Token]) Doc:
         left = binop.left
     exprs.push(left)
 
-    let expr0 = exprs.pop().unwrap() # leftmost expr
-
+    # Leftmost expr
+    let expr0 = exprs.pop().unwrap()
 
     let doc0 = expr0.format(tokens)
     let op0 = nextNonTrivia(expr0.lastToken(tokens), tokens).unwrap()
@@ -1448,7 +1454,10 @@ Pat.format(self, tokens: Array[Token]) Doc:
 
         Pat.Record(p): p.format(tokens)
 
-        Pat.Ignore(p) | Pat.Str(_, p) | Pat.Char(_, p): formatToken(p, tokens)
+        Pat.Ignore(p) | Pat.Char(_, p): formatToken(p, tokens)
+
+        Pat.Str(_, p):
+            formatToken(p, tokens) + formatToken(self.lastToken(tokens), tokens)
 
         Pat.Or(ps):
             # Same formatting as binary operators.

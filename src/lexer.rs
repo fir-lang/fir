@@ -5,14 +5,22 @@ use smol_str::SmolStr;
 
 #[derive(Debug, Default)]
 struct LexerState {
-    comment_depth: u32,
+    stack: Vec<State>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum State {
+    Init,
+    Comment,
+    String,
 }
 
 lexgen::lexer! {
     pub Lexer(LexerState) -> TokenKind;
 
-    rule Init {
+    type Error = String;
 
+    rule Init {
         // Skip whitespace
         [' ' '\n'],
 
@@ -22,7 +30,19 @@ lexgen::lexer! {
         '#' (_ # ['|' '\n']) (_ # '\n')* '\n',
 
         "#|" => |lexer| {
+            lexer.state().stack.push(State::Init);
             lexer.switch(LexerRule::Comment)
+        },
+
+        '`' =? |lexer| {
+            match lexer.state().stack.pop() {
+                Some(State::String) => {
+                    lexer.switch_and_return(LexerRule::String, Ok(TokenKind::EndInterpolation))
+                }
+                _ => {
+                    lexer.return_(Err("Backtick outside of a string interpolation".to_string()))
+                }
+            }
         },
 
         // Keywords
@@ -48,7 +68,7 @@ lexgen::lexer! {
         "not" = TokenKind::Not,
         "or" = TokenKind::Or,
         "prim" = TokenKind::Prim,
-        "return" = TokenKind::Return, // maybe shorten as "ret"?
+        "return" = TokenKind::Return,
         "trait" = TokenKind::Trait,
         "type" = TokenKind::Type,
         "var" = TokenKind::Var,
@@ -115,7 +135,8 @@ lexgen::lexer! {
 
         // Literals
         '"' => |lexer| {
-            lexer.switch(LexerRule::String)
+            lexer.state().stack.push(State::Init);
+            lexer.switch_and_return(LexerRule::String, TokenKind::BeginStr)
         },
 
         let int = ['0'-'9'] ['0'-'9' '_']*;
@@ -132,9 +153,16 @@ lexgen::lexer! {
 
 
     rule String {
-        "`" => |lexer| lexer.switch(LexerRule::Interpolation),
+        "`" => |lexer| {
+            lexer.state().stack.push(State::String);
+            lexer.switch_and_return(LexerRule::Init, TokenKind::BeginInterpolation)
+        },
 
-        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::Str),
+        '"' => |lexer| {
+            let state = lexer.state().stack.pop();
+            debug_assert_eq!(state, Some(State::Init));
+            lexer.switch_and_return(LexerRule::Init, TokenKind::EndStr)
+        },
 
         // Escaped interpolation start
         "\\`" => |lexer| lexer.continue_(),
@@ -144,40 +172,42 @@ lexgen::lexer! {
 
         // "Continuation escape": backslash followed by newline ignores the newline and following
         // whitespace.
-        '\\' '\n' => |lexer| lexer.switch(LexerRule::StringSkipWhitespace),
-
-        _ => |lexer| lexer.continue_(),
-    }
-
-    rule Interpolation {
-        "\\`" => |lexer| lexer.continue_(),
-
-        "`" => |lexer| lexer.switch(LexerRule::String),
+        '\\' '\n' => |lexer| {
+            lexer.switch(LexerRule::StringSkipWhitespace)
+        },
 
         _ => |lexer| lexer.continue_(),
     }
 
     rule StringSkipWhitespace {
         ' ' | '\t' | '\n' | '\r' => |lexer| lexer.continue_(),
-        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::Str),
+
+        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::EndStr),
+
+        // TODO: This will consume backslash, backtick before switching.
         _ => |lexer| lexer.switch(LexerRule::String),
     }
 
     rule Comment {
         "#|" =>
             |lexer| {
-                lexer.state().comment_depth += 1;
+                lexer.state().stack.push(State::Comment);
                 lexer.continue_()
             },
 
         "|#" =>
             |lexer| {
-                let depth = &mut lexer.state().comment_depth;
-                if *depth == 0 {
-                    lexer.switch(LexerRule::Init)
-                } else {
-                    *depth -= 1;
-                    lexer.continue_()
+                match lexer.state().stack.pop().unwrap() {
+                    State::Comment => {
+                        lexer.continue_()
+                    }
+                    State::Init => {
+                        lexer.reset_match();
+                        lexer.switch(LexerRule::Init)
+                    }
+                    State::String => {
+                        panic!() // bug in state handling
+                    }
                 }
             },
 

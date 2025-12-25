@@ -25,7 +25,9 @@ collectRecordFields(
                     if allLabels.insert(label.key, label.value)
                             is Option.Some(_):
                         panic(
-                            "BUG: Duplicate field in record `ty.toDoc().render(50)`",
+                            "BUG: Duplicate field in record `ty.toDoc().render(
+                                50,
+                            )`",
                         )
                 extension = nextExt
 
@@ -38,7 +40,8 @@ collectRecordFields(
                             if allLabels.insert(label.key, label.value)
                                     is Option.Some(_):
                                 panic(
-                                    "BUG: Duplicate field in record `ty.toDoc().render(50)`",
+                                    "BUG: Duplicate field in record `ty.toDoc()
+                                        .render(50)`",
                                 )
                         extension = nextExt
 
@@ -75,7 +78,9 @@ collectVariantCons(
                 for con: HashMapEntry[TyDefIdx, Vec[Ty]] in cons.iter():
                     if allCons.insert(con.key, con.value) is Option.Some(_):
                         panic(
-                            "BUG: Duplicate type in variant `ty.toDoc().render(50)`",
+                            "BUG: Duplicate type in variant `ty.toDoc().render(
+                                50,
+                            )`",
                         )
                 extension = nextExt
 
@@ -88,7 +93,8 @@ collectVariantCons(
                             if allCons.insert(con.key, con.value)
                                     is Option.Some(_):
                                 panic(
-                                    "BUG: Duplicate type in variant `ty.toDoc().render(50)`",
+                                    "BUG: Duplicate type in variant `ty.toDoc()
+                                        .render(50)`",
                                 )
                         extension = nextExt
 

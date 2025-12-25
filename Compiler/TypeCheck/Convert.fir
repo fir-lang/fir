@@ -168,7 +168,8 @@ convertNamedTy(
             TypeError(
                 loc,
                 msg =
-                    "Incorrect number of type arguments to `tyName`, expected `tyCon.info.arity()`, found `numTyArgs`",
+                    "Incorrect number of type arguments to `tyName`, expected `tyCon
+                        .info.arity()`, found `numTyArgs`",
             ),
         )
 
