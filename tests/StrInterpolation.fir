@@ -10,7 +10,7 @@ main():
         |#
     |#
 |#
-        f()
+        g("world" #| more nesting |#)
     `-")
 
     print("\`")
@@ -18,10 +18,13 @@ main():
 f() Str:
     "Hi"
 
+g(s: Str) Str:
+    "Hello, `s`!"
+
 # expected stdout:
 # Hi
 # -Hi-
 # -~Hi~-
 # -~Hi~Hi~-
-# -Hi-
+# -Hello, world!-
 # `
