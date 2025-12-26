@@ -1,4 +1,10 @@
 main():
+    let array: Array[Str] = Array.new(0)
+    print("---")
+    for i: Str in array.iter():
+        printStr(i)
+    print("---")
+
     let array: Array[Str] = Array.new(3)
     array.set(0, "a")
     array.set(1, "b")
@@ -8,6 +14,8 @@ main():
         printStr(i)
 
 # expected stdout:
+# ---
+# ---
 # a
 # b
 # c
