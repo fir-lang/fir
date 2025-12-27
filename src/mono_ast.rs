@@ -88,6 +88,27 @@ pub struct FunSig {
     pub exceptions: Option<L<Type>>,
 }
 
+impl FunSig {
+    pub(crate) fn ty(&self) -> FnType {
+        FnType {
+            args: FunArgs::Positional(
+                self.params
+                    .iter()
+                    .map(|(_param_name, param_ty)| param_ty.node.clone())
+                    .collect(),
+            ),
+            ret: self
+                .return_ty
+                .as_ref()
+                .map(|l_ty| l_ty.map_as_ref(|ty| Box::new(ty.clone()))),
+            exceptions: self
+                .exceptions
+                .as_ref()
+                .map(|l_ty| l_ty.map_as_ref(|ty| Box::new(ty.clone()))),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct FunDecl {
     pub parent_ty: Option<L<Id>>,
