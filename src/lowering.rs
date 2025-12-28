@@ -937,7 +937,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     fun_ty_args,
                     &indices,
                     &mut lowered_pgm.closures,
-                    &mono_pgm,
+                    mono_pgm,
                 );
                 lowered_pgm.funs.push(Fun::Source(source_fun));
             } else {
@@ -1021,7 +1021,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         fun_ty_args,
                         &indices,
                         &mut lowered_pgm.closures,
-                        &mono_pgm,
+                        mono_pgm,
                     );
                     lowered_pgm.funs.push(Fun::Source(source_fun));
                 } else {
@@ -1972,20 +1972,33 @@ fn lower_expr(
             ty,
             member,
             ty_args,
-        }) => (
-            Expr::AssocFnSel(
-                *indices
-                    .assoc_funs
-                    .get(ty)
-                    .unwrap()
-                    .get(member)
-                    .unwrap()
-                    .get(ty_args)
-                    .unwrap(),
-            ),
-            Default::default(),
-            todo!(),
-        ),
+        }) => {
+            let fun_idx = *indices
+                .assoc_funs
+                .get(ty)
+                .unwrap()
+                .get(member)
+                .unwrap()
+                .get(ty_args)
+                .unwrap();
+
+            let fun_decl: &mono::FunDecl = mono_pgm
+                .associated
+                .get(ty)
+                .unwrap()
+                .get(member)
+                .unwrap()
+                .get(ty_args)
+                .unwrap();
+
+            let fun_ty = fun_decl.sig.ty();
+
+            (
+                Expr::AssocFnSel(fun_idx),
+                Default::default(),
+                mono::Type::Fn(fun_ty),
+            )
+        }
 
         mono::Expr::Call(mono::CallExpr { fun, args }) => {
             let (fun, _fun_vars, fun_ty) = lower_bl_expr(fun, closures, indices, scope, mono_pgm);
