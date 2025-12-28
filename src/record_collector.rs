@@ -158,6 +158,8 @@ fn visit_ty(ty: &mono::Type, records: &mut HashSet<RecordShape>) {
                 visit_ty(&exn.node, records);
             }
         }
+
+        mono::Type::Never => {}
     }
 }
 
