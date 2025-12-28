@@ -106,7 +106,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, main: &str) {
             exceptions: Some(Box::new(Ty::empty_variant())),
         },
         tys.tys.cons(),
-        &mut TyVarGen::default(),
+        &mut UVarGen::default(),
         0,
         &main_scheme.loc,
     );
@@ -187,7 +187,7 @@ struct TcFunState<'a> {
     tys: &'a mut PgmTypes,
 
     /// Unification variable generator.
-    var_gen: &'a mut TyVarGen,
+    var_gen: &'a mut UVarGen,
 
     /// Exception type of the current function.
     ///
@@ -1072,7 +1072,7 @@ fn collect_schemes(
 
 /// Type check a top-level function.
 fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: &TraitEnv) {
-    let mut var_gen = TyVarGen::default();
+    let mut var_gen = UVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
     assert_eq!(tys.tys.len_scopes(), 1);
@@ -1223,7 +1223,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
             let mut preds: Vec<Pred> = Default::default();
             let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
-            let mut var_gen = TyVarGen::default();
+            let mut var_gen = UVarGen::default();
 
             match &fun.node.sig.self_ {
                 ast::SelfParam::No => {}
@@ -1333,12 +1333,12 @@ fn resolve_preds(
     assumps: &Vec<Pred>,
     tys: &PgmTypes,
     preds: Vec<Pred>,
-    var_gen: &mut TyVarGen,
+    var_gen: &mut UVarGen,
     _level: u32,
 ) {
     let mut goals: Vec<Pred> = preds.into_iter().collect();
-    let mut ambiguous_var_rows: Vec<TyVarRef> = vec![];
-    let mut ambiguous_rec_rows: Vec<TyVarRef> = vec![];
+    let mut ambiguous_var_rows: Vec<UVarRef> = vec![];
+    let mut ambiguous_rec_rows: Vec<UVarRef> = vec![];
 
     // TODO: Not sure if this is a bug or not, but resolving a predicate may allow other predicates
     // to be resolved as well. Keep looping as long as we resolve predicates.
@@ -1360,7 +1360,7 @@ fn resolve_preds(
                             continue;
                         }
                     }
-                    Ty::Var(var_ref) => {
+                    Ty::UVar(var_ref) => {
                         assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Record));
                         ambiguous_rec_rows.push(var_ref.clone());
                         continue;
@@ -1376,7 +1376,7 @@ fn resolve_preds(
                             continue;
                         }
                     }
-                    Ty::Var(var_ref) => {
+                    Ty::UVar(var_ref) => {
                         assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Variant));
                         ambiguous_var_rows.push(var_ref.clone());
                         continue;

@@ -75,7 +75,7 @@ pub(super) fn check_expr(
                 expr.node = ast::Expr::Var(ast::VarExpr {
                     id: var.clone(),
                     user_ty_args: vec![],
-                    ty_args: ty_args.into_iter().map(Ty::Var).collect(),
+                    ty_args: ty_args.into_iter().map(Ty::UVar).collect(),
                 });
 
                 ty
@@ -234,7 +234,7 @@ pub(super) fn check_expr(
                     ty: ty.clone(),
                     con: con.clone(),
                     user_ty_args: vec![],
-                    ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
+                    ty_args: con_ty_args.into_iter().map(Ty::UVar).collect(),
                 });
 
                 con_ty
@@ -356,7 +356,7 @@ pub(super) fn check_expr(
                 {
                     unify(
                         ty_ty_arg,
-                        &Ty::Var(method_ty_arg.clone()),
+                        &Ty::UVar(method_ty_arg.clone()),
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
                         level,
@@ -369,7 +369,7 @@ pub(super) fn check_expr(
                     ty_user_ty_args: vec![],
                     member: member.clone(),
                     user_ty_args: vec![],
-                    ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
+                    ty_args: method_ty_args.into_iter().map(Ty::UVar).collect(),
                 });
 
                 method_ty
@@ -556,7 +556,7 @@ pub(super) fn check_expr(
                     Some(Ty::Con(con, _kind)) if con == "I64" => ast::IntKind::I64,
                     Some(Ty::Con(con, _kind)) if con == "U64" => ast::IntKind::U64,
 
-                    None | Some(Ty::Var(_)) => {
+                    None | Some(Ty::UVar(_)) => {
                         // Try defaulting as i32.
                         ast::IntKind::I32
                     }
@@ -711,11 +711,16 @@ pub(super) fn check_expr(
                                 .new_var(level, Kind::Star, expr.loc.clone());
                         tc_state.preds.push(Pred {
                             trait_: Ty::to_str_id(),
-                            params: vec![Ty::Var(expr_var.clone())],
+                            params: vec![Ty::UVar(expr_var.clone())],
                             loc: expr.loc.clone(),
                         });
-                        let (part_ty, _) =
-                            check_expr(tc_state, expr, Some(&Ty::Var(expr_var)), level, loop_stack);
+                        let (part_ty, _) = check_expr(
+                            tc_state,
+                            expr,
+                            Some(&Ty::UVar(expr_var)),
+                            level,
+                            loop_stack,
+                        );
                         let expr_node = replace(&mut expr.node, ast::Expr::Self_);
                         expr.node = ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
@@ -980,7 +985,7 @@ pub(super) fn check_expr(
             check_expr(tc_state, expr, Some(&return_ty), level, loop_stack);
             (
                 expected_ty.cloned().unwrap_or_else(|| {
-                    Ty::Var(
+                    Ty::UVar(
                         tc_state
                             .var_gen
                             .new_var(level, Kind::Star, expr.loc.clone()),
@@ -1085,7 +1090,7 @@ pub(super) fn check_expr(
                     } => (Some(args), Some(ret), Some(exceptions)),
 
                     Ty::Con(_, _)
-                    | Ty::Var(_)
+                    | Ty::UVar(_)
                     | Ty::App(_, _, _)
                     | Ty::QVar(_, _)
                     | Ty::Anonymous { .. } => (None, None, None),
@@ -1099,7 +1104,7 @@ pub(super) fn check_expr(
                 Some(ty) => convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc),
                 None => match expected_ret {
                     Some(ret) => (*ret).clone(),
-                    None => Ty::Var(tc_state.var_gen.new_var(
+                    None => Ty::UVar(tc_state.var_gen.new_var(
                         level + 1,
                         Kind::Star,
                         expr.loc.clone(),
@@ -1111,11 +1116,11 @@ pub(super) fn check_expr(
                 Some(exc) => convert_ast_ty(&tc_state.tys.tys, &exc.node, &exc.loc),
                 None => match expected_exceptions {
                     Some(Some(exn)) => (*exn).clone(),
-                    _ => Ty::Var(
-                        tc_state
-                            .var_gen
-                            .new_var(level + 1, Kind::Star, expr.loc.clone()),
-                    ),
+                    _ => Ty::UVar(tc_state.var_gen.new_var(
+                        level + 1,
+                        Kind::Star,
+                        expr.loc.clone(),
+                    )),
                 },
             };
 
@@ -1580,7 +1585,7 @@ fn check_field_sel(
 
     let (method_ty, method_ty_args) = if user_ty_args.is_empty() {
         let (ty, args) = scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
-        (ty, args.into_iter().map(Ty::Var).collect())
+        (ty, args.into_iter().map(Ty::UVar).collect())
     } else {
         if scheme.quantified_vars.len() != user_ty_args.len() {
             panic!(
@@ -1795,7 +1800,7 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
 
     Ty::Anonymous {
         labels: [(con, ty)].into_iter().collect(),
-        extension: Some(Box::new(Ty::Var(row_ext))),
+        extension: Some(Box::new(Ty::UVar(row_ext))),
         kind: RecordOrVariant::Variant,
         is_row: false,
     }
@@ -1826,7 +1831,7 @@ fn refine_binders(scope: &mut HashMap<Id, Ty>, binders: &HashMap<Id, HashSet<Ty>
                         assert_eq!(old, None);
                     }
 
-                    Ty::Var(_) | Ty::QVar(_, _) => {
+                    Ty::UVar(_) | Ty::QVar(_, _) => {
                         // Get the row type from the non-refined binding.
                         extension = Some(Box::new(ty.clone()));
                     }

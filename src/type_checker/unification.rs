@@ -8,7 +8,7 @@ pub(super) fn unify(
     ty1: &Ty,
     ty2: &Ty,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut TyVarGen,
+    var_gen: &mut UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) {
@@ -133,7 +133,7 @@ pub(super) fn unify(
             panic!("{}: QVar {} during unification", loc_display(loc), var);
         }
 
-        (Ty::Var(var1), Ty::Var(var2)) => {
+        (Ty::UVar(var1), Ty::UVar(var2)) => {
             if var1.id() == var2.id() {
                 return;
             }
@@ -154,7 +154,7 @@ pub(super) fn unify(
             }
         }
 
-        (Ty::Var(var), ty2) => {
+        (Ty::UVar(var), ty2) => {
             if var.kind() != ty2.kind() {
                 panic!(
                     "{}: Unable to unify var with kind {} with type with kind {}",
@@ -166,7 +166,7 @@ pub(super) fn unify(
             link_var(var, ty2)
         }
 
-        (ty1, Ty::Var(var)) => {
+        (ty1, Ty::UVar(var)) => {
             if var.kind() != ty1.kind() {
                 panic!(
                     "{}: Unable to unify var with kind {} with type with kind {}",
@@ -232,9 +232,9 @@ pub(super) fn unify(
 
             if !extras1.is_empty() {
                 match &extension2 {
-                    Some(Ty::Var(var)) => {
+                    Some(Ty::UVar(var)) => {
                         // TODO: Not sure about level
-                        extension2 = Some(Ty::Var(link_extension(
+                        extension2 = Some(Ty::UVar(link_extension(
                             *kind2, &extras1, &labels1, var, var_gen, level, loc,
                         )));
                     }
@@ -255,9 +255,9 @@ pub(super) fn unify(
 
             if !extras2.is_empty() {
                 match &extension1 {
-                    Some(Ty::Var(var)) => {
+                    Some(Ty::UVar(var)) => {
                         // TODO: Not sure about level
-                        extension1 = Some(Ty::Var(link_extension(
+                        extension1 = Some(Ty::UVar(link_extension(
                             *kind1, &extras2, &labels2, var, var_gen, level, loc,
                         )));
                     }
@@ -323,7 +323,7 @@ pub(super) fn try_unify_one_way(
     ty1: &Ty,
     ty2: &Ty,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut TyVarGen,
+    var_gen: &mut UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> bool {
@@ -418,7 +418,7 @@ pub(super) fn try_unify_one_way(
             panic!("{}: QVar {} during unification", loc_display(loc), var);
         }
 
-        (Ty::Var(var1), Ty::Var(var2)) => {
+        (Ty::UVar(var1), Ty::UVar(var2)) => {
             if var1 == var2 {
                 return true;
             }
@@ -430,7 +430,7 @@ pub(super) fn try_unify_one_way(
             true
         }
 
-        (Ty::Var(var), ty2) => {
+        (Ty::UVar(var), ty2) => {
             link_var(var, ty2);
             true
         }
@@ -486,9 +486,9 @@ pub(super) fn try_unify_one_way(
 
             if !extras2.is_empty() {
                 match &extension1 {
-                    Some(Ty::Var(var)) => {
+                    Some(Ty::UVar(var)) => {
                         // TODO: Not sure about level
-                        extension1 = Some(Ty::Var(link_extension(
+                        extension1 = Some(Ty::UVar(link_extension(
                             *kind1, &extras2, &labels2, var, var_gen, level, loc,
                         )));
                     }
@@ -527,11 +527,11 @@ fn link_extension(
     kind: RecordOrVariant,
     extra_labels: &HashSet<&&Id>,
     label_values: &OrdMap<Id, Ty>,
-    var: &TyVarRef,
-    var_gen: &mut TyVarGen,
+    var: &UVarRef,
+    var_gen: &mut UVarGen,
     level: u32,
     loc: &ast::Loc,
-) -> TyVarRef {
+) -> UVarRef {
     let extension_labels: OrdMap<Id, Ty> = extra_labels
         .iter()
         .map(|extra_field| {
@@ -545,7 +545,7 @@ fn link_extension(
     let new_extension_var = var_gen.new_var(level, Kind::Row(kind), loc.clone());
     let new_extension_ty = Ty::Anonymous {
         labels: extension_labels,
-        extension: Some(Box::new(Ty::Var(new_extension_var.clone()))),
+        extension: Some(Box::new(Ty::UVar(new_extension_var.clone()))),
         kind,
         is_row: true,
     };
@@ -559,7 +559,7 @@ pub(super) fn unify_expected_ty(
     ty: Ty,
     expected_ty: Option<&Ty>,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut TyVarGen,
+    var_gen: &mut UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> Ty {
@@ -569,7 +569,7 @@ pub(super) fn unify_expected_ty(
     ty
 }
 
-fn link_var(var: &TyVarRef, ty: &Ty) {
+fn link_var(var: &UVarRef, ty: &Ty) {
     // TODO: Occurs check.
     prune_level(ty, var.level());
     var.set_link(ty.clone());
@@ -579,7 +579,7 @@ fn prune_level(ty: &Ty, max_level: u32) {
     match ty {
         Ty::Con(_, _) => {}
 
-        Ty::Var(var) => {
+        Ty::UVar(var) => {
             // Assertion disabled for now, see #22.
             // assert!(var.link().is_none());
             var.prune_level(max_level);

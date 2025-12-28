@@ -1417,7 +1417,7 @@ fn mono_tc_ty(
     match ty.clone() {
         // TODO: When defaulting exception types we should use empty variant instead of record, to
         // indicate that the function doesn't throw.
-        Ty::Var(var) => match var.kind() {
+        Ty::UVar(var) => match var.kind() {
             Kind::Star => mono::Type::unit(),
             Kind::Row(RecordOrVariant::Record) => mono::Type::unit(),
             Kind::Row(RecordOrVariant::Variant) => mono::Type::Variant {
@@ -1520,7 +1520,7 @@ fn mono_tc_ty(
                             }
                         }
 
-                        Ty::Var(var) => {
+                        Ty::UVar(var) => {
                             assert!(var.link().is_none());
                         }
 
@@ -1561,7 +1561,7 @@ fn mono_tc_ty(
                             }
                         }
 
-                        Ty::Var(var) => {
+                        Ty::UVar(var) => {
                             assert!(var.link().is_none());
                         }
 

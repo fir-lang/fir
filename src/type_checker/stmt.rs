@@ -76,7 +76,7 @@ fn check_stmt(
             }
 
             expected_ty.cloned().unwrap_or_else(|| {
-                Ty::Var(
+                Ty::UVar(
                     tc_state
                         .var_gen
                         .new_var(level, Kind::Star, stmt.loc.clone()),
@@ -89,7 +89,7 @@ fn check_stmt(
                 .as_ref()
                 .map(|ast_ty| convert_ast_ty(&tc_state.tys.tys, &ast_ty.node, &ast_ty.loc))
                 .unwrap_or_else(|| {
-                    Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, lhs.loc.clone()))
+                    Ty::UVar(tc_state.var_gen.new_var(level, Kind::Star, lhs.loc.clone()))
                 });
 
             tc_state.env.enter();
@@ -332,7 +332,7 @@ fn check_stmt(
                 .as_ref()
                 .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
                 .unwrap_or_else(|| {
-                    Ty::Var(
+                    Ty::UVar(
                         tc_state
                             .var_gen
                             .new_var(level, Kind::Star, expr.loc.clone()),
@@ -345,7 +345,7 @@ fn check_stmt(
             tc_state.preds.push(Pred {
                 trait_: SmolStr::new_static("Iterator"),
                 params: vec![
-                    Ty::Var(iterator_ty_var.clone()),
+                    Ty::UVar(iterator_ty_var.clone()),
                     item_ty_var.clone(),
                     tc_state.exceptions.clone(),
                 ],
@@ -356,7 +356,7 @@ fn check_stmt(
                 check_expr(
                     tc_state,
                     expr,
-                    Some(&Ty::Var(iterator_ty_var.clone())),
+                    Some(&Ty::UVar(iterator_ty_var.clone())),
                     level,
                     loop_stack,
                 )

@@ -12,13 +12,13 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
     match &mut pat.node {
         ast::Pat::Var(ast::VarPat { var, ty }) => {
             assert!(ty.is_none());
-            let fresh_ty = Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone()));
+            let fresh_ty = Ty::UVar(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone()));
             *ty = Some(fresh_ty.clone());
             tc_state.env.insert(var.clone(), fresh_ty.clone());
             fresh_ty
         }
 
-        ast::Pat::Ignore => Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone())),
+        ast::Pat::Ignore => Ty::UVar(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone())),
 
         ast::Pat::Con(ast::ConPat {
             con:
@@ -111,7 +111,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             let (con_ty, con_ty_args) =
                 con_scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &pat.loc);
 
-            *ty_args = con_ty_args.into_iter().map(Ty::Var).collect();
+            *ty_args = con_ty_args.into_iter().map(Ty::UVar).collect();
 
             // If consturctor takes named arguments, fields pattern need to be named, or a variable
             // pattern, as shorthand for `foo = foo`.
@@ -162,7 +162,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             assert!(inferred_ty.is_none());
 
             let extension: Option<Box<Ty>> = if *ignore_rest {
-                Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
+                Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
                     level,
                     Kind::Row(RecordOrVariant::Record),
                     pat.loc.clone(),

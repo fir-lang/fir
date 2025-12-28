@@ -154,7 +154,7 @@ impl TraitImpl {
     pub fn try_match(
         &self,
         args: &[Ty],
-        var_gen: &mut TyVarGen,
+        var_gen: &mut UVarGen,
         tys: &TyMap,
         loc: &ast::Loc,
     ) -> Option<Vec<Pred>> {
@@ -171,7 +171,7 @@ impl TraitImpl {
             .iter()
             .map(|(qvar, kind)| {
                 let instantiated_var = var_gen.new_var(0, kind.clone(), loc.clone());
-                (qvar.clone(), Ty::Var(instantiated_var.clone()))
+                (qvar.clone(), Ty::UVar(instantiated_var.clone()))
             })
             .collect();
 

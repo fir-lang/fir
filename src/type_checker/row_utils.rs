@@ -32,7 +32,7 @@ pub(crate) fn collect_rows(
                 extension = next_ext;
             }
 
-            Ty::Var(var) => {
+            Ty::UVar(var) => {
                 assert!(
                     matches!(var.kind(), Kind::Row(_)),
                     "{:?} : {:?}",
