@@ -212,15 +212,13 @@ impl Type {
                 } else {
                     buffer.push('(');
                 }
-                for (i, field) in fields.iter().enumerate() {
+                for (i, (field_name, field_ty)) in fields.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
                     }
-                    if let Some(name) = &field.name {
-                        buffer.push_str(name);
-                        buffer.push_str(": ");
-                    }
-                    field.node.print(buffer);
+                    buffer.push_str(field_name);
+                    buffer.push_str(": ");
+                    field_ty.print(buffer);
                 }
                 if let Some(extension) = extension {
                     buffer.push('|');
@@ -648,15 +646,13 @@ impl Expr {
 
             Expr::Record(fields) => {
                 buffer.push('(');
-                for (i, field) in fields.iter().enumerate() {
+                for (i, (field_name, field_expr)) in fields.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
                     }
-                    if let Some(name) = &field.name {
-                        buffer.push_str(name);
-                        buffer.push_str(" = ");
-                    }
-                    field.node.node.print(buffer, 0);
+                    buffer.push_str(field_name);
+                    buffer.push_str(" = ");
+                    field_expr.node.print(buffer, 0);
                 }
                 buffer.push(')');
             }

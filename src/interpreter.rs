@@ -665,14 +665,11 @@ fn eval<W: Write>(
                     fields.find_named_field_idx(field)
                 }
 
-                HeapObj::Record(record_shape) => match record_shape {
-                    RecordShape::NamedFields { fields } => fields
-                        .iter()
-                        .enumerate()
-                        .find_map(|(i, field_)| if field == field_ { Some(i) } else { None })
-                        .unwrap(),
-                    RecordShape::UnnamedFields { .. } => panic!(),
-                },
+                HeapObj::Record(RecordShape { fields }) => fields
+                    .iter()
+                    .enumerate()
+                    .find_map(|(i, field_name)| if field == field_name { Some(i) } else { None })
+                    .unwrap(),
 
                 HeapObj::Builtin(builtin) => panic!(
                     "{}: Trying to select field of {:?}, object addr = {}",
@@ -886,37 +883,25 @@ fn eval<W: Write>(
             let record = heap.allocate(fields.len() + 1);
             heap[record] = idx.as_u64();
 
-            if !fields.is_empty() && fields[0].name.is_some() {
-                let name_indices: HashMap<Id, usize> = match shape {
-                    RecordShape::UnnamedFields { .. } => panic!(),
-                    RecordShape::NamedFields { fields } => fields
-                        .iter()
-                        .enumerate()
-                        .map(|(i, name)| (name.clone(), i))
-                        .collect(),
-                };
+            let name_indices: HashMap<Id, usize> = shape
+                .fields
+                .iter()
+                .enumerate()
+                .map(|(i, field_name)| (field_name.clone(), i))
+                .collect();
 
-                for field in fields {
-                    let field_value = val!(eval(
-                        w,
-                        pgm,
-                        heap,
-                        locals,
-                        &field.node.node,
-                        &field.node.loc,
-                        call_stack
-                    ));
-                    let field_idx = *name_indices.get(field.name.as_ref().unwrap()).unwrap();
-                    heap[record + 1 + (field_idx as u64)] = field_value;
-                }
-            } else {
-                for (idx, ast::Named { name, node }) in fields.iter().enumerate() {
-                    debug_assert!(name.is_none());
-                    let value = val!(eval(
-                        w, pgm, heap, locals, &node.node, &node.loc, call_stack
-                    ));
-                    heap[record + (idx as u64) + 1] = value;
-                }
+            for (field_name, field_expr) in fields {
+                let field_value = val!(eval(
+                    w,
+                    pgm,
+                    heap,
+                    locals,
+                    &field_expr.node,
+                    &field_expr.loc,
+                    call_stack
+                ));
+                let field_idx = *name_indices.get(field_name).unwrap();
+                heap[record + 1 + (field_idx as u64)] = field_value;
             }
 
             ControlFlow::Val(record)
@@ -1054,35 +1039,20 @@ fn try_bind_pat(pgm: &Pgm, heap: &mut Heap, pat: &L<Pat>, locals: &mut [u64], va
 
             let record_shape = pgm.heap_objs[idx.as_usize()].as_record();
 
-            match record_shape {
-                RecordShape::NamedFields { fields } => {
-                    for (i, field_name) in fields.iter().enumerate() {
-                        let field_pat = match field_pats.iter().find_map(|pat| {
-                            if pat.name.as_ref().unwrap() == field_name {
-                                Some(&pat.node)
-                            } else {
-                                None
-                            }
-                        }) {
-                            None => continue,
-                            Some(pat) => pat,
-                        };
-                        let field_value = heap[value + 1 + (i as u64)];
-                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
-                            return false;
-                        }
+            for (i, field_name) in record_shape.fields.iter().enumerate() {
+                let field_pat = match field_pats.iter().find_map(|pat| {
+                    if pat.name.as_ref().unwrap() == field_name {
+                        Some(&pat.node)
+                    } else {
+                        None
                     }
-                }
-
-                RecordShape::UnnamedFields { arity } => {
-                    debug_assert_eq!(*arity as usize, field_pats.len());
-                    for (i, field_pat) in field_pats.iter().enumerate() {
-                        debug_assert!(field_pat.name.is_none());
-                        let field_value = heap[value + 1 + (i as u64)];
-                        if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
-                            return false;
-                        }
-                    }
+                }) {
+                    None => continue,
+                    Some(pat) => pat,
+                };
+                let field_value = heap[value + 1 + (i as u64)];
+                if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
+                    return false;
                 }
             }
 

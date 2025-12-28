@@ -109,8 +109,8 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         }
 
         ast::Expr::Record(fields) => {
-            for field in fields {
-                normalize_expr(&mut field.node.node, cons);
+            for (_field_name, field_expr) in fields {
+                normalize_expr(&mut field_expr.node, cons);
             }
         }
 

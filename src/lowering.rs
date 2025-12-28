@@ -464,7 +464,7 @@ pub struct CallArg {
 
 #[derive(Debug, Clone)]
 pub struct RecordExpr {
-    pub fields: Vec<Named<L<Expr>>>,
+    pub fields: Vec<(Id, L<Expr>)>,
     pub idx: HeapObjIdx,
 }
 
@@ -905,7 +905,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
 
     // Always define unit.
     // TODO: Unit should be defined already as it's the return type of `main`?
-    record_shapes.insert(RecordShape::UnnamedFields { arity: 0 });
+    record_shapes.insert(RecordShape::unit());
 
     let mut record_indices: HashMap<RecordShape, HeapObjIdx> = Default::default();
     for record_shape in record_shapes {
@@ -916,7 +916,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     }
 
     lowered_pgm.unit_con_idx = *record_indices
-        .get(&RecordShape::UnnamedFields { arity: 0 })
+        .get(&RecordShape::unit())
         .unwrap_or_else(|| panic!("BUG: Unit record not defined {record_indices:#?}"));
 
     let indices = Indices {
@@ -1952,11 +1952,9 @@ fn lower_expr(
 
                 mono::Type::Record { fields } => {
                     let mut field_ty: Option<mono::Type> = None;
-                    for record_field in &fields {
-                        if let Some(name) = &record_field.name
-                            && name == field
-                        {
-                            field_ty = Some(record_field.node.clone());
+                    for (record_field_name, record_field_ty) in &fields {
+                        if record_field_name == field {
+                            field_ty = Some(record_field_ty.clone());
                             break;
                         }
                     }
@@ -2195,27 +2193,26 @@ fn lower_expr(
         mono::Expr::BinOp(_) => panic!("BUG: {}: Non-desugared BinOp", loc_display(loc)),
 
         mono::Expr::Record(fields) => {
+            let mut field_tys: OrdMap<Id, mono::Type> = Default::default();
+            let mut field_exprs: Vec<(Id, L<Expr>)> = Vec::with_capacity(fields.len());
+
+            for (field_name, field_expr) in fields {
+                let (field_expr, _field_vars, field_ty) =
+                    lower_l_expr(field_expr, closures, indices, scope, mono_pgm);
+                field_exprs.push((field_name.clone(), field_expr));
+                field_tys.insert(field_name.clone(), field_ty);
+            }
+
             let idx = *indices
                 .records
-                .get(&RecordShape::from_named_things(fields))
+                .get(&RecordShape {
+                    fields: field_tys.keys().cloned().collect(),
+                })
                 .unwrap();
-
-            let mut field_tys: Vec<Named<mono::Type>> = Vec::with_capacity(fields.len());
-            let mut field_exprs: Vec<Named<L<Expr>>> = Vec::with_capacity(fields.len());
-
-            for field in fields {
-                let (field_expr, _field_vars, field_ty) =
-                    lower_nl_expr(field, closures, indices, scope, mono_pgm);
-                field_exprs.push(field_expr);
-                field_tys.push(field.set_node(field_ty));
-            }
 
             (
                 Expr::Record(RecordExpr {
-                    fields: fields
-                        .iter()
-                        .map(|field| lower_nl_expr(field, closures, indices, scope, mono_pgm).0)
-                        .collect(),
+                    fields: field_exprs,
                     idx,
                 }),
                 Default::default(),
@@ -2418,25 +2415,6 @@ fn lower_expr(
     }
 }
 
-fn lower_nl_expr(
-    named_expr: &Named<L<mono::Expr>>,
-    closures: &mut Vec<Closure>,
-    indices: &Indices,
-    scope: &mut FunScope,
-    mono_pgm: &mono::MonoPgm,
-) -> (Named<L<Expr>>, HashMap<Id, LocalIdx>, mono::Type) {
-    let (expr, expr_vars, expr_ty) =
-        lower_l_expr(&named_expr.node, closures, indices, scope, mono_pgm);
-    (
-        Named {
-            name: named_expr.name.clone(),
-            node: expr,
-        },
-        expr_vars,
-        expr_ty,
-    )
-}
-
 fn lower_l_expr(
     l_expr: &L<mono::Expr>,
     closures: &mut Vec<Closure>,
@@ -2533,7 +2511,9 @@ fn lower_pat(
             };
             let idx = *indices
                 .records
-                .get(&RecordShape::from_named_things(record_ty_fields))
+                .get(&RecordShape {
+                    fields: record_ty_fields.keys().cloned().collect(),
+                })
                 .unwrap();
             Pat::Record(RecordPat {
                 fields: fields

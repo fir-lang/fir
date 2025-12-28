@@ -922,18 +922,13 @@ pub(super) fn check_expr(
 
             // TODO: For now only supporting named fields.
             let mut field_names: HashSet<&Id> = Default::default();
-            for field in fields.iter() {
-                match &field.name {
-                    Some(name) => {
-                        if !field_names.insert(name) {
-                            panic!(
-                                "{}: Field name {} occurs multiple times in the record",
-                                loc_display(&expr.loc),
-                                name
-                            );
-                        }
-                    }
-                    None => panic!("{}: Unnamed record field", loc_display(&expr.loc)),
+            for (field_name, _field_expr) in fields.iter() {
+                if !field_names.insert(field_name) {
+                    panic!(
+                        "{}: Field name {} occurs multiple times in the record",
+                        loc_display(&expr.loc),
+                        field_name
+                    );
                 }
             }
 
@@ -952,13 +947,12 @@ pub(super) fn check_expr(
             });
 
             let mut record_fields: OrdMap<Id, Ty> = OrdMap::new();
-            for field in fields.iter_mut() {
-                let field_name = field.name.as_ref().unwrap();
+            for (field_name, field_expr) in fields.iter_mut() {
                 let expected_ty = expected_fields
                     .as_ref()
                     .and_then(|expected_fields| expected_fields.get(field_name));
                 let (field_ty, _) =
-                    check_expr(tc_state, &mut field.node, expected_ty, level, loop_stack);
+                    check_expr(tc_state, field_expr, expected_ty, level, loop_stack);
                 record_fields.insert(field_name.clone(), field_ty);
             }
 
@@ -1266,14 +1260,8 @@ pub(super) fn check_expr(
                         Some(k) => ast::L {
                             loc: loc.clone(),
                             node: ast::Expr::Record(vec![
-                                ast::Named {
-                                    name: Some(SmolStr::new("key")),
-                                    node: k.clone(),
-                                },
-                                ast::Named {
-                                    name: Some(SmolStr::new("value")),
-                                    node: v.clone(),
-                                },
+                                (SmolStr::new("key"), k.clone()),
+                                (SmolStr::new("value"), v.clone()),
                             ]),
                         },
                         None => v.clone(),

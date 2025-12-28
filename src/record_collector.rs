@@ -1,40 +1,16 @@
-use crate::collections::HashSet;
+use crate::ast::Id;
+use crate::collections::*;
 use crate::mono_ast as mono;
 
-use smol_str::SmolStr;
-
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum RecordShape {
-    UnnamedFields {
-        arity: u32,
-    },
-
-    NamedFields {
-        // Sorted.
-        fields: Vec<SmolStr>,
-    },
+pub(crate) struct RecordShape {
+    pub(crate) fields: OrdSet<Id>,
 }
 
 impl RecordShape {
-    pub fn from_named_things<T>(things: &[mono::Named<T>]) -> RecordShape {
-        // All or none of the fields should be named.
-        if things.is_empty() {
-            return RecordShape::UnnamedFields { arity: 0 };
-        }
-
-        if things[0].name.is_some() {
-            let mut names: HashSet<SmolStr> = Default::default();
-            for thing in things {
-                let new = names.insert(thing.name.clone().unwrap());
-                assert!(new);
-            }
-            let mut fields: Vec<SmolStr> = names.into_iter().collect();
-            fields.sort();
-            RecordShape::NamedFields { fields }
-        } else {
-            RecordShape::UnnamedFields {
-                arity: things.len() as u32,
-            }
+    pub fn unit() -> RecordShape {
+        RecordShape {
+            fields: Default::default(),
         }
     }
 }
@@ -129,7 +105,9 @@ fn visit_ty(ty: &mono::Type, records: &mut HashSet<RecordShape>) {
         }
 
         mono::Type::Record { fields } => {
-            records.insert(RecordShape::from_named_things(fields));
+            records.insert(RecordShape {
+                fields: fields.keys().cloned().collect(),
+            });
         }
 
         mono::Type::Variant { alts } => {
@@ -280,10 +258,12 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordShape>) {
         }
 
         mono::Expr::Record(fields) => {
-            for field in fields {
-                visit_expr(&field.node.node, records);
+            for (_field_name, field_expr) in fields {
+                visit_expr(&field_expr.node, records);
             }
-            records.insert(RecordShape::from_named_things(fields));
+            records.insert(RecordShape {
+                fields: fields.iter().map(|(k, _v)| k.clone()).collect(),
+            });
         }
 
         mono::Expr::Return(expr) => visit_expr(&expr.node, records),

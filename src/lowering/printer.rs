@@ -329,15 +329,13 @@ impl Expr {
 
             Expr::Record(RecordExpr { fields, idx }) => {
                 write!(buffer, "rec{}(", idx.0).unwrap();
-                for (i, field) in fields.iter().enumerate() {
+                for (i, (field_name, field_expr)) in fields.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
                     }
-                    if let Some(name) = &field.name {
-                        buffer.push_str(name);
-                        buffer.push_str(" = ");
-                    }
-                    field.node.node.print(buffer, indent);
+                    buffer.push_str(field_name);
+                    buffer.push_str(" = ");
+                    field_expr.node.print(buffer, indent);
                 }
                 buffer.push(')');
             }

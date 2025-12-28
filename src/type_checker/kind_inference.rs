@@ -174,8 +174,8 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
             extension,
             is_row: _,
         } => {
-            for field in fields {
-                collect_tvs(&field.node, loc, tvs);
+            for (_field_name, field_ty) in fields {
+                collect_tvs(field_ty, loc, tvs);
             }
             if let Some(ext) = extension {
                 let old = tvs.insert(ext.clone(), Some(Kind::Row(RecordOrVariant::Record)));

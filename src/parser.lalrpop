@@ -264,12 +264,11 @@ TypeNoFn: Type = {
     <var:LowerId> =>
         Type::Var(var.smol_str()),
 
-    "(" <mut fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" => {
-        if fields.len() == 1 && extension.is_none() {
-            if fields[0].name.is_none() {
-                return fields.pop().unwrap().node;
-            }
-        }
+    "(" <ty:Type> ")" => {
+        ty
+    },
+
+    "(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" => {
         Type::Record { fields, extension, is_row: false }
     },
 
@@ -319,9 +318,8 @@ TypeArg: L<(Option<Id>, L<Type>)> = {
     },
 }
 
-RecordTypeField: Named<Type> = {
-    <name:LowerId> ":" <ty:Type> => Named { name: Some(name.smol_str()), node: ty },
-    <ty:Type> => Named { name: None, node: ty },
+RecordTypeField: (Id, Type) = {
+    <name:LowerId> ":" <ty:Type> => (name.smol_str(), ty),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -678,12 +676,12 @@ InlineExpr: Expr = {
         Expr::ConSel(Con { ty, con: Some(con), user_ty_args, ty_args: vec![] })
     },
 
-    "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
-        match exprs.len() {
-            0 => Expr::Record(vec![]),
-            1 if exprs[0].0.is_none() => exprs.pop().unwrap().1.node,
-            _ => Expr::Record(exprs.into_iter().map(|(name, expr)| Named { name: name, node: expr }).collect()),
-        }
+    "(" <expr:Expr> ")" => {
+        expr
+    },
+
+    "(" <exprs:Sep<ParenExpr, ",">> ")" => {
+        Expr::Record(exprs)
     },
 
     <int:IntLit> => {
@@ -964,12 +962,9 @@ InlineExpr: Expr = {
         }),
 }
 
-ParenExpr: (Option<Id>, L<Expr>) = {
+ParenExpr: (Id, L<Expr>) = {
     <id:LowerId> "=" <expr:LExpr> =>
-        (Some(id.smol_str()), expr),
-
-    <expr:LExpr> =>
-        (None, expr),
+        (id.smol_str(), expr),
 }
 
 CallArg: CallArg = {

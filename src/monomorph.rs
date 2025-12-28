@@ -691,9 +691,11 @@ fn mono_expr(
         ast::Expr::Record(fields) => mono::Expr::Record(
             fields
                 .iter()
-                .map(|named_field| {
-                    named_field
-                        .map_as_ref(|field| mono_l_expr(field, ty_map, poly_pgm, mono_pgm, locals))
+                .map(|(field_name, field_expr)| {
+                    (
+                        field_name.clone(),
+                        mono_l_expr(field_expr, ty_map, poly_pgm, mono_pgm, locals),
+                    )
                 })
                 .collect(),
         ),
@@ -1291,13 +1293,10 @@ fn match_(
         ) => {
             let fields1_map: HashMap<&Id, &ast::Type> = fields1
                 .iter()
-                .map(|field| (field.name.as_ref().unwrap(), &field.node))
+                .map(|(field_name, field_ty)| (field_name, field_ty))
                 .collect();
 
-            let mut fields2_map: HashMap<&Id, &mono::Type> = fields2
-                .iter()
-                .map(|field| (field.name.as_ref().unwrap(), &field.node))
-                .collect();
+            let mut fields2_map: HashMap<&Id, &mono::Type> = fields2.iter().collect();
 
             for (field_name, field1_ty) in &fields1_map {
                 let field2_ty = match fields2_map.remove(field_name) {
@@ -1319,9 +1318,8 @@ fn match_(
                     mono::Type::Record {
                         fields: fields2_map
                             .iter()
-                            .map(|(field2_name, field2_ty)| Named {
-                                name: Some((*field2_name).clone()),
-                                node: (*field2_ty).clone(),
+                            .map(|(field2_name, field2_ty)| {
+                                ((*field2_name).clone(), (*field2_ty).clone())
                             })
                             .collect(),
                     },
@@ -1498,14 +1496,11 @@ fn mono_tc_ty(
             is_row: _,
         } => match kind {
             crate::type_checker::RecordOrVariant::Record => {
-                let mut all_fields: Vec<ast::Named<mono::Type>> = vec![];
+                let mut all_fields: OrdMap<Id, mono::Type> = Default::default();
 
                 for (field, field_ty) in labels {
                     let field_mono_ty = mono_tc_ty(&field_ty, ty_map, poly_pgm, mono_pgm);
-                    all_fields.push(ast::Named {
-                        name: Some(field),
-                        node: field_mono_ty,
-                    });
+                    all_fields.insert(field, field_mono_ty);
                 }
 
                 if let Some(ty) = extension {
@@ -1514,7 +1509,8 @@ fn mono_tc_ty(
                             let ext = ty_map.get(con).unwrap();
                             match ext {
                                 mono::Type::Record { fields } => {
-                                    all_fields.extend(fields.iter().cloned());
+                                    all_fields
+                                        .extend(fields.iter().map(|(k, v)| (k.clone(), v.clone())));
                                 }
                                 _ => panic!(),
                             }
@@ -1605,19 +1601,20 @@ fn mono_ast_ty(
             assert!(!*is_row);
 
             let mut names: HashSet<&Id> = Default::default();
-            for field in fields {
-                if let Some(name) = &field.name {
-                    let new = names.insert(name);
-                    if !new {
-                        panic!("Record has duplicate fields: {fields:?}");
-                    }
+            for (field_name, _field_ty) in fields {
+                let new = names.insert(field_name);
+                if !new {
+                    panic!("Record has duplicate fields: {fields:?}");
                 }
             }
 
-            let mut fields: Vec<ast::Named<mono::Type>> = fields
+            let mut fields: OrdMap<Id, mono::Type> = fields
                 .iter()
-                .map(|named_ty| {
-                    named_ty.map_as_ref(|ty| mono_ast_ty(ty, ty_map, poly_pgm, mono_pgm))
+                .map(|(field_name, field_ty)| {
+                    (
+                        field_name.clone(),
+                        mono_ast_ty(field_ty, ty_map, poly_pgm, mono_pgm),
+                    )
                 })
                 .collect();
 
@@ -1626,7 +1623,7 @@ fn mono_ast_ty(
                     Some(mono::Type::Record {
                         fields: extra_fields,
                     }) => {
-                        fields.extend(extra_fields.iter().cloned());
+                        fields.extend(extra_fields.iter().map(|(k, v)| (k.clone(), v.clone())));
                     }
                     other => panic!("Record extension is not a record: {other:?}"),
                 }

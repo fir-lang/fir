@@ -44,18 +44,19 @@ pub enum ConFields {
     Unnamed(Vec<Type>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Type {
     Named(NamedType),
 
     Record {
-        fields: Vec<Named<Type>>,
+        fields: OrdMap<Id, Type>,
     },
 
     Variant {
         // Keys should be the same as named type's type constructor.
         //
-        // This is a map instead of set to avoid making `Type` `Ord` or `Hash`.
+        // TODO: This was a map instead of set to avoid making `Type` `Ord` or `Hash`, but `Type` is
+        // now all of those things, so we can now refactor this.
         alts: OrdMap<Id, NamedType>,
     },
 
@@ -67,24 +68,26 @@ pub enum Type {
 
 impl Type {
     pub(crate) fn unit() -> Type {
-        Type::Record { fields: vec![] }
+        Type::Record {
+            fields: Default::default(),
+        }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NamedType {
     pub name: Id,
     pub args: Vec<Type>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FnType {
     pub args: FunArgs,
     pub ret: Option<L<Box<Type>>>,
     pub exceptions: Option<L<Box<Type>>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FunArgs {
     Positional(Vec<Type>),
     Named(OrdMap<Id, Type>),
@@ -237,7 +240,7 @@ pub enum Expr {
     Str(Vec<StringPart>),
     Char(char),
     BinOp(BinOpExpr),
-    Record(Vec<Named<L<Expr>>>),
+    Record(Vec<(Id, L<Expr>)>),
     Return(Box<L<Expr>>),
     Match(MatchExpr),
     If(IfExpr),

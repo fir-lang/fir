@@ -14,7 +14,7 @@ use smol_str::SmolStr;
 pub type Id = SmolStr;
 
 /// Things with location information.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct L<T> {
     pub loc: Loc,
     pub node: T,
@@ -188,7 +188,7 @@ pub enum Type {
 
     /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..R)`.
     Record {
-        fields: Vec<Named<Type>>,
+        fields: Vec<(Id, Type)>,
         extension: Option<Id>,
         is_row: bool,
     },
@@ -525,8 +525,8 @@ pub enum Expr {
     /// Some of the unary operators are desugared to method calls by the type checker.
     UnOp(UnOpExpr),
 
-    /// A record: `(1, 2)`, `(x = 123, msg = "hi")`.
-    Record(Vec<Named<L<Expr>>>),
+    /// A record: `()`, `(x = 123, msg = "hi")`.
+    Record(Vec<(Id, L<Expr>)>),
 
     Return(Box<L<Expr>>),
 
@@ -836,12 +836,9 @@ impl Type {
                 extension,
                 is_row,
             } => {
-                let mut fields: Vec<Named<Type>> = fields
+                let mut fields: Vec<(Id, Type)> = fields
                     .iter()
-                    .map(|Named { name, node }| Named {
-                        name: name.clone(),
-                        node: node.subst_ids(substs),
-                    })
+                    .map(|(name, ty)| (name.clone(), ty.subst_ids(substs)))
                     .collect();
 
                 let mut extension = extension.clone();
@@ -1081,8 +1078,8 @@ impl Expr {
             }
 
             Expr::Record(fields) => {
-                for field in fields {
-                    field.node.node.subst_ty_ids(substs);
+                for (_field_name, field_expr) in fields {
+                    field_expr.node.subst_ty_ids(substs);
                 }
             }
 

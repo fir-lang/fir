@@ -21,20 +21,14 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
         } => {
             let mut ty_fields: OrdMap<Id, Ty> = OrdMap::new();
 
-            for ast::Named { name, node } in fields {
-                let name = name.as_ref().unwrap_or_else(|| {
-                    panic!(
-                        "{}: Records with unnamed fields not supported yet",
-                        loc_display(loc)
-                    )
-                });
-                let ty = convert_ast_ty(tys, node, loc);
-                let old = ty_fields.insert(name.clone(), ty);
+            for (field_name, field_ty) in fields {
+                let ty = convert_ast_ty(tys, field_ty, loc);
+                let old = ty_fields.insert(field_name.clone(), ty);
                 if old.is_some() {
                     panic!(
                         "{}: Field {} defined multiple times in record",
                         loc_display(loc),
-                        name
+                        field_name
                     );
                 }
             }
