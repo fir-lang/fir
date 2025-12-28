@@ -2645,7 +2645,7 @@ fn lower_source_fun(
             .as_ref()
             .map(|l| Ty::from_mono_ty(&l.node))
             .unwrap_or(Ty {
-                mono_ty: mono::Type::Record { fields: vec![] },
+                mono_ty: mono::Type::unit(),
                 repr: Repr::U64,
             }),
 

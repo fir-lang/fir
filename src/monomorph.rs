@@ -1418,8 +1418,8 @@ fn mono_tc_ty(
         // TODO: When defaulting exception types we should use empty variant instead of record, to
         // indicate that the function doesn't throw.
         Ty::Var(var) => match var.kind() {
-            Kind::Star => mono::Type::Record { fields: vec![] },
-            Kind::Row(RecordOrVariant::Record) => mono::Type::Record { fields: vec![] },
+            Kind::Star => mono::Type::unit(),
+            Kind::Row(RecordOrVariant::Record) => mono::Type::unit(),
             Kind::Row(RecordOrVariant::Variant) => mono::Type::Variant {
                 alts: Default::default(),
             },
