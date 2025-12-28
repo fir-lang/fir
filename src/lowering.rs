@@ -917,7 +917,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
 
     lowered_pgm.unit_con_idx = *record_indices
         .get(&RecordShape::UnnamedFields { arity: 0 })
-        .unwrap_or_else(|| panic!("Unit record not defined {record_indices:#?}"));
+        .unwrap_or_else(|| panic!("BUG: Unit record not defined {record_indices:#?}"));
 
     let indices = Indices {
         product_cons: product_con_nums,
@@ -1839,27 +1839,64 @@ fn lower_expr(
         }
 
         mono::Expr::ConSel(mono::Con { ty, con, ty_args }) => {
+            fn make_con_fn_type(fields: &mono::ConFields, ret: mono::Type) -> mono::Type {
+                match fields {
+                    mono::ConFields::Empty => ret,
+
+                    mono::ConFields::Named(args) => mono::Type::Fn(mono::FnType {
+                        args: mono::FunArgs::Named(args.iter().cloned().collect()),
+                        ret: Some(ast::L::new_dummy(Box::new(ret))),
+                        exceptions: None,
+                    }),
+
+                    mono::ConFields::Unnamed(args) => mono::Type::Fn(mono::FnType {
+                        args: mono::FunArgs::Positional(args.clone()),
+                        ret: Some(ast::L::new_dummy(Box::new(ret))),
+                        exceptions: None,
+                    }),
+                }
+            }
+
             let mono_ty = mono::Type::Named(mono::NamedType {
                 name: ty.clone(),
                 args: ty_args.clone(),
             });
-            (
-                match con {
-                    Some(con) => Expr::Con(
-                        *indices
-                            .sum_cons
-                            .get(ty)
-                            .unwrap()
-                            .get(con)
-                            .unwrap()
-                            .get(ty_args)
-                            .unwrap(),
-                    ),
-                    None => Expr::Con(*indices.product_cons.get(ty).unwrap().get(ty_args).unwrap()),
-                },
-                Default::default(),
-                mono_ty,
-            )
+
+            let idx: HeapObjIdx = match con {
+                Some(con) => *indices
+                    .sum_cons
+                    .get(ty)
+                    .unwrap()
+                    .get(con)
+                    .unwrap()
+                    .get(ty_args)
+                    .unwrap(),
+                None => *indices.product_cons.get(ty).unwrap().get(ty_args).unwrap(),
+            };
+
+            let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty).unwrap().get(ty_args).unwrap();
+
+            let con_sel_ty: mono::Type = match &ty_decl.rhs {
+                Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
+                    for con_ in cons {
+                        if con_.name == *con.as_ref().unwrap() {
+                            break 'l make_con_fn_type(&con_.fields, mono_ty);
+                        }
+                    }
+                    panic!(
+                        "BUG: {}: Type {} doesn't have constructor named {}",
+                        loc_display(loc),
+                        ty,
+                        con.as_ref().unwrap()
+                    );
+                }
+
+                Some(mono::TypeDeclRhs::Product(fields)) => make_con_fn_type(fields, mono_ty),
+
+                None => make_con_fn_type(&mono::ConFields::Empty, mono_ty),
+            };
+
+            (Expr::Con(idx), Default::default(), con_sel_ty)
         }
 
         mono::Expr::FieldSel(mono::FieldSelExpr { object, field }) => {
@@ -1873,14 +1910,20 @@ fn lower_expr(
 
                     match &ty_decl.rhs {
                         None => {
-                            panic!("{}: FieldSel object doesn't have fields", loc_display(loc));
+                            panic!(
+                                "BUG: {}: FieldSel object doesn't have fields",
+                                loc_display(loc)
+                            );
                         }
                         Some(mono::TypeDeclRhs::Sum(_)) => {
-                            panic!("{}: FieldSel object is a sum type", loc_display(loc));
+                            panic!("BUG: {}: FieldSel object is a sum type", loc_display(loc));
                         }
                         Some(mono::TypeDeclRhs::Product(fields)) => match fields {
                             mono::ConFields::Empty => {
-                                panic!("{}: FieldSel object doesn't have fields", loc_display(loc));
+                                panic!(
+                                    "BUG: {}: FieldSel object doesn't have fields",
+                                    loc_display(loc)
+                                );
                             }
                             mono::ConFields::Named(named_fields) => {
                                 let mut field_ty: Option<mono::Type> = None;
@@ -1899,7 +1942,7 @@ fn lower_expr(
                             }
                             mono::ConFields::Unnamed(_) => {
                                 panic!(
-                                    "{}: FieldSel object doesn't have named fields",
+                                    "BUG: {}: FieldSel object doesn't have named fields",
                                     loc_display(loc)
                                 )
                             }
@@ -1918,13 +1961,19 @@ fn lower_expr(
                         }
                     }
                     field_ty.unwrap_or_else(|| {
-                        panic!("FieldSel object doesn't have the field {}", field)
+                        panic!(
+                            "BUG: {}: FieldSel object doesn't have the field {}",
+                            loc_display(loc),
+                            field
+                        )
                     })
                 }
 
-                mono::Type::Variant { .. } => panic!("FieldSel of variant"),
+                mono::Type::Variant { .. } => {
+                    panic!("BUG: {}: FieldSel of variant", loc_display(loc))
+                }
 
-                mono::Type::Fn(_) => panic!("FieldSel of function"),
+                mono::Type::Fn(_) => panic!("BUG: {}: FieldSel of function", loc_display(loc)),
 
                 mono::Type::Never => mono::Type::Never,
             };
@@ -2016,7 +2065,7 @@ fn lower_expr(
                 },
                 mono::Type::Named(_) | mono::Type::Record { .. } | mono::Type::Variant { .. } => {
                     panic!(
-                        "{}: Function in call expression does not have a function type: {}",
+                        "BUG: {}: Function in call expression does not have a function type: {}",
                         loc_display(loc),
                         fun_ty,
                     )
@@ -2142,7 +2191,7 @@ fn lower_expr(
             }),
         ),
 
-        mono::Expr::BinOp(_) => panic!("{}: Non-desugared BinOp", loc_display(loc)),
+        mono::Expr::BinOp(_) => panic!("BUG: {}: Non-desugared BinOp", loc_display(loc)),
 
         mono::Expr::Record(fields) => {
             let idx = *indices
@@ -2479,7 +2528,7 @@ fn lower_pat(
             let record_ty_fields = match ty {
                 mono::Type::Record { fields } => fields,
                 mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_) => panic!(),
-                mono::Type::Never => panic!("Pattern with Never type"),
+                mono::Type::Never => panic!("BUG: Pattern with Never type"),
             };
             let idx = *indices
                 .records
