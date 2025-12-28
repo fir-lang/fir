@@ -2125,6 +2125,17 @@ fn lower_expr(
                 .records
                 .get(&RecordShape::from_named_things(fields))
                 .unwrap();
+
+            let mut field_tys: Vec<Named<mono::Type>> = Vec::with_capacity(fields.len());
+            let mut field_exprs: Vec<Named<L<Expr>>> = Vec::with_capacity(fields.len());
+
+            for field in fields {
+                let (field_expr, _field_vars, field_ty) =
+                    lower_nl_expr(field, closures, indices, scope, mono_pgm);
+                field_exprs.push(field_expr);
+                field_tys.push(field.set_node(field_ty));
+            }
+
             (
                 Expr::Record(RecordExpr {
                     fields: fields
@@ -2134,7 +2145,7 @@ fn lower_expr(
                     idx,
                 }),
                 Default::default(),
-                todo!(),
+                mono::Type::Record { fields: field_tys },
             )
         }
 

@@ -242,6 +242,13 @@ impl<T> Named<T> {
             node: f(node),
         }
     }
+
+    pub fn set_node<T2>(&self, node: T2) -> Named<T2> {
+        Named {
+            name: self.name.clone(),
+            node,
+        }
+    }
 }
 
 /// Type signature part of a function declaration: type parameters, value parameters, exception
