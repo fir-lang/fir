@@ -830,15 +830,15 @@ fn mono_expr(
 //
 // - method_ty_id: `Iterator`
 // - method_id: `next`
-// - ty_args: `[Map[Chars, Char, U32], U32, r]`
+// - ty_args: `[Map[Chars, Char, U32], U32, exn]`
 //     (type arguments to `Iterator.next`)
-//     (`r` is the exception row)
+//     (`exn` is the exception type)
 //
 // Example for non-traits: `x.push` where `x: Vec[U32]`.
 //
 // - method_ty_id: `Vec`
 // - method_id: `push`
-// - ty_args: `[U32, r]`
+// - ty_args: `[U32, exn]`
 fn mono_method(
     method_ty_id: &Id,      // type that the method belonds to: `trait` or `type`
     method_id: &Id,         // method name
@@ -1262,8 +1262,8 @@ fn match_trait_impl(
     debug_assert_eq!(ty_args.len(), trait_impl.tys.len(), "{ty_args:?}");
 
     let mut substs: HashMap<Id, mono::Type> = Default::default();
-    for (trait_ty, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
-        if !match_(trait_ty, ty_arg, &mut substs) {
+    for (impl_ty_arg, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
+        if !match_(impl_ty_arg, ty_arg, &mut substs) {
             return None;
         }
     }
@@ -1271,8 +1271,12 @@ fn match_trait_impl(
     Some(substs)
 }
 
-fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut HashMap<Id, mono::Type>) -> bool {
-    match (trait_ty, arg_ty) {
+fn match_(
+    impl_ty_arg: &ast::Type,
+    arg_ty: &mono::Type,
+    substs: &mut HashMap<Id, mono::Type>,
+) -> bool {
+    match (impl_ty_arg, arg_ty) {
         (ast::Type::Named(trait_named_ty), mono::Type::Named(arg_named_ty)) => {
             match_named_ty(trait_named_ty, arg_named_ty, substs)
         }
