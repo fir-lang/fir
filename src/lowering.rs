@@ -1952,18 +1952,19 @@ fn lower_expr(
 
                 mono::Type::Record { fields } => {
                     let mut field_ty: Option<mono::Type> = None;
-                    for record_field in fields {
-                        if let Some(name) = record_field.name
-                            && name == *field
+                    for record_field in &fields {
+                        if let Some(name) = &record_field.name
+                            && name == field
                         {
-                            field_ty = Some(record_field.node);
+                            field_ty = Some(record_field.node.clone());
                             break;
                         }
                     }
                     field_ty.unwrap_or_else(|| {
                         panic!(
-                            "BUG: {}: FieldSel object doesn't have the field {}",
+                            "BUG: {}: FieldSel object with type {} doesn't have the field '{}'",
                             loc_display(loc),
+                            mono::Type::Record { fields },
                             field
                         )
                     })

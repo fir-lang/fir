@@ -24,7 +24,7 @@ HashSet.fromIter[Iterator[iter, k, exn], Eq[k], Hash[k]](iter: iter) HashSet[k] 
 
 
 HashSet.iter(self: HashSet[k]) Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn]:
-    self._map.iter().map(\(kv) k: kv.key)
+    self._map.iter().map(\(kv: HashMapEntry[k, ()]) k: kv.key)
 
 
 ## Returns whether the value is newly inserted.
