@@ -157,7 +157,9 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             for stmt in body {
                 normalize_instantiation_types(&mut stmt.node, cons);
             }
-            inferred_ty.as_mut().map(|ty| *ty = ty.deep_normalize(cons));
+            if let Some(inferred_ty) = inferred_ty.as_mut() {
+                *inferred_ty = inferred_ty.deep_normalize(cons);
+            }
         }
 
         ast::Expr::Is(ast::IsExpr { expr, pat }) => {
