@@ -2008,7 +2008,11 @@ fn lower_expr(
                     None => mono::Type::unit(),
                 },
                 mono::Type::Named(_) | mono::Type::Record { .. } | mono::Type::Variant { .. } => {
-                    panic!("Function in call expression does not have a function type")
+                    panic!(
+                        "{}: Function in call expression does not have a function type: {}",
+                        crate::utils::loc_display(loc),
+                        fun_ty,
+                    )
                 }
                 mono::Type::Never => {
                     // TODO: In this case we could convert the call to just `fun` as evaluation of
