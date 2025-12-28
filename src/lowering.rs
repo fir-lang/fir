@@ -1862,9 +1862,66 @@ fn lower_expr(
         }
 
         mono::Expr::FieldSel(mono::FieldSelExpr { object, field }) => {
-            let (object, object_vars, object_ty) =
+            let (object, _object_vars, object_ty) =
                 lower_bl_expr(object, closures, indices, scope, mono_pgm);
-            let field_ty: mono::Type = todo!();
+
+            let field_ty: mono::Type = match object_ty {
+                mono::Type::Named(mono::NamedType { name, args }) => {
+                    let ty_decl: &mono::TypeDecl =
+                        mono_pgm.ty.get(&name).unwrap().get(&args).unwrap();
+
+                    match &ty_decl.rhs {
+                        None => {
+                            panic!("FieldSel object doesn't have fields");
+                        }
+                        Some(mono::TypeDeclRhs::Sum(_)) => {
+                            panic!("FieldSel object is a sum type");
+                        }
+                        Some(mono::TypeDeclRhs::Product(fields)) => match fields {
+                            mono::ConFields::Empty => {
+                                panic!("FieldSel object doesn't have fields");
+                            }
+                            mono::ConFields::Named(named_fields) => {
+                                let mut field_ty: Option<mono::Type> = None;
+                                for (ty_field_name, ty_field_ty) in named_fields {
+                                    if ty_field_name == field {
+                                        field_ty = Some(ty_field_ty.clone());
+                                        break;
+                                    }
+                                }
+                                field_ty.unwrap_or_else(|| {
+                                    panic!("FieldSel object doesn't have named field")
+                                })
+                            }
+                            mono::ConFields::Unnamed(_) => {
+                                panic!("FieldSel object doesn't have named fields")
+                            }
+                        },
+                    }
+                }
+
+                mono::Type::Record { fields } => {
+                    let mut field_ty: Option<mono::Type> = None;
+                    for record_field in fields {
+                        if let Some(name) = record_field.name
+                            && name == *field
+                        {
+                            field_ty = Some(record_field.node);
+                            break;
+                        }
+                    }
+                    field_ty.unwrap_or_else(|| {
+                        panic!("FieldSel object doesn't have the field {}", field)
+                    })
+                }
+
+                mono::Type::Variant { .. } => panic!("FieldSel of variant"),
+
+                mono::Type::Fn(_) => panic!("FieldSel of function"),
+
+                mono::Type::Never => mono::Type::Never,
+            };
+
             (
                 Expr::FieldSel(FieldSelExpr {
                     object,
@@ -1930,20 +1987,37 @@ fn lower_expr(
             todo!(),
         ),
 
-        mono::Expr::Call(mono::CallExpr { fun, args }) => (
-            Expr::Call(CallExpr {
-                fun: lower_bl_expr(fun, closures, indices, scope, mono_pgm).0,
-                args: args
-                    .iter()
-                    .map(|mono::CallArg { name, expr }| CallArg {
-                        name: name.clone(),
-                        expr: lower_l_expr(expr, closures, indices, scope, mono_pgm).0,
-                    })
-                    .collect(),
-            }),
-            Default::default(),
-            todo!(),
-        ),
+        mono::Expr::Call(mono::CallExpr { fun, args }) => {
+            let (fun, _fun_vars, fun_ty) = lower_bl_expr(fun, closures, indices, scope, mono_pgm);
+            let ret_ty: mono::Type = match fun_ty {
+                mono::Type::Fn(fn_type) => match fn_type.ret {
+                    Some(boxed_ty) => *boxed_ty.node,
+                    None => mono::Type::unit(),
+                },
+                mono::Type::Named(_) | mono::Type::Record { .. } | mono::Type::Variant { .. } => {
+                    panic!("Function in call expression does not have a function type")
+                }
+                mono::Type::Never => {
+                    // TODO: In this case we could convert the call to just `fun` as evaluation of
+                    // `fun` won't generate a value.
+                    mono::Type::Never
+                }
+            };
+            (
+                Expr::Call(CallExpr {
+                    fun,
+                    args: args
+                        .iter()
+                        .map(|mono::CallArg { name, expr }| CallArg {
+                            name: name.clone(),
+                            expr: lower_l_expr(expr, closures, indices, scope, mono_pgm).0,
+                        })
+                        .collect(),
+                }),
+                Default::default(),
+                ret_ty,
+            )
+        }
 
         mono::Expr::Int(int) => {
             let int_ty_con = match int.suffix.unwrap() {
@@ -2071,7 +2145,7 @@ fn lower_expr(
         }
 
         mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => {
-            let (scrutinee, scrut_vars, scrut_ty) =
+            let (scrutinee, scrut_vars, _scrut_ty) =
                 lower_bl_expr(scrutinee, closures, indices, scope, mono_pgm);
             scope.bounds.push_scope(scrut_vars);
 
@@ -2127,7 +2201,7 @@ fn lower_expr(
                 branches: branches
                     .iter()
                     .map(|(cond, rhs)| {
-                        let (cond, pat_vars, cond_ty) =
+                        let (cond, pat_vars, _cond_ty) =
                             lower_l_expr(cond, closures, indices, scope, mono_pgm);
                         scope.bounds.push_scope(pat_vars);
                         let rhs = rhs
@@ -2369,10 +2443,8 @@ fn lower_pat(
         mono::Pat::Record(mono::RecordPat { fields, ty }) => {
             let record_ty_fields = match ty {
                 mono::Type::Record { fields } => fields,
-                mono::Type::Named(_)
-                | mono::Type::Variant { .. }
-                | mono::Type::Fn(_)
-                | mono::Type::Never => panic!(),
+                mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_) => panic!(),
+                mono::Type::Never => panic!("Pattern with Never type"),
             };
             let idx = *indices
                 .records
