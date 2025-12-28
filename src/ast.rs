@@ -520,7 +520,7 @@ pub enum Expr {
     /// Some of the binary operators are desugared to method calls by the type checker.
     BinOp(BinOpExpr),
 
-    /// A unary operator: `-x`, `!b`.
+    /// A unary operator: `-x`, `not b`.
     ///
     /// Some of the unary operators are desugared to method calls by the type checker.
     UnOp(UnOpExpr),
