@@ -218,6 +218,10 @@ impl Type {
                     ret.node.print(buffer);
                 }
             }
+
+            Type::Never => {
+                buffer.push('!');
+            }
         }
     }
 }

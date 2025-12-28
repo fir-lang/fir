@@ -60,6 +60,15 @@ pub enum Type {
     },
 
     Fn(FnType),
+
+    /// Type of expressions that don't generate a value. E.g. `continue`, `break`.
+    Never,
+}
+
+impl Type {
+    pub(crate) fn unit() -> Type {
+        Type::Record { fields: vec![] }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
