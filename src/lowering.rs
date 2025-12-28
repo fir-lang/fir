@@ -7,6 +7,7 @@ use crate::ast;
 use crate::collections::*;
 use crate::mono_ast::{self as mono, AssignOp, Id, L, Loc, Named};
 use crate::record_collector::{RecordShape, collect_records};
+use crate::utils::loc_display;
 
 use smol_str::SmolStr;
 
@@ -1872,14 +1873,14 @@ fn lower_expr(
 
                     match &ty_decl.rhs {
                         None => {
-                            panic!("FieldSel object doesn't have fields");
+                            panic!("{}: FieldSel object doesn't have fields", loc_display(loc));
                         }
                         Some(mono::TypeDeclRhs::Sum(_)) => {
-                            panic!("FieldSel object is a sum type");
+                            panic!("{}: FieldSel object is a sum type", loc_display(loc));
                         }
                         Some(mono::TypeDeclRhs::Product(fields)) => match fields {
                             mono::ConFields::Empty => {
-                                panic!("FieldSel object doesn't have fields");
+                                panic!("{}: FieldSel object doesn't have fields", loc_display(loc));
                             }
                             mono::ConFields::Named(named_fields) => {
                                 let mut field_ty: Option<mono::Type> = None;
@@ -1890,11 +1891,17 @@ fn lower_expr(
                                     }
                                 }
                                 field_ty.unwrap_or_else(|| {
-                                    panic!("FieldSel object doesn't have named field")
+                                    panic!(
+                                        "{}: FieldSel object doesn't have named field",
+                                        loc_display(loc)
+                                    )
                                 })
                             }
                             mono::ConFields::Unnamed(_) => {
-                                panic!("FieldSel object doesn't have named fields")
+                                panic!(
+                                    "{}: FieldSel object doesn't have named fields",
+                                    loc_display(loc)
+                                )
                             }
                         },
                     }
@@ -2010,7 +2017,7 @@ fn lower_expr(
                 mono::Type::Named(_) | mono::Type::Record { .. } | mono::Type::Variant { .. } => {
                     panic!(
                         "{}: Function in call expression does not have a function type: {}",
-                        crate::utils::loc_display(loc),
+                        loc_display(loc),
                         fun_ty,
                     )
                 }
@@ -2135,7 +2142,7 @@ fn lower_expr(
             }),
         ),
 
-        mono::Expr::BinOp(_) => panic!("Non-desugared BinOp"),
+        mono::Expr::BinOp(_) => panic!("{}: Non-desugared BinOp", loc_display(loc)),
 
         mono::Expr::Record(fields) => {
             let idx = *indices
