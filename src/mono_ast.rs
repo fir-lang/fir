@@ -40,7 +40,7 @@ pub struct ConDecl {
 #[derive(Debug, Clone)]
 pub enum ConFields {
     Empty,
-    Named(Vec<(Id, Type)>),
+    Named(OrdMap<Id, Type>),
     Unnamed(Vec<Type>),
 }
 

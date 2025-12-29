@@ -9,7 +9,6 @@ use heap::Heap;
 use crate::ast::{self, Id, L, Loc};
 use crate::collections::HashMap;
 use crate::lowering::*;
-use crate::record_collector::RecordShape;
 use crate::utils::loc_display;
 
 use std::cmp::Ordering;
@@ -459,7 +458,7 @@ fn allocate_object_from_idx<W: Write>(
                 let old = named_values.insert(name.clone(), value);
                 debug_assert!(old.is_none());
             }
-            for (name, _) in field_names {
+            for name in field_names.keys() {
                 arg_values.push(*named_values.get(name).unwrap());
             }
         }
@@ -647,7 +646,11 @@ fn eval<W: Write>(
             ControlFlow::Val(heap.allocate_con(con_idx.as_u64()))
         }
 
-        Expr::FieldSel(FieldSelExpr { object, field }) => {
+        Expr::FieldSel(FieldSelExpr {
+            object,
+            field: _,
+            idx,
+        }) => {
             let object = val!(eval(
                 w,
                 pgm,
@@ -657,29 +660,7 @@ fn eval<W: Write>(
                 &object.loc,
                 call_stack
             ));
-            let object_tag = heap[object];
-            let heap_obj = &pgm.heap_objs[object_tag as usize];
-            let field_idx = match heap_obj {
-                HeapObj::Source(source_con_decl) => {
-                    let fields = &source_con_decl.fields;
-                    fields.find_named_field_idx(field)
-                }
-
-                HeapObj::Record(RecordShape { fields }) => fields
-                    .iter()
-                    .enumerate()
-                    .find_map(|(i, field_name)| if field == field_name { Some(i) } else { None })
-                    .unwrap(),
-
-                HeapObj::Builtin(builtin) => panic!(
-                    "{}: Trying to select field of {:?}, object addr = {}",
-                    loc_display(loc),
-                    builtin,
-                    object
-                ),
-            };
-
-            ControlFlow::Val(heap[object + 1 + (field_idx as u64)])
+            ControlFlow::Val(heap[object + 1 + (*idx as u64)])
         }
 
         Expr::MethodSel(MethodSelExpr { object, fun_idx }) => {
@@ -949,7 +930,11 @@ fn assign<W: Write>(
             locals[local_idx.as_usize()] = val;
         }
 
-        Expr::FieldSel(FieldSelExpr { object, field }) => {
+        Expr::FieldSel(FieldSelExpr {
+            object,
+            field: _,
+            idx,
+        }) => {
             let object = val!(eval(
                 w,
                 pgm,
@@ -959,11 +944,7 @@ fn assign<W: Write>(
                 &object.loc,
                 call_stack,
             ));
-            let object_idx = heap[object];
-            let object_con = pgm.heap_objs[object_idx as usize].as_source_con();
-            let object_fields = &object_con.fields;
-            let field_idx = object_fields.find_named_field_idx(field);
-            heap[object + 1 + (field_idx as u64)] = val;
+            heap[object + 1 + (*idx as u64)] = val;
         }
 
         _ => todo!("Assign statement with fancy LHS at {:?}", &lhs.loc),

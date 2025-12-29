@@ -269,7 +269,11 @@ impl Expr {
 
             Expr::Con(idx) => write!(buffer, "con{}", idx.0).unwrap(),
 
-            Expr::FieldSel(FieldSelExpr { object, field }) => {
+            Expr::FieldSel(FieldSelExpr {
+                object,
+                field,
+                idx: _,
+            }) => {
                 object.node.print(buffer, indent);
                 buffer.push('.');
                 buffer.push_str(field);

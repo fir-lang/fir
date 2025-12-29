@@ -347,7 +347,7 @@ pub struct SourceConDecl {
 
 #[derive(Debug)]
 pub enum ConFields {
-    Named(Vec<(Id, Ty)>),
+    Named(OrdMap<Id, Ty>),
     Unnamed(Vec<Ty>),
 }
 
@@ -363,9 +363,9 @@ impl ConFields {
         match self {
             ConFields::Unnamed(_) => panic!(),
             ConFields::Named(fields) => fields
-                .iter()
+                .keys()
                 .enumerate()
-                .find_map(|(i, field)| if &field.0 == id { Some(i) } else { None })
+                .find_map(|(i, field_name)| if field_name == id { Some(i) } else { None })
                 .unwrap(),
         }
     }
@@ -441,7 +441,15 @@ pub enum Expr {
 #[derive(Debug, Clone)]
 pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
+
+    /// For debugging: name of the field.
     pub field: Id,
+
+    /// Index of the field in the object's payload.
+    ///
+    /// Note: this is not *offset* of the field from the object's address. E.g. if an object has N
+    /// words of header, the field's address will be `object[N + idx]`.
+    pub idx: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -1844,7 +1852,9 @@ fn lower_expr(
                     mono::ConFields::Empty => ret,
 
                     mono::ConFields::Named(args) => mono::Type::Fn(mono::FnType {
-                        args: mono::FunArgs::Named(args.iter().cloned().collect()),
+                        args: mono::FunArgs::Named(
+                            args.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
+                        ),
                         ret: Some(ast::L::new_dummy(Box::new(ret))),
                         exceptions: None,
                     }),
@@ -1903,7 +1913,7 @@ fn lower_expr(
             let (object, _object_vars, object_ty) =
                 lower_bl_expr(object, closures, indices, scope, mono_pgm);
 
-            let field_ty: mono::Type = match object_ty {
+            let (field_ty, field_idx): (mono::Type, u32) = match object_ty {
                 mono::Type::Named(mono::NamedType { name, args }) => {
                     let ty_decl: &mono::TypeDecl =
                         mono_pgm.ty.get(&name).unwrap().get(&args).unwrap();
@@ -1927,18 +1937,23 @@ fn lower_expr(
                             }
                             mono::ConFields::Named(named_fields) => {
                                 let mut field_ty: Option<mono::Type> = None;
-                                for (ty_field_name, ty_field_ty) in named_fields {
+                                let mut field_idx: u32 = 0;
+                                for (field_idx_, (ty_field_name, ty_field_ty)) in
+                                    named_fields.iter().enumerate()
+                                {
                                     if ty_field_name == field {
                                         field_ty = Some(ty_field_ty.clone());
+                                        field_idx = field_idx_ as u32;
                                         break;
                                     }
                                 }
-                                field_ty.unwrap_or_else(|| {
+                                let field_ty = field_ty.unwrap_or_else(|| {
                                     panic!(
                                         "{}: FieldSel object doesn't have named field",
                                         loc_display(loc)
                                     )
-                                })
+                                });
+                                (field_ty, field_idx)
                             }
                             mono::ConFields::Unnamed(_) => {
                                 panic!(
@@ -1952,20 +1967,25 @@ fn lower_expr(
 
                 mono::Type::Record { fields } => {
                     let mut field_ty: Option<mono::Type> = None;
-                    for (record_field_name, record_field_ty) in &fields {
+                    let mut field_idx: u32 = 0;
+                    for (field_idx_, (record_field_name, record_field_ty)) in
+                        fields.iter().enumerate()
+                    {
                         if record_field_name == field {
                             field_ty = Some(record_field_ty.clone());
+                            field_idx = field_idx_ as u32;
                             break;
                         }
                     }
-                    field_ty.unwrap_or_else(|| {
+                    let field_ty = field_ty.unwrap_or_else(|| {
                         panic!(
                             "BUG: {}: FieldSel object with type {} doesn't have the field '{}'",
                             loc_display(loc),
                             mono::Type::Record { fields },
                             field
                         )
-                    })
+                    });
+                    (field_ty, field_idx)
                 }
 
                 mono::Type::Variant { .. } => {
@@ -1974,13 +1994,14 @@ fn lower_expr(
 
                 mono::Type::Fn(_) => panic!("BUG: {}: FieldSel of function", loc_display(loc)),
 
-                mono::Type::Never => mono::Type::Never,
+                mono::Type::Never => (mono::Type::Never, 0),
             };
 
             (
                 Expr::FieldSel(FieldSelExpr {
                     object,
                     field: field.clone(),
+                    idx: field_idx,
                 }),
                 Default::default(),
                 field_ty,
