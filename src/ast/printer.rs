@@ -63,16 +63,15 @@ impl TypeDeclRhs {
                         ConFields::Empty => {}
 
                         ConFields::Named(fields) => {
-                            buffer.push_str(":\n");
-                            for (i, (field_name, field_ty)) in fields.iter().enumerate() {
-                                if i != 0 {
-                                    buffer.push('\n');
-                                }
-                                buffer.push_str(&INDENTS[0..indent as usize]);
+                            buffer.push_str("(\n");
+                            for (field_name, field_ty) in fields.iter() {
+                                buffer.push_str(&INDENTS[0..indent as usize + 4]);
                                 buffer.push_str(field_name);
                                 buffer.push_str(": ");
                                 field_ty.node.print(buffer);
+                                buffer.push_str(",\n");
                             }
+                            buffer.push_str("    )");
                         }
 
                         ConFields::Unnamed(fields) => {
@@ -93,16 +92,15 @@ impl TypeDeclRhs {
                 ConFields::Empty => {}
 
                 ConFields::Named(fields) => {
-                    buffer.push_str(":\n");
-                    for (i, (field_name, field_ty)) in fields.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push('\n');
-                        }
+                    buffer.push_str("(\n");
+                    for (field_name, field_ty) in fields.iter() {
                         buffer.push_str(&INDENTS[0..indent as usize]);
                         buffer.push_str(field_name);
                         buffer.push_str(": ");
                         field_ty.node.print(buffer);
+                        buffer.push_str(",\n");
                     }
+                    buffer.push(')');
                 }
 
                 ConFields::Unnamed(fields) => {
@@ -124,7 +122,7 @@ impl FunDecl {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         self.sig.print(&self.parent_ty, &self.name.node, buffer);
         if let Some(body) = &self.body {
-            buffer.push('\n');
+            buffer.push_str(":\n");
             for (i, stmt) in body.iter().enumerate() {
                 if i != 0 {
                     buffer.push('\n');
@@ -351,17 +349,13 @@ impl FunSig {
             }
         }
         buffer.push(')');
-        if self.exceptions.is_some() || self.return_ty.is_some() {
-            buffer.push_str(": ");
+        if let Some(ret_ty) = &self.return_ty {
+            buffer.push(' ');
+            ret_ty.node.print(buffer);
         }
         if let Some(exn) = &self.exceptions {
+            buffer.push_str(" / ");
             exn.node.print(buffer);
-        }
-        if let Some(ret_ty) = &self.return_ty {
-            if self.exceptions.is_some() {
-                buffer.push(' ');
-            }
-            ret_ty.node.print(buffer);
         }
     }
 }
@@ -393,11 +387,11 @@ impl Stmt {
                     ty.node.print(buffer);
                 }
                 buffer.push_str(" = ");
-                rhs.node.print(buffer, 0);
+                rhs.node.print(buffer, indent);
             }
 
             Stmt::Assign(AssignStmt { lhs, rhs, op }) => {
-                lhs.node.print(buffer, 0);
+                lhs.node.print(buffer, indent);
                 let op_str = match op {
                     AssignOp::Eq => "=",
                     AssignOp::PlusEq => "+=",
@@ -408,7 +402,7 @@ impl Stmt {
                 buffer.push(' ');
                 buffer.push_str(op_str);
                 buffer.push(' ');
-                rhs.node.print(buffer, 0);
+                rhs.node.print(buffer, indent);
             }
 
             Stmt::Expr(expr) => expr.node.print(buffer, indent),
@@ -545,7 +539,7 @@ impl Expr {
                         buffer.push_str(name);
                         buffer.push_str(" = ");
                     }
-                    expr.node.print(buffer, 0);
+                    expr.node.print(buffer, indent);
                 }
                 buffer.push(')');
             }
@@ -599,11 +593,11 @@ impl Expr {
 
             Expr::BinOp(BinOpExpr { left, right, op }) => {
                 let left_parens = expr_parens(&left.node);
-                let right_parens = expr_parens(&left.node);
+                let right_parens = expr_parens(&right.node);
                 if left_parens {
                     buffer.push('(');
                 }
-                left.node.print(buffer, 0);
+                left.node.print(buffer, indent);
                 if left_parens {
                     buffer.push(')');
                 }
@@ -631,7 +625,7 @@ impl Expr {
                 if right_parens {
                     buffer.push('(');
                 }
-                right.node.print(buffer, 0);
+                right.node.print(buffer, indent);
                 if right_parens {
                     buffer.push(')');
                 }
@@ -646,7 +640,7 @@ impl Expr {
                 if parens {
                     buffer.push('(');
                 }
-                expr.node.print(buffer, 0);
+                expr.node.print(buffer, indent);
                 if parens {
                     buffer.push(')');
                 }
@@ -702,7 +696,7 @@ impl Expr {
                 else_branch,
             }) => {
                 buffer.push_str("if ");
-                branches[0].0.node.print(buffer, 0);
+                branches[0].0.node.print(buffer, indent);
                 buffer.push_str(":\n");
                 for (i, stmt) in branches[0].1.iter().enumerate() {
                     if i != 0 {
@@ -745,40 +739,18 @@ impl Expr {
                 idx: _,
                 inferred_ty,
             }) => {
-                buffer.push_str("fn");
-                buffer.push('(');
-                for (i, (param_name, param_ty)) in sig.params.iter().enumerate() {
-                    if i != 0 {
-                        buffer.push_str(", ");
-                    }
-                    buffer.push_str(param_name);
-                    if let Some(param_ty) = param_ty {
-                        buffer.push_str(": ");
-                        param_ty.node.print(buffer);
-                    }
-                }
-                buffer.push(')');
-                if sig.exceptions.is_some() || sig.return_ty.is_some() {
-                    buffer.push_str(": ");
-                }
-                if let Some(exn) = &sig.exceptions {
-                    exn.node.print(buffer);
-                }
-                if let Some(ret_ty) = &sig.return_ty {
-                    if sig.exceptions.is_some() {
-                        buffer.push(' ');
-                    }
-                    ret_ty.node.print(buffer);
-                }
+                buffer.push('\\');
+                sig.print(&None, &SmolStr::new_static(""), buffer);
                 if let Some(inferred_ty) = inferred_ty {
                     write!(buffer, " #| inferred type = {inferred_ty} |# ").unwrap();
                 }
                 buffer.push_str("{\n");
                 for stmt in body.iter() {
-                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
+                    buffer.push_str(&INDENTS[..indent as usize + 4]);
                     stmt.node.print(buffer, indent + 4);
                     buffer.push('\n');
                 }
+                buffer.push_str(&INDENTS[..indent as usize]);
                 buffer.push('}');
             }
 
@@ -998,7 +970,22 @@ fn print_ty_args(args: &[Ty], buffer: &mut String) {
 }
 
 fn expr_parens(expr: &Expr) -> bool {
-    !matches!(expr, Expr::Var(_) | Expr::FieldSel(_) | Expr::ConSel(_))
+    !matches!(
+        expr,
+        Expr::Var(_)
+            | Expr::ConSel(_)
+            | Expr::FieldSel(_)
+            | Expr::MethodSel(_)
+            | Expr::AssocFnSel(_)
+            | Expr::Call(_)
+            | Expr::Int(_)
+            | Expr::Str(_)
+            | Expr::Char(_)
+            | Expr::Self_
+            | Expr::Record(_)
+            | Expr::Seq { .. }
+            | Expr::Variant(_)
+    )
 }
 
 const INDENTS: &str = "                                                  ";

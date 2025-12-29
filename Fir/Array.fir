@@ -41,7 +41,23 @@ Array.fromIter[Iterator[iter, item, exn]](iter: iter, size: U32) Array[item] / e
 
 
 Array.iter(self: Array[t]) ArrayIter[t]:
-    ArrayIter(_array = self, _idx = 0,)
+    ArrayIter(_array = self, _idx = 0)
+
+
+## Reverse the order of elements, in place.
+Array.reverse(self: Array[t]):
+    self.reverseRange(0, self.len())
+
+
+## Reverse the slice of the array from start to end (exclusive), in place.
+Array.reverseRange(self: Array[t], start: U32, end: U32):
+    if start >= end:
+        return
+
+    for i in range(u32(0), (end - start) / 2):
+        let tmp = self.get(start + i)
+        self.set(start + i, self.get(end - 1 - i))
+        self.set(end - 1 - i, tmp)
 
 
 impl[Clone[t]] Clone[Array[t]]:

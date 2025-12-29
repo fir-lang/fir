@@ -37,7 +37,7 @@ pub enum Ty {
     Con(Id, Kind),
 
     /// A unification variable, created by a type scheme when instantiated.
-    Var(TyVarRef),
+    UVar(UVarRef),
 
     /// A type application, e.g. `Vec[U32]`, `Result[E, T]`.
     ///
@@ -120,9 +120,9 @@ impl FunArgs {
 
 /// A reference to a unification variable.
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub struct TyVarRef(Rc<TyVar>);
+pub struct UVarRef(Rc<UVar>);
 
-impl TyVarRef {
+impl UVarRef {
     #[allow(unused)]
     pub(super) fn loc(&self) -> ast::Loc {
         self.0.loc.clone()
@@ -133,7 +133,7 @@ impl TyVarRef {
 ///
 /// Note: `Hash` and `Eq` are implemented based on `id`.
 #[derive(Clone)] // Debug implemented manually below
-pub struct TyVar {
+pub struct UVar {
     /// Identity of the unification variable.
     ///
     /// This is used to compare unification variables for equality.
@@ -163,7 +163,7 @@ pub enum Kind {
 }
 
 #[derive(Debug, Default)]
-pub(super) struct TyVarGen {
+pub(super) struct UVarGen {
     next_id: u32,
 }
 
@@ -264,10 +264,10 @@ impl Scheme {
     pub(super) fn instantiate(
         &self,
         level: u32,
-        var_gen: &mut TyVarGen,
+        var_gen: &mut UVarGen,
         preds: &mut Vec<Pred>,
         loc: &ast::Loc,
-    ) -> (Ty, Vec<TyVarRef>) {
+    ) -> (Ty, Vec<UVarRef>) {
         // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
         // handle shadowing here.
 
@@ -275,12 +275,12 @@ impl Scheme {
         let mut var_map: HashMap<Id, Ty> = Default::default();
 
         // Instantiated type parameters, in the same order as `self.quantified_vars`.
-        let mut instantiations: Vec<TyVarRef> = Vec::with_capacity(self.quantified_vars.len());
+        let mut instantiations: Vec<UVarRef> = Vec::with_capacity(self.quantified_vars.len());
 
         // Instantiate quantified variables of the scheme.
         for (qvar, kind) in &self.quantified_vars {
             let instantiated_var = var_gen.new_var(level, kind.clone(), self.loc.clone());
-            var_map.insert(qvar.clone(), Ty::Var(instantiated_var.clone()));
+            var_map.insert(qvar.clone(), Ty::UVar(instantiated_var.clone()));
             instantiations.push(instantiated_var);
         }
 
@@ -479,7 +479,7 @@ fn ty_eq_modulo_alpha(
     match (&ty1_normalized, &ty2_normalized) {
         (Ty::Con(con1, _), Ty::Con(con2, _)) => con1 == con2,
 
-        (Ty::Var(_), _) | (_, Ty::Var(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
+        (Ty::UVar(_), _) | (_, Ty::UVar(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
 
         (Ty::App(con1, args1, _), Ty::App(con2, args2, _)) => {
             if con1 != con2 {
@@ -687,7 +687,7 @@ impl Ty {
         match self {
             Ty::Con(_, kind) => kind.clone(),
 
-            Ty::Var(var) => var.kind(),
+            Ty::UVar(var) => var.kind(),
 
             Ty::App(_, _, kind) => kind.clone(),
 
@@ -710,7 +710,7 @@ impl Ty {
         match self {
             Ty::Con(id, kind) => Ty::Con(id.clone(), kind.clone()),
 
-            Ty::Var(var) => Ty::Var(var.clone()),
+            Ty::UVar(var) => Ty::UVar(var.clone()),
 
             Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
@@ -766,7 +766,7 @@ impl Ty {
         match self {
             Ty::Con(con, kind) => Ty::Con(con.clone(), kind.clone()),
 
-            Ty::Var(var) => Ty::Var(var.clone()),
+            Ty::UVar(var) => Ty::UVar(var.clone()),
 
             Ty::App(ty, tys, kind) => Ty::App(
                 ty.clone(),
@@ -824,7 +824,7 @@ impl Ty {
     /// Otherwise returns the original type.
     pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         match self {
-            Ty::Var(var_ref) => var_ref.normalize(cons),
+            Ty::UVar(var_ref) => var_ref.normalize(cons),
 
             Ty::Con(con, _) => match cons.get(con) {
                 Some(ty_con) => match &ty_con.details {
@@ -841,9 +841,9 @@ impl Ty {
     /// Same as `normalize` but normalizes type arguments as well.
     pub(super) fn deep_normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         match self {
-            Ty::Var(var_ref) => {
+            Ty::UVar(var_ref) => {
                 let mut var_ref_link = var_ref.normalize(cons);
-                if var_ref_link != Ty::Var(var_ref.clone()) {
+                if var_ref_link != Ty::UVar(var_ref.clone()) {
                     var_ref_link = var_ref_link.deep_normalize(cons);
                     var_ref.set_link(var_ref_link.clone());
                 }
@@ -917,7 +917,7 @@ impl Ty {
 
             Ty::App(con, args, _) => Some((con.clone(), args.clone())),
 
-            Ty::Var(_) | Ty::Anonymous { .. } | Ty::QVar(_, _) | Ty::Fun { .. } => None,
+            Ty::UVar(_) | Ty::Anonymous { .. } | Ty::QVar(_, _) | Ty::Fun { .. } => None,
         }
     }
 
@@ -929,33 +929,33 @@ impl Ty {
     }
 }
 
-impl PartialOrd for TyVar {
+impl PartialOrd for UVar {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for TyVar {
+impl Ord for UVar {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.id.cmp(&other.id)
     }
 }
 
-impl PartialEq for TyVar {
+impl PartialEq for UVar {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
 
-impl Eq for TyVar {}
+impl Eq for UVar {}
 
-impl std::hash::Hash for TyVar {
+impl std::hash::Hash for UVar {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.id.hash(state)
     }
 }
 
-impl TyVarRef {
+impl UVarRef {
     pub(super) fn id(&self) -> u32 {
         self.0.id
     }
@@ -984,18 +984,18 @@ impl TyVarRef {
     pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         let link = match &*self.0.link.borrow() {
             Some(link) => link.normalize(cons),
-            None => return Ty::Var(self.clone()),
+            None => return Ty::UVar(self.clone()),
         };
         self.set_link(link.clone());
         link
     }
 }
 
-impl TyVarGen {
-    pub(super) fn new_var(&mut self, level: u32, kind: Kind, loc: ast::Loc) -> TyVarRef {
+impl UVarGen {
+    pub(super) fn new_var(&mut self, level: u32, kind: Kind, loc: ast::Loc) -> UVarRef {
         let id = self.next_id;
         self.next_id += 1;
-        TyVarRef(Rc::new(TyVar {
+        UVarRef(Rc::new(UVar {
             id,
             level: Cell::new(level),
             link: RefCell::new(None),
@@ -1070,7 +1070,7 @@ impl fmt::Display for Ty {
         match self.normalize(&Default::default()) {
             Ty::Con(id, _) => write!(f, "{id}"),
 
-            Ty::Var(var_ref) => write!(f, "_{}", var_ref.id()),
+            Ty::UVar(var_ref) => write!(f, "_{}", var_ref.id()),
 
             Ty::App(id, args, _) => {
                 write!(f, "{id}[")?;
@@ -1225,9 +1225,9 @@ impl fmt::Display for Pred {
     }
 }
 
-impl fmt::Debug for TyVar {
+impl fmt::Debug for UVar {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("TyVar")
+        f.debug_struct("UVar")
             .field("id", &self.id)
             .field("kind", &self.kind)
             .field("level", &self.level.get()) // don't show `Cell` part

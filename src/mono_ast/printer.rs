@@ -218,6 +218,10 @@ impl Type {
                     ret.node.print(buffer);
                 }
             }
+
+            Type::Never => {
+                buffer.push('!');
+            }
         }
     }
 }
@@ -253,22 +257,6 @@ impl FunSig {
         buffer.push_str(name);
         print_ty_args(ty_args, buffer);
         buffer.push('(');
-        match &self.self_ {
-            SelfParam::No => {}
-            SelfParam::Implicit => {
-                buffer.push_str("self");
-                if !self.params.is_empty() {
-                    buffer.push_str(", ");
-                }
-            }
-            SelfParam::Explicit(ty) => {
-                buffer.push_str("self: ");
-                ty.node.print(buffer);
-                if !self.params.is_empty() {
-                    buffer.push_str(", ");
-                }
-            }
-        }
         for (i, (param_name, param_ty)) in self.params.iter().enumerate() {
             if i != 0 {
                 buffer.push_str(", ");

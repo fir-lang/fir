@@ -60,6 +60,15 @@ pub enum Type {
     },
 
     Fn(FnType),
+
+    /// Type of expressions that don't generate a value. E.g. `continue`, `break`.
+    Never,
+}
+
+impl Type {
+    pub(crate) fn unit() -> Type {
+        Type::Record { fields: vec![] }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -83,17 +92,30 @@ pub enum FunArgs {
 
 #[derive(Debug, Clone)]
 pub struct FunSig {
-    pub self_: SelfParam,
     pub params: Vec<(Id, L<Type>)>,
     pub return_ty: Option<L<Type>>,
     pub exceptions: Option<L<Type>>,
 }
 
-#[derive(Debug, Clone)]
-pub enum SelfParam {
-    No,
-    Implicit,
-    Explicit(L<Type>),
+impl FunSig {
+    pub(crate) fn ty(&self) -> FnType {
+        FnType {
+            args: FunArgs::Positional(
+                self.params
+                    .iter()
+                    .map(|(_param_name, param_ty)| param_ty.node.clone())
+                    .collect(),
+            ),
+            ret: self
+                .return_ty
+                .as_ref()
+                .map(|l_ty| l_ty.map_as_ref(|ty| Box::new(ty.clone()))),
+            exceptions: self
+                .exceptions
+                .as_ref()
+                .map(|l_ty| l_ty.map_as_ref(|ty| Box::new(ty.clone()))),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -107,7 +129,6 @@ pub struct FunDecl {
 #[derive(Debug, Clone)]
 pub enum Stmt {
     Let(LetStmt),
-    // LetFn(FunDecl),
     Assign(AssignStmt),
     Expr(L<Expr>),
     For(ForStmt),

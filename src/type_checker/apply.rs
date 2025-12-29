@@ -7,7 +7,7 @@ pub(crate) fn apply_con_ty(
     con_ty: &Ty,
     args: &Vec<ast::Named<Ty>>,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut TyVarGen,
+    var_gen: &mut UVarGen,
     level: u32,
     loc: &ast::Loc,
     ignore_extra: bool,
@@ -113,7 +113,7 @@ pub(crate) fn apply_con_ty(
             (**con_ty_ret).clone()
         }
 
-        Ty::Var(_) | Ty::Con(_, _) | Ty::App(_, _, _) | Ty::Anonymous { .. } | Ty::QVar(_, _) => {
+        Ty::UVar(_) | Ty::Con(_, _) | Ty::App(_, _, _) | Ty::Anonymous { .. } | Ty::QVar(_, _) => {
             if args.is_empty() {
                 return con_ty.clone();
             }

@@ -174,6 +174,11 @@ Vec.takeArray(self: Vec[t]) Array[t]:
     array
 
 
+## Reverse the order of elements, in place.
+Vec.reverse(self: Vec[t]):
+    self._data.reverseRange(0, self._len)
+
+
 _quicksort(vec: Vec[t], low: U32, high: U32, cmp: Fn(t, t) Ordering / exn) / exn:
     if low >= high:
         return

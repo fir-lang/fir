@@ -406,7 +406,7 @@ impl PatMatrix {
                 })
             } // Ty::Anonymous(kind: Record)
 
-            Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } => match self.skip_wildcards(&next_ty) {
+            Ty::UVar(_) | Ty::QVar(_, _) | Ty::Fun { .. } => match self.skip_wildcards(&next_ty) {
                 Some(skipped) => with_trace(trace, "wildcard".to_string(), |trace| {
                     skipped.check_coverage(tc_state, loc, info, trace)
                 }),

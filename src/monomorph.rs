@@ -226,22 +226,47 @@ fn mono_top_fn(
         .zip(ty_args.iter().cloned())
         .collect();
 
-    let params: Vec<(Id, ast::L<mono::Type>)> = fun_decl
-        .sig
-        .params
-        .iter()
-        .map(|(param_name, param_ty)| {
-            (
-                param_name.clone(),
-                mono_l_ty(param_ty.as_ref().unwrap(), &ty_map, poly_pgm, mono_pgm),
-            )
-        })
-        .collect();
+    let mut params: Vec<(Id, ast::L<mono::Type>)> =
+        Vec::with_capacity(fun_decl.sig.params.len() + 1);
+
+    match &fun_decl.sig.self_ {
+        ast::SelfParam::No => {}
+        ast::SelfParam::Implicit => {
+            // Same as the type checker: function should be an associated function, and the parent
+            // type should not have type parameters.
+            // TODO: Type checker should annotate all self types instead.
+            let self_ty_con = fun_decl.parent_ty.as_ref().unwrap().node.clone();
+            assert!(
+                poly_pgm
+                    .ty
+                    .get(&self_ty_con)
+                    .unwrap()
+                    .type_params
+                    .is_empty()
+            );
+            params.push((
+                SmolStr::new_static("self"),
+                ast::L::new_dummy(mono::Type::Named(mono::NamedType {
+                    name: self_ty_con,
+                    args: vec![],
+                })),
+            ));
+        }
+        ast::SelfParam::Explicit(self_ty) => {
+            let self_mono_ty = mono_l_ty(self_ty, &ty_map, poly_pgm, mono_pgm);
+            params.push((SmolStr::new_static("self"), self_mono_ty));
+        }
+    }
+
+    params.extend(fun_decl.sig.params.iter().map(|(param_name, param_ty)| {
+        (
+            param_name.clone(),
+            mono_l_ty(param_ty.as_ref().unwrap(), &ty_map, poly_pgm, mono_pgm),
+        )
+    }));
 
     let return_ty: Option<ast::L<mono::Type>> =
         mono_opt_l_ty(&fun_decl.sig.return_ty, &ty_map, poly_pgm, mono_pgm);
-
-    let self_ = mono_self_param(&fun_decl.sig.self_, &ty_map, poly_pgm, mono_pgm);
 
     // Check if we've already monomorphised this function.
     // Add current function to mono_pgm without a body to avoid looping.
@@ -261,7 +286,6 @@ fn mono_top_fn(
                         parent_ty: fun_decl.parent_ty.clone(),
                         name: fun_decl.name.clone(),
                         sig: mono::FunSig {
-                            self_,
                             params,
                             return_ty,
                             exceptions: None,
@@ -284,7 +308,6 @@ fn mono_top_fn(
                         parent_ty: None,
                         name: fun_decl.name.clone(),
                         sig: mono::FunSig {
-                            self_,
                             params,
                             return_ty,
                             exceptions: None,
@@ -757,7 +780,6 @@ fn mono_expr(
 
             mono::Expr::Fn(mono::FnExpr {
                 sig: mono::FunSig {
-                    self_: mono::SelfParam::No,
                     params: sig
                         .params
                         .iter()
@@ -808,15 +830,15 @@ fn mono_expr(
 //
 // - method_ty_id: `Iterator`
 // - method_id: `next`
-// - ty_args: `[Map[Chars, Char, U32], U32, r]`
+// - ty_args: `[Map[Chars, Char, U32], U32, exn]`
 //     (type arguments to `Iterator.next`)
-//     (`r` is the exception row)
+//     (`exn` is the exception type)
 //
 // Example for non-traits: `x.push` where `x: Vec[U32]`.
 //
 // - method_ty_id: `Vec`
 // - method_id: `push`
-// - ty_args: `[U32, r]`
+// - ty_args: `[U32, exn]`
 fn mono_method(
     method_ty_id: &Id,      // type that the method belonds to: `trait` or `type`
     method_id: &Id,         // method name
@@ -850,22 +872,27 @@ fn mono_method(
                     substs.insert(ty_param.clone(), ty_arg.clone());
                 }
 
-                let params: Vec<(Id, ast::L<mono::Type>)> = method
-                    .sig
-                    .params
-                    .iter()
-                    .map(|(param_name, param_ty)| {
-                        (
-                            param_name.clone(),
-                            mono_l_ty(param_ty.as_ref().unwrap(), &substs, poly_pgm, mono_pgm),
-                        )
-                    })
-                    .collect();
+                let mut params: Vec<(Id, ast::L<mono::Type>)> =
+                    Vec::with_capacity(method.sig.params.len() + 1);
+
+                match &method.sig.self_ {
+                    ast::SelfParam::No => {}
+                    ast::SelfParam::Implicit => panic!(),
+                    ast::SelfParam::Explicit(self_ty) => {
+                        let self_mono_ty = mono_l_ty(self_ty, &substs, poly_pgm, mono_pgm);
+                        params.push((SmolStr::new_static("self"), self_mono_ty));
+                    }
+                }
+
+                params.extend(method.sig.params.iter().map(|(param_name, param_ty)| {
+                    (
+                        param_name.clone(),
+                        mono_l_ty(param_ty.as_ref().unwrap(), &substs, poly_pgm, mono_pgm),
+                    )
+                }));
 
                 let return_ty: Option<ast::L<mono::Type>> =
                     mono_opt_l_ty(&method.sig.return_ty, &substs, poly_pgm, mono_pgm);
-
-                let self_ = mono_self_param(&method.sig.self_, &substs, poly_pgm, mono_pgm);
 
                 // See if we already monomorphised this method.
                 match mono_pgm
@@ -887,7 +914,6 @@ fn mono_method(
                             }),
                             name: method.name.set_node(method_id.clone()),
                             sig: mono::FunSig {
-                                self_,
                                 params,
                                 return_ty,
                                 exceptions: None,
@@ -952,22 +978,47 @@ fn mono_method(
             .zip(ty_args.iter().cloned())
             .collect();
 
-        let params: Vec<(Id, ast::L<mono::Type>)> = method
-            .sig
-            .params
-            .iter()
-            .map(|(param_name, param_ty)| {
-                (
-                    param_name.clone(),
-                    mono_l_ty(param_ty.as_ref().unwrap(), &ty_map, poly_pgm, mono_pgm),
-                )
-            })
-            .collect();
+        let mut params: Vec<(Id, ast::L<mono::Type>)> =
+            Vec::with_capacity(method.sig.params.len() + 1);
+
+        match &method.sig.self_ {
+            ast::SelfParam::No => {}
+            ast::SelfParam::Implicit => {
+                // Same as the type checker: function should be an associated function, and the parent
+                // type should not have type parameters.
+                // TODO: Type checker should annotate all self types instead.
+                let self_ty_con = method.parent_ty.as_ref().unwrap().node.clone();
+                assert!(
+                    poly_pgm
+                        .ty
+                        .get(&self_ty_con)
+                        .unwrap()
+                        .type_params
+                        .is_empty()
+                );
+                params.push((
+                    SmolStr::new_static("self"),
+                    ast::L::new_dummy(mono::Type::Named(mono::NamedType {
+                        name: self_ty_con,
+                        args: vec![],
+                    })),
+                ));
+            }
+            ast::SelfParam::Explicit(self_ty) => {
+                let self_mono_ty = mono_l_ty(self_ty, &ty_map, poly_pgm, mono_pgm);
+                params.push((SmolStr::new_static("self"), self_mono_ty));
+            }
+        }
+
+        params.extend(method.sig.params.iter().map(|(param_name, param_ty)| {
+            (
+                param_name.clone(),
+                mono_l_ty(param_ty.as_ref().unwrap(), &ty_map, poly_pgm, mono_pgm),
+            )
+        }));
 
         let return_ty: Option<ast::L<mono::Type>> =
             mono_opt_l_ty(&method.sig.return_ty, &ty_map, poly_pgm, mono_pgm);
-
-        let self_ = mono_self_param(&method.sig.self_, &ty_map, poly_pgm, mono_pgm);
 
         // See if we already monomorphised this method.
         match mono_pgm
@@ -989,7 +1040,6 @@ fn mono_method(
                     }),
                     name: method.name.set_node(method_id.clone()),
                     sig: mono::FunSig {
-                        self_,
                         params,
                         return_ty,
                         exceptions: None,
@@ -1183,21 +1233,6 @@ fn mono_named_l_pat(
     pat.map_as_ref(|pat| mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals))
 }
 
-fn mono_self_param(
-    self_: &ast::SelfParam,
-    ty_map: &HashMap<Id, mono::Type>,
-    poly_pgm: &PolyPgm,
-    mono_pgm: &mut MonoPgm,
-) -> mono::SelfParam {
-    match self_ {
-        ast::SelfParam::No => mono::SelfParam::No,
-        ast::SelfParam::Implicit => mono::SelfParam::Implicit,
-        ast::SelfParam::Explicit(ty) => mono::SelfParam::Explicit(
-            ty.map_as_ref(|ty| mono_ast_ty(ty, ty_map, poly_pgm, mono_pgm)),
-        ),
-    }
-}
-
 fn mono_l_ty(
     ty: &ast::L<ast::Type>,
     ty_map: &HashMap<Id, mono::Type>,
@@ -1227,8 +1262,8 @@ fn match_trait_impl(
     debug_assert_eq!(ty_args.len(), trait_impl.tys.len(), "{ty_args:?}");
 
     let mut substs: HashMap<Id, mono::Type> = Default::default();
-    for (trait_ty, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
-        if !match_(trait_ty, ty_arg, &mut substs) {
+    for (impl_ty_arg, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
+        if !match_(impl_ty_arg, ty_arg, &mut substs) {
             return None;
         }
     }
@@ -1236,8 +1271,12 @@ fn match_trait_impl(
     Some(substs)
 }
 
-fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut HashMap<Id, mono::Type>) -> bool {
-    match (trait_ty, arg_ty) {
+fn match_(
+    impl_ty_arg: &ast::Type,
+    arg_ty: &mono::Type,
+    substs: &mut HashMap<Id, mono::Type>,
+) -> bool {
+    match (impl_ty_arg, arg_ty) {
         (ast::Type::Named(trait_named_ty), mono::Type::Named(arg_named_ty)) => {
             match_named_ty(trait_named_ty, arg_named_ty, substs)
         }
@@ -1378,9 +1417,9 @@ fn mono_tc_ty(
     match ty.clone() {
         // TODO: When defaulting exception types we should use empty variant instead of record, to
         // indicate that the function doesn't throw.
-        Ty::Var(var) => match var.kind() {
-            Kind::Star => mono::Type::Record { fields: vec![] },
-            Kind::Row(RecordOrVariant::Record) => mono::Type::Record { fields: vec![] },
+        Ty::UVar(var) => match var.kind() {
+            Kind::Star => mono::Type::unit(),
+            Kind::Row(RecordOrVariant::Record) => mono::Type::unit(),
             Kind::Row(RecordOrVariant::Variant) => mono::Type::Variant {
                 alts: Default::default(),
             },
@@ -1481,7 +1520,7 @@ fn mono_tc_ty(
                             }
                         }
 
-                        Ty::Var(var) => {
+                        Ty::UVar(var) => {
                             assert!(var.link().is_none());
                         }
 
@@ -1522,7 +1561,7 @@ fn mono_tc_ty(
                             }
                         }
 
-                        Ty::Var(var) => {
+                        Ty::UVar(var) => {
                             assert!(var.link().is_none());
                         }
 

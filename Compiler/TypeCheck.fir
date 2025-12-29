@@ -192,7 +192,8 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                         Option.Some(existingItem):
                             if existingItem.idx != importedItem.idx:
                                 panic(
-                                    "Type `importedItemName` imported/defined multiple times in `mod._filePath`",
+                                    "Type `importedItemName` imported/defined multiple times in `mod
+                                        ._filePath`",
                                 )
 
                             let new = existingItem.imports.insert(importedModIdx)
@@ -673,7 +674,8 @@ addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
                         Option.Some(existingItem):
                             if existingItem.idx != topFun.value.idx:
                                 panic(
-                                    "Type `topFun.key` imported/defined multiple times in `mod._filePath`",
+                                    "Type `topFun.key` imported/defined multiple times in `mod
+                                        ._filePath`",
                                 )
 
                             let new = existingItem.imports.insert(importedModIdx)
@@ -715,7 +717,8 @@ addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
                             Option.Some(existingItem):
                                 if existingItem.idx != fun.value.idx:
                                     panic(
-                                        "Type `assocFunMap.key`.`fun.key` imported/defined multiple times in `mod._filePath`",
+                                        "Type `assocFunMap.key`.`fun.key` imported/defined multiple times in `mod
+                                            ._filePath`",
                                     )
 
                                 let new = existingItem.imports.insert(

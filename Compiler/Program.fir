@@ -195,7 +195,6 @@ _modulePathToFilePath(path: Vec[Str]) Str:
         if i != 0:
             filePath.push('/')
         filePath.pushStr(path.get(i))
-        i += 1
 
     filePath.pushStr(".fir")
     filePath.toStr()

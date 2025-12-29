@@ -242,6 +242,13 @@ impl<T> Named<T> {
             node: f(node),
         }
     }
+
+    pub fn set_node<T2>(&self, node: T2) -> Named<T2> {
+        Named {
+            name: self.name.clone(),
+            node,
+        }
+    }
 }
 
 /// Type signature part of a function declaration: type parameters, value parameters, exception
@@ -513,7 +520,7 @@ pub enum Expr {
     /// Some of the binary operators are desugared to method calls by the type checker.
     BinOp(BinOpExpr),
 
-    /// A unary operator: `-x`, `!b`.
+    /// A unary operator: `-x`, `not b`.
     ///
     /// Some of the unary operators are desugared to method calls by the type checker.
     UnOp(UnOpExpr),
