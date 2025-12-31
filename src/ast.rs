@@ -677,21 +677,14 @@ pub struct UnOpExpr {
 
 #[derive(Debug, Clone)]
 pub struct IntExpr {
-    /// The digits of the integer, without any prefix ("0x" or "0b") and suffix ("u32" etc.).
-    ///
-    /// The digits will be parsed during type checking. If the integer doesn't have a suffix,
-    /// parsing will be done based on the inferred type of the integer.
-    pub text: String,
+    /// The integer token contents. This includes the sign and radix parts, when available.
+    /// Examples: `-0xabc`, `0b1010`, `123`.
+    pub text: SmolStr,
 
     /// The type checker updates this based on the inferred type of the integer.
-    pub suffix: Option<IntKind>,
+    pub kind: Option<IntKind>,
 
-    pub radix: u32,
-
-    /// Filled in by the type checker. The parsed integer.
-    ///
-    /// This will be the integer value in two's complement, extended to unsiged 64-bit.
-    /// E.g. `-1u8` will be `0x00000000000000ff`, instead of `0xffffffffffffffff`.
+    /// Absolute value of the parsed integer.
     pub parsed: u64,
 }
 

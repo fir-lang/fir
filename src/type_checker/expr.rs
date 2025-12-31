@@ -541,163 +541,166 @@ pub(super) fn check_expr(
             }
         }
 
-        ast::Expr::Int(ast::IntExpr {
-            text,
-            suffix,
-            radix,
-            parsed,
-        }) => {
-            let kind: ast::IntKind = suffix.unwrap_or_else(|| {
-                match expected_ty.map(|ty| ty.normalize(tc_state.tys.tys.cons())) {
-                    Some(Ty::Con(con, _kind)) if con == "I8" => ast::IntKind::I8,
-                    Some(Ty::Con(con, _kind)) if con == "U8" => ast::IntKind::U8,
-                    Some(Ty::Con(con, _kind)) if con == "I32" => ast::IntKind::I32,
-                    Some(Ty::Con(con, _kind)) if con == "U32" => ast::IntKind::U32,
-                    Some(Ty::Con(con, _kind)) if con == "I64" => ast::IntKind::I64,
-                    Some(Ty::Con(con, _kind)) if con == "U64" => ast::IntKind::U64,
+        ast::Expr::Int(ast::IntExpr { text, kind, parsed }) => {
+            assert!(kind.is_none());
 
-                    None | Some(Ty::UVar(_)) => {
-                        // Try defaulting as i32.
-                        ast::IntKind::I32
-                    }
+            // This should be an `IntExpr` method to avoid having to know about the lexical syntax
+            // of integers in the type checker, but we run into issues when we try to borrow `kind`
+            // mutably above while also having a ref to `IntExpr`.
+            let negate = text.starts_with('-');
 
-                    Some(other) => panic!(
+            let expected_ty = expected_ty.map(|ty| ty.normalize(tc_state.tys.tys.cons()));
+
+            let con = match &expected_ty {
+                Some(Ty::Con(con, _kind)) => con.as_str(),
+
+                Some(Ty::UVar(var)) => {
+                    // Default as I32.
+                    // Note: the error order when there's a unification error + integer literal
+                    // error (i.e. integer too large/small) here vs. in the rest of the cases.
+                    unify(
+                        &Ty::UVar(var.clone()),
+                        &Ty::Con(SmolStr::new_static("I32"), Kind::Star),
+                        tc_state.tys.tys.cons(),
+                        tc_state.var_gen,
+                        level,
+                        &expr.loc,
+                    );
+                    "I32"
+                }
+
+                Some(other) => {
+                    panic!(
                         "{}: Expected {}, found integer literal",
                         loc_display(&expr.loc),
                         other,
-                    ),
-                }
-            });
-
-            *suffix = Some(kind);
-
-            match kind {
-                ast::IntKind::I8 => {
-                    *parsed = i8::from_str_radix(text, *radix).unwrap_or_else(|err| {
-                        panic!(
-                            "{}: Integer cannot be parsed as I8: {:?}",
-                            loc_display(&expr.loc),
-                            err
-                        )
-                    }) as u8 as u64;
-                    (
-                        unify_expected_ty(
-                            Ty::Con("I8".into(), Kind::Star),
-                            expected_ty,
-                            tc_state.tys.tys.cons(),
-                            tc_state.var_gen,
-                            level,
-                            &expr.loc,
-                        ),
-                        Default::default(),
                     )
                 }
 
-                ast::IntKind::U8 => {
-                    *parsed = u8::from_str_radix(text, *radix).unwrap_or_else(|err| {
+                None => {
+                    // Default as I32.
+                    "I32"
+                }
+            };
+
+            match con {
+                "U8" => {
+                    if negate {
                         panic!(
-                            "{}: Integer cannot be parsed as U8: {:?}",
-                            loc_display(&expr.loc),
-                            err
-                        )
-                    }) as u64;
-                    (
-                        unify_expected_ty(
-                            Ty::Con("U8".into(), Kind::Star),
-                            expected_ty,
-                            tc_state.tys.tys.cons(),
-                            tc_state.var_gen,
-                            level,
-                            &expr.loc,
-                        ),
-                        Default::default(),
-                    )
+                            "{}: Cannot negate unsigned integer: {}",
+                            loc_display(&loc),
+                            text
+                        );
+                    }
+                    *kind = Some(ast::IntKind::U8(u8::try_from(*parsed).unwrap_or_else(
+                        |_| {
+                            panic!(
+                                "{}: Integer literal {} out of range for U8",
+                                loc_display(&loc),
+                                text
+                            )
+                        },
+                    )));
                 }
 
-                ast::IntKind::I32 => {
-                    *parsed = i32::from_str_radix(text, *radix).unwrap_or_else(|err| {
+                "I8" => {
+                    let mut bits = u8::try_from(*parsed).unwrap_or_else(|_| {
                         panic!(
-                            "{}: Integer cannot be parsed as I32: {:?}",
-                            loc_display(&expr.loc),
-                            err
-                        )
-                    }) as u32 as u64;
-                    (
-                        unify_expected_ty(
-                            Ty::Con("I32".into(), Kind::Star),
-                            expected_ty,
-                            tc_state.tys.tys.cons(),
-                            tc_state.var_gen,
-                            level,
-                            &expr.loc,
-                        ),
-                        Default::default(),
-                    )
-                }
-
-                ast::IntKind::U32 => {
-                    *parsed = u32::from_str_radix(text, *radix).unwrap_or_else(|err| {
-                        panic!(
-                            "{}: Integer cannot be parsed as U32: {:?}",
-                            loc_display(&expr.loc),
-                            err
-                        )
-                    }) as u64;
-                    (
-                        unify_expected_ty(
-                            Ty::Con("U32".into(), Kind::Star),
-                            expected_ty,
-                            tc_state.tys.tys.cons(),
-                            tc_state.var_gen,
-                            level,
-                            &expr.loc,
-                        ),
-                        Default::default(),
-                    )
-                }
-
-                ast::IntKind::I64 => {
-                    *parsed = i64::from_str_radix(text, *radix).unwrap_or_else(|err| {
-                        panic!(
-                            "{}: Integer cannot be parsed as I64: {:?}",
-                            loc_display(&expr.loc),
-                            err
-                        )
-                    }) as u32 as u64;
-                    (
-                        unify_expected_ty(
-                            Ty::Con("I64".into(), Kind::Star),
-                            expected_ty,
-                            tc_state.tys.tys.cons(),
-                            tc_state.var_gen,
-                            level,
-                            &expr.loc,
-                        ),
-                        Default::default(),
-                    )
-                }
-
-                ast::IntKind::U64 => {
-                    *parsed = u64::from_str_radix(text, *radix).unwrap_or_else(|err| {
-                        panic!(
-                            "{}: Integer cannot be parsed as U64: {:?}",
-                            loc_display(&expr.loc),
-                            err
+                            "{}: Integer literal {} out of range for I8",
+                            loc_display(&loc),
+                            text
                         )
                     });
-                    (
-                        unify_expected_ty(
-                            Ty::Con("U64".into(), Kind::Star),
-                            expected_ty,
-                            tc_state.tys.tys.cons(),
-                            tc_state.var_gen,
-                            level,
-                            &expr.loc,
-                        ),
-                        Default::default(),
-                    )
+                    let limit = if negate { i8::MIN } else { i8::MAX }.unsigned_abs();
+                    if bits > limit {
+                        panic!(
+                            "{}: Integer literal {} out of range for I8",
+                            loc_display(&loc),
+                            text
+                        );
+                    }
+                    if negate {
+                        bits = !bits.wrapping_sub(1);
+                    }
+                    *kind = Some(ast::IntKind::I8(bits as i8));
                 }
+
+                "U32" => {
+                    if negate {
+                        panic!(
+                            "{}: Cannot negate unsigned integer: {}",
+                            loc_display(&loc),
+                            text
+                        );
+                    }
+                    *kind = Some(ast::IntKind::U32(u32::try_from(*parsed).unwrap_or_else(
+                        |_| {
+                            panic!(
+                                "{}: Integer literal {} out of range for U32",
+                                loc_display(&loc),
+                                text
+                            )
+                        },
+                    )));
+                }
+
+                "I32" => {
+                    let mut bits = u32::try_from(*parsed).unwrap_or_else(|_| {
+                        panic!(
+                            "{}: Integer literal {} out of range for I32",
+                            loc_display(&loc),
+                            text
+                        )
+                    });
+                    let limit = if negate { i32::MIN } else { i32::MAX }.unsigned_abs();
+                    if bits > limit {
+                        panic!(
+                            "{}: Integer literal {} out of range for I32",
+                            loc_display(&loc),
+                            text
+                        );
+                    }
+                    if negate {
+                        bits = !bits.wrapping_sub(1);
+                    }
+                    *kind = Some(ast::IntKind::I32(bits as i32));
+                }
+
+                "U64" => {
+                    if negate {
+                        panic!(
+                            "{}: Cannot negate unsigned integer: {}",
+                            loc_display(&loc),
+                            text
+                        );
+                    }
+                    *kind = Some(ast::IntKind::U64(*parsed));
+                }
+
+                "I64" => {
+                    let mut bits = *parsed;
+                    let limit = if negate { i64::MIN } else { i64::MAX }.unsigned_abs();
+                    if bits > limit {
+                        panic!(
+                            "{}: Integer literal {} out of range for I32",
+                            loc_display(&loc),
+                            text
+                        );
+                    }
+                    if negate {
+                        bits = !bits.wrapping_sub(1);
+                    }
+                    *kind = Some(ast::IntKind::I64(bits as i64));
+                }
+
+                other => panic!(
+                    "{}: Expected {}, found integer literal",
+                    loc_display(&expr.loc),
+                    other,
+                ),
             }
+
+            (Ty::Con(SmolStr::new(con), Kind::Star), Default::default())
         }
 
         ast::Expr::Str(parts) => {

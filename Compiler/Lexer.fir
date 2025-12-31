@@ -107,7 +107,7 @@ lexerDumpTokens():
     if error is Option.Some(error):
         print("ERROR: `error`")
     for token: Token in tokens.iter():
-        print("`token.line + 1`:`token.col + 1`: `token.kind`")
+        print("`token.line + 1`:`token.col + 1`: `token.kind` \"`token.text`\"")
 
 
 ## Entry point to tokenize a file and print generated interpreter tokens.
@@ -519,13 +519,6 @@ Lexer._nextInit(self) Option[Token] / Error:
             Token(kind = TokenKind.PlusEq, text = "+=", byteIdx, line, col),
         )
 
-    if input.startsWith("-="):
-        self._byteIdx += 2
-        self._col += 2
-        return Option.Some(
-            Token(kind = TokenKind.MinusEq, text = "-=", byteIdx, line, col),
-        )
-
     if input.startsWith("*="):
         self._byteIdx += 2
         self._col += 2
@@ -552,14 +545,6 @@ Lexer._nextInit(self) Option[Token] / Error:
         self._col += 1
         return Option.Some(
             Token(kind = TokenKind.Plus, text = "+", byteIdx, line, col),
-        )
-
-    # TODO: Handle negative numbers here by checking whether `rest` starts with a digit.
-    if input.startsWith("-"):
-        self._byteIdx += 1
-        self._col += 1
-        return Option.Some(
-            Token(kind = TokenKind.Minus, text = "-", byteIdx, line, col),
         )
 
     if input.startsWith("*"):
@@ -727,7 +712,40 @@ Lexer._nextInit(self) Option[Token] / Error:
         )
 
     # ------------------------------------------------------------------------------------------
-    # Literals
+    # Integer literals
+    #
+    # Handle integers before the '-' unop as we include prefix '-' as a part of
+    # the literal.
+
+    if input.startsWith("-"):
+        let rest = input.substr(1, input.len())
+
+        self._byteIdx += 1
+        self._col += 1
+
+        if rest.startsWith("="):
+            self._byteIdx += 1
+            self._col += 1
+            return Option.Some(
+                Token(kind = TokenKind.MinusEq, text = "-=", byteIdx, line, col),
+            )
+
+        if self._tryInt() is Option.Some(intToken):
+            # Include '-' in the token.
+            intToken.byteIdx -= 1
+            intToken.col -= 1
+            intToken.text = self._input.substr(
+                intToken.byteIdx,
+                intToken.byteIdx + intToken.text.len() + 1,
+            )
+            return Option.Some(intToken)
+
+        return Option.Some(
+            Token(kind = TokenKind.Minus, text = "-", byteIdx, line, col),
+        )
+
+    # ------------------------------------------------------------------------------------------
+    # String and character literals
 
     if input.startsWith("\""):
         # Tokenize the string contents on next iteration.
@@ -768,75 +786,12 @@ Lexer._nextInit(self) Option[Token] / Error:
 
         return Option.Some(self._char())
 
-    if input.startsWith("0b"):
-        let digitsStart = self._byteIdx
-        self._byteIdx += 2
-        self._col += 2
-
-        while self._byteIdx < self._input.len():
-            let c = self._nextChar()
-            if c != '_' and not c.isAsciiBinDigit():
-                break
-            self._byteIdx += 1
-            self._col += 1
-
-        return Option.Some(
-            Token(
-                kind = TokenKind.BinInt,
-                text = self._input.substr(digitsStart, self._byteIdx),
-                byteIdx = digitsStart,
-                line,
-                col,
-            ),
-        )
-
-    if input.startsWith("0x"):
-        let digitsStart = self._byteIdx
-        self._byteIdx += 2
-        self._col += 2
-
-        while self._byteIdx < self._input.len():
-            let c = self._nextChar()
-            if c != '_' and not c.isAsciiHexDigit():
-                break
-            self._byteIdx += 1
-            self._col += 1
-
-        return Option.Some(
-            Token(
-                kind = TokenKind.HexInt,
-                text = self._input.substr(digitsStart, self._byteIdx),
-                byteIdx = digitsStart,
-                line,
-                col,
-            ),
-        )
-
     # ------------------------------------------------------------------------------------------
 
+    if self._tryInt() is Option.Some(token):
+        return Option.Some(token)
+
     let c = self._nextChar()
-
-    if c.isAsciiDigit():
-        let digitsStart = self._byteIdx
-        self._byteIdx += 1
-        self._col += 1
-
-        while self._byteIdx < self._input.len():
-            let c = self._nextChar()
-            if c != '_' and not c.isAsciiDigit():
-                break
-            self._byteIdx += 1
-            self._col += 1
-
-        return Option.Some(
-            Token(
-                kind = TokenKind.Int,
-                text = self._input.substr(digitsStart, self._byteIdx),
-                byteIdx,
-                line,
-                col,
-            ),
-        )
 
     # If the rest starts with '_' then there must be an identifier char after it, as the
     # other case is handled above. This character specifies the casing.
@@ -1060,6 +1015,79 @@ Lexer._multiLineComment(self) Token / Error:
                     self._multiLineComment()
 
     self._fail("unterminated multi-line comment")
+
+
+Lexer._tryInt(self) Option[Token] / exn:
+    # TODOs:
+    #
+    # - Check that we're consuming at least one digit. E.g. "0x" should not be
+    #   tokenized.
+    #
+    # - We may want to reject underscores before and after the digits: "123_",
+    #   "0x_abc".
+
+    let startByteIdx = self._byteIdx
+    let startLine = self._line
+    let startCol = self._col
+
+    let input = self._input.substr(self._byteIdx, self._input.len())
+
+    if input.startsWith("0x"):
+        self._byteIdx += 2
+        self._col += 2
+        input = input.substr(2, input.len())
+        let chars = input.chars()
+        while chars.next[CharIter, Char, exn]() is Option.Some(char)
+                and (char.isAsciiHexDigit() or char == '_'):
+            self._byteIdx += 1
+            self._col += 1
+        return Option.Some(
+            Token(
+                kind = TokenKind.Int,
+                text = self._input.substr(startByteIdx, self._byteIdx),
+                byteIdx = startByteIdx,
+                line = startLine,
+                col = startCol,
+            ),
+        )
+
+    if input.startsWith("0b"):
+        self._byteIdx += 2
+        self._col += 2
+        input = input.substr(2, input.len())
+        let chars = input.chars()
+        while chars.next[CharIter, Char, exn]() is Option.Some(char)
+                and (char.isAsciiBinDigit() or char == '_'):
+            self._byteIdx += 1
+            self._col += 1
+        return Option.Some(
+            Token(
+                kind = TokenKind.Int,
+                text = self._input.substr(startByteIdx, self._byteIdx),
+                byteIdx = startByteIdx,
+                line = startLine,
+                col = startCol,
+            ),
+        )
+
+    if input.chars().next[CharIter, Char, exn]() is Option.Some(char)
+            and char.isAsciiDigit():
+        let chars = input.chars()
+        while chars.next[CharIter, Char, exn]() is Option.Some(char)
+                and (char.isAsciiDigit() or char == '_'):
+            self._byteIdx += 1
+            self._col += 1
+        return Option.Some(
+            Token(
+                kind = TokenKind.Int,
+                text = self._input.substr(startByteIdx, self._byteIdx),
+                byteIdx = startByteIdx,
+                line = startLine,
+                col = startCol,
+            ),
+        )
+
+    Option.None
 
 
 _isIdCont(c: Char) Bool:

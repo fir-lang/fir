@@ -434,24 +434,17 @@ impl Expr {
 
             Expr::Int(IntExpr {
                 text,
-                suffix,
-                radix,
+                kind,
                 parsed: _,
             }) => {
-                match radix {
-                    2 => buffer.push_str("0b"),
-                    10 => {}
-                    16 => buffer.push_str("0x"),
-                    _ => panic!(),
-                }
                 buffer.push_str(text);
-                match suffix {
-                    Some(IntKind::I64) => buffer.push_str("I64"),
-                    Some(IntKind::U64) => buffer.push_str("U64"),
-                    Some(IntKind::I32) => buffer.push_str("I32"),
-                    Some(IntKind::U32) => buffer.push_str("U32"),
-                    Some(IntKind::I8) => buffer.push_str("I8"),
-                    Some(IntKind::U8) => buffer.push_str("U8"),
+                match kind {
+                    Some(IntKind::I64(_)) => buffer.push_str("I64"),
+                    Some(IntKind::U64(_)) => buffer.push_str("U64"),
+                    Some(IntKind::I32(_)) => buffer.push_str("I32"),
+                    Some(IntKind::U32(_)) => buffer.push_str("U32"),
+                    Some(IntKind::I8(_)) => buffer.push_str("I8"),
+                    Some(IntKind::U8(_)) => buffer.push_str("U8"),
                     None => {}
                 }
             }

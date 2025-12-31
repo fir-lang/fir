@@ -90,8 +90,6 @@ extern {
         "type" => Token { kind: TokenKind::Type, .. },
         "while" => Token { kind: TokenKind::While, .. },
         IntLit => Token { kind: TokenKind::Int { .. }, .. },
-        HexIntLit => Token { kind: TokenKind::HexInt { .. }, .. },
-        BinIntLit => Token { kind: TokenKind::BinInt { .. }, .. },
         CharLit => Token { kind: TokenKind::Char, .. },
 
         BeginStr => Token { kind: TokenKind::BeginStr, .. },
@@ -684,74 +682,11 @@ InlineExpr: Expr = {
         Expr::Record(exprs)
     },
 
-    <int:IntLit> => {
-        let token_str = &int.text;
-
-        // TODO: Allocate the buffer once and reuse.
-        // Even better, build the number as we scan for underscores.
-        let mut int_str = String::new();
-
-        // Drop '_'s.
-        for char in token_str.chars() {
-            if char == '_' {
-                continue;
-            }
-            int_str.push(char);
-        }
-
+    <l:@L> <int:IntLit> => {
         Expr::Int(IntExpr {
-            text: int_str,
-            suffix: None,
-            radix: 10,
-            parsed: 0,
-        })
-    },
-
-    <int:HexIntLit> => {
-        debug_assert!(int.text.starts_with("0x"));
-        let token_str = &int.text["0x".len()..];
-
-        // TODO: Allocate the buffer once and reuse.
-        // Even better, build the number as we scan for underscores.
-        let mut int_str = String::new();
-
-        // Drop '_'s.
-        for char in token_str.chars() {
-            if char == '_' {
-                continue;
-            }
-            int_str.push(char);
-        }
-
-        Expr::Int(IntExpr {
-            text: int_str,
-            suffix: None,
-            radix: 16,
-            parsed: 0,
-        })
-    },
-
-    <int:BinIntLit> => {
-        debug_assert!(int.text.starts_with("0b"));
-        let token_str = &int.text["0b".len()..];
-
-        // TODO: Allocate the buffer once and reuse.
-        // Even better, build the number as we scan for underscores.
-        let mut int_str = String::new();
-
-        // Drop '_'s.
-        for char in token_str.chars() {
-            if char == '_' {
-                continue;
-            }
-            int_str.push(char);
-        }
-
-        Expr::Int(IntExpr {
-            text: int_str,
-            suffix: None,
-            radix: 2,
-            parsed: 0,
+            text: int.text.clone(),
+            kind: None, // for type checker
+            parsed: parse_int_lit(&int.text, module, &l),
         })
     },
 

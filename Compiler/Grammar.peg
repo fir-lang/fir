@@ -73,8 +73,6 @@ Terminals:
     "<<" = Token(kind = TokenKind.DoubleLAngle, ..)
     "<=" = Token(kind = TokenKind.LAngleEq, ..)
     "Int" = Token(kind = TokenKind.Int, ..)
-    "HexInt" = Token(kind = TokenKind.HexInt, ..)
-    "BinInt" = Token(kind = TokenKind.BinInt, ..)
     "Char" = Token(kind = TokenKind.Char, ..)
     "NEWLINE" = Token(kind = TokenKind.Newline, ..)
     "INDENT" = Token(kind = TokenKind.Indent, ..)
@@ -571,56 +569,6 @@ simpleExpr Expr:
             text = intStr.toStr(),
             suffix = Option.None,
             radix = 10,
-            parsed = 0,
-            token = TokenIdx(idx = cur),
-        ))
-
-    cur=^ int="HexInt":
-        let text = int.text
-
-        # TODO: Make this an assertion
-        if not text.startsWith("0x"):
-            panic("Bug in int lexer")
-
-        let text = text.substr(2, text.len())
-
-        let intStr = StrBuf.withCapacity(text.len())
-
-        for char: Char in text.chars():
-            if char == '_':
-                continue
-
-            intStr.push(char)
-
-        Expr.Int(IntExpr(
-            text = intStr.toStr(),
-            suffix = Option.None,
-            radix = 16,
-            parsed = 0,
-            token = TokenIdx(idx = cur),
-        ))
-
-    cur=^ int="BinInt":
-        let text = int.text
-
-        # TODO: Make this an assertion
-        if not text.startsWith("0b"):
-            panic("Bug in int lexer")
-
-        let text = text.substr(2, text.len())
-
-        let intStr = StrBuf.withCapacity(text.len())
-
-        for char: Char in text.chars():
-            if char == '_':
-                continue
-
-            intStr.push(char)
-
-        Expr.Int(IntExpr(
-            text = intStr.toStr(),
-            suffix = Option.None,
-            radix = 2,
             parsed = 0,
             token = TokenIdx(idx = cur),
         ))

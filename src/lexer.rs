@@ -140,13 +140,13 @@ lexgen::lexer! {
         },
 
         let int = ['0'-'9'] ['0'-'9' '_']*;
-        $int+ = TokenKind::Int,
+        '-'? $int+ = TokenKind::Int,
 
         let hex_int = ['0'-'9' 'a'-'f' 'A'-'F' '_']+;
-        "0x" $hex_int+ = TokenKind::HexInt,
+        '-'? "0x" $hex_int+ = TokenKind::Int,
 
         let bin_int = ['0' '1' '_']+;
-        "0b" $bin_int+ = TokenKind::BinInt,
+        '-'? "0b" $bin_int+ = TokenKind::Int,
 
         "'" ((_ # '\'') | "\\'" | "\\n" | "\\t" | "\\r" | "\\\\") "'" = TokenKind::Char,
     }
