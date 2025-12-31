@@ -619,7 +619,6 @@ pub(super) fn check_expr(
                                 text
                             );
                         }
-
                         bits = !bits.wrapping_sub(1);
                     }
                     *kind = Some(ast::IntKind::I8(bits as i8));
@@ -660,7 +659,6 @@ pub(super) fn check_expr(
                                 text
                             );
                         }
-
                         bits = !bits.wrapping_sub(1);
                     }
                     *kind = Some(ast::IntKind::I32(bits as i32));
@@ -674,25 +672,11 @@ pub(super) fn check_expr(
                             text
                         );
                     }
-                    *kind = Some(ast::IntKind::U64(u64::try_from(*parsed).unwrap_or_else(
-                        |_| {
-                            panic!(
-                                "{}: Integer literal {} out of range for U64",
-                                loc_display(&loc),
-                                text
-                            )
-                        },
-                    )));
+                    *kind = Some(ast::IntKind::U64(*parsed));
                 }
 
                 "I64" => {
-                    let mut bits = u64::try_from(*parsed).unwrap_or_else(|_| {
-                        panic!(
-                            "{}: Integer literal {} out of range for I64",
-                            loc_display(&loc),
-                            text
-                        )
-                    });
+                    let mut bits = *parsed;
                     if negate {
                         if bits > i64::MIN.unsigned_abs() {
                             panic!(
@@ -701,7 +685,6 @@ pub(super) fn check_expr(
                                 text
                             );
                         }
-
                         bits = !bits.wrapping_sub(1);
                     }
                     *kind = Some(ast::IntKind::I64(bits as i64));
