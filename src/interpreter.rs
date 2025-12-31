@@ -315,7 +315,7 @@ fn call_closure<W: Write>(
     heap: &mut Heap,
     locals: &mut [u64],
     fun: u64,
-    args: &[CallArg],
+    args: &[L<Expr>],
     loc: &Loc,
     call_stack: &mut Vec<Frame>,
 ) -> ControlFlow {
@@ -330,15 +330,8 @@ fn call_closure<W: Write>(
             let fun = &pgm.funs[top_fun_idx as usize];
             let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
             for arg in args {
-                debug_assert!(arg.name.is_none());
                 arg_values.push(val!(eval(
-                    w,
-                    pgm,
-                    heap,
-                    locals,
-                    &arg.expr.node,
-                    &arg.expr.loc,
-                    call_stack
+                    w, pgm, heap, locals, &arg.node, &arg.loc, call_stack
                 )));
             }
             call_fun(w, pgm, heap, fun, arg_values, loc, call_stack).into_control_flow()
@@ -352,13 +345,7 @@ fn call_closure<W: Write>(
             arg_values.push(receiver);
             for arg in args {
                 arg_values.push(val!(eval(
-                    w,
-                    pgm,
-                    heap,
-                    locals,
-                    &arg.expr.node,
-                    &arg.expr.loc,
-                    call_stack
+                    w, pgm, heap, locals, &arg.node, &arg.loc, call_stack
                 )));
             }
             call_fun(w, pgm, heap, fun, arg_values, loc, call_stack).into_control_flow()
@@ -379,16 +366,8 @@ fn call_closure<W: Write>(
             // Copy closure arguments into locals.
             debug_assert_eq!(args.len(), closure.params.len());
 
-            for (i, arg_val) in args.iter().enumerate() {
-                let arg_val = val!(eval(
-                    w,
-                    pgm,
-                    heap,
-                    locals,
-                    &arg_val.expr.node,
-                    &arg_val.expr.loc,
-                    call_stack
-                ));
+            for (i, arg) in args.iter().enumerate() {
+                let arg_val = val!(eval(w, pgm, heap, locals, &arg.node, &arg.loc, call_stack));
                 closure_locals[i] = arg_val;
             }
 
@@ -419,53 +398,15 @@ fn allocate_object_from_idx<W: Write>(
     heap: &mut Heap,
     locals: &mut [u64],
     con_idx: HeapObjIdx,
-    args: &[CallArg],
+    args: &[L<Expr>],
     call_stack: &mut Vec<Frame>,
 ) -> ControlFlow {
-    let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
-    let fields = &con.fields;
     let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
 
-    match fields {
-        ConFields::Unnamed(num_fields) => {
-            // Evaluate in program order and store in the same order.
-            debug_assert_eq!(num_fields.len(), args.len());
-            for arg in args {
-                debug_assert!(arg.name.is_none());
-                arg_values.push(val!(eval(
-                    w,
-                    pgm,
-                    heap,
-                    locals,
-                    &arg.expr.node,
-                    &arg.expr.loc,
-                    call_stack
-                )));
-            }
-        }
-
-        ConFields::Named(field_names) => {
-            // Evalaute in program order, store based on the order of the names
-            // in the type.
-            let mut named_values: HashMap<Id, u64> = Default::default();
-            for arg in args {
-                let name = arg.name.as_ref().unwrap().clone();
-                let value = val!(eval(
-                    w,
-                    pgm,
-                    heap,
-                    locals,
-                    &arg.expr.node,
-                    &arg.expr.loc,
-                    call_stack
-                ));
-                let old = named_values.insert(name.clone(), value);
-                debug_assert!(old.is_none());
-            }
-            for name in field_names.keys() {
-                arg_values.push(*named_values.get(name).unwrap());
-            }
-        }
+    for arg in args {
+        arg_values.push(val!(eval(
+            w, pgm, heap, locals, &arg.node, &arg.loc, call_stack
+        )));
     }
 
     let object = heap.allocate(1 + args.len());
@@ -698,13 +639,7 @@ fn eval<W: Write>(
                     arg_vals.push(object);
                     for arg in args {
                         arg_vals.push(val!(eval(
-                            w,
-                            pgm,
-                            heap,
-                            locals,
-                            &arg.expr.node,
-                            &arg.expr.loc,
-                            call_stack
+                            w, pgm, heap, locals, &arg.node, &arg.loc, call_stack
                         )));
                     }
                     let fun = &pgm.funs[fun_idx.as_usize()];
@@ -716,13 +651,7 @@ fn eval<W: Write>(
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
                     for arg in args {
                         arg_vals.push(val!(eval(
-                            w,
-                            pgm,
-                            heap,
-                            locals,
-                            &arg.expr.node,
-                            &arg.expr.loc,
-                            call_stack
+                            w, pgm, heap, locals, &arg.node, &arg.loc, call_stack
                         )));
                     }
                     let fun = &pgm.funs[fun_idx.as_usize()];

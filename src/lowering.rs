@@ -461,13 +461,7 @@ pub struct MethodSelExpr {
 #[derive(Debug, Clone)]
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
-    pub args: Vec<CallArg>,
-}
-
-#[derive(Debug, Clone)]
-pub struct CallArg {
-    pub name: Option<Id>,
-    pub expr: L<Expr>,
+    pub args: Vec<L<Expr>>,
 }
 
 #[derive(Debug, Clone)]
@@ -2083,11 +2077,14 @@ fn lower_expr(
 
         mono::Expr::Call(mono::CallExpr { fun, args }) => {
             let (fun, _fun_vars, fun_ty) = lower_bl_expr(fun, closures, indices, scope, mono_pgm);
-            let ret_ty: mono::Type = match fun_ty {
-                mono::Type::Fn(fn_type) => match fn_type.ret {
-                    Some(boxed_ty) => *boxed_ty.node,
-                    None => mono::Type::unit(),
-                },
+
+            let mono::FnType {
+                args: arg_tys,
+                ret,
+                exceptions: _,
+            } = match fun_ty {
+                mono::Type::Fn(fun_ty) => fun_ty,
+
                 mono::Type::Named(_) | mono::Type::Record { .. } | mono::Type::Variant { .. } => {
                     panic!(
                         "BUG: {}: Function in call expression does not have a function type: {}",
@@ -2095,25 +2092,72 @@ fn lower_expr(
                         fun_ty,
                     )
                 }
+
                 mono::Type::Never => {
-                    // TODO: In this case we could convert the call to just `fun` as evaluation of
-                    // `fun` won't generate a value.
-                    mono::Type::Never
+                    return (fun.node, Default::default(), mono::Type::Never);
                 }
             };
-            (
-                Expr::Call(CallExpr {
+
+            let expr: Expr = match arg_tys {
+                mono::FunArgs::Positional(_) => Expr::Call(CallExpr {
                     fun,
                     args: args
                         .iter()
-                        .map(|mono::CallArg { name, expr }| CallArg {
-                            name: name.clone(),
-                            expr: lower_l_expr(expr, closures, indices, scope, mono_pgm).0,
+                        .map(|mono::CallArg { name: _, expr }| {
+                            lower_l_expr(expr, closures, indices, scope, mono_pgm).0
                         })
                         .collect(),
                 }),
+
+                mono::FunArgs::Named(named_args) => {
+                    // Evaluate args in program order, pass in the order expected by the function.
+                    let mut arg_locals: HashMap<Id, LocalIdx> = Default::default();
+
+                    for (arg_name, arg_ty) in named_args.iter() {
+                        let local_idx = LocalIdx(scope.locals.len() as u32);
+                        scope.locals.push(LocalInfo {
+                            name: arg_name.clone(),
+                            ty: arg_ty.clone(),
+                        });
+                        let old = arg_locals.insert(arg_name.clone(), local_idx);
+                        assert!(old.is_none());
+                    }
+
+                    let mut stmts: Vec<L<Stmt>> = Vec::with_capacity(named_args.len());
+                    for mono::CallArg { name, expr } in args.iter() {
+                        let name = name.as_ref().unwrap();
+                        let arg_local = arg_locals.get(name).unwrap();
+                        stmts.push(ast::L::new_dummy(Stmt::Assign(AssignStmt {
+                            lhs: ast::L::new_dummy(Expr::LocalVar(*arg_local)),
+                            rhs: lower_l_expr(expr, closures, indices, scope, mono_pgm).0,
+                        })))
+                    }
+
+                    stmts.push(ast::L::new_dummy(Stmt::Expr(ast::L::new_dummy(
+                        Expr::Call(CallExpr {
+                            fun,
+                            args: named_args
+                                .keys()
+                                .map(|name| {
+                                    ast::L::new_dummy(Expr::LocalVar(
+                                        *arg_locals.get(name).unwrap(),
+                                    ))
+                                })
+                                .collect(),
+                        }),
+                    ))));
+
+                    Expr::Do(stmts)
+                }
+            };
+
+            (
+                expr,
                 Default::default(),
-                ret_ty,
+                match ret {
+                    Some(ret) => *ret.node,
+                    None => mono::Type::unit(),
+                },
             )
         }
 
@@ -2166,12 +2210,9 @@ fn lower_expr(
                             .unwrap(),
                     ),
                 }),
-                args: vec![CallArg {
-                    name: Some(SmolStr::new_static("_codePoint")),
-                    expr: L {
-                        loc: Loc::dummy(),
-                        node: Expr::Int(u64::from(*char as u32)),
-                    },
+                args: vec![L {
+                    loc: Loc::dummy(),
+                    node: Expr::Int(u64::from(*char as u32)),
                 }],
             }),
             Default::default(),

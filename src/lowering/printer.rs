@@ -281,13 +281,9 @@ impl Expr {
             Expr::Call(CallExpr { fun, args }) => {
                 fun.node.print(buffer, indent);
                 buffer.push('(');
-                for (i, CallArg { name, expr }) in args.iter().enumerate() {
+                for (i, expr) in args.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
-                    }
-                    if let Some(name) = name {
-                        buffer.push_str(name);
-                        buffer.push_str(" = ");
                     }
                     expr.node.print(buffer, indent);
                 }
