@@ -637,14 +637,14 @@ fn mono_expr(
             )
         }
 
-        ast::Expr::Int(int @ ast::IntExpr { suffix, .. }) => {
-            let ty_decl_id = match suffix.unwrap() {
-                ast::IntKind::I8 => "I8",
-                ast::IntKind::U8 => "U8",
-                ast::IntKind::I32 => "I32",
-                ast::IntKind::U32 => "U32",
-                ast::IntKind::I64 => "I64",
-                ast::IntKind::U64 => "U64",
+        ast::Expr::Int(int @ ast::IntExpr { kind, .. }) => {
+            let ty_decl_id = match kind.unwrap() {
+                ast::IntKind::I8(_) => "I8",
+                ast::IntKind::U8(_) => "U8",
+                ast::IntKind::I32(_) => "I32",
+                ast::IntKind::U32(_) => "U32",
+                ast::IntKind::I64(_) => "I64",
+                ast::IntKind::U64(_) => "U64",
             };
             let ty_decl = poly_pgm.ty.get(ty_decl_id).unwrap();
             mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm);

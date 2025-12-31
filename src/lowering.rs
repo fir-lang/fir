@@ -2111,19 +2111,20 @@ fn lower_expr(
         }
 
         mono::Expr::Int(int) => {
-            let int_ty_con = match int.suffix.unwrap() {
-                ast::IntKind::I8 => "I8",
-                ast::IntKind::U8 => "U8",
-                ast::IntKind::I32 => "I32",
-                ast::IntKind::U32 => "U32",
-                ast::IntKind::I64 => "I64",
-                ast::IntKind::U64 => "U64",
+            let kind = int.kind.unwrap();
+            let (int_ty_con, value) = match kind {
+                ast::IntKind::I8(val) => ("I8", val as u8 as u64),
+                ast::IntKind::U8(val) => ("U8", val as u64),
+                ast::IntKind::I32(val) => ("I32", val as u32 as u64),
+                ast::IntKind::U32(val) => ("U32", val as u64),
+                ast::IntKind::I64(val) => ("I64", val as u64),
+                ast::IntKind::U64(val) => ("U64", val),
             };
             let ty: mono::Type = mono::Type::Named(mono::NamedType {
                 name: SmolStr::new_static(int_ty_con),
                 args: vec![],
             });
-            (Expr::Int(int.parsed), Default::default(), ty)
+            (Expr::Int(value), Default::default(), ty)
         }
 
         mono::Expr::Str(parts) => (

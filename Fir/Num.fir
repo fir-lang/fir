@@ -1,7 +1,23 @@
 prim type I64
 
 
+I64.min() I64:
+    -9223372036854775808
+
+
+I64.max() I64:
+    9223372036854775807
+
+
 prim type U64
+
+
+U64.min() U64:
+    0
+
+
+U64.max() U64:
+    18446744073709551615
 
 
 impl Add[U64]:
@@ -26,6 +42,14 @@ impl Step[U64]:
 
 
 prim type I32
+
+
+I32.min() I32:
+    -2147483648
+
+
+I32.max() I32:
+    2147483647
 
 
 impl Add[I32]:
@@ -91,6 +115,10 @@ impl Step[I32]:
 
 
 prim type U32
+
+
+U32.min() U32:
+    0
 
 
 U32.max() U32:
@@ -176,6 +204,14 @@ prim U32.mod(self: U32, rhs: U32) U32
 prim type I8
 
 
+I8.min() I8:
+    -128
+
+
+I8.max() I8:
+    137
+
+
 impl Add[I8]:
     prim __add(self: I8, other: I8) I8
 
@@ -239,6 +275,14 @@ impl Step[I8]:
 
 
 prim type U8
+
+
+U8.min() U8:
+    0
+
+
+U8.max() U8:
+    255
 
 
 U8.isAsciiWhitespace(self) Bool:

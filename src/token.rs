@@ -133,10 +133,10 @@ pub enum TokenKind {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IntKind {
-    I8,
-    U8,
-    I32,
-    U32,
-    I64,
-    U64,
+    I8(i8),
+    U8(u8),
+    I32(i32),
+    U32(u32),
+    I64(i64),
+    U64(u64),
 }

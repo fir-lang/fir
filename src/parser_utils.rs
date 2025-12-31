@@ -23,6 +23,64 @@ pub(crate) fn parse_char_lit(text: &str) -> char {
     }
 }
 
+pub(crate) fn parse_int_lit(
+    mut text: &str,
+    module: &std::rc::Rc<str>,
+    loc: &lexgen_util::Loc,
+) -> u64 {
+    text = text.strip_prefix("-").unwrap_or(text);
+
+    let mut base: u32 = 10;
+
+    if text.starts_with("0b") {
+        base = 2;
+        text = &text[2..];
+    } else if text.starts_with("0x") {
+        base = 16;
+        text = &text[2..];
+    }
+
+    // We can't use standard library `from_str_radix` or similar as we have to skip '_' characters.
+    let mut value: u64 = 0;
+
+    for char in text.chars() {
+        if char == '_' {
+            continue;
+        }
+
+        let digit: u32 = char.to_digit(base).unwrap_or_else(|| {
+            panic!(
+                "{}:{}:{}: invalid base {} digit: {}",
+                module,
+                loc.line + 1,
+                loc.col + 1,
+                base,
+                char
+            )
+        });
+
+        value = value.checked_mul(u64::from(base)).unwrap_or_else(|| {
+            panic!(
+                "{}:{}:{}: integer literal too large",
+                module,
+                loc.line + 1,
+                loc.col + 1,
+            )
+        });
+
+        value = value.checked_add(u64::from(digit)).unwrap_or_else(|| {
+            panic!(
+                "{}:{}:{}: integer literal too large",
+                module,
+                loc.line + 1,
+                loc.col + 1,
+            )
+        });
+    }
+
+    value
+}
+
 pub(crate) fn process_param_list(
     params: Vec<(Id, Option<L<ast::Type>>)>,
     module: &std::rc::Rc<str>,
