@@ -9,6 +9,10 @@ I64.max() I64:
     9223372036854775807
 
 
+impl ToStr[I64]:
+    prim toStr(self: I64) Str
+
+
 prim type U64
 
 

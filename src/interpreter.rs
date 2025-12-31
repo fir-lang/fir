@@ -221,6 +221,10 @@ fn val_as_u32(val: u64) -> u32 {
     val as u32
 }
 
+fn val_as_i64(val: u64) -> i64 {
+    val as i64
+}
+
 fn i8_as_val(i: i8) -> u64 {
     i as u8 as u64
 }
@@ -1212,6 +1216,17 @@ fn call_builtin_fun<W: Write>(
                 pgm.array_u8_con_idx.as_u64(),
                 Repr::U8,
                 format!("{}", val_as_u32(i)).as_bytes(),
+            ))
+        }
+
+        BuiltinFunDecl::ToStrI64 => {
+            debug_assert_eq!(args.len(), 1);
+            let i = val_as_i64(args[0]);
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                Repr::U8,
+                format!("{}", i).as_bytes(),
             ))
         }
 

@@ -170,6 +170,7 @@ pub enum BuiltinFunDecl {
     ToStrI32,
     ToStrU32,
     ToStrU64,
+    ToStrI64,
     U8AsI8,
     U8AsU32,
     U32AsU8,
@@ -1194,6 +1195,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                             lowered_pgm
                                                 .funs
                                                 .push(Fun::Builtin(BuiltinFunDecl::ToStrU64));
+                                        }
+                                        "I64" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrI64));
                                         }
                                         _ => panic!(),
                                     }
