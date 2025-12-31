@@ -501,15 +501,7 @@ fn exec<W: Write>(
                 val
             }
 
-            Stmt::Assign(AssignStmt { lhs, rhs, op }) => {
-                // Complex assignment operators should've been desugared during type checking.
-                debug_assert_eq!(
-                    *op,
-                    ast::AssignOp::Eq,
-                    "{}: Complex assignment: {:?}",
-                    loc_display(&stmt.loc),
-                    op
-                );
+            Stmt::Assign(AssignStmt { lhs, rhs }) => {
                 let rhs = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc, call_stack));
                 val!(assign(w, pgm, heap, locals, lhs, rhs, call_stack))
             }

@@ -1,6 +1,6 @@
 pub mod printer;
 
-pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, L, Loc, Named};
+pub use crate::ast::{BinOp, Id, IntExpr, L, Loc, Named};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -208,7 +208,6 @@ pub struct IfExpr {
 pub struct AssignStmt {
     pub lhs: L<Expr>,
     pub rhs: L<Expr>,
-    pub op: AssignOp,
 }
 
 #[derive(Debug, Clone)]

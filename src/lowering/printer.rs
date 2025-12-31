@@ -198,17 +198,9 @@ impl Stmt {
                 rhs.node.print(buffer, indent);
             }
 
-            Stmt::Assign(AssignStmt { lhs, rhs, op }) => {
+            Stmt::Assign(AssignStmt { lhs, rhs }) => {
                 lhs.node.print(buffer, indent);
-                buffer.push(' ');
-                buffer.push_str(match op {
-                    AssignOp::Eq => "=",
-                    AssignOp::PlusEq => "+=",
-                    AssignOp::MinusEq => "-=",
-                    AssignOp::StarEq => "*=",
-                    AssignOp::CaretEq => "^=",
-                });
-                buffer.push(' ');
+                buffer.push_str(" = ");
                 rhs.node.print(buffer, indent);
             }
 

@@ -384,10 +384,17 @@ fn mono_stmt(
         }
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
+            // Complex assignment operators should've been desugared during type checking.
+            assert_eq!(
+                *op,
+                ast::AssignOp::Eq,
+                "{}: Complex assignment: {:?}",
+                loc_display(loc),
+                op
+            );
             mono::Stmt::Assign(mono::AssignStmt {
                 lhs: mono_l_expr(lhs, ty_map, poly_pgm, mono_pgm, locals),
                 rhs: mono_l_expr(rhs, ty_map, poly_pgm, mono_pgm, locals),
-                op: *op,
             })
         }
 

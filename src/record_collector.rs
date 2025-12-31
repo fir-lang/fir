@@ -150,7 +150,7 @@ fn visit_stmt(stmt: &mono::Stmt, records: &mut HashSet<RecordShape>) {
             visit_expr(&rhs.node, records);
         }
 
-        mono::Stmt::Assign(mono::AssignStmt { lhs, rhs, op: _ }) => {
+        mono::Stmt::Assign(mono::AssignStmt { lhs, rhs }) => {
             visit_expr(&lhs.node, records);
             visit_expr(&rhs.node, records);
         }

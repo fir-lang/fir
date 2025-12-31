@@ -5,7 +5,7 @@ pub mod printer;
 
 use crate::ast;
 use crate::collections::*;
-use crate::mono_ast::{self as mono, AssignOp, Id, L, Loc, Named};
+use crate::mono_ast::{self as mono, Id, L, Loc, Named};
 use crate::record_collector::{RecordShape, collect_records};
 use crate::utils::loc_display;
 
@@ -392,7 +392,6 @@ pub struct LetStmt {
 pub struct AssignStmt {
     pub lhs: L<Expr>,
     pub rhs: L<Expr>,
-    pub op: AssignOp,
 }
 
 #[derive(Debug, Clone)]
@@ -1703,11 +1702,10 @@ fn lower_stmt(
             (Stmt::Let(LetStmt { lhs, rhs }), mono::Type::unit())
         }
 
-        mono::Stmt::Assign(mono::AssignStmt { lhs, rhs, op }) => (
+        mono::Stmt::Assign(mono::AssignStmt { lhs, rhs }) => (
             Stmt::Assign(AssignStmt {
                 lhs: lower_l_expr(lhs, closures, indices, scope, mono_pgm).0,
                 rhs: lower_l_expr(rhs, closures, indices, scope, mono_pgm).0,
-                op: *op,
             }),
             mono::Type::unit(),
         ),
