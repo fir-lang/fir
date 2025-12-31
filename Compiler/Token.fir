@@ -186,8 +186,6 @@ type TokenKind:
 
     # Literals
     Int
-    HexInt
-    BinInt
     Char
 
     # Indentation
@@ -285,7 +283,6 @@ impl ToStr[TokenKind]:
             TokenKind.And: "And"
             TokenKind.As: "As"
             TokenKind.Backslash: "Backslash"
-            TokenKind.BinInt: "BinInt"
             TokenKind.Break: "Break"
             TokenKind.Caret: "Caret"
             TokenKind.CaretEq: "CaretEq"
@@ -309,7 +306,6 @@ impl ToStr[TokenKind]:
             TokenKind.ExclamationEq: "ExclamationEq"
             TokenKind.Fn_: "Fn"
             TokenKind.For: "For"
-            TokenKind.HexInt: "HexInt"
             TokenKind.If: "If"
             TokenKind.Impl: "Impl"
             TokenKind.Import: "Import"
@@ -374,7 +370,6 @@ impl Eq[TokenKind]:
             (left = TokenKind.And, right = TokenKind.And): Bool.True
             (left = TokenKind.As, right = TokenKind.As): Bool.True
             (left = TokenKind.Backslash, right = TokenKind.Backslash): Bool.True
-            (left = TokenKind.BinInt, right = TokenKind.BinInt): Bool.True
             (left = TokenKind.Break, right = TokenKind.Break): Bool.True
             (left = TokenKind.Char, right = TokenKind.Char): Bool.True
             (left = TokenKind.Colon, right = TokenKind.Colon): Bool.True
@@ -400,7 +395,6 @@ impl Eq[TokenKind]:
                 Bool.True
             (left = TokenKind.Fn_, right = TokenKind.Fn_): Bool.True
             (left = TokenKind.For, right = TokenKind.For): Bool.True
-            (left = TokenKind.HexInt, right = TokenKind.HexInt): Bool.True
             (left = TokenKind.If, right = TokenKind.If): Bool.True
             (left = TokenKind.Impl, right = TokenKind.Impl): Bool.True
             (left = TokenKind.Import, right = TokenKind.Import): Bool.True

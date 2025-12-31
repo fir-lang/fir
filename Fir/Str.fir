@@ -23,6 +23,7 @@ Str.isEmpty(self) Bool:
 
 
 # TODO: This should check that `byteStart` and `byteEnd` are on character boundaries.
+# TODO: Check that `byteStart <= byteEnd`, either return empty or panic.
 Str.substr(self, byteStart: U32, byteEnd: U32) Str:
     Str(_bytes = self._bytes.slice(byteStart, byteEnd))
 
