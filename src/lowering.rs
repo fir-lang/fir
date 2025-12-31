@@ -359,17 +359,6 @@ impl ConFields {
             ConFields::Unnamed(fields) => fields.is_empty(),
         }
     }
-
-    pub fn find_named_field_idx(&self, id: &Id) -> usize {
-        match self {
-            ConFields::Unnamed(_) => panic!(),
-            ConFields::Named(fields) => fields
-                .keys()
-                .enumerate()
-                .find_map(|(i, field_name)| if field_name == id { Some(i) } else { None })
-                .unwrap(),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -516,9 +505,7 @@ pub enum Pat {
 #[derive(Debug, Clone)]
 pub struct ConPat {
     pub con: HeapObjIdx,
-
-    // Note: this does not need to bind or match all fields!
-    pub fields: Vec<Named<L<Pat>>>,
+    pub fields: Vec<L<Pat>>,
 }
 
 #[derive(Debug, Clone)]
@@ -1699,7 +1686,7 @@ fn lower_stmt(
     match stmt {
         mono::Stmt::Let(mono::LetStmt { lhs, rhs }) => {
             let rhs = lower_l_expr(rhs, closures, indices, scope, mono_pgm).0;
-            let lhs = lower_l_pat(lhs, indices, scope, &mut Default::default());
+            let lhs = lower_l_pat(lhs, indices, scope, mono_pgm, &mut Default::default());
             (Stmt::Let(LetStmt { lhs, rhs }), mono::Type::unit())
         }
 
@@ -1752,7 +1739,7 @@ fn lower_stmt(
 
             let expr = lower_l_expr(expr, closures, indices, scope, mono_pgm).0;
             scope.bounds.enter();
-            let pat = lower_l_pat(pat, indices, scope, &mut Default::default());
+            let pat = lower_l_pat(pat, indices, scope, mono_pgm, &mut Default::default());
             let body = body
                 .iter()
                 .map(|stmt| lower_l_stmt(stmt, closures, indices, scope, mono_pgm).0)
@@ -2305,7 +2292,7 @@ fn lower_expr(
                 .iter()
                 .map(|mono::Alt { pat, guard, rhs }| {
                     scope.bounds.enter();
-                    let pat = lower_l_pat(pat, indices, scope, &mut Default::default());
+                    let pat = lower_l_pat(pat, indices, scope, mono_pgm, &mut Default::default());
                     let guard = guard
                         .as_ref()
                         .map(|guard| lower_l_expr(guard, closures, indices, scope, mono_pgm));
@@ -2446,7 +2433,7 @@ fn lower_expr(
             scope.bounds.enter();
             let (expr, _pat_vars_1, _expr_ty) =
                 lower_bl_expr(expr, closures, indices, scope, mono_pgm);
-            let pat = lower_l_pat(pat, indices, scope, &mut Default::default());
+            let pat = lower_l_pat(pat, indices, scope, mono_pgm, &mut Default::default());
             let pat_vars_2 = scope.bounds.exit();
             (
                 Expr::Is(IsExpr { expr, pat }),
@@ -2523,6 +2510,8 @@ fn lower_pat(
     pat: &mono::Pat,
     indices: &Indices,
     scope: &mut FunScope,
+    mono_pgm: &mono::MonoPgm,
+    loc: &Loc,
 
     // This map is to map binders in alternatives of or patterns to the same local.
     //
@@ -2560,14 +2549,79 @@ fn lower_pat(
                     .unwrap(),
                 None => *indices.product_cons.get(ty).unwrap().get(ty_args).unwrap(),
             };
+
+            let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty).unwrap().get(ty_args).unwrap();
+
+            let con_fields: &mono::ConFields = match &ty_decl.rhs {
+                Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
+                    for con_ in cons {
+                        if con_.name == *con.as_ref().unwrap() {
+                            break 'l &con_.fields;
+                        }
+                    }
+                    panic!(
+                        "BUG: {}: Type {} doesn't have constructor named {}",
+                        loc_display(loc),
+                        ty,
+                        con.as_ref().unwrap()
+                    );
+                }
+
+                Some(mono::TypeDeclRhs::Product(fields)) => fields,
+
+                None => panic!(
+                    "BUG: {}: Type {} doesn't have any constructors",
+                    loc_display(loc),
+                    ty,
+                ),
+            };
+
+            let field_pats = match con_fields {
+                mono::ConFields::Empty => {
+                    assert!(fields.is_empty());
+                    vec![]
+                }
+
+                mono::ConFields::Named(con_fields) => {
+                    let mut field_pats: Vec<L<Pat>> = Vec::with_capacity(con_fields.len());
+
+                    for field_name in con_fields.keys() {
+                        let pat = match fields.iter().find_map(|field_pat| {
+                            if field_pat.name.as_ref().unwrap() == field_name {
+                                Some(&field_pat.node)
+                            } else {
+                                None
+                            }
+                        }) {
+                            Some(pat) => lower_l_pat(pat, indices, scope, mono_pgm, mapped_binders),
+                            None => L::new_dummy(Pat::Ignore),
+                        };
+                        field_pats.push(pat);
+                    }
+
+                    field_pats
+                }
+
+                mono::ConFields::Unnamed(con_fields) => {
+                    let mut field_pats: Vec<L<Pat>> = fields
+                        .iter()
+                        .map(|field_pat| {
+                            assert!(field_pat.name.is_none());
+                            lower_l_pat(&field_pat.node, indices, scope, mono_pgm, mapped_binders)
+                        })
+                        .collect();
+
+                    for _ in 0..(con_fields.len() - field_pats.len()) {
+                        field_pats.push(L::new_dummy(Pat::Ignore));
+                    }
+
+                    field_pats
+                }
+            };
+
             Pat::Con(ConPat {
                 con: con_idx,
-                fields: fields
-                    .iter()
-                    .map(|named_f| {
-                        named_f.map_as_ref(|f| lower_l_pat(f, indices, scope, mapped_binders))
-                    })
-                    .collect(),
+                fields: field_pats,
             })
         }
 
@@ -2586,7 +2640,7 @@ fn lower_pat(
             Pat::Record(RecordPat {
                 fields: fields
                     .iter()
-                    .map(|field| lower_nl_pat(field, indices, scope, mapped_binders))
+                    .map(|field| lower_nl_pat(field, indices, scope, mono_pgm, mapped_binders))
                     .collect(),
                 idx,
             })
@@ -2599,13 +2653,17 @@ fn lower_pat(
         mono::Pat::Char(char) => Pat::Char(*char),
 
         mono::Pat::Or(p1, p2) => Pat::Or(
-            lower_bl_pat(p1, indices, scope, mapped_binders),
-            lower_bl_pat(p2, indices, scope, mapped_binders),
+            lower_bl_pat(p1, indices, scope, mono_pgm, mapped_binders),
+            lower_bl_pat(p2, indices, scope, mono_pgm, mapped_binders),
         ),
 
-        mono::Pat::Variant(p) => {
-            Pat::Variant(Box::new(lower_l_pat(p, indices, scope, mapped_binders)))
-        }
+        mono::Pat::Variant(p) => Pat::Variant(Box::new(lower_l_pat(
+            p,
+            indices,
+            scope,
+            mono_pgm,
+            mapped_binders,
+        ))),
     }
 }
 
@@ -2613,27 +2671,30 @@ fn lower_nl_pat(
     pat: &Named<L<mono::Pat>>,
     indices: &Indices,
     scope: &mut FunScope,
+    mono_pgm: &mono::MonoPgm,
     mapped_binders: &mut HashMap<Id, LocalIdx>,
 ) -> Named<L<Pat>> {
-    pat.map_as_ref(|pat| lower_l_pat(pat, indices, scope, mapped_binders))
+    pat.map_as_ref(|pat| lower_l_pat(pat, indices, scope, mono_pgm, mapped_binders))
 }
 
 fn lower_bl_pat(
     pat: &L<mono::Pat>,
     indices: &Indices,
     scope: &mut FunScope,
+    mono_pgm: &mono::MonoPgm,
     mapped_binders: &mut HashMap<Id, LocalIdx>,
 ) -> Box<L<Pat>> {
-    Box::new(lower_l_pat(pat, indices, scope, mapped_binders))
+    Box::new(lower_l_pat(pat, indices, scope, mono_pgm, mapped_binders))
 }
 
 fn lower_l_pat(
     pat: &L<mono::Pat>,
     indices: &Indices,
     scope: &mut FunScope,
+    mono_pgm: &mono::MonoPgm,
     mapped_binders: &mut HashMap<Id, LocalIdx>,
 ) -> L<Pat> {
-    pat.map_as_ref(|pat| lower_pat(pat, indices, scope, mapped_binders))
+    pat.map_as_ref(|pat_| lower_pat(pat_, indices, scope, mono_pgm, &pat.loc, mapped_binders))
 }
 
 fn lower_source_fun(

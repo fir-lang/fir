@@ -430,10 +430,7 @@ impl Pat {
                     if i != 0 {
                         buffer.push_str(", ");
                     }
-                    if let Some(name) = &field.name {
-                        write!(buffer, "{name}: ").unwrap();
-                    }
-                    field.node.node.print(buffer);
+                    field.node.print(buffer);
                 }
                 buffer.push(')');
             }

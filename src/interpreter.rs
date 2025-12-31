@@ -920,15 +920,9 @@ fn try_bind_pat(pgm: &Pgm, heap: &mut Heap, pat: &L<Pat>, locals: &mut [u64], va
                 return false;
             }
 
-            let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
-
-            // Consturctor can have more fields than the pattern, so iterate pattern fields.
-            for (mut field_idx, field_pat) in field_pats.iter().enumerate() {
-                if let Some(field_name) = &field_pat.name {
-                    field_idx = con.fields.find_named_field_idx(field_name);
-                }
+            for (field_idx, field_pat) in field_pats.iter().enumerate() {
                 let field_value = heap[value + 1 + (field_idx as u64)];
-                if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
+                if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
                     return false;
                 }
             }
