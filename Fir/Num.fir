@@ -213,7 +213,7 @@ I8.min() I8:
 
 
 I8.max() I8:
-    137
+    127
 
 
 impl Add[I8]:

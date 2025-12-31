@@ -611,14 +611,15 @@ pub(super) fn check_expr(
                             text
                         )
                     });
+                    let limit = if negate { i8::MIN } else { i8::MAX }.unsigned_abs();
+                    if bits > limit {
+                        panic!(
+                            "{}: Integer literal {} out of range for I8",
+                            loc_display(&loc),
+                            text
+                        );
+                    }
                     if negate {
-                        if bits > i8::MIN.unsigned_abs() {
-                            panic!(
-                                "{}: Integer literal {} out of range for I8",
-                                loc_display(&loc),
-                                text
-                            );
-                        }
                         bits = !bits.wrapping_sub(1);
                     }
                     *kind = Some(ast::IntKind::I8(bits as i8));
@@ -651,14 +652,15 @@ pub(super) fn check_expr(
                             text
                         )
                     });
+                    let limit = if negate { i32::MIN } else { i32::MAX }.unsigned_abs();
+                    if bits > limit {
+                        panic!(
+                            "{}: Integer literal {} out of range for I32",
+                            loc_display(&loc),
+                            text
+                        );
+                    }
                     if negate {
-                        if bits > i32::MIN.unsigned_abs() {
-                            panic!(
-                                "{}: Integer literal {} out of range for I32",
-                                loc_display(&loc),
-                                text
-                            );
-                        }
                         bits = !bits.wrapping_sub(1);
                     }
                     *kind = Some(ast::IntKind::I32(bits as i32));
@@ -677,14 +679,15 @@ pub(super) fn check_expr(
 
                 "I64" => {
                     let mut bits = *parsed;
+                    let limit = if negate { i64::MIN } else { i64::MAX }.unsigned_abs();
+                    if bits > limit {
+                        panic!(
+                            "{}: Integer literal {} out of range for I32",
+                            loc_display(&loc),
+                            text
+                        );
+                    }
                     if negate {
-                        if bits > i64::MIN.unsigned_abs() {
-                            panic!(
-                                "{}: Integer literal {} out of range for I64",
-                                loc_display(&loc),
-                                text
-                            );
-                        }
                         bits = !bits.wrapping_sub(1);
                     }
                     *kind = Some(ast::IntKind::I64(bits as i64));
