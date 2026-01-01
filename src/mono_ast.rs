@@ -195,7 +195,13 @@ pub struct Con {
 #[derive(Debug, Clone)]
 pub struct RecordPat {
     pub fields: Vec<Named<L<Pat>>>,
-    pub ty: Type,
+
+    /// The record type.
+    ///
+    /// Note that the type can have more fields than `fields`. Those fields are ignored by the
+    /// pattern.
+    /// TODO: Maybe have a `ignore_rest` flag here as well?
+    pub ty: OrdMap<Id, Type>,
 }
 
 #[derive(Debug, Clone)]
@@ -239,7 +245,7 @@ pub enum Expr {
     Str(Vec<StringPart>),
     Char(char),
     BinOp(BinOpExpr),
-    Record(Vec<(Id, L<Expr>)>),
+    Record(RecordExpr),
     Return(Box<L<Expr>>),
     Match(MatchExpr),
     If(IfExpr),
@@ -293,6 +299,12 @@ pub struct BinOpExpr {
     pub left: Box<L<Expr>>,
     pub right: Box<L<Expr>>,
     pub op: BinOp,
+}
+
+#[derive(Debug, Clone)]
+pub struct RecordExpr {
+    pub fields: Vec<(Id, L<Expr>)>,
+    pub ty: OrdMap<Id, Type>, // the record type
 }
 
 #[derive(Debug, Clone)]

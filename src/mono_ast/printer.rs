@@ -510,7 +510,7 @@ impl Expr {
                 }
             }
 
-            Expr::Record(fields) => {
+            Expr::Record(RecordExpr { fields, ty: _ }) => {
                 buffer.push('(');
                 for (i, (field_name, field_expr)) in fields.iter().enumerate() {
                     if i != 0 {
@@ -696,7 +696,7 @@ impl Pat {
                     node.node.print(buffer);
                 }
                 buffer.push_str("): ");
-                ty.print(buffer);
+                Type::Record { fields: ty.clone() }.print(buffer);
             }
 
             Pat::Ignore => buffer.push('_'),

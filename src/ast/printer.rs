@@ -637,7 +637,10 @@ impl Expr {
                 }
             }
 
-            Expr::Record(fields) => {
+            Expr::Record(RecordExpr {
+                fields,
+                inferred_ty: _,
+            }) => {
                 buffer.push('(');
                 for (i, (field_name, field_expr)) in fields.iter().enumerate() {
                     if i != 0 {

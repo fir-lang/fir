@@ -4,7 +4,7 @@ use crate::mono_ast as mono;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct RecordShape {
-    pub(crate) fields: OrdSet<Id>,
+    pub(crate) fields: OrdMap<Id, mono::Type>,
 }
 
 impl RecordShape {
@@ -106,7 +106,7 @@ fn visit_ty(ty: &mono::Type, records: &mut HashSet<RecordShape>) {
 
         mono::Type::Record { fields } => {
             records.insert(RecordShape {
-                fields: fields.keys().cloned().collect(),
+                fields: fields.clone(),
             });
         }
 
@@ -197,10 +197,10 @@ fn visit_pat(pat: &mono::Pat, records: &mut HashSet<RecordShape>) {
         }
 
         mono::Pat::Record(mono::RecordPat { fields, ty }) => {
+            records.insert(RecordShape { fields: ty.clone() });
             for field in fields {
                 visit_pat(&field.node.node, records);
             }
-            visit_ty(ty, records);
         }
 
         mono::Pat::Or(pat1, pat2) => {
@@ -257,13 +257,11 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordShape>) {
             visit_expr(&right.node, records);
         }
 
-        mono::Expr::Record(fields) => {
+        mono::Expr::Record(mono::RecordExpr { fields, ty }) => {
+            records.insert(RecordShape { fields: ty.clone() });
             for (_field_name, field_expr) in fields {
                 visit_expr(&field_expr.node, records);
             }
-            records.insert(RecordShape {
-                fields: fields.iter().map(|(k, _v)| k.clone()).collect(),
-            });
         }
 
         mono::Expr::Return(expr) => visit_expr(&expr.node, records),

@@ -5,7 +5,7 @@ pub mod printer;
 
 use crate::ast;
 use crate::collections::*;
-use crate::mono_ast::{self as mono, Id, L, Loc, Named};
+use crate::mono_ast::{self as mono, Id, L, Loc};
 use crate::record_collector::{RecordShape, collect_records};
 use crate::utils::loc_display;
 
@@ -292,13 +292,6 @@ impl HeapObj {
             _ => panic!(),
         }
     }
-
-    pub fn as_record(&self) -> &RecordShape {
-        match self {
-            HeapObj::Record(record) => record,
-            _ => panic!(),
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -417,7 +410,6 @@ pub enum Expr {
     Str(Vec<StringPart>),
     BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
     BoolOr(Box<L<Expr>>, Box<L<Expr>>),
-    Record(RecordExpr),
     Return(Box<L<Expr>>),
     Match(MatchExpr),
     If(IfExpr),
@@ -451,12 +443,6 @@ pub struct MethodSelExpr {
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
     pub args: Vec<L<Expr>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct RecordExpr {
-    pub fields: Vec<(Id, L<Expr>)>,
-    pub idx: HeapObjIdx,
 }
 
 #[derive(Debug, Clone)]
@@ -494,7 +480,6 @@ pub struct IsExpr {
 pub enum Pat {
     Var(LocalIdx),
     Con(ConPat),
-    Record(RecordPat),
     Ignore,
     Str(String),
     Char(char),
@@ -506,12 +491,6 @@ pub enum Pat {
 pub struct ConPat {
     pub con: HeapObjIdx,
     pub fields: Vec<L<Pat>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct RecordPat {
-    pub fields: Vec<Named<L<Pat>>>,
-    pub idx: HeapObjIdx,
 }
 
 #[derive(Debug)]
@@ -896,6 +875,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     // TODO: Unit should be defined already as it's the return type of `main`?
     record_shapes.insert(RecordShape::unit());
 
+    // TODO: We could assign indices to records as we see them during lowering below.
     let mut record_indices: HashMap<RecordShape, HeapObjIdx> = Default::default();
     for record_shape in record_shapes {
         let idx = next_con_idx;
@@ -2247,31 +2227,57 @@ fn lower_expr(
 
         mono::Expr::BinOp(_) => panic!("BUG: {}: Non-desugared BinOp", loc_display(loc)),
 
-        mono::Expr::Record(fields) => {
-            let mut field_tys: OrdMap<Id, mono::Type> = Default::default();
-            let mut field_exprs: Vec<(Id, L<Expr>)> = Vec::with_capacity(fields.len());
-
-            for (field_name, field_expr) in fields {
-                let (field_expr, _field_vars, field_ty) =
-                    lower_l_expr(field_expr, closures, indices, scope, mono_pgm);
-                field_exprs.push((field_name.clone(), field_expr));
-                field_tys.insert(field_name.clone(), field_ty);
-            }
-
-            let idx = *indices
+        mono::Expr::Record(mono::RecordExpr {
+            fields,
+            ty: field_tys,
+        }) => {
+            let record_idx = *indices
                 .records
                 .get(&RecordShape {
-                    fields: field_tys.keys().cloned().collect(),
+                    fields: field_tys.clone(),
                 })
                 .unwrap();
 
-            (
-                Expr::Record(RecordExpr {
-                    fields: field_exprs,
-                    idx,
+            // Evaluate args in program order, pass in the order expected by the function.
+            let mut arg_locals: HashMap<Id, LocalIdx> = Default::default();
+
+            for (field_name, field_ty) in field_tys.iter() {
+                let local_idx = LocalIdx(scope.locals.len() as u32);
+                scope.locals.push(LocalInfo {
+                    name: field_name.clone(),
+                    ty: field_ty.clone(),
+                });
+                let old = arg_locals.insert(field_name.clone(), local_idx);
+                assert!(old.is_none());
+            }
+
+            let mut stmts: Vec<L<Stmt>> = Vec::with_capacity(field_tys.len());
+            for (name, expr) in fields.iter() {
+                let arg_local = arg_locals.get(name).unwrap();
+                stmts.push(ast::L::new_dummy(Stmt::Assign(AssignStmt {
+                    lhs: ast::L::new_dummy(Expr::LocalVar(*arg_local)),
+                    rhs: lower_l_expr(expr, closures, indices, scope, mono_pgm).0,
+                })))
+            }
+
+            stmts.push(ast::L::new_dummy(Stmt::Expr(ast::L::new_dummy(
+                Expr::Call(CallExpr {
+                    fun: Box::new(ast::L::new_dummy(Expr::Con(record_idx))),
+                    args: field_tys
+                        .keys()
+                        .map(|name| {
+                            ast::L::new_dummy(Expr::LocalVar(*arg_locals.get(name).unwrap()))
+                        })
+                        .collect(),
                 }),
+            ))));
+
+            (
+                Expr::Do(stmts),
                 Default::default(),
-                mono::Type::Record { fields: field_tys },
+                mono::Type::Record {
+                    fields: field_tys.clone(),
+                },
             )
         }
 
@@ -2626,23 +2632,30 @@ fn lower_pat(
         }
 
         mono::Pat::Record(mono::RecordPat { fields, ty }) => {
-            let record_ty_fields = match ty {
-                mono::Type::Record { fields } => fields,
-                mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_) => panic!(),
-                mono::Type::Never => panic!("BUG: Pattern with Never type"),
-            };
             let idx = *indices
                 .records
-                .get(&RecordShape {
-                    fields: record_ty_fields.keys().cloned().collect(),
-                })
+                .get(&RecordShape { fields: ty.clone() })
                 .unwrap();
-            Pat::Record(RecordPat {
-                fields: fields
-                    .iter()
-                    .map(|field| lower_nl_pat(field, indices, scope, mono_pgm, mapped_binders))
-                    .collect(),
-                idx,
+
+            let mut field_pats: Vec<L<Pat>> = Vec::with_capacity(ty.len());
+
+            for field_name in ty.keys() {
+                let pat = match fields.iter().find_map(|field_pat| {
+                    if field_pat.name.as_ref().unwrap() == field_name {
+                        Some(&field_pat.node)
+                    } else {
+                        None
+                    }
+                }) {
+                    Some(pat) => lower_l_pat(pat, indices, scope, mono_pgm, mapped_binders),
+                    None => L::new_dummy(Pat::Ignore),
+                };
+                field_pats.push(pat);
+            }
+
+            Pat::Con(ConPat {
+                fields: field_pats,
+                con: idx,
             })
         }
 
@@ -2665,16 +2678,6 @@ fn lower_pat(
             mapped_binders,
         ))),
     }
-}
-
-fn lower_nl_pat(
-    pat: &Named<L<mono::Pat>>,
-    indices: &Indices,
-    scope: &mut FunScope,
-    mono_pgm: &mono::MonoPgm,
-    mapped_binders: &mut HashMap<Id, LocalIdx>,
-) -> Named<L<Pat>> {
-    pat.map_as_ref(|pat| lower_l_pat(pat, indices, scope, mono_pgm, mapped_binders))
 }
 
 fn lower_bl_pat(

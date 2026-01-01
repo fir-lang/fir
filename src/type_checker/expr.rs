@@ -908,8 +908,14 @@ pub(super) fn check_expr(
             }
         },
 
-        ast::Expr::Record(fields) => {
+        ast::Expr::Record(ast::RecordExpr {
+            fields,
+            inferred_ty,
+        }) => {
+            assert!(inferred_ty.is_none());
+
             if fields.is_empty() {
+                *inferred_ty = Some(Ty::unit());
                 return (
                     unify_expected_ty(
                         Ty::unit(),
@@ -959,14 +965,18 @@ pub(super) fn check_expr(
                 record_fields.insert(field_name.clone(), field_ty);
             }
 
+            let ty = Ty::Anonymous {
+                labels: record_fields,
+                extension: None,
+                kind: RecordOrVariant::Record,
+                is_row: false,
+            };
+
+            *inferred_ty = Some(ty.clone());
+
             (
                 unify_expected_ty(
-                    Ty::Anonymous {
-                        labels: record_fields,
-                        extension: None,
-                        kind: RecordOrVariant::Record,
-                        is_row: false,
-                    },
+                    ty,
                     expected_ty,
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
@@ -1262,10 +1272,13 @@ pub(super) fn check_expr(
                     let elem = match k {
                         Some(k) => ast::L {
                             loc: loc.clone(),
-                            node: ast::Expr::Record(vec![
-                                (SmolStr::new("key"), k.clone()),
-                                (SmolStr::new("value"), v.clone()),
-                            ]),
+                            node: ast::Expr::Record(ast::RecordExpr {
+                                fields: vec![
+                                    (SmolStr::new("key"), k.clone()),
+                                    (SmolStr::new("value"), v.clone()),
+                                ],
+                                inferred_ty: None,
+                            }),
                         },
                         None => v.clone(),
                     };

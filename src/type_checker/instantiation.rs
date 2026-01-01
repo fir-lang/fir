@@ -108,10 +108,14 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             normalize_expr(&mut expr.node, cons);
         }
 
-        ast::Expr::Record(fields) => {
+        ast::Expr::Record(ast::RecordExpr {
+            fields,
+            inferred_ty,
+        }) => {
             for (_field_name, field_expr) in fields {
                 normalize_expr(&mut field_expr.node, cons);
             }
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
         }
 
         ast::Expr::Return(expr) => {

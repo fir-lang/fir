@@ -695,8 +695,11 @@ fn mono_expr(
             ast::UnOp::Not => panic!("Not unop wasn't desugared"),
         },
 
-        ast::Expr::Record(fields) => mono::Expr::Record(
-            fields
+        ast::Expr::Record(ast::RecordExpr {
+            fields,
+            inferred_ty,
+        }) => mono::Expr::Record(mono::RecordExpr {
+            fields: fields
                 .iter()
                 .map(|(field_name, field_expr)| {
                     (
@@ -705,7 +708,12 @@ fn mono_expr(
                     )
                 })
                 .collect(),
-        ),
+
+            ty: get_record_ty(
+                mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+                loc,
+            ),
+        }),
 
         ast::Expr::Return(expr) => {
             mono::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
@@ -1132,6 +1140,7 @@ fn mono_pat(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
+    loc: &ast::Loc,
 ) -> mono::Pat {
     match pat {
         ast::Pat::Var(ast::VarPat { var, ty }) => {
@@ -1203,7 +1212,10 @@ fn mono_pat(
                 .iter()
                 .map(|named_pat| mono_named_l_pat(named_pat, ty_map, poly_pgm, mono_pgm, locals))
                 .collect(),
-            ty: mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+            ty: get_record_ty(
+                mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+                loc,
+            ),
         }),
 
         ast::Pat::Variant(pat) => {
@@ -1219,7 +1231,7 @@ fn mono_l_pat(
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
 ) -> ast::L<mono::Pat> {
-    pat.map_as_ref(|pat| mono_pat(pat, ty_map, poly_pgm, mono_pgm, locals))
+    pat.map_as_ref(|pat_| mono_pat(pat_, ty_map, poly_pgm, mono_pgm, locals, &pat.loc))
 }
 
 fn mono_bl_pat(
@@ -1803,5 +1815,24 @@ fn mono_fields(
                 .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm))
                 .collect(),
         ),
+    }
+}
+
+fn get_record_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::Type> {
+    match ty {
+        mono::Type::Record { fields } => fields,
+
+        other @ (mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_)) => {
+            panic!(
+                "{}: BUG: Record expression with non-record type: {}",
+                loc_display(loc),
+                other
+            )
+        }
+
+        mono::Type::Never => {
+            // This can't happen as we only infer `Never` during lowering.
+            panic!()
+        }
     }
 }

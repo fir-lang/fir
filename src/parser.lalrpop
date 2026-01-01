@@ -678,8 +678,8 @@ InlineExpr: Expr = {
         expr
     },
 
-    "(" <exprs:Sep<ParenExpr, ",">> ")" => {
-        Expr::Record(exprs)
+    "(" <fields:Sep<ParenExpr, ",">> ")" => {
+        Expr::Record(RecordExpr { fields, inferred_ty: None })
     },
 
     <l:@L> <int:IntLit> => {
@@ -875,7 +875,7 @@ InlineExpr: Expr = {
         }),
 
     <l:@L> "return" <r:@R> =>
-        Expr::Return(Box::new(L::new(module, l, r, Expr::Record(vec![])))),
+        Expr::Return(Box::new(L::new(module, l, r, Expr::Record(RecordExpr { fields: vec![], inferred_ty: None })))),
 
     #[precedence(level = "12")]
     "return" <expr:LInlineExpr> =>

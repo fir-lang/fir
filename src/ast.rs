@@ -526,7 +526,7 @@ pub enum Expr {
     UnOp(UnOpExpr),
 
     /// A record: `()`, `(x = 123, msg = "hi")`.
-    Record(Vec<(Id, L<Expr>)>),
+    Record(RecordExpr),
 
     Return(Box<L<Expr>>),
 
@@ -729,6 +729,12 @@ pub struct FnExpr {
 pub struct IsExpr {
     pub expr: Box<L<Expr>>,
     pub pat: L<Pat>,
+}
+
+#[derive(Debug, Clone)]
+pub struct RecordExpr {
+    pub fields: Vec<(Id, L<Expr>)>,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1070,7 +1076,10 @@ impl Expr {
                 expr.node.subst_ty_ids(substs);
             }
 
-            Expr::Record(fields) => {
+            Expr::Record(RecordExpr {
+                fields,
+                inferred_ty: _,
+            }) => {
                 for (_field_name, field_expr) in fields {
                     field_expr.node.subst_ty_ids(substs);
                 }

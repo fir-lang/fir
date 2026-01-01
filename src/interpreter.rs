@@ -7,7 +7,6 @@ mod heap;
 use heap::Heap;
 
 use crate::ast::{self, Id, L, Loc};
-use crate::collections::HashMap;
 use crate::lowering::*;
 use crate::utils::loc_display;
 
@@ -783,36 +782,6 @@ fn eval<W: Write>(
             ControlFlow::Val(alloc)
         }
 
-        Expr::Record(RecordExpr { fields, idx }) => {
-            let shape = pgm.heap_objs[idx.as_usize()].as_record();
-
-            let record = heap.allocate(fields.len() + 1);
-            heap[record] = idx.as_u64();
-
-            let name_indices: HashMap<Id, usize> = shape
-                .fields
-                .iter()
-                .enumerate()
-                .map(|(i, field_name)| (field_name.clone(), i))
-                .collect();
-
-            for (field_name, field_expr) in fields {
-                let field_value = val!(eval(
-                    w,
-                    pgm,
-                    heap,
-                    locals,
-                    &field_expr.node,
-                    &field_expr.loc,
-                    call_stack
-                ));
-                let field_idx = *name_indices.get(field_name).unwrap();
-                heap[record + 1 + (field_idx as u64)] = field_value;
-            }
-
-            ControlFlow::Val(record)
-        }
-
         Expr::Is(IsExpr { expr, pat }) => {
             let val = val!(eval(
                 w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
@@ -922,35 +891,6 @@ fn try_bind_pat(pgm: &Pgm, heap: &mut Heap, pat: &L<Pat>, locals: &mut [u64], va
 
             for (field_idx, field_pat) in field_pats.iter().enumerate() {
                 let field_value = heap[value + 1 + (field_idx as u64)];
-                if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
-                    return false;
-                }
-            }
-
-            true
-        }
-
-        Pat::Record(RecordPat {
-            fields: field_pats,
-            idx,
-        }) => {
-            let value_tag = heap[value];
-            debug_assert_eq!(value_tag, idx.as_u64());
-
-            let record_shape = pgm.heap_objs[idx.as_usize()].as_record();
-
-            for (i, field_name) in record_shape.fields.iter().enumerate() {
-                let field_pat = match field_pats.iter().find_map(|pat| {
-                    if pat.name.as_ref().unwrap() == field_name {
-                        Some(&pat.node)
-                    } else {
-                        None
-                    }
-                }) {
-                    None => continue,
-                    Some(pat) => pat,
-                };
-                let field_value = heap[value + 1 + (i as u64)];
                 if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
                     return false;
                 }
