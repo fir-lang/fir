@@ -285,15 +285,6 @@ pub enum HeapObj {
     Record(RecordShape),
 }
 
-impl HeapObj {
-    pub fn as_source_con(&self) -> &SourceConDecl {
-        match self {
-            HeapObj::Source(con) => con,
-            _ => panic!(),
-        }
-    }
-}
-
 #[derive(Debug)]
 pub enum BuiltinConDecl {
     /// Constructor closure, e.g. `Option.Some`, `Char`.
@@ -333,10 +324,6 @@ pub struct SourceConDecl {
     pub idx: HeapObjIdx,          // for debugging
     pub ty_args: Vec<mono::Type>, // for debugging
     pub fields: ConFields,
-
-    /// For interpeter: if the constructor doesn't have any fields, this holds the address to the
-    /// singleton allocation.
-    pub alloc: u64,
 }
 
 #[derive(Debug)]
@@ -399,14 +386,38 @@ pub struct WhileStmt {
 
 #[derive(Debug, Clone)]
 pub enum Expr {
-    LocalVar(LocalIdx),       // a local variable
-    TopVar(FunIdx),           // a top-level function reference
-    Con(HeapObjIdx),          // a product constructor
-    FieldSel(FieldSelExpr),   // <expr>.<id>
-    MethodSel(MethodSelExpr), // <id>.<id>, with an object captured as receiver
-    AssocFnSel(FunIdx),       // <id>.<id>
+    /// Local variable.
+    LocalVar(LocalIdx),
+
+    /// Top-level function reference.
+    TopVar(FunIdx),
+
+    /// Constructor closure.
+    ///
+    /// This allocates a closure that when applied allocates the constructor.
+    ///
+    /// Note: nullary constructor will be lowered to `ConAlloc`.
+    Con(HeapObjIdx),
+
+    /// Constructor allocation.
+    ///
+    /// The argument list may be empty (for nullary constructors).
+    ConAlloc(HeapObjIdx, Vec<L<Expr>>),
+
+    /// Field selection: `<expr>.<id>`.
+    FieldSel(FieldSelExpr),
+
+    /// Method selection: `<expr>.<id>`. Captures receiver.
+    MethodSel(MethodSelExpr),
+
+    /// Associated function selection: `<UpperId>.<id>`.
+    AssocFnSel(FunIdx),
+
     Call(CallExpr),
-    Int(u64), // two's complement representation, unsigned extended to u64
+
+    /// Two's complement representation of an integer value, unsigned extended to `u64`.
+    Int(u64),
+
     Str(Vec<StringPart>),
     BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
     BoolOr(Box<L<Expr>>, Box<L<Expr>>),
@@ -858,7 +869,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             idx,
                             ty_args: vec![],
                             fields: ConFields::Unnamed(vec![]),
-                            alloc: u64::MAX, // a value that causes errors if accidentally used
                         }))
                     }
 
@@ -1652,7 +1662,6 @@ fn lower_source_con(
                     .collect(),
             ),
         },
-        alloc: u64::MAX, // a value that causes errors if accidentally used
     })
 }
 
@@ -1813,27 +1822,7 @@ fn lower_expr(
         }
 
         mono::Expr::ConSel(mono::Con { ty, con, ty_args }) => {
-            fn make_con_fn_type(fields: &mono::ConFields, ret: mono::Type) -> mono::Type {
-                match fields {
-                    mono::ConFields::Empty => ret,
-
-                    mono::ConFields::Named(args) => mono::Type::Fn(mono::FnType {
-                        args: mono::FunArgs::Named(
-                            args.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
-                        ),
-                        ret: Some(ast::L::new_dummy(Box::new(ret))),
-                        exceptions: None,
-                    }),
-
-                    mono::ConFields::Unnamed(args) => mono::Type::Fn(mono::FnType {
-                        args: mono::FunArgs::Positional(args.clone()),
-                        ret: Some(ast::L::new_dummy(Box::new(ret))),
-                        exceptions: None,
-                    }),
-                }
-            }
-
-            let mono_ty = mono::Type::Named(mono::NamedType {
+            let ret_ty = mono::Type::Named(mono::NamedType {
                 name: ty.clone(),
                 args: ty_args.clone(),
             });
@@ -1852,11 +1841,11 @@ fn lower_expr(
 
             let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty).unwrap().get(ty_args).unwrap();
 
-            let con_sel_ty: mono::Type = match &ty_decl.rhs {
+            let con_fields = match &ty_decl.rhs {
                 Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
                     for con_ in cons {
                         if con_.name == *con.as_ref().unwrap() {
-                            break 'l make_con_fn_type(&con_.fields, mono_ty);
+                            break 'l &con_.fields;
                         }
                     }
                     panic!(
@@ -1867,12 +1856,36 @@ fn lower_expr(
                     );
                 }
 
-                Some(mono::TypeDeclRhs::Product(fields)) => make_con_fn_type(fields, mono_ty),
+                Some(mono::TypeDeclRhs::Product(fields)) => fields,
 
-                None => make_con_fn_type(&mono::ConFields::Empty, mono_ty),
+                None => &mono::ConFields::Empty,
             };
 
-            (Expr::Con(idx), Default::default(), con_sel_ty)
+            let con_ty = match con_fields {
+                mono::ConFields::Empty => ret_ty,
+
+                mono::ConFields::Named(args) => mono::Type::Fn(mono::FnType {
+                    args: mono::FunArgs::Named(
+                        args.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
+                    ),
+                    ret: Some(ast::L::new_dummy(Box::new(ret_ty))),
+                    exceptions: None,
+                }),
+
+                mono::ConFields::Unnamed(args) => mono::Type::Fn(mono::FnType {
+                    args: mono::FunArgs::Positional(args.clone()),
+                    ret: Some(ast::L::new_dummy(Box::new(ret_ty))),
+                    exceptions: None,
+                }),
+            };
+
+            let expr = if let mono::ConFields::Empty = con_fields {
+                Expr::ConAlloc(idx, vec![])
+            } else {
+                Expr::Con(idx)
+            };
+
+            (expr, Default::default(), con_ty)
         }
 
         mono::Expr::FieldSel(mono::FieldSelExpr { object, field }) => {
@@ -2100,19 +2113,19 @@ fn lower_expr(
                         })))
                     }
 
-                    stmts.push(ast::L::new_dummy(Stmt::Expr(ast::L::new_dummy(
-                        Expr::Call(CallExpr {
-                            fun,
-                            args: named_args
-                                .keys()
-                                .map(|name| {
-                                    ast::L::new_dummy(Expr::LocalVar(
-                                        *arg_locals.get(name).unwrap(),
-                                    ))
-                                })
-                                .collect(),
-                        }),
-                    ))));
+                    let args = named_args
+                        .keys()
+                        .map(|name| {
+                            ast::L::new_dummy(Expr::LocalVar(*arg_locals.get(name).unwrap()))
+                        })
+                        .collect();
+
+                    let call_expr = match &fun.node {
+                        Expr::Con(heap_obj_idx) => Expr::ConAlloc(*heap_obj_idx, args),
+                        _ => Expr::Call(CallExpr { fun, args }),
+                    };
+
+                    stmts.push(ast::L::new_dummy(Stmt::Expr(ast::L::new_dummy(call_expr))));
 
                     Expr::Do(stmts)
                 }

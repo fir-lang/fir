@@ -16,10 +16,12 @@ use std::ops::{Neg, Rem};
 
 // Just lowered program with some extra cached stuff for easy access.
 struct Pgm {
-    heap_objs: Vec<HeapObj>,
     funs: Vec<Fun>,
     closures: Vec<Closure>,
     cli_args: Vec<String>,
+
+    /// Indexed by `HeapObjIdx`. Allocations of nullary constructors.
+    allocs: Vec<u64>,
 
     // Some allocations and type tags for the built-ins.
     true_alloc: u64,
@@ -50,7 +52,7 @@ enum FrameKind {
 impl Pgm {
     fn init(lowered_pgm: LoweredPgm, heap: &mut Heap, cli_args: Vec<String>) -> Pgm {
         let LoweredPgm {
-            mut heap_objs,
+            heap_objs,
             funs,
             closures,
             true_con_idx,
@@ -66,38 +68,40 @@ impl Pgm {
             unit_con_idx,
         } = lowered_pgm;
 
+        let mut allocs: Vec<u64> = vec![u64::MAX; heap_objs.len()];
+
         // Allocate singletons for constructors without fields.
-        for heap_obj in heap_objs.iter_mut() {
-            let source_con = match heap_obj {
-                HeapObj::Builtin(_) | HeapObj::Record(_) => continue,
-                HeapObj::Source(source_con) => source_con,
-            };
+        for (i, heap_obj) in heap_objs.iter().enumerate() {
+            match heap_obj {
+                HeapObj::Builtin(_) => continue,
 
-            if !source_con.fields.is_empty() {
-                continue;
+                HeapObj::Source(source_con) => {
+                    if source_con.fields.is_empty() {
+                        debug_assert_eq!(i, source_con.idx.as_usize());
+                        allocs[i] = heap.allocate_tag(i as u64);
+                    }
+                }
+
+                HeapObj::Record(record) => {
+                    if record.fields.is_empty() {
+                        allocs[i] = heap.allocate_tag(i as u64);
+                    }
+                }
             }
-
-            source_con.alloc = heap.allocate_tag(source_con.idx.as_u64());
         }
 
-        let true_alloc = heap_objs[true_con_idx.as_usize()].as_source_con().alloc;
-        let false_alloc = heap_objs[false_con_idx.as_usize()].as_source_con().alloc;
-        let ordering_less_alloc = heap_objs[ordering_less_con_idx.as_usize()]
-            .as_source_con()
-            .alloc;
-        let ordering_equal_alloc = heap_objs[ordering_equal_con_idx.as_usize()]
-            .as_source_con()
-            .alloc;
-        let ordering_greater_alloc = heap_objs[ordering_greater_con_idx.as_usize()]
-            .as_source_con()
-            .alloc;
-        let unit_alloc = heap.allocate_tag(unit_con_idx.as_u64());
+        let true_alloc = allocs[true_con_idx.as_usize()];
+        let false_alloc = allocs[false_con_idx.as_usize()];
+        let ordering_less_alloc = allocs[ordering_less_con_idx.as_usize()];
+        let ordering_equal_alloc = allocs[ordering_equal_con_idx.as_usize()];
+        let ordering_greater_alloc = allocs[ordering_greater_con_idx.as_usize()];
+        let unit_alloc = allocs[unit_con_idx.as_usize()];
 
         Pgm {
-            heap_objs,
             funs,
             closures,
             cli_args,
+            allocs,
             true_alloc,
             false_alloc,
             ordering_less_alloc,
@@ -400,20 +404,12 @@ fn allocate_object_from_idx<W: Write>(
     args: &[L<Expr>],
     call_stack: &mut Vec<Frame>,
 ) -> ControlFlow {
-    let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
-
-    for arg in args {
-        arg_values.push(val!(eval(
-            w, pgm, heap, locals, &arg.node, &arg.loc, call_stack
-        )));
-    }
-
     let object = heap.allocate(1 + args.len());
     heap[object] = con_idx.as_u64();
-    for (arg_idx, arg_value) in arg_values.into_iter().enumerate() {
-        heap[object + 1 + (arg_idx as u64)] = arg_value;
+    for (arg_idx, arg) in args.iter().enumerate() {
+        let val = val!(eval(w, pgm, heap, locals, &arg.node, &arg.loc, call_stack));
+        heap[object + 1 + (arg_idx as u64)] = val;
     }
-
     ControlFlow::Val(object)
 }
 
@@ -572,14 +568,14 @@ fn eval<W: Write>(
 
         Expr::TopVar(fun_idx) => ControlFlow::Val(heap.allocate_fun(fun_idx.as_u64())),
 
-        Expr::Con(con_idx) => {
-            let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
+        Expr::Con(con_idx) => ControlFlow::Val(heap.allocate_con(con_idx.as_u64())),
 
-            if con.fields.is_empty() {
-                return ControlFlow::Val(con.alloc);
+        Expr::ConAlloc(con_idx, args) => {
+            if args.is_empty() {
+                ControlFlow::Val(pgm.allocs[con_idx.as_usize()])
+            } else {
+                allocate_object_from_idx(w, pgm, heap, locals, *con_idx, args, call_stack)
             }
-
-            ControlFlow::Val(heap.allocate_con(con_idx.as_u64()))
         }
 
         Expr::FieldSel(FieldSelExpr {

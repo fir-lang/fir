@@ -21,7 +21,6 @@ impl LoweredPgm {
                     idx,
                     ty_args,
                     fields,
-                    alloc: _,
                 }) => {
                     assert_eq!(idx.0 as usize, heap_obj_idx);
                     buffer.push_str(name.as_str());
@@ -260,6 +259,18 @@ impl Expr {
             Expr::TopVar(idx) => write!(buffer, "fun{}", idx.0).unwrap(),
 
             Expr::Con(idx) => write!(buffer, "con{}", idx.0).unwrap(),
+
+            Expr::ConAlloc(idx, args) => {
+                write!(buffer, "con{}", idx.0).unwrap();
+                buffer.push('(');
+                for (i, expr) in args.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    expr.node.print(buffer, indent);
+                }
+                buffer.push(')');
+            }
 
             Expr::FieldSel(FieldSelExpr {
                 object,
