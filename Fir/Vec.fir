@@ -204,6 +204,14 @@ _partition(vec: Vec[t], low: U32, high: U32, cmp: Fn(t, t) Ordering / exn) U32 /
     i
 
 
+impl[Clone[t]] Clone[Vec[t]]:
+    clone(self: Vec[t]) Vec[t]:
+        let ret: Vec[t] = Vec.withCapacity(self.len())
+        for t: t in self.iter():
+            ret.push(t.clone())
+        ret
+
+
 impl[ToStr[t]] ToStr[Vec[t]]:
     toStr(self: Vec[t]) Str:
         let buf = StrBuf.withCapacity(self.len() * 5 + 2)

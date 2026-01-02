@@ -13,6 +13,11 @@ impl ToStr[I64]:
     prim toStr(self: I64) Str
 
 
+impl Clone[I64]:
+    clone(self: I64) I64:
+        self
+
+
 prim type U64
 
 
@@ -43,6 +48,11 @@ impl ToStr[U64]:
 impl Step[U64]:
     step(self: U64) U64:
         self + 1
+
+
+impl Clone[U64]:
+    clone(self: U64) U64:
+        self
 
 
 prim type I32
@@ -116,6 +126,11 @@ impl ToDoc[I32]:
 impl Step[I32]:
     step(self: I32) I32:
         self + 1
+
+
+impl Clone[I32]:
+    clone(self: I32) I32:
+        self
 
 
 prim type U32
@@ -205,6 +220,11 @@ impl Step[U32]:
 prim U32.mod(self: U32, rhs: U32) U32
 
 
+impl Clone[U32]:
+    clone(self: U32) U32:
+        self
+
+
 prim type I8
 
 
@@ -276,6 +296,11 @@ impl ToDoc[I8]:
 impl Step[I8]:
     step(self: I8) I8:
         self + 1
+
+
+impl Clone[I8]:
+    clone(self: I8) I8:
+        self
 
 
 prim type U8
@@ -358,6 +383,11 @@ impl ToDoc[U8]:
 impl Step[U8]:
     step(self: U8) U8:
         self + 1
+
+
+impl Clone[U8]:
+    clone(self: U8) U8:
+        self
 
 
 # ------------------------------------------------------------------------------
