@@ -208,7 +208,8 @@ fn visit_pat(pat: &mono::Pat, records: &mut HashSet<RecordShape>) {
             visit_pat(&pat2.node, records);
         }
 
-        mono::Pat::Variant(pat) => {
+        mono::Pat::Variant(mono::VariantPat { pat, ty }) => {
+            visit_ty(&mono::Type::Variant { alts: ty.clone() }, records);
             visit_pat(&pat.node, records);
         }
     }
@@ -255,13 +256,6 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordShape>) {
         mono::Expr::BinOp(mono::BinOpExpr { left, right, op: _ }) => {
             visit_expr(&left.node, records);
             visit_expr(&right.node, records);
-        }
-
-        mono::Expr::Record(mono::RecordExpr { fields, ty }) => {
-            records.insert(RecordShape { fields: ty.clone() });
-            for (_field_name, field_expr) in fields {
-                visit_expr(&field_expr.node, records);
-            }
         }
 
         mono::Expr::Return(expr) => visit_expr(&expr.node, records),
@@ -314,7 +308,15 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordShape>) {
             }
         }
 
-        mono::Expr::Variant(expr) => {
+        mono::Expr::Record(mono::RecordExpr { fields, ty }) => {
+            records.insert(RecordShape { fields: ty.clone() });
+            for (_field_name, field_expr) in fields {
+                visit_expr(&field_expr.node, records);
+            }
+        }
+
+        mono::Expr::Variant(mono::VariantExpr { expr, ty }) => {
+            visit_ty(&mono::Type::Variant { alts: ty.clone() }, records);
             visit_expr(&expr.node, records);
         }
     }

@@ -108,16 +108,6 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             normalize_expr(&mut expr.node, cons);
         }
 
-        ast::Expr::Record(ast::RecordExpr {
-            fields,
-            inferred_ty,
-        }) => {
-            for (_field_name, field_expr) in fields {
-                normalize_expr(&mut field_expr.node, cons);
-            }
-            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
-        }
-
         ast::Expr::Return(expr) => {
             normalize_expr(&mut expr.node, cons);
         }
@@ -179,8 +169,19 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
 
         ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
 
-        ast::Expr::Variant(expr) => {
+        ast::Expr::Record(ast::RecordExpr {
+            fields,
+            inferred_ty,
+        }) => {
+            for (_field_name, field_expr) in fields {
+                normalize_expr(&mut field_expr.node, cons);
+            }
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
+        }
+
+        ast::Expr::Variant(ast::VariantExpr { expr, inferred_ty }) => {
             normalize_expr(&mut expr.node, cons);
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
         }
     }
 }
@@ -206,6 +207,11 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             }
         }
 
+        ast::Pat::Or(pat1, pat2) => {
+            normalize_pat(&mut pat1.node, cons);
+            normalize_pat(&mut pat2.node, cons);
+        }
+
         ast::Pat::Record(ast::RecordPat {
             fields,
             ignore_rest: _,
@@ -217,13 +223,9 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
         }
 
-        ast::Pat::Or(pat1, pat2) => {
-            normalize_pat(&mut pat1.node, cons);
-            normalize_pat(&mut pat2.node, cons);
-        }
-
-        ast::Pat::Variant(p) => {
-            normalize_pat(&mut p.node, cons);
+        ast::Pat::Variant(ast::VariantPat { pat, inferred_ty }) => {
+            normalize_pat(&mut pat.node, cons);
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
         }
     }
 }

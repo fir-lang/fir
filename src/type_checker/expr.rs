@@ -908,85 +908,6 @@ pub(super) fn check_expr(
             }
         },
 
-        ast::Expr::Record(ast::RecordExpr {
-            fields,
-            inferred_ty,
-        }) => {
-            assert!(inferred_ty.is_none());
-
-            if fields.is_empty() {
-                *inferred_ty = Some(Ty::unit());
-                return (
-                    unify_expected_ty(
-                        Ty::unit(),
-                        expected_ty,
-                        tc_state.tys.tys.cons(),
-                        tc_state.var_gen,
-                        level,
-                        &expr.loc,
-                    ),
-                    Default::default(),
-                );
-            }
-
-            // TODO: For now only supporting named fields.
-            let mut field_names: HashSet<&Id> = Default::default();
-            for (field_name, _field_expr) in fields.iter() {
-                if !field_names.insert(field_name) {
-                    panic!(
-                        "{}: Field name {} occurs multiple times in the record",
-                        loc_display(&expr.loc),
-                        field_name
-                    );
-                }
-            }
-
-            // To give better error messages use the field types in the expected type as expected
-            // types of the expr fields when possible.
-            let expected_fields = expected_ty.and_then(|expected_ty| {
-                match expected_ty.normalize(tc_state.tys.tys.cons()) {
-                    Ty::Anonymous {
-                        labels: expected_fields,
-                        extension: _,
-                        kind: RecordOrVariant::Record,
-                        is_row: _,
-                    } => Some(expected_fields),
-                    _ => None,
-                }
-            });
-
-            let mut record_fields: OrdMap<Id, Ty> = OrdMap::new();
-            for (field_name, field_expr) in fields.iter_mut() {
-                let expected_ty = expected_fields
-                    .as_ref()
-                    .and_then(|expected_fields| expected_fields.get(field_name));
-                let (field_ty, _) =
-                    check_expr(tc_state, field_expr, expected_ty, level, loop_stack);
-                record_fields.insert(field_name.clone(), field_ty);
-            }
-
-            let ty = Ty::Anonymous {
-                labels: record_fields,
-                extension: None,
-                kind: RecordOrVariant::Record,
-                is_row: false,
-            };
-
-            *inferred_ty = Some(ty.clone());
-
-            (
-                unify_expected_ty(
-                    ty,
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &expr.loc,
-                ),
-                Default::default(),
-            )
-        }
-
         ast::Expr::Return(expr) => {
             let return_ty = tc_state.return_ty.clone();
             check_expr(tc_state, expr, Some(&return_ty), level, loop_stack);
@@ -1386,9 +1307,90 @@ pub(super) fn check_expr(
             check_expr(tc_state, expr, expected_ty, level, loop_stack)
         }
 
-        ast::Expr::Variant(var_expr) => {
-            let (expr_ty, binders) = check_expr(tc_state, var_expr, None, level, loop_stack);
+        ast::Expr::Record(ast::RecordExpr {
+            fields,
+            inferred_ty,
+        }) => {
+            assert!(inferred_ty.is_none());
+
+            if fields.is_empty() {
+                *inferred_ty = Some(Ty::unit());
+                return (
+                    unify_expected_ty(
+                        Ty::unit(),
+                        expected_ty,
+                        tc_state.tys.tys.cons(),
+                        tc_state.var_gen,
+                        level,
+                        &expr.loc,
+                    ),
+                    Default::default(),
+                );
+            }
+
+            // TODO: For now only supporting named fields.
+            let mut field_names: HashSet<&Id> = Default::default();
+            for (field_name, _field_expr) in fields.iter() {
+                if !field_names.insert(field_name) {
+                    panic!(
+                        "{}: Field name {} occurs multiple times in the record",
+                        loc_display(&expr.loc),
+                        field_name
+                    );
+                }
+            }
+
+            // To give better error messages use the field types in the expected type as expected
+            // types of the expr fields when possible.
+            let expected_fields = expected_ty.and_then(|expected_ty| {
+                match expected_ty.normalize(tc_state.tys.tys.cons()) {
+                    Ty::Anonymous {
+                        labels: expected_fields,
+                        extension: _,
+                        kind: RecordOrVariant::Record,
+                        is_row: _,
+                    } => Some(expected_fields),
+                    _ => None,
+                }
+            });
+
+            let mut record_fields: OrdMap<Id, Ty> = OrdMap::new();
+            for (field_name, field_expr) in fields.iter_mut() {
+                let expected_ty = expected_fields
+                    .as_ref()
+                    .and_then(|expected_fields| expected_fields.get(field_name));
+                let (field_ty, _) =
+                    check_expr(tc_state, field_expr, expected_ty, level, loop_stack);
+                record_fields.insert(field_name.clone(), field_ty);
+            }
+
+            let ty = Ty::Anonymous {
+                labels: record_fields,
+                extension: None,
+                kind: RecordOrVariant::Record,
+                is_row: false,
+            };
+
+            *inferred_ty = Some(ty.clone());
+
+            (
+                unify_expected_ty(
+                    ty,
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                Default::default(),
+            )
+        }
+
+        ast::Expr::Variant(ast::VariantExpr { expr, inferred_ty }) => {
+            assert!(inferred_ty.is_none());
+            let (expr_ty, binders) = check_expr(tc_state, expr, None, level, loop_stack);
             let variant_ty = make_variant(tc_state, expr_ty, level, &expr.loc);
+            *inferred_ty = Some(variant_ty.clone());
             (
                 unify_expected_ty(
                     variant_ty,

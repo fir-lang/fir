@@ -695,26 +695,6 @@ fn mono_expr(
             ast::UnOp::Not => panic!("Not unop wasn't desugared"),
         },
 
-        ast::Expr::Record(ast::RecordExpr {
-            fields,
-            inferred_ty,
-        }) => mono::Expr::Record(mono::RecordExpr {
-            fields: fields
-                .iter()
-                .map(|(field_name, field_expr)| {
-                    (
-                        field_name.clone(),
-                        mono_l_expr(field_expr, ty_map, poly_pgm, mono_pgm, locals),
-                    )
-                })
-                .collect(),
-
-            ty: get_record_ty(
-                mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
-                loc,
-            ),
-        }),
-
         ast::Expr::Return(expr) => {
             mono::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
         }
@@ -835,8 +815,34 @@ fn mono_expr(
 
         ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
 
-        ast::Expr::Variant(expr) => {
-            mono::Expr::Variant(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
+        ast::Expr::Record(ast::RecordExpr {
+            fields,
+            inferred_ty,
+        }) => mono::Expr::Record(mono::RecordExpr {
+            fields: fields
+                .iter()
+                .map(|(field_name, field_expr)| {
+                    (
+                        field_name.clone(),
+                        mono_l_expr(field_expr, ty_map, poly_pgm, mono_pgm, locals),
+                    )
+                })
+                .collect(),
+
+            ty: get_record_ty(
+                mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+                loc,
+            ),
+        }),
+
+        ast::Expr::Variant(ast::VariantExpr { expr, inferred_ty }) => {
+            mono::Expr::Variant(mono::VariantExpr {
+                expr: mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals),
+                ty: get_variant_ty(
+                    mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+                    loc,
+                ),
+            })
         }
     }
 }
@@ -1218,8 +1224,14 @@ fn mono_pat(
             ),
         }),
 
-        ast::Pat::Variant(pat) => {
-            mono::Pat::Variant(mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm, locals))
+        ast::Pat::Variant(ast::VariantPat { pat, inferred_ty }) => {
+            mono::Pat::Variant(mono::VariantPat {
+                pat: mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
+                ty: get_variant_ty(
+                    mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+                    loc,
+                ),
+            })
         }
     }
 }
@@ -1825,6 +1837,25 @@ fn get_record_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::Type> {
         other @ (mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_)) => {
             panic!(
                 "{}: BUG: Record expression with non-record type: {}",
+                loc_display(loc),
+                other
+            )
+        }
+
+        mono::Type::Never => {
+            // This can't happen as we only infer `Never` during lowering.
+            panic!()
+        }
+    }
+}
+
+fn get_variant_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::NamedType> {
+    match ty {
+        mono::Type::Variant { alts } => alts,
+
+        other @ (mono::Type::Named(_) | mono::Type::Record { .. } | mono::Type::Fn(_)) => {
+            panic!(
+                "{}: BUG: Variant expression with non-record type: {}",
                 loc_display(loc),
                 other
             )

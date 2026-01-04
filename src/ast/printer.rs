@@ -782,7 +782,10 @@ impl Expr {
                 buffer.push(']');
             }
 
-            Expr::Variant(expr) => {
+            Expr::Variant(VariantExpr {
+                expr,
+                inferred_ty: _,
+            }) => {
                 buffer.push('~');
                 expr.node.print(buffer, indent);
             }
@@ -881,7 +884,10 @@ impl Pat {
                 buffer.push(')');
             }
 
-            Pat::Variant(pat) => {
+            Pat::Variant(VariantPat {
+                pat,
+                inferred_ty: _,
+            }) => {
                 buffer.push('~');
                 pat.node.print(buffer);
             }

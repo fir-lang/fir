@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: 03f2940307eeb459c51ceb0b7c1bb20ad0bb521cc727d615b396e10436d69950
+// sha3: 2bdf0f20a611d5c7e69966010c41aac154f7449a9349851c230e012f536913fc
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -47718,7 +47718,10 @@ fn __action108<'a>(
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> Expr {
-    Expr::Variant(Box::new(L::new(module, l, r, expr)))
+    Expr::Variant(VariantExpr {
+        expr: Box::new(L::new(module, l, r, expr)),
+        inferred_ty: None,
+    })
 }
 
 #[allow(unused_variables)]
@@ -48491,7 +48494,10 @@ fn __action153<'a>(
     (_, pat, _): (Loc, Pat, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> Pat {
-    Pat::Variant(Box::new(L::new(module, l, r, pat)))
+    Pat::Variant(VariantPat {
+        pat: Box::new(L::new(module, l, r, pat)),
+        inferred_ty: None,
+    })
 }
 
 #[allow(unused_variables)]

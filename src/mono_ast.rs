@@ -163,12 +163,12 @@ pub struct Alt {
 pub enum Pat {
     Var(VarPat),
     Con(ConPat),
-    Record(RecordPat),
     Ignore,
     Str(String),
     Char(char),
     Or(Box<L<Pat>>, Box<L<Pat>>),
-    Variant(Box<L<Pat>>),
+    Record(RecordPat),
+    Variant(VariantPat),
 }
 
 #[derive(Debug, Clone)]
@@ -202,6 +202,12 @@ pub struct RecordPat {
     /// pattern.
     /// TODO: Maybe have a `ignore_rest` flag here as well?
     pub ty: OrdMap<Id, Type>,
+}
+
+#[derive(Debug, Clone)]
+pub struct VariantPat {
+    pub pat: Box<L<Pat>>,
+    pub ty: OrdMap<Id, NamedType>, // the variant type
 }
 
 #[derive(Debug, Clone)]
@@ -245,14 +251,14 @@ pub enum Expr {
     Str(Vec<StringPart>),
     Char(char),
     BinOp(BinOpExpr),
-    Record(RecordExpr),
     Return(Box<L<Expr>>),
     Match(MatchExpr),
     If(IfExpr),
     Fn(FnExpr),
     Is(IsExpr),
     Do(Vec<L<Stmt>>),
-    Variant(Box<L<Expr>>),
+    Record(RecordExpr),
+    Variant(VariantExpr),
 }
 
 #[derive(Debug, Clone)]
@@ -305,6 +311,12 @@ pub struct BinOpExpr {
 pub struct RecordExpr {
     pub fields: Vec<(Id, L<Expr>)>,
     pub ty: OrdMap<Id, Type>, // the record type
+}
+
+#[derive(Debug, Clone)]
+pub struct VariantExpr {
+    pub expr: Box<L<Expr>>,
+    pub ty: OrdMap<Id, NamedType>, // the variant type
 }
 
 #[derive(Debug, Clone)]

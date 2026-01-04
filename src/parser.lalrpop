@@ -737,7 +737,7 @@ InlineExpr: Expr = {
         Expr::UnOp(UnOpExpr { op: UnOp::Neg, expr: Box::new(L::new(module, l, r, expr)) }),
 
     <l:@L> "~" <expr:InlineExpr> <r:@R> =>
-        Expr::Variant(Box::new(L::new(module, l, r, expr))),
+        Expr::Variant(VariantExpr { expr: Box::new(L::new(module, l, r, expr)), inferred_ty: None }),
 
     #[precedence(level = "4")]
     #[assoc(side = "left")]
@@ -967,7 +967,7 @@ Pat: Pat = {
     <char:CharLit> => Pat::Char(parse_char_lit(&char.text)),
 
     <l:@L> "~" <pat:Pat> <r:@R> =>
-        Pat::Variant(Box::new(L::new(module, l, r, pat))),
+        Pat::Variant(VariantPat { pat: Box::new(L::new(module, l, r, pat)), inferred_ty: None }),
 
     #[precedence(level = "1")]
     #[assoc(side = "right")]

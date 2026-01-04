@@ -2482,9 +2482,15 @@ fn lower_expr(
             (expr, Default::default(), body_ty.unwrap())
         }
 
-        mono::Expr::Variant(expr) => {
-            let (expr, vars, ty) = lower_bl_expr(expr, closures, indices, scope, mono_pgm);
-            (Expr::Variant(expr), vars, ty)
+        mono::Expr::Variant(mono::VariantExpr { expr, ty }) => {
+            // Note: Type of the expr in the variant won't be a variant type. Use the
+            // `VariantExpr`'s type.
+            let (expr, vars, _ty) = lower_bl_expr(expr, closures, indices, scope, mono_pgm);
+            (
+                Expr::Variant(expr),
+                vars,
+                mono::Type::Variant { alts: ty.clone() },
+            )
         }
     }
 }
@@ -2683,8 +2689,8 @@ fn lower_pat(
             lower_bl_pat(p2, indices, scope, mono_pgm, mapped_binders),
         ),
 
-        mono::Pat::Variant(p) => Pat::Variant(Box::new(lower_l_pat(
-            p,
+        mono::Pat::Variant(mono::VariantPat { pat, ty: _ }) => Pat::Variant(Box::new(lower_l_pat(
+            pat,
             indices,
             scope,
             mono_pgm,

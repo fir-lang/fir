@@ -154,58 +154,6 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             )
         }
 
-        ast::Pat::Record(ast::RecordPat {
-            fields,
-            ignore_rest,
-            inferred_ty,
-        }) => {
-            assert!(inferred_ty.is_none());
-
-            let extension: Option<Box<Ty>> = if *ignore_rest {
-                Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
-                    level,
-                    Kind::Row(RecordOrVariant::Record),
-                    pat.loc.clone(),
-                ))))
-            } else {
-                None
-            };
-
-            // Similar to constructor patterns, update unnamed variable pattern `foo` as shorthand
-            // for `foo = foo`.
-            for field in fields.iter_mut() {
-                if field.name.is_some() {
-                    continue;
-                }
-
-                if let ast::Pat::Var(var_pat) = &field.node.node {
-                    field.name = Some(var_pat.var.clone());
-                } else {
-                    panic!(
-                        "{}: Record pattern with unnamed field",
-                        loc_display(&field.node.loc)
-                    )
-                }
-            }
-
-            let ty = Ty::Anonymous {
-                labels: fields
-                    .iter_mut()
-                    .map(|named| {
-                        (
-                            named.name.as_ref().unwrap().clone(),
-                            check_pat(tc_state, &mut named.node, level),
-                        )
-                    })
-                    .collect(),
-                extension,
-                kind: RecordOrVariant::Record,
-                is_row: false,
-            };
-            *inferred_ty = Some(ty.clone());
-            ty
-        }
-
         ast::Pat::Str(_) => Ty::str(),
 
         ast::Pat::Char(_) => Ty::char(),
@@ -272,9 +220,65 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             pat1_ty
         }
 
-        ast::Pat::Variant(var_pat) => {
-            let pat_ty = check_pat(tc_state, var_pat, level);
-            crate::type_checker::expr::make_variant(tc_state, pat_ty, level, &pat.loc)
+        ast::Pat::Record(ast::RecordPat {
+            fields,
+            ignore_rest,
+            inferred_ty,
+        }) => {
+            assert!(inferred_ty.is_none());
+
+            let extension: Option<Box<Ty>> = if *ignore_rest {
+                Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
+                    level,
+                    Kind::Row(RecordOrVariant::Record),
+                    pat.loc.clone(),
+                ))))
+            } else {
+                None
+            };
+
+            // Similar to constructor patterns, update unnamed variable pattern `foo` as shorthand
+            // for `foo = foo`.
+            for field in fields.iter_mut() {
+                if field.name.is_some() {
+                    continue;
+                }
+
+                if let ast::Pat::Var(var_pat) = &field.node.node {
+                    field.name = Some(var_pat.var.clone());
+                } else {
+                    panic!(
+                        "{}: Record pattern with unnamed field",
+                        loc_display(&field.node.loc)
+                    )
+                }
+            }
+
+            let ty = Ty::Anonymous {
+                labels: fields
+                    .iter_mut()
+                    .map(|named| {
+                        (
+                            named.name.as_ref().unwrap().clone(),
+                            check_pat(tc_state, &mut named.node, level),
+                        )
+                    })
+                    .collect(),
+                extension,
+                kind: RecordOrVariant::Record,
+                is_row: false,
+            };
+            *inferred_ty = Some(ty.clone());
+            ty
+        }
+
+        ast::Pat::Variant(ast::VariantPat { pat, inferred_ty }) => {
+            assert!(inferred_ty.is_none());
+            let pat_ty = check_pat(tc_state, pat, level);
+            let variant_ty =
+                crate::type_checker::expr::make_variant(tc_state, pat_ty, level, &pat.loc);
+            *inferred_ty = Some(variant_ty.clone());
+            variant_ty
         }
     }
 }

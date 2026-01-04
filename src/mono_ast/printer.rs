@@ -510,19 +510,6 @@ impl Expr {
                 }
             }
 
-            Expr::Record(RecordExpr { fields, ty: _ }) => {
-                buffer.push('(');
-                for (i, (field_name, field_expr)) in fields.iter().enumerate() {
-                    if i != 0 {
-                        buffer.push_str(", ");
-                    }
-                    buffer.push_str(field_name);
-                    buffer.push_str(" = ");
-                    field_expr.node.print(buffer, 0);
-                }
-                buffer.push(')');
-            }
-
             Expr::Return(expr) => {
                 buffer.push_str("return ");
                 expr.node.print(buffer, 0);
@@ -646,7 +633,20 @@ impl Expr {
                 }
             }
 
-            Expr::Variant(expr) => {
+            Expr::Record(RecordExpr { fields, ty: _ }) => {
+                buffer.push('(');
+                for (i, (field_name, field_expr)) in fields.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    buffer.push_str(field_name);
+                    buffer.push_str(" = ");
+                    field_expr.node.print(buffer, 0);
+                }
+                buffer.push(')');
+            }
+
+            Expr::Variant(VariantExpr { expr, ty: _ }) => {
                 buffer.push('~');
                 expr.node.print(buffer, indent);
             }
@@ -721,7 +721,7 @@ impl Pat {
                 buffer.push(')');
             }
 
-            Pat::Variant(pat) => {
+            Pat::Variant(VariantPat { pat, ty: _ }) => {
                 buffer.push('~');
                 pat.node.print(buffer);
             }

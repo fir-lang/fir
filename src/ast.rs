@@ -368,8 +368,6 @@ pub enum Pat {
     /// Matches a constructor.
     Con(ConPat),
 
-    Record(RecordPat),
-
     /// Underscore, aka. wildcard.
     Ignore,
 
@@ -382,8 +380,11 @@ pub enum Pat {
     /// Or pattern: `<pat1> | <pat2>`.
     Or(Box<L<Pat>>, Box<L<Pat>>),
 
+    /// A record pattern: `(x, y)` (short for `(x = x, y, = y)`), `(x = <pat1>, y = <pat2>, ...)`.
+    Record(RecordPat),
+
     /// A variant pattern: `~"Hi"`, `~Option.Some(123)`.
-    Variant(Box<L<Pat>>),
+    Variant(VariantPat),
 }
 
 #[derive(Debug, Clone)]
@@ -408,6 +409,12 @@ pub struct ConPat {
 pub struct RecordPat {
     pub fields: Vec<Named<L<Pat>>>,
     pub ignore_rest: bool,
+    pub inferred_ty: Option<Ty>,
+}
+
+#[derive(Debug, Clone)]
+pub struct VariantPat {
+    pub pat: Box<L<Pat>>,
     pub inferred_ty: Option<Ty>,
 }
 
@@ -525,9 +532,6 @@ pub enum Expr {
     /// Some of the unary operators are desugared to method calls by the type checker.
     UnOp(UnOpExpr),
 
-    /// A record: `()`, `(x = 123, msg = "hi")`.
-    Record(RecordExpr),
-
     Return(Box<L<Expr>>),
 
     Match(MatchExpr),
@@ -546,8 +550,11 @@ pub enum Expr {
         elems: Vec<(Option<L<Expr>>, L<Expr>)>,
     },
 
+    /// A record: `()`, `(x = 123, msg = "hi")`.
+    Record(RecordExpr),
+
     /// A variant: `~Option.Some(123)`, `~123`.
-    Variant(Box<L<Expr>>),
+    Variant(VariantExpr),
 }
 
 #[derive(Debug, Clone)]
@@ -734,6 +741,12 @@ pub struct IsExpr {
 #[derive(Debug, Clone)]
 pub struct RecordExpr {
     pub fields: Vec<(Id, L<Expr>)>,
+    pub inferred_ty: Option<Ty>,
+}
+
+#[derive(Debug, Clone)]
+pub struct VariantExpr {
+    pub expr: Box<L<Expr>>,
     pub inferred_ty: Option<Ty>,
 }
 
@@ -1076,15 +1089,6 @@ impl Expr {
                 expr.node.subst_ty_ids(substs);
             }
 
-            Expr::Record(RecordExpr {
-                fields,
-                inferred_ty: _,
-            }) => {
-                for (_field_name, field_expr) in fields {
-                    field_expr.node.subst_ty_ids(substs);
-                }
-            }
-
             Expr::Return(expr) => expr.node.subst_ty_ids(substs),
 
             Expr::Match(MatchExpr { scrutinee, alts }) => {
@@ -1147,7 +1151,19 @@ impl Expr {
                 }
             }
 
-            Expr::Variant(expr) => {
+            Expr::Record(RecordExpr {
+                fields,
+                inferred_ty: _,
+            }) => {
+                for (_field_name, field_expr) in fields {
+                    field_expr.node.subst_ty_ids(substs);
+                }
+            }
+
+            Expr::Variant(VariantExpr {
+                expr,
+                inferred_ty: _,
+            }) => {
                 expr.node.subst_ty_ids(substs);
             }
         }

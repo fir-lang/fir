@@ -636,7 +636,10 @@ impl PatMatrix {
                         work.push((*pat2).clone());
                     }
 
-                    ast::Pat::Variant(pat) => {
+                    ast::Pat::Variant(ast::VariantPat {
+                        pat,
+                        inferred_ty: _,
+                    }) => {
                         work.push((*pat).clone());
                     }
                 } // match pat
