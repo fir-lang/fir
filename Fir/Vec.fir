@@ -4,12 +4,12 @@ type Vec[t](
 )
 
 
-Vec.empty() Vec[t]:
-    Vec(_data = Array.new(0), _len = 0)
-
-
 Vec.withCapacity(cap: U32) Vec[t]:
     Vec(_data = Array.new(cap), _len = 0)
+
+
+Vec.empty() Vec[t]:
+    Vec.withCapacity(0)
 
 
 Vec.fromIter[Iterator[iter, item, exn]](iter: iter) Vec[item] / exn:
@@ -20,13 +20,11 @@ Vec.fromIter[Iterator[iter, item, exn]](iter: iter) Vec[item] / exn:
     vec
 
 
-Vec.reserve(self: Vec[t], cap: U32):
-    let len = self._len
-    let newCap = self._data.len()
-    while newCap - len < cap:
-        newCap *= 2
-
-    if newCap != self._data.len():
+Vec.reserve(self: Vec[t], additional: U32):
+    if additional == 0:
+        return
+    let newCap = max(u32(8), (self.len() + additional).nextPowerOfTwo())
+    if newCap > self._data.len():
         let newData = Array.new(newCap)
         for i: U32 in range(u32(0), self._data.len()):
             newData.set(i, self._data.get(i))
@@ -56,14 +54,7 @@ Vec.truncate(self: Vec[t], len: U32):
 
 
 Vec.push(self: Vec[t], elem: t):
-    let cap = self._data.len()
-
-    if self._len == cap:
-        let newData = Array.new((cap * 2) | 3)
-        for i: U32 in range(u32(0), cap):
-            newData.set(i, self._data.get(i))
-        self._data = newData
-
+    self.reserve(1)
     self._data.set(self._len, elem)
     self._len += 1
 
