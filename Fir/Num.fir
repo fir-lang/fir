@@ -220,6 +220,22 @@ impl Step[U32]:
 prim U32.mod(self: U32, rhs: U32) U32
 
 
+## Note: returns 0 when overflows.
+U32.nextPowerOfTwo(self: U32) U32:
+    let x = self
+    if x == 0:
+        return 1
+    x -= 1
+    x = x | (x >> 1)
+    x = x | (x >> 2)
+    x = x | (x >> 4)
+    x = x | (x >> 8)
+    x = x | (x >> 16)
+    if x == U32.max():
+        return 0
+    return x + 1
+
+
 impl Clone[U32]:
     clone(self: U32) U32:
         self
