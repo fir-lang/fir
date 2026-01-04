@@ -727,19 +727,22 @@ pub(super) fn check_expr(
                         let expr_node = replace(&mut expr.node, ast::Expr::Self_);
                         expr.node = ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
-                                node: ast::Expr::MethodSel(ast::MethodSelExpr {
-                                    object: Box::new(ast::L {
-                                        node: expr_node,
-                                        loc: expr.loc.clone(),
-                                    }),
-                                    object_ty: Some(part_ty.clone()),
-                                    method_ty_id: SmolStr::new_static("ToStr"),
-                                    method: SmolStr::new_static("toStr"),
+                                node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                    ty: SmolStr::new_static("ToStr"),
+                                    ty_user_ty_args: vec![],
+                                    member: SmolStr::new_static("toStr"),
+                                    user_ty_args: vec![],
                                     ty_args: vec![part_ty, tc_state.exceptions.clone()],
                                 }),
                                 loc: expr.loc.clone(),
                             }),
-                            args: vec![],
+                            args: vec![ast::CallArg {
+                                name: None,
+                                expr: ast::L {
+                                    node: expr_node,
+                                    loc: expr.loc.clone(),
+                                },
+                            }],
                         });
                     }
                 }
@@ -871,15 +874,18 @@ pub(super) fn check_expr(
                     node: ast::Expr::Call(ast::CallExpr {
                         fun: Box::new(ast::L {
                             loc: arg.loc.clone(),
-                            node: ast::Expr::MethodSel(ast::MethodSelExpr {
-                                object: arg.clone(),
-                                object_ty: Some(Ty::bool()),
-                                method_ty_id: SmolStr::new_static("Bool"),
-                                ty_args: vec![],
-                                method: SmolStr::new_static("__not"),
+                            node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                ty: SmolStr::new_static("Bool"),
+                                ty_user_ty_args: vec![],
+                                member: SmolStr::new_static("__not"),
+                                user_ty_args: vec![],
+                                ty_args: vec![tc_state.exceptions.clone()],
                             }),
                         }),
-                        args: vec![],
+                        args: vec![ast::CallArg {
+                            name: None,
+                            expr: *arg.clone(),
+                        }],
                     }),
                 };
                 *expr = desugared;
