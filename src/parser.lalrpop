@@ -499,13 +499,13 @@ Stmt: Stmt = {
     <l:@L> <expr:BlockExpr> <r:@R> =>
         Stmt::Expr(L::new(module, l, r, expr)),
 
-    <label:Label?> "for" <pat:LPat> <ast_ty:(":" <LType>)?> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT => {
+    <label:Label?> "for" <pat:LPat> <item_ast_ty:(":" <LType>)?> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT => {
         let label = label.map(|l| SmolStr::new(&l.smol_str()[1..]));
         Stmt::For(ForStmt {
             label,
             pat,
-            ast_ty,
-            tc_ty: None,
+            item_ast_ty,
+            item_tc_ty: None,
             expr,
             expr_ty: None,
             body,

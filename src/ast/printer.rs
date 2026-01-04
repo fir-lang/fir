@@ -408,8 +408,8 @@ impl Stmt {
             Stmt::For(ForStmt {
                 label,
                 pat,
-                ast_ty: ty,
-                tc_ty: _,
+                item_ast_ty,
+                item_tc_ty: _,
                 expr,
                 expr_ty: _,
                 body,
@@ -421,7 +421,7 @@ impl Stmt {
                 }
                 buffer.push_str("for ");
                 pat.node.print(buffer);
-                if let Some(ty) = ty {
+                if let Some(ty) = item_ast_ty {
                     buffer.push_str(": ");
                     ty.node.print(buffer);
                 }

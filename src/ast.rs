@@ -456,21 +456,22 @@ pub enum AssignOp {
     CaretEq,
 }
 
+/// `for <pat>: <item_ast_ty> in <expr>: <body>`
 #[derive(Debug, Clone)]
 pub struct ForStmt {
     pub label: Option<Id>,
 
     pub pat: L<Pat>,
 
-    /// Type annotation on the loop variable, the `item` type in `Iterator[iter, item]`.
-    pub ast_ty: Option<L<Type>>,
+    /// Type annotation on the loop variable, the `item` type in `Iterator[iter, item, exn]`.
+    pub item_ast_ty: Option<L<Type>>,
 
-    /// `ast_ty`, converted to type checking types by the type checker.
-    pub tc_ty: Option<Ty>,
+    /// `item_ast_ty`, converted to type checking types by the type checker.
+    pub item_tc_ty: Option<Ty>,
 
     pub expr: L<Expr>,
 
-    /// Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, item]`.
+    /// Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, item, exn]`.
     pub expr_ty: Option<Ty>,
 
     pub body: Vec<L<Stmt>>,
@@ -977,13 +978,13 @@ impl Stmt {
             Stmt::For(ForStmt {
                 label: _,
                 pat: _,
-                ast_ty,
-                tc_ty: _,
+                item_ast_ty,
+                item_tc_ty: _,
                 expr,
                 expr_ty: _,
                 body,
             }) => {
-                if let Some(ast_ty) = ast_ty {
+                if let Some(ast_ty) = item_ast_ty {
                     ast_ty.node = ast_ty.node.subst_ids(substs);
                 }
                 expr.node.subst_ty_ids(substs);

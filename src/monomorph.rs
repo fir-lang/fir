@@ -405,8 +405,8 @@ fn mono_stmt(
         ast::Stmt::For(ast::ForStmt {
             label: _,
             pat,
-            ast_ty: _,
-            tc_ty: ty,
+            item_ast_ty: _,
+            item_tc_ty,
             expr,
             expr_ty,
             body,
@@ -414,7 +414,7 @@ fn mono_stmt(
             // Interpreter will call `next` on `expr`, monomorphise the `next` member.
             let mono_iter_ty = mono_tc_ty(expr_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
 
-            let mono_item_ty = match ty {
+            let mono_item_ty = match item_tc_ty {
                 Some(tc_ty) => mono_tc_ty(tc_ty, ty_map, poly_pgm, mono_pgm),
                 None => panic!(
                     "{}: For loop does not have type annotation",

@@ -313,22 +313,20 @@ fn check_stmt(
         ast::Stmt::For(ast::ForStmt {
             label,
             pat,
-            ast_ty: ty,
-            tc_ty,
+            item_ast_ty,
+            item_tc_ty,
             expr,
             expr_ty,
             body,
         }) => {
             assert!(expr_ty.is_none());
 
-            // Fresh `iter` for the predicate `Iterator[iter, item]`.
-            let iterator_ty_var = tc_state
-                .var_gen
-                .new_var(level, Kind::Star, expr.loc.clone());
+            let iter_ty = check_expr(tc_state, expr, None, level, loop_stack).0;
+            *expr_ty = Some(iter_ty.clone());
 
-            // The type `item` for the predicate `Iterator[iter, item]`. This will the the pattern
-            // type (when available) or a fresh type variable.
-            let item_ty_var = ty
+            // The type `item` for the predicate `Iterator[iter, item, exn]`. This will the the
+            // pattern type (when available) or a fresh type variable.
+            let item_ty = item_ast_ty
                 .as_ref()
                 .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
                 .unwrap_or_else(|| {
@@ -339,36 +337,25 @@ fn check_stmt(
                     )
                 });
 
-            *tc_ty = Some(item_ty_var.clone());
+            *item_tc_ty = Some(item_ty.clone());
 
-            // Add predicate `Iterator[iter, item]`.
+            // Add predicate `Iterator[iter, item, exn]`.
             tc_state.preds.push(Pred {
                 trait_: SmolStr::new_static("Iterator"),
                 params: vec![
-                    Ty::UVar(iterator_ty_var.clone()),
-                    item_ty_var.clone(),
+                    iter_ty.clone(),
+                    item_ty.clone(),
                     tc_state.exceptions.clone(),
                 ],
                 loc: stmt.loc.clone(),
             });
-
-            *expr_ty = Some(
-                check_expr(
-                    tc_state,
-                    expr,
-                    Some(&Ty::UVar(iterator_ty_var.clone())),
-                    level,
-                    loop_stack,
-                )
-                .0,
-            );
 
             tc_state.env.enter();
 
             let pat_ty = check_pat(tc_state, pat, level);
             unify(
                 &pat_ty,
-                &item_ty_var,
+                &item_ty,
                 tc_state.tys.tys.cons(),
                 tc_state.var_gen,
                 level,
