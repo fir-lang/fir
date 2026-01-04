@@ -213,7 +213,11 @@ struct TcFunState<'a> {
     /// `Pred`s will have the same `Loc`. So this will never have duplicates.
     preds: &'a mut Vec<Pred>,
 
+    /// Assumptions in scope. These come from function contexts: `f[<context>](<args>): <body>`.
     assumps: &'a Vec<Pred>,
+
+    /// Local counter for generating new temporaries.
+    local_gen: u32,
 }
 
 const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
@@ -1155,6 +1159,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         preds: &mut preds,
         exceptions,
         assumps: &assumps,
+        local_gen: 0,
     };
 
     if let Some(body) = &mut fun.node.body.as_mut() {
@@ -1270,6 +1275,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 preds: &mut preds,
                 exceptions,
                 assumps: &assumps,
+                local_gen: 0,
             };
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());

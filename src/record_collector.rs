@@ -157,22 +157,6 @@ fn visit_stmt(stmt: &mono::Stmt, records: &mut HashSet<RecordShape>) {
 
         mono::Stmt::Expr(expr) => visit_expr(&expr.node, records),
 
-        mono::Stmt::For(mono::ForStmt {
-            pat,
-            expr,
-            body,
-            iter_ty,
-            item_ty,
-        }) => {
-            visit_pat(&pat.node, records);
-            visit_expr(&expr.node, records);
-            for stmt in body {
-                visit_stmt(&stmt.node, records);
-            }
-            visit_ty(iter_ty, records);
-            visit_ty(item_ty, records);
-        }
-
         mono::Stmt::While(mono::WhileStmt {
             label: _,
             cond,

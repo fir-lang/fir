@@ -346,7 +346,6 @@ pub enum Stmt {
     Let(LetStmt),
     Assign(AssignStmt),
     Expr(L<Expr>),
-    For(ForStmt),
     While(WhileStmt),
     Break { label: Option<Id>, level: u32 },
     Continue { label: Option<Id>, level: u32 },
@@ -362,19 +361,6 @@ pub struct LetStmt {
 pub struct AssignStmt {
     pub lhs: L<Expr>,
     pub rhs: L<Expr>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ForStmt {
-    pub pat: L<Pat>,
-    pub expr: L<Expr>,
-    pub body: Vec<L<Stmt>>,
-
-    /// The `next` method to call on the iterator.
-    pub next_method: FunIdx,
-
-    /// Heap object for the `Option.Some` constructor that iterator returns.
-    pub option_some_con: HeapObjIdx,
 }
 
 #[derive(Debug, Clone)]
@@ -1691,60 +1677,6 @@ fn lower_stmt(
             let (expr, _expr_vars, expr_ty) =
                 lower_l_expr(expr, closures, indices, scope, mono_pgm);
             (Stmt::Expr(expr), expr_ty)
-        }
-
-        mono::Stmt::For(mono::ForStmt {
-            pat,
-            expr,
-            body,
-            iter_ty,
-            item_ty,
-        }) => {
-            let next_method = *indices
-                .assoc_funs
-                .get("Iterator")
-                .unwrap()
-                .get("next")
-                .unwrap()
-                .get(&vec![
-                    iter_ty.clone(),
-                    item_ty.clone(),
-                    // exception type passed as empty variant by monomorphiser
-                    // TODO: Maybe store exception type in the statement.
-                    mono::Type::Variant {
-                        alts: Default::default(),
-                    },
-                ])
-                .unwrap();
-
-            let option_some_con = *indices
-                .sum_cons
-                .get("Option")
-                .unwrap()
-                .get("Some")
-                .unwrap()
-                .get(&vec![item_ty.clone()])
-                .unwrap();
-
-            let expr = lower_l_expr(expr, closures, indices, scope, mono_pgm).0;
-            scope.bounds.enter();
-            let pat = lower_l_pat(pat, indices, scope, mono_pgm, &mut Default::default());
-            let body = body
-                .iter()
-                .map(|stmt| lower_l_stmt(stmt, closures, indices, scope, mono_pgm).0)
-                .collect();
-            scope.bounds.exit();
-
-            (
-                Stmt::For(ForStmt {
-                    pat,
-                    expr,
-                    body,
-                    next_method,
-                    option_some_con,
-                }),
-                mono::Type::unit(),
-            )
         }
 
         mono::Stmt::While(mono::WhileStmt { label, cond, body }) => {

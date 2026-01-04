@@ -402,57 +402,8 @@ fn mono_stmt(
             mono::Stmt::Expr(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
         }
 
-        ast::Stmt::For(ast::ForStmt {
-            label: _,
-            pat,
-            item_ast_ty: _,
-            item_tc_ty,
-            expr,
-            expr_ty,
-            body,
-        }) => {
-            // Interpreter will call `next` on `expr`, monomorphise the `next` member.
-            let mono_iter_ty = mono_tc_ty(expr_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
-
-            let mono_item_ty = match item_tc_ty {
-                Some(tc_ty) => mono_tc_ty(tc_ty, ty_map, poly_pgm, mono_pgm),
-                None => panic!(
-                    "{}: For loop does not have type annotation",
-                    loc_display(loc)
-                ),
-            };
-
-            mono_method(
-                &SmolStr::new_static("Iterator"),
-                &SmolStr::new_static("next"),
-                &[
-                    mono_iter_ty.clone(),
-                    mono_item_ty.clone(),
-                    mono::Type::Variant {
-                        alts: Default::default(),
-                    },
-                ],
-                poly_pgm,
-                mono_pgm,
-                loc,
-            );
-
-            let expr = expr.map_as_ref(|expr_| {
-                mono_expr(expr_, ty_map, poly_pgm, mono_pgm, locals, &expr.loc)
-            });
-
-            locals.enter();
-            let pat = mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals);
-            let body = mono_l_stmts(body, ty_map, poly_pgm, mono_pgm, locals);
-            locals.exit();
-
-            mono::Stmt::For(mono::ForStmt {
-                pat,
-                expr,
-                body,
-                iter_ty: mono_iter_ty,
-                item_ty: mono_item_ty,
-            })
+        ast::Stmt::For(ast::ForStmt { .. }) => {
+            panic!("{}: For loop should've been desugared", loc_display(loc))
         }
 
         ast::Stmt::While(ast::WhileStmt { label, cond, body }) => {

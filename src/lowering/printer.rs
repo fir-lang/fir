@@ -205,24 +205,6 @@ impl Stmt {
 
             Stmt::Expr(expr) => expr.node.print(buffer, indent),
 
-            Stmt::For(ForStmt {
-                pat,
-                expr,
-                body,
-                next_method: _,
-                option_some_con: _,
-            }) => {
-                buffer.push_str("for ");
-                pat.node.print(buffer);
-                buffer.push_str(" in ");
-                expr.node.print(buffer, indent);
-                buffer.push_str(":\n");
-                for stmt in body {
-                    buffer.push_str(&INDENTS[0..(indent + 2) as usize]);
-                    stmt.node.print(buffer, indent + 2);
-                }
-            }
-
             Stmt::While(WhileStmt { label, cond, body }) => {
                 if let Some(label) = label {
                     write!(buffer, "{label}: ").unwrap();

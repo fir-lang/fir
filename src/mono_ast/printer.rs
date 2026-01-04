@@ -313,27 +313,6 @@ impl Stmt {
 
             Stmt::Expr(expr) => expr.node.print(buffer, indent),
 
-            Stmt::For(ForStmt {
-                pat,
-                expr,
-                body,
-                iter_ty: _,
-                item_ty: _,
-            }) => {
-                buffer.push_str("for ");
-                pat.node.print(buffer);
-                buffer.push_str(" in ");
-                expr.node.print(buffer, 0);
-                buffer.push_str(":\n");
-                for (i, stmt) in body.iter().enumerate() {
-                    if i != 0 {
-                        buffer.push('\n');
-                    }
-                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    stmt.node.print(buffer, indent + 4);
-                }
-            }
-
             Stmt::While(WhileStmt { label, cond, body }) => {
                 if let Some(label) = label {
                     buffer.push('\'');

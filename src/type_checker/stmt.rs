@@ -321,6 +321,26 @@ fn check_stmt(
         }) => {
             assert!(expr_ty.is_none());
 
+            /*
+            for <pat>: <item_ty> in <expr>:
+                <body>
+
+            ==>
+
+            do:
+                let temp: iter = <expr>
+                while Iterator.next[iter, <item_ty>, exn]() is Option.Some(<pat>):
+                    <body>
+
+            We can't do this desugaring and then type check it: we need to infer the `iter` type as
+            the type of `<expr>`, but `let` statement AST doesn't allow us to annotate the binder
+            with a type checking type (only with an AST type). So we can't invent a fresh
+            unification variable for the type of `temp` and pas sit to `Iterator.next`.
+
+            So instead we check `<expr>`, and create the desugared code in a type-checked form (with
+            the inferred types of nodes).
+            */
+
             let iter_ty = check_expr(tc_state, expr, None, level, loop_stack).0;
             *expr_ty = Some(iter_ty.clone());
 
@@ -367,14 +387,97 @@ fn check_stmt(
             loop_stack.pop();
 
             tc_state.env.exit();
-            unify_expected_ty(
+
+            let ret = unify_expected_ty(
                 Ty::unit(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
                 tc_state.var_gen,
                 level,
                 &stmt.loc,
-            )
+            );
+
+            let expr_local = SmolStr::new(format!("temp{}", tc_state.local_gen));
+            tc_state.local_gen += 1;
+            stmt.node = ast::Stmt::Expr(ast::L {
+                loc: stmt.loc.clone(),
+                node: ast::Expr::Do(vec![
+                    ast::L {
+                        loc: expr.loc.clone(),
+                        node: ast::Stmt::Let(ast::LetStmt {
+                            lhs: ast::L {
+                                loc: expr.loc.clone(),
+                                node: ast::Pat::Var(ast::VarPat {
+                                    var: expr_local.clone(),
+                                    ty: Some(iter_ty.clone()),
+                                }),
+                            },
+                            ty: None,
+                            rhs: expr.clone(),
+                        }),
+                    },
+                    ast::L {
+                        loc: stmt.loc.clone(),
+                        node: ast::Stmt::While(ast::WhileStmt {
+                            label: label.clone(),
+                            cond: ast::L {
+                                loc: expr.loc.clone(),
+                                node: ast::Expr::Is(ast::IsExpr {
+                                    expr: Box::new(ast::L {
+                                        loc: expr.loc.clone(),
+                                        node: ast::Expr::Call(ast::CallExpr {
+                                            fun: Box::new(ast::L {
+                                                loc: expr.loc.clone(),
+                                                node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                                    ty: SmolStr::new_static("Iterator"),
+                                                    ty_user_ty_args: vec![],
+                                                    member: SmolStr::new_static("next"),
+                                                    user_ty_args: vec![],
+                                                    ty_args: vec![
+                                                        iter_ty.clone(),
+                                                        item_ty.clone(),
+                                                        tc_state.exceptions.clone(),
+                                                    ],
+                                                }),
+                                            }),
+                                            args: vec![ast::CallArg {
+                                                name: None,
+                                                expr: ast::L {
+                                                    loc: expr.loc.clone(),
+                                                    node: ast::Expr::Var(ast::VarExpr {
+                                                        id: expr_local.clone(),
+                                                        user_ty_args: vec![],
+                                                        ty_args: vec![],
+                                                    }),
+                                                },
+                                            }],
+                                        }),
+                                    }),
+                                    pat: ast::L {
+                                        loc: pat.loc.clone(),
+                                        node: ast::Pat::Con(ast::ConPat {
+                                            con: ast::Con {
+                                                ty: SmolStr::new_static("Option"),
+                                                con: Some(SmolStr::new_static("Some")),
+                                                user_ty_args: vec![],
+                                                ty_args: vec![item_ty.clone()],
+                                            },
+                                            fields: vec![ast::Named {
+                                                name: None,
+                                                node: pat.clone(),
+                                            }],
+                                            ignore_rest: false,
+                                        }),
+                                    },
+                                }),
+                            },
+                            body: body.clone(),
+                        }),
+                    },
+                ]),
+            });
+
+            ret
         }
 
         ast::Stmt::While(ast::WhileStmt { label, cond, body }) => {

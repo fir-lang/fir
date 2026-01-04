@@ -134,7 +134,6 @@ pub enum Stmt {
     Let(LetStmt),
     Assign(AssignStmt),
     Expr(L<Expr>),
-    For(ForStmt),
     While(WhileStmt),
     Break { label: Option<Id>, level: u32 },
     Continue { label: Option<Id>, level: u32 },
@@ -220,15 +219,6 @@ pub struct IfExpr {
 pub struct AssignStmt {
     pub lhs: L<Expr>,
     pub rhs: L<Expr>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ForStmt {
-    pub pat: L<Pat>,
-    pub expr: L<Expr>,
-    pub body: Vec<L<Stmt>>,
-    pub iter_ty: Type,
-    pub item_ty: Type,
 }
 
 #[derive(Debug, Clone)]
