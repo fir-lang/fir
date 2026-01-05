@@ -1613,8 +1613,6 @@ fn check_field_sel(
         (ty, user_ty_args_converted)
     };
 
-    // Type arguments of the receiver already substituted for type parameters in
-    // `select_method`. Drop 'self' argument.
     let (mut args, ret, exceptions) = match method_ty {
         Ty::Fun {
             args,
@@ -1631,6 +1629,8 @@ fn check_field_sel(
 
     match &mut args {
         FunArgs::Positional(args) => {
+            // Type arguments of the receiver already substituted for type parameters in
+            // `select_method`. Drop 'self' argument.
             let self_arg = args.remove(0);
             unify(
                 &self_arg,
