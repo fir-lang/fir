@@ -1,6 +1,7 @@
 import [
     Fir/Array,
     Fir/Char,
+    Fir/Deque,
     Fir/Exn,
     Fir/HashMap,
     Fir/HashSet,
