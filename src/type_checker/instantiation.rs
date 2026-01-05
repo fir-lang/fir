@@ -76,22 +76,6 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             normalize_expr(&mut object.node, cons)
         }
 
-        ast::Expr::MethodSel(ast::MethodSelExpr {
-            object,
-            object_ty,
-            method_ty_id: _,
-            method: _,
-            ty_args,
-        }) => {
-            if let Some(object_ty) = object_ty {
-                *object_ty = object_ty.deep_normalize(cons);
-            }
-            ty_args
-                .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(cons));
-            normalize_expr(&mut object.node, cons)
-        }
-
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
             normalize_expr(&mut fun.node, cons);
             for arg in args {

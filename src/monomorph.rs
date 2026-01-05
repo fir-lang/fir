@@ -468,33 +468,6 @@ fn mono_expr(
             field: field.clone(),
         }),
 
-        ast::Expr::MethodSel(ast::MethodSelExpr {
-            object,       // receiver
-            object_ty,    // receiver type
-            method_ty_id, // type that the method belongs to: `trait` or `type`
-            method,       // method or associated function name
-            ty_args,      // function type arguments
-        }) => {
-            let mono_ty_args: Vec<mono::Type> = ty_args
-                .iter()
-                .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
-                .collect();
-
-            mono_method(method_ty_id, method, &mono_ty_args, poly_pgm, mono_pgm, loc);
-
-            let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals);
-
-            let _mono_object_ty =
-                mono_tc_ty(object_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
-
-            mono::Expr::MethodSel(mono::MethodSelExpr {
-                object: mono_object,
-                method_ty_id: method_ty_id.clone(),
-                method_id: method.clone(),
-                ty_args: mono_ty_args,
-            })
-        }
-
         ast::Expr::ConSel(ast::Con {
             ty,
             con,

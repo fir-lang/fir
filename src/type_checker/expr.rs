@@ -121,7 +121,6 @@ pub(super) fn check_expr(
         }
 
         // <object:Expr>.<field:Id>.
-        // This updates the expression as `MethodSelect` if the `field` turns out to be a method.
         ast::Expr::FieldSel(ast::FieldSelExpr {
             object,
             field,
@@ -189,8 +188,6 @@ pub(super) fn check_expr(
                 Default::default(),
             )
         }
-
-        ast::Expr::MethodSel(_) => panic!("MethodSel in type checker"),
 
         ast::Expr::ConSel(ast::Con {
             ty,

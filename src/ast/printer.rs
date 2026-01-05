@@ -482,21 +482,6 @@ impl Expr {
                 print_user_ty_args(user_ty_args, buffer);
             }
 
-            Expr::MethodSel(MethodSelExpr {
-                object,
-                object_ty: _,
-                method_ty_id,
-                method,
-                ty_args,
-            }) => {
-                object.node.print(buffer, 0);
-                buffer.push_str(".{");
-                buffer.push_str(method_ty_id);
-                buffer.push_str(".}");
-                buffer.push_str(method);
-                print_ty_args(ty_args, buffer);
-            }
-
             Expr::ConSel(con) => {
                 con.print(buffer);
             }
@@ -519,7 +504,7 @@ impl Expr {
             Expr::Call(CallExpr { fun, args }) => {
                 let parens = !matches!(
                     &fun.node,
-                    Expr::Var(_) | Expr::FieldSel(_) | Expr::ConSel(_) | Expr::MethodSel(_)
+                    Expr::Var(_) | Expr::FieldSel(_) | Expr::ConSel(_)
                 );
                 if parens {
                     buffer.push('(');
@@ -972,7 +957,6 @@ fn expr_parens(expr: &Expr) -> bool {
         Expr::Var(_)
             | Expr::ConSel(_)
             | Expr::FieldSel(_)
-            | Expr::MethodSel(_)
             | Expr::AssocFnSel(_)
             | Expr::Call(_)
             | Expr::Int(_)

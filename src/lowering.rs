@@ -394,7 +394,6 @@ pub enum Expr {
     FieldSel(FieldSelExpr),
 
     /// Method selection: `<expr>.<id>`. Captures receiver.
-    MethodSel(MethodSelExpr),
 
     /// Associated function selection: `<UpperId>.<id>`.
     AssocFnSel(FunIdx),
@@ -428,12 +427,6 @@ pub struct FieldSelExpr {
     /// Note: this is not *offset* of the field from the object's address. E.g. if an object has N
     /// words of header, the field's address will be `object[N + idx]`.
     pub idx: u32,
-}
-
-#[derive(Debug, Clone)]
-pub struct MethodSelExpr {
-    pub object: Box<L<Expr>>,
-    pub fun_idx: FunIdx,
 }
 
 #[derive(Debug, Clone)]
@@ -1916,42 +1909,6 @@ fn lower_expr(
                 }),
                 Default::default(),
                 field_ty,
-            )
-        }
-
-        mono::Expr::MethodSel(mono::MethodSelExpr {
-            object,
-            method_ty_id,
-            method_id,
-            ty_args,
-        }) => {
-            let fun_idx = *indices
-                .assoc_funs
-                .get(method_ty_id)
-                .unwrap()
-                .get(method_id)
-                .unwrap()
-                .get(ty_args)
-                .unwrap();
-
-            let fun_decl = mono_pgm
-                .associated
-                .get(method_ty_id)
-                .unwrap()
-                .get(method_id)
-                .unwrap()
-                .get(ty_args)
-                .unwrap();
-
-            let fun_ty = fun_decl.sig.ty();
-
-            (
-                Expr::MethodSel(MethodSelExpr {
-                    object: lower_bl_expr(object, closures, indices, scope, mono_pgm).0,
-                    fun_idx,
-                }),
-                Default::default(),
-                mono::Type::Fn(fun_ty),
             )
         }
 
