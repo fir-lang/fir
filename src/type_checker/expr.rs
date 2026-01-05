@@ -1616,49 +1616,51 @@ fn check_field_sel(
         (ty, user_ty_args_converted)
     };
 
-    // Type arguments of the receiver already substituted for type parameters in
-    // `select_method`. Drop 'self' argument.
-    match method_ty {
+    let (mut args, ret, exceptions) = match method_ty {
         Ty::Fun {
-            mut args,
+            args,
             ret,
             exceptions,
-        } => {
-            match &mut args {
-                FunArgs::Positional(args) => {
-                    let self_arg = args.remove(0);
-                    unify(
-                        &self_arg,
-                        object_ty,
-                        tc_state.tys.tys.cons(),
-                        tc_state.var_gen,
-                        level,
-                        loc,
-                    );
-                }
-                FunArgs::Named(_) => panic!(),
-            }
-            (
-                Ty::Fun {
-                    args,
-                    ret,
-                    exceptions,
-                },
-                ast::Expr::MethodSel(ast::MethodSelExpr {
-                    object: Box::new(object.clone()),
-                    object_ty: Some(object_ty.clone()),
-                    method_ty_id,
-                    method: field.clone(),
-                    ty_args: method_ty_args,
-                }),
-            )
-        }
+        } => (args, ret, exceptions),
+
         _ => panic!(
             "{}: Type of method is not a function type: {:?}",
             loc_display(loc),
             method_ty
         ),
+    };
+
+    match &mut args {
+        FunArgs::Positional(args) => {
+            // Type arguments of the receiver already substituted for type parameters in
+            // `select_method`. Drop 'self' argument.
+            let self_arg = args.remove(0);
+            unify(
+                &self_arg,
+                object_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                loc,
+            );
+        }
+        FunArgs::Named(_) => panic!(),
     }
+
+    (
+        Ty::Fun {
+            args,
+            ret,
+            exceptions,
+        },
+        ast::Expr::MethodSel(ast::MethodSelExpr {
+            object: Box::new(object.clone()),
+            object_ty: Some(object_ty.clone()),
+            method_ty_id,
+            method: field.clone(),
+            ty_args: method_ty_args,
+        }),
+    )
 }
 
 /// Try to select a field.
