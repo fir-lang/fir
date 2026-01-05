@@ -631,7 +631,6 @@ BlockExpr: Expr = {
                 return_ty: ret.1,
             },
             body,
-            idx: 0,
             inferred_ty: None,
         }),
 }
@@ -892,7 +891,6 @@ InlineExpr: Expr = {
                 return_ty: ret.1,
             },
             body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
-            idx: 0,
             inferred_ty: None,
         }),
 }

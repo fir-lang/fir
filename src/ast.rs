@@ -726,7 +726,6 @@ pub enum UnOp {
 pub struct FnExpr {
     pub sig: FunSig,
     pub body: Vec<L<Stmt>>,
-    pub idx: u32,
     pub inferred_ty: Option<Ty>,
 }
 
@@ -1124,7 +1123,6 @@ impl Expr {
             Expr::Fn(FnExpr {
                 sig,
                 body,
-                idx: _,
                 inferred_ty: _,
             }) => {
                 sig.subst_ty_ids(substs);

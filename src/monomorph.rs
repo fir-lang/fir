@@ -696,11 +696,8 @@ fn mono_expr(
         ast::Expr::Fn(ast::FnExpr {
             sig,
             body,
-            idx,
             inferred_ty,
         }) => {
-            assert_eq!(*idx, 0);
-
             let (args, ret, exceptions) = match inferred_ty.as_ref().unwrap() {
                 Ty::Fun {
                     args,

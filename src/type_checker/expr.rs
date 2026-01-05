@@ -1006,13 +1006,11 @@ pub(super) fn check_expr(
         ast::Expr::Fn(ast::FnExpr {
             sig,
             body,
-            idx,
             inferred_ty,
         }) => {
             assert!(sig.context.type_params.is_empty());
             assert!(sig.context.preds.is_empty());
             assert!(matches!(&sig.self_, ast::SelfParam::No));
-            assert_eq!(*idx, 0);
             assert!(inferred_ty.is_none());
 
             let (expected_args, expected_ret, expected_exceptions) = match expected_ty {

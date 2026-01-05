@@ -728,7 +728,6 @@ impl Expr {
             Expr::Fn(FnExpr {
                 sig,
                 body,
-                idx: _,
                 inferred_ty,
             }) => {
                 buffer.push('\\');

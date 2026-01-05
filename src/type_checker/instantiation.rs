@@ -145,7 +145,6 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         ast::Expr::Fn(ast::FnExpr {
             sig: _,
             body,
-            idx: _,
             inferred_ty,
         }) => {
             for stmt in body {
