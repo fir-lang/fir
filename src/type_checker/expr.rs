@@ -1615,123 +1615,124 @@ fn check_field_sel(
 
     // Type arguments of the receiver already substituted for type parameters in
     // `select_method`. Drop 'self' argument.
-    match method_ty {
+    let (mut args, ret, exceptions) = match method_ty {
         Ty::Fun {
-            mut args,
+            args,
             ret,
             exceptions,
-        } => {
-            match &mut args {
-                FunArgs::Positional(args) => {
-                    let self_arg = args.remove(0);
-                    unify(
-                        &self_arg,
-                        object_ty,
-                        tc_state.tys.tys.cons(),
-                        tc_state.var_gen,
-                        level,
-                        loc,
-                    );
-                }
-                FunArgs::Named(_) => panic!(),
-            }
+        } => (args, ret, exceptions),
 
-            let num_args = args.len();
-
-            let fun_ty = Ty::Fun {
-                args,
-                ret,
-                exceptions,
-            };
-
-            let receiver_id: Id = SmolStr::new_static("receiver");
-
-            let fn_arg_ids: Vec<Id> = (0..num_args)
-                .map(|i| SmolStr::new(format!("arg{}", i)))
-                .collect();
-
-            let desugared = ast::Expr::Do(vec![
-                ast::L {
-                    loc: loc.clone(),
-                    node: ast::Stmt::Let(ast::LetStmt {
-                        lhs: ast::L {
-                            loc: loc.clone(),
-                            node: ast::Pat::Var(ast::VarPat {
-                                var: receiver_id.clone(),
-                                ty: Some(object_ty.clone()),
-                            }),
-                        },
-                        rhs: object.clone(),
-                        ty: None,
-                    }),
-                },
-                ast::L {
-                    loc: loc.clone(),
-                    node: ast::Stmt::Expr(ast::L {
-                        loc: loc.clone(),
-                        node: ast::Expr::Fn(ast::FnExpr {
-                            sig: ast::FunSig {
-                                context: ast::Context::default(),
-                                self_: ast::SelfParam::No,
-                                params: fn_arg_ids.iter().map(|id| (id.clone(), None)).collect(),
-                                return_ty: None,  // not used after type checking
-                                exceptions: None, // not used after type checking
-                            },
-                            body: vec![ast::L {
-                                loc: loc.clone(),
-                                node: ast::Stmt::Expr(ast::L {
-                                    loc: loc.clone(),
-                                    node: ast::Expr::Call(ast::CallExpr {
-                                        fun: Box::new(ast::L {
-                                            loc: loc.clone(),
-                                            node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                                                ty: method_ty_id.clone(),
-                                                ty_user_ty_args: vec![],
-                                                member: field.clone(),
-                                                user_ty_args: vec![],
-                                                ty_args: method_ty_args.clone(),
-                                            }),
-                                        }),
-                                        args: std::iter::once(ast::CallArg {
-                                            name: None,
-                                            expr: ast::L {
-                                                loc: loc.clone(),
-                                                node: ast::Expr::Var(ast::VarExpr {
-                                                    id: receiver_id.clone(),
-                                                    user_ty_args: vec![],
-                                                    ty_args: vec![],
-                                                }),
-                                            },
-                                        })
-                                        .chain(fn_arg_ids.iter().map(|id| ast::CallArg {
-                                            name: None,
-                                            expr: ast::L {
-                                                loc: loc.clone(),
-                                                node: ast::Expr::Var(ast::VarExpr {
-                                                    id: id.clone(),
-                                                    user_ty_args: vec![],
-                                                    ty_args: vec![],
-                                                }),
-                                            },
-                                        }))
-                                        .collect(),
-                                    }),
-                                }),
-                            }],
-                            inferred_ty: Some(fun_ty.clone()),
-                        }),
-                    }),
-                },
-            ]);
-
-            (fun_ty, desugared)
-        }
         _ => panic!(
             "{}: Type of method is not a function type: {:?}",
             loc_display(loc),
             method_ty
         ),
+    };
+
+    match &mut args {
+        FunArgs::Positional(args) => {
+            let self_arg = args.remove(0);
+            unify(
+                &self_arg,
+                object_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                loc,
+            );
+        }
+        FunArgs::Named(_) => panic!(),
     }
+
+    let num_args = args.len();
+
+    let fun_ty = Ty::Fun {
+        args,
+        ret,
+        exceptions,
+    };
+
+    let receiver_id: Id = SmolStr::new_static("receiver");
+
+    let fn_arg_ids: Vec<Id> = (0..num_args)
+        .map(|i| SmolStr::new(format!("arg{}", i)))
+        .collect();
+
+    let desugared = ast::Expr::Do(vec![
+        ast::L {
+            loc: loc.clone(),
+            node: ast::Stmt::Let(ast::LetStmt {
+                lhs: ast::L {
+                    loc: loc.clone(),
+                    node: ast::Pat::Var(ast::VarPat {
+                        var: receiver_id.clone(),
+                        ty: Some(object_ty.clone()),
+                    }),
+                },
+                rhs: object.clone(),
+                ty: None,
+            }),
+        },
+        ast::L {
+            loc: loc.clone(),
+            node: ast::Stmt::Expr(ast::L {
+                loc: loc.clone(),
+                node: ast::Expr::Fn(ast::FnExpr {
+                    sig: ast::FunSig {
+                        context: ast::Context::default(),
+                        self_: ast::SelfParam::No,
+                        params: fn_arg_ids.iter().map(|id| (id.clone(), None)).collect(),
+                        return_ty: None,  // not used after type checking
+                        exceptions: None, // not used after type checking
+                    },
+                    body: vec![ast::L {
+                        loc: loc.clone(),
+                        node: ast::Stmt::Expr(ast::L {
+                            loc: loc.clone(),
+                            node: ast::Expr::Call(ast::CallExpr {
+                                fun: Box::new(ast::L {
+                                    loc: loc.clone(),
+                                    node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                        ty: method_ty_id.clone(),
+                                        ty_user_ty_args: vec![],
+                                        member: field.clone(),
+                                        user_ty_args: vec![],
+                                        ty_args: method_ty_args.clone(),
+                                    }),
+                                }),
+                                args: std::iter::once(ast::CallArg {
+                                    name: None,
+                                    expr: ast::L {
+                                        loc: loc.clone(),
+                                        node: ast::Expr::Var(ast::VarExpr {
+                                            id: receiver_id.clone(),
+                                            user_ty_args: vec![],
+                                            ty_args: vec![],
+                                        }),
+                                    },
+                                })
+                                .chain(fn_arg_ids.iter().map(|id| ast::CallArg {
+                                    name: None,
+                                    expr: ast::L {
+                                        loc: loc.clone(),
+                                        node: ast::Expr::Var(ast::VarExpr {
+                                            id: id.clone(),
+                                            user_ty_args: vec![],
+                                            ty_args: vec![],
+                                        }),
+                                    },
+                                }))
+                                .collect(),
+                            }),
+                        }),
+                    }],
+                    inferred_ty: Some(fun_ty.clone()),
+                }),
+            }),
+        },
+    ]);
+
+    (fun_ty, desugared)
 }
 
 /// Try to select a field.
