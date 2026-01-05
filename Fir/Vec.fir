@@ -26,7 +26,7 @@ Vec.reserve(self: Vec[t], additional: U32):
     let newCap = max(u32(8), (self.len() + additional).nextPowerOfTwo())
     if newCap > self._data.len():
         let newData = Array.new(newCap)
-        for i: U32 in range(u32(0), self._data.len()):
+        for i: U32 in range(u32(0), self._len):
             newData.set(i, self._data.get(i))
         self._data = newData
 
@@ -130,7 +130,7 @@ Vec.swap(self: Vec[t], i: U32, j: U32):
 
 
 Vec.iter(self: Vec[t]) VecIter[t]:
-    VecIter(_vec = self, _idx = 0,)
+    VecIter(_vec = self, _idx = 0)
 
 
 Vec.first(self: Vec[t]) Option[t]:
