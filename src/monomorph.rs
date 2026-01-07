@@ -484,15 +484,115 @@ fn mono_expr(
 
             let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals);
 
-            let _mono_object_ty =
+            let mono_object_ty =
                 mono_tc_ty(object_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
 
-            mono::Expr::MethodSel(mono::MethodSelExpr {
-                object: mono_object,
-                method_ty_id: method_ty_id.clone(),
-                method_id: method.clone(),
-                ty_args: mono_ty_args,
-            })
+            /*
+            <receiver>.<method>
+
+            ==>
+
+            do:
+                let receiver = <receiver>
+                \(...args): <receiver_type>.<method>(reciver, ...args)
+            */
+
+            let mono_fun = mono_pgm
+                .associated
+                .get(method_ty_id)
+                .unwrap()
+                .get(method)
+                .unwrap()
+                .get(&mono_ty_args)
+                .unwrap();
+
+            let mono::FnType {
+                args,
+                ret,
+                exceptions,
+            } = mono_fun.sig.ty();
+
+            let mono_fun_args = match args {
+                mono::FunArgs::Positional(args) => args,
+                mono::FunArgs::Named(_) => {
+                    // Methods can't have named arguments.
+                    panic!()
+                }
+            };
+
+            let closure_params: Vec<(Id, mono::L<mono::Type>)> = mono_fun_args
+                .iter()
+                .skip(1) // skip receiver
+                .enumerate()
+                .map(|(i, arg_ty)| {
+                    (
+                        SmolStr::new(format!("$arg{}$", i)),
+                        mono::L {
+                            loc: loc.clone(),
+                            node: arg_ty.clone(),
+                        },
+                    )
+                })
+                .collect();
+
+            let receiver_id = SmolStr::new_static("$receiver$");
+
+            let assoc_fn_args: Vec<mono::CallArg> = std::iter::once(receiver_id.clone())
+                .chain(closure_params.iter().map(|(arg, _)| arg.clone()))
+                .map(|arg| mono::CallArg {
+                    name: None,
+                    expr: ast::L {
+                        loc: loc.clone(),
+                        node: mono::Expr::LocalVar(arg.clone()),
+                    },
+                })
+                .collect();
+
+            mono::Expr::Do(vec![
+                mono::L {
+                    loc: loc.clone(),
+                    node: mono::Stmt::Let(mono::LetStmt {
+                        lhs: mono::L {
+                            loc: loc.clone(),
+                            node: mono::Pat::Var(mono::VarPat {
+                                var: SmolStr::new_static("$receiver$"),
+                                ty: mono_object_ty,
+                            }),
+                        },
+                        rhs: *mono_object,
+                    }),
+                },
+                mono::L {
+                    loc: loc.clone(),
+                    node: mono::Stmt::Expr(mono::L {
+                        loc: loc.clone(),
+                        node: mono::Expr::Fn(mono::FnExpr {
+                            sig: mono::FunSig {
+                                params: closure_params,
+                                return_ty: ret.map(|ty| ty.map(|ty| *ty)),
+                                exceptions: exceptions.map(|ty| ty.map(|ty| *ty)),
+                            },
+                            body: vec![mono::L {
+                                loc: loc.clone(),
+                                node: mono::Stmt::Expr(mono::L {
+                                    loc: loc.clone(),
+                                    node: mono::Expr::Call(mono::CallExpr {
+                                        fun: Box::new(ast::L {
+                                            loc: loc.clone(),
+                                            node: mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
+                                                ty: method_ty_id.clone(),
+                                                member: method.clone(),
+                                                ty_args: mono_ty_args,
+                                            }),
+                                        }),
+                                        args: assoc_fn_args,
+                                    }),
+                                }),
+                            }],
+                        }),
+                    }),
+                },
+            ])
         }
 
         ast::Expr::ConSel(ast::Con {

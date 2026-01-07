@@ -93,6 +93,15 @@ pub enum FunArgs {
     Named(OrdMap<Id, Type>),
 }
 
+impl FunArgs {
+    fn len(&self) -> u32 {
+        match self {
+            FunArgs::Positional(args) => args.len() as u32,
+            FunArgs::Named(args) => args.len() as u32,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct FunSig {
     pub params: Vec<(Id, L<Type>)>,
