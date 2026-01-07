@@ -35,8 +35,7 @@ pub struct LoweredPgm {
 
 pub const CON_CON_IDX: HeapObjIdx = HeapObjIdx(0);
 pub const FUN_CON_IDX: HeapObjIdx = HeapObjIdx(1);
-pub const METHOD_CON_IDX: HeapObjIdx = HeapObjIdx(2);
-pub const CLOSURE_CON_IDX: HeapObjIdx = HeapObjIdx(3);
+pub const CLOSURE_CON_IDX: HeapObjIdx = HeapObjIdx(2);
 const FIRST_FREE_CON_IDX: HeapObjIdx = HeapObjIdx(4);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

@@ -340,20 +340,6 @@ fn call_closure<W: Write>(
             call_fun(w, pgm, heap, fun, arg_values, loc, call_stack).into_control_flow()
         }
 
-        METHOD_CON_IDX => {
-            let receiver = heap[fun + 1];
-            let fun_idx = heap[fun + 2];
-            let fun = &pgm.funs[fun_idx as usize];
-            let mut arg_values: Vec<u64> = Vec::with_capacity(args.len() + 1);
-            arg_values.push(receiver);
-            for arg in args {
-                arg_values.push(val!(eval(
-                    w, pgm, heap, locals, &arg.node, &arg.loc, call_stack
-                )));
-            }
-            call_fun(w, pgm, heap, fun, arg_values, loc, call_stack).into_control_flow()
-        }
-
         CLOSURE_CON_IDX => {
             let closure_idx = heap[fun + 1];
             let closure = &pgm.closures[closure_idx as usize];
