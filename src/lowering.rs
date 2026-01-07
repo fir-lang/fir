@@ -36,7 +36,7 @@ pub struct LoweredPgm {
 pub const CON_CON_IDX: HeapObjIdx = HeapObjIdx(0);
 pub const FUN_CON_IDX: HeapObjIdx = HeapObjIdx(1);
 pub const CLOSURE_CON_IDX: HeapObjIdx = HeapObjIdx(2);
-const FIRST_FREE_CON_IDX: HeapObjIdx = HeapObjIdx(4);
+const FIRST_FREE_CON_IDX: HeapObjIdx = HeapObjIdx(3);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunIdx(u32);
@@ -295,11 +295,6 @@ pub enum BuiltinConDecl {
     ///
     /// Payload holds the function index (`FunIdx`).
     Fun,
-
-    /// Method closure, e.g. `x.toString`.
-    ///
-    /// Payload holds the receiver and function index (`FunIdx`), in that order.
-    Method,
 
     /// A function expression.
     ///
@@ -744,9 +739,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     lowered_pgm
         .heap_objs
         .push(HeapObj::Builtin(BuiltinConDecl::Fun));
-    lowered_pgm
-        .heap_objs
-        .push(HeapObj::Builtin(BuiltinConDecl::Method));
     lowered_pgm
         .heap_objs
         .push(HeapObj::Builtin(BuiltinConDecl::Closure));
