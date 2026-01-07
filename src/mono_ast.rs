@@ -234,7 +234,6 @@ pub enum Expr {
     TopVar(VarExpr),            // a top-level function reference
     ConSel(Con),                // a product or sum constructor
     FieldSel(FieldSelExpr),     // <expr>.<id>
-    MethodSel(MethodSelExpr),   // <id>.<id>, with an object captured as receiver
     AssocFnSel(AssocFnSelExpr), // <id>.<id>
     Call(CallExpr),
     Int(IntExpr),
@@ -273,14 +272,6 @@ pub struct CallArg {
 pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
     pub field: Id,
-}
-
-#[derive(Debug, Clone)]
-pub struct MethodSelExpr {
-    pub object: Box<L<Expr>>,
-    pub method_ty_id: Id,
-    pub method_id: Id,
-    pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]

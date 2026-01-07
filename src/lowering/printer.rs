@@ -264,11 +264,6 @@ impl Expr {
                 buffer.push_str(field);
             }
 
-            Expr::MethodSel(MethodSelExpr { object, fun_idx }) => {
-                object.node.print(buffer, indent);
-                write!(buffer, ".fun{}", fun_idx.0).unwrap();
-            }
-
             Expr::AssocFnSel(idx) => write!(buffer, "assocfun{}", idx.0).unwrap(),
 
             Expr::Call(CallExpr { fun, args }) => {

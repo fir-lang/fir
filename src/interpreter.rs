@@ -340,20 +340,6 @@ fn call_closure<W: Write>(
             call_fun(w, pgm, heap, fun, arg_values, loc, call_stack).into_control_flow()
         }
 
-        METHOD_CON_IDX => {
-            let receiver = heap[fun + 1];
-            let fun_idx = heap[fun + 2];
-            let fun = &pgm.funs[fun_idx as usize];
-            let mut arg_values: Vec<u64> = Vec::with_capacity(args.len() + 1);
-            arg_values.push(receiver);
-            for arg in args {
-                arg_values.push(val!(eval(
-                    w, pgm, heap, locals, &arg.node, &arg.loc, call_stack
-                )));
-            }
-            call_fun(w, pgm, heap, fun, arg_values, loc, call_stack).into_control_flow()
-        }
-
         CLOSURE_CON_IDX => {
             let closure_idx = heap[fun + 1];
             let closure = &pgm.closures[closure_idx as usize];
@@ -529,19 +515,6 @@ fn eval<W: Write>(
             ControlFlow::Val(heap[object + 1 + (*idx as u64)])
         }
 
-        Expr::MethodSel(MethodSelExpr { object, fun_idx }) => {
-            let object = val!(eval(
-                w,
-                pgm,
-                heap,
-                locals,
-                &object.node,
-                &object.loc,
-                call_stack
-            ));
-            ControlFlow::Val(heap.allocate_method(object, fun_idx.as_u64()))
-        }
-
         Expr::AssocFnSel(idx) => ControlFlow::Val(heap.allocate_fun(idx.as_u64())),
 
         Expr::Call(CallExpr { fun, args }) => {
@@ -552,28 +525,6 @@ fn eval<W: Write>(
                     return allocate_object_from_idx(
                         w, pgm, heap, locals, *con_idx, args, call_stack,
                     );
-                }
-
-                Expr::MethodSel(MethodSelExpr { object, fun_idx }) => {
-                    let object = val!(eval(
-                        w,
-                        pgm,
-                        heap,
-                        locals,
-                        &object.node,
-                        &object.loc,
-                        call_stack
-                    ));
-                    let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len() + 1);
-                    arg_vals.push(object);
-                    for arg in args {
-                        arg_vals.push(val!(eval(
-                            w, pgm, heap, locals, &arg.node, &arg.loc, call_stack
-                        )));
-                    }
-                    let fun = &pgm.funs[fun_idx.as_usize()];
-                    return call_fun(w, pgm, heap, fun, arg_vals, loc, call_stack)
-                        .into_control_flow();
                 }
 
                 Expr::AssocFnSel(fun_idx) => {

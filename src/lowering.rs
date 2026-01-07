@@ -35,9 +35,8 @@ pub struct LoweredPgm {
 
 pub const CON_CON_IDX: HeapObjIdx = HeapObjIdx(0);
 pub const FUN_CON_IDX: HeapObjIdx = HeapObjIdx(1);
-pub const METHOD_CON_IDX: HeapObjIdx = HeapObjIdx(2);
-pub const CLOSURE_CON_IDX: HeapObjIdx = HeapObjIdx(3);
-const FIRST_FREE_CON_IDX: HeapObjIdx = HeapObjIdx(4);
+pub const CLOSURE_CON_IDX: HeapObjIdx = HeapObjIdx(2);
+const FIRST_FREE_CON_IDX: HeapObjIdx = HeapObjIdx(3);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunIdx(u32);
@@ -297,11 +296,6 @@ pub enum BuiltinConDecl {
     /// Payload holds the function index (`FunIdx`).
     Fun,
 
-    /// Method closure, e.g. `x.toString`.
-    ///
-    /// Payload holds the receiver and function index (`FunIdx`), in that order.
-    Method,
-
     /// A function expression.
     ///
     /// Payload holds the closure index (`ClosureIdx`), then free variables.
@@ -393,9 +387,6 @@ pub enum Expr {
     /// Field selection: `<expr>.<id>`.
     FieldSel(FieldSelExpr),
 
-    /// Method selection: `<expr>.<id>`. Captures receiver.
-    MethodSel(MethodSelExpr),
-
     /// Associated function selection: `<UpperId>.<id>`.
     AssocFnSel(FunIdx),
 
@@ -428,12 +419,6 @@ pub struct FieldSelExpr {
     /// Note: this is not *offset* of the field from the object's address. E.g. if an object has N
     /// words of header, the field's address will be `object[N + idx]`.
     pub idx: u32,
-}
-
-#[derive(Debug, Clone)]
-pub struct MethodSelExpr {
-    pub object: Box<L<Expr>>,
-    pub fun_idx: FunIdx,
 }
 
 #[derive(Debug, Clone)]
@@ -754,9 +739,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     lowered_pgm
         .heap_objs
         .push(HeapObj::Builtin(BuiltinConDecl::Fun));
-    lowered_pgm
-        .heap_objs
-        .push(HeapObj::Builtin(BuiltinConDecl::Method));
     lowered_pgm
         .heap_objs
         .push(HeapObj::Builtin(BuiltinConDecl::Closure));
@@ -1916,42 +1898,6 @@ fn lower_expr(
                 }),
                 Default::default(),
                 field_ty,
-            )
-        }
-
-        mono::Expr::MethodSel(mono::MethodSelExpr {
-            object,
-            method_ty_id,
-            method_id,
-            ty_args,
-        }) => {
-            let fun_idx = *indices
-                .assoc_funs
-                .get(method_ty_id)
-                .unwrap()
-                .get(method_id)
-                .unwrap()
-                .get(ty_args)
-                .unwrap();
-
-            let fun_decl = mono_pgm
-                .associated
-                .get(method_ty_id)
-                .unwrap()
-                .get(method_id)
-                .unwrap()
-                .get(ty_args)
-                .unwrap();
-
-            let fun_ty = fun_decl.sig.ty();
-
-            (
-                Expr::MethodSel(MethodSelExpr {
-                    object: lower_bl_expr(object, closures, indices, scope, mono_pgm).0,
-                    fun_idx,
-                }),
-                Default::default(),
-                mono::Type::Fn(fun_ty),
             )
         }
 

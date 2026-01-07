@@ -1,5 +1,5 @@
 use crate::interpreter::*;
-use crate::lowering::{CON_CON_IDX, FUN_CON_IDX, METHOD_CON_IDX, Repr};
+use crate::lowering::{CON_CON_IDX, FUN_CON_IDX, Repr};
 
 use bytemuck::{cast_slice, cast_slice_mut};
 
@@ -304,14 +304,6 @@ impl Heap {
         let alloc = self.allocate(2);
         self[alloc] = FUN_CON_IDX.as_u64();
         self[alloc + 1] = fun_idx;
-        alloc
-    }
-
-    pub fn allocate_method(&mut self, receiver: u64, fun_idx: u64) -> u64 {
-        let alloc = self.allocate(3);
-        self[alloc] = METHOD_CON_IDX.as_u64();
-        self[alloc + 1] = receiver;
-        self[alloc + 2] = fun_idx;
         alloc
     }
 }

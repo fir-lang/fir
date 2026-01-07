@@ -221,15 +221,6 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordShape>) {
             visit_expr(&object.node, records);
         }
 
-        mono::Expr::MethodSel(mono::MethodSelExpr {
-            object,
-            method_ty_id: _,
-            method_id: _,
-            ty_args: _,
-        }) => {
-            visit_expr(&object.node, records);
-        }
-
         mono::Expr::Call(mono::CallExpr { fun, args }) => {
             visit_expr(&fun.node, records);
             for arg in args {
