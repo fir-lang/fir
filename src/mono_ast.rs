@@ -237,7 +237,7 @@ pub enum Expr {
     AssocFnSel(AssocFnSelExpr), // <id>.<id>
     Call(CallExpr),
     Int(IntExpr),
-    Str(Vec<StringPart>),
+    Str(String),
     Char(char),
     BinOp(BinOpExpr),
     Return(Box<L<Expr>>),
@@ -310,10 +310,4 @@ pub struct FnExpr {
 pub struct IsExpr {
     pub expr: Box<L<Expr>>,
     pub pat: L<Pat>,
-}
-
-#[derive(Debug, Clone)]
-pub enum StringPart {
-    Str(String),
-    Expr(L<Expr>),
 }

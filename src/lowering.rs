@@ -395,7 +395,7 @@ pub enum Expr {
     /// Two's complement representation of an integer value, unsigned extended to `u64`.
     Int(u64),
 
-    Str(Vec<StringPart>),
+    Str(String),
     BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
     BoolOr(Box<L<Expr>>, Box<L<Expr>>),
     Return(Box<L<Expr>>),
@@ -425,12 +425,6 @@ pub struct FieldSelExpr {
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
     pub args: Vec<L<Expr>>,
-}
-
-#[derive(Debug, Clone)]
-pub enum StringPart {
-    Str(String),
-    Expr(L<Expr>),
 }
 
 #[derive(Debug, Clone)]
@@ -2036,18 +2030,8 @@ fn lower_expr(
             (Expr::Int(value), Default::default(), ty)
         }
 
-        mono::Expr::Str(parts) => (
-            Expr::Str(
-                parts
-                    .iter()
-                    .map(|part| match part {
-                        mono::StringPart::Str(str) => StringPart::Str(str.clone()),
-                        mono::StringPart::Expr(expr) => StringPart::Expr(
-                            lower_l_expr(expr, closures, indices, scope, mono_pgm).0,
-                        ),
-                    })
-                    .collect(),
-            ),
+        mono::Expr::Str(str) => (
+            Expr::Str(str.clone()),
             Default::default(),
             mono::Type::Named(mono::NamedType {
                 name: SmolStr::new_static("Str"),
