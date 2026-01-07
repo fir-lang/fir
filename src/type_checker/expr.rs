@@ -415,7 +415,7 @@ pub(super) fn check_expr(
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
             let (fun_ty, _) = check_expr(tc_state, fun, None, level, loop_stack);
 
-            match fun_ty.normalize(tc_state.tys.tys.cons()) {
+            let ret_ty = match fun_ty.normalize(tc_state.tys.tys.cons()) {
                 Ty::Fun {
                     args: param_tys,
                     ret: ret_ty,
@@ -497,7 +497,7 @@ pub(super) fn check_expr(
                                 );
                             }
 
-                            for arg in args {
+                            for arg in args.iter_mut() {
                                 let arg_name: &Id = arg.name.as_ref().unwrap();
                                 let param_ty: &Ty = param_tys.get(arg_name).unwrap();
                                 let (arg_ty, _) = check_expr(
@@ -530,7 +530,7 @@ pub(super) fn check_expr(
                         );
                     }
 
-                    (ret_ty, Default::default())
+                    ret_ty
                 }
 
                 _ => panic!(
@@ -538,7 +538,37 @@ pub(super) fn check_expr(
                     loc_display(&expr.loc),
                     fun_ty,
                 ),
+            };
+
+            // If the callee is a method and called directly, convert it into an associated function
+            // call to avoid closure allocation.
+            if let ast::Expr::MethodSel(ast::MethodSelExpr {
+                object,
+                object_ty: _,
+                method_ty_id,
+                method,
+                ty_args,
+            }) = &fun.node
+            {
+                // Methods can't have named arguments.
+                args.insert(
+                    0,
+                    ast::CallArg {
+                        name: None,
+                        expr: (**object).clone(),
+                    },
+                );
+
+                fun.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                    ty: method_ty_id.clone(),
+                    ty_user_ty_args: vec![], // unused after type checking
+                    member: method.clone(),
+                    user_ty_args: vec![], // unused after type checking
+                    ty_args: ty_args.clone(),
+                });
             }
+
+            (ret_ty, Default::default())
         }
 
         ast::Expr::Int(ast::IntExpr { text, kind, parsed }) => {
