@@ -8,6 +8,10 @@ StrBuf.withCapacity(cap: U32) StrBuf:
     StrBuf(_bytes = Vec.withCapacity(cap))
 
 
+StrBuf.empty() StrBuf:
+    StrBuf.withCapacity(0)
+
+
 StrBuf.len(self) U32:
     self._bytes.len()
 

@@ -548,28 +548,12 @@ fn eval<W: Write>(
 
         Expr::Int(int) => ControlFlow::Val(*int),
 
-        Expr::Str(parts) => {
-            let mut bytes: Vec<u8> = vec![];
-            for part in parts {
-                match part {
-                    StringPart::Str(str) => bytes.extend(str.as_bytes()),
-                    StringPart::Expr(expr) => {
-                        let str = val!(eval(
-                            w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
-                        ));
-                        debug_assert_eq!(heap[str], pgm.str_con_idx.as_u64());
-                        let part_bytes = heap.str_bytes(str);
-                        bytes.extend(part_bytes);
-                    }
-                }
-            }
-            ControlFlow::Val(heap.allocate_str(
-                pgm.str_con_idx.as_u64(),
-                pgm.array_u8_con_idx.as_u64(),
-                Repr::U8,
-                &bytes,
-            ))
-        }
+        Expr::Str(str) => ControlFlow::Val(heap.allocate_str(
+            pgm.str_con_idx.as_u64(),
+            pgm.array_u8_con_idx.as_u64(),
+            Repr::U8,
+            str.as_bytes(),
+        )),
 
         Expr::BoolAnd(left, right) => {
             let left = val!(eval(

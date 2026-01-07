@@ -721,17 +721,18 @@ fn mono_expr(
                 .collect(),
         }),
 
-        ast::Expr::Str(parts) => mono::Expr::Str(
-            parts
-                .iter()
-                .map(|part| match part {
-                    StrPart::Str(str) => mono::StringPart::Str(str.clone()),
-                    StrPart::Expr(expr) => mono::StringPart::Expr(mono_l_expr(
-                        expr, ty_map, poly_pgm, mono_pgm, locals,
-                    )),
-                })
-                .collect(),
-        ),
+        ast::Expr::Str(parts) => {
+            if parts.len() != 1 {
+                panic!("{}: Non-desugared string literal", loc_display(loc));
+            }
+            let str = match &parts[0] {
+                StrPart::Expr(_) => {
+                    panic!("{}: Non-desugared string literal", loc_display(loc));
+                }
+                StrPart::Str(str) => str,
+            };
+            mono::Expr::Str(str.clone())
+        }
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
             mono::Expr::BinOp(mono::BinOpExpr {

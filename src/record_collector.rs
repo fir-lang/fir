@@ -206,16 +206,8 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordShape>) {
         | mono::Expr::ConSel(_)
         | mono::Expr::AssocFnSel(_)
         | mono::Expr::Int(_)
-        | mono::Expr::Char(_) => {}
-
-        mono::Expr::Str(parts) => {
-            for part in parts {
-                match part {
-                    mono::StringPart::Str(_) => {}
-                    mono::StringPart::Expr(expr) => visit_expr(&expr.node, records),
-                }
-            }
-        }
+        | mono::Expr::Char(_)
+        | mono::Expr::Str(_) => {}
 
         mono::Expr::FieldSel(mono::FieldSelExpr { object, field: _ }) => {
             visit_expr(&object.node, records);

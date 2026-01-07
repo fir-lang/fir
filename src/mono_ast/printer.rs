@@ -410,18 +410,9 @@ impl Expr {
                 }
             }
 
-            Expr::Str(parts) => {
+            Expr::Str(str) => {
                 buffer.push('"');
-                for part in parts {
-                    match part {
-                        StringPart::Str(str) => buffer.push_str(str), // TODO: escaping
-                        StringPart::Expr(expr) => {
-                            buffer.push('`');
-                            expr.node.print(buffer, 0);
-                            buffer.push('`');
-                        }
-                    }
-                }
+                buffer.push_str(str); // TODO: escaping
                 buffer.push('"');
             }
 

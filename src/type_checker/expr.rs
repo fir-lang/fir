@@ -733,11 +733,121 @@ pub(super) fn check_expr(
             (Ty::Con(SmolStr::new(con), Kind::Star), Default::default())
         }
 
-        ast::Expr::Str(parts) => {
+        ast::Expr::Str(og_parts) => {
+            let ty = unify_expected_ty(
+                Ty::str(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &expr.loc,
+            );
+
+            let ret = (ty, Default::default());
+
+            if og_parts.len() == 1
+                && let StrPart::Str(_) = &og_parts[0]
+            {
+                return ret;
+            }
+
+            /*
+            "part1 `part2` ..."
+
+            ==>
+
+            do:
+                let buf = StrBuf.withCapacity(0)
+                buf.pushStr(part1)
+                buf.pushStr(part2.toStr())
+                ...
+                buf.toStr()
+            */
+
+            let parts = std::mem::take(og_parts);
+
+            let buf_id = SmolStr::new_static("$buf$");
+
+            let str_buf_ty = Ty::Con(SmolStr::new_static("StrBuf"), Kind::Star);
+
+            let mut desugared_stmts: Vec<ast::L<ast::Stmt>> = vec![ast::L {
+                loc: loc.clone(),
+                node: ast::Stmt::Let(ast::LetStmt {
+                    lhs: ast::L {
+                        loc: loc.clone(),
+                        node: ast::Pat::Var(ast::VarPat {
+                            var: buf_id.clone(),
+                            ty: Some(Ty::Con(SmolStr::new_static("StrBuf"), Kind::Star)),
+                        }),
+                    },
+                    ty: None,
+                    rhs: ast::L {
+                        loc: loc.clone(),
+                        node: ast::Expr::Call(ast::CallExpr {
+                            fun: Box::new(ast::L {
+                                loc: loc.clone(),
+                                node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                    ty: SmolStr::new_static("StrBuf"),
+                                    ty_user_ty_args: vec![],
+                                    member: SmolStr::new_static("empty"),
+                                    user_ty_args: vec![],
+                                    ty_args: vec![tc_state.exceptions.clone()],
+                                }),
+                            }),
+                            args: vec![],
+                        }),
+                    },
+                }),
+            }];
+
+            let make_push = |arg: ast::L<ast::Expr>, exn: Ty| -> ast::L<ast::Stmt> {
+                ast::L {
+                    loc: loc.clone(),
+                    node: ast::Stmt::Expr(ast::L {
+                        loc: loc.clone(),
+                        node: ast::Expr::Call(ast::CallExpr {
+                            fun: Box::new(ast::L {
+                                loc: loc.clone(),
+                                node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                    ty: SmolStr::new_static("StrBuf"),
+                                    ty_user_ty_args: vec![],
+                                    member: SmolStr::new_static("pushStr"),
+                                    user_ty_args: vec![],
+                                    ty_args: vec![exn],
+                                }),
+                            }),
+                            args: vec![
+                                ast::CallArg {
+                                    name: None,
+                                    expr: ast::L {
+                                        loc: loc.clone(),
+                                        node: ast::Expr::Var(ast::VarExpr {
+                                            id: buf_id.clone(),
+                                            user_ty_args: vec![],
+                                            ty_args: vec![],
+                                        }),
+                                    },
+                                },
+                                ast::CallArg {
+                                    name: None,
+                                    expr: arg,
+                                },
+                            ],
+                        }),
+                    }),
+                }
+            };
+
             for part in parts {
                 match part {
-                    StrPart::Str(_) => continue,
-                    StrPart::Expr(expr) => {
+                    StrPart::Str(str) => desugared_stmts.push(make_push(
+                        ast::L {
+                            loc: loc.clone(),
+                            node: ast::Expr::Str(vec![StrPart::Str(str)]),
+                        },
+                        tc_state.exceptions.clone(),
+                    )),
+                    StrPart::Expr(mut expr) => {
                         let expr_var =
                             tc_state
                                 .var_gen
@@ -749,7 +859,7 @@ pub(super) fn check_expr(
                         });
                         let (part_ty, _) = check_expr(
                             tc_state,
-                            expr,
+                            &mut expr,
                             Some(&Ty::UVar(expr_var)),
                             level,
                             loop_stack,
@@ -774,21 +884,44 @@ pub(super) fn check_expr(
                                 },
                             }],
                         });
+                        desugared_stmts.push(make_push(expr, tc_state.exceptions.clone()));
                     }
                 }
             }
 
-            (
-                unify_expected_ty(
-                    Ty::str(),
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &expr.loc,
-                ),
-                Default::default(),
-            )
+            desugared_stmts.push(ast::L {
+                loc: loc.clone(),
+                node: ast::Stmt::Expr(ast::L {
+                    loc: loc.clone(),
+                    node: ast::Expr::Call(ast::CallExpr {
+                        fun: Box::new(ast::L {
+                            node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                ty: SmolStr::new_static("ToStr"),
+                                ty_user_ty_args: vec![],
+                                member: SmolStr::new_static("toStr"),
+                                user_ty_args: vec![],
+                                ty_args: vec![str_buf_ty, tc_state.exceptions.clone()],
+                            }),
+                            loc: expr.loc.clone(),
+                        }),
+                        args: vec![ast::CallArg {
+                            name: None,
+                            expr: ast::L {
+                                node: ast::Expr::Var(ast::VarExpr {
+                                    id: buf_id.clone(),
+                                    user_ty_args: vec![],
+                                    ty_args: vec![],
+                                }),
+                                loc: expr.loc.clone(),
+                            },
+                        }],
+                    }),
+                }),
+            });
+
+            expr.node = ast::Expr::Do(desugared_stmts);
+
+            ret
         }
 
         ast::Expr::Char(_) => (
