@@ -369,8 +369,8 @@ pub enum Expr {
     /// Local variable.
     LocalVar(LocalIdx),
 
-    /// Top-level function reference.
-    TopVar(FunIdx),
+    /// A function reference.
+    Fun(FunIdx),
 
     /// Constructor closure.
     ///
@@ -386,9 +386,6 @@ pub enum Expr {
 
     /// Field selection: `<expr>.<id>`.
     FieldSel(FieldSelExpr),
-
-    /// Associated function selection: `<UpperId>.<id>`.
-    AssocFnSel(FunIdx),
 
     Call(CallExpr),
 
@@ -1723,7 +1720,7 @@ fn lower_expr(
             let fun_decl: &mono::FunDecl = mono_pgm.funs.get(id).unwrap().get(ty_args).unwrap();
             let fun_ty = fun_decl.sig.ty();
             (
-                Expr::TopVar(fun_idx),
+                Expr::Fun(fun_idx),
                 Default::default(),
                 mono::Type::Fn(fun_ty),
             )
@@ -1921,7 +1918,7 @@ fn lower_expr(
             let fun_ty = fun_decl.sig.ty();
 
             (
-                Expr::AssocFnSel(fun_idx),
+                Expr::Fun(fun_idx),
                 Default::default(),
                 mono::Type::Fn(fun_ty),
             )

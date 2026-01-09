@@ -238,7 +238,7 @@ impl Expr {
         match self {
             Expr::LocalVar(idx) => write!(buffer, "local{}", idx.0).unwrap(),
 
-            Expr::TopVar(idx) => write!(buffer, "fun{}", idx.0).unwrap(),
+            Expr::Fun(idx) => write!(buffer, "fun{}", idx.0).unwrap(),
 
             Expr::Con(idx) => write!(buffer, "con{}", idx.0).unwrap(),
 
@@ -263,8 +263,6 @@ impl Expr {
                 buffer.push('.');
                 buffer.push_str(field);
             }
-
-            Expr::AssocFnSel(idx) => write!(buffer, "assocfun{}", idx.0).unwrap(),
 
             Expr::Call(CallExpr { fun, args }) => {
                 fun.node.print(buffer, indent);
