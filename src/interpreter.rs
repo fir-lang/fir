@@ -486,7 +486,7 @@ fn eval<W: Write>(
     match expr {
         Expr::LocalVar(local_idx) => ControlFlow::Val(locals[local_idx.as_usize()]),
 
-        Expr::TopVar(fun_idx) => ControlFlow::Val(heap.allocate_fun(fun_idx.as_u64())),
+        Expr::Fun(fun_idx) => ControlFlow::Val(heap.allocate_fun(fun_idx.as_u64())),
 
         Expr::Con(con_idx) => ControlFlow::Val(heap.allocate_con(con_idx.as_u64())),
 
@@ -515,8 +515,6 @@ fn eval<W: Write>(
             ControlFlow::Val(heap[object + 1 + (*idx as u64)])
         }
 
-        Expr::AssocFnSel(idx) => ControlFlow::Val(heap.allocate_fun(idx.as_u64())),
-
         Expr::Call(CallExpr { fun, args }) => {
             // See if `fun` is a method, associated function, or constructor to avoid closure
             // allocations.
@@ -527,7 +525,7 @@ fn eval<W: Write>(
                     );
                 }
 
-                Expr::TopVar(fun_idx) | Expr::AssocFnSel(fun_idx) => {
+                Expr::Fun(fun_idx) => {
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
                     for arg in args {
                         arg_vals.push(val!(eval(
