@@ -527,7 +527,7 @@ fn eval<W: Write>(
                     );
                 }
 
-                Expr::AssocFnSel(fun_idx) => {
+                Expr::TopVar(fun_idx) | Expr::AssocFnSel(fun_idx) => {
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
                     for arg in args {
                         arg_vals.push(val!(eval(

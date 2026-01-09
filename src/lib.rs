@@ -19,6 +19,7 @@ mod parser_utils;
 mod record_collector;
 mod scanner;
 mod scope_map;
+mod to_c;
 mod token;
 mod type_checker;
 mod utils;
