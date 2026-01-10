@@ -96,6 +96,7 @@ use crate::lowering::*;
 use crate::mono_ast as mono;
 
 use indoc::writedoc;
+use smol_str::SmolStr;
 
 use std::fmt::Write;
 
@@ -139,7 +140,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
     }
 
     for (_i, fun) in pgm.funs.iter().enumerate() {
-        fun_to_c(fun, &mut p);
+        fun_to_c(fun, &record_tags, &mut p);
     }
 
     p.print()
@@ -345,10 +346,10 @@ fn ty_to_c_(ty: &mono::Type, record_tags: &HashMap<RecordType, u32>, out: &mut S
     }
 }
 
-fn fun_to_c(fun: &Fun, p: &mut Printer) {
+fn fun_to_c(fun: &Fun, record_tags: &HashMap<RecordType, u32>, p: &mut Printer) {
     match fun {
         Fun::Builtin(builtin) => {
-            builtin_fun_to_c(builtin, p);
+            builtin_fun_to_c(builtin, record_tags, p);
         }
 
         Fun::Source(_) => {
@@ -357,9 +358,23 @@ fn fun_to_c(fun: &Fun, p: &mut Printer) {
     }
 }
 
-fn builtin_fun_to_c(fun: &BuiltinFunDecl, _p: &mut Printer) {
+fn builtin_fun_to_c(fun: &BuiltinFunDecl, record_tags: &HashMap<RecordType, u32>, p: &mut Printer) {
     match fun {
-        BuiltinFunDecl::Panic => todo!(),
+        BuiltinFunDecl::Panic { a, exn_q } => {
+            // prim panic(msg: Str) a / exn?
+            let a = ty_to_c(a, record_tags);
+            let exn_q = ty_to_c(exn_q, record_tags);
+            writedoc!(
+                p,
+                "
+                [[noreturn]]
+                {a} panic_{a}_{exn_q}(Str msg) {{
+                    // TODO: copy string with nul terminator, write to stderr
+                    abort();
+                }}
+                ",
+            );
+        }
 
         BuiltinFunDecl::PrintStrNoNl => todo!(),
 
@@ -491,12 +506,52 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, _p: &mut Printer) {
 
         BuiltinFunDecl::I32Neg => todo!(),
 
-        BuiltinFunDecl::ThrowUnchecked => todo!(),
+        BuiltinFunDecl::ThrowUnchecked { exn, a, exn_q } => {
+            // prim throwUnchecked(exn: exn) a / exn?
+            let exn = ty_to_c(exn, record_tags);
+            let a = ty_to_c(a, record_tags);
+            let exn_q = ty_to_c(exn_q, record_tags);
+            writedoc!(
+                p,
+                "
+                {a} throwUnchecked_{exn}_{a}_{exn_q}({exn} exn) {{
+                    throw exn;
+                }}
+                ",
+            );
+        }
 
         BuiltinFunDecl::Try {
+            a,
+            exn,
+            exn_q,
             ok_con: _,
             err_con: _,
-        } => todo!(),
+        } => {
+            // prim try(cb: Fn() a / exn) Result[exn, a] / exn?
+            let result = ty_to_c(
+                &mono::Type::Named(mono::NamedType {
+                    name: SmolStr::new_static("Result"),
+                    args: vec![exn.clone(), a.clone()],
+                }),
+                record_tags,
+            );
+            let exn = ty_to_c(exn, record_tags);
+            let a = ty_to_c(a, record_tags);
+            let exn_q = ty_to_c(exn_q, record_tags);
+            writedoc!(
+                p,
+                "
+                {result} try_{a}_{exn}_{exn_q}(Closure cb) {{
+                    try {{
+                        // TODO: call closure, return return value
+                    }} catch ({exn} exn) {{
+                        // TODO: return error
+                    }}
+                }}
+                ",
+            );
+        }
 
         BuiltinFunDecl::ArrayNew { t: _ } => todo!(),
 
