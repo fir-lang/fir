@@ -268,6 +268,9 @@ fn mono_top_fn(
     let return_ty: Option<ast::L<mono::Type>> =
         mono_opt_l_ty(&fun_decl.sig.return_ty, &ty_map, poly_pgm, mono_pgm);
 
+    let exceptions: Option<ast::L<mono::Type>> =
+        mono_opt_l_ty(&fun_decl.sig.exceptions, &ty_map, poly_pgm, mono_pgm);
+
     // Check if we've already monomorphised this function.
     // Add current function to mono_pgm without a body to avoid looping.
     match &fun_decl.parent_ty {
@@ -288,7 +291,7 @@ fn mono_top_fn(
                         sig: mono::FunSig {
                             params,
                             return_ty,
-                            exceptions: None,
+                            exceptions,
                         },
                         body: None,
                     });
@@ -310,7 +313,7 @@ fn mono_top_fn(
                         sig: mono::FunSig {
                             params,
                             return_ty,
-                            exceptions: None,
+                            exceptions,
                         },
                         body: None,
                     });
@@ -966,6 +969,9 @@ fn mono_method(
                 let return_ty: Option<ast::L<mono::Type>> =
                     mono_opt_l_ty(&method.sig.return_ty, &substs, poly_pgm, mono_pgm);
 
+                let exceptions: Option<ast::L<mono::Type>> =
+                    mono_opt_l_ty(&method.sig.exceptions, &substs, poly_pgm, mono_pgm);
+
                 // See if we already monomorphised this method.
                 match mono_pgm
                     .associated
@@ -988,7 +994,7 @@ fn mono_method(
                             sig: mono::FunSig {
                                 params,
                                 return_ty,
-                                exceptions: None,
+                                exceptions,
                             },
                             body: None,
                         });
@@ -1092,6 +1098,9 @@ fn mono_method(
         let return_ty: Option<ast::L<mono::Type>> =
             mono_opt_l_ty(&method.sig.return_ty, &ty_map, poly_pgm, mono_pgm);
 
+        let exceptions: Option<ast::L<mono::Type>> =
+            mono_opt_l_ty(&method.sig.exceptions, &ty_map, poly_pgm, mono_pgm);
+
         // See if we already monomorphised this method.
         match mono_pgm
             .associated
@@ -1114,7 +1123,7 @@ fn mono_method(
                     sig: mono::FunSig {
                         params,
                         return_ty,
-                        exceptions: None,
+                        exceptions,
                     },
                     body: None,
                 });
@@ -1762,7 +1771,7 @@ fn mono_ast_ty(
         ast::Type::Fn(ast::FnType {
             args,
             ret,
-            exceptions: _,
+            exceptions,
         }) => mono::Type::Fn(mono::FnType {
             args: mono::FunArgs::Positional(
                 args.iter()
@@ -1772,7 +1781,9 @@ fn mono_ast_ty(
             ret: ret.as_ref().map(|ret| {
                 ret.map_as_ref(|ret| Box::new(mono_ast_ty(ret, ty_map, poly_pgm, mono_pgm)))
             }),
-            exceptions: None,
+            exceptions: exceptions.as_ref().map(|exn| {
+                exn.map_as_ref(|exn| Box::new(mono_ast_ty(exn, ty_map, poly_pgm, mono_pgm)))
+            }),
         }),
     }
 }
