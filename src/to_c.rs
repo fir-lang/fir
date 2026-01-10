@@ -116,8 +116,10 @@ struct Cg {
     locals: Vec<LocalInfo>,
 }
 
+type RecordType = OrdMap<Id, mono::Type>;
+
 pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
-    let mut record_tags: HashMap<OrdMap<Id, mono::Type>, u32> = Default::default();
+    let mut record_tags: HashMap<RecordType, u32> = Default::default();
 
     let mut p = Printer::default();
 
@@ -125,6 +127,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
 
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
         heap_obj_to_c(heap_obj, tag as u32, &mut record_tags, &mut p);
+        p.nl();
     }
 
     p.print()
@@ -133,12 +136,12 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
 fn heap_obj_to_c(
     heap_obj: &HeapObj,
     tag: u32,
-    record_tags: &mut HashMap<OrdMap<Id, mono::Type>, u32>,
+    record_tags: &mut HashMap<RecordType, u32>,
     p: &mut Printer,
 ) {
     match heap_obj {
         HeapObj::Builtin(builtin) => builtin_con_decl_to_c(builtin, tag, p),
-        HeapObj::Source(source_con) => source_con_decl_to_c(source_con, tag, p),
+        HeapObj::Source(source_con) => source_con_decl_to_c(source_con, tag, record_tags, p),
         HeapObj::Record(record) => record_decl_to_c(record, tag, record_tags, p),
     }
 }
@@ -153,7 +156,9 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
                 typedef struct {{
                     uint32_t tag; // {tag}
                     uint32_t con_tag;
-                }} Con;
+                }} Con_;
+
+                typedef Con_* Con;
                 "
             );
         }
@@ -166,7 +171,9 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
                 typedef struct {{
                     uint32_t tag; // {tag}
                     void* fun;
-                }} Fun;
+                }} Fun_;
+
+                typedef Fun_* Fun;
                 "
             );
         }
@@ -182,7 +189,9 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
                     uint32_t tag; // {tag}
                     void* fun;
                     // captured values here...
-                }} Closure;
+                }} Closure_;
+
+                typedef Closure_* Closure;
                 "
             );
         }
@@ -225,7 +234,12 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
     }
 }
 
-fn source_con_decl_to_c(builtin: &SourceConDecl, tag: u32, p: &mut Printer) {
+fn source_con_decl_to_c(
+    builtin: &SourceConDecl,
+    tag: u32,
+    record_tags: &HashMap<RecordType, u32>,
+    p: &mut Printer,
+) {
     let SourceConDecl {
         name,
         idx,
@@ -238,67 +252,85 @@ fn source_con_decl_to_c(builtin: &SourceConDecl, tag: u32, p: &mut Printer) {
     let mut ty_name = name.to_string();
     for ty_arg in ty_args {
         ty_name.push('_');
-        ty_to_c_(ty_arg, &mut ty_name);
+        ty_to_c_(ty_arg, record_tags, &mut ty_name);
     }
 
     write!(p, "typedef struct {{");
     p.indent();
     p.nl();
     write!(p, "uint32_t tag; // {tag}");
-    p.nl();
     for (i, field) in fields.iter().enumerate() {
-        write!(p, "{} f{};", ty_to_c(&field.mono_ty), i);
         p.nl();
+        write!(p, "{} f{};", ty_to_c(&field.mono_ty, record_tags), i);
     }
     p.dedent();
     p.nl();
-    write!(p, "}} {};", ty_name);
+    write!(p, "}} {ty_name}_;");
+    p.nl();
+    p.nl();
+    write!(p, "typedef struct {ty_name}_* {ty_name};");
     p.nl();
 }
 
-fn ty_to_c(ty: &mono::Type) -> String {
+fn record_decl_to_c(
+    record: &RecordShape,
+    tag: u32,
+    record_tags: &mut HashMap<RecordType, u32>,
+    p: &mut Printer,
+) {
+    let old = record_tags.insert(record.fields.clone(), tag);
+    assert!(old.is_none());
+
+    write!(p, "typedef struct {{");
+    p.indent();
+    p.nl();
+    write!(p, "uint32_t tag; // {tag}");
+    for (i, field) in record.fields.values().enumerate() {
+        p.nl();
+        write!(p, "{} f{};", ty_to_c(field, record_tags), i);
+    }
+    p.dedent();
+    p.nl();
+    write!(p, "}} Record{tag}_;");
+    p.nl();
+    p.nl();
+    write!(p, "typedef Record{tag}_* Record{tag};");
+    p.nl();
+}
+
+fn ty_to_c(ty: &mono::Type, record_tags: &HashMap<RecordType, u32>) -> String {
     let mut out = String::new();
-    ty_to_c_(ty, &mut out);
+    ty_to_c_(ty, record_tags, &mut out);
     out
 }
 
-fn ty_to_c_(ty: &mono::Type, out: &mut String) {
+fn ty_to_c_(ty: &mono::Type, record_tags: &HashMap<RecordType, u32>, out: &mut String) {
     match ty {
         mono::Type::Named(mono::NamedType { name, args }) => {
             out.push_str(name);
             for arg in args {
                 out.push('_');
-                ty_to_c_(arg, out);
+                ty_to_c_(arg, record_tags, out);
             }
         }
 
         mono::Type::Record { fields } => {
-            out.push_str("TODO_1");
+            let tag = record_tags.get(fields).unwrap();
+            write!(out, "Record{}", tag);
         }
 
         mono::Type::Variant { alts } => {
             out.push_str("TODO_2");
         }
 
-        mono::Type::Fn(fn_type) => {
-            out.push_str("TODO_3");
+        mono::Type::Fn(_) => {
+            out.push_str("Closure");
         }
 
         mono::Type::Never => {
-            out.push_str("TODO_4");
+            panic!("Never type")
         }
     }
-}
-
-fn record_decl_to_c(
-    record: &RecordShape,
-    tag: u32,
-    record_tags: &mut HashMap<OrdMap<Id, mono::Type>, u32>,
-    p: &mut Printer,
-) {
-    let old = record_tags.insert(record.fields.clone(), tag);
-    assert!(old.is_none());
-    // TODO
 }
 
 /// Compile the Fir expression to a C expression.
