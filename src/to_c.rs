@@ -105,6 +105,7 @@ macro_rules! write {
     };
 }
 
+#[allow(unused)]
 macro_rules! writeln {
     ($($arg:tt)*) => {
         ::core::writeln!($($arg)*).unwrap()
@@ -123,11 +124,22 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
 
     let mut p = Printer::default();
 
-    writeln!(p, "#include <stdint.h>");
+    writedoc!(
+        p,
+        "
+        #include <stdint.h>
+        #include <stdio.h>
+        #include <stdlib.h>
+        "
+    );
 
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
         heap_obj_to_c(heap_obj, tag as u32, &mut record_tags, &mut p);
         p.nl();
+    }
+
+    for (_i, fun) in pgm.funs.iter().enumerate() {
+        fun_to_c(fun, &mut p);
     }
 
     p.print()
@@ -319,7 +331,7 @@ fn ty_to_c_(ty: &mono::Type, record_tags: &HashMap<RecordType, u32>, out: &mut S
             write!(out, "Record{}", tag);
         }
 
-        mono::Type::Variant { alts } => {
+        mono::Type::Variant { alts: _ } => {
             out.push_str("TODO_2");
         }
 
@@ -330,6 +342,177 @@ fn ty_to_c_(ty: &mono::Type, record_tags: &HashMap<RecordType, u32>, out: &mut S
         mono::Type::Never => {
             panic!("Never type")
         }
+    }
+}
+
+fn fun_to_c(fun: &Fun, p: &mut Printer) {
+    match fun {
+        Fun::Builtin(builtin) => {
+            builtin_fun_to_c(builtin, p);
+        }
+
+        Fun::Source(_) => {
+            // TODO
+        }
+    }
+}
+
+fn builtin_fun_to_c(fun: &BuiltinFunDecl, _p: &mut Printer) {
+    match fun {
+        BuiltinFunDecl::Panic => todo!(),
+
+        BuiltinFunDecl::PrintStrNoNl => todo!(),
+
+        BuiltinFunDecl::ShrI8 => todo!(),
+
+        BuiltinFunDecl::ShrU8 => todo!(),
+
+        BuiltinFunDecl::ShrI32 => todo!(),
+
+        BuiltinFunDecl::ShrU32 => todo!(),
+
+        BuiltinFunDecl::BitAndI8 => todo!(),
+
+        BuiltinFunDecl::BitAndU8 => todo!(),
+
+        BuiltinFunDecl::BitAndI32 => todo!(),
+
+        BuiltinFunDecl::BitAndU32 => todo!(),
+
+        BuiltinFunDecl::BitOrI8 => todo!(),
+
+        BuiltinFunDecl::BitOrU8 => todo!(),
+
+        BuiltinFunDecl::BitOrI32 => todo!(),
+
+        BuiltinFunDecl::BitOrU32 => todo!(),
+
+        BuiltinFunDecl::BitXorU32 => todo!(),
+
+        BuiltinFunDecl::ToStrI8 => todo!(),
+
+        BuiltinFunDecl::ToStrU8 => todo!(),
+
+        BuiltinFunDecl::ToStrI32 => todo!(),
+
+        BuiltinFunDecl::ToStrU32 => todo!(),
+
+        BuiltinFunDecl::ToStrU64 => todo!(),
+
+        BuiltinFunDecl::ToStrI64 => todo!(),
+
+        BuiltinFunDecl::U8AsI8 => todo!(),
+
+        BuiltinFunDecl::U8AsU32 => todo!(),
+
+        BuiltinFunDecl::U32AsU8 => todo!(),
+
+        BuiltinFunDecl::U32AsI32 => todo!(),
+
+        BuiltinFunDecl::U32AsU64 => todo!(),
+
+        BuiltinFunDecl::I8Shl => todo!(),
+
+        BuiltinFunDecl::U8Shl => todo!(),
+
+        BuiltinFunDecl::I32Shl => todo!(),
+
+        BuiltinFunDecl::U32Shl => todo!(),
+
+        BuiltinFunDecl::I8Cmp => todo!(),
+
+        BuiltinFunDecl::U8Cmp => todo!(),
+
+        BuiltinFunDecl::I32Cmp => todo!(),
+
+        BuiltinFunDecl::U32Cmp => todo!(),
+
+        BuiltinFunDecl::U64Cmp => todo!(),
+
+        BuiltinFunDecl::I8Add => todo!(),
+
+        BuiltinFunDecl::U8Add => todo!(),
+
+        BuiltinFunDecl::I32Add => todo!(),
+
+        BuiltinFunDecl::U32Add => todo!(),
+
+        BuiltinFunDecl::U64Add => todo!(),
+
+        BuiltinFunDecl::I8Sub => todo!(),
+
+        BuiltinFunDecl::U8Sub => todo!(),
+
+        BuiltinFunDecl::I32Sub => todo!(),
+
+        BuiltinFunDecl::U32Sub => todo!(),
+
+        BuiltinFunDecl::I8Mul => todo!(),
+
+        BuiltinFunDecl::U8Mul => todo!(),
+
+        BuiltinFunDecl::I32Mul => todo!(),
+
+        BuiltinFunDecl::U32Mul => todo!(),
+
+        BuiltinFunDecl::U64Mul => todo!(),
+
+        BuiltinFunDecl::I8Div => todo!(),
+
+        BuiltinFunDecl::U8Div => todo!(),
+
+        BuiltinFunDecl::I32Div => todo!(),
+
+        BuiltinFunDecl::U32Div => todo!(),
+
+        BuiltinFunDecl::I8Eq => todo!(),
+
+        BuiltinFunDecl::U8Eq => todo!(),
+
+        BuiltinFunDecl::I32Eq => todo!(),
+
+        BuiltinFunDecl::U32Eq => todo!(),
+
+        BuiltinFunDecl::U32Mod => todo!(),
+
+        BuiltinFunDecl::I8Rem => todo!(),
+
+        BuiltinFunDecl::U8Rem => todo!(),
+
+        BuiltinFunDecl::I32Rem => todo!(),
+
+        BuiltinFunDecl::U32Rem => todo!(),
+
+        BuiltinFunDecl::I32AsU32 => todo!(),
+
+        BuiltinFunDecl::I32Abs => todo!(),
+
+        BuiltinFunDecl::I8Neg => todo!(),
+
+        BuiltinFunDecl::I32Neg => todo!(),
+
+        BuiltinFunDecl::ThrowUnchecked => todo!(),
+
+        BuiltinFunDecl::Try {
+            ok_con: _,
+            err_con: _,
+        } => todo!(),
+
+        BuiltinFunDecl::ArrayNew { t: _ } => todo!(),
+
+        BuiltinFunDecl::ArrayLen => todo!(),
+
+        BuiltinFunDecl::ArrayGet { t: _ } => todo!(),
+
+        BuiltinFunDecl::ArraySet { t: _ } => todo!(),
+
+        BuiltinFunDecl::ArraySlice { t: _ } => todo!(),
+
+        BuiltinFunDecl::ArrayCopyWithin { t: _ } => todo!(),
+
+        BuiltinFunDecl::ReadFileUtf8 => todo!(),
+
+        BuiltinFunDecl::GetArgs => todo!(),
     }
 }
 
