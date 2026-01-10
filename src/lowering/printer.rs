@@ -10,11 +10,11 @@ pub fn print_pgm(pgm: &LoweredPgm) {
 }
 
 impl LoweredPgm {
-    pub fn print(&self, buffer: &mut String) {
+    pub fn print(&self, buf: &mut String) {
         for (heap_obj_idx, heap_obj) in self.heap_objs.iter().enumerate() {
-            write!(buffer, "heap_obj{heap_obj_idx}: ").unwrap();
+            write!(buf, "heap_obj{heap_obj_idx}: ").unwrap();
             match heap_obj {
-                HeapObj::Builtin(builtin) => write!(buffer, "{builtin:?}").unwrap(),
+                HeapObj::Builtin(builtin) => write!(buf, "{builtin:?}").unwrap(),
 
                 HeapObj::Source(SourceConDecl {
                     name,
@@ -23,43 +23,43 @@ impl LoweredPgm {
                     fields,
                 }) => {
                     assert_eq!(idx.0 as usize, heap_obj_idx);
-                    buffer.push_str(name.as_str());
-                    print_ty_args(ty_args, buffer);
-                    buffer.push('(');
+                    buf.push_str(name.as_str());
+                    print_ty_args(ty_args, buf);
+                    buf.push('(');
                     match fields {
                         ConFields::Named(items) => {
                             for (i, (field_name, field_ty)) in items.iter().enumerate() {
                                 if i != 0 {
-                                    buffer.push_str(", ");
+                                    buf.push_str(", ");
                                 }
-                                buffer.push_str(field_name.as_str());
-                                buffer.push_str(": ");
-                                field_ty.print(buffer);
+                                buf.push_str(field_name.as_str());
+                                buf.push_str(": ");
+                                field_ty.print(buf);
                             }
                         }
                         ConFields::Unnamed(items) => {
                             for (i, field_ty) in items.iter().enumerate() {
                                 if i != 0 {
-                                    buffer.push_str(", ");
+                                    buf.push_str(", ");
                                 }
-                                field_ty.print(buffer);
+                                field_ty.print(buf);
                             }
                         }
                     }
-                    buffer.push(')');
+                    buf.push(')');
                 }
 
-                HeapObj::Record(record) => write!(buffer, "{record:?}").unwrap(),
+                HeapObj::Record(record) => write!(buf, "{record:?}").unwrap(),
             }
-            buffer.push('\n');
+            buf.push('\n');
         }
 
-        buffer.push('\n');
+        buf.push('\n');
 
         for (fun_idx, fun) in self.funs.iter().enumerate() {
-            write!(buffer, "fun{fun_idx}: ").unwrap();
+            write!(buf, "fun{fun_idx}: ").unwrap();
             match fun {
-                Fun::Builtin(builtin) => write!(buffer, "{builtin:?}").unwrap(),
+                Fun::Builtin(builtin) => write!(buf, "{builtin:?}").unwrap(),
 
                 Fun::Source(SourceFunDecl {
                     parent_ty,
@@ -74,47 +74,47 @@ impl LoweredPgm {
                 }) => {
                     assert_eq!(idx.0 as usize, fun_idx);
                     if let Some(parent_ty) = parent_ty {
-                        write!(buffer, "{}.", parent_ty.node).unwrap();
+                        write!(buf, "{}.", parent_ty.node).unwrap();
                     }
-                    buffer.push_str(name.node.as_str());
-                    print_ty_args(ty_args, buffer);
-                    buffer.push('\n');
+                    buf.push_str(name.node.as_str());
+                    print_ty_args(ty_args, buf);
+                    buf.push('\n');
 
-                    buffer.push_str("  locals: ");
+                    buf.push_str("  locals: ");
                     for (i, local) in locals.iter().enumerate() {
                         if i != 0 {
-                            buffer.push_str(", ");
+                            buf.push_str(", ");
                         }
-                        write!(buffer, "{}: {}: ", i, local.name).unwrap();
-                        local.ty.print(buffer);
+                        write!(buf, "{}: {}: ", i, local.name).unwrap();
+                        local.ty.print(buf);
                     }
-                    buffer.push('\n');
+                    buf.push('\n');
 
-                    buffer.push_str("  params: ");
+                    buf.push_str("  params: ");
                     for (i, arg) in params.iter().enumerate() {
                         if i != 0 {
-                            buffer.push_str(", ");
+                            buf.push_str(", ");
                         }
-                        arg.print(buffer);
+                        arg.print(buf);
                     }
-                    buffer.push('\n');
+                    buf.push('\n');
 
-                    buffer.push_str("  return_ty: ");
-                    return_ty.print(buffer);
-                    buffer.push('\n');
+                    buf.push_str("  return_ty: ");
+                    return_ty.print(buf);
+                    buf.push('\n');
 
-                    buffer.push_str("  exceptions: ");
-                    exceptions.print(buffer);
-                    buffer.push('\n');
-                    buffer.push('\n');
+                    buf.push_str("  exceptions: ");
+                    exceptions.print(buf);
+                    buf.push('\n');
+                    buf.push('\n');
 
                     for stmt in body {
-                        buffer.push_str(&INDENTS[0..2]);
-                        stmt.node.print(buffer, 2);
+                        buf.push_str(&INDENTS[0..2]);
+                        stmt.node.print(buf, 2);
                     }
                 }
             }
-            buffer.push('\n');
+            buf.push('\n');
         }
 
         for (
@@ -130,20 +130,20 @@ impl LoweredPgm {
         ) in self.closures.iter().enumerate()
         {
             assert_eq!(idx.0 as usize, closure_idx);
-            writeln!(buffer, "closure{closure_idx}:").unwrap();
+            writeln!(buf, "closure{closure_idx}:").unwrap();
 
-            buffer.push_str("  locals: ");
+            buf.push_str("  locals: ");
             for (i, LocalInfo { name, ty }) in locals.iter().enumerate() {
                 if i != 0 {
-                    buffer.push_str(", ");
+                    buf.push_str(", ");
                 }
-                buffer.push_str(name.as_str());
-                buffer.push_str(": ");
-                ty.print(buffer);
+                buf.push_str(name.as_str());
+                buf.push_str(": ");
+                ty.print(buf);
             }
-            buffer.push('\n');
+            buf.push('\n');
 
-            buffer.push_str("  fvs: ");
+            buf.push_str("  fvs: ");
             for (
                 i,
                 ClosureFv {
@@ -154,104 +154,104 @@ impl LoweredPgm {
             ) in fvs.iter().enumerate()
             {
                 if i != 0 {
-                    buffer.push_str(", ");
+                    buf.push_str(", ");
                 }
-                write!(buffer, "{}(alloc={}, use={})", id, alloc_idx.0, use_idx.0).unwrap();
+                write!(buf, "{}(alloc={}, use={})", id, alloc_idx.0, use_idx.0).unwrap();
             }
-            buffer.push('\n');
+            buf.push('\n');
 
-            buffer.push_str("  params: ");
+            buf.push_str("  params: ");
             for (i, arg) in params.iter().enumerate() {
                 if i != 0 {
-                    buffer.push_str(", ");
+                    buf.push_str(", ");
                 }
-                arg.print(buffer);
+                arg.print(buf);
             }
-            buffer.push('\n');
-            buffer.push('\n');
+            buf.push('\n');
+            buf.push('\n');
 
             for stmt in body {
-                buffer.push_str(&INDENTS[0..2]);
-                stmt.node.print(buffer, 2);
+                buf.push_str(&INDENTS[0..2]);
+                stmt.node.print(buf, 2);
             }
 
-            buffer.push('\n');
+            buf.push('\n');
         }
     }
 }
 
 impl Ty {
-    pub fn print(&self, buffer: &mut String) {
-        self.mono_ty.print(buffer);
-        write!(buffer, "#{:?}", self.repr).unwrap();
+    pub fn print(&self, buf: &mut String) {
+        self.mono_ty.print(buf);
+        write!(buf, "#{:?}", self.repr).unwrap();
     }
 }
 
 impl Stmt {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
+    pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
             Stmt::Let(LetStmt { lhs, rhs }) => {
-                buffer.push_str("let ");
-                lhs.node.print(buffer);
-                buffer.push_str(" = ");
-                rhs.node.print(buffer, indent);
+                buf.push_str("let ");
+                lhs.node.print(buf);
+                buf.push_str(" = ");
+                rhs.node.print(buf, indent);
             }
 
             Stmt::Assign(AssignStmt { lhs, rhs }) => {
-                lhs.node.print(buffer, indent);
-                buffer.push_str(" = ");
-                rhs.node.print(buffer, indent);
+                lhs.node.print(buf, indent);
+                buf.push_str(" = ");
+                rhs.node.print(buf, indent);
             }
 
-            Stmt::Expr(expr) => expr.node.print(buffer, indent),
+            Stmt::Expr(expr) => expr.node.print(buf, indent),
 
             Stmt::While(WhileStmt { label, cond, body }) => {
                 if let Some(label) = label {
-                    write!(buffer, "{label}: ").unwrap();
+                    write!(buf, "{label}: ").unwrap();
                 }
-                buffer.push_str("while ");
-                cond.node.print(buffer, indent);
-                buffer.push_str(":\n");
+                buf.push_str("while ");
+                cond.node.print(buf, indent);
+                buf.push_str(":\n");
                 for stmt in body {
-                    buffer.push_str(&INDENTS[0..(indent + 2) as usize]);
-                    stmt.node.print(buffer, indent + 2);
+                    buf.push_str(&INDENTS[0..(indent + 2) as usize]);
+                    stmt.node.print(buf, indent + 2);
                 }
             }
 
             Stmt::Break { label, level: _ } => match label {
-                Some(label) => write!(buffer, "break {label}").unwrap(),
-                None => buffer.push_str("break"),
+                Some(label) => write!(buf, "break {label}").unwrap(),
+                None => buf.push_str("break"),
             },
 
             Stmt::Continue { label, level: _ } => match label {
-                Some(label) => write!(buffer, "continue {label}").unwrap(),
-                None => buffer.push_str("continue"),
+                Some(label) => write!(buf, "continue {label}").unwrap(),
+                None => buf.push_str("continue"),
             },
         }
 
-        buffer.push('\n');
+        buf.push('\n');
     }
 }
 
 impl Expr {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
+    pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
-            Expr::LocalVar(idx) => write!(buffer, "local{}", idx.0).unwrap(),
+            Expr::LocalVar(idx) => write!(buf, "local{}", idx.0).unwrap(),
 
-            Expr::Fun(idx) => write!(buffer, "fun{}", idx.0).unwrap(),
+            Expr::Fun(idx) => write!(buf, "fun{}", idx.0).unwrap(),
 
-            Expr::Con(idx) => write!(buffer, "con{}", idx.0).unwrap(),
+            Expr::Con(idx) => write!(buf, "con{}", idx.0).unwrap(),
 
             Expr::ConAlloc(idx, args) => {
-                write!(buffer, "con{}", idx.0).unwrap();
-                buffer.push('(');
+                write!(buf, "con{}", idx.0).unwrap();
+                buf.push('(');
                 for (i, expr) in args.iter().enumerate() {
                     if i != 0 {
-                        buffer.push_str(", ");
+                        buf.push_str(", ");
                     }
-                    expr.node.print(buffer, indent);
+                    expr.node.print(buf, indent);
                 }
-                buffer.push(')');
+                buf.push(')');
             }
 
             Expr::FieldSel(FieldSelExpr {
@@ -259,66 +259,66 @@ impl Expr {
                 field,
                 idx: _,
             }) => {
-                object.node.print(buffer, indent);
-                buffer.push('.');
-                buffer.push_str(field);
+                object.node.print(buf, indent);
+                buf.push('.');
+                buf.push_str(field);
             }
 
             Expr::Call(CallExpr { fun, args }) => {
-                fun.node.print(buffer, indent);
-                buffer.push('(');
+                fun.node.print(buf, indent);
+                buf.push('(');
                 for (i, expr) in args.iter().enumerate() {
                     if i != 0 {
-                        buffer.push_str(", ");
+                        buf.push_str(", ");
                     }
-                    expr.node.print(buffer, indent);
+                    expr.node.print(buf, indent);
                 }
-                buffer.push(')');
+                buf.push(')');
             }
 
-            Expr::Int(int) => write!(buffer, "{:#x}", int).unwrap(),
+            Expr::Int(int) => write!(buf, "{:#x}", int).unwrap(),
 
             Expr::Str(str) => {
-                buffer.push('"');
-                buffer.push_str(str); // TODO: escaping
-                buffer.push('"');
+                buf.push('"');
+                crate::ast::printer::escape_str_lit(str, buf);
+                buf.push('"');
             }
 
             Expr::BoolAnd(e1, e2) => {
-                e1.node.print(buffer, indent);
-                buffer.push_str(" && ");
-                e2.node.print(buffer, indent);
+                e1.node.print(buf, indent);
+                buf.push_str(" && ");
+                e2.node.print(buf, indent);
             }
 
             Expr::BoolOr(e1, e2) => {
-                e1.node.print(buffer, indent);
-                buffer.push_str(" || ");
-                e2.node.print(buffer, indent);
+                e1.node.print(buf, indent);
+                buf.push_str(" || ");
+                e2.node.print(buf, indent);
             }
 
             Expr::Return(expr) => {
-                buffer.push_str("return ");
-                expr.node.print(buffer, indent);
+                buf.push_str("return ");
+                expr.node.print(buf, indent);
             }
 
             Expr::Match(MatchExpr { scrutinee, alts }) => {
-                buffer.push_str("match ");
-                scrutinee.node.print(buffer, indent);
-                buffer.push_str(":\n");
+                buf.push_str("match ");
+                scrutinee.node.print(buf, indent);
+                buf.push_str(":\n");
                 for (i, Alt { pat, guard, rhs }) in alts.iter().enumerate() {
                     if i != 0 {
-                        buffer.push('\n');
+                        buf.push('\n');
                     }
-                    buffer.push_str(&INDENTS[0..indent as usize + 2]);
-                    pat.node.print(buffer);
+                    buf.push_str(&INDENTS[0..indent as usize + 2]);
+                    pat.node.print(buf);
                     if let Some(guard) = guard {
-                        buffer.push_str(" if ");
-                        guard.node.print(buffer, indent + 8);
+                        buf.push_str(" if ");
+                        guard.node.print(buf, indent + 8);
                     }
-                    buffer.push_str(":\n");
+                    buf.push_str(":\n");
                     for stmt in rhs {
-                        buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                        stmt.node.print(buffer, indent + 4);
+                        buf.push_str(&INDENTS[0..indent as usize + 4]);
+                        stmt.node.print(buf, indent + 4);
                     }
                 }
             }
@@ -327,121 +327,121 @@ impl Expr {
                 branches,
                 else_branch,
             }) => {
-                buffer.push_str("if ");
-                branches[0].0.node.print(buffer, indent);
-                buffer.push_str(":\n");
+                buf.push_str("if ");
+                branches[0].0.node.print(buf, indent);
+                buf.push_str(":\n");
                 for stmt in &branches[0].1 {
-                    buffer.push_str(&INDENTS[0..indent as usize + 2]);
-                    stmt.node.print(buffer, indent + 2);
+                    buf.push_str(&INDENTS[0..indent as usize + 2]);
+                    stmt.node.print(buf, indent + 2);
                 }
                 for branch in &branches[1..] {
-                    buffer.push('\n');
-                    buffer.push_str(&INDENTS[0..indent as usize]);
-                    buffer.push_str("elif ");
-                    branch.0.node.print(buffer, indent);
-                    buffer.push_str(":\n");
+                    buf.push('\n');
+                    buf.push_str(&INDENTS[0..indent as usize]);
+                    buf.push_str("elif ");
+                    branch.0.node.print(buf, indent);
+                    buf.push_str(":\n");
                     for stmt in &branch.1 {
-                        buffer.push_str(&INDENTS[0..indent as usize + 2]);
-                        stmt.node.print(buffer, indent + 2);
+                        buf.push_str(&INDENTS[0..indent as usize + 2]);
+                        stmt.node.print(buf, indent + 2);
                     }
                 }
                 if let Some(else_branch) = else_branch {
-                    buffer.push('\n');
-                    buffer.push_str(&INDENTS[0..indent as usize]);
-                    buffer.push_str("else:\n");
+                    buf.push('\n');
+                    buf.push_str(&INDENTS[0..indent as usize]);
+                    buf.push_str("else:\n");
                     for stmt in else_branch {
-                        buffer.push_str(&INDENTS[0..indent as usize + 2]);
-                        stmt.node.print(buffer, indent + 2);
+                        buf.push_str(&INDENTS[0..indent as usize + 2]);
+                        stmt.node.print(buf, indent + 2);
                     }
                 }
             }
 
-            Expr::ClosureAlloc(idx) => write!(buffer, "closure{}", idx.0).unwrap(),
+            Expr::ClosureAlloc(idx) => write!(buf, "closure{}", idx.0).unwrap(),
 
             Expr::Is(IsExpr { expr, pat }) => {
-                buffer.push('(');
-                expr.node.print(buffer, indent);
-                buffer.push_str(" is ");
-                pat.node.print(buffer);
-                buffer.push(')');
+                buf.push('(');
+                expr.node.print(buf, indent);
+                buf.push_str(" is ");
+                pat.node.print(buf);
+                buf.push(')');
             }
 
             Expr::Do(body) => {
-                buffer.push_str("do:\n");
+                buf.push_str("do:\n");
                 for stmt in body.iter() {
-                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    stmt.node.print(buffer, indent + 4);
-                    buffer.push('\n');
+                    buf.push_str(&INDENTS[0..indent as usize + 4]);
+                    stmt.node.print(buf, indent + 4);
+                    buf.push('\n');
                 }
             }
 
             Expr::Variant(expr) => {
-                buffer.push('~');
-                expr.node.print(buffer, indent);
+                buf.push('~');
+                expr.node.print(buf, indent);
             }
         }
     }
 }
 
 impl Pat {
-    pub fn print(&self, buffer: &mut String) {
+    pub fn print(&self, buf: &mut String) {
         match self {
-            Pat::Var(idx) => write!(buffer, "local{}", idx.0).unwrap(),
+            Pat::Var(idx) => write!(buf, "local{}", idx.0).unwrap(),
 
             Pat::Con(ConPat { con, fields }) => {
-                write!(buffer, "con{}(", con.0).unwrap();
+                write!(buf, "con{}(", con.0).unwrap();
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
-                        buffer.push_str(", ");
+                        buf.push_str(", ");
                     }
-                    field.node.print(buffer);
+                    field.node.print(buf);
                 }
-                buffer.push(')');
+                buf.push(')');
             }
 
             Pat::Ignore => {
-                buffer.push('_');
+                buf.push('_');
             }
 
             Pat::Str(str) => {
-                buffer.push('"');
-                buffer.push_str(str); // TOOD: escaping
-                buffer.push('"');
+                buf.push('"');
+                crate::ast::printer::escape_str_lit(str, buf);
+                buf.push('"');
             }
 
             Pat::Char(char) => {
-                buffer.push('\'');
-                buffer.push(*char); // TODO: escaping
-                buffer.push('\'');
+                buf.push('\'');
+                crate::ast::printer::escape_char_lit(*char, buf);
+                buf.push('\'');
             }
 
             Pat::Or(p1, p2) => {
-                p1.node.print(buffer);
-                buffer.push_str(" | ");
-                p2.node.print(buffer);
+                p1.node.print(buf);
+                buf.push_str(" | ");
+                p2.node.print(buf);
             }
 
             Pat::Variant(p) => {
-                buffer.push('~');
-                p.node.print(buffer);
+                buf.push('~');
+                p.node.print(buf);
             }
         }
     }
 }
 
-fn print_ty_args(ty_args: &[mono::Type], buffer: &mut String) {
+fn print_ty_args(ty_args: &[mono::Type], buf: &mut String) {
     if ty_args.is_empty() {
         return;
     }
 
-    buffer.push('[');
+    buf.push('[');
     for (i, ty_arg) in ty_args.iter().enumerate() {
         if i != 0 {
-            buffer.push_str(", ");
+            buf.push_str(", ");
         }
-        ty_arg.print(buffer);
+        ty_arg.print(buf);
     }
-    buffer.push(']');
+    buf.push(']');
 }
 
 const INDENTS: &str = "                                                  ";

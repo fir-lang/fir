@@ -9,25 +9,25 @@ pub fn print_pgm(pgm: &MonoPgm) {
 }
 
 impl MonoPgm {
-    pub fn print(&self, buffer: &mut String) {
+    pub fn print(&self, buf: &mut String) {
         for ty_arg_map in self.ty.values() {
             for (ty_args, ty_decl) in ty_arg_map.iter() {
-                buffer.push_str("type ");
-                buffer.push_str(&ty_decl.name);
-                print_ty_args(ty_args, buffer);
+                buf.push_str("type ");
+                buf.push_str(&ty_decl.name);
+                print_ty_args(ty_args, buf);
                 if let Some(rhs) = &ty_decl.rhs {
-                    rhs.print(buffer, 4);
+                    rhs.print(buf, 4);
                 }
-                buffer.push('\n');
-                buffer.push('\n');
+                buf.push('\n');
+                buf.push('\n');
             }
         }
 
         for fun_insts in self.funs.values() {
             for (ty_args, fun) in fun_insts.iter() {
-                fun.print(buffer, ty_args, 0);
-                buffer.push('\n');
-                buffer.push('\n');
+                fun.print(buf, ty_args, 0);
+                buf.push('\n');
+                buf.push('\n');
             }
         }
 
@@ -37,61 +37,60 @@ impl MonoPgm {
             .flat_map(|method_map| method_map.values())
         {
             for (ty_args, fun) in ty_arg_map.iter() {
-                fun.print(buffer, ty_args, 0);
-                buffer.push('\n');
-                buffer.push('\n');
+                fun.print(buf, ty_args, 0);
+                buf.push('\n');
+                buf.push('\n');
             }
         }
     }
 }
 
 impl TypeDecl {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
-        buffer.push_str("type ");
-        buffer.push_str(&self.name);
+    pub fn print(&self, buf: &mut String, indent: u32) {
+        buf.push_str("type ");
+        buf.push_str(&self.name);
 
         if let Some(rhs) = &self.rhs {
-            rhs.print(buffer, indent + 4);
+            rhs.print(buf, indent + 4);
         }
     }
 }
 
 impl TypeDeclRhs {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
+    pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
             TypeDeclRhs::Sum(cons) => {
-                buffer.push_str(":\n");
+                buf.push_str(":\n");
                 for (i, con) in cons.iter().enumerate() {
                     if i != 0 {
-                        buffer.push('\n');
+                        buf.push('\n');
                     }
-                    buffer.push_str(&INDENTS[0..indent as usize]);
-                    buffer.push_str(&con.name);
+                    buf.push_str(&INDENTS[..indent as usize]);
+                    buf.push_str(&con.name);
                     match &con.fields {
                         ConFields::Empty => {}
 
                         ConFields::Named(fields) => {
-                            buffer.push_str(":\n");
-                            for (i, (field_name, field_ty)) in fields.iter().enumerate() {
-                                if i != 0 {
-                                    buffer.push('\n');
-                                }
-                                buffer.push_str(&INDENTS[0..indent as usize]);
-                                buffer.push_str(field_name);
-                                buffer.push_str(": ");
-                                field_ty.print(buffer);
+                            buf.push_str("(\n");
+                            for (field_name, field_ty) in fields.iter() {
+                                buf.push_str(&INDENTS[..indent as usize + 4]);
+                                buf.push_str(field_name);
+                                buf.push_str(": ");
+                                field_ty.print(buf);
+                                buf.push_str(",\n");
                             }
+                            buf.push_str("    )");
                         }
 
                         ConFields::Unnamed(fields) => {
-                            buffer.push('(');
+                            buf.push('(');
                             for (i, field_ty) in fields.iter().enumerate() {
                                 if i != 0 {
-                                    buffer.push_str(", ");
+                                    buf.push_str(", ");
                                 }
-                                field_ty.print(buffer);
+                                field_ty.print(buf);
                             }
-                            buffer.push(')');
+                            buf.push(')');
                         }
                     }
                 }
@@ -101,27 +100,26 @@ impl TypeDeclRhs {
                 ConFields::Empty => {}
 
                 ConFields::Named(fields) => {
-                    buffer.push_str(":\n");
-                    for (i, (field_name, field_ty)) in fields.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push('\n');
-                        }
-                        buffer.push_str(&INDENTS[0..indent as usize]);
-                        buffer.push_str(field_name);
-                        buffer.push_str(": ");
-                        field_ty.print(buffer);
+                    buf.push_str("(\n");
+                    for (field_name, field_ty) in fields.iter() {
+                        buf.push_str(&INDENTS[..indent as usize]);
+                        buf.push_str(field_name);
+                        buf.push_str(": ");
+                        field_ty.print(buf);
+                        buf.push_str(",\n");
                     }
+                    buf.push(')');
                 }
 
                 ConFields::Unnamed(fields) => {
-                    buffer.push('(');
+                    buf.push('(');
                     for (i, field_ty) in fields.iter().enumerate() {
                         if i != 0 {
-                            buffer.push_str(", ");
+                            buf.push_str(", ");
                         }
-                        field_ty.print(buffer);
+                        field_ty.print(buf);
                     }
-                    buffer.push(')');
+                    buf.push(')');
                 }
             },
         }
@@ -129,51 +127,51 @@ impl TypeDeclRhs {
 }
 
 impl FunDecl {
-    pub fn print(&self, buffer: &mut String, ty_args: &[Type], indent: u32) {
+    pub fn print(&self, buf: &mut String, ty_args: &[Type], indent: u32) {
         self.sig
-            .print(&self.parent_ty, &self.name.node, ty_args, buffer);
+            .print(&self.parent_ty, &self.name.node, ty_args, buf);
         if let Some(body) = &self.body {
-            buffer.push('\n');
+            buf.push_str(":\n");
             for (i, stmt) in body.iter().enumerate() {
                 if i != 0 {
-                    buffer.push('\n');
+                    buf.push('\n');
                 }
-                buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                stmt.node.print(buffer, indent + 4);
+                buf.push_str(&INDENTS[..indent as usize + 4]);
+                stmt.node.print(buf, indent + 4);
             }
         }
     }
 }
 
 impl Type {
-    pub fn print(&self, buffer: &mut String) {
+    pub fn print(&self, buf: &mut String) {
         match self {
             Type::Named(ty) => {
-                ty.print(buffer);
+                ty.print(buf);
             }
 
             Type::Record { fields } => {
-                buffer.push('(');
+                buf.push('(');
                 for (i, (field_name, field_ty)) in fields.iter().enumerate() {
                     if i != 0 {
-                        buffer.push_str(", ");
+                        buf.push_str(", ");
                     }
-                    buffer.push_str(field_name);
-                    buffer.push_str(": ");
-                    field_ty.print(buffer);
+                    buf.push_str(field_name);
+                    buf.push_str(": ");
+                    field_ty.print(buf);
                 }
-                buffer.push(')');
+                buf.push(')');
             }
 
             Type::Variant { alts } => {
-                buffer.push('[');
+                buf.push('[');
                 for (i, ty) in alts.values().enumerate() {
                     if i != 0 {
-                        buffer.push_str(", ");
+                        buf.push_str(", ");
                     }
-                    ty.print(buffer);
+                    ty.print(buf);
                 }
-                buffer.push(']');
+                buf.push(']');
             }
 
             Type::Fn(FnType {
@@ -181,153 +179,143 @@ impl Type {
                 ret,
                 exceptions,
             }) => {
-                buffer.push_str("Fn(");
+                buf.push_str("Fn(");
                 match args {
                     FunArgs::Positional(args) => {
                         for (i, arg) in args.iter().enumerate() {
-                            if i > 0 {
-                                buffer.push_str(", ");
+                            if i != 0 {
+                                buf.push_str(", ");
                             }
-                            arg.print(buffer);
+                            arg.print(buf);
                         }
                     }
                     FunArgs::Named(args) => {
                         for (i, (name, ty)) in args.iter().enumerate() {
-                            if i > 0 {
-                                buffer.push_str(", ");
+                            if i != 0 {
+                                buf.push_str(", ");
                             }
-                            buffer.push_str(name);
-                            buffer.push_str(": ");
-                            ty.print(buffer);
+                            buf.push_str(name);
+                            buf.push_str(": ");
+                            ty.print(buf);
                         }
                     }
                 }
-                buffer.push(')');
+                buf.push(')');
                 if exceptions.is_some() || ret.is_some() {
-                    buffer.push_str(": ");
+                    buf.push_str(": ");
                 }
                 if let Some(exn) = exceptions {
-                    exn.node.print(buffer);
+                    exn.node.print(buf);
                 }
                 if let Some(ret) = ret {
                     if exceptions.is_some() {
-                        buffer.push(' ');
+                        buf.push(' ');
                     }
-                    ret.node.print(buffer);
+                    ret.node.print(buf);
                 }
             }
 
             Type::Never => {
-                buffer.push('!');
+                buf.push('!');
             }
         }
     }
 }
 
 impl NamedType {
-    pub fn print(&self, buffer: &mut String) {
-        buffer.push_str(&self.name);
+    pub fn print(&self, buf: &mut String) {
+        buf.push_str(&self.name);
         if !self.args.is_empty() {
-            buffer.push('[');
+            buf.push('[');
             for (i, arg) in self.args.iter().enumerate() {
                 if i != 0 {
-                    buffer.push_str(", ");
+                    buf.push_str(", ");
                 }
-                arg.print(buffer);
+                arg.print(buf);
             }
-            buffer.push(']');
+            buf.push(']');
         }
     }
 }
 
 impl FunSig {
-    pub fn print(
-        &self,
-        parent_ty: &Option<L<Id>>,
-        name: &Id,
-        ty_args: &[Type],
-        buffer: &mut String,
-    ) {
+    pub fn print(&self, parent_ty: &Option<L<Id>>, name: &Id, ty_args: &[Type], buf: &mut String) {
         if let Some(parent_ty) = parent_ty {
-            buffer.push_str(&parent_ty.node);
-            buffer.push('.');
+            buf.push_str(&parent_ty.node);
+            buf.push('.');
         }
-        buffer.push_str(name);
-        print_ty_args(ty_args, buffer);
-        buffer.push('(');
+        buf.push_str(name);
+        print_ty_args(ty_args, buf);
+        buf.push('(');
         for (i, (param_name, param_ty)) in self.params.iter().enumerate() {
             if i != 0 {
-                buffer.push_str(", ");
+                buf.push_str(", ");
             }
-            buffer.push_str(param_name);
-            buffer.push_str(": ");
-            param_ty.node.print(buffer);
+            buf.push_str(param_name);
+            buf.push_str(": ");
+            param_ty.node.print(buf);
         }
-        buffer.push(')');
-        if self.exceptions.is_some() || self.return_ty.is_some() {
-            buffer.push_str(": ");
+        buf.push(')');
+        if let Some(ret_ty) = &self.return_ty {
+            buf.push(' ');
+            ret_ty.node.print(buf);
         }
         if let Some(exn) = &self.exceptions {
-            exn.node.print(buffer);
-        }
-        if let Some(ret_ty) = &self.return_ty {
-            if self.exceptions.is_some() {
-                buffer.push(' ');
-            }
-            ret_ty.node.print(buffer);
+            buf.push_str(" / ");
+            exn.node.print(buf);
         }
     }
 }
 
 impl Stmt {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
+    pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
             Stmt::Break { label, level: _ } => {
-                buffer.push_str("break");
+                buf.push_str("break");
                 if let Some(label) = label {
-                    buffer.push_str(" \'");
-                    buffer.push_str(label);
+                    buf.push_str(" \'");
+                    buf.push_str(label);
                 }
             }
 
             Stmt::Continue { label, level: _ } => {
-                buffer.push_str("continue");
+                buf.push_str("continue");
                 if let Some(label) = label {
-                    buffer.push_str(" \'");
-                    buffer.push_str(label);
+                    buf.push_str(" \'");
+                    buf.push_str(label);
                 }
             }
 
             Stmt::Let(LetStmt { lhs, rhs }) => {
-                buffer.push_str("let ");
-                lhs.node.print(buffer);
-                buffer.push_str(" = ");
-                rhs.node.print(buffer, 0);
+                buf.push_str("let ");
+                lhs.node.print(buf);
+                buf.push_str(" = ");
+                rhs.node.print(buf, indent);
             }
 
             Stmt::Assign(AssignStmt { lhs, rhs }) => {
-                lhs.node.print(buffer, 0);
-                buffer.push_str(" = ");
-                rhs.node.print(buffer, 0);
+                lhs.node.print(buf, 0);
+                buf.push_str(" = ");
+                rhs.node.print(buf, 0);
             }
 
-            Stmt::Expr(expr) => expr.node.print(buffer, indent),
+            Stmt::Expr(expr) => expr.node.print(buf, indent),
 
             Stmt::While(WhileStmt { label, cond, body }) => {
                 if let Some(label) = label {
-                    buffer.push('\'');
-                    buffer.push_str(label);
-                    buffer.push_str(": ");
+                    buf.push('\'');
+                    buf.push_str(label);
+                    buf.push_str(": ");
                 }
-                buffer.push_str("while ");
-                cond.node.print(buffer, 0);
-                buffer.push_str(":\n");
+                buf.push_str("while ");
+                cond.node.print(buf, 0);
+                buf.push_str(":\n");
                 for (i, stmt) in body.iter().enumerate() {
                     if i != 0 {
-                        buffer.push('\n');
+                        buf.push('\n');
                     }
-                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    stmt.node.print(buffer, indent + 4);
+                    buf.push_str(&INDENTS[..indent as usize + 4]);
+                    stmt.node.print(buf, indent + 4);
                 }
             }
         }
@@ -335,25 +323,25 @@ impl Stmt {
 }
 
 impl Expr {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
+    pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
             Expr::LocalVar(id) => {
-                buffer.push_str(id);
+                buf.push_str(id);
             }
 
             Expr::TopVar(VarExpr { id, ty_args }) => {
-                buffer.push_str(id);
-                print_ty_args(ty_args, buffer);
+                buf.push_str(id);
+                print_ty_args(ty_args, buf);
             }
 
             Expr::FieldSel(FieldSelExpr { object, field }) => {
-                object.node.print(buffer, 0);
-                buffer.push('.');
-                buffer.push_str(field);
+                object.node.print(buf, 0);
+                buf.push('.');
+                buf.push_str(field);
             }
 
             Expr::ConSel(con) => {
-                con.print(buffer);
+                con.print(buf);
             }
 
             Expr::AssocFnSel(AssocFnSelExpr {
@@ -361,36 +349,40 @@ impl Expr {
                 member,
                 ty_args,
             }) => {
-                buffer.push_str(ty);
-                buffer.push('.');
-                buffer.push_str(member);
-                print_ty_args(ty_args, buffer);
+                buf.push_str(ty);
+                buf.push('.');
+                buf.push_str(member);
+                print_ty_args(ty_args, buf);
             }
 
             Expr::Call(CallExpr { fun, args }) => {
                 let parens = !matches!(
                     &fun.node,
-                    Expr::LocalVar(_) | Expr::TopVar(_) | Expr::FieldSel(_) | Expr::ConSel(_)
+                    Expr::LocalVar(_)
+                        | Expr::TopVar(_)
+                        | Expr::FieldSel(_)
+                        | Expr::ConSel(_)
+                        | Expr::AssocFnSel(_)
                 );
                 if parens {
-                    buffer.push('(');
+                    buf.push('(');
                 }
-                fun.node.print(buffer, 0);
+                fun.node.print(buf, indent);
                 if parens {
-                    buffer.push(')');
+                    buf.push(')');
                 }
-                buffer.push('(');
+                buf.push('(');
                 for (i, CallArg { name, expr }) in args.iter().enumerate() {
                     if i != 0 {
-                        buffer.push_str(", ");
+                        buf.push_str(", ");
                     }
                     if let Some(name) = name {
-                        buffer.push_str(name);
-                        buffer.push_str(" = ");
+                        buf.push_str(name);
+                        buf.push_str(" = ");
                     }
-                    expr.node.print(buffer, 0);
+                    expr.node.print(buf, indent);
                 }
-                buffer.push(')');
+                buf.push(')');
             }
 
             Expr::Int(IntExpr {
@@ -398,39 +390,39 @@ impl Expr {
                 kind,
                 parsed: _,
             }) => {
-                buffer.push_str(text);
+                buf.push_str(text);
                 match kind {
-                    Some(IntKind::I64(_)) => buffer.push_str("I64"),
-                    Some(IntKind::U64(_)) => buffer.push_str("U64"),
-                    Some(IntKind::I32(_)) => buffer.push_str("I32"),
-                    Some(IntKind::U32(_)) => buffer.push_str("U32"),
-                    Some(IntKind::I8(_)) => buffer.push_str("I8"),
-                    Some(IntKind::U8(_)) => buffer.push_str("U8"),
+                    Some(IntKind::I64(_)) => buf.push_str("I64"),
+                    Some(IntKind::U64(_)) => buf.push_str("U64"),
+                    Some(IntKind::I32(_)) => buf.push_str("I32"),
+                    Some(IntKind::U32(_)) => buf.push_str("U32"),
+                    Some(IntKind::I8(_)) => buf.push_str("I8"),
+                    Some(IntKind::U8(_)) => buf.push_str("U8"),
                     None => {}
                 }
             }
 
             Expr::Str(str) => {
-                buffer.push('"');
-                buffer.push_str(str); // TODO: escaping
-                buffer.push('"');
+                buf.push('"');
+                crate::ast::printer::escape_str_lit(str, buf);
+                buf.push('"');
             }
 
             Expr::Char(char) => {
-                buffer.push('\'');
-                buffer.push(*char); // TODO: escaping
-                buffer.push('\'');
+                buf.push('\'');
+                crate::ast::printer::escape_char_lit(*char, buf);
+                buf.push('\'');
             }
 
             Expr::BinOp(BinOpExpr { left, right, op }) => {
                 let left_parens = expr_parens(&left.node);
                 let right_parens = expr_parens(&left.node);
                 if left_parens {
-                    buffer.push('(');
+                    buf.push('(');
                 }
-                left.node.print(buffer, 0);
+                left.node.print(buf, 0);
                 if left_parens {
-                    buffer.push(')');
+                    buf.push(')');
                 }
                 let op_str = match op {
                     BinOp::Add => "+",
@@ -450,44 +442,44 @@ impl Expr {
                     BinOp::LeftShift => "<<",
                     BinOp::RightShift => ">>",
                 };
-                buffer.push(' ');
-                buffer.push_str(op_str);
-                buffer.push(' ');
+                buf.push(' ');
+                buf.push_str(op_str);
+                buf.push(' ');
                 if right_parens {
-                    buffer.push('(');
+                    buf.push('(');
                 }
-                right.node.print(buffer, 0);
+                right.node.print(buf, 0);
                 if right_parens {
-                    buffer.push(')');
+                    buf.push(')');
                 }
             }
 
             Expr::Return(expr) => {
-                buffer.push_str("return ");
-                expr.node.print(buffer, 0);
+                buf.push_str("return ");
+                expr.node.print(buf, 0);
             }
 
             Expr::Match(MatchExpr { scrutinee, alts }) => {
-                buffer.push_str("match ");
-                scrutinee.node.print(buffer, 0);
-                buffer.push_str(":\n");
+                buf.push_str("match ");
+                scrutinee.node.print(buf, 0);
+                buf.push_str(":\n");
                 for (i, Alt { pat, guard, rhs }) in alts.iter().enumerate() {
                     if i != 0 {
-                        buffer.push('\n');
+                        buf.push('\n');
                     }
-                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    pat.node.print(buffer);
+                    buf.push_str(&INDENTS[..indent as usize + 4]);
+                    pat.node.print(buf);
                     if let Some(guard) = guard {
-                        buffer.push_str(" if ");
-                        guard.node.print(buffer, indent + 8);
+                        buf.push_str(" if ");
+                        guard.node.print(buf, indent + 8);
                     }
-                    buffer.push_str(":\n");
+                    buf.push_str(":\n");
                     for (j, stmt) in rhs.iter().enumerate() {
                         if j != 0 {
-                            buffer.push('\n');
+                            buf.push('\n');
                         }
-                        buffer.push_str(&INDENTS[0..indent as usize + 8]);
-                        stmt.node.print(buffer, indent + 8);
+                        buf.push_str(&INDENTS[..indent as usize + 8]);
+                        stmt.node.print(buf, indent + 8);
                     }
                 }
             }
@@ -496,199 +488,180 @@ impl Expr {
                 branches,
                 else_branch,
             }) => {
-                buffer.push_str("if ");
-                branches[0].0.node.print(buffer, 0);
-                buffer.push_str(":\n");
+                buf.push_str("if ");
+                branches[0].0.node.print(buf, 0);
+                buf.push_str(":\n");
                 for (i, stmt) in branches[0].1.iter().enumerate() {
                     if i != 0 {
-                        buffer.push('\n');
+                        buf.push('\n');
                     }
-                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    stmt.node.print(buffer, indent + 4);
+                    buf.push_str(&INDENTS[..indent as usize + 4]);
+                    stmt.node.print(buf, indent + 4);
                 }
                 for branch in &branches[1..] {
-                    buffer.push('\n');
-                    buffer.push_str(&INDENTS[0..indent as usize]);
-                    buffer.push_str("elif ");
-                    branch.0.node.print(buffer, 0);
-                    buffer.push_str(":\n");
+                    buf.push('\n');
+                    buf.push_str(&INDENTS[..indent as usize]);
+                    buf.push_str("elif ");
+                    branch.0.node.print(buf, indent);
+                    buf.push_str(":\n");
                     for (i, stmt) in branch.1.iter().enumerate() {
                         if i != 0 {
-                            buffer.push('\n');
+                            buf.push('\n');
                         }
-                        buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                        stmt.node.print(buffer, indent + 4);
+                        buf.push_str(&INDENTS[..indent as usize + 4]);
+                        stmt.node.print(buf, indent + 4);
                     }
                 }
                 if let Some(else_branch) = else_branch {
-                    buffer.push('\n');
-                    buffer.push_str(&INDENTS[0..indent as usize]);
-                    buffer.push_str("else:\n");
+                    buf.push('\n');
+                    buf.push_str(&INDENTS[..indent as usize]);
+                    buf.push_str("else:\n");
                     for (i, stmt) in else_branch.iter().enumerate() {
                         if i != 0 {
-                            buffer.push('\n');
+                            buf.push('\n');
                         }
-                        buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                        stmt.node.print(buffer, indent + 4);
+                        buf.push_str(&INDENTS[..indent as usize + 4]);
+                        stmt.node.print(buf, indent + 4);
                     }
                 }
             }
 
             Expr::Fn(FnExpr { sig, body }) => {
-                buffer.push_str("fn");
-                buffer.push('(');
-                for (i, (param_name, param_ty)) in sig.params.iter().enumerate() {
-                    if i != 0 {
-                        buffer.push_str(", ");
-                    }
-                    buffer.push_str(param_name);
-                    buffer.push_str(": ");
-                    param_ty.node.print(buffer);
+                buf.push('\\');
+                sig.print(&None, &SmolStr::new_static(""), &[], buf);
+                buf.push_str(" {\n");
+                for stmt in body.iter() {
+                    buf.push_str(&INDENTS[..indent as usize + 4]);
+                    stmt.node.print(buf, indent + 4);
+                    buf.push('\n');
                 }
-                buffer.push(')');
-                if sig.exceptions.is_some() || sig.return_ty.is_some() {
-                    buffer.push_str(": ");
-                }
-                if let Some(exn) = &sig.exceptions {
-                    exn.node.print(buffer);
-                }
-                if let Some(ret_ty) = &sig.return_ty {
-                    if sig.exceptions.is_some() {
-                        buffer.push(' ');
-                    }
-                    ret_ty.node.print(buffer);
-                }
-                buffer.push('\n');
-                for (i, stmt) in body.iter().enumerate() {
-                    if i != 0 {
-                        buffer.push('\n');
-                    }
-                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    stmt.node.print(buffer, indent + 4);
-                }
+                buf.push_str(&INDENTS[..indent as usize]);
+                buf.push('}');
             }
 
             Expr::Is(IsExpr { expr, pat }) => {
-                buffer.push('(');
-                expr.node.print(buffer, indent);
-                buffer.push_str(" is ");
-                pat.node.print(buffer);
-                buffer.push(')');
+                buf.push('(');
+                expr.node.print(buf, indent);
+                buf.push_str(" is ");
+                pat.node.print(buf);
+                buf.push(')');
             }
 
             Expr::Do(body) => {
-                buffer.push_str("do:\n");
-                for stmt in body.iter() {
-                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    stmt.node.print(buffer, indent + 4);
-                    buffer.push('\n');
+                buf.push_str("do:\n");
+                for (i, stmt) in body.iter().enumerate() {
+                    if i != 0 {
+                        buf.push('\n');
+                    }
+                    buf.push_str(&INDENTS[..indent as usize + 4]);
+                    stmt.node.print(buf, indent + 4);
                 }
             }
 
             Expr::Record(RecordExpr { fields, ty: _ }) => {
-                buffer.push('(');
+                buf.push('(');
                 for (i, (field_name, field_expr)) in fields.iter().enumerate() {
                     if i != 0 {
-                        buffer.push_str(", ");
+                        buf.push_str(", ");
                     }
-                    buffer.push_str(field_name);
-                    buffer.push_str(" = ");
-                    field_expr.node.print(buffer, 0);
+                    buf.push_str(field_name);
+                    buf.push_str(" = ");
+                    field_expr.node.print(buf, indent);
                 }
-                buffer.push(')');
+                buf.push(')');
             }
 
             Expr::Variant(VariantExpr { expr, ty: _ }) => {
-                buffer.push('~');
-                expr.node.print(buffer, indent);
+                buf.push('~');
+                expr.node.print(buf, indent);
             }
         }
     }
 }
 
 impl Pat {
-    pub fn print(&self, buffer: &mut String) {
+    pub fn print(&self, buf: &mut String) {
         match self {
             Pat::Var(VarPat { var, ty }) => {
-                buffer.push_str(var);
-                buffer.push_str(": ");
-                ty.print(buffer);
+                buf.push_str(var);
+                buf.push_str(": ");
+                ty.print(buf);
             }
 
             Pat::Con(ConPat { con, fields }) => {
-                con.print(buffer);
+                con.print(buf);
 
                 if !fields.is_empty() {
-                    buffer.push('(');
+                    buf.push('(');
                     for (i, field) in fields.iter().enumerate() {
                         if i != 0 {
-                            buffer.push_str(", ");
+                            buf.push_str(", ");
                         }
                         if let Some(name) = &field.name {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
+                            buf.push_str(name);
+                            buf.push_str(" = ");
                         }
-                        field.node.node.print(buffer);
+                        field.node.node.print(buf);
                     }
-                    buffer.push(')');
+                    buf.push(')');
                 }
             }
 
             Pat::Record(RecordPat { fields, ty }) => {
-                buffer.push('(');
+                buf.push('(');
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
-                        buffer.push_str(", ");
+                        buf.push_str(", ");
                     }
                     let Named { name, node } = field;
                     if let Some(name) = name {
-                        buffer.push_str(name);
-                        buffer.push_str(" = ");
+                        buf.push_str(name);
+                        buf.push_str(" = ");
                     }
-                    node.node.print(buffer);
+                    node.node.print(buf);
                 }
-                buffer.push_str("): ");
-                Type::Record { fields: ty.clone() }.print(buffer);
+                buf.push_str("): ");
+                Type::Record { fields: ty.clone() }.print(buf);
             }
 
-            Pat::Ignore => buffer.push('_'),
+            Pat::Ignore => buf.push('_'),
 
             Pat::Str(str) => {
-                buffer.push('"');
-                buffer.push_str(str); // TOOD: escaping
-                buffer.push('"');
+                buf.push('"');
+                crate::ast::printer::escape_str_lit(str, buf);
+                buf.push('"');
             }
 
             Pat::Char(char) => {
-                buffer.push('\'');
-                buffer.push(*char); // TODO: escaping
-                buffer.push('\'');
+                buf.push('\'');
+                crate::ast::printer::escape_char_lit(*char, buf);
+                buf.push('\'');
             }
 
             Pat::Or(pat1, pat2) => {
-                buffer.push('(');
-                pat1.node.print(buffer);
-                buffer.push_str(") | (");
-                pat2.node.print(buffer);
-                buffer.push(')');
+                buf.push('(');
+                pat1.node.print(buf);
+                buf.push_str(") | (");
+                pat2.node.print(buf);
+                buf.push(')');
             }
 
             Pat::Variant(VariantPat { pat, ty: _ }) => {
-                buffer.push('~');
-                pat.node.print(buffer);
+                buf.push('~');
+                pat.node.print(buf);
             }
         }
     }
 }
 
 impl Con {
-    pub fn print(&self, buffer: &mut String) {
-        buffer.push_str(&self.ty);
+    pub fn print(&self, buf: &mut String) {
+        buf.push_str(&self.ty);
         if let Some(con) = &self.con {
-            buffer.push('.');
-            buffer.push_str(con);
+            buf.push('.');
+            buf.push_str(con);
         }
-        print_ty_args(&self.ty_args, buffer);
+        print_ty_args(&self.ty_args, buf);
     }
 }
 
@@ -699,22 +672,22 @@ fn expr_parens(expr: &Expr) -> bool {
     )
 }
 
-fn print_ty_args(args: &[Type], buffer: &mut String) {
+fn print_ty_args(args: &[Type], buf: &mut String) {
     if args.is_empty() {
         return;
     }
 
-    buffer.push('[');
+    buf.push('[');
     for (i, ty) in args.iter().enumerate() {
         if i != 0 {
-            buffer.push_str(", ");
+            buf.push_str(", ");
         }
-        buffer.push_str(&ty.to_string());
+        buf.push_str(&ty.to_string());
     }
-    buffer.push(']');
+    buf.push(']');
 }
 
-const INDENTS: &str = "                                                  ";
+const INDENTS: &str = "                                                                                               ";
 
 use std::fmt::Display;
 
