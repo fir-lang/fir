@@ -39,6 +39,7 @@ pub struct CompilerOpts {
     pub print_mono_ast: bool,
     pub print_lowered_ast: bool,
     pub main: String,
+    pub to_c: bool,
 }
 
 fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String {
@@ -178,9 +179,13 @@ mod native {
             lowering::printer::print_pgm(&lowered_pgm);
         }
 
-        let mut w = std::io::stdout();
-        program_args.insert(0, program);
-        interpreter::run_with_args(&mut w, lowered_pgm, &opts.main, program_args);
+        if opts.to_c {
+            println!("{}", to_c::to_c(&lowered_pgm));
+        } else {
+            let mut w = std::io::stdout();
+            program_args.insert(0, program);
+            interpreter::run_with_args(&mut w, lowered_pgm, &opts.main, program_args);
+        }
     }
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {

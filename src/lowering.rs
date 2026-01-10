@@ -6,7 +6,8 @@ pub mod printer;
 use crate::ast;
 use crate::collections::*;
 use crate::mono_ast::{self as mono, Id, L, Loc};
-use crate::record_collector::{RecordShape, collect_records};
+pub(crate) use crate::record_collector::RecordShape;
+use crate::record_collector::collect_records;
 use crate::utils::loc_display;
 
 use smol_str::SmolStr;
@@ -317,22 +318,7 @@ pub struct SourceConDecl {
     pub name: Id,
     pub idx: HeapObjIdx,          // for debugging
     pub ty_args: Vec<mono::Type>, // for debugging
-    pub fields: ConFields,
-}
-
-#[derive(Debug)]
-pub enum ConFields {
-    Named(OrdMap<Id, Ty>),
-    Unnamed(Vec<Ty>),
-}
-
-impl ConFields {
-    pub fn is_empty(&self) -> bool {
-        match self {
-            ConFields::Named(fields) => fields.is_empty(),
-            ConFields::Unnamed(fields) => fields.is_empty(),
-        }
-    }
+    pub fields: Vec<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -741,7 +727,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     mono::TypeDeclRhs::Sum(cons) => {
                         for mono::ConDecl { name, fields } in cons {
                             let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                            let name = SmolStr::new(format!("{con_id}.{name}"));
+                            let name = SmolStr::new(format!("{con_id}_{name}"));
                             lowered_pgm.heap_objs.push(lower_source_con(
                                 idx,
                                 &name,
@@ -827,7 +813,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             name: SmolStr::new_static("Void"),
                             idx,
                             ty_args: vec![],
-                            fields: ConFields::Unnamed(vec![]),
+                            fields: vec![],
                         }))
                     }
 
@@ -1594,32 +1580,23 @@ fn lower_source_con(
         idx,
         ty_args: con_ty_args.to_vec(),
         fields: match fields {
-            mono::ConFields::Empty => ConFields::Unnamed(vec![]),
+            mono::ConFields::Empty => vec![],
 
-            mono::ConFields::Named(fields) => ConFields::Named(
-                fields
-                    .iter()
-                    .map(|(name, field_ty)| {
-                        (
-                            name.clone(),
-                            Ty {
-                                mono_ty: field_ty.clone(),
-                                repr: Repr::from_mono_ty(field_ty),
-                            },
-                        )
-                    })
-                    .collect(),
-            ),
+            mono::ConFields::Named(fields) => fields
+                .iter()
+                .map(|(_name, field_ty)| Ty {
+                    mono_ty: field_ty.clone(),
+                    repr: Repr::from_mono_ty(field_ty),
+                })
+                .collect(),
 
-            mono::ConFields::Unnamed(fields) => ConFields::Unnamed(
-                fields
-                    .iter()
-                    .map(|field_ty| Ty {
-                        mono_ty: field_ty.clone(),
-                        repr: Repr::from_mono_ty(field_ty),
-                    })
-                    .collect(),
-            ),
+            mono::ConFields::Unnamed(fields) => fields
+                .iter()
+                .map(|field_ty| Ty {
+                    mono_ty: field_ty.clone(),
+                    repr: Repr::from_mono_ty(field_ty),
+                })
+                .collect(),
         },
     })
 }

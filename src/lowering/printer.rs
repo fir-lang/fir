@@ -26,25 +26,11 @@ impl LoweredPgm {
                     buffer.push_str(name.as_str());
                     print_ty_args(ty_args, buffer);
                     buffer.push('(');
-                    match fields {
-                        ConFields::Named(items) => {
-                            for (i, (field_name, field_ty)) in items.iter().enumerate() {
-                                if i != 0 {
-                                    buffer.push_str(", ");
-                                }
-                                buffer.push_str(field_name.as_str());
-                                buffer.push_str(": ");
-                                field_ty.print(buffer);
-                            }
+                    for (i, field_ty) in fields.iter().enumerate() {
+                        if i != 0 {
+                            buffer.push_str(", ");
                         }
-                        ConFields::Unnamed(items) => {
-                            for (i, field_ty) in items.iter().enumerate() {
-                                if i != 0 {
-                                    buffer.push_str(", ");
-                                }
-                                field_ty.print(buffer);
-                            }
-                        }
+                        field_ty.print(buffer);
                     }
                     buffer.push(')');
                 }

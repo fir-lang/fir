@@ -75,6 +75,12 @@ fn main() {
                 .allow_hyphen_values(true)
                 .num_args(0..),
         )
+        .arg(
+            clap::Arg::new(TO_C)
+                .long(TO_C)
+                .num_args(0)
+                .help("Compile to C"),
+        )
         .get_matches();
 
     let compiler_opts = fir::CompilerOpts {
@@ -88,6 +94,7 @@ fn main() {
         print_mono_ast: matches.get_flag(PRINT_MONO_AST),
         print_lowered_ast: matches.get_flag(PRINT_LOWERED_AST),
         main: matches.get_one(MAIN).cloned().unwrap(),
+        to_c: matches.get_flag(TO_C),
     };
 
     let program: String = matches.get_one::<String>(PROGRAM).unwrap().clone();
@@ -100,18 +107,19 @@ fn main() {
     fir::main(compiler_opts, program, program_args)
 }
 
-const TYPECHECK: &str = "typecheck";
-const NO_PRELUDE: &str = "no-prelude";
 const BACKTRACE: &str = "backtrace";
-const TOKENIZE: &str = "tokenize";
-const SCAN: &str = "scan";
-const PRINT_PARSED_AST: &str = "print-parsed-ast";
-const PRINT_CHECKED_AST: &str = "print-checked-ast";
-const PRINT_MONO_AST: &str = "print-mono-ast";
-const PRINT_LOWERED_AST: &str = "print-lowered-ast";
 const MAIN: &str = "main";
+const NO_PRELUDE: &str = "no-prelude";
+const PRINT_CHECKED_AST: &str = "print-checked-ast";
+const PRINT_LOWERED_AST: &str = "print-lowered-ast";
+const PRINT_MONO_AST: &str = "print-mono-ast";
+const PRINT_PARSED_AST: &str = "print-parsed-ast";
 const PROGRAM: &str = "program";
 const PROGRAM_ARGS: &str = "program-args";
+const SCAN: &str = "scan";
+const TOKENIZE: &str = "tokenize";
+const TO_C: &str = "to-c";
+const TYPECHECK: &str = "typecheck";
 
 // This is the same as `VersionInfo`'s `Display`, except it doesn't show the crate name as clap adds
 // command name as prefix in `--version`.
