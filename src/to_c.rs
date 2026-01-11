@@ -369,7 +369,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, record_tags: &HashMap<RecordType, u32>
                 "
                 [[noreturn]]
                 {a} panic_{a}_{exn_q}(Str msg) {{
-                    // TODO: copy string with nul terminator, write to stderr
+                    fwrite(msg->_bytes, 1, Array_U8_len(msg->_bytes), stderr);
                     abort();
                 }}
                 ",
