@@ -81,6 +81,12 @@ fn main() {
                 .num_args(0)
                 .help("Compile to C"),
         )
+        .arg(
+            clap::Arg::new(RUN_C)
+                .long(RUN_C)
+                .num_args(0)
+                .help("Compile to C in /tmp, compile generated C with gcc, run it"),
+        )
         .get_matches();
 
     let compiler_opts = fir::CompilerOpts {
@@ -95,6 +101,7 @@ fn main() {
         print_lowered_ast: matches.get_flag(PRINT_LOWERED_AST),
         main: matches.get_one(MAIN).cloned().unwrap(),
         to_c: matches.get_flag(TO_C),
+        run_c: matches.get_flag(RUN_C),
     };
 
     let program: String = matches.get_one::<String>(PROGRAM).unwrap().clone();
@@ -120,6 +127,7 @@ const MAIN: &str = "main";
 const PROGRAM: &str = "program";
 const PROGRAM_ARGS: &str = "program-args";
 const TO_C: &str = "to-c";
+const RUN_C: &str = "run-c";
 
 // This is the same as `VersionInfo`'s `Display`, except it doesn't show the crate name as clap adds
 // command name as prefix in `--version`.

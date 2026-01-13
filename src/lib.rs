@@ -40,6 +40,7 @@ pub struct CompilerOpts {
     pub print_lowered_ast: bool,
     pub main: String,
     pub to_c: bool,
+    pub run_c: bool,
 }
 
 fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String {
@@ -108,7 +109,7 @@ mod native {
     use super::*;
 
     use smol_str::SmolStr;
-    use std::path::Path;
+    use std::{io::Write, path::Path};
 
     pub fn main(opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
         if opts.tokenize {
@@ -179,7 +180,40 @@ mod native {
             lowering::printer::print_pgm(&lowered_pgm);
         }
 
-        if opts.to_c {
+        if opts.run_c {
+            let c = to_c::to_c(&lowered_pgm);
+            let mut file = tempfile::NamedTempFile::with_suffix(".c").unwrap();
+            let out_file_path = file.path().as_os_str().to_string_lossy().into_owned();
+            let out_file_path = &out_file_path[..out_file_path.len() - 2];
+            file.disable_cleanup(true);
+            file.write_all(c.as_bytes()).unwrap();
+            let mut gcc_cmd = std::process::Command::new("gcc");
+            gcc_cmd
+                .arg(file.path().as_os_str())
+                .arg("-o")
+                .arg(out_file_path);
+            // dbg!(&gcc_cmd);
+            let output = gcc_cmd.output().unwrap();
+            if !output.status.success() {
+                eprintln!("C compilation failed:");
+                eprintln!("stdout:");
+                eprintln!("{}", String::from_utf8_lossy(&output.stdout));
+                eprintln!("stderr:");
+                eprintln!("{}", String::from_utf8_lossy(&output.stderr));
+                std::process::exit(1);
+            }
+            // dbg!(&out_file_path);
+            // dbg!(&program_args);
+            let status = std::process::Command::new(out_file_path)
+                .args(program_args)
+                .spawn()
+                .unwrap()
+                .wait()
+                .unwrap();
+            if !status.success() {
+                std::process::exit(1);
+            }
+        } else if opts.to_c {
             println!("{}", to_c::to_c(&lowered_pgm));
         } else {
             let mut w = std::io::stdout();
