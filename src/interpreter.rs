@@ -780,7 +780,7 @@ fn call_builtin_fun<W: Write>(
     call_stack: &mut Vec<Frame>,
 ) -> FunRet {
     match fun {
-        BuiltinFunDecl::Panic { .. } => {
+        BuiltinFunDecl::Panic => {
             debug_assert_eq!(args.len(), 1);
             let msg = args[0];
             let bytes = heap.str_bytes(msg);
@@ -1283,7 +1283,7 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(i32_as_val(val_as_i32(args[0]).neg()))
         }
 
-        BuiltinFunDecl::ThrowUnchecked { .. } => {
+        BuiltinFunDecl::ThrowUnchecked => {
             debug_assert_eq!(args.len(), 1);
             let exn = args[0];
             FunRet::Unwind(exn)

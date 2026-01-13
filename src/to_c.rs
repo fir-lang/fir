@@ -617,7 +617,7 @@ fn builtin_fun_to_c(
     p: &mut Printer,
 ) {
     match fun {
-        BuiltinFunDecl::Panic { .. } => {
+        BuiltinFunDecl::Panic => {
             w!(p, "static uint64_t _fun_{}(uint64_t msg) {{", idx);
             p.indent();
             p.nl();
@@ -1268,7 +1268,7 @@ fn builtin_fun_to_c(
             p.nl();
         }
 
-        BuiltinFunDecl::ThrowUnchecked { .. } => {
+        BuiltinFunDecl::ThrowUnchecked => {
             w!(p, "static uint64_t _fun_{}(uint64_t exn) {{", idx);
             p.indent();
             p.nl();
