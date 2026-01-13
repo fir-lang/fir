@@ -90,8 +90,6 @@ In C statement context: wrap the generated code with `({ ... })`.
 Reference: https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html
 */
 
-use crate::ast::Id;
-use crate::collections::*;
 use crate::lowering::*;
 use crate::mono_ast as mono;
 
@@ -105,13 +103,10 @@ macro_rules! w {
     };
 }
 
-type RecordType = OrdMap<Id, mono::Type>;
-
 /// Code generation context.
 struct Cg<'a> {
     pgm: &'a LoweredPgm,
-    #[allow(dead_code)]
-    record_tags: &'a HashMap<RecordType, u32>,
+
     /// Counter for generating fresh temporary variables.
     temp_counter: u32,
 }
@@ -125,8 +120,6 @@ impl<'a> Cg<'a> {
 }
 
 pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
-    let mut record_tags: HashMap<RecordType, u32> = Default::default();
-
     let mut p = Printer::default();
 
     // Header includes and runtime definitions
@@ -331,7 +324,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
 
     // Generate type definitions
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
-        heap_obj_to_c(heap_obj, tag as u32, &mut record_tags, &mut p);
+        heap_obj_to_c(heap_obj, tag as u32, &mut p);
         p.nl();
     }
 
@@ -381,14 +374,13 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
 
     let mut cg = Cg {
         pgm,
-        record_tags: &record_tags,
         temp_counter: 0,
     };
 
     // Generate builtin functions
     for (i, fun) in pgm.funs.iter().enumerate() {
         if let Fun::Builtin(builtin) = fun {
-            builtin_fun_to_c(builtin, i, pgm, &record_tags, &mut p);
+            builtin_fun_to_c(builtin, i, pgm, &mut p);
             p.nl();
         }
     }
@@ -444,16 +436,11 @@ fn forward_declare_closure(_pgm: &LoweredPgm, closure: &Closure, idx: usize, p: 
     p.nl();
 }
 
-fn heap_obj_to_c(
-    heap_obj: &HeapObj,
-    tag: u32,
-    record_tags: &mut HashMap<RecordType, u32>,
-    p: &mut Printer,
-) {
+fn heap_obj_to_c(heap_obj: &HeapObj, tag: u32, p: &mut Printer) {
     match heap_obj {
         HeapObj::Builtin(builtin) => builtin_con_decl_to_c(builtin, tag, p),
-        HeapObj::Source(source_con) => source_con_decl_to_c(source_con, tag, record_tags, p),
-        HeapObj::Record(record) => record_decl_to_c(record, tag, record_tags, p),
+        HeapObj::Source(source_con) => source_con_decl_to_c(source_con, tag, p),
+        HeapObj::Record(record) => record_decl_to_c(record, tag, p),
     }
 }
 
@@ -533,12 +520,7 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
     }
 }
 
-fn source_con_decl_to_c(
-    source_con: &SourceConDecl,
-    tag: u32,
-    _record_tags: &HashMap<RecordType, u32>,
-    p: &mut Printer,
-) {
+fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, p: &mut Printer) {
     let SourceConDecl {
         name,
         idx,
@@ -564,15 +546,7 @@ fn source_con_decl_to_c(
     }
 }
 
-fn record_decl_to_c(
-    record: &RecordShape,
-    tag: u32,
-    record_tags: &mut HashMap<RecordType, u32>,
-    p: &mut Printer,
-) {
-    let old = record_tags.insert(record.fields.clone(), tag);
-    assert!(old.is_none());
-
+fn record_decl_to_c(record: &RecordShape, tag: u32, p: &mut Printer) {
     w!(p, "#define RECORD_{}_TAG {}", tag, tag);
     p.nl();
     if !record.fields.is_empty() {
@@ -609,13 +583,7 @@ fn ty_to_c_name(ty: &mono::Type, out: &mut String) {
     }
 }
 
-fn builtin_fun_to_c(
-    fun: &BuiltinFunDecl,
-    idx: usize,
-    pgm: &LoweredPgm,
-    _record_tags: &HashMap<RecordType, u32>,
-    p: &mut Printer,
-) {
+fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut Printer) {
     match fun {
         BuiltinFunDecl::Panic => {
             w!(p, "static uint64_t _fun_{}(uint64_t msg) {{", idx);
