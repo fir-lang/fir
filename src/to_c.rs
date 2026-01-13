@@ -3,7 +3,7 @@ This module compiles lowered syntax to C.
 
 ## Heap objects
 
-All heap objects are allocated with `mallc` and have a `u32` tag.
+All heap objects are allocated with `malloc` and have a `u32` tag.
 
 For now we don't reclaim memory: all allocations leak.
 
@@ -96,54 +96,352 @@ use crate::lowering::*;
 use crate::mono_ast as mono;
 
 use indoc::writedoc;
-use smol_str::SmolStr;
 
 use std::fmt::Write;
 
-macro_rules! write {
+macro_rules! w {
     ($($arg:tt)*) => {
         ::core::write!($($arg)*).unwrap()
     };
 }
 
-#[allow(unused)]
-macro_rules! writeln {
-    ($($arg:tt)*) => {
-        ::core::writeln!($($arg)*).unwrap()
-    };
-}
-
-struct Cg {
-    /// Indexed by `LocalIdx`. Locals in the current function.
-    locals: Vec<LocalInfo>,
-}
-
 type RecordType = OrdMap<Id, mono::Type>;
+
+/// Code generation context.
+struct Cg<'a> {
+    pgm: &'a LoweredPgm,
+    #[allow(dead_code)]
+    record_tags: &'a HashMap<RecordType, u32>,
+    /// Counter for generating fresh temporary variables.
+    temp_counter: u32,
+}
+
+impl<'a> Cg<'a> {
+    fn fresh_temp(&mut self) -> String {
+        let n = self.temp_counter;
+        self.temp_counter += 1;
+        format!("_t{}", n)
+    }
+}
 
 pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
     let mut record_tags: HashMap<RecordType, u32> = Default::default();
 
     let mut p = Printer::default();
 
-    writedoc!(
+    // Header includes and runtime definitions
+    let _ = writedoc!(
         p,
         "
         #include <stdint.h>
+        #include <stdbool.h>
         #include <stdio.h>
         #include <stdlib.h>
+        #include <string.h>
+        #include <setjmp.h>
+
+        // Tags for builtin heap objects
+        #define CON_TAG 0
+        #define FUN_TAG 1
+        #define CLOSURE_TAG 2
+
+        // Array header layout:
+        // word 0: tag
+        // word 1: length
+        // word 2: capacity
+        // word 3+: data (for U64) or packed data (for U8/U32)
+        #define ARRAY_TAG_IDX 0
+        #define ARRAY_LEN_IDX 1
+        #define ARRAY_CAP_IDX 2
+        #define ARRAY_DATA_IDX 3
+
+        // Exception handling using setjmp/longjmp
+        typedef struct ExnHandler {{
+            jmp_buf buf;
+            struct ExnHandler* prev;
+            uint64_t exn_value;
+        }} ExnHandler;
+
+        static ExnHandler* current_exn_handler = NULL;
+
+        static void throw_exn(uint64_t exn) {{
+            if (current_exn_handler == NULL) {{
+                fprintf(stderr, \"Uncaught exception\\n\");
+                abort();
+            }}
+            current_exn_handler->exn_value = exn;
+            longjmp(current_exn_handler->buf, 1);
+        }}
+
+        // Runtime allocation
+        static uint64_t* alloc_words(size_t n) {{
+            return (uint64_t*)malloc(n * sizeof(uint64_t));
+        }}
+
+        // Get tag from heap object
+        static uint32_t get_tag(uint64_t obj) {{
+            return *(uint32_t*)obj;
+        }}
+
+        // Array functions
+        static uint64_t array_new_u8(uint32_t len) {{
+            size_t data_words = (len + 7) / 8;
+            uint64_t* arr = alloc_words(3 + data_words);
+            arr[ARRAY_TAG_IDX] = 0; // Will be set by caller
+            arr[ARRAY_LEN_IDX] = len;
+            arr[ARRAY_CAP_IDX] = len;
+            memset(&arr[ARRAY_DATA_IDX], 0, data_words * 8);
+            return (uint64_t)arr;
+        }}
+
+        static uint64_t array_new_u32(uint32_t len) {{
+            size_t data_words = (len + 1) / 2;
+            uint64_t* arr = alloc_words(3 + data_words);
+            arr[ARRAY_TAG_IDX] = 0;
+            arr[ARRAY_LEN_IDX] = len;
+            arr[ARRAY_CAP_IDX] = len;
+            memset(&arr[ARRAY_DATA_IDX], 0, data_words * 8);
+            return (uint64_t)arr;
+        }}
+
+        static uint64_t array_new_u64(uint32_t len) {{
+            uint64_t* arr = alloc_words(3 + len);
+            arr[ARRAY_TAG_IDX] = 0;
+            arr[ARRAY_LEN_IDX] = len;
+            arr[ARRAY_CAP_IDX] = len;
+            memset(&arr[ARRAY_DATA_IDX], 0, len * 8);
+            return (uint64_t)arr;
+        }}
+
+        static uint32_t array_len(uint64_t arr) {{
+            return (uint32_t)((uint64_t*)arr)[ARRAY_LEN_IDX];
+        }}
+
+        static uint8_t array_get_u8(uint64_t arr, uint32_t idx) {{
+            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            return data[idx];
+        }}
+
+        static uint32_t array_get_u32(uint64_t arr, uint32_t idx) {{
+            uint32_t* data = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            return data[idx];
+        }}
+
+        static uint64_t array_get_u64(uint64_t arr, uint32_t idx) {{
+            return ((uint64_t*)arr)[ARRAY_DATA_IDX + idx];
+        }}
+
+        static void array_set_u8(uint64_t arr, uint32_t idx, uint8_t val) {{
+            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            data[idx] = val;
+        }}
+
+        static void array_set_u32(uint64_t arr, uint32_t idx, uint32_t val) {{
+            uint32_t* data = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            data[idx] = val;
+        }}
+
+        static void array_set_u64(uint64_t arr, uint32_t idx, uint64_t val) {{
+            ((uint64_t*)arr)[ARRAY_DATA_IDX + idx] = val;
+        }}
+
+        static uint64_t array_slice_u8(uint64_t arr, uint32_t start, uint32_t end, uint64_t tag) {{
+            uint32_t len = end - start;
+            uint64_t new_arr = array_new_u8(len);
+            ((uint64_t*)new_arr)[ARRAY_TAG_IDX] = tag;
+            uint8_t* src = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            uint8_t* dst = (uint8_t*)&((uint64_t*)new_arr)[ARRAY_DATA_IDX];
+            memcpy(dst, src + start, len);
+            return new_arr;
+        }}
+
+        static uint64_t array_slice_u32(uint64_t arr, uint32_t start, uint32_t end, uint64_t tag) {{
+            uint32_t len = end - start;
+            uint64_t new_arr = array_new_u32(len);
+            ((uint64_t*)new_arr)[ARRAY_TAG_IDX] = tag;
+            uint32_t* src = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            uint32_t* dst = (uint32_t*)&((uint64_t*)new_arr)[ARRAY_DATA_IDX];
+            memcpy(dst, src + start, len * sizeof(uint32_t));
+            return new_arr;
+        }}
+
+        static uint64_t array_slice_u64(uint64_t arr, uint32_t start, uint32_t end, uint64_t tag) {{
+            uint32_t len = end - start;
+            uint64_t new_arr = array_new_u64(len);
+            ((uint64_t*)new_arr)[ARRAY_TAG_IDX] = tag;
+            memcpy(&((uint64_t*)new_arr)[ARRAY_DATA_IDX], &((uint64_t*)arr)[ARRAY_DATA_IDX + start], len * sizeof(uint64_t));
+            return new_arr;
+        }}
+
+        static void array_copy_within_u8(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
+            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            memmove(data + dst, data + src, len);
+        }}
+
+        static void array_copy_within_u32(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
+            uint32_t* data = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            memmove(data + dst, data + src, len * sizeof(uint32_t));
+        }}
+
+        static void array_copy_within_u64(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
+            memmove(&((uint64_t*)arr)[ARRAY_DATA_IDX + dst], &((uint64_t*)arr)[ARRAY_DATA_IDX + src], len * sizeof(uint64_t));
+        }}
+
+        // String comparison for pattern matching
+        static bool str_eq(uint64_t str1, const char* str2, size_t len2) {{
+            uint64_t* s1 = (uint64_t*)str1;
+            uint64_t bytes_arr = s1[1]; // _bytes field
+            uint32_t len1 = array_len(bytes_arr);
+            if (len1 != len2) return false;
+            uint8_t* data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];
+            return memcmp(data, str2, len1) == 0;
+        }}
+
+        // Allocate string from bytes
+        static uint64_t alloc_str(uint64_t str_tag, uint64_t array_tag, const char* bytes, size_t len) {{
+            uint64_t arr = array_new_u8(len);
+            ((uint64_t*)arr)[ARRAY_TAG_IDX] = array_tag;
+            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            memcpy(data, bytes, len);
+
+            uint64_t* str = alloc_words(2);
+            str[0] = str_tag;
+            str[1] = arr;
+            return (uint64_t)str;
+        }}
+
+        // Globals for CLI args
+        static int g_argc;
+        static char** g_argv;
+
         "
     );
+    p.nl();
 
+    // Forward declare all functions and closures
+    for (i, fun) in pgm.funs.iter().enumerate() {
+        forward_declare_fun(pgm, fun, i, &mut p);
+    }
+    p.nl();
+
+    for (i, closure) in pgm.closures.iter().enumerate() {
+        forward_declare_closure(pgm, closure, i, &mut p);
+    }
+    p.nl();
+
+    // Generate type definitions
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
         heap_obj_to_c(heap_obj, tag as u32, &mut record_tags, &mut p);
         p.nl();
     }
 
-    for (_i, fun) in pgm.funs.iter().enumerate() {
-        fun_to_c(fun, &record_tags, &mut p);
+    // Generate static singleton allocations for nullary constructors
+    p.nl();
+    w!(p, "// Singleton allocations for nullary constructors");
+    p.nl();
+    for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
+        match heap_obj {
+            HeapObj::Source(source_con) if source_con.fields.is_empty() => {
+                w!(p, "static uint64_t _singleton_{} = 0;", tag);
+                p.nl();
+            }
+            HeapObj::Record(record) if record.fields.is_empty() => {
+                w!(p, "static uint64_t _singleton_{} = 0;", tag);
+                p.nl();
+            }
+            _ => {}
+        }
+    }
+    p.nl();
+
+    // Generate static closure objects for top-level functions
+    w!(p, "// Static closure objects for top-level functions");
+    p.nl();
+    for (i, fun) in pgm.funs.iter().enumerate() {
+        if let Fun::Source(_) = fun {
+            w!(p, "static uint64_t _fun_closure_{} = 0;", i);
+            p.nl();
+        }
+    }
+    p.nl();
+
+    // Generate static closure objects for constructors
+    w!(p, "// Static closure objects for constructors");
+    p.nl();
+    for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
+        match heap_obj {
+            HeapObj::Source(source_con) if !source_con.fields.is_empty() => {
+                w!(p, "static uint64_t _con_closure_{} = 0;", tag);
+                p.nl();
+            }
+            _ => {}
+        }
+    }
+    p.nl();
+
+    let mut cg = Cg {
+        pgm,
+        record_tags: &record_tags,
+        temp_counter: 0,
+    };
+
+    // Generate builtin functions
+    for (i, fun) in pgm.funs.iter().enumerate() {
+        if let Fun::Builtin(builtin) = fun {
+            builtin_fun_to_c(builtin, i, pgm, &record_tags, &mut p);
+            p.nl();
+        }
     }
 
+    // Generate source functions
+    for (i, fun) in pgm.funs.iter().enumerate() {
+        if let Fun::Source(source) = fun {
+            source_fun_to_c(source, i, &mut cg, &mut p);
+            p.nl();
+        }
+    }
+
+    // Generate closures
+    for (i, closure) in pgm.closures.iter().enumerate() {
+        closure_to_c(closure, i, &mut cg, &mut p);
+        p.nl();
+    }
+
+    // Generate init function for singletons
+    generate_init_fn(pgm, &mut p);
+
+    // Generate main function
+    generate_main_fn(pgm, &mut p);
+
     p.print()
+}
+
+fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer) {
+    match fun {
+        Fun::Builtin(_) => {
+            // Builtins are generated inline
+        }
+        Fun::Source(source) => {
+            w!(p, "static uint64_t _fun_{}(", idx);
+            for (i, _) in source.params.iter().enumerate() {
+                if i > 0 {
+                    w!(p, ", ");
+                }
+                w!(p, "uint64_t _p{}", i);
+            }
+            w!(p, ");");
+            p.nl();
+        }
+    }
+}
+
+fn forward_declare_closure(_pgm: &LoweredPgm, closure: &Closure, idx: usize, p: &mut Printer) {
+    w!(p, "static uint64_t _closure_{}(uint64_t _closure_obj", idx);
+    for (i, _) in closure.params.iter().enumerate() {
+        w!(p, ", uint64_t _p{}", i);
+    }
+    w!(p, ");");
+    p.nl();
 }
 
 fn heap_obj_to_c(
@@ -162,95 +460,83 @@ fn heap_obj_to_c(
 fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
     match builtin {
         BuiltinConDecl::Con => {
-            writedoc!(
-                p,
-                "
-                // Heap layout of constructor closures.
-                typedef struct {{
-                    uint32_t tag; // {tag}
-                    uint32_t con_tag;
-                }} Con_;
-
-                typedef Con_* Con;
-                "
-            );
+            w!(p, "#define CON_CON_TAG {}", tag);
+            p.nl();
         }
 
         BuiltinConDecl::Fun => {
-            writedoc!(
-                p,
-                "
-                // Heap layout of function closures.
-                typedef struct {{
-                    uint32_t tag; // {tag}
-                    void* fun;
-                }} Fun_;
-
-                typedef Fun_* Fun;
-                "
-            );
+            w!(p, "#define FUN_CON_TAG {}", tag);
+            p.nl();
         }
 
         BuiltinConDecl::Closure => {
-            writedoc!(
-                p,
-                "
-                // Heap layout of function expression closures.
-                // These objects have variable sizes depending on captured values.
-                // Captured values come after the `fun` field.
-                typedef struct {{
-                    uint32_t tag; // {tag}
-                    void* fun;
-                    // captured values here...
-                }} Closure_;
-
-                typedef Closure_* Closure;
-                "
-            );
+            w!(p, "#define CLOSURE_CON_TAG {}", tag);
+            p.nl();
         }
 
         BuiltinConDecl::ArrayU8 => {
-            writedoc!(p, "typedef uint8_t* Array_U8;\n");
+            w!(p, "#ifndef ARRAY_U8_TAG");
+            p.nl();
+            w!(p, "#define ARRAY_U8_TAG {}", tag);
+            p.nl();
+            w!(p, "#endif");
+            p.nl();
         }
 
         BuiltinConDecl::ArrayU32 => {
-            writedoc!(p, "typedef uint32_t* Array_U32;\n");
+            w!(p, "#ifndef ARRAY_U32_TAG");
+            p.nl();
+            w!(p, "#define ARRAY_U32_TAG {}", tag);
+            p.nl();
+            w!(p, "#endif");
+            p.nl();
         }
 
         BuiltinConDecl::ArrayU64 => {
-            writedoc!(p, "typedef uint64_t* Array_U64;\n");
+            w!(p, "#ifndef ARRAY_U64_TAG");
+            p.nl();
+            w!(p, "#define ARRAY_U64_TAG {}", tag);
+            p.nl();
+            w!(p, "#endif");
+            p.nl();
         }
 
         BuiltinConDecl::I8 => {
-            writedoc!(p, "typedef int8_t I8;\n");
+            w!(p, "// I8 tag {}", tag);
+            p.nl();
         }
 
         BuiltinConDecl::U8 => {
-            writedoc!(p, "typedef uint8_t U8;\n");
+            w!(p, "// U8 tag {}", tag);
+            p.nl();
         }
 
         BuiltinConDecl::I32 => {
-            writedoc!(p, "typedef int32_t I32;\n");
+            w!(p, "// I32 tag {}", tag);
+            p.nl();
         }
 
         BuiltinConDecl::U32 => {
-            writedoc!(p, "typedef uint32_t U32;\n");
+            w!(p, "// U32 tag {}", tag);
+            p.nl();
         }
 
         BuiltinConDecl::I64 => {
-            writedoc!(p, "typedef int64_t I64;\n");
+            w!(p, "// I64 tag {}", tag);
+            p.nl();
         }
 
         BuiltinConDecl::U64 => {
-            writedoc!(p, "typedef uint64_t U64;\n");
+            w!(p, "// U64 tag {}", tag);
+            p.nl();
         }
     }
 }
 
 fn source_con_decl_to_c(
-    builtin: &SourceConDecl,
+    source_con: &SourceConDecl,
     tag: u32,
-    record_tags: &HashMap<RecordType, u32>,
+    _record_tags: &HashMap<RecordType, u32>,
     p: &mut Printer,
 ) {
     let SourceConDecl {
@@ -258,31 +544,24 @@ fn source_con_decl_to_c(
         idx,
         ty_args,
         fields,
-    } = builtin;
+    } = source_con;
 
     assert_eq!(idx.0, tag);
 
     let mut ty_name = name.to_string();
     for ty_arg in ty_args {
         ty_name.push('_');
-        ty_to_c_(ty_arg, record_tags, &mut ty_name);
+        ty_to_c_name(ty_arg, &mut ty_name);
     }
 
-    write!(p, "typedef struct {{");
-    p.indent();
+    w!(p, "#define {}_TAG {}", ty_name, tag);
     p.nl();
-    write!(p, "uint32_t tag; // {tag}");
-    for (i, field) in fields.iter().enumerate() {
+
+    // Comment about fields
+    if !fields.is_empty() {
+        w!(p, "// {} has {} field(s)", ty_name, fields.len());
         p.nl();
-        write!(p, "{} f{};", ty_to_c(&field.mono_ty, record_tags), i);
     }
-    p.dedent();
-    p.nl();
-    write!(p, "}} {ty_name}_;");
-    p.nl();
-    p.nl();
-    write!(p, "typedef struct {ty_name}_* {ty_name};");
-    p.nl();
 }
 
 fn record_decl_to_c(
@@ -294,46 +573,30 @@ fn record_decl_to_c(
     let old = record_tags.insert(record.fields.clone(), tag);
     assert!(old.is_none());
 
-    write!(p, "typedef struct {{");
-    p.indent();
+    w!(p, "#define RECORD_{}_TAG {}", tag, tag);
     p.nl();
-    write!(p, "uint32_t tag; // {tag}");
-    for (i, field) in record.fields.values().enumerate() {
+    if !record.fields.is_empty() {
+        w!(p, "// Record{} has {} field(s)", tag, record.fields.len());
         p.nl();
-        write!(p, "{} f{};", ty_to_c(field, record_tags), i);
     }
-    p.dedent();
-    p.nl();
-    write!(p, "}} Record{tag}_;");
-    p.nl();
-    p.nl();
-    write!(p, "typedef Record{tag}_* Record{tag};");
-    p.nl();
 }
 
-fn ty_to_c(ty: &mono::Type, record_tags: &HashMap<RecordType, u32>) -> String {
-    let mut out = String::new();
-    ty_to_c_(ty, record_tags, &mut out);
-    out
-}
-
-fn ty_to_c_(ty: &mono::Type, record_tags: &HashMap<RecordType, u32>, out: &mut String) {
+fn ty_to_c_name(ty: &mono::Type, out: &mut String) {
     match ty {
         mono::Type::Named(mono::NamedType { name, args }) => {
             out.push_str(name);
             for arg in args {
                 out.push('_');
-                ty_to_c_(arg, record_tags, out);
+                ty_to_c_name(arg, out);
             }
         }
 
-        mono::Type::Record { fields } => {
-            let tag = record_tags.get(fields).unwrap();
-            write!(out, "Record{}", tag);
+        mono::Type::Record { fields: _ } => {
+            out.push_str("Record");
         }
 
         mono::Type::Variant { alts: _ } => {
-            out.push_str("TODO_2");
+            out.push_str("Variant");
         }
 
         mono::Type::Fn(_) => {
@@ -341,276 +604,1870 @@ fn ty_to_c_(ty: &mono::Type, record_tags: &HashMap<RecordType, u32>, out: &mut S
         }
 
         mono::Type::Never => {
-            panic!("Never type")
+            out.push_str("Never");
         }
     }
 }
 
-fn fun_to_c(fun: &Fun, record_tags: &HashMap<RecordType, u32>, p: &mut Printer) {
+fn builtin_fun_to_c(
+    fun: &BuiltinFunDecl,
+    idx: usize,
+    pgm: &LoweredPgm,
+    _record_tags: &HashMap<RecordType, u32>,
+    p: &mut Printer,
+) {
     match fun {
-        Fun::Builtin(builtin) => {
-            builtin_fun_to_c(builtin, record_tags, p);
-        }
-
-        Fun::Source(_) => {
-            // TODO
-        }
-    }
-}
-
-fn builtin_fun_to_c(fun: &BuiltinFunDecl, record_tags: &HashMap<RecordType, u32>, p: &mut Printer) {
-    match fun {
-        BuiltinFunDecl::Panic { a, exn_q } => {
-            // prim panic(msg: Str) a / exn?
-            let a = ty_to_c(a, record_tags);
-            let exn_q = ty_to_c(exn_q, record_tags);
-            writedoc!(
+        BuiltinFunDecl::Panic { .. } => {
+            w!(p, "static uint64_t _fun_{}(uint64_t msg) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "uint64_t* str = (uint64_t*)msg;");
+            p.nl();
+            w!(p, "uint64_t bytes_arr = str[1];");
+            p.nl();
+            w!(p, "uint32_t len = array_len(bytes_arr);");
+            p.nl();
+            w!(
                 p,
-                "
-                [[noreturn]]
-                {a} panic_{a}_{exn_q}(Str msg) {{
-                    fwrite(msg->_bytes, 1, Array_U8_len(msg->_bytes), stderr);
-                    abort();
-                }}
-                ",
+                "uint8_t* data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];"
             );
+            p.nl();
+            w!(p, "fwrite(data, 1, len, stderr);");
+            p.nl();
+            w!(p, "fprintf(stderr, \"\\n\");");
+            p.nl();
+            w!(p, "abort();");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
         }
 
-        BuiltinFunDecl::PrintStrNoNl => todo!(),
-
-        BuiltinFunDecl::ShrI8 => todo!(),
-
-        BuiltinFunDecl::ShrU8 => todo!(),
-
-        BuiltinFunDecl::ShrI32 => todo!(),
-
-        BuiltinFunDecl::ShrU32 => todo!(),
-
-        BuiltinFunDecl::BitAndI8 => todo!(),
-
-        BuiltinFunDecl::BitAndU8 => todo!(),
-
-        BuiltinFunDecl::BitAndI32 => todo!(),
-
-        BuiltinFunDecl::BitAndU32 => todo!(),
-
-        BuiltinFunDecl::BitOrI8 => todo!(),
-
-        BuiltinFunDecl::BitOrU8 => todo!(),
-
-        BuiltinFunDecl::BitOrI32 => todo!(),
-
-        BuiltinFunDecl::BitOrU32 => todo!(),
-
-        BuiltinFunDecl::BitXorU32 => todo!(),
-
-        BuiltinFunDecl::ToStrI8 => todo!(),
-
-        BuiltinFunDecl::ToStrU8 => todo!(),
-
-        BuiltinFunDecl::ToStrI32 => todo!(),
-
-        BuiltinFunDecl::ToStrU32 => todo!(),
-
-        BuiltinFunDecl::ToStrU64 => todo!(),
-
-        BuiltinFunDecl::ToStrI64 => todo!(),
-
-        BuiltinFunDecl::U8AsI8 => todo!(),
-
-        BuiltinFunDecl::U8AsU32 => todo!(),
-
-        BuiltinFunDecl::U32AsU8 => todo!(),
-
-        BuiltinFunDecl::U32AsI32 => todo!(),
-
-        BuiltinFunDecl::U32AsU64 => todo!(),
-
-        BuiltinFunDecl::I8Shl => todo!(),
-
-        BuiltinFunDecl::U8Shl => todo!(),
-
-        BuiltinFunDecl::I32Shl => todo!(),
-
-        BuiltinFunDecl::U32Shl => todo!(),
-
-        BuiltinFunDecl::I8Cmp => todo!(),
-
-        BuiltinFunDecl::U8Cmp => todo!(),
-
-        BuiltinFunDecl::I32Cmp => todo!(),
-
-        BuiltinFunDecl::U32Cmp => todo!(),
-
-        BuiltinFunDecl::U64Cmp => todo!(),
-
-        BuiltinFunDecl::I8Add => todo!(),
-
-        BuiltinFunDecl::U8Add => todo!(),
-
-        BuiltinFunDecl::I32Add => todo!(),
-
-        BuiltinFunDecl::U32Add => todo!(),
-
-        BuiltinFunDecl::U64Add => todo!(),
-
-        BuiltinFunDecl::I8Sub => todo!(),
-
-        BuiltinFunDecl::U8Sub => todo!(),
-
-        BuiltinFunDecl::I32Sub => todo!(),
-
-        BuiltinFunDecl::U32Sub => todo!(),
-
-        BuiltinFunDecl::I8Mul => todo!(),
-
-        BuiltinFunDecl::U8Mul => todo!(),
-
-        BuiltinFunDecl::I32Mul => todo!(),
-
-        BuiltinFunDecl::U32Mul => todo!(),
-
-        BuiltinFunDecl::U64Mul => todo!(),
-
-        BuiltinFunDecl::I8Div => todo!(),
-
-        BuiltinFunDecl::U8Div => todo!(),
-
-        BuiltinFunDecl::I32Div => todo!(),
-
-        BuiltinFunDecl::U32Div => todo!(),
-
-        BuiltinFunDecl::I8Eq => todo!(),
-
-        BuiltinFunDecl::U8Eq => todo!(),
-
-        BuiltinFunDecl::I32Eq => todo!(),
-
-        BuiltinFunDecl::U32Eq => todo!(),
-
-        BuiltinFunDecl::U32Mod => todo!(),
-
-        BuiltinFunDecl::I8Rem => todo!(),
-
-        BuiltinFunDecl::U8Rem => todo!(),
-
-        BuiltinFunDecl::I32Rem => todo!(),
-
-        BuiltinFunDecl::U32Rem => todo!(),
-
-        BuiltinFunDecl::I32AsU32 => todo!(),
-
-        BuiltinFunDecl::I32Abs => todo!(),
-
-        BuiltinFunDecl::I8Neg => todo!(),
-
-        BuiltinFunDecl::I32Neg => todo!(),
-
-        BuiltinFunDecl::ThrowUnchecked { exn, a, exn_q } => {
-            // prim throwUnchecked(exn: exn) a / exn?
-            let exn = ty_to_c(exn, record_tags);
-            let a = ty_to_c(a, record_tags);
-            let exn_q = ty_to_c(exn_q, record_tags);
-            writedoc!(
+        BuiltinFunDecl::PrintStrNoNl => {
+            w!(p, "static uint64_t _fun_{}(uint64_t str) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "uint64_t* s = (uint64_t*)str;");
+            p.nl();
+            w!(p, "uint64_t bytes_arr = s[1];");
+            p.nl();
+            w!(p, "uint32_t len = array_len(bytes_arr);");
+            p.nl();
+            w!(
                 p,
-                "
-                {a} throwUnchecked_{exn}_{a}_{exn_q}({exn} exn) {{
-                    throw exn;
-                }}
-                ",
+                "uint8_t* data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];"
             );
+            p.nl();
+            w!(p, "fwrite(data, 1, len, stdout);");
+            p.nl();
+            w!(p, "return _singleton_{};", pgm.unit_con_idx.0);
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::ShrI8 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a >> (int8_t)(uint8_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::ShrU8 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint8_t)a >> (uint8_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::ShrI32 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a >> (int32_t)(uint32_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::ShrU32 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint32_t)a >> (uint32_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::BitAndI8 | BuiltinFunDecl::BitAndU8 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint8_t)a & (uint8_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::BitAndI32 | BuiltinFunDecl::BitAndU32 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint32_t)a & (uint32_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::BitOrI8 | BuiltinFunDecl::BitOrU8 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint8_t)a | (uint8_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::BitOrI32 | BuiltinFunDecl::BitOrU32 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint32_t)a | (uint32_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::BitXorU32 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint32_t)a ^ (uint32_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::ToStrI8 => {
+            gen_tostr_fn(idx, "int8_t", "(int8_t)(uint8_t)", pgm, p);
+        }
+
+        BuiltinFunDecl::ToStrU8 => {
+            gen_tostr_fn(idx, "uint8_t", "(uint8_t)", pgm, p);
+        }
+
+        BuiltinFunDecl::ToStrI32 => {
+            gen_tostr_fn(idx, "int32_t", "(int32_t)(uint32_t)", pgm, p);
+        }
+
+        BuiltinFunDecl::ToStrU32 => {
+            gen_tostr_fn(idx, "uint32_t", "(uint32_t)", pgm, p);
+        }
+
+        BuiltinFunDecl::ToStrU64 => {
+            gen_tostr_fn(idx, "uint64_t", "", pgm, p);
+        }
+
+        BuiltinFunDecl::ToStrI64 => {
+            gen_tostr_fn(idx, "int64_t", "(int64_t)", pgm, p);
+        }
+
+        BuiltinFunDecl::U8AsI8 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)(uint8_t)(int8_t)(uint8_t)a;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U8AsU32 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)(uint32_t)(uint8_t)a;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U32AsU8 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)(uint8_t)(uint32_t)a;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U32AsI32 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)(uint32_t)(int32_t)(uint32_t)a;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U32AsU64 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)(uint32_t)a;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I8Shl => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a << (int8_t)(uint8_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U8Shl => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint8_t)a << (uint8_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I32Shl => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a << (int32_t)(uint32_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U32Shl => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint32_t)a << (uint32_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I8Cmp => gen_cmp_fn(idx, "(int8_t)(uint8_t)", pgm, p),
+        BuiltinFunDecl::U8Cmp => gen_cmp_fn(idx, "(uint8_t)", pgm, p),
+        BuiltinFunDecl::I32Cmp => gen_cmp_fn(idx, "(int32_t)(uint32_t)", pgm, p),
+        BuiltinFunDecl::U32Cmp => gen_cmp_fn(idx, "(uint32_t)", pgm, p),
+        BuiltinFunDecl::U64Cmp => gen_cmp_fn(idx, "", pgm, p),
+
+        BuiltinFunDecl::I8Add => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a + (int8_t)(uint8_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U8Add => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint8_t)a + (uint8_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I32Add => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a + (int32_t)(uint32_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U32Add => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint32_t)a + (uint32_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U64Add => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return a + b;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I8Sub => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a - (int8_t)(uint8_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U8Sub => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint8_t)a - (uint8_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I32Sub => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a - (int32_t)(uint32_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U32Sub => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint32_t)a - (uint32_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I8Mul => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a * (int8_t)(uint8_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U8Mul => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint8_t)a * (uint8_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I32Mul => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a * (int32_t)(uint32_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U32Mul => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint32_t)a * (uint32_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U64Mul => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return a * b;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I8Div => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a / (int8_t)(uint8_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U8Div => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint8_t)a / (uint8_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I32Div => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a / (int32_t)(uint32_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U32Div => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint32_t)a / (uint32_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I8Eq | BuiltinFunDecl::U8Eq => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return ((uint8_t)a == (uint8_t)b) ? _singleton_{} : _singleton_{};",
+                pgm.true_con_idx.0,
+                pgm.false_con_idx.0
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I32Eq | BuiltinFunDecl::U32Eq => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return ((uint32_t)a == (uint32_t)b) ? _singleton_{} : _singleton_{};",
+                pgm.true_con_idx.0,
+                pgm.false_con_idx.0
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U32Mod => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint32_t)a % (uint32_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I8Rem => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a % (int8_t)(uint8_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U8Rem => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint8_t)a % (uint8_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I32Rem => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a % (int32_t)(uint32_t)b);"
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::U32Rem => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)((uint32_t)a % (uint32_t)b);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I32AsU32 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)(uint32_t)(int32_t)(uint32_t)a;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I32Abs => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "int32_t v = (int32_t)(uint32_t)a;");
+            p.nl();
+            w!(p, "return (uint64_t)(uint32_t)(v < 0 ? -v : v);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I8Neg => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)(uint8_t)(-(int8_t)(uint8_t)a);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::I32Neg => {
+            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)(uint32_t)(-(int32_t)(uint32_t)a);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        BuiltinFunDecl::ThrowUnchecked { .. } => {
+            w!(p, "static uint64_t _fun_{}(uint64_t exn) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "throw_exn(exn);");
+            p.nl();
+            w!(p, "return 0; // unreachable");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
         }
 
         BuiltinFunDecl::Try {
-            a,
-            exn,
-            exn_q,
-            ok_con: _,
-            err_con: _,
+            ok_con, err_con, ..
         } => {
-            // prim try(cb: Fn() a / exn) Result[exn, a] / exn?
-            let result = ty_to_c(
-                &mono::Type::Named(mono::NamedType {
-                    name: SmolStr::new_static("Result"),
-                    args: vec![exn.clone(), a.clone()],
-                }),
-                record_tags,
-            );
-            let exn = ty_to_c(exn, record_tags);
-            let a = ty_to_c(a, record_tags);
-            let exn_q = ty_to_c(exn_q, record_tags);
-            writedoc!(
+            w!(p, "static uint64_t _fun_{}(uint64_t cb) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "ExnHandler handler;");
+            p.nl();
+            w!(p, "handler.prev = current_exn_handler;");
+            p.nl();
+            w!(p, "current_exn_handler = &handler;");
+            p.nl();
+            w!(p, "if (setjmp(handler.buf) == 0) {{");
+            p.indent();
+            p.nl();
+            w!(p, "// Call the closure");
+            p.nl();
+            w!(p, "uint64_t* closure = (uint64_t*)cb;");
+            p.nl();
+            w!(
                 p,
-                "
-                {result} try_{a}_{exn}_{exn_q}(Closure cb) {{
-                    try {{
-                        // TODO: call closure, return return value
-                    }} catch ({exn} exn) {{
-                        // TODO: return error
-                    }}
-                }}
-                ",
+                "uint64_t (*fn)(uint64_t) = (uint64_t (*)(uint64_t))((uint64_t*)cb)[1];"
             );
+            p.nl();
+            w!(p, "uint64_t result = fn(cb);");
+            p.nl();
+            w!(p, "current_exn_handler = handler.prev;");
+            p.nl();
+            w!(p, "// Allocate Ok result");
+            p.nl();
+            w!(p, "uint64_t* ok = alloc_words(2);");
+            p.nl();
+            w!(p, "ok[0] = {};", ok_con.0);
+            p.nl();
+            w!(p, "ok[1] = result;");
+            p.nl();
+            w!(p, "return (uint64_t)ok;");
+            p.dedent();
+            p.nl();
+            w!(p, "}} else {{");
+            p.indent();
+            p.nl();
+            w!(p, "// Exception was thrown");
+            p.nl();
+            w!(p, "current_exn_handler = handler.prev;");
+            p.nl();
+            w!(p, "uint64_t* err = alloc_words(2);");
+            p.nl();
+            w!(p, "err[0] = {};", err_con.0);
+            p.nl();
+            w!(p, "err[1] = handler.exn_value;");
+            p.nl();
+            w!(p, "return (uint64_t)err;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
         }
 
-        BuiltinFunDecl::ArrayNew { t: _ } => todo!(),
+        BuiltinFunDecl::ArrayNew { t } => {
+            let repr = Repr::from_mono_ty(t);
+            let (fn_name, tag) = match repr {
+                Repr::U8 => ("array_new_u8", "ARRAY_U8_TAG"),
+                Repr::U32 => ("array_new_u32", "ARRAY_U32_TAG"),
+                Repr::U64 => ("array_new_u64", "ARRAY_U64_TAG"),
+            };
+            w!(p, "static uint64_t _fun_{}(uint64_t len) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "uint64_t arr = {}((uint32_t)len);", fn_name);
+            p.nl();
+            w!(p, "((uint64_t*)arr)[ARRAY_TAG_IDX] = {};", tag);
+            p.nl();
+            w!(p, "return arr;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
 
-        BuiltinFunDecl::ArrayLen => todo!(),
+        BuiltinFunDecl::ArrayLen => {
+            w!(p, "static uint64_t _fun_{}(uint64_t arr) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t)array_len(arr);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
 
-        BuiltinFunDecl::ArrayGet { t: _ } => todo!(),
+        BuiltinFunDecl::ArrayGet { t } => {
+            let repr = Repr::from_mono_ty(t);
+            let fn_name = match repr {
+                Repr::U8 => "array_get_u8",
+                Repr::U32 => "array_get_u32",
+                Repr::U64 => "array_get_u64",
+            };
+            w!(
+                p,
+                "static uint64_t _fun_{}(uint64_t arr, uint64_t idx) {{",
+                idx
+            );
+            p.indent();
+            p.nl();
+            w!(p, "return (uint64_t){}(arr, (uint32_t)idx);", fn_name);
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
 
-        BuiltinFunDecl::ArraySet { t: _ } => todo!(),
+        BuiltinFunDecl::ArraySet { t } => {
+            let repr = Repr::from_mono_ty(t);
+            let fn_name = match repr {
+                Repr::U8 => "array_set_u8",
+                Repr::U32 => "array_set_u32",
+                Repr::U64 => "array_set_u64",
+            };
+            let cast = match repr {
+                Repr::U8 => "(uint8_t)",
+                Repr::U32 => "(uint32_t)",
+                Repr::U64 => "",
+            };
+            w!(
+                p,
+                "static uint64_t _fun_{}(uint64_t arr, uint64_t idx, uint64_t val) {{",
+                idx
+            );
+            p.indent();
+            p.nl();
+            w!(p, "{}(arr, (uint32_t)idx, {}val);", fn_name, cast);
+            p.nl();
+            w!(p, "return _singleton_{};", pgm.unit_con_idx.0);
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
 
-        BuiltinFunDecl::ArraySlice { t: _ } => todo!(),
+        BuiltinFunDecl::ArraySlice { t } => {
+            let repr = Repr::from_mono_ty(t);
+            let (fn_name, tag) = match repr {
+                Repr::U8 => ("array_slice_u8", "ARRAY_U8_TAG"),
+                Repr::U32 => ("array_slice_u32", "ARRAY_U32_TAG"),
+                Repr::U64 => ("array_slice_u64", "ARRAY_U64_TAG"),
+            };
+            w!(
+                p,
+                "static uint64_t _fun_{}(uint64_t arr, uint64_t start, uint64_t end) {{",
+                idx
+            );
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return {}(arr, (uint32_t)start, (uint32_t)end, {});",
+                fn_name,
+                tag
+            );
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
 
-        BuiltinFunDecl::ArrayCopyWithin { t: _ } => todo!(),
+        BuiltinFunDecl::ArrayCopyWithin { t } => {
+            let repr = Repr::from_mono_ty(t);
+            let fn_name = match repr {
+                Repr::U8 => "array_copy_within_u8",
+                Repr::U32 => "array_copy_within_u32",
+                Repr::U64 => "array_copy_within_u64",
+            };
+            w!(
+                p,
+                "static uint64_t _fun_{}(uint64_t arr, uint64_t src, uint64_t dst, uint64_t len) {{",
+                idx
+            );
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "{}(arr, (uint32_t)src, (uint32_t)dst, (uint32_t)len);",
+                fn_name
+            );
+            p.nl();
+            w!(p, "return _singleton_{};", pgm.unit_con_idx.0);
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
 
-        BuiltinFunDecl::ReadFileUtf8 => todo!(),
+        BuiltinFunDecl::ReadFileUtf8 => {
+            w!(p, "static uint64_t _fun_{}(uint64_t path_str) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "uint64_t* s = (uint64_t*)path_str;");
+            p.nl();
+            w!(p, "uint64_t bytes_arr = s[1];");
+            p.nl();
+            w!(p, "uint32_t path_len = array_len(bytes_arr);");
+            p.nl();
+            w!(
+                p,
+                "uint8_t* path_data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];"
+            );
+            p.nl();
+            w!(p, "char* path = (char*)malloc(path_len + 1);");
+            p.nl();
+            w!(p, "memcpy(path, path_data, path_len);");
+            p.nl();
+            w!(p, "path[path_len] = '\\0';");
+            p.nl();
+            w!(p, "FILE* f = fopen(path, \"rb\");");
+            p.nl();
+            w!(p, "free(path);");
+            p.nl();
+            w!(
+                p,
+                "if (!f) {{ fprintf(stderr, \"Failed to open file\\n\"); abort(); }}"
+            );
+            p.nl();
+            w!(p, "fseek(f, 0, SEEK_END);");
+            p.nl();
+            w!(p, "long size = ftell(f);");
+            p.nl();
+            w!(p, "fseek(f, 0, SEEK_SET);");
+            p.nl();
+            w!(p, "char* contents = (char*)malloc(size);");
+            p.nl();
+            w!(p, "fread(contents, 1, size, f);");
+            p.nl();
+            w!(p, "fclose(f);");
+            p.nl();
+            w!(
+                p,
+                "uint64_t result = alloc_str({}, ARRAY_U8_TAG, contents, size);",
+                pgm.str_con_idx.0
+            );
+            p.nl();
+            w!(p, "free(contents);");
+            p.nl();
+            w!(p, "return result;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
 
-        BuiltinFunDecl::GetArgs => todo!(),
+        BuiltinFunDecl::GetArgs => {
+            w!(p, "static uint64_t _fun_{}(void) {{", idx);
+            p.indent();
+            p.nl();
+            w!(p, "uint64_t arr = array_new_u64(g_argc);");
+            p.nl();
+            w!(p, "((uint64_t*)arr)[ARRAY_TAG_IDX] = ARRAY_U64_TAG;");
+            p.nl();
+            w!(p, "for (int i = 0; i < g_argc; i++) {{");
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "uint64_t arg_str = alloc_str({}, ARRAY_U8_TAG, g_argv[i], strlen(g_argv[i]));",
+                pgm.str_con_idx.0
+            );
+            p.nl();
+            w!(p, "array_set_u64(arr, i, arg_str);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+            w!(p, "return arr;");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
     }
 }
 
-/// Compile the Fir expression to a C expression.
-#[allow(unused)]
-fn expr(expr: &Expr, cg: &mut Cg, p: &mut Printer) {
-    match expr {
-        Expr::LocalVar(idx) => {
-            write!(p, "{}", cg.locals[idx.as_usize()].name);
+fn gen_tostr_fn(idx: usize, c_type: &str, cast: &str, pgm: &LoweredPgm, p: &mut Printer) {
+    w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+    p.indent();
+    p.nl();
+    w!(p, "char buf[32];");
+    p.nl();
+    w!(
+        p,
+        "int len = snprintf(buf, sizeof(buf), \"%d\", ({}){}a);",
+        c_type,
+        cast
+    );
+    p.nl();
+    w!(
+        p,
+        "return alloc_str({}, ARRAY_U8_TAG, buf, len);",
+        pgm.str_con_idx.0
+    );
+    p.dedent();
+    p.nl();
+    w!(p, "}}");
+    p.nl();
+}
+
+fn gen_cmp_fn(idx: usize, cast: &str, pgm: &LoweredPgm, p: &mut Printer) {
+    w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+    p.indent();
+    p.nl();
+    w!(
+        p,
+        "if ({}a < {}b) return _singleton_{};",
+        cast,
+        cast,
+        pgm.ordering_less_con_idx.0
+    );
+    p.nl();
+    w!(
+        p,
+        "if ({}a > {}b) return _singleton_{};",
+        cast,
+        cast,
+        pgm.ordering_greater_con_idx.0
+    );
+    p.nl();
+    w!(p, "return _singleton_{};", pgm.ordering_equal_con_idx.0);
+    p.dedent();
+    p.nl();
+    w!(p, "}}");
+    p.nl();
+}
+
+fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer) {
+    w!(p, "static uint64_t _fun_{}(", idx);
+    for (i, _) in fun.params.iter().enumerate() {
+        if i > 0 {
+            w!(p, ", ");
+        }
+        w!(p, "uint64_t _p{}", i);
+    }
+    w!(p, ") {{");
+    p.indent();
+    p.nl();
+
+    // Declare all locals
+    for (i, local) in fun.locals.iter().enumerate() {
+        w!(p, "uint64_t _{} = 0; // {}", i, local.name);
+        p.nl();
+    }
+
+    // Copy parameters to locals
+    for (i, _) in fun.params.iter().enumerate() {
+        w!(p, "_{} = _p{};", i, i);
+        p.nl();
+    }
+
+    // Declare result variable
+    w!(p, "uint64_t _result = 0;");
+    p.nl();
+
+    // Generate body
+    for stmt in &fun.body {
+        stmt_to_c(&stmt.node, &fun.locals, cg, p);
+    }
+
+    w!(p, "return _result;");
+    p.dedent();
+    p.nl();
+    w!(p, "}}");
+    p.nl();
+}
+
+fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
+    w!(p, "static uint64_t _closure_{}(uint64_t _closure_obj", idx);
+    for (i, _) in closure.params.iter().enumerate() {
+        w!(p, ", uint64_t _p{}", i);
+    }
+    w!(p, ") {{");
+    p.indent();
+    p.nl();
+
+    // Declare all locals
+    for (i, local) in closure.locals.iter().enumerate() {
+        w!(p, "uint64_t _{} = 0; // {}", i, local.name);
+        p.nl();
+    }
+
+    // Load free variables from closure object
+    for (i, fv) in closure.fvs.iter().enumerate() {
+        w!(
+            p,
+            "_{} = ((uint64_t*)_closure_obj)[{}]; // {}",
+            fv.use_idx.as_usize(),
+            2 + i,
+            fv.id
+        );
+        p.nl();
+    }
+
+    // Copy parameters to locals
+    for (i, _) in closure.params.iter().enumerate() {
+        w!(p, "_{} = _p{};", i, i);
+        p.nl();
+    }
+
+    // Declare result variable
+    w!(p, "uint64_t _result = 0;");
+    p.nl();
+
+    // Generate body
+    for stmt in &closure.body {
+        stmt_to_c(&stmt.node, &closure.locals, cg, p);
+    }
+
+    w!(p, "return _result;");
+    p.dedent();
+    p.nl();
+    w!(p, "}}");
+    p.nl();
+}
+
+fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
+    match stmt {
+        Stmt::Let(LetStmt { lhs, rhs }) => {
+            let rhs_temp = cg.fresh_temp();
+            w!(p, "uint64_t {} = ", rhs_temp);
+            expr_to_c(&rhs.node, locals, cg, p);
+            w!(p, ";");
+            p.nl();
+            pat_bind(&lhs.node, &rhs_temp, locals, cg, p);
         }
 
-        Expr::Fun(fun_idx) => todo!(),
+        Stmt::Assign(AssignStmt { lhs, rhs }) => match &lhs.node {
+            Expr::LocalVar(idx) => {
+                w!(p, "_{} = ", idx.as_usize());
+                expr_to_c(&rhs.node, locals, cg, p);
+                w!(p, ";");
+                p.nl();
+            }
+            Expr::FieldSel(FieldSelExpr {
+                object,
+                field: _,
+                idx,
+            }) => {
+                let obj_temp = cg.fresh_temp();
+                w!(p, "uint64_t {} = ", obj_temp);
+                expr_to_c(&object.node, locals, cg, p);
+                w!(p, ";");
+                p.nl();
+                w!(p, "((uint64_t*){})[{}] = ", obj_temp, 1 + idx);
+                expr_to_c(&rhs.node, locals, cg, p);
+                w!(p, ";");
+                p.nl();
+            }
+            _ => {
+                w!(p, "// TODO: complex assignment");
+                p.nl();
+            }
+        },
 
-        Expr::Con(heap_obj_idx) => todo!(),
+        Stmt::Expr(expr) => {
+            w!(p, "_result = ");
+            expr_to_c(&expr.node, locals, cg, p);
+            w!(p, ";");
+            p.nl();
+        }
 
-        Expr::ConAlloc(heap_obj_idx, ls) => todo!(),
+        Stmt::While(WhileStmt {
+            label: _,
+            cond,
+            body,
+        }) => {
+            w!(p, "while (1) {{");
+            p.indent();
+            p.nl();
+            let cond_temp = cg.fresh_temp();
+            w!(p, "uint64_t {} = ", cond_temp);
+            expr_to_c(&cond.node, locals, cg, p);
+            w!(p, ";");
+            p.nl();
+            w!(
+                p,
+                "if ({} == _singleton_{}) break;",
+                cond_temp,
+                cg.pgm.false_con_idx.0
+            );
+            p.nl();
+            for stmt in body {
+                stmt_to_c(&stmt.node, locals, cg, p);
+            }
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
 
-        Expr::FieldSel(field_sel_expr) => todo!(),
+        Stmt::Break { label: _, level } => {
+            // For now, only support level 0 breaks
+            if *level == 0 {
+                w!(p, "break;");
+            } else {
+                w!(p, "goto _break_{};", level);
+            }
+            p.nl();
+        }
 
-        Expr::Call(call_expr) => todo!(),
-
-        Expr::Int(_) => todo!(),
-
-        Expr::Str(_) => todo!(),
-
-        Expr::BoolAnd(l, l1) => todo!(),
-
-        Expr::BoolOr(l, l1) => todo!(),
-
-        Expr::Return(l) => todo!(),
-
-        Expr::Match(match_expr) => todo!(),
-
-        Expr::If(if_expr) => todo!(),
-
-        Expr::ClosureAlloc(closure_idx) => todo!(),
-
-        Expr::Is(is_expr) => todo!(),
-
-        Expr::Do(ls) => todo!(),
-
-        Expr::Variant(l) => todo!(),
+        Stmt::Continue { label: _, level } => {
+            if *level == 0 {
+                w!(p, "continue;");
+            } else {
+                w!(p, "goto _continue_{};", level);
+            }
+            p.nl();
+        }
     }
+}
+
+fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
+    match expr {
+        Expr::LocalVar(idx) => {
+            w!(p, "_{}", idx.as_usize());
+        }
+
+        Expr::Fun(fun_idx) => {
+            // Return a closure object for the function
+            w!(p, "_fun_closure_{}", fun_idx.as_usize());
+        }
+
+        Expr::Con(heap_obj_idx) => {
+            // Return a constructor closure object
+            w!(p, "_con_closure_{}", heap_obj_idx.0);
+        }
+
+        Expr::ConAlloc(heap_obj_idx, args) => {
+            if args.is_empty() {
+                // Return singleton
+                w!(p, "_singleton_{}", heap_obj_idx.0);
+            } else {
+                // Allocate object
+                w!(p, "({{");
+                p.indent();
+                p.nl();
+                w!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
+                p.nl();
+                w!(p, "_obj[0] = {};", heap_obj_idx.0);
+                p.nl();
+                for (i, arg) in args.iter().enumerate() {
+                    w!(p, "_obj[{}] = ", 1 + i);
+                    expr_to_c(&arg.node, locals, cg, p);
+                    w!(p, ";");
+                    p.nl();
+                }
+                w!(p, "(uint64_t)_obj;");
+                p.dedent();
+                p.nl();
+                w!(p, "}})");
+            }
+        }
+
+        Expr::FieldSel(FieldSelExpr {
+            object,
+            field: _,
+            idx,
+        }) => {
+            w!(p, "((uint64_t*)(");
+            expr_to_c(&object.node, locals, cg, p);
+            w!(p, "))[{}]", 1 + idx);
+        }
+
+        Expr::Call(CallExpr { fun, args }) => {
+            // Check if direct function call
+            match &fun.node {
+                Expr::Fun(fun_idx) => {
+                    // Direct function call
+                    w!(p, "_fun_{}(", fun_idx.as_usize());
+                    for (i, arg) in args.iter().enumerate() {
+                        if i > 0 {
+                            w!(p, ", ");
+                        }
+                        expr_to_c(&arg.node, locals, cg, p);
+                    }
+                    w!(p, ")");
+                }
+                Expr::Con(heap_obj_idx) => {
+                    // Direct constructor allocation
+                    if args.is_empty() {
+                        w!(p, "_singleton_{}", heap_obj_idx.0);
+                    } else {
+                        w!(p, "({{");
+                        p.indent();
+                        p.nl();
+                        w!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
+                        p.nl();
+                        w!(p, "_obj[0] = {};", heap_obj_idx.0);
+                        p.nl();
+                        for (i, arg) in args.iter().enumerate() {
+                            w!(p, "_obj[{}] = ", 1 + i);
+                            expr_to_c(&arg.node, locals, cg, p);
+                            w!(p, ";");
+                            p.nl();
+                        }
+                        w!(p, "(uint64_t)_obj;");
+                        p.dedent();
+                        p.nl();
+                        w!(p, "}})");
+                    }
+                }
+                _ => {
+                    // Closure call
+                    w!(p, "({{");
+                    p.indent();
+                    p.nl();
+                    let fun_temp = cg.fresh_temp();
+                    w!(p, "uint64_t {} = ", fun_temp);
+                    expr_to_c(&fun.node, locals, cg, p);
+                    w!(p, ";");
+                    p.nl();
+                    w!(p, "uint32_t _tag = get_tag({});", fun_temp);
+                    p.nl();
+                    w!(p, "uint64_t _call_result;");
+                    p.nl();
+
+                    // Check tag and dispatch
+                    w!(p, "if (_tag == CON_CON_TAG) {{");
+                    p.indent();
+                    p.nl();
+                    w!(p, "uint32_t _con_tag = ((uint32_t*){})[ 1];", fun_temp);
+                    p.nl();
+                    w!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
+                    p.nl();
+                    w!(p, "_obj[0] = _con_tag;");
+                    p.nl();
+                    for (i, arg) in args.iter().enumerate() {
+                        w!(p, "_obj[{}] = ", 1 + i);
+                        expr_to_c(&arg.node, locals, cg, p);
+                        w!(p, ";");
+                        p.nl();
+                    }
+                    w!(p, "_call_result = (uint64_t)_obj;");
+                    p.dedent();
+                    p.nl();
+                    w!(p, "}} else if (_tag == FUN_CON_TAG) {{");
+                    p.indent();
+                    p.nl();
+                    // Cast to function pointer and call
+                    let arg_count = args.len();
+                    w!(p, "uint64_t (*_fn)(");
+                    for i in 0..arg_count {
+                        if i > 0 {
+                            w!(p, ", ");
+                        }
+                        w!(p, "uint64_t");
+                    }
+                    w!(p, ") = (uint64_t (*)(");
+                    for i in 0..arg_count {
+                        if i > 0 {
+                            w!(p, ", ");
+                        }
+                        w!(p, "uint64_t");
+                    }
+                    w!(p, "))((uint64_t*){})[ 1];", fun_temp);
+                    p.nl();
+                    w!(p, "_call_result = _fn(");
+                    for (i, arg) in args.iter().enumerate() {
+                        if i > 0 {
+                            w!(p, ", ");
+                        }
+                        expr_to_c(&arg.node, locals, cg, p);
+                    }
+                    w!(p, ");");
+                    p.dedent();
+                    p.nl();
+                    w!(p, "}} else {{");
+                    p.indent();
+                    p.nl();
+                    // Closure call - need to pass closure object as first arg
+                    w!(p, "uint64_t (*_fn)(uint64_t");
+                    for _ in 0..args.len() {
+                        w!(p, ", uint64_t");
+                    }
+                    w!(p, ") = (uint64_t (*)(uint64_t");
+                    for _ in 0..args.len() {
+                        w!(p, ", uint64_t");
+                    }
+                    w!(p, "))((uint64_t*){})[ 1];", fun_temp);
+                    p.nl();
+                    w!(p, "_call_result = _fn({}", fun_temp);
+                    for arg in args {
+                        w!(p, ", ");
+                        expr_to_c(&arg.node, locals, cg, p);
+                    }
+                    w!(p, ");");
+                    p.dedent();
+                    p.nl();
+                    w!(p, "}}");
+                    p.nl();
+                    w!(p, "_call_result;");
+                    p.dedent();
+                    p.nl();
+                    w!(p, "}})");
+                }
+            }
+        }
+
+        Expr::Int(val) => {
+            w!(p, "{}ULL", val);
+        }
+
+        Expr::Str(s) => {
+            // Allocate string literal
+            w!(p, "alloc_str({}, ARRAY_U8_TAG, \"", cg.pgm.str_con_idx.0);
+            for byte in s.bytes() {
+                if byte == b'"' || byte == b'\\' || !(32..=126).contains(&byte) {
+                    w!(p, "\\x{:02x}", byte);
+                } else {
+                    w!(p, "{}", byte as char);
+                }
+            }
+            w!(p, "\", {})", s.len());
+        }
+
+        Expr::BoolAnd(left, right) => {
+            w!(p, "({{");
+            p.indent();
+            p.nl();
+            w!(p, "uint64_t _and_result = ");
+            expr_to_c(&left.node, locals, cg, p);
+            w!(p, ";");
+            p.nl();
+            w!(
+                p,
+                "if (_and_result == _singleton_{}) {{",
+                cg.pgm.true_con_idx.0
+            );
+            p.indent();
+            p.nl();
+            w!(p, "_and_result = ");
+            expr_to_c(&right.node, locals, cg, p);
+            w!(p, ";");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+            w!(p, "_and_result;");
+            p.dedent();
+            p.nl();
+            w!(p, "}})");
+        }
+
+        Expr::BoolOr(left, right) => {
+            w!(p, "({{");
+            p.indent();
+            p.nl();
+            w!(p, "uint64_t _or_result = ");
+            expr_to_c(&left.node, locals, cg, p);
+            w!(p, ";");
+            p.nl();
+            w!(
+                p,
+                "if (_or_result == _singleton_{}) {{",
+                cg.pgm.false_con_idx.0
+            );
+            p.indent();
+            p.nl();
+            w!(p, "_or_result = ");
+            expr_to_c(&right.node, locals, cg, p);
+            w!(p, ";");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+            w!(p, "_or_result;");
+            p.dedent();
+            p.nl();
+            w!(p, "}})");
+        }
+
+        Expr::Return(expr) => {
+            w!(p, "({{");
+            p.indent();
+            p.nl();
+            w!(p, "return ");
+            expr_to_c(&expr.node, locals, cg, p);
+            w!(p, ";");
+            p.nl();
+            w!(p, "0;"); // unreachable
+            p.dedent();
+            p.nl();
+            w!(p, "}})");
+        }
+
+        Expr::Match(MatchExpr { scrutinee, alts }) => {
+            w!(p, "({{");
+            p.indent();
+            p.nl();
+            let scrut_temp = cg.fresh_temp();
+            w!(p, "uint64_t {} = ", scrut_temp);
+            expr_to_c(&scrutinee.node, locals, cg, p);
+            w!(p, ";");
+            p.nl();
+            w!(p, "uint64_t _match_result = 0;");
+            p.nl();
+
+            for (i, alt) in alts.iter().enumerate() {
+                if i > 0 {
+                    w!(p, " else ");
+                }
+                // Generate pattern match condition
+                let cond = pat_to_cond(&alt.pat.node, &scrut_temp, cg);
+                w!(p, "if ({}", cond);
+
+                // Add guard if present
+                if let Some(guard) = &alt.guard {
+                    w!(p, " && (");
+                    expr_to_c(&guard.node, locals, cg, p);
+                    w!(p, " == _singleton_{})", cg.pgm.true_con_idx.0);
+                }
+
+                w!(p, ") {{");
+                p.indent();
+                p.nl();
+
+                // Bind pattern variables
+                pat_bind(&alt.pat.node, &scrut_temp, locals, cg, p);
+
+                // Generate RHS
+                for stmt in &alt.rhs {
+                    stmt_to_c(&stmt.node, locals, cg, p);
+                }
+                w!(p, "_match_result = _result;");
+                p.dedent();
+                p.nl();
+                w!(p, "}}");
+            }
+            w!(p, " else {{");
+            p.indent();
+            p.nl();
+            w!(p, "fprintf(stderr, \"Non-exhaustive pattern match\\n\");");
+            p.nl();
+            w!(p, "abort();");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+            w!(p, "_match_result;");
+            p.dedent();
+            p.nl();
+            w!(p, "}})");
+        }
+
+        Expr::If(IfExpr {
+            branches,
+            else_branch,
+        }) => {
+            w!(p, "({{");
+            p.indent();
+            p.nl();
+            w!(p, "uint64_t _if_result = 0;");
+            p.nl();
+
+            for (i, (cond, body)) in branches.iter().enumerate() {
+                if i > 0 {
+                    w!(p, " else ");
+                }
+                let cond_temp = cg.fresh_temp();
+                w!(p, "{{ uint64_t {} = ", cond_temp);
+                expr_to_c(&cond.node, locals, cg, p);
+                w!(p, ";");
+                p.nl();
+                w!(
+                    p,
+                    "if ({} == _singleton_{}) {{",
+                    cond_temp,
+                    cg.pgm.true_con_idx.0
+                );
+                p.indent();
+                p.nl();
+                for stmt in body {
+                    stmt_to_c(&stmt.node, locals, cg, p);
+                }
+                w!(p, "_if_result = _result;");
+                p.dedent();
+                p.nl();
+                w!(p, "}}");
+            }
+
+            if let Some(else_body) = else_branch {
+                w!(p, " else {{");
+                p.indent();
+                p.nl();
+                for stmt in else_body {
+                    stmt_to_c(&stmt.node, locals, cg, p);
+                }
+                w!(p, "_if_result = _result;");
+                p.dedent();
+                p.nl();
+                w!(p, "}}");
+            }
+
+            // Close all the blocks we opened for conditions
+            for _ in 0..branches.len() {
+                w!(p, " }}");
+            }
+            p.nl();
+            w!(p, "_if_result;");
+            p.dedent();
+            p.nl();
+            w!(p, "}})");
+        }
+
+        Expr::ClosureAlloc(closure_idx) => {
+            let closure = &cg.pgm.closures[closure_idx.as_usize()];
+            w!(p, "({{");
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "uint64_t* _clos = alloc_words({});",
+                2 + closure.fvs.len()
+            );
+            p.nl();
+            w!(p, "_clos[0] = CLOSURE_CON_TAG;");
+            p.nl();
+            w!(
+                p,
+                "_clos[1] = (uint64_t)_closure_{};",
+                closure_idx.as_usize()
+            );
+            p.nl();
+            for (i, fv) in closure.fvs.iter().enumerate() {
+                w!(
+                    p,
+                    "_clos[{}] = _{}; // {}",
+                    2 + i,
+                    fv.alloc_idx.as_usize(),
+                    fv.id
+                );
+                p.nl();
+            }
+            w!(p, "(uint64_t)_clos;");
+            p.dedent();
+            p.nl();
+            w!(p, "}})");
+        }
+
+        Expr::Is(IsExpr { expr, pat }) => {
+            w!(p, "({{");
+            p.indent();
+            p.nl();
+            let expr_temp = cg.fresh_temp();
+            w!(p, "uint64_t {} = ", expr_temp);
+            expr_to_c(&expr.node, locals, cg, p);
+            w!(p, ";");
+            p.nl();
+            let cond = pat_to_cond(&pat.node, &expr_temp, cg);
+            w!(p, "uint64_t _is_result;");
+            p.nl();
+            w!(p, "if ({}) {{", cond);
+            p.indent();
+            p.nl();
+            pat_bind(&pat.node, &expr_temp, locals, cg, p);
+            w!(p, "_is_result = _singleton_{};", cg.pgm.true_con_idx.0);
+            p.dedent();
+            p.nl();
+            w!(p, "}} else {{");
+            p.indent();
+            p.nl();
+            w!(p, "_is_result = _singleton_{};", cg.pgm.false_con_idx.0);
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+            w!(p, "_is_result;");
+            p.dedent();
+            p.nl();
+            w!(p, "}})");
+        }
+
+        Expr::Do(stmts) => {
+            w!(p, "({{");
+            p.indent();
+            p.nl();
+            for stmt in stmts {
+                stmt_to_c(&stmt.node, locals, cg, p);
+            }
+            w!(p, "_result;");
+            p.dedent();
+            p.nl();
+            w!(p, "}})");
+        }
+
+        Expr::Variant(expr) => {
+            // Variants are represented as their underlying type
+            expr_to_c(&expr.node, locals, cg, p);
+        }
+    }
+}
+
+/// Generate a C condition expression for pattern matching
+fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
+    match pat {
+        Pat::Var(_) | Pat::Ignore => "1".to_string(),
+
+        Pat::Con(ConPat { con, fields }) => {
+            let mut cond = format!("(get_tag({}) == {})", scrutinee, con.0);
+            for (i, field_pat) in fields.iter().enumerate() {
+                let field_expr = format!("((uint64_t*){})[{}]", scrutinee, 1 + i);
+                let field_cond = pat_to_cond(&field_pat.node, &field_expr, cg);
+                if field_cond != "1" {
+                    cond = format!("({} && {})", cond, field_cond);
+                }
+            }
+            cond
+        }
+
+        Pat::Str(s) => {
+            let mut escaped = String::new();
+            for byte in s.bytes() {
+                if byte == b'"' || byte == b'\\' || !(32..=126).contains(&byte) {
+                    escaped.push_str(&format!("\\x{:02x}", byte));
+                } else {
+                    escaped.push(byte as char);
+                }
+            }
+            format!("str_eq({}, \"{}\", {})", scrutinee, escaped, s.len())
+        }
+
+        Pat::Char(c) => {
+            format!(
+                "(get_tag({}) == {} && ((uint64_t*){})[1] == {})",
+                scrutinee, cg.pgm.char_con_idx.0, scrutinee, *c as u32
+            )
+        }
+
+        Pat::Or(p1, p2) => {
+            let c1 = pat_to_cond(&p1.node, scrutinee, cg);
+            let c2 = pat_to_cond(&p2.node, scrutinee, cg);
+            format!("({} || {})", c1, c2)
+        }
+
+        Pat::Variant(inner) => pat_to_cond(&inner.node, scrutinee, cg),
+    }
+}
+
+/// Bind pattern variables to the scrutinee
+fn pat_bind(pat: &Pat, scrutinee: &str, _locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
+    match pat {
+        Pat::Var(idx) => {
+            w!(p, "_{} = {};", idx.as_usize(), scrutinee);
+            p.nl();
+        }
+
+        Pat::Ignore => {}
+
+        Pat::Con(ConPat { con: _, fields }) => {
+            for (i, field_pat) in fields.iter().enumerate() {
+                let field_expr = format!("((uint64_t*){})[{}]", scrutinee, 1 + i);
+                pat_bind(&field_pat.node, &field_expr, _locals, cg, p);
+            }
+        }
+
+        Pat::Str(_) | Pat::Char(_) => {}
+
+        Pat::Or(p1, p2) => {
+            // For or patterns, we need to try the first, then the second
+            // The binders in both branches should be the same
+            let cond1 = pat_to_cond(&p1.node, scrutinee, cg);
+            w!(p, "if ({}) {{", cond1);
+            p.indent();
+            p.nl();
+            pat_bind(&p1.node, scrutinee, _locals, cg, p);
+            p.dedent();
+            p.nl();
+            w!(p, "}} else {{");
+            p.indent();
+            p.nl();
+            pat_bind(&p2.node, scrutinee, _locals, cg, p);
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
+            p.nl();
+        }
+
+        Pat::Variant(inner) => {
+            pat_bind(&inner.node, scrutinee, _locals, cg, p);
+        }
+    }
+}
+
+fn generate_init_fn(pgm: &LoweredPgm, p: &mut Printer) {
+    w!(p, "static void _init(void) {{");
+    p.indent();
+    p.nl();
+
+    // Initialize singletons for nullary constructors
+    for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
+        match heap_obj {
+            HeapObj::Source(source_con) if source_con.fields.is_empty() => {
+                w!(p, "_singleton_{} = (uint64_t)alloc_words(1);", tag);
+                p.nl();
+                w!(p, "*(uint32_t*)_singleton_{} = {};", tag, tag);
+                p.nl();
+            }
+            HeapObj::Record(record) if record.fields.is_empty() => {
+                w!(p, "_singleton_{} = (uint64_t)alloc_words(1);", tag);
+                p.nl();
+                w!(p, "*(uint32_t*)_singleton_{} = {};", tag, tag);
+                p.nl();
+            }
+            _ => {}
+        }
+    }
+
+    // Initialize function closure objects
+    for (i, fun) in pgm.funs.iter().enumerate() {
+        if let Fun::Source(_) = fun {
+            w!(p, "_fun_closure_{} = (uint64_t)alloc_words(2);", i);
+            p.nl();
+            w!(p, "((uint64_t*)_fun_closure_{})[0] = FUN_CON_TAG;", i);
+            p.nl();
+            w!(
+                p,
+                "((uint64_t*)_fun_closure_{})[1] = (uint64_t)_fun_{};",
+                i,
+                i
+            );
+            p.nl();
+        }
+    }
+
+    // Initialize constructor closure objects
+    for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
+        match heap_obj {
+            HeapObj::Source(source_con) if !source_con.fields.is_empty() => {
+                w!(p, "_con_closure_{} = (uint64_t)alloc_words(2);", tag);
+                p.nl();
+                w!(p, "((uint64_t*)_con_closure_{})[0] = CON_CON_TAG;", tag);
+                p.nl();
+                w!(p, "((uint64_t*)_con_closure_{})[1] = {};", tag, tag);
+                p.nl();
+            }
+            _ => {}
+        }
+    }
+
+    p.dedent();
+    p.nl();
+    w!(p, "}}");
+    p.nl();
+}
+
+fn generate_main_fn(pgm: &LoweredPgm, p: &mut Printer) {
+    // Find the main function
+    let main_idx = pgm.funs.iter().enumerate().find_map(|(i, fun)| match fun {
+        Fun::Source(source) if source.name.node.as_str() == "main" => Some(i),
+        _ => None,
+    });
+
+    p.nl();
+    w!(p, "int main(int argc, char** argv) {{");
+    p.indent();
+    p.nl();
+    w!(p, "g_argc = argc;");
+    p.nl();
+    w!(p, "g_argv = argv;");
+    p.nl();
+    w!(p, "_init();");
+    p.nl();
+
+    if let Some(main_idx) = main_idx {
+        w!(p, "_fun_{}();", main_idx);
+        p.nl();
+    } else {
+        w!(p, "fprintf(stderr, \"No main function found\\n\");");
+        p.nl();
+        w!(p, "return 1;");
+        p.nl();
+    }
+
+    w!(p, "return 0;");
+    p.dedent();
+    p.nl();
+    w!(p, "}}");
+    p.nl();
 }
 
 #[derive(Debug, Default)]
@@ -622,12 +2479,7 @@ struct Printer {
 
 impl Printer {
     fn nl(&mut self) {
-        let line = std::mem::replace(
-            &mut self.current_line,
-            std::iter::repeat(' ')
-                .take(self.indent as usize * 4)
-                .collect(),
-        );
+        let line = std::mem::replace(&mut self.current_line, " ".repeat(self.indent as usize * 4));
         self.lines.push(line)
     }
 

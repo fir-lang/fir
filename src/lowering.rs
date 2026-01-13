@@ -150,11 +150,7 @@ pub enum Fun {
 
 #[derive(Debug, Clone)]
 pub enum BuiltinFunDecl {
-    Panic {
-        a: mono::Type,
-        exn_q: mono::Type,
-    },
-
+    Panic,
     PrintStrNoNl,
     ShrI8,
     ShrU8,
@@ -222,18 +218,10 @@ pub enum BuiltinFunDecl {
     I32Neg,
 
     /// `prim throwUnchecked(exn: exn) a / exn?` (`exn?` is implicit)
-    ThrowUnchecked {
-        exn: mono::Type, // the exception being thrown, not `exn?`
-        a: mono::Type,
-        exn_q: mono::Type, // the implicit `exn?`
-    },
+    ThrowUnchecked,
 
     /// `prim try(cb: Fn() a / exn) Result[exn, a] / exn?` (`exn?` is implicit)
     Try {
-        a: mono::Type,
-        exn: mono::Type,
-        exn_q: mono::Type,
-
         /// Tag of the `Result.Ok` constructor allocated by the `try` on success.
         ok_con: HeapObjIdx,
 
@@ -887,12 +875,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     "panic" => {
                         // prim panic(msg: Str) a / exn?
                         assert_eq!(fun_ty_args.len(), 2); // a, exn?
-                        let a = &fun_ty_args[0];
-                        let exn_q = &fun_ty_args[1];
-                        lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::Panic {
-                            a: a.clone(),
-                            exn_q: exn_q.clone(),
-                        }));
+                        lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::Panic));
                     }
 
                     "try" => {
@@ -900,7 +883,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         assert_eq!(fun_ty_args.len(), 3); // a, exn, exn? (implicit)
                         let a = &fun_ty_args[0];
                         let exn = &fun_ty_args[1];
-                        let exn_q = &fun_ty_args[2];
                         let result = indices
                             .sum_cons
                             .get(&SmolStr::new_static("Result"))
@@ -916,28 +898,17 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             .unwrap()
                             .get(&ty_args)
                             .unwrap();
-                        lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::Try {
-                            a: a.clone(),
-                            exn: exn.clone(),
-                            exn_q: exn_q.clone(),
-                            ok_con,
-                            err_con,
-                        }));
+                        lowered_pgm
+                            .funs
+                            .push(Fun::Builtin(BuiltinFunDecl::Try { ok_con, err_con }));
                     }
 
                     "throwUnchecked" => {
                         // prim throwUnchecked(exn: exn) a
                         assert_eq!(fun_ty_args.len(), 3); // exn, a, exn? (implicit)
-                        let exn = &fun_ty_args[0];
-                        let a = &fun_ty_args[1];
-                        let exn_q = &fun_ty_args[2];
                         lowered_pgm
                             .funs
-                            .push(Fun::Builtin(BuiltinFunDecl::ThrowUnchecked {
-                                exn: exn.clone(),
-                                a: a.clone(),
-                                exn_q: exn_q.clone(),
-                            }));
+                            .push(Fun::Builtin(BuiltinFunDecl::ThrowUnchecked));
                     }
 
                     "readFileUtf8" => {
@@ -1611,8 +1582,8 @@ fn lower_source_con(
             mono::ConFields::Empty => vec![],
 
             mono::ConFields::Named(fields) => fields
-                .iter()
-                .map(|(_name, field_ty)| Ty {
+                .values()
+                .map(|field_ty| Ty {
                     mono_ty: field_ty.clone(),
                     repr: Repr::from_mono_ty(field_ty),
                 })
