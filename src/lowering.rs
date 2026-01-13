@@ -723,16 +723,18 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     // Lower the program. Note that the iteration order here should be the same as above to add
     // right definitions to the right indices in the vectors.
 
-    // Lower types. Add special built-ins first.
+    // Lower types. Add special built-ins first so that they'll have the expected hard-coded
+    // indices.
+    assert!(lowered_pgm.heap_objs.is_empty());
     lowered_pgm
         .heap_objs
-        .push(HeapObj::Builtin(BuiltinConDecl::Con));
+        .push(HeapObj::Builtin(BuiltinConDecl::Con)); // CON_CON_IDX = 0
     lowered_pgm
         .heap_objs
-        .push(HeapObj::Builtin(BuiltinConDecl::Fun));
+        .push(HeapObj::Builtin(BuiltinConDecl::Fun)); // FUN_CON_IDX = 1
     lowered_pgm
         .heap_objs
-        .push(HeapObj::Builtin(BuiltinConDecl::Closure));
+        .push(HeapObj::Builtin(BuiltinConDecl::Closure)); // CLOSURE_CON_IDX = 2
 
     for (con_id, con_ty_map) in &mono_pgm.ty {
         for (con_ty_args, con_decl) in con_ty_map {
@@ -814,21 +816,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         lowered_pgm
                             .heap_objs
                             .push(HeapObj::Builtin(BuiltinConDecl::U64));
-                    }
-
-                    "Void" => {
-                        assert_eq!(con_ty_args.len(), 0);
-                        // Lower as unit as we can't express empty types in the lowered
-                        // representation.
-                        // TODO: Could we just skip this?
-                        // NOTE: This needs to be in sync with the numbering loop above.
-                        let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                        lowered_pgm.heap_objs.push(HeapObj::Source(SourceConDecl {
-                            name: SmolStr::new_static("Void"),
-                            idx,
-                            ty_args: vec![],
-                            fields: ConFields::Unnamed(vec![]),
-                        }))
                     }
 
                     other => panic!("Unknown built-in type: {other}"),
