@@ -107,19 +107,19 @@ fn main() {
     fir::main(compiler_opts, program, program_args)
 }
 
-const BACKTRACE: &str = "backtrace";
-const MAIN: &str = "main";
+const TYPECHECK: &str = "typecheck";
 const NO_PRELUDE: &str = "no-prelude";
-const PRINT_CHECKED_AST: &str = "print-checked-ast";
-const PRINT_LOWERED_AST: &str = "print-lowered-ast";
-const PRINT_MONO_AST: &str = "print-mono-ast";
+const BACKTRACE: &str = "backtrace";
+const TOKENIZE: &str = "tokenize";
+const SCAN: &str = "scan";
 const PRINT_PARSED_AST: &str = "print-parsed-ast";
+const PRINT_CHECKED_AST: &str = "print-checked-ast";
+const PRINT_MONO_AST: &str = "print-mono-ast";
+const PRINT_LOWERED_AST: &str = "print-lowered-ast";
+const MAIN: &str = "main";
 const PROGRAM: &str = "program";
 const PROGRAM_ARGS: &str = "program-args";
-const SCAN: &str = "scan";
-const TOKENIZE: &str = "tokenize";
 const TO_C: &str = "to-c";
-const TYPECHECK: &str = "typecheck";
 
 // This is the same as `VersionInfo`'s `Display`, except it doesn't show the crate name as clap adds
 // command name as prefix in `--version`.
