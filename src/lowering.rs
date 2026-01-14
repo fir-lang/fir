@@ -809,7 +809,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             .push(HeapObj::Builtin(BuiltinConDecl::U64));
                     }
 
-
                     other => panic!("Unknown built-in type: {other}"),
                 },
             }
