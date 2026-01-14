@@ -516,23 +516,21 @@ fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, p: &mut Printer) {
         ty_to_c_name(ty_arg, &mut ty_name);
     }
 
-    w!(p, "#define {}_TAG {}", ty_name, tag);
-    p.nl();
-
-    // Comment about fields
+    // Just a comment for debugging - not a #define since names may collide
+    // (e.g. Vec[Record1] and Vec[Record2] would both be Vec_Record)
+    w!(p, "// tag {}: {}", tag, ty_name);
     if !fields.is_empty() {
-        w!(p, "// {} has {} field(s)", ty_name, fields.len());
-        p.nl();
+        w!(p, " ({} field(s))", fields.len());
     }
+    p.nl();
 }
 
 fn record_decl_to_c(record: &RecordShape, tag: u32, p: &mut Printer) {
-    w!(p, "#define RECORD_{}_TAG {}", tag, tag);
-    p.nl();
+    w!(p, "// tag {}: Record", tag);
     if !record.fields.is_empty() {
-        w!(p, "// Record{} has {} field(s)", tag, record.fields.len());
-        p.nl();
+        w!(p, " ({} field(s))", record.fields.len());
     }
+    p.nl();
 }
 
 fn ty_to_c_name(ty: &mono::Type, out: &mut String) {
