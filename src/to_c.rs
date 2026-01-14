@@ -461,28 +461,10 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
             p.nl();
         }
 
-        BuiltinConDecl::ArrayU8 => {
-            w!(p, "#ifndef ARRAY_U8_TAG");
+        BuiltinConDecl::Array => {
+            w!(p, "#ifndef ARRAY_TAG");
             p.nl();
-            w!(p, "#define ARRAY_U8_TAG {}", tag);
-            p.nl();
-            w!(p, "#endif");
-            p.nl();
-        }
-
-        BuiltinConDecl::ArrayU32 => {
-            w!(p, "#ifndef ARRAY_U32_TAG");
-            p.nl();
-            w!(p, "#define ARRAY_U32_TAG {}", tag);
-            p.nl();
-            w!(p, "#endif");
-            p.nl();
-        }
-
-        BuiltinConDecl::ArrayU64 => {
-            w!(p, "#ifndef ARRAY_U64_TAG");
-            p.nl();
-            w!(p, "#define ARRAY_U64_TAG {}", tag);
+            w!(p, "#define ARRAY_TAG {}", tag);
             p.nl();
             w!(p, "#endif");
             p.nl();
@@ -1311,19 +1293,13 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
         }
 
-        BuiltinFunDecl::ArrayNew { t } => {
-            let repr = Repr::from_mono_ty(t);
-            let (fn_name, tag) = match repr {
-                Repr::U8 => ("array_new_u8", "ARRAY_U8_TAG"),
-                Repr::U32 => ("array_new_u32", "ARRAY_U32_TAG"),
-                Repr::U64 => ("array_new_u64", "ARRAY_U64_TAG"),
-            };
+        BuiltinFunDecl::ArrayNew { t: _ } => {
             w!(p, "static uint64_t _fun_{}(uint64_t len) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "uint64_t arr = {}((uint32_t)len);", fn_name);
+            w!(p, "uint64_t arr = array_new_u64((uint32_t)len);");
             p.nl();
-            w!(p, "((uint64_t*)arr)[ARRAY_TAG_IDX] = {};", tag);
+            w!(p, "((uint64_t*)arr)[ARRAY_TAG_IDX] = ARRAY_TAG;");
             p.nl();
             w!(p, "return arr;");
             p.dedent();
@@ -1343,13 +1319,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
         }
 
-        BuiltinFunDecl::ArrayGet { t } => {
-            let repr = Repr::from_mono_ty(t);
-            let fn_name = match repr {
-                Repr::U8 => "array_get_u8",
-                Repr::U32 => "array_get_u32",
-                Repr::U64 => "array_get_u64",
-            };
+        BuiltinFunDecl::ArrayGet { t: _ } => {
             w!(
                 p,
                 "static uint64_t _fun_{}(uint64_t arr, uint64_t idx) {{",
@@ -1357,25 +1327,14 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t){}(arr, (uint32_t)idx);", fn_name);
+            w!(p, "return (uint64_t)array_get_u64(arr, (uint32_t)idx);");
             p.dedent();
             p.nl();
             w!(p, "}}");
             p.nl();
         }
 
-        BuiltinFunDecl::ArraySet { t } => {
-            let repr = Repr::from_mono_ty(t);
-            let fn_name = match repr {
-                Repr::U8 => "array_set_u8",
-                Repr::U32 => "array_set_u32",
-                Repr::U64 => "array_set_u64",
-            };
-            let cast = match repr {
-                Repr::U8 => "(uint8_t)",
-                Repr::U32 => "(uint32_t)",
-                Repr::U64 => "",
-            };
+        BuiltinFunDecl::ArraySet { t: _ } => {
             w!(
                 p,
                 "static uint64_t _fun_{}(uint64_t arr, uint64_t idx, uint64_t val) {{",
@@ -1383,7 +1342,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.indent();
             p.nl();
-            w!(p, "{}(arr, (uint32_t)idx, {}val);", fn_name, cast);
+            w!(p, "array_set_u64(arr, (uint32_t)idx, val);");
             p.nl();
             w!(p, "return _singleton_{};", pgm.unit_con_idx.0);
             p.dedent();
@@ -1392,13 +1351,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
         }
 
-        BuiltinFunDecl::ArraySlice { t } => {
-            let repr = Repr::from_mono_ty(t);
-            let (fn_name, tag) = match repr {
-                Repr::U8 => ("array_slice_u8", "ARRAY_U8_TAG"),
-                Repr::U32 => ("array_slice_u32", "ARRAY_U32_TAG"),
-                Repr::U64 => ("array_slice_u64", "ARRAY_U64_TAG"),
-            };
+        BuiltinFunDecl::ArraySlice { t: _ } => {
             w!(
                 p,
                 "static uint64_t _fun_{}(uint64_t arr, uint64_t start, uint64_t end) {{",
@@ -1408,9 +1361,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "return {}(arr, (uint32_t)start, (uint32_t)end, {});",
-                fn_name,
-                tag
+                "return array_slice_u64(arr, (uint32_t)start, (uint32_t)end, ARRAY_TAG);"
             );
             p.dedent();
             p.nl();
@@ -1418,13 +1369,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
         }
 
-        BuiltinFunDecl::ArrayCopyWithin { t } => {
-            let repr = Repr::from_mono_ty(t);
-            let fn_name = match repr {
-                Repr::U8 => "array_copy_within_u8",
-                Repr::U32 => "array_copy_within_u32",
-                Repr::U64 => "array_copy_within_u64",
-            };
+        BuiltinFunDecl::ArrayCopyWithin { t: _ } => {
             w!(
                 p,
                 "static uint64_t _fun_{}(uint64_t arr, uint64_t src, uint64_t dst, uint64_t len) {{",
@@ -1434,8 +1379,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "{}(arr, (uint32_t)src, (uint32_t)dst, (uint32_t)len);",
-                fn_name
+                "array_copy_within_u64(arr, (uint32_t)src, (uint32_t)dst, (uint32_t)len);"
             );
             p.nl();
             w!(p, "return _singleton_{};", pgm.unit_con_idx.0);
@@ -1489,7 +1433,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "uint64_t result = alloc_str({}, ARRAY_U8_TAG, contents, size);",
+                "uint64_t result = alloc_str({}, ARRAY_TAG, contents, size);",
                 pgm.str_con_idx.0
             );
             p.nl();
@@ -1508,14 +1452,14 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(p, "uint64_t arr = array_new_u64(g_argc);");
             p.nl();
-            w!(p, "((uint64_t*)arr)[ARRAY_TAG_IDX] = ARRAY_U64_TAG;");
+            w!(p, "((uint64_t*)arr)[ARRAY_TAG_IDX] = ARRAY_TAG;");
             p.nl();
             w!(p, "for (int i = 0; i < g_argc; i++) {{");
             p.indent();
             p.nl();
             w!(
                 p,
-                "uint64_t arg_str = alloc_str({}, ARRAY_U8_TAG, g_argv[i], strlen(g_argv[i]));",
+                "uint64_t arg_str = alloc_str({}, ARRAY_TAG, g_argv[i], strlen(g_argv[i]));",
                 pgm.str_con_idx.0
             );
             p.nl();
@@ -1548,7 +1492,7 @@ fn gen_tostr_fn(idx: usize, c_type: &str, cast: &str, pgm: &LoweredPgm, p: &mut 
     p.nl();
     w!(
         p,
-        "return alloc_str({}, ARRAY_U8_TAG, buf, len);",
+        "return alloc_str({}, ARRAY_TAG, buf, len);",
         pgm.str_con_idx.0
     );
     p.dedent();
@@ -1962,7 +1906,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
 
         Expr::Str(s) => {
             // Allocate string literal
-            w!(p, "alloc_str({}, ARRAY_U8_TAG, \"", cg.pgm.str_con_idx.0);
+            w!(p, "alloc_str({}, ARRAY_TAG, \"", cg.pgm.str_con_idx.0);
             for byte in s.bytes() {
                 if byte == b'"' || byte == b'\\' || !(32..=126).contains(&byte) {
                     w!(p, "\\x{:02x}", byte);
