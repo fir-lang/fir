@@ -1964,10 +1964,12 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
 
         Expr::Str(s) => {
             // Allocate string literal
+            // Use octal escapes instead of hex because hex escapes in C are greedy
+            // and consume all following hex digits (e.g., "\x0aa" is parsed as \x0AA not \x0A + 'a')
             w!(p, "alloc_str({}, ARRAY_TAG, \"", cg.pgm.str_con_idx.0);
             for byte in s.bytes() {
                 if byte == b'"' || byte == b'\\' || !(32..=126).contains(&byte) {
-                    w!(p, "\\x{:02x}", byte);
+                    w!(p, "\\{:03o}", byte);
                 } else {
                     w!(p, "{}", byte as char);
                 }
