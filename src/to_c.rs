@@ -141,12 +141,10 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
         // Array header layout:
         // word 0: tag
         // word 1: length
-        // word 2: capacity
-        // word 3+: data (for U64) or packed data (for U8/U32)
+        // word 2+: data
         #define ARRAY_TAG_IDX 0
         #define ARRAY_LEN_IDX 1
-        #define ARRAY_CAP_IDX 2
-        #define ARRAY_DATA_IDX 3
+        #define ARRAY_DATA_IDX 2
 
         // Exception handling using setjmp/longjmp
         typedef struct ExnHandler {{
@@ -177,31 +175,10 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
         }}
 
         // Array functions
-        static uint64_t array_new_u8(uint32_t len) {{
-            size_t data_words = (len + 7) / 8;
-            uint64_t* arr = alloc_words(3 + data_words);
+        static uint64_t array_new_u64(uint32_t len) {{
+            uint64_t* arr = alloc_words(2 + len);
             arr[ARRAY_TAG_IDX] = 0; // Will be set by caller
             arr[ARRAY_LEN_IDX] = len;
-            arr[ARRAY_CAP_IDX] = len;
-            memset(&arr[ARRAY_DATA_IDX], 0, data_words * 8);
-            return (uint64_t)arr;
-        }}
-
-        static uint64_t array_new_u32(uint32_t len) {{
-            size_t data_words = (len + 1) / 2;
-            uint64_t* arr = alloc_words(3 + data_words);
-            arr[ARRAY_TAG_IDX] = 0;
-            arr[ARRAY_LEN_IDX] = len;
-            arr[ARRAY_CAP_IDX] = len;
-            memset(&arr[ARRAY_DATA_IDX], 0, data_words * 8);
-            return (uint64_t)arr;
-        }}
-
-        static uint64_t array_new_u64(uint32_t len) {{
-            uint64_t* arr = alloc_words(3 + len);
-            arr[ARRAY_TAG_IDX] = 0;
-            arr[ARRAY_LEN_IDX] = len;
-            arr[ARRAY_CAP_IDX] = len;
             memset(&arr[ARRAY_DATA_IDX], 0, len * 8);
             return (uint64_t)arr;
         }}
@@ -210,52 +187,12 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
             return (uint32_t)((uint64_t*)arr)[ARRAY_LEN_IDX];
         }}
 
-        static uint8_t array_get_u8(uint64_t arr, uint32_t idx) {{
-            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
-            return data[idx];
-        }}
-
-        static uint32_t array_get_u32(uint64_t arr, uint32_t idx) {{
-            uint32_t* data = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
-            return data[idx];
-        }}
-
         static uint64_t array_get_u64(uint64_t arr, uint32_t idx) {{
             return ((uint64_t*)arr)[ARRAY_DATA_IDX + idx];
         }}
 
-        static void array_set_u8(uint64_t arr, uint32_t idx, uint8_t val) {{
-            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
-            data[idx] = val;
-        }}
-
-        static void array_set_u32(uint64_t arr, uint32_t idx, uint32_t val) {{
-            uint32_t* data = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
-            data[idx] = val;
-        }}
-
         static void array_set_u64(uint64_t arr, uint32_t idx, uint64_t val) {{
             ((uint64_t*)arr)[ARRAY_DATA_IDX + idx] = val;
-        }}
-
-        static uint64_t array_slice_u8(uint64_t arr, uint32_t start, uint32_t end, uint64_t tag) {{
-            uint32_t len = end - start;
-            uint64_t new_arr = array_new_u8(len);
-            ((uint64_t*)new_arr)[ARRAY_TAG_IDX] = tag;
-            uint8_t* src = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
-            uint8_t* dst = (uint8_t*)&((uint64_t*)new_arr)[ARRAY_DATA_IDX];
-            memcpy(dst, src + start, len);
-            return new_arr;
-        }}
-
-        static uint64_t array_slice_u32(uint64_t arr, uint32_t start, uint32_t end, uint64_t tag) {{
-            uint32_t len = end - start;
-            uint64_t new_arr = array_new_u32(len);
-            ((uint64_t*)new_arr)[ARRAY_TAG_IDX] = tag;
-            uint32_t* src = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
-            uint32_t* dst = (uint32_t*)&((uint64_t*)new_arr)[ARRAY_DATA_IDX];
-            memcpy(dst, src + start, len * sizeof(uint32_t));
-            return new_arr;
         }}
 
         static uint64_t array_slice_u64(uint64_t arr, uint32_t start, uint32_t end, uint64_t tag) {{
@@ -264,16 +201,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
             ((uint64_t*)new_arr)[ARRAY_TAG_IDX] = tag;
             memcpy(&((uint64_t*)new_arr)[ARRAY_DATA_IDX], &((uint64_t*)arr)[ARRAY_DATA_IDX + start], len * sizeof(uint64_t));
             return new_arr;
-        }}
-
-        static void array_copy_within_u8(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
-            memmove(data + dst, data + src, len);
-        }}
-
-        static void array_copy_within_u32(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint32_t* data = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
-            memmove(data + dst, data + src, len * sizeof(uint32_t));
         }}
 
         static void array_copy_within_u64(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
@@ -286,16 +213,19 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
             uint64_t bytes_arr = s1[1]; // _bytes field
             uint32_t len1 = array_len(bytes_arr);
             if (len1 != len2) return false;
-            uint8_t* data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];
-            return memcmp(data, str2, len1) == 0;
+            for (size_t i = 0; i < len1; i++) {{
+                if ((uint8_t)array_get_u64(bytes_arr, i) != (uint8_t)str2[i]) return false;
+            }}
+            return true;
         }}
 
         // Allocate string from bytes
         static uint64_t alloc_str(uint64_t str_tag, uint64_t array_tag, const char* bytes, size_t len) {{
-            uint64_t arr = array_new_u8(len);
+            uint64_t arr = array_new_u64(len);
             ((uint64_t*)arr)[ARRAY_TAG_IDX] = array_tag;
-            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
-            memcpy(data, bytes, len);
+            for (size_t i = 0; i < len; i++) {{
+                array_set_u64(arr, i, (uint8_t)bytes[i]);
+            }}
 
             uint64_t* str = alloc_words(2);
             str[0] = str_tag;
@@ -577,12 +507,13 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(p, "uint32_t len = array_len(bytes_arr);");
             p.nl();
-            w!(
-                p,
-                "uint8_t* data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];"
-            );
+            w!(p, "for (uint32_t i = 0; i < len; i++) {{");
+            p.indent();
             p.nl();
-            w!(p, "fwrite(data, 1, len, stderr);");
+            w!(p, "fputc((uint8_t)array_get_u64(bytes_arr, i), stderr);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
             p.nl();
             w!(p, "fprintf(stderr, \"\\n\");");
             p.nl();
@@ -603,12 +534,13 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(p, "uint32_t len = array_len(bytes_arr);");
             p.nl();
-            w!(
-                p,
-                "uint8_t* data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];"
-            );
+            w!(p, "for (uint32_t i = 0; i < len; i++) {{");
+            p.indent();
             p.nl();
-            w!(p, "fwrite(data, 1, len, stdout);");
+            w!(p, "fputc((uint8_t)array_get_u64(bytes_arr, i), stdout);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
             p.nl();
             w!(p, "return _singleton_{};", pgm.unit_con_idx.0);
             p.dedent();
@@ -1399,14 +1331,15 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(p, "uint32_t path_len = array_len(bytes_arr);");
             p.nl();
-            w!(
-                p,
-                "uint8_t* path_data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];"
-            );
-            p.nl();
             w!(p, "char* path = (char*)malloc(path_len + 1);");
             p.nl();
-            w!(p, "memcpy(path, path_data, path_len);");
+            w!(p, "for (uint32_t i = 0; i < path_len; i++) {{");
+            p.indent();
+            p.nl();
+            w!(p, "path[i] = (char)array_get_u64(bytes_arr, i);");
+            p.dedent();
+            p.nl();
+            w!(p, "}}");
             p.nl();
             w!(p, "path[path_len] = '\\0';");
             p.nl();
