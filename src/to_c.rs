@@ -126,12 +126,13 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
     let _ = writedoc!(
         p,
         "
-        #include <stdint.h>
+        #include <inttypes.h>
+        #include <setjmp.h>
         #include <stdbool.h>
+        #include <stdint.h>
         #include <stdio.h>
         #include <stdlib.h>
         #include <string.h>
-        #include <setjmp.h>
 
         // Tags for builtin heap objects
         #define CON_TAG 0
