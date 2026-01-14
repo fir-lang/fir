@@ -113,6 +113,11 @@ mod native {
     use std::path::Path;
 
     pub fn main(opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
+        // let opts = CompilerOpts {
+        //     run_c: true,
+        //     ..opts
+        // };
+
         if opts.tokenize {
             let file_contents = std::fs::read_to_string(program).unwrap();
             for (l, t, _) in crate::lexer::lex(&file_contents, "test") {

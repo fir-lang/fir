@@ -692,7 +692,13 @@ fn assign<W: Write>(
             heap[object + 1 + (*idx as u64)] = val;
         }
 
-        _ => todo!("Assign statement with fancy LHS at {:?}", &lhs.loc),
+        _ => {
+            // Type checker only accepts variables and fields on the LHS.
+            panic!(
+                "{}: BUG: Assign statement with fancy LHS",
+                loc_display(&lhs.loc)
+            )
+        }
     }
     ControlFlow::Val(pgm.unit_alloc)
 }
