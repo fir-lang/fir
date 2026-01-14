@@ -1564,6 +1564,29 @@ fn gen_cmp_fn(idx: usize, cast: &str, pgm: &LoweredPgm, p: &mut Printer) {
 }
 
 fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer) {
+    // Generate comment with source location, function name, and type arguments.
+    let loc = &fun.name.loc;
+    w!(
+        p,
+        "// {}:{}:{} {}",
+        loc.module,
+        loc.line_start + 1,
+        loc.col_start + 1,
+        fun.name.node
+    );
+    if !fun.ty_args.is_empty() {
+        w!(p, "[");
+        for (i, ty_arg) in fun.ty_args.iter().enumerate() {
+            if i > 0 {
+                w!(p, ", ");
+            }
+            let mut ty_str = String::new();
+            ty_arg.print(&mut ty_str);
+            w!(p, "{}", ty_str);
+        }
+        w!(p, "]");
+    }
+    p.nl();
     w!(p, "static uint64_t _fun_{}(", idx);
     for (i, _) in fun.params.iter().enumerate() {
         if i > 0 {
