@@ -718,27 +718,27 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::ToStrI8 => {
-            gen_tostr_fn(idx, "int8_t", "(int8_t)(uint8_t)", pgm, p);
+            gen_tostr_fn(idx, "int8_t", "(int8_t)(uint8_t)", "PRId8", pgm, p);
         }
 
         BuiltinFunDecl::ToStrU8 => {
-            gen_tostr_fn(idx, "uint8_t", "(uint8_t)", pgm, p);
+            gen_tostr_fn(idx, "uint8_t", "(uint8_t)", "PRIu8", pgm, p);
         }
 
         BuiltinFunDecl::ToStrI32 => {
-            gen_tostr_fn(idx, "int32_t", "(int32_t)(uint32_t)", pgm, p);
+            gen_tostr_fn(idx, "int32_t", "(int32_t)(uint32_t)", "PRId32", pgm, p);
         }
 
         BuiltinFunDecl::ToStrU32 => {
-            gen_tostr_fn(idx, "uint32_t", "(uint32_t)", pgm, p);
+            gen_tostr_fn(idx, "uint32_t", "(uint32_t)", "PRIu32", pgm, p);
         }
 
         BuiltinFunDecl::ToStrU64 => {
-            gen_tostr_fn(idx, "uint64_t", "", pgm, p);
+            gen_tostr_fn(idx, "uint64_t", "", "PRIu64", pgm, p);
         }
 
         BuiltinFunDecl::ToStrI64 => {
-            gen_tostr_fn(idx, "int64_t", "(int64_t)", pgm, p);
+            gen_tostr_fn(idx, "int64_t", "(int64_t)", "PRId64", pgm, p);
         }
 
         BuiltinFunDecl::U8AsI8 => {
@@ -1504,7 +1504,14 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
     }
 }
 
-fn gen_tostr_fn(idx: usize, c_type: &str, cast: &str, pgm: &LoweredPgm, p: &mut Printer) {
+fn gen_tostr_fn(
+    idx: usize,
+    c_type: &str,
+    cast: &str,
+    fmt: &str,
+    pgm: &LoweredPgm,
+    p: &mut Printer,
+) {
     w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
     p.indent();
     p.nl();
@@ -1512,7 +1519,8 @@ fn gen_tostr_fn(idx: usize, c_type: &str, cast: &str, pgm: &LoweredPgm, p: &mut 
     p.nl();
     w!(
         p,
-        "int len = snprintf(buf, sizeof(buf), \"%d\", ({}){}a);",
+        "int len = snprintf(buf, sizeof(buf), \"%\" {} , ({}){}a);",
+        fmt,
         c_type,
         cast
     );
