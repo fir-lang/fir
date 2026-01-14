@@ -459,11 +459,7 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
         }
 
         BuiltinConDecl::Array => {
-            w!(p, "#ifndef ARRAY_TAG");
-            p.nl();
             w!(p, "#define ARRAY_TAG {}", tag);
-            p.nl();
-            w!(p, "#endif");
             p.nl();
         }
 
@@ -1226,9 +1222,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
         }
 
-        BuiltinFunDecl::Try {
-            ok_con, err_con, ..
-        } => {
+        BuiltinFunDecl::Try { ok_con, err_con } => {
             w!(p, "static uint64_t _fun_{}(uint64_t cb) {{", idx);
             p.indent();
             p.nl();
@@ -1963,12 +1957,11 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
         }
 
         Expr::Str(s) => {
-            // Allocate string literal
-            // Use octal escapes instead of hex because hex escapes in C are greedy
-            // and consume all following hex digits (e.g., "\x0aa" is parsed as \x0AA not \x0A + 'a')
             w!(p, "alloc_str({}, ARRAY_TAG, \"", cg.pgm.str_con_idx.0);
             for byte in s.bytes() {
                 if byte == b'"' || byte == b'\\' || !(32..=126).contains(&byte) {
+                    // Use octal escapes as hex escapes doesn't have a digit limit, e.g.
+                    // `\x0aaaaa...` will consider all those `a`s as digits.
                     w!(p, "\\{:03o}", byte);
                 } else {
                     w!(p, "{}", byte as char);
@@ -2275,7 +2268,8 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
             let mut escaped = String::new();
             for byte in s.bytes() {
                 if byte == b'"' || byte == b'\\' || !(32..=126).contains(&byte) {
-                    escaped.push_str(&format!("\\x{:02x}", byte));
+                    // Same as `Expr::Str`, use octal escape here instead of hex.
+                    escaped.push_str(&format!("\\{:03o}", byte));
                 } else {
                     escaped.push(byte as char);
                 }
