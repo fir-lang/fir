@@ -348,11 +348,9 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
     // Generate static closure objects for top-level functions
     w!(p, "// Static closure objects for top-level functions");
     p.nl();
-    for (i, fun) in pgm.funs.iter().enumerate() {
-        if let Fun::Source(_) = fun {
-            w!(p, "static uint64_t _fun_closure_{} = 0;", i);
-            p.nl();
-        }
+    for i in 0..pgm.funs.len() {
+        w!(p, "static uint64_t _fun_closure_{} = 0;", i);
+        p.nl();
     }
     p.nl();
 
@@ -2338,20 +2336,18 @@ fn generate_init_fn(pgm: &LoweredPgm, p: &mut Printer) {
     }
 
     // Initialize function closure objects
-    for (i, fun) in pgm.funs.iter().enumerate() {
-        if let Fun::Source(_) = fun {
-            w!(p, "_fun_closure_{} = (uint64_t)alloc_words(2);", i);
-            p.nl();
-            w!(p, "((uint64_t*)_fun_closure_{})[0] = FUN_CON_TAG;", i);
-            p.nl();
-            w!(
-                p,
-                "((uint64_t*)_fun_closure_{})[1] = (uint64_t)_fun_{};",
-                i,
-                i
-            );
-            p.nl();
-        }
+    for i in 0..pgm.funs.len() {
+        w!(p, "_fun_closure_{} = (uint64_t)alloc_words(2);", i);
+        p.nl();
+        w!(p, "((uint64_t*)_fun_closure_{})[0] = FUN_CON_TAG;", i);
+        p.nl();
+        w!(
+            p,
+            "((uint64_t*)_fun_closure_{})[1] = (uint64_t)_fun_{};",
+            i,
+            i
+        );
+        p.nl();
     }
 
     // Initialize constructor closure objects
