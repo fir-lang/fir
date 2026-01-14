@@ -1271,9 +1271,7 @@ fn call_builtin_fun<W: Write>(
             FunRet::Unwind(exn)
         }
 
-        BuiltinFunDecl::Try {
-            ok_con, err_con, ..
-        } => {
+        BuiltinFunDecl::Try { ok_con, err_con } => {
             debug_assert_eq!(args.len(), 1);
             let cb = args[0];
 

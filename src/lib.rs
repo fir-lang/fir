@@ -109,7 +109,8 @@ mod native {
     use super::*;
 
     use smol_str::SmolStr;
-    use std::{io::Write, path::Path};
+    use std::io::Write;
+    use std::path::Path;
 
     pub fn main(opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
         if opts.tokenize {

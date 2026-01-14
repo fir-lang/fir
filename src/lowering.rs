@@ -28,7 +28,6 @@ pub struct LoweredPgm {
     pub ordering_equal_con_idx: HeapObjIdx,
     pub ordering_greater_con_idx: HeapObjIdx,
     pub str_con_idx: HeapObjIdx,
-
     pub unit_con_idx: HeapObjIdx,
 }
 
