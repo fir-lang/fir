@@ -194,12 +194,20 @@ mod native {
                 .arg(out_file_path);
             // dbg!(&gcc_cmd);
             let output = gcc_cmd.output().unwrap();
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
             if !output.status.success() {
                 eprintln!("C compilation failed:");
+            }
+            if !stdout.is_empty() {
                 eprintln!("stdout:");
                 eprintln!("{}", String::from_utf8_lossy(&output.stdout));
+            }
+            if !stderr.is_empty() {
                 eprintln!("stderr:");
                 eprintln!("{}", String::from_utf8_lossy(&output.stderr));
+            }
+            if !output.status.success() {
                 std::process::exit(1);
             }
             // dbg!(&out_file_path);
