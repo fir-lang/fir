@@ -28,16 +28,15 @@ pub struct LoweredPgm {
     pub ordering_equal_con_idx: HeapObjIdx,
     pub ordering_greater_con_idx: HeapObjIdx,
     pub str_con_idx: HeapObjIdx,
-    pub array_u8_con_idx: HeapObjIdx,
-    pub array_u32_con_idx: HeapObjIdx,
-    pub array_u64_con_idx: HeapObjIdx,
+    pub array_con_idx: HeapObjIdx,
     pub unit_con_idx: HeapObjIdx,
 }
 
 pub const CON_CON_IDX: HeapObjIdx = HeapObjIdx(0);
 pub const FUN_CON_IDX: HeapObjIdx = HeapObjIdx(1);
 pub const CLOSURE_CON_IDX: HeapObjIdx = HeapObjIdx(2);
-const FIRST_FREE_CON_IDX: HeapObjIdx = HeapObjIdx(3);
+pub const ARRAY_CON_IDX: HeapObjIdx = HeapObjIdx(3);
+const FIRST_FREE_CON_IDX: HeapObjIdx = HeapObjIdx(4);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunIdx(u32);
@@ -595,6 +594,11 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     // No RHS means it's either an uninhabited type like Void or a primitive. We
                     // can't distinguish the two here, so we assume primitive and give a number to
                     // all types without a RHS.
+                    //
+                    // Skip Array - it has a hard-coded index (ARRAY_CON_IDX).
+                    if con_id == "Array" {
+                        continue;
+                    }
                     product_con_nums
                         .entry(con_id.clone())
                         .or_default()
@@ -685,30 +689,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             .unwrap(),
         char_con_idx: *product_con_nums.get("Char").unwrap().get(&vec![]).unwrap(),
         str_con_idx: *product_con_nums.get("Str").unwrap().get(&vec![]).unwrap(),
-        array_u8_con_idx: *product_con_nums
-            .get("Array")
-            .unwrap()
-            .get(&vec![mono::Type::Named(mono::NamedType {
-                name: SmolStr::new("U8"),
-                args: vec![],
-            })])
-            .unwrap(),
-        array_u32_con_idx: *product_con_nums
-            .get("Array")
-            .unwrap()
-            .get(&vec![mono::Type::Named(mono::NamedType {
-                name: SmolStr::new("U32"),
-                args: vec![],
-            })])
-            .unwrap(),
-        array_u64_con_idx: *product_con_nums
-            .get("Array")
-            .unwrap()
-            .get(&vec![mono::Type::Named(mono::NamedType {
-                name: SmolStr::new("U64"),
-                args: vec![],
-            })])
-            .unwrap(),
+        array_con_idx: ARRAY_CON_IDX,
         unit_con_idx: HeapObjIdx(u32::MAX), // updated below
     };
 
@@ -727,6 +708,9 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     lowered_pgm
         .heap_objs
         .push(HeapObj::Builtin(BuiltinConDecl::Closure)); // CLOSURE_CON_IDX = 2
+    lowered_pgm
+        .heap_objs
+        .push(HeapObj::Builtin(BuiltinConDecl::Array)); // ARRAY_CON_IDX = 3
 
     for (con_id, con_ty_map) in &mono_pgm.ty {
         for (con_ty_args, con_decl) in con_ty_map {
@@ -757,15 +741,8 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 },
 
                 None => match con_id.as_str() {
-                    "Array" => {
-                        assert_eq!(con_ty_args.len(), 1);
-                        // We don't care about the element type for now as all values have the same
-                        // size, and we don't have GC so we don't have to distinguish pointers from
-                        // others.
-                        lowered_pgm
-                            .heap_objs
-                            .push(HeapObj::Builtin(BuiltinConDecl::Array));
-                    }
+                    // Array is handled separately with a hard-coded index (ARRAY_CON_IDX).
+                    "Array" => {}
 
                     "I8" => {
                         assert_eq!(con_ty_args.len(), 0);
