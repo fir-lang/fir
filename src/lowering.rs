@@ -289,21 +289,28 @@ pub enum BuiltinConDecl {
     /// Constructor closure, e.g. `Option.Some`, `Char`.
     ///
     /// Payload holds the constructor index (`ConIdx`).
+    ///
+    /// Tag of this constructor is `CON_CON_IDX`.
     Con,
 
     /// Function closure, e.g. `id`, `Vec.withCapacity`.
     ///
     /// Payload holds the function index (`FunIdx`).
+    ///
+    /// Tag of this constructor is `FUN_CON_IDX`.
     Fun,
 
     /// A function expression.
     ///
     /// Payload holds the closure index (`ClosureIdx`), then free variables.
+    ///
+    /// Tag of this constructor is `CLOSURE_CON_IDX`.
     Closure,
 
-    ArrayU8,
-    ArrayU32,
-    ArrayU64,
+    /// For now we have one array constructor. This works currently because all values are 64-bit
+    /// wide (so stores are loads are the same for all values) and we don't have GC.
+    Array,
+
     I8,
     U8,
     I32,
@@ -578,7 +585,8 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     let mut assoc_fun_nums: HashMap<Id, HashMap<Id, HashMap<Vec<mono::Type>, FunIdx>>> =
         Default::default();
 
-    // Number type declarations.
+    // Number type declarations. Start with `FIRST_FREE_CON_IDX`: we have a few constructors that
+    // don't have Fir definitions. The first few indices are allocated for them.
     let mut next_con_idx = FIRST_FREE_CON_IDX;
     for (con_id, con_ty_map) in &mono_pgm.ty {
         for (con_ty_args, con_decl) in con_ty_map {
@@ -767,13 +775,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 None => match con_id.as_str() {
                     "Array" => {
                         assert_eq!(con_ty_args.len(), 1);
-                        let elem_repr = Repr::from_mono_ty(&con_ty_args[0]);
-                        let array_con = match elem_repr {
-                            Repr::U8 => BuiltinConDecl::ArrayU8,
-                            Repr::U32 => BuiltinConDecl::ArrayU32,
-                            Repr::U64 => BuiltinConDecl::ArrayU64,
-                        };
-                        lowered_pgm.heap_objs.push(HeapObj::Builtin(array_con));
+                        // We don't care about the element type for now as all values have the same
+                        // size, and we don't have GC so we don't have to distinguish pointers from
+                        // others.
+                        lowered_pgm
+                            .heap_objs
+                            .push(HeapObj::Builtin(BuiltinConDecl::Array));
                     }
 
                     "I8" => {
