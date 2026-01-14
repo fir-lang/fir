@@ -28,7 +28,7 @@ pub struct LoweredPgm {
     pub ordering_equal_con_idx: HeapObjIdx,
     pub ordering_greater_con_idx: HeapObjIdx,
     pub str_con_idx: HeapObjIdx,
-    pub array_con_idx: HeapObjIdx,
+
     pub unit_con_idx: HeapObjIdx,
 }
 
@@ -591,12 +591,8 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 }
 
                 Some(mono::TypeDeclRhs::Product(_)) | None => {
-                    // No RHS means it's either an uninhabited type like Void or a primitive. We
-                    // can't distinguish the two here, so we assume primitive and give a number to
-                    // all types without a RHS.
-                    //
-                    // Skip Array - it has a hard-coded index (ARRAY_CON_IDX).
                     if con_id == "Array" {
+                        // Skip `Array`: all array types use the same hard-coded index ARRAY_CON_IDX.
                         continue;
                     }
                     product_con_nums
@@ -689,7 +685,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             .unwrap(),
         char_con_idx: *product_con_nums.get("Char").unwrap().get(&vec![]).unwrap(),
         str_con_idx: *product_con_nums.get("Str").unwrap().get(&vec![]).unwrap(),
-        array_con_idx: ARRAY_CON_IDX,
         unit_con_idx: HeapObjIdx(u32::MAX), // updated below
     };
 
