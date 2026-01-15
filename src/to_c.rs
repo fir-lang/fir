@@ -1,4 +1,24 @@
 /*
+TODOs:
+
+- `ty_to_c_name` should take record and variant arguments into account.
+
+- Then we can generate `#define`s for type tags and use them. (instead of the comments generated for
+  `Vector_Record`)
+
+- All constants for tags should be the `#define`d symbols instead, to help with debugging.
+
+- We could also consider creating a `struct` for every constructor, to make debugging in gdb even
+  easier.
+
+- We may want to generate `#define`s or function for value conversions: value to `U32`, `I32` to
+  value etc.
+
+- Pattern match (`is` and others) handling seems wrong: we want one function that tests and binds in
+  one go. (same as the interpreter)
+*/
+
+/*
 This module compiles lowered syntax to C.
 
 ## Heap objects
@@ -316,7 +336,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
     );
     p.nl();
 
-    // Forward declare all functions and closures
     for (i, fun) in pgm.funs.iter().enumerate() {
         forward_declare_fun(pgm, fun, i, &mut p);
     }
@@ -327,13 +346,11 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
     }
     p.nl();
 
-    // Generate type definitions
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
         heap_obj_to_c(heap_obj, tag as u32, &mut p);
         p.nl();
     }
 
-    // Generate static singleton allocations for nullary constructors
     p.nl();
     w!(p, "// Singleton allocations for nullary constructors");
     p.nl();
@@ -352,7 +369,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
     }
     p.nl();
 
-    // Generate static closure objects for top-level functions
     w!(p, "// Static closure objects for top-level functions");
     p.nl();
     for i in 0..pgm.funs.len() {
@@ -361,7 +377,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
     }
     p.nl();
 
-    // Generate static closure objects for constructors
     w!(p, "// Static closure objects for constructors");
     p.nl();
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
@@ -380,7 +395,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
         temp_counter: 0,
     };
 
-    // Generate builtin functions
+    // Generate built-in functions first. Built-in functions don't depend on each other or source
+    // functions, but source functions can depend on built-in functions.
     for (i, fun) in pgm.funs.iter().enumerate() {
         if let Fun::Builtin(builtin) = fun {
             builtin_fun_to_c(builtin, i, pgm, &mut p);
@@ -388,7 +404,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
         }
     }
 
-    // Generate source functions
+    // Generate source functions after built-in functions as they may depend on built-in functions
+    // and built-in functions are not forward-declared.
     for (i, fun) in pgm.funs.iter().enumerate() {
         if let Fun::Source(source) = fun {
             source_fun_to_c(source, i, &mut cg, &mut p);
@@ -396,16 +413,13 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
         }
     }
 
-    // Generate closures
     for (i, closure) in pgm.closures.iter().enumerate() {
         closure_to_c(closure, i, &mut cg, &mut p);
         p.nl();
     }
 
-    // Generate init function for singletons
     generate_init_fn(pgm, &mut p);
 
-    // Generate main function
     generate_main_fn(pgm, &mut p);
 
     p.print()
@@ -414,7 +428,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
 fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer) {
     match fun {
         Fun::Builtin(_) => {
-            // Builtins are generated inline
+            // Built-in functions don't depend on each other or source functions, and they're
+            // generated before source functions. So they don't need to be forward-declared.
         }
         Fun::Source(source) => {
             w!(p, "static uint64_t _fun_{}(", idx);
@@ -2357,7 +2372,7 @@ fn generate_init_fn(pgm: &LoweredPgm, p: &mut Printer) {
     p.indent();
     p.nl();
 
-    // Initialize singletons for nullary constructors
+    // Initialize singletons for nullary constructors.
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
         match heap_obj {
             HeapObj::Source(source_con) if source_con.fields.is_empty() => {
@@ -2376,7 +2391,7 @@ fn generate_init_fn(pgm: &LoweredPgm, p: &mut Printer) {
         }
     }
 
-    // Initialize function closure objects
+    // Initialize function closure objects.
     for i in 0..pgm.funs.len() {
         w!(p, "_fun_closure_{} = (uint64_t)alloc_words(2);", i);
         p.nl();
@@ -2391,7 +2406,7 @@ fn generate_init_fn(pgm: &LoweredPgm, p: &mut Printer) {
         p.nl();
     }
 
-    // Initialize constructor closure objects
+    // Initialize constructor closure objects.
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
         match heap_obj {
             HeapObj::Source(source_con) if !source_con.fields.is_empty() => {
@@ -2413,7 +2428,6 @@ fn generate_init_fn(pgm: &LoweredPgm, p: &mut Printer) {
 }
 
 fn generate_main_fn(pgm: &LoweredPgm, p: &mut Printer) {
-    // Find the main function
     let main_idx = pgm.funs.iter().enumerate().find_map(|(i, fun)| match fun {
         Fun::Source(source) if source.name.node.as_str() == "main" => Some(i),
         _ => None,
