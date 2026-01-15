@@ -204,7 +204,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             return (uint32_t)*(uint64_t*)obj;
         }}
 
-        // Array functions - U8 (packed as bytes)
         static uint64_t array_new_u8(uint32_t len) {{
             size_t data_words = (len + 7) / 8;
             uint64_t* arr = alloc_words(2 + data_words);
@@ -239,7 +238,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             memmove(data + dst, data + src, len);
         }}
 
-        // Array functions - U32 (packed as 32-bit integers)
         static uint64_t array_new_u32(uint32_t len) {{
             size_t data_words = (len + 1) / 2;
             uint64_t* arr = alloc_words(2 + data_words);
@@ -274,7 +272,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             memmove(data + dst, data + src, len * sizeof(uint32_t));
         }}
 
-        // Array functions - U64
         static uint64_t array_new_u64(uint32_t len) {{
             uint64_t* arr = alloc_words(2 + len);
             arr[ARRAY_TAG_IDX] = 0;
