@@ -165,7 +165,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
         static void throw_exn(uint64_t exn) {{
             if (current_exn_handler == NULL) {{
                 fprintf(stderr, \"Uncaught exception\\n\");
-                abort();
+                exit(1);
             }}
             current_exn_handler->exn_value = exn;
             longjmp(current_exn_handler->buf, 1);
@@ -583,7 +583,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(p, "fprintf(stderr, \"\\n\");");
             p.nl();
-            w!(p, "abort();");
+            w!(p, "exit(1);");
             p.dedent();
             p.nl();
             w!(p, "}}");
@@ -1443,7 +1443,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "if (!f) {{ fprintf(stderr, \"Failed to open file\\n\"); abort(); }}"
+                "if (!f) {{ fprintf(stderr, \"Failed to open file\\n\"); exit(1); }}"
             );
             p.nl();
             w!(p, "fseek(f, 0, SEEK_END);");
@@ -2096,7 +2096,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.nl();
             w!(p, "fprintf(stderr, \"Non-exhaustive pattern match\\n\");");
             p.nl();
-            w!(p, "abort();");
+            w!(p, "exit(1);");
             p.dedent();
             p.nl();
             w!(p, "}}");
