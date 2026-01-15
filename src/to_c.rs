@@ -9,9 +9,6 @@ TODOs:
 - We may want to generate `#define`s or function for value conversions: value to `U32`, `I32` to
   value etc.
 
-- Pattern match (`is` and others) handling seems wrong: we want one function that tests and binds in
-  one go. (same as the interpreter)
-
 - Make sure signed integers wrap on overflow and underflow in a defined way (no UBs). Update the
   interpreter to do the same. Add tests. (`__builtin_add_overflow` etc.)
 
@@ -1751,7 +1748,8 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             expr_to_c(&rhs.node, locals, cg, p);
             w!(p, ";");
             p.nl();
-            pat_bind(&lhs.node, &rhs_temp, locals, cg, p);
+            w!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, cg));
+            p.nl();
         }
 
         Stmt::Assign(AssignStmt { lhs, rhs }) => match &lhs.node {
@@ -2149,10 +2147,6 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 w!(p, ") {{");
                 p.indent();
                 p.nl();
-
-                // Bind pattern variables
-                pat_bind(&alt.pat.node, &scrut_temp, locals, cg, p);
-
                 // Generate RHS
                 for stmt in &alt.rhs {
                     stmt_to_c(&stmt.node, locals, cg, p);
@@ -2293,7 +2287,6 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "if ({}) {{", cond);
             p.indent();
             p.nl();
-            pat_bind(&pat.node, &expr_temp, locals, cg, p);
             w!(p, "_is_result = _singleton_{};", cg.pgm.true_con_idx.0);
             p.dedent();
             p.nl();
@@ -2331,10 +2324,14 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
     }
 }
 
-/// Generate a C condition expression for pattern matching
+/// Generate a C condition expression for pattern matching.
 fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
     match pat {
-        Pat::Var(_) | Pat::Ignore => "1".to_string(),
+        Pat::Ignore => "1".to_string(),
+
+        Pat::Var(idx) => {
+            format!("({{ _{} = {}; 1; }})", idx.as_usize(), scrutinee)
+        }
 
         Pat::Con(ConPat { con, fields }) => {
             let tag_name = heap_obj_tag_name(cg.pgm, *con);
@@ -2342,9 +2339,7 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
             for (i, field_pat) in fields.iter().enumerate() {
                 let field_expr = format!("((uint64_t*){})[{}]", scrutinee, 1 + i);
                 let field_cond = pat_to_cond(&field_pat.node, &field_expr, cg);
-                if field_cond != "1" {
-                    cond = format!("({} && {})", cond, field_cond);
-                }
+                cond = format!("({} && {})", cond, field_cond);
             }
             cond
         }
@@ -2377,51 +2372,6 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
         }
 
         Pat::Variant(inner) => pat_to_cond(&inner.node, scrutinee, cg),
-    }
-}
-
-/// Bind pattern variables to the scrutinee
-fn pat_bind(pat: &Pat, scrutinee: &str, _locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
-    match pat {
-        Pat::Var(idx) => {
-            w!(p, "_{} = {};", idx.as_usize(), scrutinee);
-            p.nl();
-        }
-
-        Pat::Ignore => {}
-
-        Pat::Con(ConPat { con: _, fields }) => {
-            for (i, field_pat) in fields.iter().enumerate() {
-                let field_expr = format!("((uint64_t*){})[{}]", scrutinee, 1 + i);
-                pat_bind(&field_pat.node, &field_expr, _locals, cg, p);
-            }
-        }
-
-        Pat::Str(_) | Pat::Char(_) => {}
-
-        Pat::Or(p1, p2) => {
-            // For or patterns, we need to try the first, then the second
-            // The binders in both branches should be the same
-            let cond1 = pat_to_cond(&p1.node, scrutinee, cg);
-            w!(p, "if ({}) {{", cond1);
-            p.indent();
-            p.nl();
-            pat_bind(&p1.node, scrutinee, _locals, cg, p);
-            p.dedent();
-            p.nl();
-            w!(p, "}} else {{");
-            p.indent();
-            p.nl();
-            pat_bind(&p2.node, scrutinee, _locals, cg, p);
-            p.dedent();
-            p.nl();
-            w!(p, "}}");
-            p.nl();
-        }
-
-        Pat::Variant(inner) => {
-            pat_bind(&inner.node, scrutinee, _locals, cg, p);
-        }
     }
 }
 
