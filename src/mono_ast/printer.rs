@@ -723,6 +723,14 @@ impl Display for Type {
     }
 }
 
+impl Display for NamedType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s);
+        f.write_str(&s)
+    }
+}
+
 impl Display for FunSig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();

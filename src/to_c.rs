@@ -1,9 +1,7 @@
 /*
 TODOs:
 
-- `ty_to_c` should take record and variant arguments into account.
-
-- Then we can generate `#define`s for type tags and use them. (instead of the comments generated for
+- Generate `#define`s for type tags and use them. (instead of the comments generated for
   `Vector_Record`)
 
 - All constants for tags should be the `#define`d symbols instead, to help with debugging.
@@ -570,16 +568,53 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
             }
         }
 
-        mono::Type::Record { fields: _ } => {
+        mono::Type::Record { fields } => {
             out.push_str("Record");
+            for (field_name, field_ty) in fields {
+                w!(out, "_{}_", field_name);
+                ty_to_c(field_ty, out);
+            }
         }
 
-        mono::Type::Variant { alts: _ } => {
+        mono::Type::Variant { alts } => {
             out.push_str("Variant");
+            for alt in alts.values() {
+                w!(out, "_{}", alt);
+            }
         }
 
-        mono::Type::Fn(_) => {
-            out.push_str("Closure");
+        mono::Type::Fn(mono::FnType {
+            args,
+            ret,
+            exceptions,
+        }) => {
+            out.push_str("Fn");
+            match args {
+                mono::FunArgs::Positional(positional_args) => {
+                    for arg in positional_args {
+                        out.push('_');
+                        ty_to_c(arg, out);
+                    }
+                }
+                mono::FunArgs::Named(named_args) => {
+                    for (name, arg) in named_args {
+                        out.push('_');
+                        out.push_str(name);
+                        out.push('_');
+                        ty_to_c(arg, out);
+                    }
+                }
+            }
+            out.push_str("_ret_");
+            match ret {
+                Some(ret_ty) => ty_to_c(&ret_ty.node, out),
+                None => out.push_str("NONE"),
+            }
+            out.push_str("_exn_");
+            match exceptions {
+                Some(exn_ty) => ty_to_c(&exn_ty.node, out),
+                None => out.push_str("NONE"),
+            }
         }
 
         mono::Type::Never => {
