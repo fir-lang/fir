@@ -1676,7 +1676,11 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
     }
 
     // Declare result variable
-    w!(p, "uint64_t _result = 0;");
+    w!(
+        p,
+        "uint64_t _result = _singleton_{};",
+        cg.pgm.unit_con_idx.0
+    );
     p.nl();
 
     // Generate body
@@ -1725,7 +1729,11 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     }
 
     // Declare result variable
-    w!(p, "uint64_t _result = 0;");
+    w!(
+        p,
+        "uint64_t _result = _singleton_{};",
+        cg.pgm.unit_con_idx.0
+    );
     p.nl();
 
     // Generate body
@@ -1750,6 +1758,8 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.nl();
             w!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, cg));
             p.nl();
+            w!(p, "_result = {};", rhs_temp);
+            p.nl();
         }
 
         Stmt::Assign(AssignStmt { lhs, rhs }) => match &lhs.node {
@@ -1757,6 +1767,8 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 w!(p, "_{} = ", idx.as_usize());
                 expr_to_c(&rhs.node, locals, cg, p);
                 w!(p, ";");
+                p.nl();
+                w!(p, "_result = _singleton_{};", cg.pgm.unit_con_idx.0);
                 p.nl();
             }
             Expr::FieldSel(FieldSelExpr {
@@ -1772,6 +1784,8 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 w!(p, "((uint64_t*){})[{}] = ", obj_temp, 1 + idx);
                 expr_to_c(&rhs.node, locals, cg, p);
                 w!(p, ";");
+                p.nl();
+                w!(p, "_result = _singleton_{};", cg.pgm.unit_con_idx.0);
                 p.nl();
             }
             _ => {
@@ -1820,6 +1834,8 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 w!(p, "_break_{}:;", label);
                 p.nl();
             }
+            w!(p, "_result = _singleton_{};", cg.pgm.unit_con_idx.0);
+            p.nl();
         }
 
         Stmt::Break { label, level: _ } => {
@@ -2211,17 +2227,22 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 w!(p, "}}");
             }
 
-            if let Some(else_body) = else_branch {
-                w!(p, " else {{");
-                p.indent();
-                p.nl();
-                for stmt in else_body {
-                    stmt_to_c(&stmt.node, locals, cg, p);
+            match else_branch {
+                Some(else_body) => {
+                    w!(p, " else {{");
+                    p.indent();
+                    p.nl();
+                    for stmt in else_body {
+                        stmt_to_c(&stmt.node, locals, cg, p);
+                    }
+                    w!(p, "_if_result = _result;");
+                    p.dedent();
+                    p.nl();
+                    w!(p, "}}");
                 }
-                w!(p, "_if_result = _result;");
-                p.dedent();
-                p.nl();
-                w!(p, "}}");
+                None => {
+                    w!(p, "_if_result = _singleton_{};", cg.pgm.unit_con_idx.0);
+                }
             }
 
             // Close all the blocks we opened for conditions
