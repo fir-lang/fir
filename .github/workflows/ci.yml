@@ -76,7 +76,7 @@ jobs:
         run: sudo apt install -y just
 
       - name: Install goldentests
-        run: cargo install --git https://github.com/osa1/golden-tests --branch fir --features=binary
+        run: cargo install goldentests --features=binary
 
       - name: Build interpreter
         run: cargo build --verbose
@@ -108,7 +108,7 @@ jobs:
         run: sudo apt install -y just
 
       - name: Install goldentests
-        run: cargo install --git https://github.com/osa1/golden-tests --branch fir --features=binary
+        run: cargo install goldentests --features=binary
 
       - name: Build interpreter
         run: cargo build --verbose
@@ -160,7 +160,7 @@ jobs:
         run: sudo apt install -y just
 
       - name: Install goldentests
-        run: cargo install --git https://github.com/osa1/golden-tests --branch fir --features=binary
+        run: cargo install goldentests --features=binary
 
       - name: Build interpreter
         run: cargo build --release --verbose
