@@ -38,7 +38,7 @@ interpreter_update_goldens: build
     for f in tests/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
 compiler_unit_test:
-    cargo run --release -- Compiler/Main.fir -- Compiler/Main.fir
+    cargo run --bin fir --release -- Compiler/Main.fir -- Compiler/Main.fir
     ./Compiler/tests/tokenize.sh
     ./Compiler/tests/scan.sh
 
