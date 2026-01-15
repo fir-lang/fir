@@ -1,10 +1,7 @@
 /*
 TODOs:
 
-- Generate `#define`s for type tags and use them. (instead of the comments generated for
-  `Vector_Record`)
-
-- All constants for tags should be the `#define`d symbols instead, to help with debugging.
+- Rename singletons as `_singleton_CONSTRUCTOR_NAME` from `_singleton_TAG`.
 
 - We could also consider creating a `struct` for every constructor, to make debugging in gdb even
   easier.
@@ -525,27 +522,41 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
     }
 }
 
+/// Generate a symbolic tag name for a source constructor.
+fn source_con_tag_name(source_con: &SourceConDecl) -> String {
+    let mut tag_name = String::from("TAG_");
+    tag_name.push_str(&source_con.name);
+    for ty_arg in &source_con.ty_args {
+        tag_name.push('_');
+        ty_to_c(ty_arg, &mut tag_name);
+    }
+    tag_name
+}
+
+/// Get the symbolic tag name for a heap object.
+/// Returns the symbolic name for source constructors, or the numeric tag for builtins/records.
+fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
+    match &pgm.heap_objs[idx.0 as usize] {
+        HeapObj::Source(source_con) => source_con_tag_name(source_con),
+        HeapObj::Builtin(_) | HeapObj::Record(_) => format!("{}", idx.0),
+    }
+}
+
 fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, p: &mut Printer) {
     let SourceConDecl {
-        name,
+        name: _,
         idx,
-        ty_args,
+        ty_args: _,
         fields,
     } = source_con;
 
     assert_eq!(idx.0, tag);
 
-    let mut ty_name = name.to_string();
-    for ty_arg in ty_args {
-        ty_name.push('_');
-        ty_to_c(ty_arg, &mut ty_name);
-    }
+    let tag_name = source_con_tag_name(source_con);
 
-    // Just a comment for debugging - not a #define since names may collide
-    // (e.g. Vec[Record1] and Vec[Record2] would both be Vec_Record)
-    w!(p, "// tag {}: {}", tag, ty_name);
+    w!(p, "#define {} {}", tag_name, tag);
     if !fields.is_empty() {
-        w!(p, " ({} field(s))", fields.len());
+        w!(p, " // {} field(s)", fields.len());
     }
     p.nl();
 }
@@ -558,14 +569,18 @@ fn record_decl_to_c(record: &RecordShape, tag: u32, p: &mut Printer) {
     p.nl();
 }
 
+fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
+    out.push_str(&named_ty.name);
+    for arg in &named_ty.args {
+        out.push('_');
+        ty_to_c(arg, out);
+    }
+}
+
 fn ty_to_c(ty: &mono::Type, out: &mut String) {
     match ty {
-        mono::Type::Named(mono::NamedType { name, args }) => {
-            out.push_str(name);
-            for arg in args {
-                out.push('_');
-                ty_to_c(arg, out);
-            }
+        mono::Type::Named(named_ty) => {
+            named_ty_to_c(named_ty, out);
         }
 
         mono::Type::Record { fields } => {
@@ -579,7 +594,8 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
         mono::Type::Variant { alts } => {
             out.push_str("Variant");
             for alt in alts.values() {
-                w!(out, "_{}", alt);
+                out.push('_');
+                named_ty_to_c(alt, out);
             }
         }
 
@@ -1280,6 +1296,8 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::Try { ok_con, err_con } => {
+            let ok_tag_name = heap_obj_tag_name(pgm, *ok_con);
+            let err_tag_name = heap_obj_tag_name(pgm, *err_con);
             w!(p, "static uint64_t _fun_{}(uint64_t cb) {{", idx);
             p.indent();
             p.nl();
@@ -1309,7 +1327,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(p, "uint64_t* ok = alloc_words(2);");
             p.nl();
-            w!(p, "ok[0] = {};", ok_con.0);
+            w!(p, "ok[0] = {};", ok_tag_name);
             p.nl();
             w!(p, "ok[1] = result;");
             p.nl();
@@ -1325,7 +1343,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(p, "uint64_t* err = alloc_words(2);");
             p.nl();
-            w!(p, "err[0] = {};", err_con.0);
+            w!(p, "err[0] = {};", err_tag_name);
             p.nl();
             w!(p, "err[1] = handler.exn_value;");
             p.nl();
@@ -1851,7 +1869,8 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 p.nl();
                 w!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
                 p.nl();
-                w!(p, "_obj[0] = {};", heap_obj_idx.0);
+                let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
+                w!(p, "_obj[0] = {};", tag_name);
                 p.nl();
                 for (i, arg) in args.iter().enumerate() {
                     w!(p, "_obj[{}] = ", 1 + i);
@@ -1900,7 +1919,8 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                         p.nl();
                         w!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
                         p.nl();
-                        w!(p, "_obj[0] = {};", heap_obj_idx.0);
+                        let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
+                        w!(p, "_obj[0] = {};", tag_name);
                         p.nl();
                         for (i, arg) in args.iter().enumerate() {
                             w!(p, "_obj[{}] = ", 1 + i);
@@ -2317,7 +2337,8 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
         Pat::Var(_) | Pat::Ignore => "1".to_string(),
 
         Pat::Con(ConPat { con, fields }) => {
-            let mut cond = format!("(get_tag({}) == {})", scrutinee, con.0);
+            let tag_name = heap_obj_tag_name(cg.pgm, *con);
+            let mut cond = format!("(get_tag({}) == {})", scrutinee, tag_name);
             for (i, field_pat) in fields.iter().enumerate() {
                 let field_expr = format!("((uint64_t*){})[{}]", scrutinee, 1 + i);
                 let field_cond = pat_to_cond(&field_pat.node, &field_expr, cg);
@@ -2342,9 +2363,10 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
         }
 
         Pat::Char(c) => {
+            let tag_name = heap_obj_tag_name(cg.pgm, cg.pgm.char_con_idx);
             format!(
                 "(get_tag({}) == {} && ((uint64_t*){})[1] == {})",
-                scrutinee, cg.pgm.char_con_idx.0, scrutinee, *c as u32
+                scrutinee, tag_name, scrutinee, *c as u32
             )
         }
 
