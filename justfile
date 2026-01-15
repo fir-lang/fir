@@ -24,7 +24,7 @@ test: build interpreter_unit_test interpreter_golden_test compiler_unit_test com
 interpreter_unit_test:
     cargo test
 
-interpreter_golden_test:
+interpreter_golden_test: build
     goldentests target/debug/fir tests '# '
 
 interpreter_update_goldens: build
