@@ -201,7 +201,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
         // Get tag from heap object
         static uint32_t get_tag(uint64_t obj) {{
-            return *(uint32_t*)obj;
+            return (uint32_t)*(uint64_t*)obj;
         }}
 
         // Array functions - U8 (packed as bytes)
@@ -1967,7 +1967,11 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     w!(p, "if (_tag == CON_CON_TAG) {{");
                     p.indent();
                     p.nl();
-                    w!(p, "uint32_t _con_tag = ((uint32_t*){})[ 1];", fun_temp);
+                    w!(
+                        p,
+                        "uint32_t _con_tag = (uint32_t)((uint64_t*){})[ 1];",
+                        fun_temp
+                    );
                     p.nl();
                     w!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
                     p.nl();
@@ -2414,13 +2418,13 @@ fn generate_init_fn(pgm: &LoweredPgm, p: &mut Printer) {
             HeapObj::Source(source_con) if source_con.fields.is_empty() => {
                 w!(p, "_singleton_{} = (uint64_t)alloc_words(1);", tag);
                 p.nl();
-                w!(p, "*(uint32_t*)_singleton_{} = {};", tag, tag);
+                w!(p, "*(uint64_t*)_singleton_{} = {};", tag, tag);
                 p.nl();
             }
             HeapObj::Record(record) if record.fields.is_empty() => {
                 w!(p, "_singleton_{} = (uint64_t)alloc_words(1);", tag);
                 p.nl();
-                w!(p, "*(uint32_t*)_singleton_{} = {};", tag, tag);
+                w!(p, "*(uint64_t*)_singleton_{} = {};", tag, tag);
                 p.nl();
             }
             _ => {}
