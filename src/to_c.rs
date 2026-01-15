@@ -16,6 +16,17 @@ TODOs:
 
 - Pattern match (`is` and others) handling seems wrong: we want one function that tests and binds in
   one go. (same as the interpreter)
+
+- Make sure signed integers wrap on overflow and underflow in a defined way (no UBs). Update the
+  interpreter to do the same. Add tests. (`__builtin_add_overflow` etc.)
+
+  In the future we'll probably trap by default and require explicitly allowing overflowing.
+  (`checkedAdd`, `uncheckedAdd` etc.)
+
+- Update for 452221fc86f2bd4848a035896bcf6d85985125dc: we now have one array tag but the C gen still
+  uses multiple.
+
+  `array_new_u8` etc. should be gone and there should be just one `array_new`.
 */
 
 /*
