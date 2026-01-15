@@ -2354,7 +2354,14 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
                     escaped.push(byte as char);
                 }
             }
-            format!("str_eq({}, \"{}\", {})", scrutinee, escaped, s.len())
+            format!(
+                "(get_tag({}) == {} && str_eq({}, \"{}\", {}))",
+                scrutinee,
+                cg.pgm.str_con_idx.0,
+                scrutinee,
+                escaped,
+                s.len()
+            )
         }
 
         Pat::Char(c) => {
