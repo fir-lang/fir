@@ -1790,11 +1790,7 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.nl();
         }
 
-        Stmt::While(WhileStmt {
-            label: _,
-            cond,
-            body,
-        }) => {
+        Stmt::While(WhileStmt { label, cond, body }) => {
             w!(p, "while (1) {{");
             p.indent();
             p.nl();
@@ -1813,27 +1809,31 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             for stmt in body {
                 stmt_to_c(&stmt.node, locals, cg, p);
             }
+            if let Some(label) = label {
+                w!(p, "_continue_{}:;", label);
+            }
             p.dedent();
             p.nl();
             w!(p, "}}");
             p.nl();
+            if let Some(label) = label {
+                w!(p, "_break_{}:;", label);
+                p.nl();
+            }
         }
 
-        Stmt::Break { label: _, level } => {
-            // For now, only support level 0 breaks
-            if *level == 0 {
-                w!(p, "break;");
-            } else {
-                w!(p, "goto _break_{};", level);
+        Stmt::Break { label, level: _ } => {
+            match label {
+                Some(label) => w!(p, "goto _break_{};", label),
+                None => w!(p, "break;"),
             }
             p.nl();
         }
 
-        Stmt::Continue { label: _, level } => {
-            if *level == 0 {
-                w!(p, "continue;");
-            } else {
-                w!(p, "goto _continue_{};", level);
+        Stmt::Continue { label, level: _ } => {
+            match label {
+                Some(label) => w!(p, "goto _continue_{};", label),
+                None => w!(p, "continue;"),
             }
             p.nl();
         }
