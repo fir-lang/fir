@@ -1,7 +1,7 @@
 /*
 TODOs:
 
-- `ty_to_c_name` should take record and variant arguments into account.
+- `ty_to_c` should take record and variant arguments into account.
 
 - Then we can generate `#define`s for type tags and use them. (instead of the comments generated for
   `Vector_Record`)
@@ -540,7 +540,7 @@ fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, p: &mut Printer) {
     let mut ty_name = name.to_string();
     for ty_arg in ty_args {
         ty_name.push('_');
-        ty_to_c_name(ty_arg, &mut ty_name);
+        ty_to_c(ty_arg, &mut ty_name);
     }
 
     // Just a comment for debugging - not a #define since names may collide
@@ -560,13 +560,13 @@ fn record_decl_to_c(record: &RecordShape, tag: u32, p: &mut Printer) {
     p.nl();
 }
 
-fn ty_to_c_name(ty: &mono::Type, out: &mut String) {
+fn ty_to_c(ty: &mono::Type, out: &mut String) {
     match ty {
         mono::Type::Named(mono::NamedType { name, args }) => {
             out.push_str(name);
             for arg in args {
                 out.push('_');
-                ty_to_c_name(arg, out);
+                ty_to_c(arg, out);
             }
         }
 
