@@ -203,11 +203,11 @@ impl Type {
                 buf.push(')');
                 if let Some(ret) = ret {
                     buf.push(' ');
-                    ret.node.print(buf);
+                    ret.print(buf);
                 }
                 if let Some(exn) = exceptions {
                     buf.push_str(" / ");
-                    exn.node.print(buf);
+                    exn.print(buf);
                 }
             }
 

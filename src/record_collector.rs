@@ -130,10 +130,10 @@ fn visit_ty(ty: &mono::Type, records: &mut HashSet<RecordShape>) {
                 }
             }
             if let Some(ret) = ret {
-                visit_ty(&ret.node, records);
+                visit_ty(ret, records);
             }
             if let Some(exn) = exceptions {
-                visit_ty(&exn.node, records);
+                visit_ty(exn, records);
             }
         }
 

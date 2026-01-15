@@ -572,8 +572,8 @@ fn mono_expr(
                         node: mono::Expr::Fn(mono::FnExpr {
                             sig: mono::FunSig {
                                 params: closure_params,
-                                return_ty: ret.map(|ty| ty.map(|ty| *ty)),
-                                exceptions: exceptions.map(|ty| ty.map(|ty| *ty)),
+                                return_ty: ret.map(|ty| ast::L::new_dummy(*ty)),
+                                exceptions: exceptions.map(|ty| ast::L::new_dummy(*ty)),
                             },
                             body: vec![mono::L {
                                 loc: loc.clone(),
@@ -1568,14 +1568,8 @@ fn mono_tc_ty(
                         .collect(),
                 ),
             },
-            ret: Some(ast::L {
-                loc: ast::Loc::dummy(),
-                node: Box::new(mono_tc_ty(&ret, ty_map, poly_pgm, mono_pgm)),
-            }),
-            exceptions: exceptions.map(|ty| ast::L {
-                loc: ast::Loc::dummy(),
-                node: Box::new(mono_tc_ty(&ty, ty_map, poly_pgm, mono_pgm)),
-            }),
+            ret: Some(Box::new(mono_tc_ty(&ret, ty_map, poly_pgm, mono_pgm))),
+            exceptions: exceptions.map(|ty| Box::new(mono_tc_ty(&ty, ty_map, poly_pgm, mono_pgm))),
         }),
 
         Ty::Anonymous {
@@ -1778,12 +1772,12 @@ fn mono_ast_ty(
                     .map(|arg| mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm))
                     .collect(),
             ),
-            ret: ret.as_ref().map(|ret| {
-                ret.map_as_ref(|ret| Box::new(mono_ast_ty(ret, ty_map, poly_pgm, mono_pgm)))
-            }),
-            exceptions: exceptions.as_ref().map(|exn| {
-                exn.map_as_ref(|exn| Box::new(mono_ast_ty(exn, ty_map, poly_pgm, mono_pgm)))
-            }),
+            ret: ret
+                .as_ref()
+                .map(|ret| Box::new(mono_ast_ty(&ret.node, ty_map, poly_pgm, mono_pgm))),
+            exceptions: exceptions
+                .as_ref()
+                .map(|exn| Box::new(mono_ast_ty(&exn.node, ty_map, poly_pgm, mono_pgm))),
         }),
     }
 }

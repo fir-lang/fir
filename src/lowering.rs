@@ -1737,13 +1737,13 @@ fn lower_expr(
                     args: mono::FunArgs::Named(
                         args.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
                     ),
-                    ret: Some(ast::L::new_dummy(Box::new(ret_ty))),
+                    ret: Some(Box::new(ret_ty)),
                     exceptions: None,
                 }),
 
                 mono::ConFields::Unnamed(args) => mono::Type::Fn(mono::FnType {
                     args: mono::FunArgs::Positional(args.clone()),
-                    ret: Some(ast::L::new_dummy(Box::new(ret_ty))),
+                    ret: Some(Box::new(ret_ty)),
                     exceptions: None,
                 }),
             };
@@ -1968,7 +1968,7 @@ fn lower_expr(
                 expr,
                 Default::default(),
                 match ret {
-                    Some(ret) => *ret.node,
+                    Some(ret) => *ret,
                     None => mono::Type::unit(),
                 },
             )
