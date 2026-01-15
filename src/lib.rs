@@ -114,11 +114,6 @@ mod native {
     use std::path::Path;
 
     pub fn main(opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
-        // let opts = CompilerOpts {
-        //     run_c: true,
-        //     ..opts
-        // };
-
         if opts.tokenize {
             let file_contents = std::fs::read_to_string(program).unwrap();
             for (l, t, _) in crate::lexer::lex(&file_contents, "test") {
@@ -188,7 +183,7 @@ mod native {
         }
 
         if opts.run_c {
-            let c = to_c::to_c(&lowered_pgm);
+            let c = to_c::to_c(&lowered_pgm, &opts.main);
             let mut file = tempfile::NamedTempFile::with_suffix(".c").unwrap();
             let out_file_path = file.path().as_os_str().to_string_lossy().into_owned();
             let out_file_path = &out_file_path[..out_file_path.len() - 2];
@@ -229,7 +224,7 @@ mod native {
                 std::process::exit(1);
             }
         } else if opts.to_c {
-            println!("{}", to_c::to_c(&lowered_pgm));
+            println!("{}", to_c::to_c(&lowered_pgm, &opts.main));
         } else {
             let mut w = std::io::stdout();
             program_args.insert(0, program);

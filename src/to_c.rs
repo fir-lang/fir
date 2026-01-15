@@ -148,7 +148,7 @@ impl<'a> Cg<'a> {
     }
 }
 
-pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
+pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     let mut p = Printer::default();
 
     // Header includes and runtime definitions
@@ -423,7 +423,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm) -> String {
 
     generate_init_fn(pgm, &mut p);
 
-    generate_main_fn(pgm, &mut p);
+    generate_main_fn(pgm, main, &mut p);
 
     p.print()
 }
@@ -2435,11 +2435,16 @@ fn generate_init_fn(pgm: &LoweredPgm, p: &mut Printer) {
     p.nl();
 }
 
-fn generate_main_fn(pgm: &LoweredPgm, p: &mut Printer) {
-    let main_idx = pgm.funs.iter().enumerate().find_map(|(i, fun)| match fun {
-        Fun::Source(source) if source.name.node.as_str() == "main" => Some(i),
-        _ => None,
-    });
+fn generate_main_fn(pgm: &LoweredPgm, main: &str, p: &mut Printer) {
+    let main_idx = pgm
+        .funs
+        .iter()
+        .enumerate()
+        .find_map(|(i, fun)| match fun {
+            Fun::Source(source) if source.name.node.as_str() == main => Some(i),
+            _ => None,
+        })
+        .unwrap_or_else(|| panic!("Main function {main} is not defined"));
 
     p.nl();
     w!(p, "int main(int argc, char** argv) {{");
@@ -2451,17 +2456,8 @@ fn generate_main_fn(pgm: &LoweredPgm, p: &mut Printer) {
     p.nl();
     w!(p, "_init();");
     p.nl();
-
-    if let Some(main_idx) = main_idx {
-        w!(p, "_fun_{}();", main_idx);
-        p.nl();
-    } else {
-        w!(p, "fprintf(stderr, \"No main function found\\n\");");
-        p.nl();
-        w!(p, "return 1;");
-        p.nl();
-    }
-
+    w!(p, "_fun_{}();", main_idx);
+    p.nl();
     w!(p, "return 0;");
     p.dedent();
     p.nl();
