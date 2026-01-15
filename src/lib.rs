@@ -6,6 +6,7 @@
 )]
 
 mod ast;
+pub mod cli;
 mod collections;
 mod import_resolver;
 mod interpolation;

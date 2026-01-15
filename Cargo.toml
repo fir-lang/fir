@@ -10,6 +10,10 @@ crate-type = ["cdylib", "rlib"]
 name = "fir"
 path = "bin/fir.rs"
 
+[[bin]]
+name = "fir2c"
+path = "bin/fir2c.rs"
+
 [dependencies]
 bytemuck = "1.16.0"
 clap = { version = "4.5.27", default-features = false, features = ["std", "string", "help", "error-context", "usage", "suggestions"] }
