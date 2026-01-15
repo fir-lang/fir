@@ -44,6 +44,8 @@ pub enum ConFields {
     Unnamed(Vec<Type>),
 }
 
+// Note: `Type` is used in maps and sets and it *cannot* have `Loc`s in it to avoid duplicating
+// types that come from different locations.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Type {
     Named(NamedType),
@@ -72,6 +74,12 @@ impl Type {
             fields: Default::default(),
         }
     }
+
+    pub(crate) fn empty() -> Type {
+        Type::Variant {
+            alts: Default::default(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -83,8 +91,8 @@ pub struct NamedType {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FnType {
     pub args: FunArgs,
-    pub ret: Option<L<Box<Type>>>,
-    pub exceptions: Option<L<Box<Type>>>,
+    pub ret: Box<Type>,
+    pub exn: Box<Type>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -109,14 +117,18 @@ impl FunSig {
                     .map(|(_param_name, param_ty)| param_ty.node.clone())
                     .collect(),
             ),
-            ret: self
-                .return_ty
-                .as_ref()
-                .map(|l_ty| l_ty.map_as_ref(|ty| Box::new(ty.clone()))),
-            exceptions: self
-                .exceptions
-                .as_ref()
-                .map(|l_ty| l_ty.map_as_ref(|ty| Box::new(ty.clone()))),
+            ret: Box::new(
+                self.return_ty
+                    .as_ref()
+                    .map(|ty| ty.node.clone())
+                    .unwrap_or(Type::unit()),
+            ),
+            exn: Box::new(
+                self.exceptions
+                    .as_ref()
+                    .map(|ty| ty.node.clone())
+                    .unwrap_or(Type::empty()),
+            ),
         }
     }
 }

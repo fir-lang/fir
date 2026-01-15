@@ -509,11 +509,7 @@ fn mono_expr(
                 .get(&mono_ty_args)
                 .unwrap();
 
-            let mono::FnType {
-                args,
-                ret,
-                exceptions,
-            } = mono_fun.sig.ty();
+            let mono::FnType { args, ret, exn } = mono_fun.sig.ty();
 
             let mono_fun_args = match args {
                 mono::FunArgs::Positional(args) => args,
@@ -572,8 +568,8 @@ fn mono_expr(
                         node: mono::Expr::Fn(mono::FnExpr {
                             sig: mono::FunSig {
                                 params: closure_params,
-                                return_ty: ret.map(|ty| ty.map(|ty| *ty)),
-                                exceptions: exceptions.map(|ty| ty.map(|ty| *ty)),
+                                return_ty: Some(ast::L::new_dummy((*ret).clone())),
+                                exceptions: Some(ast::L::new_dummy((*exn).clone())),
                             },
                             body: vec![mono::L {
                                 loc: loc.clone(),
@@ -1568,14 +1564,12 @@ fn mono_tc_ty(
                         .collect(),
                 ),
             },
-            ret: Some(ast::L {
-                loc: ast::Loc::dummy(),
-                node: Box::new(mono_tc_ty(&ret, ty_map, poly_pgm, mono_pgm)),
-            }),
-            exceptions: exceptions.map(|ty| ast::L {
-                loc: ast::Loc::dummy(),
-                node: Box::new(mono_tc_ty(&ty, ty_map, poly_pgm, mono_pgm)),
-            }),
+            ret: Box::new(mono_tc_ty(&ret, ty_map, poly_pgm, mono_pgm)),
+            exn: Box::new(
+                exceptions
+                    .map(|ty| mono_tc_ty(&ty, ty_map, poly_pgm, mono_pgm))
+                    .unwrap_or(mono::Type::empty()),
+            ),
         }),
 
         Ty::Anonymous {
@@ -1778,12 +1772,17 @@ fn mono_ast_ty(
                     .map(|arg| mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm))
                     .collect(),
             ),
-            ret: ret.as_ref().map(|ret| {
-                ret.map_as_ref(|ret| Box::new(mono_ast_ty(ret, ty_map, poly_pgm, mono_pgm)))
-            }),
-            exceptions: exceptions.as_ref().map(|exn| {
-                exn.map_as_ref(|exn| Box::new(mono_ast_ty(exn, ty_map, poly_pgm, mono_pgm)))
-            }),
+            ret: Box::new(
+                ret.as_ref()
+                    .map(|ret| mono_ast_ty(&ret.node, ty_map, poly_pgm, mono_pgm))
+                    .unwrap_or_else(mono::Type::unit),
+            ),
+            exn: Box::new(
+                exceptions
+                    .as_ref()
+                    .map(|exn| mono_ast_ty(&exn.node, ty_map, poly_pgm, mono_pgm))
+                    .unwrap_or_else(mono::Type::empty),
+            ),
         }),
     }
 }

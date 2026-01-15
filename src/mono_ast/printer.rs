@@ -174,11 +174,7 @@ impl Type {
                 buf.push(']');
             }
 
-            Type::Fn(FnType {
-                args,
-                ret,
-                exceptions,
-            }) => {
+            Type::Fn(FnType { args, ret, exn }) => {
                 buf.push_str("Fn(");
                 match args {
                     FunArgs::Positional(args) => {
@@ -201,18 +197,10 @@ impl Type {
                     }
                 }
                 buf.push(')');
-                if exceptions.is_some() || ret.is_some() {
-                    buf.push_str(": ");
-                }
-                if let Some(exn) = exceptions {
-                    exn.node.print(buf);
-                }
-                if let Some(ret) = ret {
-                    if exceptions.is_some() {
-                        buf.push(' ');
-                    }
-                    ret.node.print(buf);
-                }
+                buf.push(' ');
+                ret.print(buf);
+                buf.push_str(" / ");
+                exn.print(buf);
             }
 
             Type::Never => {

@@ -583,11 +583,7 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
             }
         }
 
-        mono::Type::Fn(mono::FnType {
-            args,
-            ret,
-            exceptions,
-        }) => {
+        mono::Type::Fn(mono::FnType { args, ret, exn }) => {
             out.push_str("Fn");
             match args {
                 mono::FunArgs::Positional(positional_args) => {
@@ -605,16 +601,10 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
                     }
                 }
             }
-            out.push_str("_ret_");
-            match ret {
-                Some(ret_ty) => ty_to_c(&ret_ty.node, out),
-                None => out.push_str("NONE"),
-            }
-            out.push_str("_exn_");
-            match exceptions {
-                Some(exn_ty) => ty_to_c(&exn_ty.node, out),
-                None => out.push_str("NONE"),
-            }
+            out.push('_');
+            ty_to_c(ret, out);
+            out.push('_');
+            ty_to_c(exn, out);
         }
 
         mono::Type::Never => {

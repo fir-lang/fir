@@ -278,17 +278,13 @@ impl Type {
                     arg.node.print(buf);
                 }
                 buf.push(')');
-                if exceptions.is_some() || ret.is_some() {
-                    buf.push_str(": ");
+                if let Some(ret) = ret {
+                    buf.push(' ');
+                    ret.node.print(buf);
                 }
                 if let Some(exn) = exceptions {
+                    buf.push_str(" / ");
                     exn.node.print(buf);
-                }
-                if let Some(ret) = ret {
-                    if exceptions.is_some() {
-                        buf.push(' ');
-                    }
-                    ret.node.print(buf);
                 }
             }
         }

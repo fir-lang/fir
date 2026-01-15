@@ -116,11 +116,7 @@ fn visit_ty(ty: &mono::Type, records: &mut HashSet<RecordShape>) {
             }
         }
 
-        mono::Type::Fn(mono::FnType {
-            args,
-            ret,
-            exceptions,
-        }) => {
+        mono::Type::Fn(mono::FnType { args, ret, exn }) => {
             match args {
                 mono::FunArgs::Positional(args) => {
                     args.iter().for_each(|ty| visit_ty(ty, records));
@@ -129,12 +125,8 @@ fn visit_ty(ty: &mono::Type, records: &mut HashSet<RecordShape>) {
                     args.values().for_each(|ty| visit_ty(ty, records));
                 }
             }
-            if let Some(ret) = ret {
-                visit_ty(&ret.node, records);
-            }
-            if let Some(exn) = exceptions {
-                visit_ty(&exn.node, records);
-            }
+            visit_ty(ret, records);
+            visit_ty(exn, records);
         }
 
         mono::Type::Never => {}
