@@ -358,17 +358,45 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     }
 
     p.nl();
-    w!(p, "// Singleton allocations for nullary constructors");
+    w!(
+        p,
+        "// Statically allocated singletons for nullary constructors"
+    );
     p.nl();
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
         match heap_obj {
             HeapObj::Source(source_con) if source_con.fields.is_empty() => {
                 let singleton_name = source_con_singleton_name(source_con);
-                w!(p, "static uint64_t {} = 0;", singleton_name);
+                let tag_name = source_con_tag_name(source_con);
+                w!(
+                    p,
+                    "static uint64_t {}_data[] = {{ {} }};",
+                    singleton_name,
+                    tag_name
+                );
+                p.nl();
+                w!(
+                    p,
+                    "#define {} ((uint64_t){}_data)",
+                    singleton_name,
+                    singleton_name
+                );
                 p.nl();
             }
             HeapObj::Record(record) if record.fields.is_empty() => {
-                w!(p, "static uint64_t _singleton_record_{} = 0;", tag);
+                w!(
+                    p,
+                    "static uint64_t _singleton_record_{}_data[] = {{ {} }};",
+                    tag,
+                    tag
+                );
+                p.nl();
+                w!(
+                    p,
+                    "#define _singleton_record_{} ((uint64_t)_singleton_record_{}_data)",
+                    tag,
+                    tag
+                );
                 p.nl();
             }
             _ => {}
@@ -376,24 +404,55 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     }
     p.nl();
 
-    w!(p, "// Static closure objects for top-level functions");
-    p.nl();
-    for i in 0..pgm.funs.len() {
-        w!(p, "static uint64_t _fun_closure_{} = 0;", i);
-        p.nl();
-    }
-    p.nl();
-
-    w!(p, "// Static closure objects for constructors");
+    w!(
+        p,
+        "// Statically allocated closure objects for constructors"
+    );
     p.nl();
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
         match heap_obj {
             HeapObj::Source(source_con) if !source_con.fields.is_empty() => {
-                w!(p, "static uint64_t _con_closure_{} = 0;", tag);
+                let tag_name = source_con_tag_name(source_con);
+                w!(
+                    p,
+                    "static uint64_t _con_closure_{}_data[] = {{ CON_CON_TAG, {} }};",
+                    tag,
+                    tag_name
+                );
+                p.nl();
+                w!(
+                    p,
+                    "#define _con_closure_{} ((uint64_t)_con_closure_{}_data)",
+                    tag,
+                    tag
+                );
                 p.nl();
             }
             _ => {}
         }
+    }
+    p.nl();
+
+    w!(
+        p,
+        "// Statically allocated closure objects for top-level functions"
+    );
+    p.nl();
+    for i in 0..pgm.funs.len() {
+        w!(
+            p,
+            "static uint64_t _fun_closure_{}_data[] = {{ FUN_CON_TAG, (uint64_t)_fun_{} }};",
+            i,
+            i
+        );
+        p.nl();
+        w!(
+            p,
+            "#define _fun_closure_{} ((uint64_t)_fun_closure_{}_data)",
+            i,
+            i
+        );
+        p.nl();
     }
     p.nl();
 
@@ -425,30 +484,109 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         p.nl();
     }
 
-    generate_init_fn(pgm, &mut p);
-
     generate_main_fn(pgm, main, &mut p);
 
     p.print()
 }
 
 fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer) {
-    match fun {
-        Fun::Builtin(_) => {
-            // Built-in functions don't depend on each other or source functions, and they're
-            // generated before source functions. So they don't need to be forward-declared.
-        }
-        Fun::Source(source) => {
-            w!(p, "static uint64_t _fun_{}(", idx);
-            for (i, _) in source.params.iter().enumerate() {
-                if i > 0 {
-                    w!(p, ", ");
-                }
-                w!(p, "uint64_t _p{}", i);
+    let param_count = match fun {
+        Fun::Builtin(builtin) => builtin_fun_param_count(builtin),
+        Fun::Source(source) => source.params.len(),
+    };
+
+    w!(p, "static uint64_t _fun_{}(", idx);
+    if param_count == 0 {
+        w!(p, "void");
+    } else {
+        for i in 0..param_count {
+            if i > 0 {
+                w!(p, ", ");
             }
-            w!(p, ");");
-            p.nl();
+            w!(p, "uint64_t _p{}", i);
         }
+    }
+    w!(p, ");");
+    p.nl();
+}
+
+/// Returns the number of parameters for a built-in function.
+fn builtin_fun_param_count(fun: &BuiltinFunDecl) -> usize {
+    match fun {
+        BuiltinFunDecl::Panic => 1,
+        BuiltinFunDecl::PrintStrNoNl => 1,
+        BuiltinFunDecl::ShrI8
+        | BuiltinFunDecl::ShrU8
+        | BuiltinFunDecl::ShrI32
+        | BuiltinFunDecl::ShrU32
+        | BuiltinFunDecl::BitAndI8
+        | BuiltinFunDecl::BitAndU8
+        | BuiltinFunDecl::BitAndI32
+        | BuiltinFunDecl::BitAndU32
+        | BuiltinFunDecl::BitOrI8
+        | BuiltinFunDecl::BitOrU8
+        | BuiltinFunDecl::BitOrI32
+        | BuiltinFunDecl::BitOrU32
+        | BuiltinFunDecl::BitXorU32 => 2,
+        BuiltinFunDecl::ToStrI8
+        | BuiltinFunDecl::ToStrU8
+        | BuiltinFunDecl::ToStrI32
+        | BuiltinFunDecl::ToStrU32
+        | BuiltinFunDecl::ToStrU64
+        | BuiltinFunDecl::ToStrI64 => 1,
+        BuiltinFunDecl::U8AsI8
+        | BuiltinFunDecl::U8AsU32
+        | BuiltinFunDecl::U32AsU8
+        | BuiltinFunDecl::U32AsI32
+        | BuiltinFunDecl::U32AsU64 => 1,
+        BuiltinFunDecl::I8Shl
+        | BuiltinFunDecl::U8Shl
+        | BuiltinFunDecl::I32Shl
+        | BuiltinFunDecl::U32Shl => 2,
+        BuiltinFunDecl::I8Cmp
+        | BuiltinFunDecl::U8Cmp
+        | BuiltinFunDecl::I32Cmp
+        | BuiltinFunDecl::U32Cmp
+        | BuiltinFunDecl::U64Cmp => 2,
+        BuiltinFunDecl::I8Add
+        | BuiltinFunDecl::U8Add
+        | BuiltinFunDecl::I32Add
+        | BuiltinFunDecl::U32Add
+        | BuiltinFunDecl::U64Add => 2,
+        BuiltinFunDecl::I8Sub
+        | BuiltinFunDecl::U8Sub
+        | BuiltinFunDecl::I32Sub
+        | BuiltinFunDecl::U32Sub => 2,
+        BuiltinFunDecl::I8Mul
+        | BuiltinFunDecl::U8Mul
+        | BuiltinFunDecl::I32Mul
+        | BuiltinFunDecl::U32Mul
+        | BuiltinFunDecl::U64Mul => 2,
+        BuiltinFunDecl::I8Div
+        | BuiltinFunDecl::U8Div
+        | BuiltinFunDecl::I32Div
+        | BuiltinFunDecl::U32Div => 2,
+        BuiltinFunDecl::I8Eq
+        | BuiltinFunDecl::U8Eq
+        | BuiltinFunDecl::I32Eq
+        | BuiltinFunDecl::U32Eq => 2,
+        BuiltinFunDecl::U32Mod => 2,
+        BuiltinFunDecl::I8Rem
+        | BuiltinFunDecl::U8Rem
+        | BuiltinFunDecl::I32Rem
+        | BuiltinFunDecl::U32Rem => 2,
+        BuiltinFunDecl::I32AsU32 | BuiltinFunDecl::I32Abs => 1,
+        BuiltinFunDecl::I8Neg | BuiltinFunDecl::I32Neg => 1,
+        BuiltinFunDecl::ThrowUnchecked => 1,
+        BuiltinFunDecl::Try { .. } => 1,
+        BuiltinFunDecl::ArrayNew { .. } => 1,
+        BuiltinFunDecl::ArrayLen => 1,
+        BuiltinFunDecl::ArrayGet { .. } => 2,
+        BuiltinFunDecl::ArraySet { .. } => 3,
+        BuiltinFunDecl::ArraySlice { .. } => 3,
+        BuiltinFunDecl::ArrayCopyWithin { .. } => 4,
+        BuiltinFunDecl::ReadFileUtf8 => 1,
+        BuiltinFunDecl::GetArgs => 0,
     }
 }
 
@@ -2470,73 +2608,6 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
     }
 }
 
-fn generate_init_fn(pgm: &LoweredPgm, p: &mut Printer) {
-    w!(p, "static void _init(void) {{");
-    p.indent();
-    p.nl();
-
-    // Initialize singletons for nullary constructors.
-    for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
-        match heap_obj {
-            HeapObj::Source(source_con) if source_con.fields.is_empty() => {
-                let singleton_name = source_con_singleton_name(source_con);
-                let tag_name = source_con_tag_name(source_con);
-                w!(p, "{} = (uint64_t)alloc_words(1);", singleton_name);
-                p.nl();
-                w!(p, "*(uint64_t*){} = {};", singleton_name, tag_name);
-                p.nl();
-            }
-            HeapObj::Record(record) if record.fields.is_empty() => {
-                w!(p, "_singleton_record_{} = (uint64_t)alloc_words(1);", tag);
-                p.nl();
-                w!(p, "*(uint64_t*)_singleton_record_{} = {};", tag, tag);
-                p.nl();
-            }
-            _ => {}
-        }
-    }
-
-    // Initialize function closure objects.
-    for i in 0..pgm.funs.len() {
-        w!(p, "_fun_closure_{} = (uint64_t)alloc_words(2);", i);
-        p.nl();
-        w!(p, "((uint64_t*)_fun_closure_{})[0] = FUN_CON_TAG;", i);
-        p.nl();
-        w!(
-            p,
-            "((uint64_t*)_fun_closure_{})[1] = (uint64_t)_fun_{};",
-            i,
-            i
-        );
-        p.nl();
-    }
-
-    // Initialize constructor closure objects.
-    for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
-        match heap_obj {
-            HeapObj::Source(source_con) if !source_con.fields.is_empty() => {
-                w!(p, "_con_closure_{} = (uint64_t)alloc_words(2);", tag);
-                p.nl();
-                w!(p, "((uint64_t*)_con_closure_{})[0] = CON_CON_TAG;", tag);
-                p.nl();
-                w!(
-                    p,
-                    "((uint64_t*)_con_closure_{})[1] = {};",
-                    tag,
-                    source_con_tag_name(source_con)
-                );
-                p.nl();
-            }
-            _ => {}
-        }
-    }
-
-    p.dedent();
-    p.nl();
-    w!(p, "}}");
-    p.nl();
-}
-
 fn generate_main_fn(pgm: &LoweredPgm, main: &str, p: &mut Printer) {
     let main_idx = pgm
         .funs
@@ -2555,8 +2626,6 @@ fn generate_main_fn(pgm: &LoweredPgm, main: &str, p: &mut Printer) {
     w!(p, "g_argc = argc;");
     p.nl();
     w!(p, "g_argv = argv;");
-    p.nl();
-    w!(p, "_init();");
     p.nl();
     w!(p, "_fun_{}();", main_idx);
     p.nl();
