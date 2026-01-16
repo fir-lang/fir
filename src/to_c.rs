@@ -363,11 +363,12 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
         match heap_obj {
             HeapObj::Source(source_con) if source_con.fields.is_empty() => {
-                w!(p, "static uint64_t _singleton_{} = 0;", tag);
+                let singleton_name = source_con_singleton_name(source_con);
+                w!(p, "static uint64_t {} = 0;", singleton_name);
                 p.nl();
             }
             HeapObj::Record(record) if record.fields.is_empty() => {
-                w!(p, "static uint64_t _singleton_{} = 0;", tag);
+                w!(p, "static uint64_t _singleton_record_{} = 0;", tag);
                 p.nl();
             }
             _ => {}
@@ -541,6 +542,26 @@ fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     }
 }
 
+/// Generate singleton variable name for a nullary source constructor.
+fn source_con_singleton_name(source_con: &SourceConDecl) -> String {
+    let mut name = String::from("_singleton_");
+    name.push_str(&source_con.name);
+    for ty_arg in &source_con.ty_args {
+        name.push('_');
+        ty_to_c(ty_arg, &mut name);
+    }
+    name
+}
+
+/// Get the singleton variable name for a heap object (nullary constructors only).
+fn heap_obj_singleton_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
+    match &pgm.heap_objs[idx.0 as usize] {
+        HeapObj::Source(source_con) => source_con_singleton_name(source_con),
+        HeapObj::Record(_) => format!("_singleton_record_{}", idx.0),
+        HeapObj::Builtin(_) => panic!("Builtin heap objects don't have singletons"),
+    }
+}
+
 fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, p: &mut Printer) {
     let SourceConDecl {
         name: _,
@@ -675,7 +696,11 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(p, "fwrite(data, 1, len, stdout);");
             p.nl();
-            w!(p, "return _singleton_{};", pgm.unit_con_idx.0);
+            w!(
+                p,
+                "return {};",
+                heap_obj_singleton_name(pgm, pgm.unit_con_idx)
+            );
             p.dedent();
             p.nl();
             w!(p, "}}");
@@ -1150,9 +1175,9 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "return ((uint8_t)a == (uint8_t)b) ? _singleton_{} : _singleton_{};",
-                pgm.true_con_idx.0,
-                pgm.false_con_idx.0
+                "return ((uint8_t)a == (uint8_t)b) ? {} : {};",
+                heap_obj_singleton_name(pgm, pgm.true_con_idx),
+                heap_obj_singleton_name(pgm, pgm.false_con_idx)
             );
             p.dedent();
             p.nl();
@@ -1166,9 +1191,9 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "return ((uint32_t)a == (uint32_t)b) ? _singleton_{} : _singleton_{};",
-                pgm.true_con_idx.0,
-                pgm.false_con_idx.0
+                "return ((uint32_t)a == (uint32_t)b) ? {} : {};",
+                heap_obj_singleton_name(pgm, pgm.true_con_idx),
+                heap_obj_singleton_name(pgm, pgm.false_con_idx)
             );
             p.dedent();
             p.nl();
@@ -1423,7 +1448,11 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(p, "{}(arr, (uint32_t)idx, val);", fn_name);
             p.nl();
-            w!(p, "return _singleton_{};", pgm.unit_con_idx.0);
+            w!(
+                p,
+                "return {};",
+                heap_obj_singleton_name(pgm, pgm.unit_con_idx)
+            );
             p.dedent();
             p.nl();
             w!(p, "}}");
@@ -1475,7 +1504,11 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
                 fn_name
             );
             p.nl();
-            w!(p, "return _singleton_{};", pgm.unit_con_idx.0);
+            w!(
+                p,
+                "return {};",
+                heap_obj_singleton_name(pgm, pgm.unit_con_idx)
+            );
             p.dedent();
             p.nl();
             w!(p, "}}");
@@ -1602,21 +1635,25 @@ fn gen_cmp_fn(idx: usize, cast: &str, pgm: &LoweredPgm, p: &mut Printer) {
     p.nl();
     w!(
         p,
-        "if ({}a < {}b) return _singleton_{};",
+        "if ({}a < {}b) return {};",
         cast,
         cast,
-        pgm.ordering_less_con_idx.0
+        heap_obj_singleton_name(pgm, pgm.ordering_less_con_idx)
     );
     p.nl();
     w!(
         p,
-        "if ({}a > {}b) return _singleton_{};",
+        "if ({}a > {}b) return {};",
         cast,
         cast,
-        pgm.ordering_greater_con_idx.0
+        heap_obj_singleton_name(pgm, pgm.ordering_greater_con_idx)
     );
     p.nl();
-    w!(p, "return _singleton_{};", pgm.ordering_equal_con_idx.0);
+    w!(
+        p,
+        "return {};",
+        heap_obj_singleton_name(pgm, pgm.ordering_equal_con_idx)
+    );
     p.dedent();
     p.nl();
     w!(p, "}}");
@@ -1672,8 +1709,8 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
     // Declare result variable
     w!(
         p,
-        "uint64_t _result = _singleton_{};",
-        cg.pgm.unit_con_idx.0
+        "uint64_t _result = {};",
+        heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
     );
     p.nl();
 
@@ -1725,8 +1762,8 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     // Declare result variable
     w!(
         p,
-        "uint64_t _result = _singleton_{};",
-        cg.pgm.unit_con_idx.0
+        "uint64_t _result = {};",
+        heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
     );
     p.nl();
 
@@ -1762,7 +1799,11 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 expr_to_c(&rhs.node, locals, cg, p);
                 w!(p, ";");
                 p.nl();
-                w!(p, "_result = _singleton_{};", cg.pgm.unit_con_idx.0);
+                w!(
+                    p,
+                    "_result = {};",
+                    heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
+                );
                 p.nl();
             }
             Expr::FieldSel(FieldSelExpr {
@@ -1779,7 +1820,11 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 expr_to_c(&rhs.node, locals, cg, p);
                 w!(p, ";");
                 p.nl();
-                w!(p, "_result = _singleton_{};", cg.pgm.unit_con_idx.0);
+                w!(
+                    p,
+                    "_result = {};",
+                    heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
+                );
                 p.nl();
             }
             _ => {
@@ -1809,9 +1854,9 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.nl();
             w!(
                 p,
-                "if ({} == _singleton_{}) break;",
+                "if ({} == {}) break;",
                 cond_temp,
-                cg.pgm.false_con_idx.0
+                heap_obj_singleton_name(cg.pgm, cg.pgm.false_con_idx)
             );
             p.nl();
             for stmt in body {
@@ -1828,7 +1873,11 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 w!(p, "_break_{}:;", label);
                 p.nl();
             }
-            w!(p, "_result = _singleton_{};", cg.pgm.unit_con_idx.0);
+            w!(
+                p,
+                "_result = {};",
+                heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
+            );
             p.nl();
         }
 
@@ -1869,7 +1918,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
         Expr::ConAlloc(heap_obj_idx, args) => {
             if args.is_empty() {
                 // Return singleton
-                w!(p, "_singleton_{}", heap_obj_idx.0);
+                w!(p, "{}", heap_obj_singleton_name(cg.pgm, *heap_obj_idx));
             } else {
                 // Allocate object
                 w!(p, "({{");
@@ -1920,7 +1969,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 Expr::Con(heap_obj_idx) => {
                     // Direct constructor allocation
                     if args.is_empty() {
-                        w!(p, "_singleton_{}", heap_obj_idx.0);
+                        w!(p, "{}", heap_obj_singleton_name(cg.pgm, *heap_obj_idx));
                     } else {
                         w!(p, "({{");
                         p.indent();
@@ -2071,8 +2120,8 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.nl();
             w!(
                 p,
-                "if (_and_result == _singleton_{}) {{",
-                cg.pgm.true_con_idx.0
+                "if (_and_result == {}) {{",
+                heap_obj_singleton_name(cg.pgm, cg.pgm.true_con_idx)
             );
             p.indent();
             p.nl();
@@ -2099,8 +2148,8 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.nl();
             w!(
                 p,
-                "if (_or_result == _singleton_{}) {{",
-                cg.pgm.false_con_idx.0
+                "if (_or_result == {}) {{",
+                heap_obj_singleton_name(cg.pgm, cg.pgm.false_con_idx)
             );
             p.indent();
             p.nl();
@@ -2155,7 +2204,11 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 if let Some(guard) = &alt.guard {
                     w!(p, " && (");
                     expr_to_c(&guard.node, locals, cg, p);
-                    w!(p, " == _singleton_{})", cg.pgm.true_con_idx.0);
+                    w!(
+                        p,
+                        " == {})",
+                        heap_obj_singleton_name(cg.pgm, cg.pgm.true_con_idx)
+                    );
                 }
 
                 w!(p, ") {{");
@@ -2210,9 +2263,9 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 p.nl();
                 w!(
                     p,
-                    "if ({} == _singleton_{}) {{",
+                    "if ({} == {}) {{",
                     cond_temp,
-                    cg.pgm.true_con_idx.0
+                    heap_obj_singleton_name(cg.pgm, cg.pgm.true_con_idx)
                 );
                 p.indent();
                 p.nl();
@@ -2239,7 +2292,11 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     w!(p, "}}");
                 }
                 None => {
-                    w!(p, "_if_result = _singleton_{};", cg.pgm.unit_con_idx.0);
+                    w!(
+                        p,
+                        "_if_result = {};",
+                        heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
+                    );
                 }
             }
 
@@ -2306,13 +2363,21 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "if ({}) {{", cond);
             p.indent();
             p.nl();
-            w!(p, "_is_result = _singleton_{};", cg.pgm.true_con_idx.0);
+            w!(
+                p,
+                "_is_result = {};",
+                heap_obj_singleton_name(cg.pgm, cg.pgm.true_con_idx)
+            );
             p.dedent();
             p.nl();
             w!(p, "}} else {{");
             p.indent();
             p.nl();
-            w!(p, "_is_result = _singleton_{};", cg.pgm.false_con_idx.0);
+            w!(
+                p,
+                "_is_result = {};",
+                heap_obj_singleton_name(cg.pgm, cg.pgm.false_con_idx)
+            );
             p.dedent();
             p.nl();
             w!(p, "}}");
@@ -2410,15 +2475,17 @@ fn generate_init_fn(pgm: &LoweredPgm, p: &mut Printer) {
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
         match heap_obj {
             HeapObj::Source(source_con) if source_con.fields.is_empty() => {
-                w!(p, "_singleton_{} = (uint64_t)alloc_words(1);", tag);
+                let singleton_name = source_con_singleton_name(source_con);
+                let tag_name = source_con_tag_name(source_con);
+                w!(p, "{} = (uint64_t)alloc_words(1);", singleton_name);
                 p.nl();
-                w!(p, "*(uint64_t*)_singleton_{} = {};", tag, tag);
+                w!(p, "*(uint64_t*){} = {};", singleton_name, tag_name);
                 p.nl();
             }
             HeapObj::Record(record) if record.fields.is_empty() => {
-                w!(p, "_singleton_{} = (uint64_t)alloc_words(1);", tag);
+                w!(p, "_singleton_record_{} = (uint64_t)alloc_words(1);", tag);
                 p.nl();
-                w!(p, "*(uint64_t*)_singleton_{} = {};", tag, tag);
+                w!(p, "*(uint64_t*)_singleton_record_{} = {};", tag, tag);
                 p.nl();
             }
             _ => {}
@@ -2448,7 +2515,12 @@ fn generate_init_fn(pgm: &LoweredPgm, p: &mut Printer) {
                 p.nl();
                 w!(p, "((uint64_t*)_con_closure_{})[0] = CON_CON_TAG;", tag);
                 p.nl();
-                w!(p, "((uint64_t*)_con_closure_{})[1] = {};", tag, tag);
+                w!(
+                    p,
+                    "((uint64_t*)_con_closure_{})[1] = {};",
+                    tag,
+                    source_con_tag_name(source_con)
+                );
                 p.nl();
             }
             _ => {}
