@@ -214,11 +214,11 @@ pub enum BuiltinFunDecl {
     I32Neg,
 
     /// `prim throwUnchecked(exn: exn) a / exn?` (`exn?` is implicit)
+    ///
+    /// This function never throws or returns, so we don't need the exception and return types.
     ThrowUnchecked,
 
     /// `prim try(cb: Fn() a / exn) Result[exn, a] / exn?` (`exn?` is implicit)
-    ///
-    /// This function never throws or returns, so we don't need the exception and return types.
     Try {
         /// Tag of the `Result.Ok` constructor allocated by the `try` on success.
         ok_con: HeapObjIdx,
