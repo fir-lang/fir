@@ -14,11 +14,6 @@ TODOs:
 
   In the future we'll probably trap by default and require explicitly allowing overflowing.
   (`checkedAdd`, `uncheckedAdd` etc.)
-
-- Update for 452221fc86f2bd4848a035896bcf6d85985125dc: we now have one array tag but the C gen still
-  uses multiple.
-
-  `array_new_u8` etc. should be gone and there should be just one `array_new`.
 */
 
 /*
@@ -167,14 +162,16 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         #define CON_TAG 0
         #define FUN_TAG 1
         #define CLOSURE_TAG 2
+        #define ARRAY_TAG 3
 
-        // Array header layout:
+        // Array header layout (matches interpreter):
         // word 0: tag
-        // word 1: length (in elements)
-        // word 2+: data (packed according to element size)
+        // word 1: data pointer (scaled by element size for direct indexing)
+        // word 2: length (in elements)
+        // Data is allocated separately so slices can share underlying storage.
         #define ARRAY_TAG_IDX 0
-        #define ARRAY_LEN_IDX 1
-        #define ARRAY_DATA_IDX 2
+        #define ARRAY_DATA_PTR_IDX 1
+        #define ARRAY_LEN_IDX 2
 
         // Exception handling using setjmp/longjmp
         typedef struct ExnHandler {{
@@ -204,100 +201,110 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             return (uint32_t)*(uint64_t*)obj;
         }}
 
+        // Array allocation and access functions.
+        // For the C backend, we store actual byte pointers in ARRAY_DATA_PTR_IDX.
+        // This differs from the interpreter which uses scaled indices into a single heap.
+        // Slicing creates a new header pointing to the same underlying data.
+
         static uint64_t array_new_u8(uint32_t len) {{
             size_t data_words = (len + 7) / 8;
-            uint64_t* arr = alloc_words(2 + data_words);
-            arr[ARRAY_TAG_IDX] = 0; // Will be set by caller
+            uint64_t* arr = alloc_words(3 + data_words);
+            arr[ARRAY_TAG_IDX] = ARRAY_TAG;
+            arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(arr + 3);
             arr[ARRAY_LEN_IDX] = len;
-            memset(&arr[ARRAY_DATA_IDX], 0, data_words * 8);
+            memset(arr + 3, 0, data_words * 8);
             return (uint64_t)arr;
         }}
 
         static uint64_t array_get_u8(uint64_t arr, uint32_t idx) {{
-            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            uint8_t* data = (uint8_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
             return (uint64_t)data[idx];
         }}
 
         static void array_set_u8(uint64_t arr, uint32_t idx, uint64_t val) {{
-            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            uint8_t* data = (uint8_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
             data[idx] = (uint8_t)val;
         }}
 
-        static uint64_t array_slice_u8(uint64_t arr, uint32_t start, uint32_t end, uint64_t tag) {{
-            uint32_t len = end - start;
-            uint64_t new_arr = array_new_u8(len);
-            ((uint64_t*)new_arr)[ARRAY_TAG_IDX] = tag;
-            uint8_t* src = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
-            uint8_t* dst = (uint8_t*)&((uint64_t*)new_arr)[ARRAY_DATA_IDX];
-            memcpy(dst, src + start, len);
-            return new_arr;
+        static uint64_t array_slice_u8(uint64_t arr, uint32_t start, uint32_t end) {{
+            uint64_t* new_arr = alloc_words(3);
+            new_arr[ARRAY_TAG_IDX] = ARRAY_TAG;
+            uint8_t* data = (uint8_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
+            new_arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(data + start);
+            new_arr[ARRAY_LEN_IDX] = end - start;
+            return (uint64_t)new_arr;
         }}
 
         static void array_copy_within_u8(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            uint8_t* data = (uint8_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
             memmove(data + dst, data + src, len);
         }}
 
         static uint64_t array_new_u32(uint32_t len) {{
             size_t data_words = (len + 1) / 2;
-            uint64_t* arr = alloc_words(2 + data_words);
-            arr[ARRAY_TAG_IDX] = 0;
+            uint64_t* arr = alloc_words(3 + data_words);
+            arr[ARRAY_TAG_IDX] = ARRAY_TAG;
+            arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(arr + 3);
             arr[ARRAY_LEN_IDX] = len;
-            memset(&arr[ARRAY_DATA_IDX], 0, data_words * 8);
+            memset(arr + 3, 0, data_words * 8);
             return (uint64_t)arr;
         }}
 
         static uint64_t array_get_u32(uint64_t arr, uint32_t idx) {{
-            uint32_t* data = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            uint32_t* data = (uint32_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
             return (uint64_t)data[idx];
         }}
 
         static void array_set_u32(uint64_t arr, uint32_t idx, uint64_t val) {{
-            uint32_t* data = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            uint32_t* data = (uint32_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
             data[idx] = (uint32_t)val;
         }}
 
-        static uint64_t array_slice_u32(uint64_t arr, uint32_t start, uint32_t end, uint64_t tag) {{
-            uint32_t len = end - start;
-            uint64_t new_arr = array_new_u32(len);
-            ((uint64_t*)new_arr)[ARRAY_TAG_IDX] = tag;
-            uint32_t* src = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
-            uint32_t* dst = (uint32_t*)&((uint64_t*)new_arr)[ARRAY_DATA_IDX];
-            memcpy(dst, src + start, len * sizeof(uint32_t));
-            return new_arr;
+        static uint64_t array_slice_u32(uint64_t arr, uint32_t start, uint32_t end) {{
+            uint64_t* new_arr = alloc_words(3);
+            new_arr[ARRAY_TAG_IDX] = ARRAY_TAG;
+            uint32_t* data = (uint32_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
+            new_arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(data + start);
+            new_arr[ARRAY_LEN_IDX] = end - start;
+            return (uint64_t)new_arr;
         }}
 
         static void array_copy_within_u32(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint32_t* data = (uint32_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            uint32_t* data = (uint32_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
             memmove(data + dst, data + src, len * sizeof(uint32_t));
         }}
 
         static uint64_t array_new_u64(uint32_t len) {{
-            uint64_t* arr = alloc_words(2 + len);
-            arr[ARRAY_TAG_IDX] = 0;
+            uint64_t* arr = alloc_words(3 + len);
+            arr[ARRAY_TAG_IDX] = ARRAY_TAG;
+            arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(arr + 3);
             arr[ARRAY_LEN_IDX] = len;
-            memset(&arr[ARRAY_DATA_IDX], 0, len * 8);
+            memset(arr + 3, 0, len * 8);
             return (uint64_t)arr;
         }}
 
         static uint64_t array_get_u64(uint64_t arr, uint32_t idx) {{
-            return ((uint64_t*)arr)[ARRAY_DATA_IDX + idx];
+            uint64_t* data = (uint64_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
+            return data[idx];
         }}
 
         static void array_set_u64(uint64_t arr, uint32_t idx, uint64_t val) {{
-            ((uint64_t*)arr)[ARRAY_DATA_IDX + idx] = val;
+            uint64_t* data = (uint64_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
+            data[idx] = val;
         }}
 
-        static uint64_t array_slice_u64(uint64_t arr, uint32_t start, uint32_t end, uint64_t tag) {{
-            uint32_t len = end - start;
-            uint64_t new_arr = array_new_u64(len);
-            ((uint64_t*)new_arr)[ARRAY_TAG_IDX] = tag;
-            memcpy(&((uint64_t*)new_arr)[ARRAY_DATA_IDX], &((uint64_t*)arr)[ARRAY_DATA_IDX + start], len * sizeof(uint64_t));
-            return new_arr;
+        static uint64_t array_slice_u64(uint64_t arr, uint32_t start, uint32_t end) {{
+            uint64_t* new_arr = alloc_words(3);
+            new_arr[ARRAY_TAG_IDX] = ARRAY_TAG;
+            uint64_t* data = (uint64_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
+            new_arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(data + start);
+            new_arr[ARRAY_LEN_IDX] = end - start;
+            return (uint64_t)new_arr;
         }}
 
         static void array_copy_within_u64(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            memmove(&((uint64_t*)arr)[ARRAY_DATA_IDX + dst], &((uint64_t*)arr)[ARRAY_DATA_IDX + src], len * sizeof(uint64_t));
+            uint64_t* data = (uint64_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
+            memmove(data + dst, data + src, len * sizeof(uint64_t));
         }}
 
         // Common array function
@@ -311,15 +318,14 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             uint64_t bytes_arr = s1[1]; // _bytes field
             uint32_t len1 = array_len(bytes_arr);
             if (len1 != len2) return false;
-            uint8_t* data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];
+            uint8_t* data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];
             return memcmp(data, str2, len1) == 0;
         }}
 
         // Allocate string from bytes (strings use U8 arrays)
-        static uint64_t alloc_str(uint64_t str_tag, uint64_t array_tag, const char* bytes, size_t len) {{
+        static uint64_t alloc_str(uint64_t str_tag, const char* bytes, size_t len) {{
             uint64_t arr = array_new_u8(len);
-            ((uint64_t*)arr)[ARRAY_TAG_IDX] = array_tag;
-            uint8_t* data = (uint8_t*)&((uint64_t*)arr)[ARRAY_DATA_IDX];
+            uint8_t* data = (uint8_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
             memcpy(data, bytes, len);
 
             uint64_t* str = alloc_words(2);
@@ -480,8 +486,7 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
         }
 
         BuiltinConDecl::Array => {
-            w!(p, "#define ARRAY_TAG {}", tag);
-            p.nl();
+            // ARRAY_TAG is defined in the header
         }
 
         BuiltinConDecl::I8 => {
@@ -637,7 +642,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "uint8_t* data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];"
+                "uint8_t* data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];"
             );
             p.nl();
             w!(p, "fwrite(data, 1, len, stderr);");
@@ -663,7 +668,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "uint8_t* data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];"
+                "uint8_t* data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];"
             );
             p.nl();
             w!(p, "fwrite(data, 1, len, stdout);");
@@ -1361,11 +1366,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "static uint64_t _fun_{}(uint64_t len) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "uint64_t arr = {}((uint32_t)len);", fn_name);
-            p.nl();
-            w!(p, "((uint64_t*)arr)[ARRAY_TAG_IDX] = ARRAY_TAG;");
-            p.nl();
-            w!(p, "return arr;");
+            w!(p, "return {}((uint32_t)len);", fn_name);
             p.dedent();
             p.nl();
             w!(p, "}}");
@@ -1443,7 +1444,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "return {}(arr, (uint32_t)start, (uint32_t)end, ARRAY_TAG);",
+                "return {}(arr, (uint32_t)start, (uint32_t)end);",
                 fn_name
             );
             p.dedent();
@@ -1491,7 +1492,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "uint8_t* path_data = (uint8_t*)&((uint64_t*)bytes_arr)[ARRAY_DATA_IDX];"
+                "uint8_t* path_data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];"
             );
             p.nl();
             w!(p, "char* path = (char*)malloc(path_len + 1);");
@@ -1523,7 +1524,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "uint64_t result = alloc_str({}, ARRAY_TAG, contents, size);",
+                "uint64_t result = alloc_str({}, contents, size);",
                 pgm.str_con_idx.0
             );
             p.nl();
@@ -1542,14 +1543,12 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(p, "uint64_t arr = array_new_u64(g_argc);");
             p.nl();
-            w!(p, "((uint64_t*)arr)[ARRAY_TAG_IDX] = ARRAY_TAG;");
-            p.nl();
             w!(p, "for (int i = 0; i < g_argc; i++) {{");
             p.indent();
             p.nl();
             w!(
                 p,
-                "uint64_t arg_str = alloc_str({}, ARRAY_TAG, g_argv[i], strlen(g_argv[i]));",
+                "uint64_t arg_str = alloc_str({}, g_argv[i], strlen(g_argv[i]));",
                 pgm.str_con_idx.0
             );
             p.nl();
@@ -1588,11 +1587,7 @@ fn gen_tostr_fn(
         cast
     );
     p.nl();
-    w!(
-        p,
-        "return alloc_str({}, ARRAY_TAG, buf, len);",
-        pgm.str_con_idx.0
-    );
+    w!(p, "return alloc_str({}, buf, len);", pgm.str_con_idx.0);
     p.dedent();
     p.nl();
     w!(p, "}}");
@@ -2051,7 +2046,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
         }
 
         Expr::Str(s) => {
-            w!(p, "alloc_str({}, ARRAY_TAG, \"", cg.pgm.str_con_idx.0);
+            w!(p, "alloc_str({}, \"", cg.pgm.str_con_idx.0);
             for byte in s.bytes() {
                 if byte == b'"' || byte == b'\\' || !(32..=126).contains(&byte) {
                     // Use octal escapes as hex escapes doesn't have a digit limit, e.g.
