@@ -27,15 +27,18 @@ interpreter_unit_test:
 interpreter_golden_test: build
     goldentests target/debug/fir tests '# '
 
+c_golden_test: build
+    goldentests target/debug/fir2c tests '# ' --glob='!tests/interpreter/*'
+
 interpreter_update_goldens: build
     goldentests target/debug/fir tests '# ' --overwrite
 
     # goldentests leaves two newlines at the end of the files, remove one of
     # them.
-    for f in tests/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
+    for f in tests/**/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
 compiler_unit_test:
-    cargo run --release -- Compiler/Main.fir -- Compiler/Main.fir
+    cargo run --bin fir --release -- Compiler/Main.fir -- Compiler/Main.fir
     ./Compiler/tests/tokenize.sh
     ./Compiler/tests/scan.sh
 

@@ -6,6 +6,7 @@
 )]
 
 mod ast;
+pub mod cli;
 mod collections;
 mod import_resolver;
 mod interpolation;
@@ -19,6 +20,7 @@ mod parser_utils;
 mod record_collector;
 mod scanner;
 mod scope_map;
+mod to_c;
 mod token;
 mod type_checker;
 mod utils;
@@ -38,6 +40,8 @@ pub struct CompilerOpts {
     pub print_mono_ast: bool,
     pub print_lowered_ast: bool,
     pub main: String,
+    pub to_c: bool,
+    pub run_c: bool,
 }
 
 fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String {
@@ -106,6 +110,7 @@ mod native {
     use super::*;
 
     use smol_str::SmolStr;
+    use std::io::Write;
     use std::path::Path;
 
     pub fn main(opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
@@ -177,9 +182,54 @@ mod native {
             lowering::printer::print_pgm(&lowered_pgm);
         }
 
-        let mut w = std::io::stdout();
-        program_args.insert(0, program);
-        interpreter::run_with_args(&mut w, lowered_pgm, &opts.main, program_args);
+        if opts.run_c {
+            let c = to_c::to_c(&lowered_pgm, &opts.main);
+            let mut file = tempfile::NamedTempFile::with_suffix(".c").unwrap();
+            let out_file_path = file.path().as_os_str().to_string_lossy().into_owned();
+            let out_file_path = &out_file_path[..out_file_path.len() - 2];
+            file.disable_cleanup(true);
+            file.write_all(c.as_bytes()).unwrap();
+            let mut gcc_cmd = std::process::Command::new("gcc");
+            gcc_cmd
+                .arg(file.path().as_os_str())
+                .arg("-o")
+                .arg(out_file_path);
+            // dbg!(&gcc_cmd);
+            let output = gcc_cmd.output().unwrap();
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            if !output.status.success() {
+                eprintln!("C compilation failed:");
+            }
+            if !stdout.is_empty() {
+                eprintln!("stdout:");
+                eprintln!("{}", String::from_utf8_lossy(&output.stdout));
+            }
+            if !stderr.is_empty() {
+                eprintln!("stderr:");
+                eprintln!("{}", String::from_utf8_lossy(&output.stderr));
+            }
+            if !output.status.success() {
+                std::process::exit(1);
+            }
+            // dbg!(&out_file_path);
+            // dbg!(&program_args);
+            let status = std::process::Command::new(out_file_path)
+                .args(program_args)
+                .spawn()
+                .unwrap()
+                .wait()
+                .unwrap();
+            if !status.success() {
+                std::process::exit(1);
+            }
+        } else if opts.to_c {
+            println!("{}", to_c::to_c(&lowered_pgm, &opts.main));
+        } else {
+            let mut w = std::io::stdout();
+            program_args.insert(0, program);
+            interpreter::run_with_args(&mut w, lowered_pgm, &opts.main, program_args);
+        }
     }
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {

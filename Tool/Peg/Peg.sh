@@ -5,4 +5,4 @@
 set -e
 set -x
 
-cargo run --release -- Tool/Peg/Peg.fir -- $@
+cargo run --bin fir --release -- Tool/Peg/Peg.fir -- $@

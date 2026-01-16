@@ -7,8 +7,8 @@ main():
 
 # expected exit status: 101
 # expected stderr:
-# tests/Panic.fir:6:25: PANIC: optionInt returned 123
+# tests/interpreter/Panic.fir:6:25: PANIC: optionInt returned 123
 # 
 # FIR STACK:
-# tests/Panic.fir:6:25: Builtin: Panic
+# tests/interpreter/Panic.fir:6:25: Builtin: Panic
 # :1:1: main

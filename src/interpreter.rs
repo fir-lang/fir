@@ -692,7 +692,13 @@ fn assign<W: Write>(
             heap[object + 1 + (*idx as u64)] = val;
         }
 
-        _ => todo!("Assign statement with fancy LHS at {:?}", &lhs.loc),
+        _ => {
+            // Type checker only accepts variables and fields on the LHS.
+            panic!(
+                "{}: BUG: Assign statement with fancy LHS",
+                loc_display(&lhs.loc)
+            )
+        }
     }
     ControlFlow::Val(pgm.unit_alloc)
 }
@@ -1297,7 +1303,7 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(heap.allocate_array(repr, cap))
         }
 
-        BuiltinFunDecl::ArraySlice => {
+        BuiltinFunDecl::ArraySlice { t: _ } => {
             debug_assert_eq!(args.len(), 3); // array, start, end
             let array = args[0];
             let start = val_as_u32(args[1]);

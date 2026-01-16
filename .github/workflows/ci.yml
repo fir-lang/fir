@@ -76,7 +76,7 @@ jobs:
         run: sudo apt install -y just
 
       - name: Install goldentests
-        run: cargo install goldentests --features=binary
+        run: cargo install --git https://github.com/osa1/golden-tests --branch glob --features=binary
 
       - name: Build interpreter
         run: cargo build --verbose
@@ -108,13 +108,32 @@ jobs:
         run: sudo apt install -y just
 
       - name: Install goldentests
-        run: cargo install goldentests --features=binary
+        run: cargo install --git https://github.com/osa1/golden-tests --branch glob --features=binary
 
       - name: Build interpreter
         run: cargo build --verbose
 
       - name: Test
         run: just interpreter_golden_test
+
+  run_c_golden_tests:
+    name: C backend golden tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install just
+        run: sudo apt install -y just
+
+      - name: Install goldentests
+        run: cargo install --git https://github.com/osa1/golden-tests --branch glob --features=binary
+
+      - name: Build C generator
+        run: cargo build --release --verbose
+
+      - name: Test
+        run: just c_golden_test
 
   check_generated_files:
     name: Check that generated files are up-to-date
@@ -160,7 +179,7 @@ jobs:
         run: sudo apt install -y just
 
       - name: Install goldentests
-        run: cargo install goldentests --features=binary
+        run: cargo install --git https://github.com/osa1/golden-tests --branch glob --features=binary
 
       - name: Build interpreter
         run: cargo build --release --verbose
