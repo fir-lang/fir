@@ -319,22 +319,7 @@ pub struct SourceConDecl {
     pub name: Id,
     pub idx: HeapObjIdx,          // for debugging
     pub ty_args: Vec<mono::Type>, // for debugging
-    pub fields: ConFields,
-}
-
-#[derive(Debug)]
-pub enum ConFields {
-    Named(OrdMap<Id, Ty>),
-    Unnamed(Vec<Ty>),
-}
-
-impl ConFields {
-    pub fn is_empty(&self) -> bool {
-        match self {
-            ConFields::Named(fields) => fields.is_empty(),
-            ConFields::Unnamed(fields) => fields.is_empty(),
-        }
-    }
+    pub fields: Vec<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -1556,32 +1541,23 @@ fn lower_source_con(
         idx,
         ty_args: con_ty_args.to_vec(),
         fields: match fields {
-            mono::ConFields::Empty => ConFields::Unnamed(vec![]),
+            mono::ConFields::Empty => vec![],
 
-            mono::ConFields::Named(fields) => ConFields::Named(
-                fields
-                    .iter()
-                    .map(|(name, field_ty)| {
-                        (
-                            name.clone(),
-                            Ty {
-                                mono_ty: field_ty.clone(),
-                                repr: Repr::from_mono_ty(field_ty),
-                            },
-                        )
-                    })
-                    .collect(),
-            ),
+            mono::ConFields::Named(fields) => fields
+                .values()
+                .map(|field_ty| Ty {
+                    mono_ty: field_ty.clone(),
+                    repr: Repr::from_mono_ty(field_ty),
+                })
+                .collect(),
 
-            mono::ConFields::Unnamed(fields) => ConFields::Unnamed(
-                fields
-                    .iter()
-                    .map(|field_ty| Ty {
-                        mono_ty: field_ty.clone(),
-                        repr: Repr::from_mono_ty(field_ty),
-                    })
-                    .collect(),
-            ),
+            mono::ConFields::Unnamed(fields) => fields
+                .iter()
+                .map(|field_ty| Ty {
+                    mono_ty: field_ty.clone(),
+                    repr: Repr::from_mono_ty(field_ty),
+                })
+                .collect(),
         },
     })
 }
