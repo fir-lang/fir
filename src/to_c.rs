@@ -650,6 +650,10 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
 }
 
 fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut Printer) {
+    // Debug output of `fun` is too noisy, but it's better than not knowing what the generated
+    // functions are for.
+    w!(p, "// {:?}", fun);
+    p.nl();
     match fun {
         BuiltinFunDecl::Panic => {
             w!(p, "static uint64_t _fun_{}(uint64_t msg) {{", idx);
