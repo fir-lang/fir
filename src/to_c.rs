@@ -645,6 +645,8 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
                 "uint8_t* data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];"
             );
             p.nl();
+            w!(p, "fprintf(stderr, \"PANIC: \");");
+            p.nl();
             w!(p, "fwrite(data, 1, len, stderr);");
             p.nl();
             w!(p, "fprintf(stderr, \"\\n\");");
