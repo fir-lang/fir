@@ -103,8 +103,6 @@ impl Repr {
                     "I8" | "U8" => Repr::U8,
                     "I32" | "U32" => Repr::U32,
                     "I64" | "U64" => Repr::U64,
-                    "Char" => Repr::U32,
-                    "Bool" => Repr::U8,
                     _ => Repr::U64, // box
                 }
             }
