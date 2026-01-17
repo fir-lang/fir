@@ -76,6 +76,13 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                                 ))
                     }
                     None => {
+                        if *sum {
+                            panic!(
+                                "{}: Type {} is a sum type, the pattern needs a constructor",
+                                loc_display(&pat.loc),
+                                ty_con.id
+                            )
+                        }
                         if cons.is_empty() {
                             panic!(
                                 "{}: Type {} doesn't have any constructors",
