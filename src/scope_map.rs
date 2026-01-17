@@ -40,6 +40,10 @@ impl<K, V> ScopeMap<K, V> {
     pub fn push_scope(&mut self, scope: HashMap<K, V>) {
         self.0.push(scope)
     }
+
+    pub fn last(&self) -> &HashMap<K, V> {
+        self.0.last().unwrap()
+    }
 }
 
 impl<K: Hash + Eq, V> ScopeMap<K, V> {

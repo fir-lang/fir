@@ -206,14 +206,6 @@ pub(super) enum TyConDetails {
 pub(super) struct TraitDetails {
     /// Methods of the trait, with optional default implementations.
     pub(super) methods: HashMap<Id, TraitMethod>,
-    /*
-    /// Types implementing the trait.
-    ///
-    /// For now we don't allow extra context in implementations, e.g.
-    /// `impl Debug[T] => Debug[Array[T]]` is not possible, and the implemenhting types can be a
-    /// set of type constructors.
-    pub(super) implementing_tys: Set<Id>,
-    */
 }
 
 #[derive(Debug, Clone)]
@@ -227,6 +219,9 @@ pub(super) struct TraitMethod {
 
 #[derive(Debug, Clone)]
 pub(super) struct TypeDetails {
+    /// Whether the type is a value type.
+    pub(super) value: bool,
+
     /// Value constructors of the type.
     pub(super) cons: Vec<ConShape>,
 
@@ -1013,6 +1008,7 @@ impl TyCon {
             details: TyConDetails::Type(TypeDetails {
                 cons: vec![],
                 sum: true,
+                value: false,
             }),
         }
     }

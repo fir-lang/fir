@@ -228,6 +228,7 @@ const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
 /// Does not type check the code, only collects types and type schemes.
 fn collect_types(module: &mut ast::Module) -> PgmTypes {
     let mut tys = collect_cons(module);
+    check_value_type_sizes(tys.cons().last());
     let (top_schemes, associated_fn_schemes, method_schemes) = collect_schemes(module, &mut tys);
     PgmTypes {
         top_schemes,
@@ -272,6 +273,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         details: TyConDetails::Type(TypeDetails {
                             cons: vec![],
                             sum: true,
+                            value: ty_decl.node.value,
                         }),
                     },
                 );
@@ -324,18 +326,24 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         ast::TypeDeclRhs::Sum(sum_cons) => {
                             let cons: Vec<ConShape> =
                                 sum_cons.iter().map(ConShape::from_ast).collect();
-                            TyConDetails::Type(TypeDetails { cons, sum: true })
+                            TyConDetails::Type(TypeDetails {
+                                cons,
+                                sum: true,
+                                value: ty_decl.node.value,
+                            })
                         }
 
                         ast::TypeDeclRhs::Product(_fields) => TyConDetails::Type(TypeDetails {
                             cons: vec![ConShape { name: None }],
                             sum: false,
+                            value: ty_decl.node.value,
                         }),
                     },
 
                     None => TyConDetails::Type(TypeDetails {
                         cons: vec![],
                         sum: true,
+                        value: ty_decl.node.value,
                     }),
                 };
 
@@ -552,6 +560,19 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
     assert_eq!(tys.len_scopes(), 1);
     tys
+}
+
+fn check_value_type_sizes(cons: &HashMap<Id, TyCon>) {
+    for con in cons.values() {
+        let ty_details = match &con.details {
+            TyConDetails::Trait(_) | TyConDetails::Synonym(_) => continue,
+            TyConDetails::Type(details) => details,
+        };
+
+        if !ty_details.value {
+            continue;
+        }
+    }
 }
 
 // `ty_cons` is `mut` to be able to update it with associated types when checking traits.

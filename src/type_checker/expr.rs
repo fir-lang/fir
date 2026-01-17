@@ -1843,7 +1843,11 @@ pub(super) fn select_field(
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
     match &ty_con.details {
-        TyConDetails::Type(TypeDetails { cons, sum }) if !sum => {
+        TyConDetails::Type(TypeDetails {
+            cons,
+            sum,
+            value: _,
+        }) if !sum => {
             let con_name = cons[0].name.as_ref().unwrap_or(&ty_con.id);
             let con_scheme = tc_state.tys.top_schemes.get(con_name)?;
             let con_ty = con_scheme.instantiate_with_tys(ty_args, tc_state.preds, loc);
