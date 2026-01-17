@@ -124,7 +124,7 @@ unify(ty1: Ty, ty2: Ty, varGen: UVarGen, level: U32, loc: Loc) / TypeError:
                                     ),
                                 ),
                         )
-                        unify(arg1.value, arg2, varGen, level, loc)
+                        unify(arg1.val, arg2, varGen, level, loc)
 
                 _:
                     throw(
@@ -677,7 +677,7 @@ linkRecordExtension(
     let extensionLabels: HashMap[LocalId, Ty] = HashMap.fromIter(
         extraLabels.iter().map(
             \(label: LocalId):
-                (key = label, value = labelValues.get(label).unwrap()),
+                (key = label, val = labelValues.get(label).unwrap()),
         ),
     )
 
@@ -708,7 +708,7 @@ linkVariantExtension(
 ) UVar:
     let extensionCons: HashMap[TyDefIdx, Vec[Ty]] = HashMap.fromIter(
         extraCons.iter().map(
-            \(label: TyDefIdx): (key = label, value = cons.get(label).unwrap()),
+            \(label: TyDefIdx): (key = label, val = cons.get(label).unwrap()),
         ),
     )
 

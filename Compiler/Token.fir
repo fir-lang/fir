@@ -134,6 +134,7 @@ type TokenKind:
     Trait
     Type
     UpperFn
+    Value
     Var
     While
 
@@ -360,6 +361,7 @@ impl ToStr[TokenKind]:
             TokenKind.UpperIdDotLBracket: "UpperIdDotLBracket"
             TokenKind.UpperIdPath: "UpperIdPath"
             TokenKind.Var: "Var"
+            TokenKind.Value: "Value"
             TokenKind.While: "While"
 
 
@@ -463,6 +465,7 @@ impl Eq[TokenKind]:
             (left = TokenKind.UpperIdPath, right = TokenKind.UpperIdPath):
                 Bool.True
             (left = TokenKind.Var, right = TokenKind.Var): Bool.True
+            (left = TokenKind.Value, right = TokenKind.Value): Bool.True
             (left = TokenKind.While, right = TokenKind.While): Bool.True
             _: Bool.False
 

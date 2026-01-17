@@ -1363,7 +1363,7 @@ pub(super) fn check_expr(
                             node: ast::Expr::Record(ast::RecordExpr {
                                 fields: vec![
                                     (SmolStr::new("key"), k.clone()),
-                                    (SmolStr::new("value"), v.clone()),
+                                    (SmolStr::new("val"), v.clone()),
                                 ],
                                 inferred_ty: None,
                             }),

@@ -13,7 +13,7 @@ collectRecordFields(
     let allLabels: HashMap[LocalId, Ty] = HashMap.fromIter(
         labels.iter().map(
             \(label: HashMapEntry[LocalId, Ty]):
-                (key = label.key, value = label.value.deepNormalize()),
+                (key = label.key, val = label.val.deepNormalize()),
         ),
     )
 
@@ -22,8 +22,7 @@ collectRecordFields(
             Ty.Record(labels, extension = nextExt, isRow):
                 assert(isRow)
                 for label: HashMapEntry[LocalId, Ty] in labels.iter():
-                    if allLabels.insert(label.key, label.value)
-                            is Option.Some(_):
+                    if allLabels.insert(label.key, label.val) is Option.Some(_):
                         panic(
                             "BUG: Duplicate field in record `ty.toDoc().render(
                                 50,
@@ -37,7 +36,7 @@ collectRecordFields(
                     Ty.Record(labels, extension = nextExt, isRow):
                         assert(isRow)
                         for label: HashMapEntry[LocalId, Ty] in labels.iter():
-                            if allLabels.insert(label.key, label.value)
+                            if allLabels.insert(label.key, label.val)
                                     is Option.Some(_):
                                 panic(
                                     "BUG: Duplicate field in record `ty.toDoc()
@@ -65,9 +64,9 @@ collectVariantCons(
         cons.iter().map(
             \(con: HashMapEntry[TyDefIdx, Vec[Ty]]):
                 let tyArgs: Vec[Ty] = Vec.fromIter(
-                    con.value.iter().map(Ty.deepNormalize),
+                    con.val.iter().map(Ty.deepNormalize),
                 )
-                (key = con.key, value = tyArgs),
+                (key = con.key, val = tyArgs),
         ),
     )
 
@@ -76,7 +75,7 @@ collectVariantCons(
             Ty.Variant(cons, extension = nextExt, isRow):
                 assert(isRow)
                 for con: HashMapEntry[TyDefIdx, Vec[Ty]] in cons.iter():
-                    if allCons.insert(con.key, con.value) is Option.Some(_):
+                    if allCons.insert(con.key, con.val) is Option.Some(_):
                         panic(
                             "BUG: Duplicate type in variant `ty.toDoc().render(
                                 50,
@@ -90,7 +89,7 @@ collectVariantCons(
                     Ty.Variant(cons, extension = nextExt, isRow):
                         assert(isRow)
                         for con: HashMapEntry[TyDefIdx, Vec[Ty]] in cons.iter():
-                            if allCons.insert(con.key, con.value)
+                            if allCons.insert(con.key, con.val)
                                     is Option.Some(_):
                                 panic(
                                     "BUG: Duplicate type in variant `ty.toDoc()

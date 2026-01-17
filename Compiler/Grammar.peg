@@ -37,6 +37,7 @@ Terminals:
     "return" = Token(kind = TokenKind.Return, ..)
     "trait" = Token(kind = TokenKind.Trait, ..)
     "type" = Token(kind = TokenKind.Type, ..)
+    "value" = Token(kind = TokenKind.Value, ..)
     "while" = Token(kind = TokenKind.While, ..)
     "row[" = Token(kind = TokenKind.LBracketRow, ..)
     "row(" = Token(kind = TokenKind.LParenRow, ..)
@@ -277,8 +278,9 @@ returnTy (ret: Option[Type], exn: Option[Type]):
 
 typeDecl TypeDecl:
     # Sum type: at least one constructors
-    "type" name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
+    val=^ valToken="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
         TypeDecl(
+            value_ = valToken.map(\(a): TokenIdx(idx = val)),
             prim_ = Option.None,
             name = newId(name),
             typeParams = match params:
@@ -289,11 +291,12 @@ typeDecl TypeDecl:
         )
 
     # Product type
-    "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
+    val=^ valToken="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
         let fs = match fs:
             Option.Some(fs): fs.fields
             Option.None: ConFields.Empty
         TypeDecl(
+            value_ = valToken.map(\(a): TokenIdx(idx = val)),
             prim_ = Option.None,
             name = newId(name),
             typeParams = match params:
@@ -305,6 +308,7 @@ typeDecl TypeDecl:
 
     prim_=^ "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
         TypeDecl(
+            value_ = Option.None,
             prim_ = Option.Some(TokenIdx(idx = prim_)),
             name = newId(name),
             typeParams = match params:
@@ -619,9 +623,9 @@ seqElem SeqElem:
     e1=inlineExpr e2=("=" e=inlineExpr)?:
         match e2:
             Option.None:
-                SeqElem(key = Option.None, value = e1)
+                SeqElem(key = Option.None, val = e1)
             Option.Some((e = e2)):
-                SeqElem(key = Option.Some(e1), value = e2)
+                SeqElem(key = Option.Some(e1), val = e2)
 
 
 con Con:

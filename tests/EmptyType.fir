@@ -12,7 +12,7 @@ returnsEmpty() Empty:
 diverges() Void:
      diverges()
 
-expectsEmpty(value: Empty) ():
+expectsEmpty(val: Empty) ():
     ()
 
 test():

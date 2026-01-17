@@ -194,11 +194,11 @@ convertFields(module: Module, vars: ScopeMap[Str, Ty], fields: ConFields) Option
                 FunArgs.Named(
                     HashMap.fromIter(
                         namedFields.iter().map(
-                            \(field: NamedField) (key: LocalId, value: Ty):
+                            \(field: NamedField) (key: LocalId, val: Ty):
                                 (
                                     key =
                                         LocalId(name = module.idText(field.name)),
-                                    value = convertAstTy(module, vars, field.ty),
+                                    val = convertAstTy(module, vars, field.ty),
                                 ),
                         ),
                     ),

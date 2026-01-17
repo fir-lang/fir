@@ -136,9 +136,12 @@ pub enum TopDecl {
     Impl(L<ImplDecl>),
 }
 
-/// A type declaration: `type Vec[t]: ...`.
+/// A type declaration: `type Vec[t](...)`, `value type Bool: ...`.
 #[derive(Debug, Clone)]
 pub struct TypeDecl {
+    /// Whether this is a value type.
+    pub value: bool,
+
     /// The type name. `Vec` in the example.
     pub name: Id,
 

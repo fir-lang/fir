@@ -57,9 +57,9 @@ TraitImpl.tryMatch(self, args: Vec[Ty], varGen: UVarGen, loc: Loc) Option[Vec[Pr
     # Maps `QVar`s to instantiations.
     let varMap: HashMap[LocalId, Ty] = HashMap.fromIter(
         self.qvars.iter().map(
-            \(qvar: QVar) (key: LocalId, value: Ty):
+            \(qvar: QVar) (key: LocalId, val: Ty):
                 let instantiatedVar = Ty.UVar(varGen.newVar(0, qvar.kind, loc))
-                (key = qvar.id, value = instantiatedVar),
+                (key = qvar.id, val = instantiatedVar),
         ),
     )
 

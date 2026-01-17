@@ -183,7 +183,7 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                 for importedItemEntry: HashMapEntry[Str, TcItem[TyDefIdx, TyCon]] in
                         importedModuleCons.iter():
                     let importedItemName = importedItemEntry.key
-                    let importedItem = importedItemEntry.value
+                    let importedItem = importedItemEntry.val
 
                     # If a type with the name is already imported, it should
                     # have the same `TyDefIdx`.
@@ -608,7 +608,7 @@ addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
                         importedModTcEnv._topSchemes.iter():
                     match modTcEnv._topSchemes.get(topFun.key):
                         Option.Some(existingItem):
-                            if existingItem.idx != topFun.value.idx:
+                            if existingItem.idx != topFun.val.idx:
                                 panic(
                                     "Type `topFun.key` imported/defined multiple times in `mod
                                         ._filePath`",
@@ -623,8 +623,8 @@ addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
                             modTcEnv._topSchemes.insert(
                                 topFun.key,
                                 TcItem(
-                                    idx = topFun.value.idx,
-                                    info = topFun.value.info,
+                                    idx = topFun.val.idx,
+                                    info = topFun.val.info,
                                     imports = HashSet.[importedModIdx],
                                 ),
                             )
@@ -648,10 +648,10 @@ addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
                         Option.Some(typeFunMap): typeFunMap
 
                     for fun: HashMapEntry[Str, TcItem[AssocVarDefIdx, Scheme]] in
-                            assocFunMap.value.iter():
+                            assocFunMap.val.iter():
                         match typeFunMap.get(fun.key):
                             Option.Some(existingItem):
-                                if existingItem.idx != fun.value.idx:
+                                if existingItem.idx != fun.val.idx:
                                     panic(
                                         "Type `assocFunMap.key`.`fun.key` imported/defined multiple times in `mod
                                             ._filePath`",
@@ -668,8 +668,8 @@ addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
                                 typeFunMap.insert(
                                     fun.key,
                                     TcItem(
-                                        idx = fun.value.idx,
-                                        info = fun.value.info,
+                                        idx = fun.val.idx,
+                                        info = fun.val.info,
                                         imports = HashSet.[importedModIdx],
                                     ),
                                 )

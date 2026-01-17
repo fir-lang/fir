@@ -449,8 +449,7 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                                         \(entry: HashMapEntry[LocalId, Ty]):
                                             (
                                                 key = entry.key,
-                                                value =
-                                                    entry.value.substQVars(vars),
+                                                val = entry.val.substQVars(vars),
                                             ),
                                     ),
                                 ),
@@ -464,12 +463,12 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                 cons =
                     HashMap.fromIter(
                         cons.iter().map(
-                            \(entry: HashMapEntry[TyDefIdx, Vec[Ty]]) (key: TyDefIdx, value: Vec[Ty]):
+                            \(entry: HashMapEntry[TyDefIdx, Vec[Ty]]) (key: TyDefIdx, val: Vec[Ty]):
                                 (
                                     key = entry.key,
-                                    value =
+                                    val =
                                         Vec.fromIter(
-                                            entry.value.iter().map(
+                                            entry.val.iter().map(
                                                 \(ty: Ty) Ty:
                                                     ty.substQVars(vars),
                                             ),
@@ -489,7 +488,7 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                             \(entry: HashMapEntry[LocalId, Ty]):
                                 (
                                     key = entry.key,
-                                    value = entry.value.substQVars(vars),
+                                    val = entry.val.substQVars(vars),
                                 ),
                         ),
                     ),

@@ -58,7 +58,7 @@ Ty.deepNormalize(self) Ty:
                                         \(ty: HashMapEntry[LocalId, Ty]):
                                             (
                                                 key = ty.key,
-                                                value = ty.value.deepNormalize(),
+                                                val = ty.val.deepNormalize(),
                                             ),
                                     ),
                                 ),
@@ -72,12 +72,12 @@ Ty.deepNormalize(self) Ty:
                 cons =
                     HashMap.fromIter(
                         cons.iter().map(
-                            \(label: HashMapEntry[TyDefIdx, Vec[Ty]]) (key: TyDefIdx, value: Vec[Ty]):
+                            \(label: HashMapEntry[TyDefIdx, Vec[Ty]]) (key: TyDefIdx, val: Vec[Ty]):
                                 (
                                     key = label.key,
-                                    value =
+                                    val =
                                         Vec.fromIter(
-                                            label.value.iter().map(
+                                            label.val.iter().map(
                                                 \(ty: Ty) Ty: ty.deepNormalize(),
                                             ),
                                         ),
@@ -96,7 +96,7 @@ Ty.deepNormalize(self) Ty:
                             \(label: HashMapEntry[LocalId, Ty]):
                                 (
                                     key = label.key,
-                                    value = label.value.deepNormalize(),
+                                    val = label.val.deepNormalize(),
                                 ),
                         ),
                     ),
