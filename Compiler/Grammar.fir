@@ -929,6 +929,24 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let val = if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Value, ..):
+                        state._cursor += 1
+                        sym
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    val,
+            )
+            let val = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Type, ..):
                 state._cursor += 1
@@ -1013,6 +1031,24 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         Result.Ok(val): return val
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let val = if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Value, ..):
+                        state._cursor += 1
+                        sym
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    val,
+            )
+            let val = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Type, ..):
                 state._cursor += 1

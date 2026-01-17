@@ -37,6 +37,7 @@ Terminals:
     "return" = Token(kind = TokenKind.Return, ..)
     "trait" = Token(kind = TokenKind.Trait, ..)
     "type" = Token(kind = TokenKind.Type, ..)
+    "value" = Token(kind = TokenKind.Value, ..)
     "while" = Token(kind = TokenKind.While, ..)
     "row[" = Token(kind = TokenKind.LBracketRow, ..)
     "row(" = Token(kind = TokenKind.LParenRow, ..)
@@ -277,7 +278,7 @@ returnTy (ret: Option[Type], exn: Option[Type]):
 
 typeDecl TypeDecl:
     # Sum type: at least one constructors
-    "type" name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
+    val="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
         TypeDecl(
             prim_ = Option.None,
             name = newId(name),
@@ -289,7 +290,7 @@ typeDecl TypeDecl:
         )
 
     # Product type
-    "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
+    val="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
         let fs = match fs:
             Option.Some(fs): fs.fields
             Option.None: ConFields.Empty

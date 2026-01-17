@@ -1081,7 +1081,7 @@ SeqExpr.format(self, tokens: Array[Token]) Doc:
             trailingComma = Bool.False
 
         docRest += match elem.key:
-            Option.None: elem.value.format(tokens)
+            Option.None: elem.val.format(tokens)
             Option.Some(key):
                 let eq = nextNonTrivia(key.lastToken(tokens), tokens).unwrap()
                 assert(tokens.get(eq.idx).kind is TokenKind.Eq)
@@ -1091,10 +1091,10 @@ SeqExpr.format(self, tokens: Array[Token]) Doc:
                         + Doc.blank(1)
                         + formatToken(eq, tokens)
                         + Doc.break_(1)
-                        + elem.value.format(tokens),
+                        + elem.val.format(tokens),
                 )
 
-        if nextNonTrivia(elem.value.lastToken(tokens), tokens)
+        if nextNonTrivia(elem.val.lastToken(tokens), tokens)
                 is Option.Some(next)
                 and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
