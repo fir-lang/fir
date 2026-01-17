@@ -37,7 +37,7 @@ jobs:
         run: sudo apt install -y just
 
       - name: 'Check Fir formatting'
-        run:
+        run: |
           just build_tools
           just check_fir_formatting
 
@@ -154,7 +154,7 @@ jobs:
         run: cargo build --verbose
 
       - name: Check
-        run:
+        run: |
           just build_tools
           just check_generated_files
 
