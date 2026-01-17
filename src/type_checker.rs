@@ -582,8 +582,6 @@ fn visit_ty_con(
     ty_cons: &HashMap<Id, TyCon>,
     visited: &mut HashSet<Id>,
 ) -> bool {
-    // println!("{}", &ty_con.id);
-
     let ty_con_details = match &ty_con.details {
         TyConDetails::Trait(_) => return false,
         TyConDetails::Type(details) => details,
