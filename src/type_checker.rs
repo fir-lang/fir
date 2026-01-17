@@ -228,8 +228,8 @@ const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
 /// Does not type check the code, only collects types and type schemes.
 fn collect_types(module: &mut ast::Module) -> PgmTypes {
     let mut tys = collect_cons(module);
-    check_value_type_sizes(tys.cons().last());
     let (top_schemes, associated_fn_schemes, method_schemes) = collect_schemes(module, &mut tys);
+    check_value_type_sizes(tys.cons().last());
     PgmTypes {
         top_schemes,
         associated_fn_schemes,
@@ -510,7 +510,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         let trait_type_params = &trait_ty_con.ty_params;
         let trait_methods = match &mut trait_ty_con.details {
             TyConDetails::Trait(TraitDetails { methods }) => methods,
-            TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
+            TyConDetails::Type { .. } => {
                 panic!() // checked above
             }
         };
@@ -558,17 +558,95 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
     tys
 }
 
-fn check_value_type_sizes(cons: &HashMap<Id, TyCon>) {
-    for con in cons.values() {
-        let ty_details = match &con.details {
-            TyConDetails::Trait(_) | TyConDetails::Synonym(_) => continue,
-            TyConDetails::Type(details) => details,
-        };
-
-        if !ty_details.value {
-            continue;
+fn check_value_type_sizes(ty_cons: &HashMap<Id, TyCon>) {
+    for ty_con in ty_cons.values() {
+        let mut visited: HashSet<Id> = Default::default();
+        let ty_args: Vec<Ty> = ty_con
+            .ty_params
+            .iter()
+            .map(|(name, kind)| Ty::Con(SmolStr::new(format!("#{}", name)), kind.clone()))
+            .collect();
+        if visit_ty_con(ty_con, &ty_args, ty_cons, &mut visited) {
+            panic!(
+                "Value type {} has infinite size due to recursion",
+                ty_con.id
+            );
         }
     }
+}
+
+/// Returns whether we've detected a cycle.
+fn visit_ty_con(
+    ty_con: &TyCon,
+    ty_args: &[Ty],
+    ty_cons: &HashMap<Id, TyCon>,
+    visited: &mut HashSet<Id>,
+) -> bool {
+    // println!("{}", &ty_con.id);
+
+    let ty_con_details = match &ty_con.details {
+        TyConDetails::Trait(_) => return false,
+        TyConDetails::Type(details) => details,
+    };
+
+    if !ty_con_details.value {
+        return false;
+    }
+
+    if !visited.insert(ty_con.id.clone()) {
+        return true;
+    }
+
+    for (_con_name, con_scheme) in ty_con_details.cons.iter() {
+        let con_ty = con_scheme.instantiate_with_tys(ty_args, &mut vec![], &ast::Loc::dummy());
+
+        let con_args = match con_ty {
+            Ty::Fun { args, .. } => args,
+            _ => continue,
+        };
+
+        let mut tys: Vec<&Ty> = match &con_args {
+            FunArgs::Positional(args) => args.iter().collect(),
+            FunArgs::Named(args) => args.values().collect(),
+        };
+
+        while let Some(ty) = tys.pop() {
+            match ty {
+                Ty::Con(con, _kind) => {
+                    // No ty con can happen because we don't have `RVar`s and represent them as
+                    // `Con`s.
+                    if let Some(ty_con) = ty_cons.get(con)
+                        && visit_ty_con(ty_con, &[], ty_cons, visited)
+                    {
+                        return true;
+                    }
+                }
+
+                Ty::App(con, args, _kind) => {
+                    if visit_ty_con(ty_cons.get(con).unwrap(), args, ty_cons, visited) {
+                        return true;
+                    }
+                }
+
+                Ty::Anonymous {
+                    labels,
+                    extension: _,
+                    kind: _,
+                    is_row: _,
+                } => {
+                    for label_ty in labels.values() {
+                        tys.push(label_ty);
+                    }
+                }
+
+                Ty::QVar(_, _) | Ty::Fun { .. } => {}
+
+                Ty::UVar(_) => panic!(),
+            }
+        }
+    }
+
+    false
 }
 
 // `tys` is `mut` to be able to update it with associated types when checking traits.

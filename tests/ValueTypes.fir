@@ -31,3 +31,5 @@ impl[ToStr[t]] ToStr[T2[t]]:
 main():
     let x: T1[T2[T1[()]]] = T1(T2(T1(())))
     print(x)
+
+# expected stdout: T1(T2(T1(())))

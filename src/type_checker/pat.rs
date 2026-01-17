@@ -80,12 +80,6 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     loc_display(&pat.loc),
                     pat_ty_name
                 ),
-
-                TyConDetails::Synonym(_) => panic!(
-                    "{}: Type constructor {} is a type synonym",
-                    loc_display(&pat.loc),
-                    pat_ty_name
-                ),
             };
 
             // We don't need to instantiate based on pattern types. If we don't have a term with

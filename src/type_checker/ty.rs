@@ -193,20 +193,13 @@ pub(super) enum TyConDetails {
 
     /// Type constructor is for a product or sum type definition.
     Type(TypeDetails),
-
-    /// Type is a synonym to this other type.
-    ///
-    /// For now, type synonyms are not allowed to have type parameters, and the RHS needs to have
-    /// kind `*`.
-    #[allow(unused)]
-    Synonym(Ty),
 }
 
 impl TyConDetails {
     pub(super) fn as_type_mut(&mut self) -> &mut TypeDetails {
         match self {
             TyConDetails::Type(details) => details,
-            TyConDetails::Trait(_) | TyConDetails::Synonym(_) => panic!(),
+            TyConDetails::Trait(_) => panic!(),
         }
     }
 }
@@ -824,15 +817,6 @@ impl Ty {
     pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         match self {
             Ty::UVar(var_ref) => var_ref.normalize(cons),
-
-            Ty::Con(con, _) => match cons.get(con) {
-                Some(ty_con) => match &ty_con.details {
-                    TyConDetails::Synonym(ty) => ty.clone(),
-                    TyConDetails::Trait(_) | TyConDetails::Type(_) => self.clone(),
-                },
-                None => self.clone(),
-            },
-
             _ => self.clone(),
         }
     }
@@ -849,13 +833,7 @@ impl Ty {
                 var_ref_link
             }
 
-            Ty::Con(con, _) => match cons.get(con) {
-                Some(ty_con) => match &ty_con.details {
-                    TyConDetails::Synonym(ty) => ty.clone(),
-                    TyConDetails::Trait(_) | TyConDetails::Type(_) => self.clone(),
-                },
-                None => self.clone(),
-            },
+            Ty::Con(_, _) => self.clone(),
 
             Ty::App(con, args, kind) => Ty::App(
                 con.clone(),

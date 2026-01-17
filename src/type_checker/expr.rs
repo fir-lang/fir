@@ -1883,10 +1883,6 @@ pub(super) fn select_field(
             }
         }
 
-        TyConDetails::Synonym(_) => {
-            panic!("{}: Type synonym in select_field", loc_display(loc));
-        }
-
         _ => None,
     }
 }

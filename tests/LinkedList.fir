@@ -16,4 +16,5 @@ impl[ToStr[t]] ToStr[List[t]]:
 main():
     print(List.Cons(val = u32(1), rest = List.Cons(val = u32(2), rest = List.Nil)))
 
+# expected stdout: 1 --> 2 --> Nil
 
