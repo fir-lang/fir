@@ -1847,8 +1847,7 @@ fn check_field_sel(
     )
 }
 
-/// Try to select a field.
-pub(super) fn select_field(
+fn select_field(
     tc_state: &mut TcFunState,
     ty_con: &Id,
     ty_args: &[Ty],

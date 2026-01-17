@@ -1,6 +1,6 @@
 use crate::ast::{self, AssignOp, Id};
 use crate::type_checker::convert::convert_ast_ty;
-use crate::type_checker::expr::{check_expr, select_field};
+use crate::type_checker::expr::check_expr;
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
@@ -189,52 +189,48 @@ fn check_stmt(
 
                     let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                     let lhs_ty: Ty = match &lhs_ty_normalized {
-                        Ty::Con(con, _) => select_field(tc_state, con, &[], field, &lhs.loc)
-                            .unwrap_or_else(|| {
-                                panic!(
-                                    "{}: Type {} does not have field {}",
-                                    loc_display(&lhs.loc),
-                                    con,
-                                    field
-                                )
-                            }),
+                        Ty::Con(con, _) => {
+                            select_field_for_assignment(tc_state, con, &[], field, &lhs.loc)
+                                .unwrap_or_else(|| {
+                                    panic!(
+                                        "{}: Type {} does not have field {}",
+                                        loc_display(&lhs.loc),
+                                        con,
+                                        field
+                                    )
+                                })
+                        }
 
-                        Ty::App(con, args, _) => select_field(tc_state, con, args, field, &lhs.loc)
-                            .unwrap_or_else(|| {
-                                panic!(
-                                    "{}: Type {} does not have field {}",
-                                    loc_display(&lhs.loc),
-                                    con,
-                                    field
-                                )
-                            }),
+                        Ty::App(con, args, _) => {
+                            select_field_for_assignment(tc_state, con, args, field, &lhs.loc)
+                                .unwrap_or_else(|| {
+                                    panic!(
+                                        "{}: Type {} does not have field {}",
+                                        loc_display(&lhs.loc),
+                                        con,
+                                        field
+                                    )
+                                })
+                        }
 
                         Ty::Anonymous {
-                            labels,
-                            extension,
+                            labels: _,
+                            extension: _,
                             kind: RecordOrVariant::Record,
                             is_row,
                         } => {
                             assert!(!(*is_row));
-                            let (fields, _) = crate::type_checker::row_utils::collect_rows(
-                                tc_state.tys.tys.cons(),
-                                &lhs_ty_normalized,
-                                RecordOrVariant::Record,
-                                labels,
-                                extension.clone(),
+                            panic!(
+                                "{}: Records are value types and can't be updated",
+                                loc_display(&lhs.loc)
                             );
-                            match fields.get(field) {
-                                Some(field_ty) => field_ty.clone(),
-                                None => panic!(
-                                    "{}: Record with fields {:?} does not have field {}",
-                                    loc_display(&object.loc),
-                                    fields.keys().collect::<Vec<_>>(),
-                                    field
-                                ),
-                            }
                         }
 
-                        _ => panic!(),
+                        _ => panic!(
+                            "{}: Type {} doesn't have fields that can be assigned",
+                            loc_display(&lhs.loc),
+                            lhs_ty_normalized
+                        ),
                     };
 
                     let method = match op {
@@ -500,5 +496,45 @@ fn check_stmt(
                 &stmt.loc,
             )
         }
+    }
+}
+
+fn select_field_for_assignment(
+    tc_state: &mut TcFunState,
+    ty_con: &Id,
+    ty_args: &[Ty],
+    field: &Id,
+    loc: &ast::Loc,
+) -> Option<Ty> {
+    let ty_con = tc_state
+        .tys
+        .tys
+        .get_con(ty_con)
+        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con));
+
+    assert_eq!(ty_con.ty_params.len(), ty_args.len());
+
+    match &ty_con.details {
+        TyConDetails::Type(TypeDetails { cons, sum, value }) if !sum => {
+            if *value {
+                panic!("{}: Value types can't be updated", loc_display(loc));
+            }
+
+            assert_eq!(cons.len(), 1);
+            let con_scheme = cons.values().next().unwrap();
+            let con_ty = con_scheme.instantiate_with_tys(ty_args, tc_state.preds, loc);
+
+            match con_ty {
+                Ty::Fun {
+                    args: FunArgs::Named(fields),
+                    ret: _,
+                    exceptions: _,
+                } => fields.get(field).cloned(),
+
+                _ => None,
+            }
+        }
+
+        _ => None,
     }
 }
