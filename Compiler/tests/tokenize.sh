@@ -1,10 +1,16 @@
 #!/bin/bash
 
+# This script needs to run in Fir git repo root.
+
+set -e
+
 shopt -s globstar
 
 SCRIPT_DIR="$(dirname "$0")"
 
-cargo build --release
+cargo build --release --bin fir
+cargo run --release --bin fir2c -- Compiler/Lexer.fir --main lexerDumpInterpreterTokens --no-run > target/LexerDumpInterpreterTokens.c
+gcc target/LexerDumpInterpreterTokens.c -o target/LexerDumpInterpreterTokens -O3
 
 exit_code=0
 
@@ -20,7 +26,7 @@ source "${SCRIPT_DIR}/common.sh"
 
 for f in "${files[@]}"; do
     echo $f
-    compiler_output=$(./target/release/fir Compiler/Lexer.fir --main lexerDumpInterpreterTokens -- "$f")
+    compiler_output=$(./target/LexerDumpInterpreterTokens "$f")
     interpreter_output=$(./target/release/fir --tokenize "$f")
     diff -u <(echo "$interpreter_output") <(echo "$compiler_output")
     if [ $? -ne 0 ]; then

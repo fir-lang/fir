@@ -37,15 +37,15 @@ interpreter_update_goldens: build
     # them.
     for f in tests/**/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
-compiler_unit_test:
-    cargo run --bin fir --release -- Compiler/Main.fir -- Compiler/Main.fir
+compiler_unit_test: build_compiler
+    ./target/Compiler Compiler/Main.fir
     ./Compiler/tests/tokenize.sh
     ./Compiler/tests/scan.sh
 
 compiler_parser_test:
     ./Compiler/tests/parse.sh
 
-compiler_golden_test:
+compiler_golden_test: build
     goldentests target/debug/fir Tool/Peg/Tests.fir '# '
     goldentests target/debug/fir Compiler/DeriveEq.fir '# '
     goldentests target/debug/fir Compiler/DeriveToDoc.fir '# '
@@ -91,6 +91,14 @@ build_tools:
 
     cargo run --bin fir2c -- Tool/Peg/Peg.fir --no-run > target/Peg.c
     gcc target/Peg.c -o target/Peg -O3
+
+build_compiler:
+    mkdir -p target
+
+    set -x
+
+    cargo run --release --bin fir2c -- Compiler/Main.fir --no-run > target/Compiler.c
+    gcc target/Compiler.c -o target/Compiler -O3
 
 generate_parser:
     lalrpop src/parser.lalrpop

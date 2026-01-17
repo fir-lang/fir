@@ -1,10 +1,16 @@
 #!/bin/bash
 
+# This script needs to run in Fir git repo root.
+
+set -e
+
 shopt -s globstar
 
 SCRIPT_DIR="$(dirname "$0")"
 
-cargo build --release
+cargo build --release --bin fir
+cargo run --release --bin fir2c -- Compiler/Scanner.fir --main scannerDumpInterpreterTokens --no-run > target/ScannerDumpInterpreterTokens.c
+gcc target/ScannerDumpInterpreterTokens.c -o target/ScannerDumpInterpreterTokens -O3
 
 exit_code=0
 
@@ -22,7 +28,7 @@ source "${SCRIPT_DIR}/common.sh"
 
 for f in "${files[@]}"; do
     echo $f
-    compiler_output=$(./target/release/fir Compiler/Scanner.fir --main scannerDumpInterpreterTokens -- "$f")
+    compiler_output=$(./target/ScannerDumpInterpreterTokens "$f")
     interpreter_output=$(./target/release/fir --scan "$f")
     diff -u <(echo "$interpreter_output") <(echo "$compiler_output")
     if [ $? -ne 0 ]; then
