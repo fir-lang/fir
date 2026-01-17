@@ -1,9 +1,16 @@
 #!/bin/bash
 
+# This script needs to run in Fir git repo root.
+
 shopt -s globstar
 
-echo "Building Fir..."
-cargo build --release
+if [ ! -f "target/Format" ]; then
+  # We deliberately don't build it ourselves to allow formatting the repo while
+  # the code is not in a buildable state, buggy, incomplete.
+  echo "Error: target/Format isn't build. Build it first with:"
+  echo "    just build_tools"
+  exit 1
+fi
 
 TEMP_DIR=$(mktemp -d)
 # trap 'echo "Cleaning up temp dir"; rm -rf "$TEMP_DIR"' EXIT
@@ -20,12 +27,12 @@ for file in Compiler/**/*.fir Fir/**/*.fir Tool/**/*.fir; do
 
   echo "$file"
 
-  OUTPUT_FILE="$TEMP_DIR/$file"
-  mkdir -p "$(dirname "$OUTPUT_FILE")"
+  output_file="$TEMP_DIR/$file"
+  mkdir -p "$(dirname "$output_file")"
 
   # Note: we can't use Format.sh here as it drops the golden test expectations
   # before calling the formatter.
-  if ! ./target/release/fir Tool/Format/Format.fir -- "$file" > "$OUTPUT_FILE"; then
+  if ! ./target/Format "$file" > "$output_file"; then
     script_failed=1
   fi
 done

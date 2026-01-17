@@ -4,8 +4,13 @@
 
 shopt -s globstar
 
-echo "Building Fir..."
-cargo build --release
+if [ ! -f "target/Format" ]; then
+  # We deliberately don't build it ourselves to allow formatting the repo while
+  # the code is not in a buildable state, buggy, incomplete.
+  echo "Error: target/Format isn't build. Build it first with:"
+  echo "    just build_tools"
+  exit 1
+fi
 
 script_failed=0
 
@@ -14,7 +19,7 @@ for file in "$@"; do
 
   output_file="$file.formatted"
 
-  if ./target/release/fir Tool/Format/Format.fir -- "$file" > "$output_file"; then
+  if ./target/Format "$file" > "$output_file"; then
     mv "$output_file" "$file"
   else
     script_failed=1

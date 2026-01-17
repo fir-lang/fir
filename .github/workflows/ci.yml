@@ -37,7 +37,9 @@ jobs:
         run: sudo apt install -y just
 
       - name: 'Check Fir formatting'
-        run: just check_fir_formatting
+        run: |
+          just build_tools
+          just check_fir_formatting
 
   check_lints:
     name: Check lints
@@ -152,7 +154,9 @@ jobs:
         run: cargo build --verbose
 
       - name: Check
-        run: just check_generated_files
+        run: |
+          just build_tools
+          just check_generated_files
 
   # This step takes long, so it's a separate step.
   run_compiler_parser_tests:
