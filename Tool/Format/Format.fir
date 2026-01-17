@@ -99,6 +99,9 @@ TopDecl.format(self, tokens: Array[Token]) Doc:
 TypeDecl.format(self, tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
+    if self.value_ is Option.Some(value_):
+        doc += formatToken(value_, tokens) + Doc.blank(1)
+
     if self.prim_ is Option.Some(prim_):
         doc += formatToken(prim_, tokens) + Doc.blank(1)
 
