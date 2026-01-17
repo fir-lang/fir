@@ -200,30 +200,51 @@ pub(super) fn check_expr(
         }) => {
             assert!(ty_args.is_empty());
 
-            let scheme = match con {
-                Some(con) => tc_state
-                    .tys
-                    .associated_fn_schemes
-                    .get(ty)
-                    .unwrap_or_else(|| {
+            let ty_con: &TyCon = tc_state
+                .tys
+                .tys
+                .cons()
+                .get(ty)
+                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(&expr.loc), ty));
+
+            let ty_details: &TypeDetails = ty_con.type_details().unwrap_or_else(|| {
+                panic!(
+                    "{}: Type {} is a trait or type synonym",
+                    loc_display(&expr.loc),
+                    ty
+                )
+            });
+
+            let scheme: &Scheme = match con {
+                Some(con) => {
+                    if !ty_details.sum {
                         panic!(
-                            "{}: Type {} is not in type environment",
+                            "{}: Type {} does not have sum constructors",
                             loc_display(&expr.loc),
                             ty
-                        )
-                    })
-                    .get(con)
-                    .unwrap_or_else(|| {
+                        );
+                    }
+                    ty_details.cons.get(con).unwrap_or_else(|| {
                         panic!(
-                            "{}: Type {} does not have the constructor {}",
+                            "{}: Type {} does not have a constructor named {}",
                             loc_display(&expr.loc),
                             ty,
                             con
                         )
-                    }),
-                None => tc_state.tys.top_schemes.get(ty).unwrap_or_else(|| {
-                    panic!("{}: Unknown constructor {}", loc_display(&expr.loc), ty)
-                }),
+                    })
+                }
+
+                None => {
+                    if ty_details.sum {
+                        panic!(
+                            "{}: Sum type allocation {} needs a constructor",
+                            loc_display(&expr.loc),
+                            ty
+                        );
+                    }
+                    assert_eq!(ty_details.cons.len(), 1);
+                    ty_details.cons.values().next().unwrap()
+                }
             };
 
             let con_ty = if user_ty_args.is_empty() {
@@ -1844,8 +1865,8 @@ pub(super) fn select_field(
 
     match &ty_con.details {
         TyConDetails::Type(TypeDetails { cons, sum }) if !sum => {
-            let con_name = cons[0].name.as_ref().unwrap_or(&ty_con.id);
-            let con_scheme = tc_state.tys.top_schemes.get(con_name)?;
+            assert_eq!(cons.len(), 1);
+            let con_scheme = cons.values().next().unwrap();
             let con_ty = con_scheme.instantiate_with_tys(ty_args, tc_state.preds, loc);
 
             match con_ty {
