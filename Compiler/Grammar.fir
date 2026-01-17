@@ -929,18 +929,19 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
+            let val = state.nextCursor()
             let optionalCursor0 = state._cursor
             let symResult = try(
                 \():
-                    let val = if state.peek() is Option.Some(sym)
+                    let valToken = if state.peek() is Option.Some(sym)
                             and sym is Token(kind = TokenKind.Value, ..):
                         state._cursor += 1
                         sym
                     else:
                         throw(state.updateErrorCursor(state._cursor))
-                    val,
+                    valToken,
             )
-            let val = match symResult:
+            let valToken = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
                     Option.None
@@ -1015,6 +1016,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
+                    value_ = valToken.map(\(a): TokenIdx(idx = val)),
                     prim_ = Option.None,
                     name = newId(name),
                     typeParams =
@@ -1031,18 +1033,19 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         Result.Ok(val): return val
     let altResult = try(
         \():
+            let val = state.nextCursor()
             let optionalCursor0 = state._cursor
             let symResult = try(
                 \():
-                    let val = if state.peek() is Option.Some(sym)
+                    let valToken = if state.peek() is Option.Some(sym)
                             and sym is Token(kind = TokenKind.Value, ..):
                         state._cursor += 1
                         sym
                     else:
                         throw(state.updateErrorCursor(state._cursor))
-                    val,
+                    valToken,
             )
-            let val = match symResult:
+            let valToken = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
                     Option.None
@@ -1106,6 +1109,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
                     Option.Some(fs): fs.fields
                     Option.None: ConFields.Empty
                 TypeDecl(
+                    value_ = valToken.map(\(a): TokenIdx(idx = val)),
                     prim_ = Option.None,
                     name = newId(name),
                     typeParams =
@@ -1169,6 +1173,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
+                    value_ = Option.None,
                     prim_ = Option.Some(TokenIdx(idx = prim_)),
                     name = newId(name),
                     typeParams =

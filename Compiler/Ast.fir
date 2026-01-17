@@ -43,10 +43,17 @@ type TopDecl:
     Impl(ImplDecl)
 
 
-## A type declaration: `type Vec[t]: ...`.
+## A type declaration: `type Vec[t](...)`, `value type Bool: ...`.
 #[derive(ToDoc)]
 type TypeDecl(
-    ## When the type is a primitive, the `prim` token.
+    ## The `value` token in value type declarations: `value type Bool: ...`.
+    ##
+    ## A type can't be both `value` and `prim`, the parser only allows one of them.
+    value_: Option[TokenIdx],
+
+    ## The `prim` token in built-in type declarations: `prim type U32`.
+    ##
+    ## A type can't be both `value` and `prim`, the parser only allows one of them.
     prim_: Option[TokenIdx],
 
     ## The type name. `Vec` in the example.
