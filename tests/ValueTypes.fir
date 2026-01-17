@@ -1,3 +1,6 @@
+# This test will be updated to use the types when we implement value types in
+# the backends.
+
 value type MyBool:
     True
     False
