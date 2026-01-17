@@ -166,13 +166,6 @@ impl LoweredPgm {
     }
 }
 
-impl Ty {
-    pub fn print(&self, buf: &mut String) {
-        self.mono_ty.print(buf);
-        write!(buf, "#{:?}", self.repr).unwrap();
-    }
-}
-
 impl Stmt {
     pub fn print(&self, buf: &mut String, indent: u32) {
         match self {

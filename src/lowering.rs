@@ -124,21 +124,6 @@ impl Repr {
 }
 
 #[derive(Debug)]
-pub struct Ty {
-    pub mono_ty: mono::Type, // for debugging
-    pub repr: Repr,
-}
-
-impl Ty {
-    fn from_mono_ty(ty: &mono::Type) -> Ty {
-        Ty {
-            mono_ty: ty.clone(),
-            repr: Repr::from_mono_ty(ty),
-        }
-    }
-}
-
-#[derive(Debug)]
 pub enum Fun {
     Builtin(BuiltinFunDecl),
     Source(SourceFunDecl),
@@ -261,9 +246,9 @@ pub struct SourceFunDecl {
     pub idx: FunIdx,              // for debugging
     pub ty_args: Vec<mono::Type>, // for debugging
     pub locals: Vec<LocalInfo>,   // for debugging, indexed by `LocalIdx`
-    pub params: Vec<Ty>,
-    pub return_ty: Ty,
-    pub exceptions: Ty,
+    pub params: Vec<mono::Type>,
+    pub return_ty: mono::Type,
+    pub exceptions: mono::Type,
     pub body: Vec<L<Stmt>>,
 }
 
@@ -318,10 +303,10 @@ pub enum BuiltinConDecl {
 
 #[derive(Debug)]
 pub struct SourceConDecl {
-    pub name: Id,
-    pub idx: HeapObjIdx,          // for debugging
+    pub name: Id, // for debugging
+    pub idx: HeapObjIdx,
     pub ty_args: Vec<mono::Type>, // for debugging
-    pub fields: Vec<Ty>,
+    pub fields: Vec<mono::Type>,
 }
 
 #[derive(Debug, Clone)]
@@ -460,7 +445,7 @@ pub struct Closure {
     pub idx: ClosureIdx, // for debugging
     pub locals: Vec<LocalInfo>,
     pub fvs: Vec<ClosureFv>,
-    pub params: Vec<Ty>,
+    pub params: Vec<mono::Type>,
     pub body: Vec<L<Stmt>>,
     pub loc: Loc,
 }
@@ -1545,22 +1530,8 @@ fn lower_source_con(
         ty_args: con_ty_args.to_vec(),
         fields: match fields {
             mono::ConFields::Empty => vec![],
-
-            mono::ConFields::Named(fields) => fields
-                .values()
-                .map(|field_ty| Ty {
-                    mono_ty: field_ty.clone(),
-                    repr: Repr::from_mono_ty(field_ty),
-                })
-                .collect(),
-
-            mono::ConFields::Unnamed(fields) => fields
-                .iter()
-                .map(|field_ty| Ty {
-                    mono_ty: field_ty.clone(),
-                    repr: Repr::from_mono_ty(field_ty),
-                })
-                .collect(),
+            mono::ConFields::Named(fields) => fields.values().cloned().collect(),
+            mono::ConFields::Unnamed(fields) => fields.to_vec(),
         },
     })
 }
@@ -2225,11 +2196,7 @@ fn lower_expr(
                 idx: closure_idx,
                 locals: closure_scope.locals,
                 fvs,
-                params: sig
-                    .params
-                    .iter()
-                    .map(|(_, ty)| Ty::from_mono_ty(&ty.node))
-                    .collect(),
+                params: sig.params.iter().map(|(_, ty)| ty.node.clone()).collect(),
                 body,
                 loc: loc.clone(),
             });
@@ -2522,7 +2489,7 @@ fn lower_source_fun(
 ) -> SourceFunDecl {
     let mut locals: Vec<LocalInfo> = vec![];
     let mut bounds: ScopeMap<Id, LocalIdx> = Default::default();
-    let mut params: Vec<Ty> = vec![];
+    let mut params: Vec<mono::Type> = vec![];
 
     for (param, ty) in &fun.sig.params {
         bounds.insert(param.clone(), LocalIdx(locals.len() as u32));
@@ -2551,7 +2518,7 @@ fn lower_source_fun(
         fun.sig
             .params
             .iter()
-            .map(|(_, param_ty)| Ty::from_mono_ty(&param_ty.node)),
+            .map(|(_, param_ty)| param_ty.node.clone()),
     );
 
     SourceFunDecl {
@@ -2567,11 +2534,8 @@ fn lower_source_fun(
             .sig
             .return_ty
             .as_ref()
-            .map(|l| Ty::from_mono_ty(&l.node))
-            .unwrap_or(Ty {
-                mono_ty: mono::Type::unit(),
-                repr: Repr::U64,
-            }),
+            .map(|l| l.node.clone())
+            .unwrap_or(mono::Type::unit()),
 
         // Constructors don't have exception types as they cannot throw, and their type parameters
         // need to be the same as the constructed type's type parameters. We can assume their
@@ -2580,12 +2544,9 @@ fn lower_source_fun(
             .sig
             .exceptions
             .as_ref()
-            .map(|ty| Ty::from_mono_ty(&ty.node))
-            .unwrap_or(Ty {
-                mono_ty: mono::Type::Variant {
-                    alts: Default::default(),
-                },
-                repr: Repr::U64, // TODO: should this be void?
+            .map(|ty| ty.node.clone())
+            .unwrap_or(mono::Type::Variant {
+                alts: Default::default(),
             }),
     }
 }
