@@ -41,8 +41,8 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             // Check that `con` exists and field shapes match.
             let con_scheme = match &ty_con.details {
                 TyConDetails::Type(TypeDetails {
-                    cons,
                     sum,
+                    cons,
                     value: _,
                 }) => match pat_con_name {
                     Some(pat_con_name) => {
@@ -53,47 +53,25 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                                 ty_con.id
                             )
                         }
-                        if !cons
-                            .iter()
-                            .any(|con| con.name.as_ref() == Some(pat_con_name))
-                        {
+                        cons.get(pat_con_name).unwrap_or_else(|| {
                             panic!(
                                 "{}: Type {} does not have a constructor named {}",
                                 loc_display(&pat.loc),
                                 ty_con.id,
                                 pat_con_name,
                             )
-                        }
-                        tc_state.tys.associated_fn_schemes
-                                .get(&ty_con.id)
-                                .unwrap_or_else(|| panic!(
-                                    "{}: BUG: Type {} doesn't have any schemes",
-                                    loc_display(&pat.loc),
-                                    ty_con.id
-                                ))
-                                .get(pat_con_name)
-                                .unwrap_or_else(|| panic!(
-                                    "{}: BUG: Type {} doesn't have a constructor named {} in associated schemes",
-                                    loc_display(&pat.loc),
-                                    ty_con.id,
-                                    pat_con_name
-                                ))
+                        })
                     }
                     None => {
-                        if cons.is_empty() {
+                        if *sum {
                             panic!(
-                                "{}: Type {} doesn't have any constructors",
-                                loc_display(&pat.loc),
-                                ty_con.id
-                            );
-                        }
-                        tc_state.tys.top_schemes.get(&ty_con.id).unwrap_or_else(|| {
-                            panic!(
-                                "{}: BUG: type {} doesn't have a top-level scheme",
+                                "{}: Type {} is a sum type, the pattern needs a constructor",
                                 loc_display(&pat.loc),
                                 ty_con.id
                             )
-                        })
+                        }
+                        assert_eq!(cons.len(), 1);
+                        cons.values().next().unwrap()
                     }
                 },
 

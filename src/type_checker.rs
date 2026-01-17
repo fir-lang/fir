@@ -271,7 +271,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .zip(ty_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
                         details: TyConDetails::Type(TypeDetails {
-                            cons: vec![],
+                            cons: Default::default(),
                             sum: true,
                             value: ty_decl.node.value,
                         }),
@@ -323,25 +323,21 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             ast::TopDecl::Type(ty_decl) => {
                 let details = match &ty_decl.node.rhs {
                     Some(rhs) => match rhs {
-                        ast::TypeDeclRhs::Sum(sum_cons) => {
-                            let cons: Vec<ConShape> =
-                                sum_cons.iter().map(ConShape::from_ast).collect();
-                            TyConDetails::Type(TypeDetails {
-                                cons,
-                                sum: true,
-                                value: ty_decl.node.value,
-                            })
-                        }
+                        ast::TypeDeclRhs::Sum(_) => TyConDetails::Type(TypeDetails {
+                            cons: Default::default(),
+                            sum: true,
+                            value: ty_decl.node.value,
+                        }),
 
                         ast::TypeDeclRhs::Product(_fields) => TyConDetails::Type(TypeDetails {
-                            cons: vec![ConShape { name: None }],
+                            cons: Default::default(),
                             sum: false,
                             value: ty_decl.node.value,
                         }),
                     },
 
                     None => TyConDetails::Type(TypeDetails {
-                        cons: vec![],
+                        cons: Default::default(),
                         sum: true,
                         value: ty_decl.node.value,
                     }),
@@ -575,14 +571,14 @@ fn check_value_type_sizes(cons: &HashMap<Id, TyCon>) {
     }
 }
 
-// `ty_cons` is `mut` to be able to update it with associated types when checking traits.
+// `tys` is `mut` to be able to update it with associated types when checking traits.
 fn collect_schemes(
     module: &ast::Module,
     tys: &mut TyMap,
 ) -> (
-    HashMap<Id, Scheme>,
-    HashMap<Id, HashMap<Id, Scheme>>,
-    HashMap<Id, Vec<(Id, Scheme)>>,
+    HashMap<Id, Scheme>,              // top schemes
+    HashMap<Id, HashMap<Id, Scheme>>, // associated fn schemes
+    HashMap<Id, Vec<(Id, Scheme)>>,   // method schemes (method name -> type name -> scheme)
 ) {
     let mut top_schemes: HashMap<Id, Scheme> = Default::default();
     let mut associated_fn_schemes: HashMap<Id, HashMap<Id, Scheme>> = Default::default();
@@ -914,10 +910,13 @@ fn collect_schemes(
                                 ty,
                                 loc: ty_decl.loc.clone(), // TODO: use con loc
                             };
-                            let old = associated_fn_schemes
-                                .entry(ty_decl.node.name.clone())
-                                .or_default()
-                                .insert(con.name.clone(), scheme);
+                            let old = tys
+                                .get_con_mut(&ty_decl.node.name)
+                                .unwrap()
+                                .details
+                                .as_type_mut()
+                                .cons
+                                .insert(con.name.clone(), scheme.clone());
                             if old.is_some() {
                                 panic!(
                                     "{}: Constructor {}.{} is defined multiple times",
@@ -928,6 +927,7 @@ fn collect_schemes(
                             }
                         }
                     }
+
                     ast::TypeDeclRhs::Product(fields) => {
                         let ty = match convert_fields(tys, fields) {
                             None => ret,
@@ -949,7 +949,13 @@ fn collect_schemes(
                             ty,
                             loc: ty_decl.loc.clone(), // TODO: use con loc
                         };
-                        let old = top_schemes.insert(ty_decl.node.name.clone(), scheme);
+                        let old = tys
+                            .get_con_mut(&ty_decl.node.name)
+                            .unwrap()
+                            .details
+                            .as_type_mut()
+                            .cons
+                            .insert(ty_decl.node.name.clone(), scheme.clone());
                         if old.is_some() {
                             panic!(
                                 "{}: Constructor {} is defined multiple times",

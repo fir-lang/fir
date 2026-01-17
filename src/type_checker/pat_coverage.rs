@@ -1,6 +1,6 @@
 use crate::ast::{self, Id};
 use crate::collections::{HashMap, HashSet};
-use crate::type_checker::{FunArgs, Scheme, TcFunState, Ty, row_utils};
+use crate::type_checker::{FunArgs, Scheme, TcFunState, Ty, TypeDetails, row_utils};
 #[allow(unused)]
 use crate::utils::loc_display;
 
@@ -163,28 +163,27 @@ impl PatMatrix {
 
         match &next_ty {
             Ty::Con(field_ty_con_id, _) | Ty::App(field_ty_con_id, _, _) => {
-                let field_con_details = tc_state
+                let field_con_details: &TypeDetails = tc_state
                     .tys
                     .tys
                     .get_con(field_ty_con_id)
                     .unwrap()
-                    .con_details()
+                    .type_details()
                     .unwrap();
 
                 let mut exhaustive = true;
 
                 // Check that every constructor of `next_ty` is covered.
-                for con in field_con_details.cons.iter() {
-                    let matrix = match &con.name {
-                        Some(con_name) => {
-                            self.focus_sum_con(&next_ty, field_ty_con_id, con_name, tc_state, loc)
-                        }
-                        None => self.focus_product_con(&next_ty, field_ty_con_id, tc_state, loc),
-                    };
-                    let s = match &con.name {
-                        Some(con) => format!("{}.{}", field_ty_con_id, con),
-                        None => field_ty_con_id.to_string(),
-                    };
+                for (con_name, con_scheme) in field_con_details.cons.iter() {
+                    let matrix = self.focus_con_scheme(
+                        &next_ty,
+                        field_ty_con_id,
+                        con_name,
+                        con_scheme,
+                        tc_state,
+                        loc,
+                    );
+                    let s = format!("{}.{}", field_ty_con_id, con_name);
                     match matrix {
                         Some(matrix) => {
                             if !with_trace(trace, s, |trace| {
@@ -415,49 +414,11 @@ impl PatMatrix {
         }
     }
 
-    fn num_fields(&self) -> usize {
-        self.field_tys.len()
-    }
-
-    fn focus_product_con(
-        &self,
-        ty: &Ty,
-        con_ty_id: &Id,
-        tc_state: &TcFunState,
-        loc: &ast::Loc,
-    ) -> Option<PatMatrix> {
-        assert!(self.num_fields() > 0);
-        let con_scheme = tc_state.tys.top_schemes.get(con_ty_id).unwrap();
-        self.focus_con_scheme(ty, con_ty_id, None, con_scheme, tc_state, loc)
-    }
-
-    fn focus_sum_con(
-        &self,
-        ty: &Ty,
-        con_ty_id: &Id,
-        con_id: &Id,
-        tc_state: &TcFunState,
-        loc: &ast::Loc,
-    ) -> Option<PatMatrix> {
-        assert!(self.num_fields() > 0);
-
-        // Get constructor field types from the constructor's type scheme.
-        let con_scheme = tc_state
-            .tys
-            .associated_fn_schemes
-            .get(con_ty_id)
-            .unwrap()
-            .get(con_id)
-            .unwrap();
-
-        self.focus_con_scheme(ty, con_ty_id, Some(con_id), con_scheme, tc_state, loc)
-    }
-
     fn focus_con_scheme(
         &self,
         ty: &Ty,
         con_ty_id: &Id,
-        con_id: Option<&Id>,
+        con_id: &Id,
         con_scheme: &Scheme,
         tc_state: &TcFunState,
         #[allow(unused)] loc: &ast::Loc,
@@ -518,6 +479,8 @@ impl PatMatrix {
                         fields,
                         ignore_rest: _,
                     }) => {
+                        let con = con.unwrap_or_else(|| ty.clone());
+
                         // Note: `ty` may not be the same as `con_ty_id` when checking variant
                         // patterns. We need to compare both type and constructor names.
                         if !(ty == *con_ty_id && con_id == con.as_ref()) {

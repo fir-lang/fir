@@ -202,6 +202,15 @@ pub(super) enum TyConDetails {
     Synonym(Ty),
 }
 
+impl TyConDetails {
+    pub(super) fn as_type_mut(&mut self) -> &mut TypeDetails {
+        match self {
+            TyConDetails::Type(details) => details,
+            TyConDetails::Trait(_) | TyConDetails::Synonym(_) => panic!(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub(super) struct TraitDetails {
     /// Methods of the trait, with optional default implementations.
@@ -223,7 +232,7 @@ pub(super) struct TypeDetails {
     pub(super) value: bool,
 
     /// Value constructors of the type.
-    pub(super) cons: Vec<ConShape>,
+    pub(super) cons: HashMap<Id, Scheme>,
 
     /// Whether the type is a sum type.
     ///
@@ -231,11 +240,6 @@ pub(super) struct TypeDetails {
     ///
     /// A sum type can have any number of constructors in `cons`.
     pub(super) sum: bool,
-}
-
-#[derive(Debug, Clone)]
-pub(super) struct ConShape {
-    pub(super) name: Option<Id>,
 }
 
 /// A predicate, e.g. `Iterator[coll, item]`.
@@ -1006,7 +1010,7 @@ impl TyCon {
             id,
             ty_params: vec![],
             details: TyConDetails::Type(TypeDetails {
-                cons: vec![],
+                cons: Default::default(),
                 sum: true,
                 value: false,
             }),
@@ -1025,8 +1029,8 @@ impl TyCon {
         self.details.trait_details()
     }
 
-    pub(super) fn con_details(&self) -> Option<&TypeDetails> {
-        self.details.con_details()
+    pub(super) fn type_details(&self) -> Option<&TypeDetails> {
+        self.details.type_details()
     }
 }
 
@@ -1042,19 +1046,10 @@ impl TyConDetails {
         }
     }
 
-    pub(super) fn con_details(&self) -> Option<&TypeDetails> {
+    pub(super) fn type_details(&self) -> Option<&TypeDetails> {
         match self {
             TyConDetails::Type(ty_details) => Some(ty_details),
             _ => None,
-        }
-    }
-}
-
-impl ConShape {
-    pub(super) fn from_ast(con: &ast::ConDecl) -> ConShape {
-        let ast::ConDecl { name, fields: _ } = con;
-        ConShape {
-            name: Some(name.clone()),
         }
     }
 }
