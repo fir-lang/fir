@@ -1,10 +1,13 @@
 #!/bin/bash
 
+# This script needs to run in Fir git repo root.
+
 shopt -s globstar
 
 SCRIPT_DIR="$(dirname "$0")"
 
-cargo build --release
+cargo run --release --bin fir2c -- Compiler/Parser.fir --no-run > target/Parser.c
+gcc target/Parser.c -o target/Parser -O3
 
 exit_code=0
 
@@ -14,7 +17,7 @@ source "${SCRIPT_DIR}/common.sh"
 
 for f in "${files[@]}"; do
     echo $f
-    ./target/release/fir Compiler/Parser.fir -- "$f"
+    ./target/Parser "$f"
     if [ $? -ne 0 ]; then
         exit_code=1
     fi
