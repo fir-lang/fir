@@ -81,6 +81,17 @@ formatter_update_goldens:
 build:
     cargo build
 
+build_tools:
+    mkdir -p target
+
+    set -x
+
+    cargo run --bin fir2c -- Tool/Format/Format.fir --no-run > target/Format.c
+    gcc target/Format.c -o target/Format -O3
+
+    cargo run --bin fir2c -- Tool/Peg/Peg.fir --no-run > target/Peg.c
+    gcc target/Peg.c -o target/Peg -O3
+
 generate_parser:
     lalrpop src/parser.lalrpop
     cargo fmt -- src/parser.rs
@@ -89,19 +100,17 @@ update_generated_files:
     #!/usr/bin/env bash
     lalrpop src/parser.lalrpop
 
-    # We can't redirect PegGrammar.peg compilation output to PegGrammar.fir, as
-    # the PEG compiler itself uses the file. Save the output to a local and
-    # then update the file.
-    output=$(Tool/Peg/Peg.sh Tool/Peg/PegGrammar.peg)
-    if [ $? -eq 0 ]; then
-        echo "$output" > Tool/Peg/PegGrammar.fir
-    else
-        echo "generated file update failed"
+    if [ ! -f "target/Peg" ]; then
+        # We deliberately don't build Peg ourselves to allow formatting the repo
+        # while the code is not in a buildable state, or buggy, or incomplete.
+        echo "Error: target/Format isn't build. Build it first with:"
+        echo "    just build_tools"
         exit 1
     fi
 
-    Tool/Peg/Peg.sh Tool/Peg/TestGrammar.peg > Tool/Peg/TestGrammar.fir
-    Tool/Peg/Peg.sh Compiler/Grammar.peg > Compiler/Grammar.fir
+    ./target/Peg Tool/Peg/PegGrammar.peg > Tool/Peg/PegGrammar.fir
+    ./target/Peg Tool/Peg/TestGrammar.peg > Tool/Peg/TestGrammar.fir
+    ./target/Peg Compiler/Grammar.peg > Compiler/Grammar.fir
 
     Tool/Format/Format.sh Tool/Peg/{PegGrammar,TestGrammar}.fir Compiler/Grammar.fir
 
