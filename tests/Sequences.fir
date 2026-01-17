@@ -4,8 +4,8 @@ main():
         print(x)
 
     let iter = ["a" = u32(1), "b" = u32(2)]
-    for x: (key: Str, value: U32) in iter:
-        print("`x.key` = `x.value`")
+    for x: (key: Str, val: U32) in iter:
+        print("`x.key` = `x.val`")
 
     # --------------------------------------------------------------------------
     # Type prefix in iters

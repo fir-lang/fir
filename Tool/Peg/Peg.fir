@@ -539,12 +539,12 @@ generateNonTerminal(
 
         altResultDoc += Doc.nested(
             4,
-            Doc.str("let value = do:") + Doc.hardLine() + valueDoc,
+            Doc.str("let val = do:") + Doc.hardLine() + valueDoc,
         )
 
         altResultDoc += Doc.hardLine()
 
-        altResultDoc += Doc.str("value")
+        altResultDoc += Doc.str("val")
 
         altResultDoc = altResultDoc.nest(4)
 
@@ -564,9 +564,7 @@ generateNonTerminal(
 
         let okAlt = Doc.nested(
             4,
-            Doc.str("Result.Ok(value):")
-                + Doc.hardLine()
-                + Doc.str("return value"),
+            Doc.str("Result.Ok(val):") + Doc.hardLine() + Doc.str("return val"),
         )
 
         altResultMatchDoc = Doc.nested(4, altResultMatchDoc + errAlt)

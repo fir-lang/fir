@@ -13,7 +13,7 @@ type HashMap[k, v](
 #[derive(ToDoc)]
 type Elem[k, v](
     key: k,
-    value: v,
+    val: v,
     next: Option[Elem[k, v]],
 )
 
@@ -46,12 +46,12 @@ HashMap._capacityBeforeGrowth(cap: U32) U32:
     (u32(cap) * u32(8000)) / u32(10000)
 
 
-HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](
+HashMap.fromIter[Iterator[iter, (key: k, val: v), exn], Eq[k], Hash[k]](
     iter: iter,
 ) HashMap[k, v] / exn:
     let map = HashMap.withCapacity(10)
-    for item: (key: k, value: v) in iter:
-        map.insert(item.key, item.value)
+    for item: (key: k, val: v) in iter:
+        map.insert(item.key, item.val)
     map
 
 
@@ -70,7 +70,7 @@ HashMap._grow[Eq[k], Hash[k]](self: HashMap[k, v]):
     let newCapacityLeft: U32 = HashMap._capacityBeforeGrowth(newCap)
 
     for entry: HashMapEntry[k, v] in self.iter():
-        HashMap._insert(newElems, entry.key, entry.value)
+        HashMap._insert(newElems, entry.key, entry.val)
         newCapacityLeft -= 1
 
     self._buckets = newElems
@@ -83,7 +83,7 @@ HashMap.fromEntries[Iterator[iter, HashMapEntry[k, v], exn], Eq[k], Hash[k]](
 ) HashMap[k, v] / exn:
     let map = HashMap.withCapacity(10)
     for item: HashMapEntry[k, v] in iter:
-        map.insert(item.key, item.value)
+        map.insert(item.key, item.val)
     map
 
 
@@ -96,7 +96,7 @@ HashMap.keys(self: HashMap[k, v]) Map[HashMapIter[k, v], HashMapEntry[k, v], k, 
 
 
 HashMap.values(self: HashMap[k, v]) Map[HashMapIter[k, v], HashMapEntry[k, v], v, exn] / exn:
-    HashMapIter.new(self).map(\(entry: HashMapEntry[k, v]): entry.value)
+    HashMapIter.new(self).map(\(entry: HashMapEntry[k, v]): entry.val)
 
 
 # Insert new value, return old value.
@@ -112,7 +112,7 @@ HashMap.remove[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
                     match prevElem:
                         Option.None: self._buckets.set(index, Option.None)
                         Option.Some(prevElem): prevElem.next = elem.next
-                    return Option.Some(elem.value)
+                    return Option.Some(elem.val)
                 else:
                     prevElem = Option.Some(elem)
                     match elem.next:
@@ -123,11 +123,11 @@ HashMap.remove[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
 
 
 # Insert new value, return old value.
-HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v) Option[v]:
+HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, val: v) Option[v]:
     if self._capacityLeft == 0:
         self._grow()
 
-    let ret = HashMap._insert(self._buckets, key, value)
+    let ret = HashMap._insert(self._buckets, key, val)
     self._capacityLeft -= 1
     self._numElements += 1
     ret
@@ -136,26 +136,26 @@ HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v) Option[v]:
 HashMap._insert[Hash[k], Eq[k]](
     buckets: Array[Option[Elem[k, v]]],
     key: k,
-    value: v,
+    val: v,
 ) Option[v]:
     let hash = key.hash()
     let index = hash.mod(buckets.len())
     match buckets.get(index):
         Option.None:
-            buckets.set(index, Option.Some(Elem(key, value, next = Option.None)))
+            buckets.set(index, Option.Some(Elem(key, val, next = Option.None)))
             Option.None
         Option.Some(elem):
             loop:
                 if elem.key == key:
-                    let old = elem.value
-                    elem.value = value
+                    let old = elem.val
+                    elem.val = val
                     return Option.Some(old)
                 else:
                     match elem.next:
                         Option.Some(next): elem = next
                         Option.None:
                             elem.next = Option.Some(
-                                Elem(key, value, next = Option.None),
+                                Elem(key, val, next = Option.None),
                             )
                             return Option.None
 
@@ -173,7 +173,7 @@ HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
             Option.None: return Option.None
             Option.Some(elem_):
                 if elem_.key == key:
-                    return Option.Some(elem_.value)
+                    return Option.Some(elem_.val)
                 else:
                     elem = elem_.next
 
@@ -197,7 +197,7 @@ impl[Clone[k], Clone[v]] Clone[Elem[k, v]]:
     clone(self: Elem[k, v]) Elem[k, v]:
         Elem(
             key = self.key.clone(),
-            value = self.value.clone(),
+            val = self.val.clone(),
             next = self.next.clone(),
         )
 
@@ -212,7 +212,7 @@ impl[ToStr[k], ToStr[v]] ToStr[HashMap[k, v]]:
                 buf.pushStr(", ")
             buf.pushStr(entry.key.toStr())
             buf.pushStr(": ")
-            buf.pushStr(entry.value.toStr())
+            buf.pushStr(entry.val.toStr())
             printed += 1
         buf.push('}')
         buf.toStr()
@@ -230,7 +230,7 @@ impl[ToDoc[k], ToDoc[v]] ToDoc[HashMap[k, v]]:
                     + Doc.blank(1)
                     + Doc.char('=')
                     + Doc.break_(1)
-                    + entry.value.toDoc(),
+                    + entry.val.toDoc(),
             )
             printed += 1
 
@@ -258,7 +258,7 @@ type HashMapIter[k, v](
 
 type HashMapEntry[k, v](
     key: k,
-    value: v,
+    val: v,
 )
 
 
@@ -274,7 +274,7 @@ impl Iterator[HashMapIter[k, v], HashMapEntry[k, v], exn]:
     next(self: HashMapIter[k, v]) Option[HashMapEntry[k, v]] / exn:
         match self._nextElem:
             Option.Some(next):
-                let ret = HashMapEntry(key = next.key, value = next.value)
+                let ret = HashMapEntry(key = next.key, val = next.val)
                 self._nextElem = next.next
                 Option.Some(ret)
 
@@ -319,8 +319,7 @@ impl[ToDoc[k], ToDoc[v]] ToDoc[Elem[k, v]]:
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
-            Doc.str("value =")
-                + Doc.nested(4, Doc.break_(1) + self.value.toDoc()),
+            Doc.str("val =") + Doc.nested(4, Doc.break_(1) + self.val.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(

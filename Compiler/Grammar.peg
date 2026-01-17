@@ -619,9 +619,9 @@ seqElem SeqElem:
     e1=inlineExpr e2=("=" e=inlineExpr)?:
         match e2:
             Option.None:
-                SeqElem(key = Option.None, value = e1)
+                SeqElem(key = Option.None, val = e1)
             Option.Some((e = e2)):
-                SeqElem(key = Option.Some(e1), value = e2)
+                SeqElem(key = Option.Some(e1), val = e2)
 
 
 con Con:

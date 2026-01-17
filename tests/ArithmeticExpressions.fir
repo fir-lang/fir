@@ -57,23 +57,23 @@ eval(term: Term) Value:
         Term.Succ(term):
             match eval(term):
                 Value.Bool(bool): panic("Succ argument evaluated to bool `bool`")
-                Value.Num(value): Value.Num(value + 1)
+                Value.Num(val): Value.Num(val + 1)
 
         Term.Pred(term):
             match eval(term):
                 Value.Bool(bool): panic("Pred argument evaluated to bool `bool`")
-                Value.Num(value): Value.Num(value - 1)
+                Value.Num(val): Value.Num(val - 1)
 
         Term.IsZero(term):
             match eval(term):
                 Value.Bool(bool): panic("IsZero argument evaluated to bool `bool`")
-                Value.Num(value): Value.Bool(value == 0)
+                Value.Num(val): Value.Bool(val == 0)
 
 impl ToStr[Value]:
     toStr(self: Value) Str:
         match self:
-            Value.Bool(value): value.toStr()
-            Value.Num(value): value.toStr()
+            Value.Bool(val): val.toStr()
+            Value.Num(val): val.toStr()
 
 parse(pgm: Str) Term:
     let (term = term, rest = rest) = parseWithRest(pgm)

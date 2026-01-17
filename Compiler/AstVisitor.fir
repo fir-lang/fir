@@ -446,7 +446,7 @@ defaultVisitSeq[Visitor[v]](v: v, e: SeqExpr):
     for elem: SeqElem in e.elems.iter():
         if elem.key is Option.Some(e):
             v.visitExpr(e)
-        v.visitExpr(elem.value)
+        v.visitExpr(elem.val)
 
 
 defaultVisitParen[Visitor[v]](v: v, e: ParenExpr):

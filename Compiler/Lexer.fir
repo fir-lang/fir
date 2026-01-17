@@ -364,6 +364,14 @@ Lexer._nextInit(self) Option[Token] / Error:
             Token(kind = TokenKind.Var, text = "var", byteIdx, line, col),
         )
 
+    if input.startsWith("value")
+            and not _isIdContStr(input.substr(5, input.len())):
+        self._byteIdx += 5
+        self._col += 5
+        return Option.Some(
+            Token(kind = TokenKind.Value, text = "value", byteIdx, line, col),
+        )
+
     if input.startsWith("while")
             and not _isIdContStr(input.substr(5, input.len())):
         self._byteIdx += 5

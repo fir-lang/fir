@@ -19,7 +19,7 @@ resolveNames(pgm: Program):
             HashMap.fromIter(
                 module._termEnv.iter().map(
                     \(entry: HashMapEntry[Str, TopVarDefIdx]):
-                        (key = entry.key, value = VarDefIdx.Top(entry.value)),
+                        (key = entry.key, val = VarDefIdx.Top(entry.val)),
                 ),
             ),
         )
@@ -33,11 +33,11 @@ resolveNames(pgm: Program):
         )
 
         for funDecl: HashMapEntry[Str, FunDecl] in module._funItems.iter():
-            let funDecl = funDecl.value
+            let funDecl = funDecl.val
             visitor.visitFunDecl(funDecl)
 
         for tyDecl: HashMapEntry[Str, TypeDecl] in module._tyItems.iter():
-            let tyDecl = tyDecl.value
+            let tyDecl = tyDecl.val
 
             if tyDecl.rhs is Option.Some(rhs):
                 match rhs:
@@ -49,7 +49,7 @@ resolveNames(pgm: Program):
 
         for traitDecl: HashMapEntry[Str, TraitDecl] in
                 module._traitItems.iter():
-            let traitDecl = traitDecl.value
+            let traitDecl = traitDecl.val
             for funDecl: FunDecl in traitDecl.items.iter():
                 visitor.visitFunDecl(funDecl)
 
@@ -235,8 +235,8 @@ type _SccEnv(
 
 _SccEnv.merge(self, other: _SccEnv):
     for term: HashMapEntry[Str, TopVarDefIdx] in other._termEnv.iter():
-        let old = self._termEnv.insert(term.key, term.value)
-        if old is Option.Some(oldImport) and oldImport != term.value:
+        let old = self._termEnv.insert(term.key, term.val)
+        if old is Option.Some(oldImport) and oldImport != term.val:
             panic("Variable `term.key` defined multiple times in SCC")
 
     for assoc: HashMapEntry[Str, HashMap[Str, AssocVarDefIdx]] in
@@ -248,16 +248,16 @@ _SccEnv.merge(self, other: _SccEnv):
                 self._assocTermEnv.insert(assoc.key, map)
                 map
 
-        for term: HashMapEntry[Str, AssocVarDefIdx] in assoc.value.iter():
-            let old = termMap.insert(term.key, term.value)
-            if old is Option.Some(oldImport) and oldImport != term.value:
+        for term: HashMapEntry[Str, AssocVarDefIdx] in assoc.val.iter():
+            let old = termMap.insert(term.key, term.val)
+            if old is Option.Some(oldImport) and oldImport != term.val:
                 panic(
                     "Associated function `assoc.key`.`term.key` defined multiple times in SCC",
                 )
 
     for ty: HashMapEntry[Str, TyDefIdx] in other._tyEnv.iter():
-        let old = self._tyEnv.insert(ty.key, ty.value)
-        if old is Option.Some(oldImport) and oldImport != ty.value:
+        let old = self._tyEnv.insert(ty.key, ty.val)
+        if old is Option.Some(oldImport) and oldImport != ty.val:
             panic("Type `ty.key` defined multiple times in SCC")
 
 
@@ -317,7 +317,7 @@ _makeSccEnv(
                     map
                 Option.Some(map): map
 
-            for assocValue: HashMapEntry[Str, FunDecl] in assocDef.value.iter():
+            for assocValue: HashMapEntry[Str, FunDecl] in assocDef.val.iter():
                 let old = tyMap.insert(
                     assocValue.key,
                     AssocVarDefIdx(

@@ -1369,7 +1369,7 @@ type SeqExpr(
 #[derive(ToDoc)]
 type SeqElem(
     key: Option[Expr],
-    value: Expr,
+    val: Expr,
 )
 
 
@@ -2904,8 +2904,7 @@ impl ToDoc[SeqElem]:
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
-            Doc.str("value =")
-                + Doc.nested(4, Doc.break_(1) + self.value.toDoc()),
+            Doc.str("val =") + Doc.nested(4, Doc.break_(1) + self.val.toDoc()),
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("SeqElem") + Doc.char('(') + args)

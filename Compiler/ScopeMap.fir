@@ -28,8 +28,8 @@ ScopeMap.exitScope(self: ScopeMap[k, v]) HashMap[k, v]:
     self.scopes.pop().unwrap()
 
 
-ScopeMap.insert[Hash[k], Eq[k]](self: ScopeMap[k, v], key: k, value: v) Option[v]:
-    self.scopes.last().unwrap().insert(key, value)
+ScopeMap.insert[Hash[k], Eq[k]](self: ScopeMap[k, v], key: k, val: v) Option[v]:
+    self.scopes.last().unwrap().insert(key, val)
 
 
 ScopeMap.get[Hash[k], Eq[k]](self: ScopeMap[k, v], key: k) Option[v]:
@@ -37,8 +37,8 @@ ScopeMap.get[Hash[k], Eq[k]](self: ScopeMap[k, v], key: k) Option[v]:
     let scopeIdx = self.scopes.len() - 1
     loop:
         let scope = self.scopes.get(scopeIdx)
-        if scope.get(key) is Option.Some(value):
-            return Option.Some(value)
+        if scope.get(key) is Option.Some(val):
+            return Option.Some(val)
         if scopeIdx == 0:
             break
         scopeIdx -= 1

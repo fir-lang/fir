@@ -88,6 +88,7 @@ extern {
         "return" => Token { kind: TokenKind::Return, .. },
         "trait" => Token { kind: TokenKind::Trait, .. },
         "type" => Token { kind: TokenKind::Type, .. },
+        "value" => Token { kind: TokenKind::Value, .. },
         "while" => Token { kind: TokenKind::While, .. },
         IntLit => Token { kind: TokenKind::Int { .. }, .. },
         CharLit => Token { kind: TokenKind::Char, .. },
@@ -143,16 +144,18 @@ LLowerId: L<Id> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TypeDecl: L<TypeDecl> = {
-    <l:@L> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
+    <l:@L> <value:"value"?> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            value: value.is_some(),
             name: type_name.smol_str(),
             type_params: vec![],
             type_param_kinds: vec![],
             rhs: Some(rhs),
         }),
 
-    <l:@L> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
+    <l:@L> <value:"value"?> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            value: value.is_some(),
             name: type_name.smol_str(),
             type_params,
             type_param_kinds: vec![],
@@ -161,6 +164,7 @@ TypeDecl: L<TypeDecl> = {
 
     <l:@L> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            value: false,
             name: type_name.smol_str(),
             type_params: vec![],
             type_param_kinds: vec![],
@@ -169,6 +173,7 @@ TypeDecl: L<TypeDecl> = {
 
     <l:@L> "prim" "type" <type_name:UpperIdLBracket> <type_params:TypeParams> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            value: false,
             name: type_name.smol_str(),
             type_params,
             type_param_kinds: vec![],

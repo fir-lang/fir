@@ -96,7 +96,7 @@ _addMissingTypeParamsFun(
         if boundVars.contains(entry.key):
             continue
 
-        let fvKind = entry.value.unwrapOr(Kind.Star)
+        let fvKind = entry.val.unwrapOr(Kind.Star)
         sig.typeParams.push(
             TypeParam(name = LocalId(name = entry.key), kind = fvKind),
         )
@@ -133,7 +133,7 @@ _addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
     trait_.typeParamKinds = Vec.fromIter(
         traitContextVarKinds.iter().map(
             \(entry: HashMapEntry[Str, Option[Kind]]) Kind:
-                entry.value.unwrapOr(Kind.Star),
+                entry.val.unwrapOr(Kind.Star),
         ),
     )
 
@@ -314,11 +314,11 @@ OrderedHashMap.get[Hash[k], Eq[k]](self: OrderedHashMap[k, v], key: k) Option[v]
 OrderedHashMap.insert[Hash[k], Eq[k]](
     self: OrderedHashMap[k, v],
     key: k,
-    value: v,
+    val: v,
 ) Option[v]:
     let insertionOrder = self._map.len()
-    let value = InsertionOrder(insertionOrder, thing = value)
-    self._map.insert(key, value).map(\(v): v.thing)
+    let val = InsertionOrder(insertionOrder, thing = val)
+    self._map.insert(key, val).map(\(v): v.thing)
 
 
 OrderedHashMap.remove[Hash[k], Eq[k]](self: OrderedHashMap[k, v], key: k) Option[v]:
@@ -333,13 +333,13 @@ OrderedHashMap.orderedEntries(self: OrderedHashMap[k, v]) Vec[HashMapEntry[k, v]
 
     vec.sortBy(
         \(v1: HashMapEntry[k, InsertionOrder[v]], v2: HashMapEntry[k, InsertionOrder[v]]) Ordering:
-            v1.value.insertionOrder.cmp(v2.value.insertionOrder),
+            v1.val.insertionOrder.cmp(v2.val.insertionOrder),
     )
 
     Vec.fromIter(
         vec.iter().map(
             \(v: HashMapEntry[k, InsertionOrder[v]]) HashMapEntry[k, v]:
-                HashMapEntry(key = v.key, value = v.value.thing),
+                HashMapEntry(key = v.key, val = v.val.thing),
         ),
     )
 
