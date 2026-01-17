@@ -221,6 +221,9 @@ pub(super) struct TraitMethod {
 
 #[derive(Debug, Clone)]
 pub(super) struct TypeDetails {
+    /// Whether the type is a value type.
+    pub(super) value: bool,
+
     /// Value constructors of the type.
     pub(super) cons: HashMap<Id, Scheme>,
 
@@ -987,6 +990,7 @@ impl TyCon {
             details: TyConDetails::Type(TypeDetails {
                 cons: Default::default(),
                 sum: true,
+                value: false,
             }),
         }
     }

@@ -1847,8 +1847,7 @@ fn check_field_sel(
     )
 }
 
-/// Try to select a field.
-pub(super) fn select_field(
+fn select_field(
     tc_state: &mut TcFunState,
     ty_con: &Id,
     ty_args: &[Ty],
@@ -1864,7 +1863,11 @@ pub(super) fn select_field(
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
     match &ty_con.details {
-        TyConDetails::Type(TypeDetails { cons, sum }) if !sum => {
+        TyConDetails::Type(TypeDetails {
+            cons,
+            sum,
+            value: _,
+        }) if !sum => {
             assert_eq!(cons.len(), 1);
             let con_scheme = cons.values().next().unwrap();
             let con_ty = con_scheme.instantiate_with_tys(ty_args, tc_state.preds, loc);
