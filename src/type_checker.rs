@@ -505,7 +505,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         let trait_type_params = &trait_ty_con.ty_params;
         let trait_methods = match &mut trait_ty_con.details {
             TyConDetails::Trait(TraitDetails { methods }) => methods,
-            TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
+            TyConDetails::Type { .. } => {
                 panic!() // checked above
             }
         };
