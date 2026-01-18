@@ -424,9 +424,7 @@ fn exec<W: Write>(
                 val!(assign(w, pgm, heap, locals, lhs, rhs, call_stack))
             }
 
-            Stmt::Expr(expr) => val!(eval(
-                w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
-            )),
+            Stmt::Expr(expr) => val!(eval(w, pgm, heap, locals, expr, &stmt.loc, call_stack)),
 
             Stmt::While(WhileStmt {
                 label: _,

@@ -287,7 +287,7 @@ impl Stmt {
                 rhs.node.print(buf, 0);
             }
 
-            Stmt::Expr(expr) => expr.node.print(buf, indent),
+            Stmt::Expr(expr) => expr.print(buf, indent),
 
             Stmt::While(WhileStmt { label, cond, body }) => {
                 if let Some(label) = label {

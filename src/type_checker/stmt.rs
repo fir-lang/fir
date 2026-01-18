@@ -93,8 +93,14 @@ fn check_stmt(
                 });
 
             tc_state.env.enter();
-            let (rhs_ty, _) =
-                check_expr(tc_state, rhs, Some(&pat_expected_ty), level + 1, loop_stack);
+            let (rhs_ty, _) = check_expr(
+                tc_state,
+                &mut rhs.node,
+                &rhs.loc,
+                Some(&pat_expected_ty),
+                level + 1,
+                loop_stack,
+            );
             tc_state.env.exit();
 
             let pat_ty = check_pat(tc_state, lhs, level);
@@ -133,7 +139,14 @@ fn check_stmt(
 
                     let method = match op {
                         ast::AssignOp::Eq => {
-                            check_expr(tc_state, rhs, Some(&var_ty), level, loop_stack);
+                            check_expr(
+                                tc_state,
+                                &mut rhs.node,
+                                &rhs.loc,
+                                Some(&var_ty),
+                                level,
+                                loop_stack,
+                            );
                             return Ty::unit();
                         }
 
@@ -175,7 +188,7 @@ fn check_stmt(
                     *rhs = desugared_rhs;
                     *op = AssignOp::Eq;
 
-                    check_expr(tc_state, rhs, None, level, loop_stack);
+                    check_expr(tc_state, &mut rhs.node, &rhs.loc, None, level, loop_stack);
                 }
 
                 ast::Expr::FieldSel(ast::FieldSelExpr {
@@ -185,7 +198,14 @@ fn check_stmt(
                 }) => {
                     assert!(user_ty_args.is_empty());
 
-                    let (object_ty, _) = check_expr(tc_state, object, None, level, loop_stack);
+                    let (object_ty, _) = check_expr(
+                        tc_state,
+                        &mut object.node,
+                        &object.loc,
+                        None,
+                        level,
+                        loop_stack,
+                    );
 
                     let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                     let lhs_ty: Ty = match &lhs_ty_normalized {
@@ -235,7 +255,14 @@ fn check_stmt(
 
                     let method = match op {
                         ast::AssignOp::Eq => {
-                            check_expr(tc_state, rhs, Some(&lhs_ty), level, loop_stack);
+                            check_expr(
+                                tc_state,
+                                &mut rhs.node,
+                                &rhs.loc,
+                                Some(&lhs_ty),
+                                level,
+                                loop_stack,
+                            );
                             return Ty::unit();
                         }
 
@@ -270,7 +297,7 @@ fn check_stmt(
                     *rhs = desugared_rhs;
                     *op = AssignOp::Eq;
 
-                    check_expr(tc_state, rhs, None, level, loop_stack);
+                    check_expr(tc_state, &mut rhs.node, &rhs.loc, None, level, loop_stack);
                 }
 
                 _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),
@@ -286,25 +313,21 @@ fn check_stmt(
             )
         }
 
-        ast::Stmt::Expr(ast::L {
-            node: ast::Expr::Match(match_expr),
-            loc,
-        }) if expected_ty.is_none() => {
+        ast::Stmt::Expr(ast::Expr::Match(match_expr)) if expected_ty.is_none() => {
             crate::type_checker::expr::check_match_expr(
-                tc_state, match_expr, loc, None, level, loop_stack,
+                tc_state, match_expr, &stmt.loc, None, level, loop_stack,
             );
             Ty::unit()
         }
 
-        ast::Stmt::Expr(ast::L {
-            node: ast::Expr::If(if_expr),
-            loc: _,
-        }) if expected_ty.is_none() => {
+        ast::Stmt::Expr(ast::Expr::If(if_expr)) if expected_ty.is_none() => {
             crate::type_checker::expr::check_if_expr(tc_state, if_expr, None, level, loop_stack);
             Ty::unit()
         }
 
-        ast::Stmt::Expr(expr) => check_expr(tc_state, expr, expected_ty, level, loop_stack).0,
+        ast::Stmt::Expr(expr) => {
+            check_expr(tc_state, expr, &stmt.loc, expected_ty, level, loop_stack).0
+        }
 
         ast::Stmt::For(ast::ForStmt {
             label,
@@ -337,7 +360,8 @@ fn check_stmt(
             the inferred types of nodes).
             */
 
-            let iter_ty = check_expr(tc_state, expr, None, level, loop_stack).0;
+            let iter_ty =
+                check_expr(tc_state, &mut expr.node, &expr.loc, None, level, loop_stack).0;
             *expr_ty = Some(iter_ty.clone());
 
             // The type `item` for the predicate `Iterator[iter, item, exn]`. This will the the
@@ -395,90 +419,93 @@ fn check_stmt(
 
             let expr_local = SmolStr::new(format!("temp{}", tc_state.local_gen));
             tc_state.local_gen += 1;
-            stmt.node = ast::Stmt::Expr(ast::L {
-                loc: stmt.loc.clone(),
-                node: ast::Expr::Do(vec![
-                    ast::L {
-                        loc: expr.loc.clone(),
-                        node: ast::Stmt::Let(ast::LetStmt {
-                            lhs: ast::L {
-                                loc: expr.loc.clone(),
-                                node: ast::Pat::Var(ast::VarPat {
-                                    var: expr_local.clone(),
-                                    ty: Some(iter_ty.clone()),
-                                }),
-                            },
-                            ty: None,
-                            rhs: expr.clone(),
-                        }),
-                    },
-                    ast::L {
-                        loc: stmt.loc.clone(),
-                        node: ast::Stmt::While(ast::WhileStmt {
-                            label: label.clone(),
-                            cond: ast::L {
-                                loc: expr.loc.clone(),
-                                node: ast::Expr::Is(ast::IsExpr {
-                                    expr: Box::new(ast::L {
-                                        loc: expr.loc.clone(),
-                                        node: ast::Expr::Call(ast::CallExpr {
-                                            fun: Box::new(ast::L {
-                                                loc: expr.loc.clone(),
-                                                node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                                                    ty: SmolStr::new_static("Iterator"),
-                                                    ty_user_ty_args: vec![],
-                                                    member: SmolStr::new_static("next"),
-                                                    user_ty_args: vec![],
-                                                    ty_args: vec![
-                                                        iter_ty.clone(),
-                                                        item_ty.clone(),
-                                                        tc_state.exceptions.clone(),
-                                                    ],
-                                                }),
-                                            }),
-                                            args: vec![ast::CallArg {
-                                                name: None,
-                                                expr: ast::L {
-                                                    loc: expr.loc.clone(),
-                                                    node: ast::Expr::Var(ast::VarExpr {
-                                                        id: expr_local.clone(),
-                                                        user_ty_args: vec![],
-                                                        ty_args: vec![],
-                                                    }),
-                                                },
-                                            }],
-                                        }),
-                                    }),
-                                    pat: ast::L {
-                                        loc: pat.loc.clone(),
-                                        node: ast::Pat::Con(ast::ConPat {
-                                            con: ast::Con {
-                                                ty: SmolStr::new_static("Option"),
-                                                con: Some(SmolStr::new_static("Some")),
+            stmt.node = ast::Stmt::Expr(ast::Expr::Do(vec![
+                ast::L {
+                    loc: expr.loc.clone(),
+                    node: ast::Stmt::Let(ast::LetStmt {
+                        lhs: ast::L {
+                            loc: expr.loc.clone(),
+                            node: ast::Pat::Var(ast::VarPat {
+                                var: expr_local.clone(),
+                                ty: Some(iter_ty.clone()),
+                            }),
+                        },
+                        ty: None,
+                        rhs: expr.clone(),
+                    }),
+                },
+                ast::L {
+                    loc: stmt.loc.clone(),
+                    node: ast::Stmt::While(ast::WhileStmt {
+                        label: label.clone(),
+                        cond: ast::L {
+                            loc: expr.loc.clone(),
+                            node: ast::Expr::Is(ast::IsExpr {
+                                expr: Box::new(ast::L {
+                                    loc: expr.loc.clone(),
+                                    node: ast::Expr::Call(ast::CallExpr {
+                                        fun: Box::new(ast::L {
+                                            loc: expr.loc.clone(),
+                                            node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                                ty: SmolStr::new_static("Iterator"),
+                                                ty_user_ty_args: vec![],
+                                                member: SmolStr::new_static("next"),
                                                 user_ty_args: vec![],
-                                                ty_args: vec![item_ty.clone()],
-                                            },
-                                            fields: vec![ast::Named {
-                                                name: None,
-                                                node: pat.clone(),
-                                            }],
-                                            ignore_rest: false,
+                                                ty_args: vec![
+                                                    iter_ty.clone(),
+                                                    item_ty.clone(),
+                                                    tc_state.exceptions.clone(),
+                                                ],
+                                            }),
                                         }),
-                                    },
+                                        args: vec![ast::CallArg {
+                                            name: None,
+                                            expr: ast::L {
+                                                loc: expr.loc.clone(),
+                                                node: ast::Expr::Var(ast::VarExpr {
+                                                    id: expr_local.clone(),
+                                                    user_ty_args: vec![],
+                                                    ty_args: vec![],
+                                                }),
+                                            },
+                                        }],
+                                    }),
                                 }),
-                            },
-                            body: body.clone(),
-                        }),
-                    },
-                ]),
-            });
+                                pat: ast::L {
+                                    loc: pat.loc.clone(),
+                                    node: ast::Pat::Con(ast::ConPat {
+                                        con: ast::Con {
+                                            ty: SmolStr::new_static("Option"),
+                                            con: Some(SmolStr::new_static("Some")),
+                                            user_ty_args: vec![],
+                                            ty_args: vec![item_ty.clone()],
+                                        },
+                                        fields: vec![ast::Named {
+                                            name: None,
+                                            node: pat.clone(),
+                                        }],
+                                        ignore_rest: false,
+                                    }),
+                                },
+                            }),
+                        },
+                        body: body.clone(),
+                    }),
+                },
+            ]));
 
             ret
         }
 
         ast::Stmt::While(ast::WhileStmt { label, cond, body }) => {
-            let (_cond_ty, cond_binders) =
-                check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
+            let (_cond_ty, cond_binders) = check_expr(
+                tc_state,
+                &mut cond.node,
+                &cond.loc,
+                Some(&Ty::bool()),
+                level,
+                loop_stack,
+            );
             loop_stack.push(label.clone());
             tc_state.env.enter();
             cond_binders.into_iter().for_each(|(k, v)| {

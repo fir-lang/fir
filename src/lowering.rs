@@ -321,7 +321,7 @@ pub struct SourceConDecl {
 pub enum Stmt {
     Let(LetStmt),
     Assign(AssignStmt),
-    Expr(L<Expr>),
+    Expr(Expr),
     While(WhileStmt),
     Break { label: Option<Id>, level: u32 },
     Continue { label: Option<Id>, level: u32 },
@@ -1557,6 +1557,7 @@ fn lower_source_con(
 
 fn lower_stmt(
     stmt: &mono::Stmt,
+    loc: &ast::Loc,
     closures: &mut Vec<Closure>,
     indices: &Indices,
     scope: &mut FunScope,
@@ -1579,7 +1580,7 @@ fn lower_stmt(
 
         mono::Stmt::Expr(expr) => {
             let (expr, _expr_vars, expr_ty) =
-                lower_l_expr(expr, closures, indices, scope, mono_pgm);
+                lower_expr(expr, loc, closures, indices, scope, mono_pgm);
             (Stmt::Expr(expr), expr_ty)
         }
 
@@ -1627,7 +1628,14 @@ fn lower_l_stmt(
     scope: &mut FunScope,
     mono_pgm: &mono::MonoPgm,
 ) -> (L<Stmt>, mono::Type) {
-    let (stmt, stmt_ty) = lower_stmt(&l_stmt.node, closures, indices, scope, mono_pgm);
+    let (stmt, stmt_ty) = lower_stmt(
+        &l_stmt.node,
+        &l_stmt.loc,
+        closures,
+        indices,
+        scope,
+        mono_pgm,
+    );
     (l_stmt.set_node(stmt), stmt_ty)
 }
 
@@ -1937,10 +1945,7 @@ fn lower_expr(
                     };
 
                     stmts.push(L {
-                        node: Stmt::Expr(L {
-                            node: call_expr,
-                            loc: loc.clone(),
-                        }),
+                        node: Stmt::Expr(call_expr),
                         loc: loc.clone(),
                     });
 
@@ -2075,19 +2080,16 @@ fn lower_expr(
             }
 
             stmts.push(L {
-                node: Stmt::Expr(L {
-                    node: Expr::ConAlloc(
-                        record_idx,
-                        field_tys
-                            .keys()
-                            .map(|name| L {
-                                node: Expr::LocalVar(*arg_locals.get(name).unwrap()),
-                                loc: loc.clone(),
-                            })
-                            .collect(),
-                    ),
-                    loc: loc.clone(),
-                }),
+                node: Stmt::Expr(Expr::ConAlloc(
+                    record_idx,
+                    field_tys
+                        .keys()
+                        .map(|name| L {
+                            node: Expr::LocalVar(*arg_locals.get(name).unwrap()),
+                            loc: loc.clone(),
+                        })
+                        .collect(),
+                )),
                 loc: loc.clone(),
             });
 

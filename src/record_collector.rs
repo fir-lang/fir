@@ -156,7 +156,7 @@ fn visit_stmt(stmt: &mono::Stmt, records: &mut HashSet<RecordType>) {
             visit_expr(&rhs.node, records);
         }
 
-        mono::Stmt::Expr(expr) => visit_expr(&expr.node, records),
+        mono::Stmt::Expr(expr) => visit_expr(expr, records),
 
         mono::Stmt::While(mono::WhileStmt {
             label: _,

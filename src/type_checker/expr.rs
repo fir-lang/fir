@@ -26,14 +26,13 @@ use smol_str::SmolStr;
 /// Variables bound in `if` and `while` conditionals are used in the bodies.
 pub(super) fn check_expr(
     tc_state: &mut TcFunState,
-    expr: &mut ast::L<ast::Expr>,
+    expr: &mut ast::Expr,
+    loc: &ast::Loc,
     expected_ty: Option<&Ty>,
     level: u32,
     loop_stack: &mut Vec<Option<Id>>,
 ) -> (Ty, HashMap<Id, Ty>) {
-    let loc = expr.loc.clone();
-
-    match &mut expr.node {
+    match expr {
         ast::Expr::Var(ast::VarExpr {
             id: var,
             user_ty_args,
@@ -46,7 +45,7 @@ pub(super) fn check_expr(
                 if !user_ty_args.is_empty() {
                     panic!(
                         "{}: Local variables can't have type parameters, but `{}` is passed type arguments",
-                        loc_display(&expr.loc),
+                        loc_display(loc),
                         var
                     );
                 }
@@ -57,7 +56,7 @@ pub(super) fn check_expr(
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
                         level,
-                        &expr.loc,
+                        loc,
                     ),
                     Default::default(),
                 );
@@ -65,14 +64,14 @@ pub(super) fn check_expr(
 
             let scheme = match tc_state.tys.top_schemes.get(var) {
                 Some(scheme) => scheme,
-                None => panic!("{}: Unbound variable {}", loc_display(&expr.loc), var),
+                None => panic!("{}: Unbound variable {}", loc_display(loc), var),
             };
 
             let ty = if user_ty_args.is_empty() {
                 let (ty, ty_args) =
-                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
+                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
 
-                expr.node = ast::Expr::Var(ast::VarExpr {
+                *expr = ast::Expr::Var(ast::VarExpr {
                     id: var.clone(),
                     user_ty_args: vec![],
                     ty_args: ty_args.into_iter().map(Ty::UVar).collect(),
@@ -83,7 +82,7 @@ pub(super) fn check_expr(
                 if scheme.quantified_vars.len() != user_ty_args.len() {
                     panic!(
                         "{}: Variable {} takes {} type arguments, but applied to {}",
-                        loc_display(&expr.loc),
+                        loc_display(loc),
                         var,
                         scheme.quantified_vars.len(),
                         user_ty_args.len()
@@ -95,10 +94,9 @@ pub(super) fn check_expr(
                     .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
                     .collect();
 
-                let ty =
-                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
+                let ty = scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
 
-                expr.node = ast::Expr::Var(ast::VarExpr {
+                *expr = ast::Expr::Var(ast::VarExpr {
                     id: var.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
@@ -114,7 +112,7 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
                     level,
-                    &expr.loc,
+                    loc,
                 ),
                 Default::default(),
             )
@@ -128,7 +126,14 @@ pub(super) fn check_expr(
             user_ty_args,
         }) => {
             let ty = {
-                let (object_ty, _) = check_expr(tc_state, object, None, level, loop_stack);
+                let (object_ty, _) = check_expr(
+                    tc_state,
+                    &mut object.node,
+                    &object.loc,
+                    None,
+                    level,
+                    loop_stack,
+                );
 
                 let ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                 match &ty_normalized {
@@ -139,10 +144,7 @@ pub(super) fn check_expr(
                         ..
                     } => {
                         if !user_ty_args.is_empty() {
-                            panic!(
-                                "{}: Record field with type arguments",
-                                loc_display(&expr.loc),
-                            );
+                            panic!("{}: Record field with type arguments", loc_display(loc));
                         }
                         let (labels, _) = crate::type_checker::row_utils::collect_rows(
                             tc_state.tys.tys.cons(),
@@ -169,10 +171,10 @@ pub(super) fn check_expr(
                             field,
                             user_ty_args,
                             other,
-                            &expr.loc,
+                            loc,
                             level,
                         );
-                        expr.node = new_expr;
+                        *expr = new_expr;
                         ty
                     }
                 }
@@ -184,7 +186,7 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
                     level,
-                    &expr.loc,
+                    loc,
                 ),
                 Default::default(),
             )
@@ -205,12 +207,12 @@ pub(super) fn check_expr(
                 .tys
                 .cons()
                 .get(ty)
-                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(&expr.loc), ty));
+                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
 
             let ty_details: &TypeDetails = ty_con.type_details().unwrap_or_else(|| {
                 panic!(
                     "{}: Type {} is a trait or type synonym",
-                    loc_display(&expr.loc),
+                    loc_display(loc),
                     ty
                 )
             });
@@ -220,14 +222,14 @@ pub(super) fn check_expr(
                     if !ty_details.sum {
                         panic!(
                             "{}: Type {} does not have sum constructors",
-                            loc_display(&expr.loc),
+                            loc_display(loc),
                             ty
                         );
                     }
                     ty_details.cons.get(con).unwrap_or_else(|| {
                         panic!(
                             "{}: Type {} does not have a constructor named {}",
-                            loc_display(&expr.loc),
+                            loc_display(loc),
                             ty,
                             con
                         )
@@ -238,7 +240,7 @@ pub(super) fn check_expr(
                     if ty_details.sum {
                         panic!(
                             "{}: Sum type allocation {} needs a constructor",
-                            loc_display(&expr.loc),
+                            loc_display(loc),
                             ty
                         );
                     }
@@ -249,9 +251,9 @@ pub(super) fn check_expr(
 
             let con_ty = if user_ty_args.is_empty() {
                 let (con_ty, con_ty_args) =
-                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
+                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
 
-                expr.node = ast::Expr::ConSel(ast::Con {
+                *expr = ast::Expr::ConSel(ast::Con {
                     ty: ty.clone(),
                     con: con.clone(),
                     user_ty_args: vec![],
@@ -263,7 +265,7 @@ pub(super) fn check_expr(
                 if scheme.quantified_vars.len() != user_ty_args.len() {
                     panic!(
                         "{}: Constructor {}{}{} takes {} type arguments, but applied to {}",
-                        loc_display(&expr.loc),
+                        loc_display(loc),
                         ty,
                         if con.is_some() { "." } else { "" },
                         con.as_ref().cloned().unwrap_or(SmolStr::new_static("")),
@@ -278,9 +280,9 @@ pub(super) fn check_expr(
                     .collect();
 
                 let con_ty =
-                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
+                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
 
-                expr.node = ast::Expr::ConSel(ast::Con {
+                *expr = ast::Expr::ConSel(ast::Con {
                     ty: ty.clone(),
                     con: con.clone(),
                     user_ty_args: vec![],
@@ -297,7 +299,7 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
                     level,
-                    &expr.loc,
+                    loc,
                 ),
                 Default::default(),
             )
@@ -313,15 +315,16 @@ pub(super) fn check_expr(
             assert!(ty_args.is_empty());
 
             if !ty_user_ty_args.is_empty() {
-                let con =
-                    tc_state.tys.tys.get_con(ty).unwrap_or_else(|| {
-                        panic!("{}: Unknown type {}", loc_display(&expr.loc), ty)
-                    });
+                let con = tc_state
+                    .tys
+                    .tys
+                    .get_con(ty)
+                    .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
 
                 if con.ty_params.len() != ty_user_ty_args.len() {
                     panic!(
                         "{}: Type {} takes {} type arguments, but applied to {}",
-                        loc_display(&expr.loc),
+                        loc_display(loc),
                         ty,
                         con.ty_params.len(),
                         ty_user_ty_args.len(),
@@ -333,12 +336,12 @@ pub(super) fn check_expr(
                 .tys
                 .associated_fn_schemes
                 .get(ty)
-                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(&expr.loc), ty))
+                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty))
                 .get(member)
                 .unwrap_or_else(|| {
                     panic!(
                         "{}: Type {} does not have associated function {}",
-                        loc_display(&expr.loc),
+                        loc_display(loc),
                         ty,
                         member
                     )
@@ -364,13 +367,13 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
                     level,
-                    &expr.loc,
+                    loc,
                 );
             }
 
             let method_ty = if user_ty_args_converted.is_empty() {
                 let (method_ty, method_ty_args) =
-                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
+                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
 
                 for (ty_ty_arg, method_ty_arg) in
                     ty_user_ty_args_converted.iter().zip(method_ty_args.iter())
@@ -381,11 +384,11 @@ pub(super) fn check_expr(
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
                         level,
-                        &expr.loc,
+                        loc,
                     );
                 }
 
-                expr.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                *expr = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                     ty: ty.clone(),
                     ty_user_ty_args: vec![],
                     member: member.clone(),
@@ -398,7 +401,7 @@ pub(super) fn check_expr(
                 if scheme.quantified_vars.len() != user_ty_args.len() {
                     panic!(
                         "{}: Associated function {}.{} takes {} type arguments, but applied to {}",
-                        loc_display(&expr.loc),
+                        loc_display(loc),
                         ty,
                         member,
                         scheme.quantified_vars.len(),
@@ -407,9 +410,9 @@ pub(super) fn check_expr(
                 }
 
                 let method_ty =
-                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
+                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
 
-                expr.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                *expr = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                     ty: ty.clone(),
                     ty_user_ty_args: vec![],
                     member: member.clone(),
@@ -427,14 +430,15 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
                     level,
-                    &expr.loc,
+                    loc,
                 ),
                 Default::default(),
             )
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
-            let (fun_ty, _) = check_expr(tc_state, fun, None, level, loop_stack);
+            let (fun_ty, _) =
+                check_expr(tc_state, &mut fun.node, &fun.loc, None, level, loop_stack);
 
             let ret_ty = match fun_ty.normalize(tc_state.tys.tys.cons()) {
                 Ty::Fun {
@@ -445,7 +449,7 @@ pub(super) fn check_expr(
                     if param_tys.len() != args.len() {
                         panic!(
                             "{}: Function with arity {} is passed {} args",
-                            loc_display(&expr.loc),
+                            loc_display(loc),
                             param_tys.len(),
                             args.len()
                         );
@@ -457,7 +461,7 @@ pub(super) fn check_expr(
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
                         level,
-                        &expr.loc,
+                        loc,
                     );
 
                     match param_tys {
@@ -466,7 +470,7 @@ pub(super) fn check_expr(
                                 if arg.name.is_some() {
                                     panic!(
                                         "{}: Named argument applied to function that expects positional arguments",
-                                        loc_display(&expr.loc),
+                                        loc_display(loc),
                                     );
                                 }
                             }
@@ -475,7 +479,8 @@ pub(super) fn check_expr(
                             for (param_ty, arg) in param_tys.iter().zip(args.iter_mut()) {
                                 let (arg_ty, _) = check_expr(
                                     tc_state,
-                                    &mut arg.expr,
+                                    &mut arg.expr.node,
+                                    &arg.expr.loc,
                                     Some(param_ty),
                                     level,
                                     loop_stack,
@@ -498,7 +503,7 @@ pub(super) fn check_expr(
                                         _ => {
                                             panic!(
                                                 "{}: Positional argument applied to function that expects named arguments",
-                                                loc_display(&expr.loc),
+                                                loc_display(loc),
                                             );
                                         }
                                     }
@@ -512,7 +517,7 @@ pub(super) fn check_expr(
                             if param_names != arg_names {
                                 panic!(
                                     "{}: Function expects arguments with names {:?}, but passed {:?}",
-                                    loc_display(&expr.loc),
+                                    loc_display(loc),
                                     param_names,
                                     arg_names
                                 );
@@ -523,7 +528,8 @@ pub(super) fn check_expr(
                                 let param_ty: &Ty = param_tys.get(arg_name).unwrap();
                                 let (arg_ty, _) = check_expr(
                                     tc_state,
-                                    &mut arg.expr,
+                                    &mut arg.expr.node,
+                                    &arg.expr.loc,
                                     Some(param_ty),
                                     level,
                                     loop_stack,
@@ -534,7 +540,7 @@ pub(super) fn check_expr(
                                     tc_state.tys.tys.cons(),
                                     tc_state.var_gen,
                                     level,
-                                    &expr.loc,
+                                    loc,
                                 );
                             }
                         }
@@ -547,7 +553,7 @@ pub(super) fn check_expr(
                             tc_state.tys.tys.cons(),
                             tc_state.var_gen,
                             level,
-                            &expr.loc,
+                            loc,
                         );
                     }
 
@@ -556,7 +562,7 @@ pub(super) fn check_expr(
 
                 _ => panic!(
                     "{}: Function in function application is not a function: {:?}",
-                    loc_display(&expr.loc),
+                    loc_display(loc),
                     fun_ty,
                 ),
             };
@@ -615,7 +621,7 @@ pub(super) fn check_expr(
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
                         level,
-                        &expr.loc,
+                        loc,
                     );
                     "I32"
                 }
@@ -623,7 +629,7 @@ pub(super) fn check_expr(
                 Some(other) => {
                     panic!(
                         "{}: Expected {}, found integer literal",
-                        loc_display(&expr.loc),
+                        loc_display(loc),
                         other,
                     )
                 }
@@ -639,7 +645,7 @@ pub(super) fn check_expr(
                     if negate {
                         panic!(
                             "{}: Cannot negate unsigned integer: {}",
-                            loc_display(&loc),
+                            loc_display(loc),
                             text
                         );
                     }
@@ -647,7 +653,7 @@ pub(super) fn check_expr(
                         |_| {
                             panic!(
                                 "{}: Integer literal {} out of range for U8",
-                                loc_display(&loc),
+                                loc_display(loc),
                                 text
                             )
                         },
@@ -658,7 +664,7 @@ pub(super) fn check_expr(
                     let mut bits = u8::try_from(*parsed).unwrap_or_else(|_| {
                         panic!(
                             "{}: Integer literal {} out of range for I8",
-                            loc_display(&loc),
+                            loc_display(loc),
                             text
                         )
                     });
@@ -666,7 +672,7 @@ pub(super) fn check_expr(
                     if bits > limit {
                         panic!(
                             "{}: Integer literal {} out of range for I8",
-                            loc_display(&loc),
+                            loc_display(loc),
                             text
                         );
                     }
@@ -680,7 +686,7 @@ pub(super) fn check_expr(
                     if negate {
                         panic!(
                             "{}: Cannot negate unsigned integer: {}",
-                            loc_display(&loc),
+                            loc_display(loc),
                             text
                         );
                     }
@@ -688,7 +694,7 @@ pub(super) fn check_expr(
                         |_| {
                             panic!(
                                 "{}: Integer literal {} out of range for U32",
-                                loc_display(&loc),
+                                loc_display(loc),
                                 text
                             )
                         },
@@ -699,7 +705,7 @@ pub(super) fn check_expr(
                     let mut bits = u32::try_from(*parsed).unwrap_or_else(|_| {
                         panic!(
                             "{}: Integer literal {} out of range for I32",
-                            loc_display(&loc),
+                            loc_display(loc),
                             text
                         )
                     });
@@ -707,7 +713,7 @@ pub(super) fn check_expr(
                     if bits > limit {
                         panic!(
                             "{}: Integer literal {} out of range for I32",
-                            loc_display(&loc),
+                            loc_display(loc),
                             text
                         );
                     }
@@ -721,7 +727,7 @@ pub(super) fn check_expr(
                     if negate {
                         panic!(
                             "{}: Cannot negate unsigned integer: {}",
-                            loc_display(&loc),
+                            loc_display(loc),
                             text
                         );
                     }
@@ -734,7 +740,7 @@ pub(super) fn check_expr(
                     if bits > limit {
                         panic!(
                             "{}: Integer literal {} out of range for I32",
-                            loc_display(&loc),
+                            loc_display(loc),
                             text
                         );
                     }
@@ -746,7 +752,7 @@ pub(super) fn check_expr(
 
                 other => panic!(
                     "{}: Expected {}, found integer literal",
-                    loc_display(&expr.loc),
+                    loc_display(loc),
                     other,
                 ),
             }
@@ -761,7 +767,7 @@ pub(super) fn check_expr(
                 tc_state.tys.tys.cons(),
                 tc_state.var_gen,
                 level,
-                &expr.loc,
+                loc,
             );
 
             let ret = (ty, Default::default());
@@ -824,38 +830,35 @@ pub(super) fn check_expr(
             let make_push = |arg: ast::L<ast::Expr>, exn: Ty| -> ast::L<ast::Stmt> {
                 ast::L {
                     loc: loc.clone(),
-                    node: ast::Stmt::Expr(ast::L {
-                        loc: loc.clone(),
-                        node: ast::Expr::Call(ast::CallExpr {
-                            fun: Box::new(ast::L {
-                                loc: loc.clone(),
-                                node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                                    ty: SmolStr::new_static("StrBuf"),
-                                    ty_user_ty_args: vec![],
-                                    member: SmolStr::new_static("pushStr"),
-                                    user_ty_args: vec![],
-                                    ty_args: vec![exn],
-                                }),
+                    node: ast::Stmt::Expr(ast::Expr::Call(ast::CallExpr {
+                        fun: Box::new(ast::L {
+                            loc: loc.clone(),
+                            node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                ty: SmolStr::new_static("StrBuf"),
+                                ty_user_ty_args: vec![],
+                                member: SmolStr::new_static("pushStr"),
+                                user_ty_args: vec![],
+                                ty_args: vec![exn],
                             }),
-                            args: vec![
-                                ast::CallArg {
-                                    name: None,
-                                    expr: ast::L {
-                                        loc: loc.clone(),
-                                        node: ast::Expr::Var(ast::VarExpr {
-                                            id: buf_id.clone(),
-                                            user_ty_args: vec![],
-                                            ty_args: vec![],
-                                        }),
-                                    },
-                                },
-                                ast::CallArg {
-                                    name: None,
-                                    expr: arg,
-                                },
-                            ],
                         }),
-                    }),
+                        args: vec![
+                            ast::CallArg {
+                                name: None,
+                                expr: ast::L {
+                                    loc: loc.clone(),
+                                    node: ast::Expr::Var(ast::VarExpr {
+                                        id: buf_id.clone(),
+                                        user_ty_args: vec![],
+                                        ty_args: vec![],
+                                    }),
+                                },
+                            },
+                            ast::CallArg {
+                                name: None,
+                                expr: arg,
+                            },
+                        ],
+                    })),
                 }
             };
 
@@ -880,7 +883,8 @@ pub(super) fn check_expr(
                         });
                         let (part_ty, _) = check_expr(
                             tc_state,
-                            &mut expr,
+                            &mut expr.node,
+                            &expr.loc,
                             Some(&Ty::UVar(expr_var)),
                             level,
                             loop_stack,
@@ -912,35 +916,32 @@ pub(super) fn check_expr(
 
             desugared_stmts.push(ast::L {
                 loc: loc.clone(),
-                node: ast::Stmt::Expr(ast::L {
-                    loc: loc.clone(),
-                    node: ast::Expr::Call(ast::CallExpr {
-                        fun: Box::new(ast::L {
-                            node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                                ty: SmolStr::new_static("ToStr"),
-                                ty_user_ty_args: vec![],
-                                member: SmolStr::new_static("toStr"),
-                                user_ty_args: vec![],
-                                ty_args: vec![str_buf_ty, tc_state.exceptions.clone()],
-                            }),
-                            loc: expr.loc.clone(),
+                node: ast::Stmt::Expr(ast::Expr::Call(ast::CallExpr {
+                    fun: Box::new(ast::L {
+                        node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                            ty: SmolStr::new_static("ToStr"),
+                            ty_user_ty_args: vec![],
+                            member: SmolStr::new_static("toStr"),
+                            user_ty_args: vec![],
+                            ty_args: vec![str_buf_ty, tc_state.exceptions.clone()],
                         }),
-                        args: vec![ast::CallArg {
-                            name: None,
-                            expr: ast::L {
-                                node: ast::Expr::Var(ast::VarExpr {
-                                    id: buf_id.clone(),
-                                    user_ty_args: vec![],
-                                    ty_args: vec![],
-                                }),
-                                loc: expr.loc.clone(),
-                            },
-                        }],
+                        loc: loc.clone(),
                     }),
-                }),
+                    args: vec![ast::CallArg {
+                        name: None,
+                        expr: ast::L {
+                            node: ast::Expr::Var(ast::VarExpr {
+                                id: buf_id.clone(),
+                                user_ty_args: vec![],
+                                ty_args: vec![],
+                            }),
+                            loc: loc.clone(),
+                        },
+                    }],
+                })),
             });
 
-            expr.node = ast::Expr::Do(desugared_stmts);
+            *expr = ast::Expr::Do(desugared_stmts);
 
             ret
         }
@@ -952,7 +953,7 @@ pub(super) fn check_expr(
                 tc_state.tys.tys.cons(),
                 tc_state.var_gen,
                 level,
-                &expr.loc,
+                loc,
             ),
             Default::default(),
         ),
@@ -965,25 +966,37 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
                     level,
-                    &expr.loc,
+                    loc,
                 ),
                 Default::default(),
             ),
-            None => panic!("{}: Unbound self", loc_display(&expr.loc)),
+            None => panic!("{}: Unbound self", loc_display(loc)),
         },
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
             let method = match op {
                 ast::BinOp::And => {
                     let bool_ty = Ty::Con("Bool".into(), Kind::Star);
-                    let (_, mut left_binders) =
-                        check_expr(tc_state, left, Some(&bool_ty), level, loop_stack);
+                    let (_, mut left_binders) = check_expr(
+                        tc_state,
+                        &mut left.node,
+                        &left.loc,
+                        Some(&bool_ty),
+                        level,
+                        loop_stack,
+                    );
                     tc_state.env.enter();
                     left_binders.iter().for_each(|(k, v)| {
                         tc_state.env.insert(k.clone(), v.clone());
                     });
-                    let (_, right_binders) =
-                        check_expr(tc_state, right, Some(&bool_ty), level, loop_stack);
+                    let (_, right_binders) = check_expr(
+                        tc_state,
+                        &mut right.node,
+                        &right.loc,
+                        Some(&bool_ty),
+                        level,
+                        loop_stack,
+                    );
                     tc_state.env.exit();
 
                     let left_binder_vars: HashSet<&Id> = left_binders.keys().collect();
@@ -995,7 +1008,7 @@ pub(super) fn check_expr(
                             .collect();
                         panic!(
                             "{}: Left and right exprs in `and` bind same variables: {}",
-                            loc_display(&expr.loc),
+                            loc_display(loc),
                             intersection.join(", "),
                         );
                     }
@@ -1006,8 +1019,22 @@ pub(super) fn check_expr(
 
                 ast::BinOp::Or => {
                     let bool_ty = Ty::Con("Bool".into(), Kind::Star);
-                    check_expr(tc_state, left, Some(&bool_ty), level, loop_stack);
-                    check_expr(tc_state, right, Some(&bool_ty), level, loop_stack);
+                    check_expr(
+                        tc_state,
+                        &mut left.node,
+                        &left.loc,
+                        Some(&bool_ty),
+                        level,
+                        loop_stack,
+                    );
+                    check_expr(
+                        tc_state,
+                        &mut right.node,
+                        &right.loc,
+                        Some(&bool_ty),
+                        level,
+                        loop_stack,
+                    );
                     return (bool_ty, Default::default());
                 }
 
@@ -1027,80 +1054,79 @@ pub(super) fn check_expr(
                 ast::BinOp::RightShift => "__shr",
             };
 
-            let desugared = ast::L {
-                loc: expr.loc.clone(),
-                node: ast::Expr::Call(ast::CallExpr {
-                    fun: Box::new(ast::L {
-                        loc: left.loc.clone(),
-                        node: ast::Expr::FieldSel(ast::FieldSelExpr {
-                            object: left.clone(),
-                            field: SmolStr::new_static(method),
-                            user_ty_args: vec![],
-                        }),
+            *expr = ast::Expr::Call(ast::CallExpr {
+                fun: Box::new(ast::L {
+                    loc: left.loc.clone(),
+                    node: ast::Expr::FieldSel(ast::FieldSelExpr {
+                        object: left.clone(),
+                        field: SmolStr::new_static(method),
+                        user_ty_args: vec![],
                     }),
-                    args: vec![ast::CallArg {
-                        name: None,
-                        expr: (**right).clone(),
-                    }],
                 }),
-            };
+                args: vec![ast::CallArg {
+                    name: None,
+                    expr: (**right).clone(),
+                }],
+            });
 
-            *expr = desugared;
-
-            check_expr(tc_state, expr, expected_ty, level, loop_stack)
+            check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr: arg }) => match op {
             ast::UnOp::Not => {
-                let (ty, _) = check_expr(tc_state, arg, Some(&Ty::bool()), level, loop_stack);
-                let desugared = ast::L {
-                    loc: expr.loc.clone(),
-                    node: ast::Expr::Call(ast::CallExpr {
-                        fun: Box::new(ast::L {
-                            loc: arg.loc.clone(),
-                            node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                                ty: SmolStr::new_static("Bool"),
-                                ty_user_ty_args: vec![],
-                                member: SmolStr::new_static("__not"),
-                                user_ty_args: vec![],
-                                ty_args: vec![tc_state.exceptions.clone()],
-                            }),
+                let (ty, _) = check_expr(
+                    tc_state,
+                    &mut arg.node,
+                    &arg.loc,
+                    Some(&Ty::bool()),
+                    level,
+                    loop_stack,
+                );
+                *expr = ast::Expr::Call(ast::CallExpr {
+                    fun: Box::new(ast::L {
+                        loc: arg.loc.clone(),
+                        node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                            ty: SmolStr::new_static("Bool"),
+                            ty_user_ty_args: vec![],
+                            member: SmolStr::new_static("__not"),
+                            user_ty_args: vec![],
+                            ty_args: vec![tc_state.exceptions.clone()],
                         }),
-                        args: vec![ast::CallArg {
-                            name: None,
-                            expr: *arg.clone(),
-                        }],
                     }),
-                };
-                *expr = desugared;
+                    args: vec![ast::CallArg {
+                        name: None,
+                        expr: *arg.clone(),
+                    }],
+                });
                 (ty, Default::default())
             }
 
             ast::UnOp::Neg => {
-                let desugared = ast::L {
-                    loc: expr.loc.clone(),
-                    node: ast::Expr::Call(ast::CallExpr {
-                        fun: Box::new(ast::L {
-                            loc: arg.loc.clone(),
-                            node: ast::Expr::FieldSel(ast::FieldSelExpr {
-                                object: arg.clone(),
-                                field: SmolStr::new_static("__neg"),
-                                user_ty_args: vec![],
-                            }),
+                *expr = ast::Expr::Call(ast::CallExpr {
+                    fun: Box::new(ast::L {
+                        loc: arg.loc.clone(),
+                        node: ast::Expr::FieldSel(ast::FieldSelExpr {
+                            object: arg.clone(),
+                            field: SmolStr::new_static("__neg"),
+                            user_ty_args: vec![],
                         }),
-                        args: vec![],
                     }),
-                };
-
-                *expr = desugared;
-
-                check_expr(tc_state, expr, expected_ty, level, loop_stack)
+                    args: vec![],
+                });
+                check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
             }
         },
 
         ast::Expr::Return(expr) => {
             let return_ty = tc_state.return_ty.clone();
-            check_expr(tc_state, expr, Some(&return_ty), level, loop_stack);
+            check_expr(
+                tc_state,
+                &mut expr.node,
+                loc,
+                Some(&return_ty),
+                level,
+                loop_stack,
+            );
             (
                 expected_ty.cloned().unwrap_or_else(|| {
                     Ty::UVar(
@@ -1114,14 +1140,8 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::Match(match_expr) => {
-            let mut rhs_tys = check_match_expr(
-                tc_state,
-                match_expr,
-                &expr.loc,
-                expected_ty,
-                level,
-                loop_stack,
-            );
+            let mut rhs_tys =
+                check_match_expr(tc_state, match_expr, loc, expected_ty, level, loop_stack);
 
             // Unify RHS types. When the `expected_ty` is available this doesn't do anything.
             // Otherwise this checks that all branches return the same type.
@@ -1134,7 +1154,7 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
                     level,
-                    &expr.loc,
+                    loc,
                 );
             }
 
@@ -1146,7 +1166,7 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
                     level,
-                    &expr.loc,
+                    loc,
                 ),
                 Default::default(),
             )
@@ -1166,7 +1186,7 @@ pub(super) fn check_expr(
                             tc_state.tys.tys.cons(),
                             tc_state.var_gen,
                             level,
-                            &expr.loc,
+                            loc,
                         );
                     }
                 }
@@ -1178,7 +1198,7 @@ pub(super) fn check_expr(
                             tc_state.tys.tys.cons(),
                             tc_state.var_gen,
                             level,
-                            &expr.loc,
+                            loc,
                         );
                     }
                 }
@@ -1220,11 +1240,7 @@ pub(super) fn check_expr(
                 Some(ty) => convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc),
                 None => match expected_ret {
                     Some(ret) => (*ret).clone(),
-                    None => Ty::UVar(tc_state.var_gen.new_var(
-                        level + 1,
-                        Kind::Star,
-                        expr.loc.clone(),
-                    )),
+                    None => Ty::UVar(tc_state.var_gen.new_var(level + 1, Kind::Star, loc.clone())),
                 },
             };
 
@@ -1232,11 +1248,7 @@ pub(super) fn check_expr(
                 Some(exc) => convert_ast_ty(&tc_state.tys.tys, &exc.node, &exc.loc),
                 None => match expected_exceptions {
                     Some(Some(exn)) => (*exn).clone(),
-                    _ => Ty::UVar(tc_state.var_gen.new_var(
-                        level + 1,
-                        Kind::Star,
-                        expr.loc.clone(),
-                    )),
+                    _ => Ty::UVar(tc_state.var_gen.new_var(level + 1, Kind::Star, loc.clone())),
                 },
             };
 
@@ -1244,7 +1256,7 @@ pub(super) fn check_expr(
             for (param_idx, (param_name, param_ty)) in sig.params.iter().enumerate() {
                 let param_ty_converted: Option<Ty> = param_ty
                     .as_ref()
-                    .map(|param_ty| convert_ast_ty(&tc_state.tys.tys, &param_ty.node, &expr.loc));
+                    .map(|param_ty| convert_ast_ty(&tc_state.tys.tys, &param_ty.node, loc));
 
                 let param_ty_converted: Ty = param_ty_converted.unwrap_or_else(|| {
                     expected_args
@@ -1258,7 +1270,7 @@ pub(super) fn check_expr(
                         .unwrap_or_else(|| {
                             panic!(
                                 "{}: fn expr needs argument type annotations",
-                                loc_display(&expr.loc)
+                                loc_display(loc)
                             )
                         })
                 });
@@ -1302,14 +1314,15 @@ pub(super) fn check_expr(
                 tc_state.tys.tys.cons(),
                 tc_state.var_gen,
                 level,
-                &expr.loc,
+                loc,
             );
             *inferred_ty = Some(ty.clone());
             (ty, Default::default())
         }
 
         ast::Expr::Is(ast::IsExpr { expr, pat }) => {
-            let (expr_ty, _) = check_expr(tc_state, expr, None, level, loop_stack);
+            let (expr_ty, _) =
+                check_expr(tc_state, &mut expr.node, &expr.loc, None, level, loop_stack);
             tc_state.env.enter();
             let pat_ty = check_pat(tc_state, pat, level);
             let pat_binders: HashMap<Id, Ty> = tc_state.env.exit();
@@ -1372,7 +1385,7 @@ pub(super) fn check_expr(
                 if pairs && singles {
                     panic!(
                         "{}: Sequence has both key-value pair and single element",
-                        loc_display(&expr.loc)
+                        loc_display(loc)
                     );
                 }
 
@@ -1444,16 +1457,13 @@ pub(super) fn check_expr(
                         }),
                     };
 
-                    ast::L {
-                        loc: loc.clone(),
-                        node: ast::Expr::Call(ast::CallExpr {
-                            fun: Box::new(field_sel_expr),
-                            args: vec![ast::CallArg {
-                                name: None,
-                                expr: iter_expr,
-                            }],
-                        }),
-                    }
+                    ast::Expr::Call(ast::CallExpr {
+                        fun: Box::new(field_sel_expr),
+                        args: vec![ast::CallArg {
+                            name: None,
+                            expr: iter_expr,
+                        }],
+                    })
                 }
 
                 None => match expected_ty {
@@ -1472,27 +1482,24 @@ pub(super) fn check_expr(
                                     }),
                                 };
 
-                                ast::L {
-                                    loc: loc.clone(),
-                                    node: ast::Expr::Call(ast::CallExpr {
-                                        fun: Box::new(field_select_expr),
-                                        args: vec![ast::CallArg {
-                                            name: None,
-                                            expr: iter_expr,
-                                        }],
-                                    }),
-                                }
+                                ast::Expr::Call(ast::CallExpr {
+                                    fun: Box::new(field_select_expr),
+                                    args: vec![ast::CallArg {
+                                        name: None,
+                                        expr: iter_expr,
+                                    }],
+                                })
                             }
-                            None => iter_expr,
+                            None => iter_expr.node,
                         }
                     }
-                    None => iter_expr,
+                    None => iter_expr.node,
                 },
             };
 
             *expr = desugared;
 
-            check_expr(tc_state, expr, expected_ty, level, loop_stack)
+            check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
         }
 
         ast::Expr::Record(ast::RecordExpr {
@@ -1510,7 +1517,7 @@ pub(super) fn check_expr(
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
                         level,
-                        &expr.loc,
+                        loc,
                     ),
                     Default::default(),
                 );
@@ -1522,7 +1529,7 @@ pub(super) fn check_expr(
                 if !field_names.insert(field_name) {
                     panic!(
                         "{}: Field name {} occurs multiple times in the record",
-                        loc_display(&expr.loc),
+                        loc_display(loc),
                         field_name
                     );
                 }
@@ -1547,8 +1554,14 @@ pub(super) fn check_expr(
                 let expected_ty = expected_fields
                     .as_ref()
                     .and_then(|expected_fields| expected_fields.get(field_name));
-                let (field_ty, _) =
-                    check_expr(tc_state, field_expr, expected_ty, level, loop_stack);
+                let (field_ty, _) = check_expr(
+                    tc_state,
+                    &mut field_expr.node,
+                    &field_expr.loc,
+                    expected_ty,
+                    level,
+                    loop_stack,
+                );
                 record_fields.insert(field_name.clone(), field_ty);
             }
 
@@ -1568,7 +1581,7 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
                     level,
-                    &expr.loc,
+                    loc,
                 ),
                 Default::default(),
             )
@@ -1576,8 +1589,9 @@ pub(super) fn check_expr(
 
         ast::Expr::Variant(ast::VariantExpr { expr, inferred_ty }) => {
             assert!(inferred_ty.is_none());
-            let (expr_ty, binders) = check_expr(tc_state, expr, None, level, loop_stack);
-            let variant_ty = make_variant(tc_state, expr_ty, level, &expr.loc);
+            let (expr_ty, binders) =
+                check_expr(tc_state, &mut expr.node, &expr.loc, None, level, loop_stack);
+            let variant_ty = make_variant(tc_state, expr_ty, level, loc);
             *inferred_ty = Some(variant_ty.clone());
             (
                 unify_expected_ty(
@@ -1586,7 +1600,7 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
                     level,
-                    &expr.loc,
+                    loc,
                 ),
                 binders,
             )
@@ -1606,7 +1620,14 @@ pub(super) fn check_match_expr(
 
     let ast::MatchExpr { scrutinee, alts } = expr;
 
-    let (scrut_ty, _) = check_expr(tc_state, scrutinee, None, level, loop_stack);
+    let (scrut_ty, _) = check_expr(
+        tc_state,
+        &mut scrutinee.node,
+        &scrutinee.loc,
+        None,
+        level,
+        loop_stack,
+    );
 
     let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
 
@@ -1655,8 +1676,14 @@ pub(super) fn check_match_expr(
 
         // Guards are checked here to use refined binders in the guards.
         if let Some(guard) = guard {
-            let (_, guard_binders) =
-                check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_stack);
+            let (_, guard_binders) = check_expr(
+                tc_state,
+                &mut guard.node,
+                &guard.loc,
+                Some(&Ty::bool()),
+                level,
+                loop_stack,
+            );
             guard_binders.into_iter().for_each(|(k, v)| {
                 tc_state.env.insert(k, v);
             });
@@ -1685,8 +1712,14 @@ pub(super) fn check_if_expr(
     let mut branch_tys: Vec<Ty> = Vec::with_capacity(branches.len() + 1);
 
     for (cond, body) in branches {
-        let (cond_ty, cond_binders) =
-            check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
+        let (cond_ty, cond_binders) = check_expr(
+            tc_state,
+            &mut cond.node,
+            &cond.loc,
+            Some(&Ty::bool()),
+            level,
+            loop_stack,
+        );
         unify(
             &cond_ty,
             &Ty::bool(),

@@ -1866,7 +1866,7 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
 
         Stmt::Expr(expr) => {
             w!(p, "_result = ");
-            expr_to_c(&expr.node, locals, cg, p);
+            expr_to_c(expr, locals, cg, p);
             wln!(p, ";");
         }
 

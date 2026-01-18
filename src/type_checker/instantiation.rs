@@ -17,7 +17,7 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
             normalize_expr(&mut rhs.node, cons);
         }
 
-        ast::Stmt::Expr(expr) => normalize_expr(&mut expr.node, cons),
+        ast::Stmt::Expr(expr) => normalize_expr(expr, cons),
 
         ast::Stmt::For(ast::ForStmt {
             label: _,

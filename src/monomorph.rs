@@ -402,7 +402,7 @@ fn mono_stmt(
         }
 
         ast::Stmt::Expr(expr) => {
-            mono::Stmt::Expr(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
+            mono::Stmt::Expr(mono_expr(expr, ty_map, poly_pgm, mono_pgm, locals, loc))
         }
 
         ast::Stmt::For(ast::ForStmt { .. }) => {
@@ -563,33 +563,27 @@ fn mono_expr(
                 },
                 mono::L {
                     loc: loc.clone(),
-                    node: mono::Stmt::Expr(mono::L {
-                        loc: loc.clone(),
-                        node: mono::Expr::Fn(mono::FnExpr {
-                            sig: mono::FunSig {
-                                params: closure_params,
-                                return_ty: Some(ast::L::new_dummy((*ret).clone())),
-                                exceptions: Some(ast::L::new_dummy((*exn).clone())),
-                            },
-                            body: vec![mono::L {
-                                loc: loc.clone(),
-                                node: mono::Stmt::Expr(mono::L {
+                    node: mono::Stmt::Expr(mono::Expr::Fn(mono::FnExpr {
+                        sig: mono::FunSig {
+                            params: closure_params,
+                            return_ty: Some(ast::L::new_dummy((*ret).clone())),
+                            exceptions: Some(ast::L::new_dummy((*exn).clone())),
+                        },
+                        body: vec![mono::L {
+                            loc: loc.clone(),
+                            node: mono::Stmt::Expr(mono::Expr::Call(mono::CallExpr {
+                                fun: Box::new(ast::L {
                                     loc: loc.clone(),
-                                    node: mono::Expr::Call(mono::CallExpr {
-                                        fun: Box::new(ast::L {
-                                            loc: loc.clone(),
-                                            node: mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
-                                                ty: method_ty_id.clone(),
-                                                member: method.clone(),
-                                                ty_args: mono_ty_args,
-                                            }),
-                                        }),
-                                        args: assoc_fn_args,
+                                    node: mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
+                                        ty: method_ty_id.clone(),
+                                        member: method.clone(),
+                                        ty_args: mono_ty_args,
                                     }),
                                 }),
-                            }],
-                        }),
-                    }),
+                                args: assoc_fn_args,
+                            })),
+                        }],
+                    })),
                 },
             ])
         }

@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: e01e3905a9d442b9d0f1af28b58f54efb2a6645e47d56a651c3c7417ab8fb75f
+// sha3: 4b7063348298292d696e2f271ddb62999ddee2c3bf845582c243abfc63d388f2
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -46926,10 +46926,7 @@ fn __action47<'a>(
                 sig: sig.1,
                 body: Some(vec![L {
                     loc: loc.clone(),
-                    node: Stmt::Expr(L {
-                        loc: loc.clone(),
-                        node: node,
-                    }),
+                    node: Stmt::Expr(node),
                 }]),
             },
         )
@@ -47054,10 +47051,7 @@ fn __action51<'a>(
                 sig,
                 body: Some(vec![L {
                     loc: loc.clone(),
-                    node: Stmt::Expr(L {
-                        loc: loc.clone(),
-                        node: node,
-                    }),
+                    node: Stmt::Expr(node),
                 }]),
             },
         )
@@ -47336,7 +47330,7 @@ fn __action68<'a>(
     (_, r, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Stmt {
-    Stmt::Expr(L::new(module, l, r, expr))
+    Stmt::Expr(expr)
 }
 
 #[allow(unused_variables)]
@@ -47351,7 +47345,7 @@ fn __action69<'a>(
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> Stmt {
-    Stmt::Expr(L::new(module, l, r, expr))
+    Stmt::Expr(expr)
 }
 
 #[allow(unused_variables)]
@@ -48650,7 +48644,7 @@ fn __action137<'a>(
         },
         body: vec![L {
             loc: body.loc.clone(),
-            node: Stmt::Expr(body),
+            node: Stmt::Expr(body.node),
         }],
         inferred_ty: None,
     })

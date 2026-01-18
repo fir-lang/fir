@@ -359,7 +359,7 @@ FunDecl: L<FunDecl> = {
             parent_ty: None,
             name: sig.0,
             sig: sig.1,
-            body: Some(vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }]),
+            body: Some(vec![L { loc: loc.clone(), node: Stmt::Expr(node) }]),
         })
     },
 }
@@ -409,7 +409,7 @@ TopFunDecl: L<FunDecl> = {
             parent_ty,
             name,
             sig,
-            body: Some(vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }]),
+            body: Some(vec![L { loc: loc.clone(), node: Stmt::Expr(node) }]),
         })
     },
 }
@@ -499,10 +499,10 @@ Stmt: Stmt = {
         }),
 
     <l:@L> <expr:InlineExpr> <r:@R> NEWLINE =>
-        Stmt::Expr(L::new(module, l, r, expr)),
+        Stmt::Expr(expr),
 
     <l:@L> <expr:BlockExpr> <r:@R> =>
-        Stmt::Expr(L::new(module, l, r, expr)),
+        Stmt::Expr(expr),
 
     <label:Label?> "for" <pat:LPat> <item_ast_ty:(":" <LType>)?> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT => {
         let label = label.map(|l| SmolStr::new(&l.smol_str()[1..]));
@@ -895,7 +895,7 @@ InlineExpr: Expr = {
                 exceptions: ret.0,
                 return_ty: ret.1,
             },
-            body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
+            body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body.node) }],
             inferred_ty: None,
         }),
 }

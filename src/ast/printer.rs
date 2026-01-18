@@ -399,7 +399,7 @@ impl Stmt {
                 rhs.node.print(buf, indent);
             }
 
-            Stmt::Expr(expr) => expr.node.print(buf, indent),
+            Stmt::Expr(expr) => expr.print(buf, indent),
 
             Stmt::For(ForStmt {
                 label,

@@ -145,7 +145,7 @@ pub struct FunDecl {
 pub enum Stmt {
     Let(LetStmt),
     Assign(AssignStmt),
-    Expr(L<Expr>),
+    Expr(Expr),
     While(WhileStmt),
     Break { label: Option<Id>, level: u32 },
     Continue { label: Option<Id>, level: u32 },

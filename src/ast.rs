@@ -324,7 +324,7 @@ pub enum Stmt {
     Let(LetStmt),
     // LetFn(FunDecl),
     Assign(AssignStmt),
-    Expr(L<Expr>),
+    Expr(Expr),
     For(ForStmt),
     While(WhileStmt),
     Break {
@@ -975,7 +975,7 @@ impl Stmt {
                 rhs.node.subst_ty_ids(substs);
             }
 
-            Stmt::Expr(expr) => expr.node.subst_ty_ids(substs),
+            Stmt::Expr(expr) => expr.subst_ty_ids(substs),
 
             Stmt::For(ForStmt {
                 label: _,
