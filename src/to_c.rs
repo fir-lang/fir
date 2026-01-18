@@ -134,6 +134,13 @@ macro_rules! w {
     };
 }
 
+macro_rules! wln {
+    ($p:expr, $($arg:tt)*) => {{
+        ::core::write!($p, $($arg)*).unwrap();
+        $p.nl();
+    }};
+}
+
 /// Code generation context.
 struct Cg<'a> {
     pgm: &'a LoweredPgm,
@@ -515,8 +522,7 @@ fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer
             w!(p, "uint64_t _p{}", i);
         }
     }
-    w!(p, ");");
-    p.nl();
+    wln!(p, ");");
 }
 
 /// Returns the number of parameters for a built-in function.
@@ -604,8 +610,7 @@ fn forward_declare_closure(_pgm: &LoweredPgm, closure: &Closure, idx: usize, p: 
     for (i, _) in closure.params.iter().enumerate() {
         w!(p, ", uint64_t _p{}", i);
     }
-    w!(p, ");");
-    p.nl();
+    wln!(p, ");");
 }
 
 fn heap_obj_to_c(heap_obj: &HeapObj, tag: u32, p: &mut Printer) {
@@ -619,18 +624,15 @@ fn heap_obj_to_c(heap_obj: &HeapObj, tag: u32, p: &mut Printer) {
 fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
     match builtin {
         BuiltinConDecl::Con => {
-            w!(p, "#define CON_CON_TAG {}", tag);
-            p.nl();
+            wln!(p, "#define CON_CON_TAG {}", tag);
         }
 
         BuiltinConDecl::Fun => {
-            w!(p, "#define FUN_CON_TAG {}", tag);
-            p.nl();
+            wln!(p, "#define FUN_CON_TAG {}", tag);
         }
 
         BuiltinConDecl::Closure => {
-            w!(p, "#define CLOSURE_CON_TAG {}", tag);
-            p.nl();
+            wln!(p, "#define CLOSURE_CON_TAG {}", tag);
         }
 
         BuiltinConDecl::Array => {
@@ -638,33 +640,27 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
         }
 
         BuiltinConDecl::I8 => {
-            w!(p, "// I8 tag {}", tag);
-            p.nl();
+            wln!(p, "// I8 tag {}", tag);
         }
 
         BuiltinConDecl::U8 => {
-            w!(p, "// U8 tag {}", tag);
-            p.nl();
+            wln!(p, "// U8 tag {}", tag);
         }
 
         BuiltinConDecl::I32 => {
-            w!(p, "// I32 tag {}", tag);
-            p.nl();
+            wln!(p, "// I32 tag {}", tag);
         }
 
         BuiltinConDecl::U32 => {
-            w!(p, "// U32 tag {}", tag);
-            p.nl();
+            wln!(p, "// U32 tag {}", tag);
         }
 
         BuiltinConDecl::I64 => {
-            w!(p, "// I64 tag {}", tag);
-            p.nl();
+            wln!(p, "// I64 tag {}", tag);
         }
 
         BuiltinConDecl::U64 => {
-            w!(p, "// U64 tag {}", tag);
-            p.nl();
+            wln!(p, "// U64 tag {}", tag);
         }
     }
 }
@@ -799,54 +795,42 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
 fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut Printer) {
     // Debug output of `fun` is too noisy, but it's better than not knowing what the generated
     // functions are for.
-    w!(p, "// {:?}", fun);
-    p.nl();
+    wln!(p, "// {:?}", fun);
     match fun {
         BuiltinFunDecl::Panic => {
             w!(p, "static uint64_t _fun_{}(uint64_t msg) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "uint64_t* str = (uint64_t*)msg;");
-            p.nl();
-            w!(p, "uint64_t bytes_arr = str[1];");
-            p.nl();
-            w!(p, "uint32_t len = array_len(bytes_arr);");
-            p.nl();
+            wln!(p, "uint64_t* str = (uint64_t*)msg;");
+            wln!(p, "uint64_t bytes_arr = str[1];");
+            wln!(p, "uint32_t len = array_len(bytes_arr);");
             w!(
                 p,
                 "uint8_t* data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];"
             );
             p.nl();
-            w!(p, "fprintf(stderr, \"PANIC: \");");
-            p.nl();
-            w!(p, "fwrite(data, 1, len, stderr);");
-            p.nl();
-            w!(p, "fprintf(stderr, \"\\n\");");
-            p.nl();
+            wln!(p, "fprintf(stderr, \"PANIC: \");");
+            wln!(p, "fwrite(data, 1, len, stderr);");
+            wln!(p, "fprintf(stderr, \"\\n\");");
             w!(p, "exit(1);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::PrintStrNoNl => {
             w!(p, "static uint64_t _fun_{}(uint64_t str) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "uint64_t* s = (uint64_t*)str;");
-            p.nl();
-            w!(p, "uint64_t bytes_arr = s[1];");
-            p.nl();
-            w!(p, "uint32_t len = array_len(bytes_arr);");
-            p.nl();
+            wln!(p, "uint64_t* s = (uint64_t*)str;");
+            wln!(p, "uint64_t bytes_arr = s[1];");
+            wln!(p, "uint32_t len = array_len(bytes_arr);");
             w!(
                 p,
                 "uint8_t* data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];"
             );
             p.nl();
-            w!(p, "fwrite(data, 1, len, stdout);");
-            p.nl();
+            wln!(p, "fwrite(data, 1, len, stdout);");
             w!(
                 p,
                 "return {};",
@@ -854,8 +838,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ShrI8 => {
@@ -868,8 +851,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ShrU8 => {
@@ -879,8 +861,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint8_t)a >> (uint8_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ShrI32 => {
@@ -893,8 +874,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ShrU32 => {
@@ -904,8 +884,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint32_t)a >> (uint32_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::BitAndI8 | BuiltinFunDecl::BitAndU8 => {
@@ -915,8 +894,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint8_t)a & (uint8_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::BitAndI32 | BuiltinFunDecl::BitAndU32 => {
@@ -926,8 +904,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint32_t)a & (uint32_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::BitOrI8 | BuiltinFunDecl::BitOrU8 => {
@@ -937,8 +914,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint8_t)a | (uint8_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::BitOrI32 | BuiltinFunDecl::BitOrU32 => {
@@ -948,8 +924,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint32_t)a | (uint32_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::BitXorU32 => {
@@ -959,8 +934,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint32_t)a ^ (uint32_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ToStrI8 => {
@@ -994,8 +968,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)(uint8_t)(int8_t)(uint8_t)a;");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8AsU32 => {
@@ -1005,8 +978,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)(uint32_t)(uint8_t)a;");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32AsU8 => {
@@ -1016,8 +988,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)(uint8_t)(uint32_t)a;");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32AsI32 => {
@@ -1027,8 +998,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)(uint32_t)(int32_t)(uint32_t)a;");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32AsU64 => {
@@ -1038,8 +1008,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)(uint32_t)a;");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I8Shl => {
@@ -1052,8 +1021,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Shl => {
@@ -1063,8 +1031,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint8_t)a << (uint8_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Shl => {
@@ -1077,8 +1044,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Shl => {
@@ -1088,8 +1054,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint32_t)a << (uint32_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I8Cmp => gen_cmp_fn(idx, "(int8_t)(uint8_t)", pgm, p),
@@ -1108,8 +1073,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Add => {
@@ -1119,8 +1083,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint8_t)a + (uint8_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Add => {
@@ -1133,8 +1096,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Add => {
@@ -1144,8 +1106,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint32_t)a + (uint32_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U64Add => {
@@ -1155,8 +1116,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return a + b;");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I8Sub => {
@@ -1169,8 +1129,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Sub => {
@@ -1180,8 +1139,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint8_t)a - (uint8_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Sub => {
@@ -1194,8 +1152,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Sub => {
@@ -1205,8 +1162,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint32_t)a - (uint32_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I8Mul => {
@@ -1219,8 +1175,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Mul => {
@@ -1230,8 +1185,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint8_t)a * (uint8_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Mul => {
@@ -1244,8 +1198,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Mul => {
@@ -1255,8 +1208,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint32_t)a * (uint32_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U64Mul => {
@@ -1266,8 +1218,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return a * b;");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I8Div => {
@@ -1280,8 +1231,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Div => {
@@ -1291,8 +1241,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint8_t)a / (uint8_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Div => {
@@ -1305,8 +1254,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Div => {
@@ -1316,8 +1264,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint32_t)a / (uint32_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I8Eq | BuiltinFunDecl::U8Eq => {
@@ -1332,8 +1279,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Eq | BuiltinFunDecl::U32Eq => {
@@ -1348,8 +1294,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Mod => {
@@ -1359,8 +1304,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint32_t)a % (uint32_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I8Rem => {
@@ -1373,8 +1317,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Rem => {
@@ -1384,8 +1327,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint8_t)a % (uint8_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Rem => {
@@ -1398,8 +1340,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Rem => {
@@ -1409,8 +1350,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)((uint32_t)a % (uint32_t)b);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32AsU32 => {
@@ -1420,21 +1360,18 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)(uint32_t)(int32_t)(uint32_t)a;");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Abs => {
             w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "int32_t v = (int32_t)(uint32_t)a;");
-            p.nl();
+            wln!(p, "int32_t v = (int32_t)(uint32_t)a;");
             w!(p, "return (uint64_t)(uint32_t)(v < 0 ? -v : v);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I8Neg => {
@@ -1444,8 +1381,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)(uint8_t)(-(int8_t)(uint8_t)a);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Neg => {
@@ -1455,21 +1391,18 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)(uint32_t)(-(int32_t)(uint32_t)a);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ThrowUnchecked => {
             w!(p, "static uint64_t _fun_{}(uint64_t exn) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "throw_exn(exn);");
-            p.nl();
+            wln!(p, "throw_exn(exn);");
             w!(p, "return 0; // unreachable");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::Try { ok_con, err_con } => {
@@ -1478,60 +1411,42 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "static uint64_t _fun_{}(uint64_t cb) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "ExnHandler handler;");
-            p.nl();
-            w!(p, "handler.prev = current_exn_handler;");
-            p.nl();
-            w!(p, "current_exn_handler = &handler;");
-            p.nl();
+            wln!(p, "ExnHandler handler;");
+            wln!(p, "handler.prev = current_exn_handler;");
+            wln!(p, "current_exn_handler = &handler;");
             w!(p, "if (setjmp(handler.buf) == 0) {{");
             p.indent();
             p.nl();
-            w!(p, "// Call the closure");
-            p.nl();
-            w!(p, "uint64_t* closure = (uint64_t*)cb;");
-            p.nl();
-            w!(
+            wln!(p, "// Call the closure");
+            wln!(p, "uint64_t* closure = (uint64_t*)cb;");
+            wln!(
                 p,
                 "uint64_t (*fn)(uint64_t) = (uint64_t (*)(uint64_t))((uint64_t*)cb)[1];"
             );
-            p.nl();
-            w!(p, "uint64_t result = fn(cb);");
-            p.nl();
-            w!(p, "current_exn_handler = handler.prev;");
-            p.nl();
-            w!(p, "// Allocate Ok result");
-            p.nl();
-            w!(p, "uint64_t* ok = alloc_words(2);");
-            p.nl();
-            w!(p, "ok[0] = {};", ok_tag_name);
-            p.nl();
-            w!(p, "ok[1] = result;");
-            p.nl();
+            wln!(p, "uint64_t result = fn(cb);");
+            wln!(p, "current_exn_handler = handler.prev;");
+            wln!(p, "// Allocate Ok result");
+            wln!(p, "uint64_t* ok = alloc_words(2);");
+            wln!(p, "ok[0] = {};", ok_tag_name);
+            wln!(p, "ok[1] = result;");
             w!(p, "return (uint64_t)ok;");
             p.dedent();
             p.nl();
             w!(p, "}} else {{");
             p.indent();
             p.nl();
-            w!(p, "// Exception was thrown");
-            p.nl();
-            w!(p, "current_exn_handler = handler.prev;");
-            p.nl();
-            w!(p, "uint64_t* err = alloc_words(2);");
-            p.nl();
-            w!(p, "err[0] = {};", err_tag_name);
-            p.nl();
-            w!(p, "err[1] = handler.exn_value;");
-            p.nl();
+            wln!(p, "// Exception was thrown");
+            wln!(p, "current_exn_handler = handler.prev;");
+            wln!(p, "uint64_t* err = alloc_words(2);");
+            wln!(p, "err[0] = {};", err_tag_name);
+            wln!(p, "err[1] = handler.exn_value;");
             w!(p, "return (uint64_t)err;");
             p.dedent();
             p.nl();
             w!(p, "}}");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ArrayNew { t } => {
@@ -1547,8 +1462,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return {}((uint32_t)len);", fn_name);
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ArrayLen => {
@@ -1558,8 +1472,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return (uint64_t)array_len(arr);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ArrayGet { t } => {
@@ -1579,8 +1492,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "return {}(arr, (uint32_t)idx);", fn_name);
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ArraySet { t } => {
@@ -1597,8 +1509,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.indent();
             p.nl();
-            w!(p, "{}(arr, (uint32_t)idx, val);", fn_name);
-            p.nl();
+            wln!(p, "{}(arr, (uint32_t)idx, val);", fn_name);
             w!(
                 p,
                 "return {};",
@@ -1606,8 +1517,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ArraySlice { t } => {
@@ -1631,8 +1541,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ArrayCopyWithin { t } => {
@@ -1662,73 +1571,58 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ReadFileUtf8 => {
             w!(p, "static uint64_t _fun_{}(uint64_t path_str) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "uint64_t* s = (uint64_t*)path_str;");
-            p.nl();
-            w!(p, "uint64_t bytes_arr = s[1];");
-            p.nl();
-            w!(p, "uint32_t path_len = array_len(bytes_arr);");
-            p.nl();
+            wln!(p, "uint64_t* s = (uint64_t*)path_str;");
+            wln!(p, "uint64_t bytes_arr = s[1];");
+            wln!(p, "uint32_t path_len = array_len(bytes_arr);");
             w!(
                 p,
                 "uint8_t* path_data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];"
             );
             p.nl();
-            w!(p, "char* path = (char*)malloc(path_len + 1);");
-            p.nl();
-            w!(p, "memcpy(path, path_data, path_len);");
-            p.nl();
-            w!(p, "path[path_len] = '\\0';");
-            p.nl();
-            w!(p, "FILE* f = fopen(path, \"rb\");");
-            p.nl();
-            w!(p, "free(path);");
-            p.nl();
+            wln!(p, "char* path = (char*)malloc(path_len + 1);");
+            wln!(p, "memcpy(path, path_data, path_len);");
+            wln!(p, "path[path_len] = '\\0';");
+            wln!(p, "FILE* f = fopen(path, \"rb\");");
+            wln!(p, "free(path);");
             w!(
                 p,
                 "if (!f) {{ fprintf(stderr, \"Failed to open file\\n\"); exit(1); }}"
             );
             p.nl();
-            w!(p, "fseek(f, 0, SEEK_END);");
-            p.nl();
-            w!(p, "long size = ftell(f);");
-            p.nl();
-            w!(p, "fseek(f, 0, SEEK_SET);");
-            p.nl();
-            w!(p, "char* contents = (char*)malloc(size);");
-            p.nl();
-            w!(p, "fread(contents, 1, size, f);");
-            p.nl();
-            w!(p, "fclose(f);");
-            p.nl();
+            wln!(p, "fseek(f, 0, SEEK_END);");
+            wln!(p, "long size = ftell(f);");
+            wln!(p, "fseek(f, 0, SEEK_SET);");
+            wln!(p, "char* contents = (char*)malloc(size);");
+            wln!(
+                p,
+                "if (fread(contents, 1, size, f) != (size_t)size) {{ fprintf(stderr, \"Failed to read file\\n\"); exit(1); }}"
+            );
+            wln!(p, "fclose(f);");
             w!(
                 p,
                 "uint64_t result = alloc_str({}, contents, size);",
                 pgm.str_con_idx.0
             );
             p.nl();
-            w!(p, "free(contents);");
-            p.nl();
+            wln!(p, "free(contents);");
             w!(p, "return result;");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
 
         BuiltinFunDecl::GetArgs => {
             w!(p, "static uint64_t _fun_{}(void) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "uint64_t arr = array_new_u64(g_argc);");
-            p.nl();
+            wln!(p, "uint64_t arr = array_new_u64(g_argc);");
             w!(p, "for (int i = 0; i < g_argc; i++) {{");
             p.indent();
             p.nl();
@@ -1741,13 +1635,11 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "array_set_u64(arr, i, arg_str);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
             w!(p, "return arr;");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
         }
     }
 }
@@ -1763,8 +1655,7 @@ fn gen_tostr_fn(
     w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
     p.indent();
     p.nl();
-    w!(p, "char buf[32];");
-    p.nl();
+    wln!(p, "char buf[32];");
     w!(
         p,
         "int len = snprintf(buf, sizeof(buf), \"%\" {} , ({}){}a);",
@@ -1776,8 +1667,7 @@ fn gen_tostr_fn(
     w!(p, "return alloc_str({}, buf, len);", pgm.str_con_idx.0);
     p.dedent();
     p.nl();
-    w!(p, "}}");
-    p.nl();
+    wln!(p, "}}");
 }
 
 fn gen_cmp_fn(idx: usize, cast: &str, pgm: &LoweredPgm, p: &mut Printer) {
@@ -1807,8 +1697,7 @@ fn gen_cmp_fn(idx: usize, cast: &str, pgm: &LoweredPgm, p: &mut Printer) {
     );
     p.dedent();
     p.nl();
-    w!(p, "}}");
-    p.nl();
+    wln!(p, "}}");
 }
 
 fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer) {
@@ -1847,14 +1736,12 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
 
     // Declare all locals
     for (i, local) in fun.locals.iter().enumerate() {
-        w!(p, "uint64_t _{} = 0; // {}: {}", i, local.name, local.ty);
-        p.nl();
+        wln!(p, "uint64_t _{} = 0; // {}: {}", i, local.name, local.ty);
     }
 
     // Copy parameters to locals
     for (i, _) in fun.params.iter().enumerate() {
-        w!(p, "_{} = _p{};", i, i);
-        p.nl();
+        wln!(p, "_{} = _p{};", i, i);
     }
 
     // Declare result variable
@@ -1873,8 +1760,7 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
     w!(p, "return _result;");
     p.dedent();
     p.nl();
-    w!(p, "}}");
-    p.nl();
+    wln!(p, "}}");
 }
 
 fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
@@ -1888,8 +1774,7 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
 
     // Declare all locals
     for (i, local) in closure.locals.iter().enumerate() {
-        w!(p, "uint64_t _{} = 0; // {}: {}", i, local.name, local.ty);
-        p.nl();
+        wln!(p, "uint64_t _{} = 0; // {}: {}", i, local.name, local.ty);
     }
 
     // Load free variables from closure object
@@ -1906,8 +1791,7 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
 
     // Copy parameters to locals
     for (i, _) in closure.params.iter().enumerate() {
-        w!(p, "_{} = _p{};", i, i);
-        p.nl();
+        wln!(p, "_{} = _p{};", i, i);
     }
 
     // Declare result variable
@@ -1926,8 +1810,7 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     w!(p, "return _result;");
     p.dedent();
     p.nl();
-    w!(p, "}}");
-    p.nl();
+    wln!(p, "}}");
 }
 
 fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
@@ -1936,20 +1819,16 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             let rhs_temp = cg.fresh_temp();
             w!(p, "uint64_t {} = ", rhs_temp);
             expr_to_c(&rhs.node, locals, cg, p);
-            w!(p, ";");
-            p.nl();
-            w!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, cg));
-            p.nl();
-            w!(p, "_result = {};", rhs_temp);
-            p.nl();
+            wln!(p, ";");
+            wln!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, cg));
+            wln!(p, "_result = {};", rhs_temp);
         }
 
         Stmt::Assign(AssignStmt { lhs, rhs }) => match &lhs.node {
             Expr::LocalVar(idx) => {
                 w!(p, "_{} = ", idx.as_usize());
                 expr_to_c(&rhs.node, locals, cg, p);
-                w!(p, ";");
-                p.nl();
+                wln!(p, ";");
                 w!(
                     p,
                     "_result = {};",
@@ -1965,12 +1844,10 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 let obj_temp = cg.fresh_temp();
                 w!(p, "uint64_t {} = ", obj_temp);
                 expr_to_c(&object.node, locals, cg, p);
-                w!(p, ";");
-                p.nl();
+                wln!(p, ";");
                 w!(p, "((uint64_t*){})[{}] = ", obj_temp, 1 + idx);
                 expr_to_c(&rhs.node, locals, cg, p);
-                w!(p, ";");
-                p.nl();
+                wln!(p, ";");
                 w!(
                     p,
                     "_result = {};",
@@ -1990,8 +1867,7 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
         Stmt::Expr(expr) => {
             w!(p, "_result = ");
             expr_to_c(&expr.node, locals, cg, p);
-            w!(p, ";");
-            p.nl();
+            wln!(p, ";");
         }
 
         Stmt::While(WhileStmt { label, cond, body }) => {
@@ -2001,8 +1877,7 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             let cond_temp = cg.fresh_temp();
             w!(p, "uint64_t {} = ", cond_temp);
             expr_to_c(&cond.node, locals, cg, p);
-            w!(p, ";");
-            p.nl();
+            wln!(p, ";");
             w!(
                 p,
                 "if ({} == {}) break;",
@@ -2018,11 +1893,9 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             }
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
             if let Some(label) = label {
-                w!(p, "_break_{}:;", label);
-                p.nl();
+                wln!(p, "_break_{}:;", label);
             }
             w!(
                 p,
@@ -2075,16 +1948,13 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 w!(p, "({{");
                 p.indent();
                 p.nl();
-                w!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
-                p.nl();
+                wln!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
                 let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
-                w!(p, "_obj[0] = {};", tag_name);
-                p.nl();
+                wln!(p, "_obj[0] = {};", tag_name);
                 for (i, arg) in args.iter().enumerate() {
                     w!(p, "_obj[{}] = ", 1 + i);
                     expr_to_c(&arg.node, locals, cg, p);
-                    w!(p, ";");
-                    p.nl();
+                    wln!(p, ";");
                 }
                 w!(p, "(uint64_t)_obj;");
                 p.dedent();
@@ -2125,16 +1995,13 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                         w!(p, "({{");
                         p.indent();
                         p.nl();
-                        w!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
-                        p.nl();
+                        wln!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
                         let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
-                        w!(p, "_obj[0] = {};", tag_name);
-                        p.nl();
+                        wln!(p, "_obj[0] = {};", tag_name);
                         for (i, arg) in args.iter().enumerate() {
                             w!(p, "_obj[{}] = ", 1 + i);
                             expr_to_c(&arg.node, locals, cg, p);
-                            w!(p, ";");
-                            p.nl();
+                            wln!(p, ";");
                         }
                         w!(p, "(uint64_t)_obj;");
                         p.dedent();
@@ -2150,12 +2017,9 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     let fun_temp = cg.fresh_temp();
                     w!(p, "uint64_t {} = ", fun_temp);
                     expr_to_c(&fun.node, locals, cg, p);
-                    w!(p, ";");
-                    p.nl();
-                    w!(p, "uint32_t _tag = get_tag({});", fun_temp);
-                    p.nl();
-                    w!(p, "uint64_t _call_result;");
-                    p.nl();
+                    wln!(p, ";");
+                    wln!(p, "uint32_t _tag = get_tag({});", fun_temp);
+                    wln!(p, "uint64_t _call_result;");
 
                     // Check tag and dispatch
                     w!(p, "if (_tag == CON_CON_TAG) {{");
@@ -2167,15 +2031,12 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                         fun_temp
                     );
                     p.nl();
-                    w!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
-                    p.nl();
-                    w!(p, "_obj[0] = _con_tag;");
-                    p.nl();
+                    wln!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
+                    wln!(p, "_obj[0] = _con_tag;");
                     for (i, arg) in args.iter().enumerate() {
                         w!(p, "_obj[{}] = ", 1 + i);
                         expr_to_c(&arg.node, locals, cg, p);
-                        w!(p, ";");
-                        p.nl();
+                        wln!(p, ";");
                     }
                     w!(p, "_call_result = (uint64_t)_obj;");
                     p.dedent();
@@ -2199,8 +2060,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                         }
                         w!(p, "uint64_t");
                     }
-                    w!(p, "))((uint64_t*){})[ 1];", fun_temp);
-                    p.nl();
+                    wln!(p, "))((uint64_t*){})[ 1];", fun_temp);
                     w!(p, "_call_result = _fn(");
                     for (i, arg) in args.iter().enumerate() {
                         if i > 0 {
@@ -2223,8 +2083,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     for _ in 0..args.len() {
                         w!(p, ", uint64_t");
                     }
-                    w!(p, "))((uint64_t*){})[ 1];", fun_temp);
-                    p.nl();
+                    wln!(p, "))((uint64_t*){})[ 1];", fun_temp);
                     w!(p, "_call_result = _fn({}", fun_temp);
                     for arg in args {
                         w!(p, ", ");
@@ -2233,8 +2092,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     w!(p, ");");
                     p.dedent();
                     p.nl();
-                    w!(p, "}}");
-                    p.nl();
+                    wln!(p, "}}");
                     w!(p, "_call_result;");
                     p.dedent();
                     p.nl();
@@ -2267,8 +2125,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.nl();
             w!(p, "uint64_t _and_result = ");
             expr_to_c(&left.node, locals, cg, p);
-            w!(p, ";");
-            p.nl();
+            wln!(p, ";");
             w!(
                 p,
                 "if (_and_result == {}) {{",
@@ -2281,8 +2138,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, ";");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
             w!(p, "_and_result;");
             p.dedent();
             p.nl();
@@ -2295,8 +2151,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.nl();
             w!(p, "uint64_t _or_result = ");
             expr_to_c(&left.node, locals, cg, p);
-            w!(p, ";");
-            p.nl();
+            wln!(p, ";");
             w!(
                 p,
                 "if (_or_result == {}) {{",
@@ -2309,8 +2164,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, ";");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
             w!(p, "_or_result;");
             p.dedent();
             p.nl();
@@ -2323,8 +2177,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.nl();
             w!(p, "return ");
             expr_to_c(&expr.node, locals, cg, p);
-            w!(p, ";");
-            p.nl();
+            wln!(p, ";");
             w!(p, "0; // unreachable");
             p.dedent();
             p.nl();
@@ -2338,10 +2191,8 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             let scrut_temp = cg.fresh_temp();
             w!(p, "uint64_t {} = ", scrut_temp);
             expr_to_c(&scrutinee.node, locals, cg, p);
-            w!(p, ";");
-            p.nl();
-            w!(p, "uint64_t _match_result = 0;");
-            p.nl();
+            wln!(p, ";");
+            wln!(p, "uint64_t _match_result = 0;");
 
             for (i, alt) in alts.iter().enumerate() {
                 if i > 0 {
@@ -2377,13 +2228,11 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, " else {{");
             p.indent();
             p.nl();
-            w!(p, "fprintf(stderr, \"Non-exhaustive pattern match\\n\");");
-            p.nl();
+            wln!(p, "fprintf(stderr, \"Non-exhaustive pattern match\\n\");");
             w!(p, "exit(1);");
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
             w!(p, "_match_result;");
             p.dedent();
             p.nl();
@@ -2397,8 +2246,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "({{");
             p.indent();
             p.nl();
-            w!(p, "uint64_t _if_result = 0;");
-            p.nl();
+            wln!(p, "uint64_t _if_result = 0;");
 
             for (i, (cond, body)) in branches.iter().enumerate() {
                 if i > 0 {
@@ -2410,8 +2258,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 p.nl();
                 w!(p, "uint64_t {} = ", cond_temp);
                 expr_to_c(&cond.node, locals, cg, p);
-                w!(p, ";");
-                p.nl();
+                wln!(p, ";");
                 w!(
                     p,
                     "if ({} == {}) {{",
@@ -2475,8 +2322,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 2 + closure.fvs.len()
             );
             p.nl();
-            w!(p, "_clos[0] = CLOSURE_CON_TAG;");
-            p.nl();
+            wln!(p, "_clos[0] = CLOSURE_CON_TAG;");
             w!(
                 p,
                 "_clos[1] = (uint64_t)_closure_{};",
@@ -2506,11 +2352,9 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             let expr_temp = cg.fresh_temp();
             w!(p, "uint64_t {} = ", expr_temp);
             expr_to_c(&expr.node, locals, cg, p);
-            w!(p, ";");
-            p.nl();
+            wln!(p, ";");
             let cond = pat_to_cond(&pat.node, &expr_temp, cg);
-            w!(p, "uint64_t _is_result;");
-            p.nl();
+            wln!(p, "uint64_t _is_result;");
             w!(p, "if ({}) {{", cond);
             p.indent();
             p.nl();
@@ -2531,8 +2375,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             );
             p.dedent();
             p.nl();
-            w!(p, "}}");
-            p.nl();
+            wln!(p, "}}");
             w!(p, "_is_result;");
             p.dedent();
             p.nl();
@@ -2632,17 +2475,13 @@ fn generate_main_fn(pgm: &LoweredPgm, main: &str, p: &mut Printer) {
     w!(p, "int main(int argc, char** argv) {{");
     p.indent();
     p.nl();
-    w!(p, "g_argc = argc;");
-    p.nl();
-    w!(p, "g_argv = argv;");
-    p.nl();
-    w!(p, "_fun_{}();", main_idx);
-    p.nl();
+    wln!(p, "g_argc = argc;");
+    wln!(p, "g_argv = argv;");
+    wln!(p, "_fun_{}();", main_idx);
     w!(p, "return 0;");
     p.dedent();
     p.nl();
-    w!(p, "}}");
-    p.nl();
+    wln!(p, "}}");
 }
 
 #[derive(Debug, Default)]
