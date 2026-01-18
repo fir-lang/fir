@@ -356,8 +356,13 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     }
     p.nl();
 
-    for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
-        heap_obj_to_c(heap_obj, tag as u32, &mut p);
+    let heap_objs_sorted = top_sort(&pgm.type_objs, &pgm.heap_objs);
+    for heap_obj_idx in heap_objs_sorted.iter().flatten() {
+        heap_obj_to_c(
+            &pgm.heap_objs[heap_obj_idx.as_usize()],
+            heap_obj_idx.0,
+            &mut p,
+        );
         p.nl();
     }
 
@@ -2691,6 +2696,8 @@ fn top_sort(
 ) -> Vec<HashSet<HeapObjIdx>> {
     let mut idx_gen = SccIdxGen::default();
 
+    let mut output: Vec<HashSet<HeapObjIdx>> = Vec::with_capacity(heap_objs.len());
+
     // Because the object indices are consecutive numbers from 0 to number of objects, we can use an
     // array to map object indices to things.
     //
@@ -2702,9 +2709,11 @@ fn top_sort(
         .iter()
         .enumerate()
         .map(|(heap_obj_idx, heap_obj)| SccNode {
-            heap_obj: HeapObjIdx(heap_obj_idx as u32),
             idx: match heap_obj {
-                HeapObj::Builtin(_) => Some(idx_gen.next()),
+                HeapObj::Builtin(_) => {
+                    output.push(std::iter::once(HeapObjIdx(heap_obj_idx as u32)).collect());
+                    Some(idx_gen.next())
+                }
                 HeapObj::Source(_) | HeapObj::Record(_) => None,
             },
             low_link: None,
@@ -2712,7 +2721,6 @@ fn top_sort(
         })
         .collect();
 
-    let mut output: Vec<HashSet<HeapObjIdx>> = Vec::with_capacity(heap_objs.len());
     let mut stack: Vec<HeapObjIdx> = Vec::with_capacity(10);
 
     for (heap_obj_idx, _) in heap_objs.iter().enumerate() {
@@ -2734,7 +2742,6 @@ fn top_sort(
 
 #[derive(Debug)]
 struct SccNode {
-    heap_obj: HeapObjIdx,
     idx: Option<SccIdx>,
     low_link: Option<SccIdx>,
     on_stack: bool,
@@ -2881,13 +2888,10 @@ fn named_type_heap_obj_deps(
     ty: &mono::NamedType,
     deps: &mut HashSet<HeapObjIdx>,
 ) {
-    deps.extend(
-        type_objs
-            .get(&ty.name)
-            .unwrap()
-            .get(&ty.args)
-            .unwrap()
-            .iter()
-            .cloned(),
-    );
+    let ty_map = match type_objs.get(&ty.name) {
+        Some(ty_map) => ty_map,
+        None => return, // builtin
+    };
+
+    deps.extend(ty_map.get(&ty.args).unwrap().iter().cloned());
 }
