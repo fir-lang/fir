@@ -2781,7 +2781,7 @@ fn _scc(
     stack.push(heap_obj_idx);
 
     // Add dependencies to the output.
-    let deps = heap_obj_deps(type_objs, heap_obj_idx, heap_objs);
+    let deps = heap_obj_deps(type_objs, heap_objs, heap_obj_idx);
     for dep_obj in deps {
         if nodes[dep_obj.as_usize()].idx.is_none() {
             // Dependency not visited yet.
@@ -2815,8 +2815,8 @@ fn _scc(
 
 fn heap_obj_deps(
     type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
-    heap_obj_idx: HeapObjIdx,
     heap_objs: &[HeapObj],
+    heap_obj_idx: HeapObjIdx,
 ) -> HashSet<HeapObjIdx> {
     let mut deps: HashSet<HeapObjIdx> = Default::default();
 
