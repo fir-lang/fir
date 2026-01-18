@@ -508,15 +508,8 @@ fn eval<W: Write>(
         }
 
         Expr::Call(CallExpr { fun, args }) => {
-            // See if `fun` is a method, associated function, or constructor to avoid closure
-            // allocations.
+            // See if `fun` is a function to avoid closure allocations.
             let fun: u64 = match &fun.node {
-                Expr::Con(con_idx) => {
-                    return allocate_object_from_idx(
-                        w, pgm, heap, locals, *con_idx, args, call_stack,
-                    );
-                }
-
                 Expr::Fun(fun_idx) => {
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
                     for arg in args {

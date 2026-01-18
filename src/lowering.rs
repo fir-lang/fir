@@ -1879,15 +1879,19 @@ fn lower_expr(
             };
 
             let expr: Expr = match arg_tys {
-                mono::FunArgs::Positional(_) => Expr::Call(CallExpr {
-                    fun,
-                    args: args
+                mono::FunArgs::Positional(_) => {
+                    let args = args
                         .iter()
                         .map(|mono::CallArg { name: _, expr }| {
                             lower_l_expr(expr, closures, indices, scope, mono_pgm).0
                         })
-                        .collect(),
-                }),
+                        .collect();
+
+                    match &fun.node {
+                        Expr::Con(heap_obj_idx) => Expr::ConAlloc(*heap_obj_idx, args),
+                        _ => Expr::Call(CallExpr { fun, args }),
+                    }
+                }
 
                 mono::FunArgs::Named(named_args) => {
                     // Evaluate args in program order, pass in the order expected by the function.
@@ -1907,16 +1911,23 @@ fn lower_expr(
                     for mono::CallArg { name, expr } in args.iter() {
                         let name = name.as_ref().unwrap();
                         let arg_local = arg_locals.get(name).unwrap();
-                        stmts.push(ast::L::new_dummy(Stmt::Assign(AssignStmt {
-                            lhs: ast::L::new_dummy(Expr::LocalVar(*arg_local)),
-                            rhs: lower_l_expr(expr, closures, indices, scope, mono_pgm).0,
-                        })))
+                        stmts.push(L {
+                            node: Stmt::Assign(AssignStmt {
+                                lhs: L {
+                                    node: Expr::LocalVar(*arg_local),
+                                    loc: expr.loc.clone(),
+                                },
+                                rhs: lower_l_expr(expr, closures, indices, scope, mono_pgm).0,
+                            }),
+                            loc: expr.loc.clone(),
+                        })
                     }
 
                     let args = named_args
                         .keys()
-                        .map(|name| {
-                            ast::L::new_dummy(Expr::LocalVar(*arg_locals.get(name).unwrap()))
+                        .map(|name| L {
+                            node: Expr::LocalVar(*arg_locals.get(name).unwrap()),
+                            loc: loc.clone(),
                         })
                         .collect();
 
@@ -1925,7 +1936,13 @@ fn lower_expr(
                         _ => Expr::Call(CallExpr { fun, args }),
                     };
 
-                    stmts.push(ast::L::new_dummy(Stmt::Expr(ast::L::new_dummy(call_expr))));
+                    stmts.push(L {
+                        node: Stmt::Expr(L {
+                            node: call_expr,
+                            loc: loc.clone(),
+                        }),
+                        loc: loc.clone(),
+                    });
 
                     Expr::Do(stmts)
                 }
@@ -1961,23 +1978,18 @@ fn lower_expr(
         ),
 
         mono::Expr::Char(char) => (
-            Expr::Call(CallExpr {
-                fun: Box::new(L {
+            Expr::ConAlloc(
+                *indices
+                    .product_cons
+                    .get(&SmolStr::new_static("Char"))
+                    .unwrap()
+                    .get(&vec![])
+                    .unwrap(),
+                vec![L {
                     loc: loc.clone(),
-                    node: Expr::Con(
-                        *indices
-                            .product_cons
-                            .get(&SmolStr::new_static("Char"))
-                            .unwrap()
-                            .get(&vec![])
-                            .unwrap(),
-                    ),
-                }),
-                args: vec![L {
-                    loc: Loc::dummy(),
                     node: Expr::Int(u64::from(*char as u32)),
                 }],
-            }),
+            ),
             Default::default(),
             mono::Type::Named(mono::NamedType {
                 name: SmolStr::new_static("Char"),
@@ -2050,23 +2062,34 @@ fn lower_expr(
             let mut stmts: Vec<L<Stmt>> = Vec::with_capacity(field_tys.len());
             for (name, expr) in fields.iter() {
                 let arg_local = arg_locals.get(name).unwrap();
-                stmts.push(ast::L::new_dummy(Stmt::Assign(AssignStmt {
-                    lhs: ast::L::new_dummy(Expr::LocalVar(*arg_local)),
-                    rhs: lower_l_expr(expr, closures, indices, scope, mono_pgm).0,
-                })))
+                stmts.push(L {
+                    node: Stmt::Assign(AssignStmt {
+                        lhs: L {
+                            node: Expr::LocalVar(*arg_local),
+                            loc: expr.loc.clone(),
+                        },
+                        rhs: lower_l_expr(expr, closures, indices, scope, mono_pgm).0,
+                    }),
+                    loc: expr.loc.clone(),
+                })
             }
 
-            stmts.push(ast::L::new_dummy(Stmt::Expr(ast::L::new_dummy(
-                Expr::Call(CallExpr {
-                    fun: Box::new(ast::L::new_dummy(Expr::Con(record_idx))),
-                    args: field_tys
-                        .keys()
-                        .map(|name| {
-                            ast::L::new_dummy(Expr::LocalVar(*arg_locals.get(name).unwrap()))
-                        })
-                        .collect(),
+            stmts.push(L {
+                node: Stmt::Expr(L {
+                    node: Expr::ConAlloc(
+                        record_idx,
+                        field_tys
+                            .keys()
+                            .map(|name| L {
+                                node: Expr::LocalVar(*arg_locals.get(name).unwrap()),
+                                loc: loc.clone(),
+                            })
+                            .collect(),
+                    ),
+                    loc: loc.clone(),
                 }),
-            ))));
+                loc: loc.clone(),
+            });
 
             (
                 Expr::Do(stmts),
@@ -2398,7 +2421,10 @@ fn lower_pat(
                             }
                         }) {
                             Some(pat) => lower_l_pat(pat, indices, scope, mono_pgm, mapped_binders),
-                            None => L::new_dummy(Pat::Ignore),
+                            None => L {
+                                node: Pat::Ignore,
+                                loc: loc.clone(),
+                            },
                         };
                         field_pats.push(pat);
                     }
@@ -2416,7 +2442,10 @@ fn lower_pat(
                         .collect();
 
                     for _ in 0..(con_fields.len() - field_pats.len()) {
-                        field_pats.push(L::new_dummy(Pat::Ignore));
+                        field_pats.push(L {
+                            node: Pat::Ignore,
+                            loc: loc.clone(),
+                        });
                     }
 
                     field_pats
@@ -2446,7 +2475,10 @@ fn lower_pat(
                     }
                 }) {
                     Some(pat) => lower_l_pat(pat, indices, scope, mono_pgm, mapped_binders),
-                    None => L::new_dummy(Pat::Ignore),
+                    None => L {
+                        node: Pat::Ignore,
+                        loc: loc.clone(),
+                    },
                 };
                 field_pats.push(pat);
             }

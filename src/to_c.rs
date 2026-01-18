@@ -1987,28 +1987,6 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     }
                     w!(p, ")");
                 }
-                Expr::Con(heap_obj_idx) => {
-                    // Direct constructor allocation
-                    if args.is_empty() {
-                        w!(p, "{}", heap_obj_singleton_name(cg.pgm, *heap_obj_idx));
-                    } else {
-                        w!(p, "({{");
-                        p.indent();
-                        p.nl();
-                        wln!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
-                        let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
-                        wln!(p, "_obj[0] = {};", tag_name);
-                        for (i, arg) in args.iter().enumerate() {
-                            w!(p, "_obj[{}] = ", 1 + i);
-                            expr_to_c(&arg.node, locals, cg, p);
-                            wln!(p, ";");
-                        }
-                        w!(p, "(uint64_t)_obj;");
-                        p.dedent();
-                        p.nl();
-                        w!(p, "}})");
-                    }
-                }
                 _ => {
                     // Closure call
                     w!(p, "({{");
