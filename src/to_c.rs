@@ -1593,7 +1593,10 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             wln!(p, "long size = ftell(f);");
             wln!(p, "fseek(f, 0, SEEK_SET);");
             wln!(p, "char* contents = (char*)malloc(size);");
-            wln!(p, "fread(contents, 1, size, f);");
+            wln!(
+                p,
+                "if (fread(contents, 1, size, f) != (size_t)size) {{ fprintf(stderr, \"Failed to read file\\n\"); exit(1); }}"
+            );
             wln!(p, "fclose(f);");
             w!(
                 p,
