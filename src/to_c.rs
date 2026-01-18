@@ -2818,13 +2818,13 @@ fn heap_obj_deps(
 
         HeapObj::Source(source_decl) => {
             for field in source_decl.fields.iter() {
-                type_heap_obj_deps(type_objs, field, heap_objs, &mut deps);
+                type_heap_obj_deps(type_objs, field, &mut deps);
             }
         }
 
         HeapObj::Record(record_type) => {
             for field in record_type.fields.values() {
-                type_heap_obj_deps(type_objs, field, heap_objs, &mut deps);
+                type_heap_obj_deps(type_objs, field, &mut deps);
             }
         }
     }
@@ -2835,7 +2835,6 @@ fn heap_obj_deps(
 fn type_heap_obj_deps(
     type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
     ty: &mono::Type,
-    heap_objs: &[HeapObj],
     deps: &mut HashSet<HeapObjIdx>,
 ) {
     match ty {
@@ -2845,7 +2844,7 @@ fn type_heap_obj_deps(
 
         mono::Type::Record { fields } => {
             for ty in fields.values() {
-                type_heap_obj_deps(type_objs, ty, heap_objs, deps);
+                type_heap_obj_deps(type_objs, ty, deps);
             }
         }
 
@@ -2859,18 +2858,18 @@ fn type_heap_obj_deps(
             match args {
                 mono::FunArgs::Positional(args) => {
                     for arg in args {
-                        type_heap_obj_deps(type_objs, arg, heap_objs, deps);
+                        type_heap_obj_deps(type_objs, arg, deps);
                     }
                 }
                 mono::FunArgs::Named(args) => {
                     for arg in args.values() {
-                        type_heap_obj_deps(type_objs, arg, heap_objs, deps);
+                        type_heap_obj_deps(type_objs, arg, deps);
                     }
                 }
             }
 
-            type_heap_obj_deps(type_objs, ret, heap_objs, deps);
-            type_heap_obj_deps(type_objs, exn, heap_objs, deps);
+            type_heap_obj_deps(type_objs, ret, deps);
+            type_heap_obj_deps(type_objs, exn, deps);
         }
 
         mono::Type::Never => {}
