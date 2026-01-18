@@ -721,7 +721,7 @@ fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, p: &mut Printer) {
     p.nl();
 }
 
-fn record_decl_to_c(record: &RecordShape, tag: u32, p: &mut Printer) {
+fn record_decl_to_c(record: &RecordType, tag: u32, p: &mut Printer) {
     w!(p, "// tag {}: Record", tag);
     if !record.fields.is_empty() {
         w!(p, " ({} field(s))", record.fields.len());

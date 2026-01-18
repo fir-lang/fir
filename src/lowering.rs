@@ -6,7 +6,7 @@ pub mod printer;
 use crate::ast;
 use crate::collections::*;
 use crate::mono_ast::{self as mono, Id, L, Loc};
-pub(crate) use crate::record_collector::RecordShape;
+pub(crate) use crate::record_collector::RecordType;
 use crate::record_collector::collect_records;
 use crate::utils::loc_display;
 
@@ -263,7 +263,7 @@ pub struct LocalInfo {
 pub enum HeapObj {
     Builtin(BuiltinConDecl),
     Source(SourceConDecl),
-    Record(RecordShape),
+    Record(RecordType),
 }
 
 #[derive(Debug)]
@@ -291,8 +291,11 @@ pub enum BuiltinConDecl {
 
     /// For now we have one array constructor. This works currently because all values are 64-bit
     /// wide (so stores are loads are the same for all values) and we don't have GC.
+    ///
+    /// Tag of this constructor is `ARRAY_CON_IDX`.
     Array,
 
+    // Integers are value types (not boxed), so they don't have tags.
     I8,
     U8,
     I32,
@@ -471,7 +474,7 @@ struct Indices {
     sum_cons: HashMap<Id, HashMap<Id, HashMap<Vec<mono::Type>, HeapObjIdx>>>,
     funs: HashMap<Id, HashMap<Vec<mono::Type>, FunIdx>>,
     assoc_funs: HashMap<Id, HashMap<Id, HashMap<Vec<mono::Type>, FunIdx>>>,
-    records: HashMap<RecordShape, HeapObjIdx>,
+    records: HashMap<RecordType, HeapObjIdx>,
 }
 
 #[derive(Debug, Default)]
@@ -772,14 +775,10 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     }
 
     // Assign indices to record shapes.
-    let mut record_shapes = collect_records(mono_pgm);
-
-    // Always define unit.
-    // TODO: Unit should be defined already as it's the return type of `main`?
-    record_shapes.insert(RecordShape::unit());
+    let record_shapes = collect_records(mono_pgm);
 
     // TODO: We could assign indices to records as we see them during lowering below.
-    let mut record_indices: HashMap<RecordShape, HeapObjIdx> = Default::default();
+    let mut record_indices: HashMap<RecordType, HeapObjIdx> = Default::default();
     for record_shape in record_shapes {
         let idx = next_con_idx;
         next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
@@ -788,7 +787,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     }
 
     lowered_pgm.unit_con_idx = *record_indices
-        .get(&RecordShape::unit())
+        .get(&RecordType::unit())
         .unwrap_or_else(|| panic!("BUG: Unit record not defined {record_indices:#?}"));
 
     let indices = Indices {
@@ -2010,7 +2009,7 @@ fn lower_expr(
         }) => {
             let record_idx = *indices
                 .records
-                .get(&RecordShape {
+                .get(&RecordType {
                     fields: field_tys.clone(),
                 })
                 .unwrap();
@@ -2413,7 +2412,7 @@ fn lower_pat(
         mono::Pat::Record(mono::RecordPat { fields, ty }) => {
             let idx = *indices
                 .records
-                .get(&RecordShape { fields: ty.clone() })
+                .get(&RecordType { fields: ty.clone() })
                 .unwrap();
 
             let mut field_pats: Vec<L<Pat>> = Vec::with_capacity(ty.len());
