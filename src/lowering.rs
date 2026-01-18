@@ -18,6 +18,11 @@ pub struct LoweredPgm {
     pub funs: Vec<Fun>,
     pub closures: Vec<Closure>,
 
+    /// Maps mono type declarations to their heap object indices.
+    ///
+    /// Product types will have one index per type. Sum types may have multiple.
+    pub type_objs: HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+
     // Ids of some special cons that the interpreter needs to know.
     //
     // Note that for product types, type and con tags are the same.
@@ -306,9 +311,9 @@ pub enum BuiltinConDecl {
 
 #[derive(Debug)]
 pub struct SourceConDecl {
-    pub name: Id, // for debugging
+    pub name: Id,
     pub idx: HeapObjIdx,
-    pub ty_args: Vec<mono::Type>, // for debugging
+    pub ty_args: Vec<mono::Type>,
     pub fields: Vec<mono::Type>,
 }
 
@@ -635,6 +640,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         heap_objs: vec![],
         funs: vec![],
         closures: vec![],
+        type_objs: Default::default(),
         true_con_idx: *sum_con_nums
             .get("Bool")
             .unwrap()
@@ -708,6 +714,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 con_ty_args,
                                 fields,
                             ));
+                            lowered_pgm
+                                .type_objs
+                                .entry(con_id.clone())
+                                .or_default()
+                                .entry(con_ty_args.clone())
+                                .or_default()
+                                .push(idx);
                         }
                     }
 
@@ -719,6 +732,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             con_ty_args,
                             fields,
                         ));
+                        lowered_pgm
+                            .type_objs
+                            .entry(con_id.clone())
+                            .or_default()
+                            .entry(con_ty_args.clone())
+                            .or_default()
+                            .push(idx);
                     }
                 },
 

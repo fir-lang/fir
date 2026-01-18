@@ -118,6 +118,8 @@ In C statement context: wrap the generated code with `({ ... })`.
 Reference: https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html
 */
 
+use crate::ast::Id;
+use crate::collections::*;
 use crate::lowering::*;
 use crate::mono_ast as mono;
 use crate::utils::loc_display;
@@ -361,8 +363,13 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     }
     p.nl();
 
-    for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
-        heap_obj_to_c(heap_obj, tag as u32, &mut p);
+    let heap_objs_sorted = top_sort(&pgm.type_objs, &pgm.heap_objs);
+    for heap_obj_idx in heap_objs_sorted.iter().flatten() {
+        heap_obj_to_c(
+            &pgm.heap_objs[heap_obj_idx.as_usize()],
+            heap_obj_idx.0,
+            &mut p,
+        );
         p.nl();
     }
 
@@ -2516,4 +2523,214 @@ impl Write for Printer {
         self.current_line.push_str(s);
         Ok(())
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Top sort
+
+/// Topologically sort user-defined types into SCCs.
+fn top_sort(
+    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    heap_objs: &[HeapObj],
+) -> Vec<HashSet<HeapObjIdx>> {
+    let mut idx_gen = SccIdxGen::default();
+
+    let mut output: Vec<HashSet<HeapObjIdx>> = Vec::with_capacity(heap_objs.len());
+
+    // Because the object indices are consecutive numbers from 0 to number of objects, we can use an
+    // array to map object indices to things.
+    //
+    // Assign the first indices to built-ins right away: they can't be analysed and they don't have
+    // dependencies, and user-defined types can depend on them. So they need to come first. (I think
+    // they may already come first in `heap_objs` so they'll get the first SCC indices, but we don't
+    // have to rely on that, we can just give the the first indices here)
+    let mut nodes: Box<[SccNode]> = heap_objs
+        .iter()
+        .enumerate()
+        .map(|(heap_obj_idx, heap_obj)| SccNode {
+            idx: match heap_obj {
+                HeapObj::Builtin(_) => {
+                    output.push(std::iter::once(HeapObjIdx(heap_obj_idx as u32)).collect());
+                    Some(idx_gen.next())
+                }
+                HeapObj::Source(_) | HeapObj::Record(_) => None,
+            },
+            low_link: None,
+            on_stack: false,
+        })
+        .collect();
+
+    let mut stack: Vec<HeapObjIdx> = Vec::with_capacity(10);
+
+    for (heap_obj_idx, _) in heap_objs.iter().enumerate() {
+        if nodes[heap_obj_idx].idx.is_none() {
+            _scc(
+                type_objs,
+                heap_objs,
+                HeapObjIdx(heap_obj_idx as u32),
+                &mut idx_gen,
+                &mut nodes,
+                &mut stack,
+                &mut output,
+            );
+        }
+    }
+
+    output
+}
+
+#[derive(Debug)]
+struct SccNode {
+    idx: Option<SccIdx>,
+    low_link: Option<SccIdx>,
+    on_stack: bool,
+}
+
+#[derive(Debug, Default)]
+struct SccIdxGen {
+    next: u32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct SccIdx(u32);
+
+impl SccIdxGen {
+    fn next(&mut self) -> SccIdx {
+        let next = self.next;
+        self.next += 1;
+        SccIdx(next)
+    }
+}
+
+fn _scc(
+    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    heap_objs: &[HeapObj],
+    heap_obj_idx: HeapObjIdx,
+    idx_gen: &mut SccIdxGen,
+    nodes: &mut [SccNode],
+    stack: &mut Vec<HeapObjIdx>,
+    output: &mut Vec<HashSet<HeapObjIdx>>,
+) {
+    let idx = idx_gen.next();
+
+    nodes[heap_obj_idx.as_usize()].idx = Some(idx);
+    nodes[heap_obj_idx.as_usize()].low_link = Some(idx);
+    nodes[heap_obj_idx.as_usize()].on_stack = true;
+
+    stack.push(heap_obj_idx);
+
+    // Add dependencies to the output.
+    let deps = heap_obj_deps(type_objs, heap_objs, heap_obj_idx);
+    for dep_obj in deps {
+        if nodes[dep_obj.as_usize()].idx.is_none() {
+            // Dependency not visited yet.
+            _scc(type_objs, heap_objs, dep_obj, idx_gen, nodes, stack, output);
+            let current_low_link = nodes[heap_obj_idx.as_usize()].low_link.unwrap();
+            let dep_low_link = nodes[dep_obj.as_usize()].low_link.unwrap();
+            nodes[heap_obj_idx.as_usize()].low_link = Some(current_low_link.min(dep_low_link));
+        } else if nodes[dep_obj.as_usize()].on_stack {
+            // Dependency is on stack, so in the current SCC.
+            let current_low_link = nodes[heap_obj_idx.as_usize()].low_link.unwrap();
+            let dep_idx = nodes[dep_obj.as_usize()].idx.unwrap();
+            nodes[heap_obj_idx.as_usize()].low_link = Some(current_low_link.min(dep_idx));
+        }
+    }
+
+    // If current node is  aroot node, pop the stack and generate an SCC.
+    if nodes[heap_obj_idx.as_usize()].low_link == nodes[heap_obj_idx.as_usize()].idx {
+        let mut scc: HashSet<HeapObjIdx> = Default::default();
+        loop {
+            let dep = stack.pop().unwrap();
+            nodes[dep.as_usize()].on_stack = false;
+            scc.insert(dep);
+            if dep == heap_obj_idx {
+                break;
+            }
+        }
+
+        output.push(scc);
+    }
+}
+
+fn heap_obj_deps(
+    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    heap_objs: &[HeapObj],
+    heap_obj_idx: HeapObjIdx,
+) -> HashSet<HeapObjIdx> {
+    let mut deps: HashSet<HeapObjIdx> = Default::default();
+
+    match &heap_objs[heap_obj_idx.as_usize()] {
+        HeapObj::Builtin(_) => {}
+
+        HeapObj::Source(source_decl) => {
+            for field in source_decl.fields.iter() {
+                type_heap_obj_deps(type_objs, field, &mut deps);
+            }
+        }
+
+        HeapObj::Record(record_type) => {
+            for field in record_type.fields.values() {
+                type_heap_obj_deps(type_objs, field, &mut deps);
+            }
+        }
+    }
+
+    deps
+}
+
+fn type_heap_obj_deps(
+    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    ty: &mono::Type,
+    deps: &mut HashSet<HeapObjIdx>,
+) {
+    match ty {
+        mono::Type::Named(ty) => {
+            named_type_heap_obj_deps(type_objs, ty, deps);
+        }
+
+        mono::Type::Record { fields } => {
+            for ty in fields.values() {
+                type_heap_obj_deps(type_objs, ty, deps);
+            }
+        }
+
+        mono::Type::Variant { alts } => {
+            for ty in alts.values() {
+                named_type_heap_obj_deps(type_objs, ty, deps);
+            }
+        }
+
+        mono::Type::Fn(mono::FnType { args, ret, exn }) => {
+            match args {
+                mono::FunArgs::Positional(args) => {
+                    for arg in args {
+                        type_heap_obj_deps(type_objs, arg, deps);
+                    }
+                }
+                mono::FunArgs::Named(args) => {
+                    for arg in args.values() {
+                        type_heap_obj_deps(type_objs, arg, deps);
+                    }
+                }
+            }
+
+            type_heap_obj_deps(type_objs, ret, deps);
+            type_heap_obj_deps(type_objs, exn, deps);
+        }
+
+        mono::Type::Never => {}
+    }
+}
+
+fn named_type_heap_obj_deps(
+    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    ty: &mono::NamedType,
+    deps: &mut HashSet<HeapObjIdx>,
+) {
+    let ty_map = match type_objs.get(&ty.name) {
+        Some(ty_map) => ty_map,
+        None => return, // builtin
+    };
+
+    deps.extend(ty_map.get(&ty.args).unwrap().iter().cloned());
 }
