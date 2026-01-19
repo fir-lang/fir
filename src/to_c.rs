@@ -124,8 +124,6 @@ use crate::lowering::*;
 use crate::mono_ast as mono;
 use crate::utils::loc_display;
 
-use indoc::writedoc;
-
 use std::fmt::Write;
 
 macro_rules! w {
@@ -138,6 +136,12 @@ macro_rules! wln {
     ($p:expr, $($arg:tt)*) => {{
         ::core::write!($p, $($arg)*).unwrap();
         $p.nl();
+    }};
+}
+
+macro_rules! writedoc {
+    ($p:expr, $($arg:tt)*) => {{
+        ::indoc::writedoc!($p, $($arg)*).unwrap();
     }};
 }
 
@@ -160,8 +164,7 @@ impl<'a> Cg<'a> {
 pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     let mut p = Printer::default();
 
-    // Header includes and runtime definitions
-    let _ = writedoc!(
+    writedoc!(
         p,
         "
         #include <inttypes.h>
@@ -172,21 +175,45 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         #include <stdlib.h>
         #include <string.h>
 
-        // Tags for builtin heap objects
-        #define CON_TAG 0
-        #define FUN_TAG 1
-        #define CLOSURE_TAG 2
-        #define ARRAY_TAG 3
+        "
+    );
 
-        // Array header layout (matches interpreter):
-        // word 0: tag
-        // word 1: data pointer (scaled by element size for direct indexing)
-        // word 2: length (in elements)
-        // Data is allocated separately so slices can share underlying storage.
-        #define ARRAY_TAG_IDX 0
-        #define ARRAY_DATA_PTR_IDX 1
-        #define ARRAY_LEN_IDX 2
+    let heap_objs_sorted = top_sort(&pgm.type_objs, &pgm.heap_objs);
+    for scc in &heap_objs_sorted {
+        // If SCC has more than one element, forward-declare the structs.
+        if scc.len() > 1 {
+            for heap_obj_idx in scc {
+                match &pgm.heap_objs[heap_obj_idx.as_usize()] {
+                    HeapObj::Source(source_con) => {
+                        let struct_name = source_con_struct_name(source_con);
+                        wln!(p, "typedef struct {} {};", struct_name, struct_name);
+                    }
+                    HeapObj::Record(record) => {
+                        let struct_name = record_struct_name(record);
+                        wln!(p, "typedef struct {} {};", struct_name, struct_name);
+                    }
+                    HeapObj::Builtin(_) => {
+                        panic!("Builtin in SCC");
+                    }
+                }
+            }
+            p.nl();
+        }
 
+        // Generate struct definitions.
+        for heap_obj_idx in scc {
+            heap_obj_to_c(
+                &pgm.heap_objs[heap_obj_idx.as_usize()],
+                heap_obj_idx.0,
+                &mut p,
+            );
+            p.nl();
+        }
+    }
+
+    writedoc!(
+        p,
+        "
         // Exception handling using setjmp/longjmp
         typedef struct ExnHandler {{
             jmp_buf buf;
@@ -214,113 +241,110 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         }}
 
         // Array allocation and access functions.
-        // For the C backend, we store actual byte pointers in ARRAY_DATA_PTR_IDX.
-        // This differs from the interpreter which uses scaled indices into a single heap.
-        // Slicing creates a new header pointing to the same underlying data.
 
         static uint64_t array_new_u8(uint32_t len) {{
             size_t data_words = (len + 7) / 8;
-            uint64_t* arr = alloc_words(3 + data_words);
-            arr[ARRAY_TAG_IDX] = ARRAY_TAG;
-            arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(arr + 3);
-            arr[ARRAY_LEN_IDX] = len;
-            memset(arr + 3, 0, data_words * 8);
+            ARRAY* arr = (ARRAY*)malloc(sizeof(ARRAY) + (data_words * sizeof(uint64_t)));
+            arr->tag = ARRAY_TAG;
+            arr->data_ptr = (uint64_t*)(arr + 1);
+            arr->len = len;
+            memset(arr + 1, 0, data_words * sizeof(uint64_t));
             return (uint64_t)arr;
         }}
 
         static uint64_t array_get_u8(uint64_t arr, uint32_t idx) {{
-            uint8_t* data = (uint8_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            return (uint64_t)data[idx];
+            uint8_t* data_ptr = (uint8_t*)((ARRAY*)arr)->data_ptr;
+            return (uint64_t)data_ptr[idx];
         }}
 
         static void array_set_u8(uint64_t arr, uint32_t idx, uint64_t val) {{
-            uint8_t* data = (uint8_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            data[idx] = (uint8_t)val;
+            uint8_t* data_ptr = (uint8_t*)((ARRAY*)arr)->data_ptr;
+            data_ptr[idx] = (uint8_t)val;
         }}
 
         static uint64_t array_slice_u8(uint64_t arr, uint32_t start, uint32_t end) {{
-            uint64_t* new_arr = alloc_words(3);
-            new_arr[ARRAY_TAG_IDX] = ARRAY_TAG;
-            uint8_t* data = (uint8_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            new_arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(data + start);
-            new_arr[ARRAY_LEN_IDX] = end - start;
+            ARRAY* new_arr = (ARRAY*)malloc(sizeof(ARRAY));
+            new_arr->tag = ARRAY_TAG;
+            uint8_t* data_ptr = (uint8_t*)((ARRAY*)arr)->data_ptr;
+            new_arr->data_ptr = (uint64_t*)(data_ptr + start);
+            new_arr->len = end - start;
             return (uint64_t)new_arr;
         }}
 
         static void array_copy_within_u8(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint8_t* data = (uint8_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            memmove(data + dst, data + src, len);
+            uint8_t* data_ptr = (uint8_t*)((ARRAY*)arr)->data_ptr;
+            memmove(data_ptr + dst, data_ptr + src, len);
         }}
 
         static uint64_t array_new_u32(uint32_t len) {{
             size_t data_words = (len + 1) / 2;
-            uint64_t* arr = alloc_words(3 + data_words);
-            arr[ARRAY_TAG_IDX] = ARRAY_TAG;
-            arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(arr + 3);
-            arr[ARRAY_LEN_IDX] = len;
-            memset(arr + 3, 0, data_words * 8);
+            ARRAY* arr = (ARRAY*)malloc(sizeof(ARRAY) + (data_words * sizeof(uint64_t)));
+            arr->tag = ARRAY_TAG;
+            arr->data_ptr = (uint64_t*)(arr + 1);
+            arr->len = len;
+            memset(arr + 1, 0, data_words * sizeof(uint64_t));
             return (uint64_t)arr;
         }}
 
         static uint64_t array_get_u32(uint64_t arr, uint32_t idx) {{
-            uint32_t* data = (uint32_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            return (uint64_t)data[idx];
+            uint32_t* data_ptr = (uint32_t*)((ARRAY*)arr)->data_ptr;
+            return (uint64_t)data_ptr[idx];
         }}
 
         static void array_set_u32(uint64_t arr, uint32_t idx, uint64_t val) {{
-            uint32_t* data = (uint32_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            data[idx] = (uint32_t)val;
+            uint32_t* data_ptr = (uint32_t*)((ARRAY*)arr)->data_ptr;
+            data_ptr[idx] = (uint32_t)val;
         }}
 
         static uint64_t array_slice_u32(uint64_t arr, uint32_t start, uint32_t end) {{
-            uint64_t* new_arr = alloc_words(3);
-            new_arr[ARRAY_TAG_IDX] = ARRAY_TAG;
-            uint32_t* data = (uint32_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            new_arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(data + start);
-            new_arr[ARRAY_LEN_IDX] = end - start;
+            ARRAY* new_arr = (ARRAY*)malloc(sizeof(ARRAY));
+            new_arr->tag = ARRAY_TAG;
+            uint32_t* data_ptr = (uint32_t*)((ARRAY*)arr)->data_ptr;
+            new_arr->data_ptr = (uint64_t*)(data_ptr + start);
+            new_arr->len = end - start;
             return (uint64_t)new_arr;
         }}
 
         static void array_copy_within_u32(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint32_t* data = (uint32_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            memmove(data + dst, data + src, len * sizeof(uint32_t));
+            uint32_t* data_ptr = (uint32_t*)((ARRAY*)arr)->data_ptr;
+            memmove(data_ptr + dst, data_ptr + src, len * sizeof(uint32_t));
         }}
 
         static uint64_t array_new_u64(uint32_t len) {{
-            uint64_t* arr = alloc_words(3 + len);
-            arr[ARRAY_TAG_IDX] = ARRAY_TAG;
-            arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(arr + 3);
-            arr[ARRAY_LEN_IDX] = len;
-            memset(arr + 3, 0, len * 8);
+            ARRAY* arr = (ARRAY*)malloc(sizeof(ARRAY) + (len * sizeof(uint64_t)));
+            arr->tag = ARRAY_TAG;
+            arr->data_ptr = (uint64_t*)(arr + 1);
+            arr->len = len;
+            memset(arr + 1, 0, len * sizeof(uint64_t));
             return (uint64_t)arr;
         }}
 
         static uint64_t array_get_u64(uint64_t arr, uint32_t idx) {{
-            uint64_t* data = (uint64_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            return data[idx];
+            uint64_t* data_ptr = (uint64_t*)((ARRAY*)arr)->data_ptr;
+            return data_ptr[idx];
         }}
 
         static void array_set_u64(uint64_t arr, uint32_t idx, uint64_t val) {{
-            uint64_t* data = (uint64_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            data[idx] = val;
+            uint64_t* data_ptr = (uint64_t*)((ARRAY*)arr)->data_ptr;
+            data_ptr[idx] = val;
         }}
 
         static uint64_t array_slice_u64(uint64_t arr, uint32_t start, uint32_t end) {{
-            uint64_t* new_arr = alloc_words(3);
-            new_arr[ARRAY_TAG_IDX] = ARRAY_TAG;
-            uint64_t* data = (uint64_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            new_arr[ARRAY_DATA_PTR_IDX] = (uint64_t)(data + start);
-            new_arr[ARRAY_LEN_IDX] = end - start;
+            ARRAY* new_arr = (ARRAY*)malloc(sizeof(ARRAY));
+            new_arr->tag = ARRAY_TAG;
+            uint64_t* data_ptr = (uint64_t*)((ARRAY*)arr)->data_ptr;
+            new_arr->data_ptr = data_ptr + start;
+            new_arr->len = end - start;
             return (uint64_t)new_arr;
         }}
 
         static void array_copy_within_u64(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint64_t* data = (uint64_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            memmove(data + dst, data + src, len * sizeof(uint64_t));
+            uint64_t* data_ptr = (uint64_t*)((ARRAY*)arr)->data_ptr;
+            memmove(data_ptr + dst, data_ptr + src, len * sizeof(uint64_t));
         }}
 
         static uint32_t array_len(uint64_t arr) {{
-            return (uint32_t)((uint64_t*)arr)[ARRAY_LEN_IDX];
+            return (uint32_t)((ARRAY*)arr)->len;
         }}
 
         // String comparison for pattern matching
@@ -329,19 +353,19 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             uint64_t bytes_arr = s1[1]; // _bytes field
             uint32_t len1 = array_len(bytes_arr);
             if (len1 != len2) return false;
-            uint8_t* data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];
-            return memcmp(data, str2, len1) == 0;
+            uint8_t* data_ptr = (uint8_t*)((ARRAY*)bytes_arr)->data_ptr;
+            return memcmp(data_ptr, str2, len1) == 0;
         }}
 
         // Allocate string from bytes
         static uint64_t alloc_str(uint64_t str_tag, const char* bytes, size_t len) {{
             uint64_t arr = array_new_u8(len);
-            uint8_t* data = (uint8_t*)((uint64_t*)arr)[ARRAY_DATA_PTR_IDX];
-            memcpy(data, bytes, len);
+            uint8_t* data_ptr = (uint8_t*)((ARRAY*)arr)->data_ptr;
+            memcpy(data_ptr, bytes, len);
 
-            uint64_t* str = alloc_words(2);
-            str[0] = str_tag;
-            str[1] = arr;
+            Str* str = (Str*)malloc(sizeof(Str));
+            str->_tag = TAG_Str;
+            str->_0 = arr;
             return (uint64_t)str;
         }}
 
@@ -363,57 +387,49 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     }
     p.nl();
 
-    let heap_objs_sorted = top_sort(&pgm.type_objs, &pgm.heap_objs);
-    for heap_obj_idx in heap_objs_sorted.iter().flatten() {
-        heap_obj_to_c(
-            &pgm.heap_objs[heap_obj_idx.as_usize()],
-            heap_obj_idx.0,
-            &mut p,
-        );
-        p.nl();
-    }
-
     p.nl();
     w!(
         p,
         "// Statically allocated singletons for nullary constructors"
     );
     p.nl();
-    for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
+    for heap_obj in pgm.heap_objs.iter() {
         match heap_obj {
             HeapObj::Source(source_con) if source_con.fields.is_empty() => {
                 let singleton_name = source_con_singleton_name(source_con);
+                let struct_name = source_con_struct_name(source_con);
                 let tag_name = source_con_tag_name(source_con);
-                w!(
+                wln!(
                     p,
-                    "static uint64_t {}_data[] = {{ {} }};",
+                    "static {} {}_data = {{ ._tag = {} }};",
+                    struct_name,
                     singleton_name,
                     tag_name
                 );
-                p.nl();
-                w!(
+                wln!(
                     p,
-                    "#define {} ((uint64_t){}_data)",
+                    "#define {} ((uint64_t)&{}_data)",
                     singleton_name,
                     singleton_name
                 );
-                p.nl();
             }
             HeapObj::Record(record) if record.fields.is_empty() => {
-                w!(
+                let struct_name = record_struct_name(record);
+                let tag_name = format!("TAG_{}", struct_name);
+                let singleton_name = format!("_singleton_{}", struct_name);
+                wln!(
                     p,
-                    "static uint64_t _singleton_record_{}_data[] = {{ {} }};",
-                    tag,
-                    tag
+                    "static {} {}_data = {{ {} }};",
+                    struct_name,
+                    singleton_name,
+                    tag_name
                 );
-                p.nl();
-                w!(
+                wln!(
                     p,
-                    "#define _singleton_record_{} ((uint64_t)_singleton_record_{}_data)",
-                    tag,
-                    tag
+                    "#define {} ((uint64_t)&{}_data)",
+                    singleton_name,
+                    singleton_name
                 );
-                p.nl();
             }
             _ => {}
         }
@@ -431,14 +447,14 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 let tag_name = source_con_tag_name(source_con);
                 w!(
                     p,
-                    "static uint64_t _con_closure_{}_data[] = {{ CON_CON_TAG, {} }};",
+                    "static CON _con_closure_{}_data = {{ .tag = CON_TAG, .con_tag = {} }};",
                     tag,
                     tag_name
                 );
                 p.nl();
                 w!(
                     p,
-                    "#define _con_closure_{} ((uint64_t)_con_closure_{}_data)",
+                    "#define _con_closure_{} ((uint64_t)&_con_closure_{}_data)",
                     tag,
                     tag
                 );
@@ -457,14 +473,14 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     for i in 0..pgm.funs.len() {
         w!(
             p,
-            "static uint64_t _fun_closure_{}_data[] = {{ FUN_CON_TAG, (uint64_t)_fun_{} }};",
+            "static FUN _fun_closure_{}_data = {{ .tag = FUN_TAG, .fun = (void(*)(void))_fun_{} }};",
             i,
             i
         );
         p.nl();
         w!(
             p,
-            "#define _fun_closure_{} ((uint64_t)_fun_closure_{}_data)",
+            "#define _fun_closure_{} ((uint64_t)&_fun_closure_{}_data)",
             i,
             i
         );
@@ -624,19 +640,58 @@ fn heap_obj_to_c(heap_obj: &HeapObj, tag: u32, p: &mut Printer) {
 fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
     match builtin {
         BuiltinConDecl::Con => {
-            wln!(p, "#define CON_CON_TAG {}", tag);
+            wln!(p, "#define CON_TAG {}", tag);
+            writedoc!(
+                p,
+                "
+                typedef struct {{
+                    uint64_t tag;
+                    uint64_t con_tag;
+                }} CON;
+                "
+            );
         }
 
         BuiltinConDecl::Fun => {
-            wln!(p, "#define FUN_CON_TAG {}", tag);
+            wln!(p, "#define FUN_TAG {}", tag);
+            writedoc!(
+                p,
+                "
+                typedef struct {{
+                    uint64_t tag;
+                    void (*fun)(void);
+                }} FUN;
+                "
+            );
         }
 
         BuiltinConDecl::Closure => {
-            wln!(p, "#define CLOSURE_CON_TAG {}", tag);
+            wln!(p, "#define CLOSURE_TAG {}", tag);
+            writedoc!(
+                p,
+                "
+                typedef struct {{
+                    uint64_t tag;
+                    void (*fun)(void);
+                    uint64_t captures[];
+                }} CLOSURE;
+                "
+            );
         }
 
         BuiltinConDecl::Array => {
-            // ARRAY_TAG is defined in the header
+            wln!(p, "#define ARRAY_TAG {}", tag);
+            writedoc!(
+                p,
+                "
+                typedef struct {{
+                    uint64_t tag;
+                    uint64_t* data_ptr; // initially points to the the `data` at the end
+                    uint64_t len;
+                    uint64_t data[];
+                }} ARRAY;
+                "
+            );
         }
 
         BuiltinConDecl::I8 => {
@@ -665,7 +720,6 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
     }
 }
 
-/// Generate a symbolic tag name for a source constructor.
 fn source_con_tag_name(source_con: &SourceConDecl) -> String {
     let mut tag_name = String::from("TAG_");
     tag_name.push_str(&source_con.name);
@@ -676,12 +730,39 @@ fn source_con_tag_name(source_con: &SourceConDecl) -> String {
     tag_name
 }
 
-/// Get the symbolic tag name for a heap object.
-/// Returns the symbolic name for source constructors, or the numeric tag for builtins/records.
+fn source_con_struct_name(source_con: &SourceConDecl) -> String {
+    let mut name = source_con.name.to_string();
+    for ty_arg in &source_con.ty_args {
+        name.push('_');
+        ty_to_c(ty_arg, &mut name);
+    }
+    name
+}
+
+fn record_struct_name(record: &RecordType) -> String {
+    let mut name = String::from("Record");
+    for (field_name, field_ty) in &record.fields {
+        name.push('_');
+        name.push_str(field_name);
+        name.push('_');
+        ty_to_c(field_ty, &mut name);
+    }
+    name
+}
+
+fn heap_obj_struct_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
+    match &pgm.heap_objs[idx.0 as usize] {
+        HeapObj::Source(source_con) => source_con_struct_name(source_con),
+        HeapObj::Record(record) => record_struct_name(record),
+        HeapObj::Builtin(_) => panic!("Builtin in heap_obj_struct_name"),
+    }
+}
+
 fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
         HeapObj::Source(source_con) => source_con_tag_name(source_con),
-        HeapObj::Builtin(_) | HeapObj::Record(_) => format!("{}", idx.0),
+        HeapObj::Record(record) => format!("TAG_{}", record_struct_name(record)),
+        HeapObj::Builtin(_) => panic!("Builtin in heap_obj_tag_name"),
     }
 }
 
@@ -700,7 +781,7 @@ fn source_con_singleton_name(source_con: &SourceConDecl) -> String {
 fn heap_obj_singleton_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
         HeapObj::Source(source_con) => source_con_singleton_name(source_con),
-        HeapObj::Record(_) => format!("_singleton_record_{}", idx.0),
+        HeapObj::Record(record) => format!("_singleton_{}", record_struct_name(record)),
         HeapObj::Builtin(_) => panic!("Builtin heap objects don't have singletons"),
     }
 }
@@ -716,20 +797,39 @@ fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, p: &mut Printer) {
     assert_eq!(idx.0, tag);
 
     let tag_name = source_con_tag_name(source_con);
+    let struct_name = source_con_struct_name(source_con);
 
-    w!(p, "#define {} {}", tag_name, tag);
-    if !fields.is_empty() {
-        w!(p, " // {} field(s)", fields.len());
-    }
+    wln!(p, "#define {} {}", tag_name, tag);
+
+    w!(p, "typedef struct {} {{", struct_name);
+    p.indent();
     p.nl();
+    w!(p, "uint64_t _tag;");
+    for (i, _field) in fields.iter().enumerate() {
+        p.nl();
+        w!(p, "uint64_t _{};", i);
+    }
+    p.dedent();
+    p.nl();
+    wln!(p, "}} {};", struct_name);
 }
 
 fn record_decl_to_c(record: &RecordType, tag: u32, p: &mut Printer) {
-    w!(p, "// tag {}: Record", tag);
-    if !record.fields.is_empty() {
-        w!(p, " ({} field(s))", record.fields.len());
-    }
+    let struct_name = record_struct_name(record);
+
+    wln!(p, "#define TAG_{} {}", struct_name, tag);
+
+    w!(p, "typedef struct {} {{", struct_name);
+    p.indent();
     p.nl();
+    w!(p, "uint64_t _tag;");
+    for (i, (_field_name, _field_ty)) in record.fields.iter().enumerate() {
+        p.nl();
+        w!(p, "uint64_t _{};", i);
+    }
+    p.dedent();
+    p.nl();
+    wln!(p, "}} {};", struct_name);
 }
 
 fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
@@ -801,16 +901,16 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "static uint64_t _fun_{}(uint64_t msg) {{", idx);
             p.indent();
             p.nl();
-            wln!(p, "uint64_t* str = (uint64_t*)msg;");
-            wln!(p, "uint64_t bytes_arr = str[1];");
+            wln!(p, "Str* str = (Str*)msg;");
+            wln!(p, "uint64_t bytes_arr = str->_0;");
             wln!(p, "uint32_t len = array_len(bytes_arr);");
             w!(
                 p,
-                "uint8_t* data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];"
+                "uint8_t* data_ptr = (uint8_t*)((ARRAY*)bytes_arr)->data_ptr;"
             );
             p.nl();
             wln!(p, "fprintf(stderr, \"PANIC: \");");
-            wln!(p, "fwrite(data, 1, len, stderr);");
+            wln!(p, "fwrite(data_ptr, 1, len, stderr);");
             wln!(p, "fprintf(stderr, \"\\n\");");
             w!(p, "exit(1);");
             p.dedent();
@@ -822,15 +922,15 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "static uint64_t _fun_{}(uint64_t str) {{", idx);
             p.indent();
             p.nl();
-            wln!(p, "uint64_t* s = (uint64_t*)str;");
-            wln!(p, "uint64_t bytes_arr = s[1];");
+            wln!(p, "Str* s = (Str*)str;");
+            wln!(p, "uint64_t bytes_arr = s->_0;");
             wln!(p, "uint32_t len = array_len(bytes_arr);");
             w!(
                 p,
-                "uint8_t* data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];"
+                "uint8_t* data_ptr = (uint8_t*)((ARRAY*)bytes_arr)->data_ptr;"
             );
             p.nl();
-            wln!(p, "fwrite(data, 1, len, stdout);");
+            wln!(p, "fwrite(data_ptr, 1, len, stdout);");
             w!(
                 p,
                 "return {};",
@@ -1406,8 +1506,6 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::Try { ok_con, err_con } => {
-            let ok_tag_name = heap_obj_tag_name(pgm, *ok_con);
-            let err_tag_name = heap_obj_tag_name(pgm, *err_con);
             w!(p, "static uint64_t _fun_{}(uint64_t cb) {{", idx);
             p.indent();
             p.nl();
@@ -1418,17 +1516,22 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.indent();
             p.nl();
             wln!(p, "// Call the closure");
-            wln!(p, "uint64_t* closure = (uint64_t*)cb;");
+            wln!(p, "CLOSURE* closure = (CLOSURE*)cb;");
             wln!(
                 p,
-                "uint64_t (*fn)(uint64_t) = (uint64_t (*)(uint64_t))((uint64_t*)cb)[1];"
+                "uint64_t (*fn)(uint64_t) = (uint64_t (*)(uint64_t))closure->fun;"
             );
             wln!(p, "uint64_t result = fn(cb);");
             wln!(p, "current_exn_handler = handler.prev;");
             wln!(p, "// Allocate Ok result");
-            wln!(p, "uint64_t* ok = alloc_words(2);");
-            wln!(p, "ok[0] = {};", ok_tag_name);
-            wln!(p, "ok[1] = result;");
+            let ok_tag_name = heap_obj_tag_name(pgm, *ok_con);
+            let ok_struct_name = heap_obj_struct_name(pgm, *ok_con);
+            wln!(
+                p,
+                "{ok_struct_name}* ok = malloc(sizeof({ok_struct_name}));"
+            );
+            wln!(p, "ok->_tag = {ok_tag_name};");
+            wln!(p, "ok->_0 = result;");
             w!(p, "return (uint64_t)ok;");
             p.dedent();
             p.nl();
@@ -1436,10 +1539,15 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.indent();
             p.nl();
             wln!(p, "// Exception was thrown");
+            let err_tag_name = heap_obj_tag_name(pgm, *err_con);
+            let err_struct_name = heap_obj_struct_name(pgm, *err_con);
             wln!(p, "current_exn_handler = handler.prev;");
-            wln!(p, "uint64_t* err = alloc_words(2);");
-            wln!(p, "err[0] = {};", err_tag_name);
-            wln!(p, "err[1] = handler.exn_value;");
+            wln!(
+                p,
+                "{err_struct_name}* err = malloc(sizeof({err_struct_name}));"
+            );
+            wln!(p, "err->_tag = {};", err_tag_name);
+            wln!(p, "err->_0 = handler.exn_value;");
             w!(p, "return (uint64_t)err;");
             p.dedent();
             p.nl();
@@ -1578,12 +1686,12 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "static uint64_t _fun_{}(uint64_t path_str) {{", idx);
             p.indent();
             p.nl();
-            wln!(p, "uint64_t* s = (uint64_t*)path_str;");
-            wln!(p, "uint64_t bytes_arr = s[1];");
+            wln!(p, "Str* s = (Str*)path_str;");
+            wln!(p, "uint64_t bytes_arr = s->_0;");
             wln!(p, "uint32_t path_len = array_len(bytes_arr);");
             w!(
                 p,
-                "uint8_t* path_data = (uint8_t*)((uint64_t*)bytes_arr)[ARRAY_DATA_PTR_IDX];"
+                "uint8_t* path_data = (uint8_t*)((ARRAY*)bytes_arr)->data_ptr;"
             );
             p.nl();
             wln!(p, "char* path = (char*)malloc(path_len + 1);");
@@ -1781,9 +1889,9 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     for (i, fv) in closure.fvs.iter().enumerate() {
         w!(
             p,
-            "_{} = ((uint64_t*)_closure_obj)[{}]; // {}",
+            "_{} = ((CLOSURE*)_closure_obj)->captures[{}]; // {}",
             fv.use_idx.as_usize(),
-            2 + i,
+            i,
             fv.id
         );
         p.nl();
@@ -1845,6 +1953,7 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 w!(p, "uint64_t {} = ", obj_temp);
                 expr_to_c(&object.node, locals, cg, p);
                 wln!(p, ";");
+                // TODO: We need the object type here to be able to get the struct type
                 w!(p, "((uint64_t*){})[{}] = ", obj_temp, 1 + idx);
                 expr_to_c(&rhs.node, locals, cg, p);
                 wln!(p, ";");
@@ -1944,15 +2053,15 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 // Return singleton
                 w!(p, "{}", heap_obj_singleton_name(cg.pgm, *heap_obj_idx));
             } else {
-                // Allocate object
+                let struct_name = heap_obj_struct_name(cg.pgm, *heap_obj_idx);
+                let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
                 w!(p, "({{");
                 p.indent();
                 p.nl();
-                wln!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
-                let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
-                wln!(p, "_obj[0] = {};", tag_name);
+                wln!(p, "{struct_name}* _obj = malloc(sizeof({struct_name}));",);
+                wln!(p, "_obj->_tag = {tag_name};");
                 for (i, arg) in args.iter().enumerate() {
-                    w!(p, "_obj[{}] = ", 1 + i);
+                    w!(p, "_obj->_{i} = ");
                     expr_to_c(&arg.node, locals, cg, p);
                     wln!(p, ";");
                 }
@@ -1968,6 +2077,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             field: _,
             idx,
         }) => {
+            // TODO: We need the object type here to be able to get the struct type
             w!(p, "((uint64_t*)(");
             expr_to_c(&object.node, locals, cg, p);
             w!(p, "))[{}]", 1 + idx);
@@ -1987,28 +2097,29 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     }
                     w!(p, ")");
                 }
-                _ => {
+                other => {
                     // Closure call
                     w!(p, "({{");
                     p.indent();
                     p.nl();
                     let fun_temp = cg.fresh_temp();
                     w!(p, "uint64_t {} = ", fun_temp);
-                    expr_to_c(&fun.node, locals, cg, p);
+                    expr_to_c(other, locals, cg, p);
                     wln!(p, ";");
                     wln!(p, "uint32_t _tag = get_tag({});", fun_temp);
                     wln!(p, "uint64_t _call_result;");
 
                     // Check tag and dispatch
-                    w!(p, "if (_tag == CON_CON_TAG) {{");
+                    w!(p, "if (_tag == CON_TAG) {{");
                     p.indent();
                     p.nl();
                     w!(
                         p,
-                        "uint32_t _con_tag = (uint32_t)((uint64_t*){})[ 1];",
+                        "uint32_t _con_tag = (uint32_t)((CON*){})->con_tag;",
                         fun_temp
                     );
                     p.nl();
+                    // TODO: We need `fun`'s type here to be able to allocate the right struct.
                     wln!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
                     wln!(p, "_obj[0] = _con_tag;");
                     for (i, arg) in args.iter().enumerate() {
@@ -2019,7 +2130,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     w!(p, "_call_result = (uint64_t)_obj;");
                     p.dedent();
                     p.nl();
-                    w!(p, "}} else if (_tag == FUN_CON_TAG) {{");
+                    w!(p, "}} else if (_tag == FUN_TAG) {{");
                     p.indent();
                     p.nl();
                     // Cast to function pointer and call
@@ -2296,22 +2407,22 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.nl();
             w!(
                 p,
-                "uint64_t* _clos = alloc_words({});",
-                2 + closure.fvs.len()
+                "CLOSURE* _clos = (CLOSURE*)malloc(sizeof(CLOSURE) + (sizeof(uint64_t) * {}));",
+                closure.fvs.len()
             );
             p.nl();
-            wln!(p, "_clos[0] = CLOSURE_CON_TAG;");
+            wln!(p, "_clos->tag = CLOSURE_TAG;");
             w!(
                 p,
-                "_clos[1] = (uint64_t)_closure_{};",
+                "_clos->fun = (void(*)(void))_closure_{};",
                 closure_idx.as_usize()
             );
             p.nl();
             for (i, fv) in closure.fvs.iter().enumerate() {
                 w!(
                     p,
-                    "_clos[{}] = _{}; // {}",
-                    2 + i,
+                    "_clos->captures[{}] = _{}; // {}",
+                    i,
                     fv.alloc_idx.as_usize(),
                     fv.id
                 );
