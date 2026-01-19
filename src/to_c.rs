@@ -1,8 +1,6 @@
 /*
 TODOs:
 
-- Consider creating a `struct` for every constructor, to make debugging in gdb easier.
-
 - Make sure signed integers wrap on overflow and underflow in a defined way. Update the interpreter
   to do the same. Add tests. (`__builtin_add_overflow` etc.)
 
@@ -470,20 +468,44 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         "// Statically allocated closure objects for top-level functions"
     );
     p.nl();
-    for i in 0..pgm.funs.len() {
+    for (i, fun) in pgm.funs.iter().enumerate() {
+        w!(p, "static uint64_t _fun_closure_{i}_fun(CLOSURE* self");
+        for i in 0..fun_param_count(fun) {
+            w!(p, ", uint64_t p{i}");
+        }
+        w!(p, ") {{");
+        p.indent();
+        p.nl();
+        w!(p, "return ((uint64_t(*)(");
+        for i in 0..fun_param_count(fun) {
+            if i != 0 {
+                w!(p, ", ");
+            }
+            w!(p, "uint64_t");
+        }
+        w!(p, "))(_fun_{i}))(");
+        for i in 0..fun_param_count(fun) {
+            if i != 0 {
+                w!(p, ", ");
+            }
+            w!(p, "p{i}");
+        }
+        w!(p, ");");
+        p.dedent();
+        p.nl();
+        wln!(p, "}}");
+
         w!(
             p,
-            "static FUN _fun_closure_{}_data = {{ .tag = FUN_TAG, .fun = (void(*)(void))_fun_{} }};",
-            i,
-            i
+            "static CLOSURE _fun_closure_{i}_data = {{ .tag = CLOSURE_TAG, .fun = (void(*)(void))_fun_closure_{i}_fun }};",
         );
         p.nl();
+
         w!(
             p,
-            "#define _fun_closure_{} ((uint64_t)&_fun_closure_{}_data)",
-            i,
-            i
+            "#define _fun_closure_{i} ((uint64_t)&_fun_closure_{i}_data)",
         );
+        p.nl();
         p.nl();
     }
     p.nl();
@@ -539,6 +561,13 @@ fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer
         }
     }
     wln!(p, ");");
+}
+
+fn fun_param_count(fun: &Fun) -> usize {
+    match fun {
+        Fun::Builtin(fun) => builtin_fun_param_count(fun),
+        Fun::Source(fun) => fun.params.len(),
+    }
 }
 
 /// Returns the number of parameters for a built-in function.
@@ -653,16 +682,7 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
         }
 
         BuiltinConDecl::Fun => {
-            wln!(p, "#define FUN_TAG {}", tag);
-            writedoc!(
-                p,
-                "
-                typedef struct {{
-                    uint64_t tag;
-                    void (*fun)(void);
-                }} FUN;
-                "
-            );
+            // This type is not used in the C backend, instead we generate static `CLOSURE`s.
         }
 
         BuiltinConDecl::Closure => {
@@ -1831,12 +1851,12 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
         w!(p, "]");
     }
     p.nl();
-    w!(p, "static uint64_t _fun_{}(", idx);
+    w!(p, "static uint64_t _fun_{idx}(");
     for (i, _) in fun.params.iter().enumerate() {
         if i > 0 {
             w!(p, ", ");
         }
-        w!(p, "uint64_t _p{}", i);
+        w!(p, "uint64_t _p{i}");
     }
     w!(p, ") {{");
     p.indent();
@@ -2128,36 +2148,6 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                         wln!(p, ";");
                     }
                     w!(p, "_call_result = (uint64_t)_obj;");
-                    p.dedent();
-                    p.nl();
-                    w!(p, "}} else if (_tag == FUN_TAG) {{");
-                    p.indent();
-                    p.nl();
-                    // Cast to function pointer and call
-                    let arg_count = args.len();
-                    w!(p, "uint64_t (*_fn)(");
-                    for i in 0..arg_count {
-                        if i > 0 {
-                            w!(p, ", ");
-                        }
-                        w!(p, "uint64_t");
-                    }
-                    w!(p, ") = (uint64_t (*)(");
-                    for i in 0..arg_count {
-                        if i > 0 {
-                            w!(p, ", ");
-                        }
-                        w!(p, "uint64_t");
-                    }
-                    wln!(p, "))((uint64_t*){})[ 1];", fun_temp);
-                    w!(p, "_call_result = _fn(");
-                    for (i, arg) in args.iter().enumerate() {
-                        if i > 0 {
-                            w!(p, ", ");
-                        }
-                        expr_to_c(&arg.node, locals, cg, p);
-                    }
-                    w!(p, ");");
                     p.dedent();
                     p.nl();
                     w!(p, "}} else {{");
