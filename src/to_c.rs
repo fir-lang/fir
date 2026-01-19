@@ -230,10 +230,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             longjmp(current_exn_handler->buf, 1);
         }}
 
-        static uint64_t* alloc_words(size_t n) {{
-            return (uint64_t*)malloc(n * sizeof(uint64_t));
-        }}
-
         static uint32_t get_tag(uint64_t obj) {{
             return (uint32_t)*(uint64_t*)obj;
         }}
@@ -442,20 +438,36 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
         match heap_obj {
             HeapObj::Source(source_con) if !source_con.fields.is_empty() => {
-                let tag_name = source_con_tag_name(source_con);
+                w!(p, "static uint64_t _con_closure_{tag}_fun(CLOSURE* self");
+                for i in 0..source_con.fields.len() {
+                    w!(p, ", uint64_t p{i}");
+                }
+                w!(p, ") {{");
+                p.indent();
+                p.nl();
+                let struct_name = heap_obj_struct_name(pgm, HeapObjIdx(tag as u32));
+                let tag_name = heap_obj_tag_name(pgm, HeapObjIdx(tag as u32));
+                wln!(p, "{struct_name}* _obj = malloc(sizeof({struct_name}));",);
+                wln!(p, "_obj->_tag = {tag_name};");
+                for i in 0..source_con.fields.len() {
+                    wln!(p, "_obj->_{i} = p{i};");
+                }
+                w!(p, "return (uint64_t)_obj;");
+                p.dedent();
+                p.nl();
+                wln!(p, "}}");
+
                 w!(
                     p,
-                    "static CON _con_closure_{}_data = {{ .tag = CON_TAG, .con_tag = {} }};",
-                    tag,
-                    tag_name
+                    "static CLOSURE _con_closure_{tag}_data = {{ .tag = CLOSURE_TAG, .fun = (void(*)(void))_con_closure_{tag}_fun }};",
                 );
                 p.nl();
+
                 w!(
                     p,
-                    "#define _con_closure_{} ((uint64_t)&_con_closure_{}_data)",
-                    tag,
-                    tag
+                    "#define _con_closure_{tag} ((uint64_t)&_con_closure_{tag}_data)",
                 );
+                p.nl();
                 p.nl();
             }
             _ => {}
@@ -668,21 +680,8 @@ fn heap_obj_to_c(heap_obj: &HeapObj, tag: u32, p: &mut Printer) {
 
 fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
     match builtin {
-        BuiltinConDecl::Con => {
-            wln!(p, "#define CON_TAG {}", tag);
-            writedoc!(
-                p,
-                "
-                typedef struct {{
-                    uint64_t tag;
-                    uint64_t con_tag;
-                }} CON;
-                "
-            );
-        }
-
-        BuiltinConDecl::Fun => {
-            // This type is not used in the C backend, instead we generate static `CLOSURE`s.
+        BuiltinConDecl::Con | BuiltinConDecl::Fun => {
+            // These types are not used in the C backend, instead we generate static `CLOSURE`s.
         }
 
         BuiltinConDecl::Closure => {
@@ -2127,32 +2126,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     expr_to_c(other, locals, cg, p);
                     wln!(p, ";");
                     wln!(p, "uint32_t _tag = get_tag({});", fun_temp);
-                    wln!(p, "uint64_t _call_result;");
 
-                    // Check tag and dispatch
-                    w!(p, "if (_tag == CON_TAG) {{");
-                    p.indent();
-                    p.nl();
-                    w!(
-                        p,
-                        "uint32_t _con_tag = (uint32_t)((CON*){})->con_tag;",
-                        fun_temp
-                    );
-                    p.nl();
-                    // TODO: We need `fun`'s type here to be able to allocate the right struct.
-                    wln!(p, "uint64_t* _obj = alloc_words({});", 1 + args.len());
-                    wln!(p, "_obj[0] = _con_tag;");
-                    for (i, arg) in args.iter().enumerate() {
-                        w!(p, "_obj[{}] = ", 1 + i);
-                        expr_to_c(&arg.node, locals, cg, p);
-                        wln!(p, ";");
-                    }
-                    w!(p, "_call_result = (uint64_t)_obj;");
-                    p.dedent();
-                    p.nl();
-                    w!(p, "}} else {{");
-                    p.indent();
-                    p.nl();
                     // Closure call - need to pass closure object as first arg
                     w!(p, "uint64_t (*_fn)(uint64_t");
                     for _ in 0..args.len() {
@@ -2163,16 +2137,12 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                         w!(p, ", uint64_t");
                     }
                     wln!(p, "))((uint64_t*){})[ 1];", fun_temp);
-                    w!(p, "_call_result = _fn({}", fun_temp);
+                    w!(p, "_fn({}", fun_temp);
                     for arg in args {
                         w!(p, ", ");
                         expr_to_c(&arg.node, locals, cg, p);
                     }
                     w!(p, ");");
-                    p.dedent();
-                    p.nl();
-                    wln!(p, "}}");
-                    w!(p, "_call_result;");
                     p.dedent();
                     p.nl();
                     w!(p, "}})");
