@@ -371,6 +371,15 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     );
     p.nl();
 
+    if pgm.closures.iter().any(|c| !c.fvs.is_empty()) {
+        wln!(p, "// Closure structs for closures with captures");
+        p.nl();
+        for (i, closure) in pgm.closures.iter().enumerate() {
+            gen_closure_struct(closure, i, &mut p);
+        }
+        p.nl();
+    }
+
     for (i, fun) in pgm.funs.iter().enumerate() {
         forward_declare_fun(pgm, fun, i, &mut p);
     }
@@ -668,6 +677,35 @@ fn forward_declare_closure(_pgm: &LoweredPgm, closure: &Closure, idx: usize, p: 
         w!(p, ", uint64_t _p{}", i);
     }
     wln!(p, ");");
+}
+
+fn gen_closure_struct(closure: &Closure, idx: usize, p: &mut Printer) {
+    if closure.fvs.is_empty() {
+        return;
+    }
+
+    wln!(
+        p,
+        "// {}:{}:{}",
+        closure.loc.module,
+        closure.loc.line_start + 1,
+        closure.loc.col_start + 1,
+    );
+    w!(p, "typedef struct {{");
+    p.indent();
+    p.nl();
+    wln!(p, "uint64_t tag;");
+    wln!(p, "void (*fun)(void);");
+    for (i, fv) in closure.fvs.iter().enumerate() {
+        if i != 0 {
+            p.nl();
+        }
+        w!(p, "uint64_t _{}; // {}", i, fv.id);
+    }
+    p.dedent();
+    p.nl();
+    wln!(p, "}} _Closure_{idx};");
+    p.nl();
 }
 
 fn heap_obj_to_c(heap_obj: &HeapObj, tag: u32, p: &mut Printer) {
@@ -1905,15 +1943,18 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     }
 
     // Load free variables from closure object
-    for (i, fv) in closure.fvs.iter().enumerate() {
-        w!(
-            p,
-            "_{} = ((CLOSURE*)_closure_obj)->captures[{}]; // {}",
-            fv.use_idx.as_usize(),
-            i,
-            fv.id
-        );
-        p.nl();
+    if !closure.fvs.is_empty() {
+        for (i, fv) in closure.fvs.iter().enumerate() {
+            w!(
+                p,
+                "_{} = ((_Closure_{}*)_closure_obj)->_{}; // {}",
+                fv.use_idx.as_usize(),
+                idx,
+                i,
+                fv.id
+            );
+            p.nl();
+        }
     }
 
     // Copy parameters to locals
@@ -2339,6 +2380,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     w!(p, "}}");
                 }
                 None => {
+                    p.nl();
                     w!(
                         p,
                         "_if_result = {};",
@@ -2362,31 +2404,33 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
 
         Expr::ClosureAlloc(closure_idx) => {
             let closure = &cg.pgm.closures[closure_idx.as_usize()];
+            let idx = closure_idx.as_usize();
             w!(p, "({{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "CLOSURE* _clos = (CLOSURE*)malloc(sizeof(CLOSURE) + (sizeof(uint64_t) * {}));",
-                closure.fvs.len()
-            );
-            p.nl();
-            wln!(p, "_clos->tag = CLOSURE_TAG;");
-            w!(
-                p,
-                "_clos->fun = (void(*)(void))_closure_{};",
-                closure_idx.as_usize()
-            );
-            p.nl();
-            for (i, fv) in closure.fvs.iter().enumerate() {
-                w!(
-                    p,
-                    "_clos->captures[{}] = _{}; // {}",
-                    i,
-                    fv.alloc_idx.as_usize(),
-                    fv.id
-                );
+            if closure.fvs.is_empty() {
+                wln!(p, "CLOSURE* _clos = (CLOSURE*)malloc(sizeof(CLOSURE));");
+                wln!(p, "_clos->tag = CLOSURE_TAG;");
+                w!(p, "_clos->fun = (void(*)(void))_closure_{};", idx);
                 p.nl();
+            } else {
+                wln!(
+                    p,
+                    "_Closure_{idx}* _clos = (_Closure_{idx}*)malloc(sizeof(_Closure_{idx}));"
+                );
+                wln!(p, "_clos->tag = CLOSURE_TAG;");
+                w!(p, "_clos->fun = (void(*)(void))_closure_{};", idx);
+                p.nl();
+                for (i, fv) in closure.fvs.iter().enumerate() {
+                    w!(
+                        p,
+                        "_clos->_{} = _{}; // {}",
+                        i,
+                        fv.alloc_idx.as_usize(),
+                        fv.id
+                    );
+                    p.nl();
+                }
             }
             w!(p, "(uint64_t)_clos;");
             p.dedent();
