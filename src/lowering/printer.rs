@@ -1,5 +1,6 @@
 use crate::lowering::*;
 use crate::mono_ast as mono;
+use crate::utils::loc_display;
 
 use std::fmt::Write;
 
@@ -43,6 +44,12 @@ impl LoweredPgm {
         buf.push('\n');
 
         for (fun_idx, fun) in self.funs.iter().enumerate() {
+            match fun {
+                Fun::Builtin(builtin) => writeln!(buf, "// {:?}", builtin).unwrap(),
+                Fun::Source(source) => {
+                    writeln!(buf, "// {}", loc_display(&source.name.loc)).unwrap();
+                }
+            }
             write!(buf, "fun{fun_idx}: ").unwrap();
             match fun {
                 Fun::Builtin(builtin) => write!(buf, "{builtin:?}").unwrap(),
@@ -110,12 +117,15 @@ impl LoweredPgm {
                 locals,
                 fvs,
                 params,
+                return_ty,
+                exceptions,
                 body,
-                loc: _,
+                loc,
             },
         ) in self.closures.iter().enumerate()
         {
             assert_eq!(idx.0 as usize, closure_idx);
+            writeln!(buf, "// {}", loc_display(loc)).unwrap();
             writeln!(buf, "closure{closure_idx}:").unwrap();
 
             buf.push_str("  locals: ");
@@ -153,6 +163,14 @@ impl LoweredPgm {
                 }
                 arg.print(buf);
             }
+            buf.push('\n');
+
+            buf.push_str("  return_ty: ");
+            return_ty.print(buf);
+            buf.push('\n');
+
+            buf.push_str("  exceptions: ");
+            exceptions.print(buf);
             buf.push('\n');
             buf.push('\n');
 
@@ -350,7 +368,6 @@ impl Expr {
                 for stmt in body.iter() {
                     buf.push_str(&INDENTS[0..indent as usize + 4]);
                     stmt.node.print(buf, indent + 4);
-                    buf.push('\n');
                 }
             }
 

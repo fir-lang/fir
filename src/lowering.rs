@@ -246,11 +246,11 @@ pub enum BuiltinFunDecl {
 
 #[derive(Debug)]
 pub struct SourceFunDecl {
-    pub parent_ty: Option<L<Id>>, // for debugging
-    pub name: L<Id>,              // for debugging and to find the main function in the interpreter
-    pub idx: FunIdx,              // for debugging
-    pub ty_args: Vec<mono::Type>, // for debugging
-    pub locals: Vec<LocalInfo>,   // for debugging, indexed by `LocalIdx`
+    pub parent_ty: Option<L<Id>>,
+    pub name: L<Id>,
+    pub idx: FunIdx,
+    pub ty_args: Vec<mono::Type>,
+    pub locals: Vec<LocalInfo>,
     pub params: Vec<mono::Type>,
     pub return_ty: mono::Type,
     pub exceptions: mono::Type,
@@ -454,6 +454,8 @@ pub struct Closure {
     pub locals: Vec<LocalInfo>,
     pub fvs: Vec<ClosureFv>,
     pub params: Vec<mono::Type>,
+    pub return_ty: mono::Type,
+    pub exceptions: mono::Type,
     pub body: Vec<L<Stmt>>,
     pub loc: Loc,
 }
@@ -2241,6 +2243,16 @@ fn lower_expr(
                 locals: closure_scope.locals,
                 fvs,
                 params: sig.params.iter().map(|(_, ty)| ty.node.clone()).collect(),
+                return_ty: sig
+                    .return_ty
+                    .as_ref()
+                    .map(|l| l.node.clone())
+                    .unwrap_or(mono::Type::unit()),
+                exceptions: sig
+                    .exceptions
+                    .as_ref()
+                    .map(|ty| ty.node.clone())
+                    .unwrap_or(mono::Type::empty()),
                 body,
                 loc: loc.clone(),
             });
@@ -2598,8 +2610,6 @@ fn lower_source_fun(
             .exceptions
             .as_ref()
             .map(|ty| ty.node.clone())
-            .unwrap_or(mono::Type::Variant {
-                alts: Default::default(),
-            }),
+            .unwrap_or(mono::Type::empty()),
     }
 }
