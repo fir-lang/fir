@@ -352,7 +352,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         }}
 
         // Allocate string from bytes
-        static uint64_t alloc_str(uint64_t str_tag, const char* bytes, size_t len) {{
+        static uint64_t alloc_str(const char* bytes, size_t len) {{
             uint64_t arr = array_new_u8(len);
             uint8_t* data_ptr = (uint8_t*)((ARRAY*)arr)->data_ptr;
             memcpy(data_ptr, bytes, len);
@@ -1095,27 +1095,27 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::ToStrI8 => {
-            gen_tostr_fn(idx, "int8_t", "(int8_t)(uint8_t)", "PRId8", pgm, p);
+            gen_tostr_fn(idx, "int8_t", "(int8_t)(uint8_t)", "PRId8", p);
         }
 
         BuiltinFunDecl::ToStrU8 => {
-            gen_tostr_fn(idx, "uint8_t", "(uint8_t)", "PRIu8", pgm, p);
+            gen_tostr_fn(idx, "uint8_t", "(uint8_t)", "PRIu8", p);
         }
 
         BuiltinFunDecl::ToStrI32 => {
-            gen_tostr_fn(idx, "int32_t", "(int32_t)(uint32_t)", "PRId32", pgm, p);
+            gen_tostr_fn(idx, "int32_t", "(int32_t)(uint32_t)", "PRId32", p);
         }
 
         BuiltinFunDecl::ToStrU32 => {
-            gen_tostr_fn(idx, "uint32_t", "(uint32_t)", "PRIu32", pgm, p);
+            gen_tostr_fn(idx, "uint32_t", "(uint32_t)", "PRIu32", p);
         }
 
         BuiltinFunDecl::ToStrU64 => {
-            gen_tostr_fn(idx, "uint64_t", "", "PRIu64", pgm, p);
+            gen_tostr_fn(idx, "uint64_t", "", "PRIu64", p);
         }
 
         BuiltinFunDecl::ToStrI64 => {
-            gen_tostr_fn(idx, "int64_t", "(int64_t)", "PRId64", pgm, p);
+            gen_tostr_fn(idx, "int64_t", "(int64_t)", "PRId64", p);
         }
 
         BuiltinFunDecl::U8AsI8 => {
@@ -1770,11 +1770,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
                 "if (fread(contents, 1, size, f) != (size_t)size) {{ fprintf(stderr, \"Failed to read file\\n\"); exit(1); }}"
             );
             wln!(p, "fclose(f);");
-            w!(
-                p,
-                "uint64_t result = alloc_str({}, contents, size);",
-                pgm.str_con_idx.0
-            );
+            w!(p, "uint64_t result = alloc_str(contents, size);",);
             p.nl();
             wln!(p, "free(contents);");
             w!(p, "return result;");
@@ -1793,8 +1789,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.nl();
             w!(
                 p,
-                "uint64_t arg_str = alloc_str({}, g_argv[i], strlen(g_argv[i]));",
-                pgm.str_con_idx.0
+                "uint64_t arg_str = alloc_str(g_argv[i], strlen(g_argv[i]));",
             );
             p.nl();
             w!(p, "array_set_u64(arr, i, arg_str);");
@@ -1809,14 +1804,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
     }
 }
 
-fn gen_tostr_fn(
-    idx: usize,
-    c_type: &str,
-    cast: &str,
-    fmt: &str,
-    pgm: &LoweredPgm,
-    p: &mut Printer,
-) {
+fn gen_tostr_fn(idx: usize, c_type: &str, cast: &str, fmt: &str, p: &mut Printer) {
     w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
     p.indent();
     p.nl();
@@ -1829,7 +1817,7 @@ fn gen_tostr_fn(
         cast
     );
     p.nl();
-    w!(p, "return alloc_str({}, buf, len);", pgm.str_con_idx.0);
+    w!(p, "return alloc_str(buf, len);");
     p.dedent();
     p.nl();
     wln!(p, "}}");
@@ -2198,7 +2186,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
         }
 
         Expr::Str(s) => {
-            w!(p, "alloc_str({}, \"", cg.pgm.str_con_idx.0);
+            w!(p, "alloc_str(\"");
             for byte in s.bytes() {
                 if byte == b'"' || byte == b'\\' || !(32..=126).contains(&byte) {
                     // Use octal escapes as hex escapes doesn't have a digit limit, e.g.
