@@ -173,6 +173,14 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         #include <stdlib.h>
         #include <string.h>
 
+        typedef  uint8_t  U8;
+        typedef   int8_t  I8;
+        typedef uint16_t U16;
+        typedef  int16_t I16;
+        typedef uint32_t U32;
+        typedef  int32_t I32;
+        typedef uint64_t U64;
+        typedef  int64_t I64;
         "
     );
 
@@ -236,131 +244,130 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
         // Array allocation and access functions.
 
-        static uint64_t array_new_u8(uint32_t len) {{
+        static ARRAY* array_new_u8(uint32_t len) {{
             size_t data_words = (len + 7) / 8;
             ARRAY* arr = (ARRAY*)malloc(sizeof(ARRAY) + (data_words * sizeof(uint64_t)));
             arr->tag = ARRAY_TAG;
             arr->data_ptr = (uint64_t*)(arr + 1);
             arr->len = len;
             memset(arr + 1, 0, data_words * sizeof(uint64_t));
-            return (uint64_t)arr;
+            return arr;
         }}
 
-        static uint64_t array_get_u8(uint64_t arr, uint32_t idx) {{
-            uint8_t* data_ptr = (uint8_t*)((ARRAY*)arr)->data_ptr;
+        static uint64_t array_get_u8(ARRAY* arr, uint32_t idx) {{
+            uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
             return (uint64_t)data_ptr[idx];
         }}
 
-        static void array_set_u8(uint64_t arr, uint32_t idx, uint64_t val) {{
-            uint8_t* data_ptr = (uint8_t*)((ARRAY*)arr)->data_ptr;
+        static void array_set_u8(ARRAY* arr, uint32_t idx, uint64_t val) {{
+            uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
             data_ptr[idx] = (uint8_t)val;
         }}
 
-        static uint64_t array_slice_u8(uint64_t arr, uint32_t start, uint32_t end) {{
+        static ARRAY* array_slice_u8(ARRAY* arr, uint32_t start, uint32_t end) {{
             ARRAY* new_arr = (ARRAY*)malloc(sizeof(ARRAY));
             new_arr->tag = ARRAY_TAG;
-            uint8_t* data_ptr = (uint8_t*)((ARRAY*)arr)->data_ptr;
+            uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
             new_arr->data_ptr = (uint64_t*)(data_ptr + start);
             new_arr->len = end - start;
-            return (uint64_t)new_arr;
+            return new_arr;
         }}
 
-        static void array_copy_within_u8(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint8_t* data_ptr = (uint8_t*)((ARRAY*)arr)->data_ptr;
+        static void array_copy_within_u8(ARRAY* arr, uint32_t src, uint32_t dst, uint32_t len) {{
+            uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
             memmove(data_ptr + dst, data_ptr + src, len);
         }}
 
-        static uint64_t array_new_u32(uint32_t len) {{
+        static ARRAY* array_new_u32(uint32_t len) {{
             size_t data_words = (len + 1) / 2;
             ARRAY* arr = (ARRAY*)malloc(sizeof(ARRAY) + (data_words * sizeof(uint64_t)));
             arr->tag = ARRAY_TAG;
             arr->data_ptr = (uint64_t*)(arr + 1);
             arr->len = len;
             memset(arr + 1, 0, data_words * sizeof(uint64_t));
-            return (uint64_t)arr;
+            return arr;
         }}
 
-        static uint64_t array_get_u32(uint64_t arr, uint32_t idx) {{
-            uint32_t* data_ptr = (uint32_t*)((ARRAY*)arr)->data_ptr;
+        static uint64_t array_get_u32(ARRAY* arr, uint32_t idx) {{
+            uint32_t* data_ptr = (uint32_t*)arr->data_ptr;
             return (uint64_t)data_ptr[idx];
         }}
 
-        static void array_set_u32(uint64_t arr, uint32_t idx, uint64_t val) {{
-            uint32_t* data_ptr = (uint32_t*)((ARRAY*)arr)->data_ptr;
+        static void array_set_u32(ARRAY* arr, uint32_t idx, uint64_t val) {{
+            uint32_t* data_ptr = (uint32_t*)arr->data_ptr;
             data_ptr[idx] = (uint32_t)val;
         }}
 
-        static uint64_t array_slice_u32(uint64_t arr, uint32_t start, uint32_t end) {{
+        static ARRAY* array_slice_u32(ARRAY* arr, uint32_t start, uint32_t end) {{
             ARRAY* new_arr = (ARRAY*)malloc(sizeof(ARRAY));
             new_arr->tag = ARRAY_TAG;
-            uint32_t* data_ptr = (uint32_t*)((ARRAY*)arr)->data_ptr;
+            uint32_t* data_ptr = (uint32_t*)arr->data_ptr;
             new_arr->data_ptr = (uint64_t*)(data_ptr + start);
             new_arr->len = end - start;
-            return (uint64_t)new_arr;
+            return new_arr;
         }}
 
-        static void array_copy_within_u32(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint32_t* data_ptr = (uint32_t*)((ARRAY*)arr)->data_ptr;
+        static void array_copy_within_u32(ARRAY* arr, uint32_t src, uint32_t dst, uint32_t len) {{
+            uint32_t* data_ptr = (uint32_t*)arr->data_ptr;
             memmove(data_ptr + dst, data_ptr + src, len * sizeof(uint32_t));
         }}
 
-        static uint64_t array_new_u64(uint32_t len) {{
+        static ARRAY* array_new_u64(uint32_t len) {{
             ARRAY* arr = (ARRAY*)malloc(sizeof(ARRAY) + (len * sizeof(uint64_t)));
             arr->tag = ARRAY_TAG;
             arr->data_ptr = (uint64_t*)(arr + 1);
             arr->len = len;
             memset(arr + 1, 0, len * sizeof(uint64_t));
-            return (uint64_t)arr;
+            return arr;
         }}
 
-        static uint64_t array_get_u64(uint64_t arr, uint32_t idx) {{
-            uint64_t* data_ptr = (uint64_t*)((ARRAY*)arr)->data_ptr;
+        static uint64_t array_get_u64(ARRAY* arr, uint32_t idx) {{
+            uint64_t* data_ptr = (uint64_t*)arr->data_ptr;
             return data_ptr[idx];
         }}
 
-        static void array_set_u64(uint64_t arr, uint32_t idx, uint64_t val) {{
-            uint64_t* data_ptr = (uint64_t*)((ARRAY*)arr)->data_ptr;
+        static void array_set_u64(ARRAY* arr, uint32_t idx, uint64_t val) {{
+            uint64_t* data_ptr = (uint64_t*)arr->data_ptr;
             data_ptr[idx] = val;
         }}
 
-        static uint64_t array_slice_u64(uint64_t arr, uint32_t start, uint32_t end) {{
+        static ARRAY* array_slice_u64(ARRAY* arr, uint32_t start, uint32_t end) {{
             ARRAY* new_arr = (ARRAY*)malloc(sizeof(ARRAY));
             new_arr->tag = ARRAY_TAG;
-            uint64_t* data_ptr = (uint64_t*)((ARRAY*)arr)->data_ptr;
+            uint64_t* data_ptr = (uint64_t*)arr->data_ptr;
             new_arr->data_ptr = data_ptr + start;
             new_arr->len = end - start;
-            return (uint64_t)new_arr;
+            return new_arr;
         }}
 
-        static void array_copy_within_u64(uint64_t arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint64_t* data_ptr = (uint64_t*)((ARRAY*)arr)->data_ptr;
+        static void array_copy_within_u64(ARRAY* arr, uint32_t src, uint32_t dst, uint32_t len) {{
+            uint64_t* data_ptr = (uint64_t*)arr->data_ptr;
             memmove(data_ptr + dst, data_ptr + src, len * sizeof(uint64_t));
         }}
 
-        static uint32_t array_len(uint64_t arr) {{
-            return (uint32_t)((ARRAY*)arr)->len;
+        static uint32_t array_len(ARRAY* arr) {{
+            return (uint32_t)arr->len;
         }}
 
         // String comparison for pattern matching
-        static bool str_eq(uint64_t str1, const char* str2, size_t len2) {{
-            uint64_t* s1 = (uint64_t*)str1;
-            uint64_t bytes_arr = s1[1]; // _bytes field
+        static bool str_eq(Str* s1, const char* str2, size_t len2) {{
+            ARRAY* bytes_arr = s1->_0;
             uint32_t len1 = array_len(bytes_arr);
             if (len1 != len2) return false;
-            uint8_t* data_ptr = (uint8_t*)((ARRAY*)bytes_arr)->data_ptr;
+            uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
             return memcmp(data_ptr, str2, len1) == 0;
         }}
 
         // Allocate string from bytes
-        static uint64_t alloc_str(const char* bytes, size_t len) {{
-            uint64_t arr = array_new_u8(len);
-            uint8_t* data_ptr = (uint8_t*)((ARRAY*)arr)->data_ptr;
+        static Str* alloc_str(const char* bytes, size_t len) {{
+            ARRAY* arr = array_new_u8(len);
+            uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
             memcpy(data_ptr, bytes, len);
 
             Str* str = (Str*)malloc(sizeof(Str));
             str->_tag = TAG_Str;
             str->_0 = arr;
-            return (uint64_t)str;
+            return str;
         }}
 
         // Globals for CLI args
@@ -386,7 +393,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     p.nl();
 
     for (i, closure) in pgm.closures.iter().enumerate() {
-        forward_declare_closure(pgm, closure, i, &mut p);
+        forward_declare_closure(closure, i, &mut p);
     }
     p.nl();
 
@@ -409,12 +416,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                     singleton_name,
                     tag_name
                 );
-                wln!(
-                    p,
-                    "#define {} ((uint64_t)&{}_data)",
-                    singleton_name,
-                    singleton_name
-                );
+                wln!(p, "#define {} (&{}_data)", singleton_name, singleton_name);
             }
             HeapObj::Record(record) if record.fields.is_empty() => {
                 let struct_name = record_struct_name(record);
@@ -427,12 +429,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                     singleton_name,
                     tag_name
                 );
-                wln!(
-                    p,
-                    "#define {} ((uint64_t)&{}_data)",
-                    singleton_name,
-                    singleton_name
-                );
+                wln!(p, "#define {} (&{}_data)", singleton_name, singleton_name);
             }
             _ => {}
         }
@@ -448,8 +445,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         match heap_obj {
             HeapObj::Source(source_con) if !source_con.fields.is_empty() => {
                 w!(p, "static uint64_t _con_closure_{tag}_fun(CLOSURE* self");
-                for i in 0..source_con.fields.len() {
-                    w!(p, ", uint64_t p{i}");
+                for (i, ty) in source_con.fields.iter().enumerate() {
+                    w!(p, ", {} p{i}", c_ty(ty));
                 }
                 w!(p, ") {{");
                 p.indent();
@@ -472,10 +469,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 );
                 p.nl();
 
-                w!(
-                    p,
-                    "#define _con_closure_{tag} ((uint64_t)&_con_closure_{tag}_data)",
-                );
+                w!(p, "#define _con_closure_{tag} (&_con_closure_{tag}_data)",);
                 p.nl();
                 p.nl();
             }
@@ -522,10 +516,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         );
         p.nl();
 
-        w!(
-            p,
-            "#define _fun_closure_{i} ((uint64_t)&_fun_closure_{i}_data)",
-        );
+        w!(p, "#define _fun_closure_{i} (&_fun_closure_{i}_data)",);
         p.nl();
         p.nl();
     }
@@ -566,8 +557,32 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
 fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer) {
     let param_count = match fun {
-        Fun::Builtin(builtin) => builtin_fun_param_count(builtin),
-        Fun::Source(source) => source.params.len(),
+        Fun::Builtin(builtin) => {
+            wln!(p, "// {:?}", builtin);
+            builtin_fun_param_count(builtin)
+        }
+        Fun::Source(source) => {
+            w!(
+                p,
+                "// {} {}",
+                loc_display(&source.name.loc),
+                source.name.node
+            );
+            if !source.ty_args.is_empty() {
+                w!(p, "[");
+                for (i, ty_arg) in source.ty_args.iter().enumerate() {
+                    if i > 0 {
+                        w!(p, ", ");
+                    }
+                    let mut ty_str = String::new();
+                    ty_arg.print(&mut ty_str);
+                    w!(p, "{}", ty_str);
+                }
+                w!(p, "]");
+            }
+            p.nl();
+            source.params.len()
+        }
     };
 
     w!(p, "static uint64_t _fun_{}(", idx);
@@ -671,10 +686,16 @@ fn builtin_fun_param_count(fun: &BuiltinFunDecl) -> usize {
     }
 }
 
-fn forward_declare_closure(_pgm: &LoweredPgm, closure: &Closure, idx: usize, p: &mut Printer) {
-    w!(p, "static uint64_t _closure_{}(uint64_t _closure_obj", idx);
-    for (i, _) in closure.params.iter().enumerate() {
-        w!(p, ", uint64_t _p{}", i);
+fn forward_declare_closure(closure: &Closure, idx: usize, p: &mut Printer) {
+    wln!(p, "// {}", loc_display(&closure.loc));
+    w!(
+        p,
+        "static {} _closure_{}(CLOSURE* _closure_obj",
+        c_ty(&closure.return_ty),
+        idx
+    );
+    for (i, ty) in closure.params.iter().enumerate() {
+        w!(p, ", {} _p{}", c_ty(ty), i);
     }
     wln!(p, ");");
 }
@@ -684,13 +705,7 @@ fn gen_closure_struct(closure: &Closure, idx: usize, p: &mut Printer) {
         return;
     }
 
-    wln!(
-        p,
-        "// {}:{}:{}",
-        closure.loc.module,
-        closure.loc.line_start + 1,
-        closure.loc.col_start + 1,
-    );
+    wln!(p, "// {}", loc_display(&closure.loc));
     w!(p, "typedef struct {{");
     p.indent();
     p.nl();
@@ -700,7 +715,8 @@ fn gen_closure_struct(closure: &Closure, idx: usize, p: &mut Printer) {
         if i != 0 {
             p.nl();
         }
-        w!(p, "uint64_t _{}; // {}", i, fv.id);
+        let ty = &closure.locals[fv.use_idx.as_usize()].ty;
+        w!(p, "{} _{}; // {}", c_ty(ty), i, fv.id);
     }
     p.dedent();
     p.nl();
@@ -862,9 +878,9 @@ fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, p: &mut Printer) {
     p.indent();
     p.nl();
     w!(p, "uint64_t _tag;");
-    for (i, _field) in fields.iter().enumerate() {
+    for (i, ty) in fields.iter().enumerate() {
         p.nl();
-        w!(p, "uint64_t _{};", i);
+        w!(p, "{} _{};", c_ty(ty), i);
     }
     p.dedent();
     p.nl();
@@ -880,9 +896,9 @@ fn record_decl_to_c(record: &RecordType, tag: u32, p: &mut Printer) {
     p.indent();
     p.nl();
     w!(p, "uint64_t _tag;");
-    for (i, (_field_name, _field_ty)) in record.fields.iter().enumerate() {
+    for (i, (_field_name, field_ty)) in record.fields.iter().enumerate() {
         p.nl();
-        w!(p, "uint64_t _{};", i);
+        w!(p, "{} _{};", c_ty(field_ty), i);
     }
     p.dedent();
     p.nl();
@@ -895,6 +911,14 @@ fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
         out.push('_');
         ty_to_c(arg, out);
     }
+}
+
+// TODO: Generate `uint32_t` etc. for numbers, `ARRAY*` for all arrays, add `*` suffix to boxed
+// types, ...
+fn c_ty(ty: &mono::Type) -> String {
+    let mut s = String::new();
+    ty_to_c(ty, &mut s);
+    s
 }
 
 fn ty_to_c(ty: &mono::Type, out: &mut String) {
@@ -1855,14 +1879,7 @@ fn gen_cmp_fn(idx: usize, cast: &str, pgm: &LoweredPgm, p: &mut Printer) {
 
 fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer) {
     let loc = &fun.name.loc;
-    w!(
-        p,
-        "// {}:{}:{} {}",
-        loc.module,
-        loc.line_start + 1,
-        loc.col_start + 1,
-        fun.name.node
-    );
+    w!(p, "// {} {}", loc_display(loc), fun.name.node);
     if !fun.ty_args.is_empty() {
         w!(p, "[");
         for (i, ty_arg) in fun.ty_args.iter().enumerate() {
@@ -1876,12 +1893,12 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
         w!(p, "]");
     }
     p.nl();
-    w!(p, "static uint64_t _fun_{idx}(");
-    for (i, _) in fun.params.iter().enumerate() {
+    w!(p, "static {} _fun_{}(", c_ty(&fun.return_ty), idx);
+    for (i, ty) in fun.params.iter().enumerate() {
         if i > 0 {
             w!(p, ", ");
         }
-        w!(p, "uint64_t _{i}");
+        w!(p, "{} _{}", c_ty(ty), i);
     }
     w!(p, ") {{");
     p.indent();
@@ -1889,13 +1906,21 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
 
     // Declare locals. First few locals are for parameters, skip those.
     for (i, local) in fun.locals.iter().enumerate().skip(fun.params.len()) {
-        wln!(p, "uint64_t _{} = 0; // {}: {}", i, local.name, local.ty);
+        wln!(
+            p,
+            "{} _{} = 0; // {}: {}",
+            c_ty(&local.ty),
+            i,
+            local.name,
+            local.ty
+        );
     }
 
     // Declare result variable
     w!(
         p,
-        "uint64_t _result = {};",
+        "{} _result = {};",
+        c_ty(&fun.return_ty),
         heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
     );
     p.nl();
@@ -1910,9 +1935,14 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
 }
 
 fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
-    w!(p, "static uint64_t _closure_{}(uint64_t _closure_obj", idx);
-    for (i, _) in closure.params.iter().enumerate() {
-        w!(p, ", uint64_t _{}", i);
+    w!(
+        p,
+        "static {} _closure_{}(CLOSURE* _closure_obj",
+        c_ty(&closure.return_ty),
+        idx
+    );
+    for (i, ty) in closure.params.iter().enumerate() {
+        w!(p, ", {} _{}", c_ty(ty), i);
     }
     w!(p, ") {{");
     p.indent();
@@ -1920,7 +1950,14 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
 
     // Declare locals.
     for (i, local) in closure.locals.iter().enumerate().skip(closure.params.len()) {
-        wln!(p, "uint64_t _{} = 0; // {}: {}", i, local.name, local.ty);
+        wln!(
+            p,
+            "{} _{} = 0; // {}: {}",
+            c_ty(&local.ty),
+            i,
+            local.name,
+            local.ty
+        );
     }
 
     // Load free variables from closure object
@@ -1941,7 +1978,8 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     // Declare result variable
     w!(
         p,
-        "uint64_t _result = {};",
+        "{} _result = {};",
+        c_ty(&closure.return_ty),
         heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
     );
     p.nl();
