@@ -1461,7 +1461,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return a % b;");
+            w!(p, "return a % b;"); // TODO: I think is rem, not mod.
             p.dedent();
             p.nl();
             wln!(p, "}}");
