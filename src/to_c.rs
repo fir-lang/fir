@@ -530,7 +530,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     // Generate built-in functions first. Built-in functions don't depend on each other or source
     // functions, but source functions can depend on built-in functions.
     for (i, fun) in pgm.funs.iter().enumerate() {
-        if let Fun::Builtin(builtin) = fun {
+        if let FunBody::Builtin(builtin) = &fun.body {
             builtin_fun_to_c(builtin, i, pgm, &mut p);
             p.nl();
         }
@@ -539,8 +539,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     // Generate source functions after built-in functions as they may depend on built-in functions
     // and built-in functions are not forward-declared.
     for (i, fun) in pgm.funs.iter().enumerate() {
-        if let Fun::Source(source) = fun {
-            source_fun_to_c(source, i, &mut cg, &mut p);
+        if let FunBody::Source(source) = &fun.body {
+            source_fun_to_c(fun, source, i, &mut cg, &mut p);
             p.nl();
         }
     }
@@ -556,35 +556,21 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 }
 
 fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer) {
-    let param_count = match fun {
-        Fun::Builtin(builtin) => {
-            wln!(p, "// {:?}", builtin);
-            builtin_fun_param_count(builtin)
-        }
-        Fun::Source(source) => {
-            w!(
-                p,
-                "// {} {}",
-                loc_display(&source.name.loc),
-                source.name.node
-            );
-            if !source.ty_args.is_empty() {
-                w!(p, "[");
-                for (i, ty_arg) in source.ty_args.iter().enumerate() {
-                    if i > 0 {
-                        w!(p, ", ");
-                    }
-                    let mut ty_str = String::new();
-                    ty_arg.print(&mut ty_str);
-                    w!(p, "{}", ty_str);
-                }
-                w!(p, "]");
+    w!(p, "// {} {}", loc_display(&fun.name.loc), fun.name.node);
+    if !fun.ty_args.is_empty() {
+        w!(p, "[");
+        for (i, ty_arg) in fun.ty_args.iter().enumerate() {
+            if i > 0 {
+                w!(p, ", ");
             }
-            p.nl();
-            source.params.len()
+            let mut ty_str = String::new();
+            ty_arg.print(&mut ty_str);
+            w!(p, "{}", ty_str);
         }
-    };
-
+        w!(p, "]");
+    }
+    p.nl();
+    let param_count = fun.params.len();
     w!(p, "static uint64_t _fun_{}(", idx);
     if param_count == 0 {
         w!(p, "void");
@@ -600,9 +586,9 @@ fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer
 }
 
 fn fun_param_count(fun: &Fun) -> usize {
-    match fun {
-        Fun::Builtin(fun) => builtin_fun_param_count(fun),
-        Fun::Source(fun) => fun.params.len(),
+    match &fun.body {
+        FunBody::Builtin(fun) => builtin_fun_param_count(fun),
+        FunBody::Source(_) => fun.params.len(),
     }
 }
 
@@ -1877,7 +1863,7 @@ fn gen_cmp_fn(idx: usize, cast: &str, pgm: &LoweredPgm, p: &mut Printer) {
     wln!(p, "}}");
 }
 
-fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer) {
+fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer) {
     let loc = &fun.name.loc;
     w!(p, "// {} {}", loc_display(loc), fun.name.node);
     if !fun.ty_args.is_empty() {
@@ -1905,7 +1891,7 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
     p.nl();
 
     // Declare locals. First few locals are for parameters, skip those.
-    for (i, local) in fun.locals.iter().enumerate().skip(fun.params.len()) {
+    for (i, local) in source.locals.iter().enumerate().skip(fun.params.len()) {
         wln!(
             p,
             "{} _{} = 0; // {}: {}",
@@ -1926,7 +1912,7 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
     p.nl();
 
     // Generate body
-    stmts_to_c(&fun.body, &fun.locals, cg, p);
+    stmts_to_c(&source.body, &source.locals, cg, p);
 
     w!(p, "return _result;");
     p.dedent();
@@ -2577,8 +2563,8 @@ fn generate_main_fn(pgm: &LoweredPgm, main: &str, p: &mut Printer) {
         .funs
         .iter()
         .enumerate()
-        .find_map(|(i, fun)| match fun {
-            Fun::Source(source) if source.name.node.as_str() == main => Some(i),
+        .find_map(|(i, fun)| match &fun.body {
+            FunBody::Source(_) if fun.name.node.as_str() == main => Some(i),
             _ => None,
         })
         .unwrap_or_else(|| panic!("Main function {main} is not defined"));

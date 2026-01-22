@@ -44,33 +44,23 @@ impl LoweredPgm {
         buf.push('\n');
 
         for (fun_idx, fun) in self.funs.iter().enumerate() {
-            match fun {
-                Fun::Builtin(builtin) => writeln!(buf, "// {:?}", builtin).unwrap(),
-                Fun::Source(source) => {
-                    writeln!(buf, "// {}", loc_display(&source.name.loc)).unwrap();
+            match &fun.body {
+                FunBody::Builtin(builtin) => writeln!(buf, "// {:?}", builtin).unwrap(),
+                FunBody::Source(_) => {
+                    writeln!(buf, "// {}", loc_display(&fun.name.loc)).unwrap();
                 }
             }
             write!(buf, "fun{fun_idx}: ").unwrap();
-            match fun {
-                Fun::Builtin(builtin) => write!(buf, "{builtin:?}").unwrap(),
+            match &fun.body {
+                FunBody::Builtin(builtin) => write!(buf, "{builtin:?}").unwrap(),
 
-                Fun::Source(SourceFunDecl {
-                    parent_ty,
-                    name,
-                    idx,
-                    ty_args,
-                    locals,
-                    params,
-                    return_ty,
-                    exceptions,
-                    body,
-                }) => {
-                    assert_eq!(idx.0 as usize, fun_idx);
-                    if let Some(parent_ty) = parent_ty {
+                FunBody::Source(SourceFunDecl { locals, body }) => {
+                    assert_eq!(fun.idx.0 as usize, fun_idx);
+                    if let Some(parent_ty) = &fun.parent_ty {
                         write!(buf, "{}.", parent_ty.node).unwrap();
                     }
-                    buf.push_str(name.node.as_str());
-                    print_ty_args(ty_args, buf);
+                    buf.push_str(fun.name.node.as_str());
+                    print_ty_args(&fun.ty_args, buf);
                     buf.push('\n');
 
                     buf.push_str("  locals: ");
@@ -84,7 +74,7 @@ impl LoweredPgm {
                     buf.push('\n');
 
                     buf.push_str("  params: ");
-                    for (i, arg) in params.iter().enumerate() {
+                    for (i, arg) in fun.params.iter().enumerate() {
                         if i != 0 {
                             buf.push_str(", ");
                         }
@@ -93,11 +83,11 @@ impl LoweredPgm {
                     buf.push('\n');
 
                     buf.push_str("  return_ty: ");
-                    return_ty.print(buf);
+                    fun.return_ty.print(buf);
                     buf.push('\n');
 
                     buf.push_str("  exceptions: ");
-                    exceptions.print(buf);
+                    fun.exceptions.print(buf);
                     buf.push('\n');
                     buf.push('\n');
 

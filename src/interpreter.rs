@@ -41,8 +41,7 @@ struct Frame {
 }
 
 enum FrameKind {
-    Builtin(BuiltinFunDecl),
-    Source(Id),
+    Fun(Id),
     Closure(Loc),
 }
 
@@ -114,13 +113,11 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: Vec
     let mut heap = Heap::new();
     let pgm = Pgm::init(pgm, &mut heap, args);
 
-    let main_fun: &SourceFunDecl = pgm
+    let (main_fun, main_source) = pgm
         .funs
         .iter()
-        .find_map(|fun| match fun {
-            Fun::Source(fun @ SourceFunDecl { name, .. }) if name.node.as_str() == main => {
-                Some(fun)
-            }
+        .find_map(|fun| match &fun.body {
+            FunBody::Source(source) if fun.name.node.as_str() == main => Some((fun, source)),
             _ => None,
         })
         .unwrap_or_else(|| panic!("Main function `{main}` is not defined"));
@@ -139,7 +136,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: Vec
     // Note: normally `call_fun` adjusts the stack, but when calling `main` we don't call
     // `call_fun`, so we add `main` here.
     let mut call_stack = vec![Frame {
-        kind: FrameKind::Source(main_fun.name.node.clone()),
+        kind: FrameKind::Fun(main_fun.name.node.clone()),
         call_site: Loc::dummy(),
     }];
 
@@ -148,6 +145,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: Vec
         &pgm,
         &mut heap,
         main_fun,
+        main_source,
         vec![],
         &call_loc,
         &mut call_stack,
@@ -257,21 +255,13 @@ fn call_fun<W: Write>(
     loc: &Loc,
     call_stack: &mut Vec<Frame>,
 ) -> FunRet {
-    let ret = match fun {
-        Fun::Builtin(builtin) => {
-            call_stack.push(Frame {
-                call_site: loc.clone(),
-                kind: FrameKind::Builtin(builtin.clone()),
-            });
-            call_builtin_fun(w, pgm, heap, builtin, args, loc, call_stack)
-        }
-        Fun::Source(source) => {
-            call_stack.push(Frame {
-                call_site: loc.clone(),
-                kind: FrameKind::Source(source.name.node.clone()),
-            });
-            call_ast_fun(w, pgm, heap, source, args, loc, call_stack)
-        }
+    call_stack.push(Frame {
+        call_site: loc.clone(),
+        kind: FrameKind::Fun(fun.name.node.clone()),
+    });
+    let ret = match &fun.body {
+        FunBody::Builtin(builtin) => call_builtin_fun(w, pgm, heap, builtin, args, loc, call_stack),
+        FunBody::Source(source) => call_ast_fun(w, pgm, heap, fun, source, args, loc, call_stack),
     };
     call_stack.pop();
     ret
@@ -281,7 +271,8 @@ fn call_ast_fun<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    fun: &SourceFunDecl,
+    fun: &Fun,
+    source: &SourceFunDecl,
     args: Vec<u64>,
     loc: &Loc,
     call_stack: &mut Vec<Frame>,
@@ -295,9 +286,9 @@ fn call_ast_fun<W: Write>(
     );
 
     let mut locals = args;
-    locals.resize(fun.locals.len(), 0);
+    locals.resize(source.locals.len(), 0);
 
-    match exec(w, pgm, heap, &mut locals, &fun.body, call_stack) {
+    match exec(w, pgm, heap, &mut locals, &source.body, call_stack) {
         ControlFlow::Val(val) | ControlFlow::Ret(val) => FunRet::Val(val),
         ControlFlow::Break(_) | ControlFlow::Continue(_) => panic!(),
         ControlFlow::Unwind(val) => FunRet::Unwind(val),
@@ -1363,12 +1354,7 @@ fn write_call_stack<W: std::fmt::Write>(call_stack: &[Frame], out: &mut W) {
     for frame in call_stack.iter().rev() {
         write!(out, "{}: ", loc_display(&frame.call_site)).unwrap();
         match &frame.kind {
-            FrameKind::Builtin(builtin_fun_decl) => {
-                writeln!(out, "Builtin: {builtin_fun_decl:?}").unwrap()
-            }
-            FrameKind::Source(source_fun_name) => {
-                writeln!(out, "{source_fun_name}").unwrap();
-            }
+            FrameKind::Fun(fun_id) => writeln!(out, "{}", fun_id).unwrap(),
             FrameKind::Closure(loc) => {
                 writeln!(out, "Closure at {}", loc_display(loc)).unwrap();
             }

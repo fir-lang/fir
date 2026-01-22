@@ -10,5 +10,5 @@ main():
 # tests/interpreter/Panic.fir:6:25: PANIC: optionInt returned 123
 # 
 # FIR STACK:
-# tests/interpreter/Panic.fir:6:25: Builtin: Panic
+# tests/interpreter/Panic.fir:6:25: panic
 # :1:1: main
