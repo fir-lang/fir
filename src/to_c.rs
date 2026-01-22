@@ -539,7 +539,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     // Generate built-in functions first. Built-in functions don't depend on each other or source
     // functions, but source functions can depend on built-in functions.
     for (i, fun) in pgm.funs.iter().enumerate() {
-        if let Fun::Builtin(builtin) = fun {
+        if let FunBody::Builtin(builtin) = &fun.body {
             builtin_fun_to_c(builtin, i, pgm, &mut p);
             p.nl();
         }
@@ -548,8 +548,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     // Generate source functions after built-in functions as they may depend on built-in functions
     // and built-in functions are not forward-declared.
     for (i, fun) in pgm.funs.iter().enumerate() {
-        if let Fun::Source(source) = fun {
-            source_fun_to_c(source, i, &mut cg, &mut p);
+        if let FunBody::Source(source) = &fun.body {
+            source_fun_to_c(fun, source, i, &mut cg, &mut p);
             p.nl();
         }
     }
@@ -565,9 +565,9 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 }
 
 fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer) {
-    let param_count = match fun {
-        Fun::Builtin(builtin) => builtin_fun_param_count(builtin),
-        Fun::Source(source) => source.params.len(),
+    let param_count = match &fun.body {
+        FunBody::Builtin(builtin) => builtin_fun_param_count(builtin),
+        FunBody::Source(_) => fun.params.len(),
     };
 
     w!(p, "static uint64_t _fun_{}(", idx);
@@ -585,9 +585,9 @@ fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer
 }
 
 fn fun_param_count(fun: &Fun) -> usize {
-    match fun {
-        Fun::Builtin(fun) => builtin_fun_param_count(fun),
-        Fun::Source(fun) => fun.params.len(),
+    match &fun.body {
+        FunBody::Builtin(fun) => builtin_fun_param_count(fun),
+        FunBody::Source(_) => fun.params.len(),
     }
 }
 
@@ -1853,7 +1853,7 @@ fn gen_cmp_fn(idx: usize, cast: &str, pgm: &LoweredPgm, p: &mut Printer) {
     wln!(p, "}}");
 }
 
-fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer) {
+fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer) {
     let loc = &fun.name.loc;
     w!(
         p,
@@ -1888,7 +1888,7 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
     p.nl();
 
     // Declare locals. First few locals are for parameters, skip those.
-    for (i, local) in fun.locals.iter().enumerate().skip(fun.params.len()) {
+    for (i, local) in source.locals.iter().enumerate().skip(fun.params.len()) {
         wln!(p, "uint64_t _{} = 0; // {}: {}", i, local.name, local.ty);
     }
 
@@ -1901,7 +1901,7 @@ fn source_fun_to_c(fun: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer
     p.nl();
 
     // Generate body
-    stmts_to_c(&fun.body, &fun.locals, cg, p);
+    stmts_to_c(&source.body, &source.locals, cg, p);
 
     w!(p, "return _result;");
     p.dedent();
@@ -2539,8 +2539,8 @@ fn generate_main_fn(pgm: &LoweredPgm, main: &str, p: &mut Printer) {
         .funs
         .iter()
         .enumerate()
-        .find_map(|(i, fun)| match fun {
-            Fun::Source(source) if source.name.node.as_str() == main => Some(i),
+        .find_map(|(i, fun)| match &fun.body {
+            FunBody::Source(_) if fun.name.node.as_str() == main => Some(i),
             _ => None,
         })
         .unwrap_or_else(|| panic!("Main function {main} is not defined"));

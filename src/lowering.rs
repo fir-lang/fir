@@ -129,7 +129,19 @@ impl Repr {
 }
 
 #[derive(Debug)]
-pub enum Fun {
+pub struct Fun {
+    pub parent_ty: Option<L<Id>>,
+    pub name: L<Id>,
+    pub idx: FunIdx,
+    pub ty_args: Vec<mono::Type>,
+    pub params: Vec<mono::Type>,
+    pub return_ty: mono::Type,
+    pub exceptions: mono::Type,
+    pub body: FunBody,
+}
+
+#[derive(Debug)]
+pub enum FunBody {
     Builtin(BuiltinFunDecl),
     Source(SourceFunDecl),
 }
@@ -246,14 +258,7 @@ pub enum BuiltinFunDecl {
 
 #[derive(Debug)]
 pub struct SourceFunDecl {
-    pub parent_ty: Option<L<Id>>,
-    pub name: L<Id>,
-    pub idx: FunIdx,
-    pub ty_args: Vec<mono::Type>,
     pub locals: Vec<LocalInfo>,
-    pub params: Vec<mono::Type>,
-    pub return_ty: mono::Type,
-    pub exceptions: mono::Type,
     pub body: Vec<L<Stmt>>,
 }
 
@@ -824,714 +829,516 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     for (fun_id, fun_ty_map) in &mono_pgm.funs {
         for (fun_ty_args, fun_decl) in fun_ty_map {
             let idx = FunIdx(lowered_pgm.funs.len() as u32);
-            if fun_decl.body.is_some() {
-                let source_fun = lower_source_fun(
-                    fun_decl,
-                    idx,
-                    fun_ty_args,
+            let body = match &fun_decl.body {
+                Some(body) => FunBody::Source(lower_source_fun(
+                    &fun_decl.sig,
+                    body,
                     &indices,
                     &mut lowered_pgm.closures,
                     mono_pgm,
-                );
-                lowered_pgm.funs.push(Fun::Source(source_fun));
-            } else {
-                match fun_id.as_str() {
-                    "printStrNoNl" => {
-                        assert_eq!(fun_ty_args.len(), 1); // exception
-                        lowered_pgm
-                            .funs
-                            .push(Fun::Builtin(BuiltinFunDecl::PrintStrNoNl));
-                    }
+                )),
+                None => {
+                    FunBody::Builtin(match fun_id.as_str() {
+                        "printStrNoNl" => {
+                            assert_eq!(fun_ty_args.len(), 1); // exception
+                            BuiltinFunDecl::PrintStrNoNl
+                        }
 
-                    "panic" => {
-                        // prim panic(msg: Str) a / exn?
-                        assert_eq!(fun_ty_args.len(), 2); // a, exn?
-                        lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::Panic));
-                    }
+                        "panic" => {
+                            // prim panic(msg: Str) a / exn?
+                            assert_eq!(fun_ty_args.len(), 2); // a, exn?
+                            BuiltinFunDecl::Panic
+                        }
 
-                    "try" => {
-                        // prim try(cb: Fn() a / exn) Result[exn, a] / exn?
-                        assert_eq!(fun_ty_args.len(), 3); // a, exn, exn? (implicit)
-                        let a = &fun_ty_args[0];
-                        let exn = &fun_ty_args[1];
-                        let result = indices
-                            .sum_cons
-                            .get(&SmolStr::new_static("Result"))
-                            .unwrap();
-                        let ty_args = vec![exn.clone(), a.clone()];
-                        let ok_con = *result
-                            .get(&SmolStr::new_static("Ok"))
-                            .unwrap()
-                            .get(&ty_args)
-                            .unwrap();
-                        let err_con = *result
-                            .get(&SmolStr::new_static("Err"))
-                            .unwrap()
-                            .get(&ty_args)
-                            .unwrap();
-                        lowered_pgm
-                            .funs
-                            .push(Fun::Builtin(BuiltinFunDecl::Try { ok_con, err_con }));
-                    }
+                        "try" => {
+                            // prim try(cb: Fn() a / exn) Result[exn, a] / exn?
+                            assert_eq!(fun_ty_args.len(), 3); // a, exn, exn? (implicit)
+                            let a = &fun_ty_args[0];
+                            let exn = &fun_ty_args[1];
+                            let result = indices
+                                .sum_cons
+                                .get(&SmolStr::new_static("Result"))
+                                .unwrap();
+                            let ty_args = vec![exn.clone(), a.clone()];
+                            let ok_con = *result
+                                .get(&SmolStr::new_static("Ok"))
+                                .unwrap()
+                                .get(&ty_args)
+                                .unwrap();
+                            let err_con = *result
+                                .get(&SmolStr::new_static("Err"))
+                                .unwrap()
+                                .get(&ty_args)
+                                .unwrap();
+                            BuiltinFunDecl::Try { ok_con, err_con }
+                        }
 
-                    "throwUnchecked" => {
-                        // prim throwUnchecked(exn: exn) a
-                        assert_eq!(fun_ty_args.len(), 3); // exn, a, exn? (implicit)
-                        lowered_pgm
-                            .funs
-                            .push(Fun::Builtin(BuiltinFunDecl::ThrowUnchecked));
-                    }
+                        "throwUnchecked" => {
+                            // prim throwUnchecked(exn: exn) a
+                            assert_eq!(fun_ty_args.len(), 3); // exn, a, exn? (implicit)
+                            BuiltinFunDecl::ThrowUnchecked
+                        }
 
-                    "readFileUtf8" => {
-                        // prim readFileUtf8(path: Str) Str
-                        assert_eq!(fun_ty_args.len(), 1); // exception
-                        lowered_pgm
-                            .funs
-                            .push(Fun::Builtin(BuiltinFunDecl::ReadFileUtf8));
-                    }
+                        "readFileUtf8" => {
+                            // prim readFileUtf8(path: Str) Str
+                            assert_eq!(fun_ty_args.len(), 1); // exception
+                            BuiltinFunDecl::ReadFileUtf8
+                        }
 
-                    "getArgs" => {
-                        // prim getArgs() Array[Str]
-                        assert_eq!(fun_ty_args.len(), 1); // exception
-                        lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::GetArgs));
-                    }
+                        "getArgs" => {
+                            // prim getArgs() Array[Str]
+                            assert_eq!(fun_ty_args.len(), 1); // exception
+                            BuiltinFunDecl::GetArgs
+                        }
 
-                    other => {
-                        panic!("Unknown built-in function: {other} (ty args = {fun_ty_args:?})");
-                    }
+                        other => {
+                            panic!(
+                                "Unknown built-in function: {other} (ty args = {fun_ty_args:?})"
+                            );
+                        }
+                    })
                 }
-            }
+            };
+            lowered_pgm.funs.push(Fun {
+                parent_ty: None,
+                name: fun_decl.name.clone(),
+                idx,
+                ty_args: fun_ty_args.clone(),
+                params: fun_decl
+                    .sig
+                    .params
+                    .iter()
+                    .map(|(_, ty)| ty.node.clone())
+                    .collect(),
+                return_ty: fun_decl
+                    .sig
+                    .return_ty
+                    .as_ref()
+                    .map(|l| l.node.clone())
+                    .unwrap_or(mono::Type::unit()),
+                exceptions: fun_decl
+                    .sig
+                    .exceptions
+                    .as_ref()
+                    .map(|l| l.node.clone())
+                    .unwrap_or(mono::Type::unit()),
+                body,
+            });
         }
     }
 
-    // Number associated functions.
+    // Lower associated functions.
     for (ty, assoc_fun_map) in &mono_pgm.associated {
         for (fun, fun_ty_map) in assoc_fun_map {
             for (fun_ty_args, fun_decl) in fun_ty_map {
                 let idx = FunIdx(lowered_pgm.funs.len() as u32);
-                if fun_decl.body.is_some() {
-                    let source_fun = lower_source_fun(
-                        fun_decl,
-                        idx,
-                        fun_ty_args,
+                let body = match &fun_decl.body {
+                    Some(body) => FunBody::Source(lower_source_fun(
+                        &fun_decl.sig,
+                        body,
                         &indices,
                         &mut lowered_pgm.closures,
                         mono_pgm,
-                    );
-                    lowered_pgm.funs.push(Fun::Source(source_fun));
-                } else {
-                    match (ty.as_str(), fun.as_str()) {
-                        ("Shr", "__shr") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::ShrI8));
+                    )),
+                    None => {
+                        FunBody::Builtin(match (ty.as_str(), fun.as_str()) {
+                            ("Shr", "__shr") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args }) => {
+                                        match name.as_str() {
+                                            "I8" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::ShrI8
+                                            }
+                                            "U8" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::ShrU8
+                                            }
+                                            "I32" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::ShrI32
+                                            }
+                                            "U32" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::ShrU32
+                                            }
+                                            _ => panic!(),
                                         }
-                                        "U8" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::ShrU8));
-                                        }
-                                        "I32" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::ShrI32));
-                                        }
-                                        "U32" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::ShrU32));
-                                        }
-                                        _ => panic!(),
                                     }
+                                    _ => panic!(),
                                 }
-                                _ => panic!(),
                             }
-                        }
 
-                        ("BitAnd", "__bitand") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::BitAndI8));
+                            ("BitAnd", "__bitand") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args }) => {
+                                        match name.as_str() {
+                                            "I8" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::BitAndI8
+                                            }
+                                            "U8" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::BitAndU8
+                                            }
+                                            "I32" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::BitAndI32
+                                            }
+                                            "U32" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::BitAndU32
+                                            }
+                                            _ => panic!(),
                                         }
-                                        "U8" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::BitAndU8));
-                                        }
-                                        "I32" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::BitAndI32));
-                                        }
-                                        "U32" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::BitAndU32));
-                                        }
-                                        _ => panic!(),
                                     }
+                                    _ => panic!(),
                                 }
-                                _ => panic!(),
                             }
-                        }
 
-                        ("BitOr", "__bitor") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::BitOrI8));
+                            ("BitOr", "__bitor") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args }) => {
+                                        match name.as_str() {
+                                            "I8" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::BitOrI8
+                                            }
+                                            "U8" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::BitOrU8
+                                            }
+                                            "I32" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::BitOrI32
+                                            }
+                                            "U32" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::BitOrU32
+                                            }
+                                            _ => panic!(),
                                         }
-                                        "U8" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::BitOrU8));
-                                        }
-                                        "I32" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::BitOrI32));
-                                        }
-                                        "U32" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::BitOrU32));
-                                        }
-                                        _ => panic!(),
                                     }
+                                    _ => panic!(),
                                 }
-                                _ => panic!(),
                             }
-                        }
 
-                        ("BitXor", "__bitxor") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args }) => {
-                                    match name.as_str() {
-                                        "U32" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::BitXorU32));
+                            ("BitXor", "__bitxor") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args }) => {
+                                        match name.as_str() {
+                                            "U32" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::BitXorU32
+                                            }
+                                            _ => panic!(),
                                         }
-                                        _ => panic!(),
                                     }
+                                    _ => panic!(),
                                 }
-                                _ => panic!(),
                             }
-                        }
 
-                        ("ToStr", "toStr") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrI8));
+                            ("ToStr", "toStr") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args }) => {
+                                        match name.as_str() {
+                                            "I8" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::ToStrI8
+                                            }
+                                            "U8" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::ToStrU8
+                                            }
+                                            "I32" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::ToStrI32
+                                            }
+                                            "U32" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::ToStrU32
+                                            }
+                                            "U64" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::ToStrU64
+                                            }
+                                            "I64" => {
+                                                assert!(args.is_empty());
+                                                BuiltinFunDecl::ToStrI64
+                                            }
+                                            _ => panic!(),
                                         }
-                                        "U8" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrU8));
-                                        }
-                                        "I32" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrI32));
-                                        }
-                                        "U32" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrU32));
-                                        }
-                                        "U64" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrU64));
-                                        }
-                                        "I64" => {
-                                            assert!(args.is_empty());
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrI64));
-                                        }
-                                        _ => panic!(),
                                     }
+                                    _ => panic!(),
                                 }
-                                _ => panic!(),
                             }
-                        }
 
-                        ("U32", "asU8") => {
-                            assert_eq!(fun_ty_args.len(), 1); // exception
-                            lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::U32AsU8));
-                        }
+                            ("U32", "asU8") => {
+                                assert_eq!(fun_ty_args.len(), 1); // exception
+                                BuiltinFunDecl::U32AsU8
+                            }
 
-                        ("U32", "asI32") => {
-                            assert_eq!(fun_ty_args.len(), 1); // exception
-                            lowered_pgm
-                                .funs
-                                .push(Fun::Builtin(BuiltinFunDecl::U32AsI32));
-                        }
+                            ("U32", "asI32") => {
+                                assert_eq!(fun_ty_args.len(), 1); // exception
+                                BuiltinFunDecl::U32AsI32
+                            }
 
-                        ("U32", "asU64") => {
-                            assert_eq!(fun_ty_args.len(), 1); // exception
-                            lowered_pgm
-                                .funs
-                                .push(Fun::Builtin(BuiltinFunDecl::U32AsU64));
-                        }
+                            ("U32", "asU64") => {
+                                assert_eq!(fun_ty_args.len(), 1); // exception
+                                BuiltinFunDecl::U32AsU64
+                            }
 
-                        ("U32", "mod") => {
-                            assert_eq!(fun_ty_args.len(), 1); // exception
-                            lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::U32Mod));
-                        }
+                            ("U32", "mod") => {
+                                assert_eq!(fun_ty_args.len(), 1); // exception
+                                BuiltinFunDecl::U32Mod
+                            }
 
-                        ("U8", "asU32") => {
-                            assert_eq!(fun_ty_args.len(), 1); // exception
-                            lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::U8AsU32));
-                        }
+                            ("U8", "asU32") => {
+                                assert_eq!(fun_ty_args.len(), 1); // exception
+                                BuiltinFunDecl::U8AsU32
+                            }
 
-                        ("U8", "asI8") => {
-                            assert_eq!(fun_ty_args.len(), 1); // exception
-                            lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::U8AsI8));
-                        }
+                            ("U8", "asI8") => {
+                                assert_eq!(fun_ty_args.len(), 1); // exception
+                                BuiltinFunDecl::U8AsI8
+                            }
 
-                        ("Shl", "__shl") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I8Shl));
+                            ("Shl", "__shl") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                        match name.as_str() {
+                                            "I8" => BuiltinFunDecl::I8Shl,
+                                            "U8" => BuiltinFunDecl::U8Shl,
+                                            "I32" => BuiltinFunDecl::I32Shl,
+                                            "U32" => BuiltinFunDecl::U32Shl,
+                                            _ => panic!(),
                                         }
-
-                                        "U8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U8Shl));
-                                        }
-
-                                        "I32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I32Shl));
-                                        }
-
-                                        "U32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U32Shl));
-                                        }
-
-                                        _ => panic!(),
                                     }
+                                    _ => panic!(),
                                 }
-                                _ => panic!(),
                             }
-                        }
 
-                        ("Rem", "rem") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I8Rem));
+                            ("Rem", "rem") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                        match name.as_str() {
+                                            "I8" => BuiltinFunDecl::I8Rem,
+                                            "U8" => BuiltinFunDecl::U8Rem,
+                                            "I32" => BuiltinFunDecl::I32Rem,
+                                            "U32" => BuiltinFunDecl::U32Rem,
+                                            _ => panic!(),
                                         }
-
-                                        "U8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U8Rem));
-                                        }
-
-                                        "I32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I32Rem));
-                                        }
-
-                                        "U32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U32Rem));
-                                        }
-
-                                        _ => panic!(),
                                     }
+                                    _ => panic!(),
                                 }
-                                _ => panic!(),
                             }
-                        }
 
-                        ("Ord", "cmp") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I8Cmp));
+                            ("Ord", "cmp") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                        match name.as_str() {
+                                            "I8" => BuiltinFunDecl::I8Cmp,
+                                            "U8" => BuiltinFunDecl::U8Cmp,
+                                            "I32" => BuiltinFunDecl::I32Cmp,
+                                            "U32" => BuiltinFunDecl::U32Cmp,
+                                            "U64" => BuiltinFunDecl::U64Cmp,
+                                            _ => panic!(),
                                         }
-
-                                        "U8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U8Cmp));
-                                        }
-
-                                        "I32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I32Cmp));
-                                        }
-
-                                        "U32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U32Cmp));
-                                        }
-
-                                        "U64" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U64Cmp));
-                                        }
-
-                                        _ => panic!(),
                                     }
+                                    _ => panic!(),
                                 }
-                                _ => panic!(),
                             }
-                        }
 
-                        ("Add", "__add") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I8Add));
+                            ("Add", "__add") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                        match name.as_str() {
+                                            "I8" => BuiltinFunDecl::I8Add,
+                                            "U8" => BuiltinFunDecl::U8Add,
+                                            "I32" => BuiltinFunDecl::I32Add,
+                                            "U32" => BuiltinFunDecl::U32Add,
+                                            "U64" => BuiltinFunDecl::U64Add,
+                                            _ => panic!(),
                                         }
-
-                                        "U8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U8Add));
-                                        }
-
-                                        "I32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I32Add));
-                                        }
-
-                                        "U32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U32Add));
-                                        }
-
-                                        "U64" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U64Add));
-                                        }
-
-                                        _ => panic!(),
                                     }
+
+                                    _ => panic!(),
                                 }
-
-                                _ => panic!(),
                             }
-                        }
 
-                        ("Sub", "__sub") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I8Sub));
+                            ("Sub", "__sub") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                        match name.as_str() {
+                                            "I8" => BuiltinFunDecl::I8Sub,
+                                            "U8" => BuiltinFunDecl::U8Sub,
+                                            "I32" => BuiltinFunDecl::I32Sub,
+                                            "U32" => BuiltinFunDecl::U32Sub,
+                                            _ => panic!(),
                                         }
-
-                                        "U8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U8Sub));
-                                        }
-
-                                        "I32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I32Sub));
-                                        }
-
-                                        "U32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U32Sub));
-                                        }
-
-                                        _ => panic!(),
                                     }
+
+                                    _ => panic!(),
                                 }
-
-                                _ => panic!(),
                             }
-                        }
 
-                        ("Mul", "__mul") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I8Mul));
+                            ("Mul", "__mul") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                        match name.as_str() {
+                                            "I8" => BuiltinFunDecl::I8Mul,
+                                            "U8" => BuiltinFunDecl::U8Mul,
+                                            "I32" => BuiltinFunDecl::I32Mul,
+                                            "U32" => BuiltinFunDecl::U32Mul,
+                                            "U64" => BuiltinFunDecl::U64Mul,
+
+                                            _ => panic!(),
                                         }
-
-                                        "U8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U8Mul));
-                                        }
-
-                                        "I32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I32Mul));
-                                        }
-
-                                        "U32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U32Mul));
-                                        }
-
-                                        "U64" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U64Mul));
-                                        }
-
-                                        _ => panic!(),
                                     }
+                                    _ => panic!(),
                                 }
-                                _ => panic!(),
                             }
-                        }
 
-                        ("Div", "__div") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I8Div));
+                            ("Div", "__div") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                        match name.as_str() {
+                                            "I8" => BuiltinFunDecl::I8Div,
+                                            "U8" => BuiltinFunDecl::U8Div,
+                                            "I32" => BuiltinFunDecl::I32Div,
+                                            "U32" => BuiltinFunDecl::U32Div,
+                                            _ => panic!(),
                                         }
-
-                                        "U8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U8Div));
-                                        }
-
-                                        "I32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I32Div));
-                                        }
-
-                                        "U32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U32Div));
-                                        }
-
-                                        _ => panic!(),
                                     }
+                                    _ => panic!(),
                                 }
-                                _ => panic!(),
                             }
-                        }
 
-                        ("Eq", "__eq") => {
-                            assert_eq!(fun_ty_args.len(), 2); // self, exception
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I8Eq));
+                            ("Eq", "__eq") => {
+                                assert_eq!(fun_ty_args.len(), 2); // self, exception
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                        match name.as_str() {
+                                            "I8" => BuiltinFunDecl::I8Eq,
+                                            "U8" => BuiltinFunDecl::U8Eq,
+                                            "I32" => BuiltinFunDecl::I32Eq,
+                                            "U32" => BuiltinFunDecl::U32Eq,
+                                            _ => panic!(),
                                         }
-
-                                        "U8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U8Eq));
-                                        }
-
-                                        "I32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I32Eq));
-                                        }
-
-                                        "U32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::U32Eq));
-                                        }
-
-                                        _ => panic!(),
                                     }
+
+                                    _ => panic!(),
                                 }
-
-                                _ => panic!(),
                             }
-                        }
 
-                        ("Array", "new") => {
-                            // prim Array.new(len: U32) Array[t]
-                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
-                            let t = fun_ty_args[0].clone();
-                            lowered_pgm
-                                .funs
-                                .push(Fun::Builtin(BuiltinFunDecl::ArrayNew { t }));
-                        }
+                            ("Array", "new") => {
+                                // prim Array.new(len: U32) Array[t]
+                                assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                                let t = fun_ty_args[0].clone();
+                                BuiltinFunDecl::ArrayNew { t }
+                            }
 
-                        ("Array", "len") => {
-                            // prim Array.len(self: Array[t]) U32
-                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
-                            // All arrays have the length in the same location, ignore `t`.
-                            lowered_pgm
-                                .funs
-                                .push(Fun::Builtin(BuiltinFunDecl::ArrayLen));
-                        }
+                            ("Array", "len") => {
+                                // prim Array.len(self: Array[t]) U32
+                                assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                                // All arrays have the length in the same location, ignore `t`.
+                                BuiltinFunDecl::ArrayLen
+                            }
 
-                        ("Array", "get") => {
-                            // prim Array.get(self: Array[t], idx: U32) t
-                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
-                            let t = fun_ty_args[0].clone();
-                            lowered_pgm
-                                .funs
-                                .push(Fun::Builtin(BuiltinFunDecl::ArrayGet { t }));
-                        }
+                            ("Array", "get") => {
+                                // prim Array.get(self: Array[t], idx: U32) t
+                                assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                                let t = fun_ty_args[0].clone();
+                                BuiltinFunDecl::ArrayGet { t }
+                            }
 
-                        ("Array", "set") => {
-                            // prim Array.set(self: Array[t], idx: U32, elem: t)
-                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
-                            let t = fun_ty_args[0].clone();
-                            lowered_pgm
-                                .funs
-                                .push(Fun::Builtin(BuiltinFunDecl::ArraySet { t }));
-                        }
+                            ("Array", "set") => {
+                                // prim Array.set(self: Array[t], idx: U32, elem: t)
+                                assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                                let t = fun_ty_args[0].clone();
+                                BuiltinFunDecl::ArraySet { t }
+                            }
 
-                        ("Array", "slice") => {
-                            // prim Array.slice(self: Array[t], start: U32, end: U32)
-                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
-                            let t = fun_ty_args[0].clone();
-                            lowered_pgm
-                                .funs
-                                .push(Fun::Builtin(BuiltinFunDecl::ArraySlice { t }));
-                        }
+                            ("Array", "slice") => {
+                                // prim Array.slice(self: Array[t], start: U32, end: U32)
+                                assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                                let t = fun_ty_args[0].clone();
+                                BuiltinFunDecl::ArraySlice { t }
+                            }
 
-                        ("Array", "copyWithin") => {
-                            // prim Array.copyWithin(self: Array[t], src: U32, dst: U32, len: U32)
-                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
-                            let t = fun_ty_args[0].clone();
-                            lowered_pgm
-                                .funs
-                                .push(Fun::Builtin(BuiltinFunDecl::ArrayCopyWithin { t }));
-                        }
+                            ("Array", "copyWithin") => {
+                                // prim Array.copyWithin(self: Array[t], src: U32, dst: U32, len: U32)
+                                assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                                let t = fun_ty_args[0].clone();
+                                BuiltinFunDecl::ArrayCopyWithin { t }
+                            }
 
-                        ("I32", "asU32") => {
-                            assert_eq!(fun_ty_args.len(), 1); // exception (implicit)
-                            lowered_pgm
-                                .funs
-                                .push(Fun::Builtin(BuiltinFunDecl::I32AsU32));
-                        }
+                            ("I32", "asU32") => {
+                                assert_eq!(fun_ty_args.len(), 1); // exception (implicit)
+                                BuiltinFunDecl::I32AsU32
+                            }
 
-                        ("I32", "abs") => {
-                            assert_eq!(fun_ty_args.len(), 1); // exception (implicit)
-                            lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::I32Abs));
-                        }
+                            ("I32", "abs") => {
+                                assert_eq!(fun_ty_args.len(), 1); // exception (implicit)
+                                BuiltinFunDecl::I32Abs
+                            }
 
-                        ("Neg", "__neg") => {
-                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
-                            match &fun_ty_args[0] {
-                                mono::Type::Named(mono::NamedType { name, args: _ }) => {
-                                    match name.as_str() {
-                                        "I8" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I8Neg));
+                            ("Neg", "__neg") => {
+                                assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                                match &fun_ty_args[0] {
+                                    mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                                        match name.as_str() {
+                                            "I8" => BuiltinFunDecl::I8Neg,
+                                            "I32" => BuiltinFunDecl::I32Neg,
+                                            _ => panic!(),
                                         }
-
-                                        "I32" => {
-                                            lowered_pgm
-                                                .funs
-                                                .push(Fun::Builtin(BuiltinFunDecl::I32Neg));
-                                        }
-
-                                        _ => panic!(),
                                     }
+
+                                    _ => panic!(),
                                 }
-
-                                _ => panic!(),
                             }
-                        }
 
-                        (_, _) => todo!("Built-in function {}.{}", ty, fun),
+                            (_, _) => todo!("Built-in function {}.{}", ty, fun),
+                        })
                     }
-                }
+                };
+                lowered_pgm.funs.push(Fun {
+                    parent_ty: None,
+                    name: fun_decl.name.clone(),
+                    idx,
+                    ty_args: fun_ty_args.clone(),
+                    params: fun_decl
+                        .sig
+                        .params
+                        .iter()
+                        .map(|(_, ty)| ty.node.clone())
+                        .collect(),
+                    return_ty: fun_decl
+                        .sig
+                        .return_ty
+                        .as_ref()
+                        .map(|l| l.node.clone())
+                        .unwrap_or(mono::Type::unit()),
+                    exceptions: fun_decl
+                        .sig
+                        .exceptions
+                        .as_ref()
+                        .map(|l| l.node.clone())
+                        .unwrap_or(mono::Type::unit()),
+                    body,
+                });
             }
         }
     }
@@ -2545,18 +2352,16 @@ fn lower_l_pat(
 }
 
 fn lower_source_fun(
-    fun: &mono::FunDecl,
-    idx: FunIdx,
-    ty_args: &[mono::Type],
+    sig: &mono::FunSig,
+    body: &[L<mono::Stmt>],
     indices: &Indices,
     closures: &mut Vec<Closure>,
     mono_pgm: &mono::MonoPgm,
 ) -> SourceFunDecl {
     let mut locals: Vec<LocalInfo> = vec![];
     let mut bounds: ScopeMap<Id, LocalIdx> = Default::default();
-    let mut params: Vec<mono::Type> = vec![];
 
-    for (param, ty) in &fun.sig.params {
+    for (param, ty) in &sig.params {
         bounds.insert(param.clone(), LocalIdx(locals.len() as u32));
         locals.push(LocalInfo {
             name: param.clone(),
@@ -2571,45 +2376,13 @@ fn lower_source_fun(
         parent_fun_scope: None,
     };
 
-    let body: Vec<L<Stmt>> = fun
-        .body
-        .as_ref()
-        .unwrap()
+    let body: Vec<L<Stmt>> = body
         .iter()
         .map(|stmt| lower_l_stmt(stmt, closures, indices, &mut scope, mono_pgm).0)
         .collect();
 
-    params.extend(
-        fun.sig
-            .params
-            .iter()
-            .map(|(_, param_ty)| param_ty.node.clone()),
-    );
-
     SourceFunDecl {
-        parent_ty: fun.parent_ty.clone(),
-        name: fun.name.clone(),
-        idx,
-        ty_args: ty_args.to_vec(),
-        locals: scope.locals,
         body,
-        params,
-
-        return_ty: fun
-            .sig
-            .return_ty
-            .as_ref()
-            .map(|l| l.node.clone())
-            .unwrap_or(mono::Type::unit()),
-
-        // Constructors don't have exception types as they cannot throw, and their type parameters
-        // need to be the same as the constructed type's type parameters. We can assume their
-        // exception type to be empty type (variant with no constructor).
-        exceptions: fun
-            .sig
-            .exceptions
-            .as_ref()
-            .map(|ty| ty.node.clone())
-            .unwrap_or(mono::Type::empty()),
+        locals: scope.locals,
     }
 }
