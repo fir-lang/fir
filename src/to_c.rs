@@ -453,7 +453,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 p.nl();
                 let struct_name = heap_obj_struct_name(pgm, HeapObjIdx(tag as u32));
                 let tag_name = heap_obj_tag_name(pgm, HeapObjIdx(tag as u32));
-                wln!(p, "{struct_name}* _obj = malloc(sizeof({struct_name}));",);
+                wln!(p, "{struct_name}* _obj = malloc(sizeof({struct_name}));");
                 wln!(p, "_obj->_tag = {tag_name};");
                 for i in 0..source_con.fields.len() {
                     wln!(p, "_obj->_{i} = p{i};");
@@ -469,7 +469,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 );
                 p.nl();
 
-                w!(p, "#define _con_closure_{tag} (&_con_closure_{tag}_data)",);
+                w!(p, "#define _con_closure_{tag} (&_con_closure_{tag}_data)");
                 p.nl();
                 p.nl();
             }
@@ -516,7 +516,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         );
         p.nl();
 
-        w!(p, "#define _fun_closure_{i} (&_fun_closure_{i}_data)",);
+        w!(p, "#define _fun_closure_{i} (&_fun_closure_{i}_data)");
         p.nl();
         p.nl();
     }
@@ -1794,7 +1794,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
                 "if (fread(contents, 1, size, f) != (size_t)size) {{ fprintf(stderr, \"Failed to read file\\n\"); exit(1); }}"
             );
             wln!(p, "fclose(f);");
-            w!(p, "uint64_t result = alloc_str(contents, size);",);
+            w!(p, "uint64_t result = alloc_str(contents, size);");
             p.nl();
             wln!(p, "free(contents);");
             w!(p, "return result;");
@@ -2146,7 +2146,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 w!(p, "({{");
                 p.indent();
                 p.nl();
-                wln!(p, "{struct_name}* _obj = malloc(sizeof({struct_name}));",);
+                wln!(p, "{struct_name}* _obj = malloc(sizeof({struct_name}));");
                 wln!(p, "_obj->_tag = {tag_name};");
                 for (i, arg) in args.iter().enumerate() {
                     w!(p, "_obj->_{i} = ");
