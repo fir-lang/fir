@@ -388,7 +388,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     }
 
     for (i, fun) in pgm.funs.iter().enumerate() {
-        forward_declare_fun(pgm, fun, i, &mut p);
+        forward_declare_fun(fun, i, &mut p);
     }
     p.nl();
 
@@ -484,19 +484,24 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     );
     p.nl();
     for (i, fun) in pgm.funs.iter().enumerate() {
-        w!(p, "static uint64_t _fun_closure_{i}_fun(CLOSURE* self");
-        for i in 0..fun.params.len() {
-            w!(p, ", uint64_t p{i}");
+        w!(
+            p,
+            "static {} _fun_closure_{}_fun(CLOSURE* self",
+            c_ty(&fun.return_ty),
+            i
+        );
+        for (i, ty) in fun.params.iter().enumerate() {
+            w!(p, ", {} p{}", c_ty(ty), i);
         }
         w!(p, ") {{");
         p.indent();
         p.nl();
-        w!(p, "return ((uint64_t(*)(");
-        for i in 0..fun.params.len() {
+        w!(p, "return (({}(*)(", c_ty(&fun.return_ty));
+        for (i, ty) in fun.params.iter().enumerate() {
             if i != 0 {
                 w!(p, ", ");
             }
-            w!(p, "uint64_t");
+            w!(p, "{}", c_ty(ty));
         }
         w!(p, "))(_fun_{i}))(");
         for i in 0..fun.params.len() {
@@ -555,7 +560,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     p.print()
 }
 
-fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer) {
+fn forward_declare_fun(fun: &Fun, idx: usize, p: &mut Printer) {
     w!(p, "// {} {}", loc_display(&fun.name.loc), fun.name.node);
     if !fun.ty_args.is_empty() {
         w!(p, "[");
@@ -571,15 +576,15 @@ fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer
     }
     p.nl();
     let param_count = fun.params.len();
-    w!(p, "static uint64_t _fun_{}(", idx);
+    w!(p, "static {} _fun_{}(", c_ty(&fun.return_ty), idx);
     if param_count == 0 {
         w!(p, "void");
     } else {
-        for i in 0..param_count {
+        for (i, ty) in fun.params.iter().enumerate() {
             if i > 0 {
                 w!(p, ", ");
             }
-            w!(p, "uint64_t _p{}", i);
+            w!(p, "{} _p{}", c_ty(ty), i);
         }
     }
     wln!(p, ");");
@@ -882,7 +887,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             p.indent();
             p.nl();
             wln!(p, "Str* str = (Str*)msg;");
-            wln!(p, "uint64_t bytes_arr = str->_0;");
+            wln!(p, "ARRAY* bytes_arr = str->_0;");
             wln!(p, "uint32_t len = array_len(bytes_arr);");
             w!(
                 p,
@@ -899,11 +904,10 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::PrintStrNoNl => {
-            w!(p, "static uint64_t _fun_{}(uint64_t str) {{", idx);
+            w!(p, "static uint64_t _fun_{}(Str* str) {{", idx);
             p.indent();
             p.nl();
-            wln!(p, "Str* s = (Str*)str;");
-            wln!(p, "uint64_t bytes_arr = s->_0;");
+            wln!(p, "ARRAY* bytes_arr = str->_0;");
             wln!(p, "uint32_t len = array_len(bytes_arr);");
             w!(
                 p,
