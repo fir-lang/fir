@@ -932,16 +932,12 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
     wln!(p, "// {:?}", fun);
     match fun {
         BuiltinFunDecl::Panic => {
-            w!(p, "static uint64_t _fun_{}(uint64_t msg) {{", idx);
+            w!(p, "static Record* _fun_{}(Str* msg) {{", idx);
             p.indent();
             p.nl();
-            wln!(p, "Str* str = (Str*)msg;");
-            wln!(p, "ARRAY* bytes_arr = str->_0;");
+            wln!(p, "ARRAY* bytes_arr = msg->_0;");
             wln!(p, "uint32_t len = array_len(bytes_arr);");
-            w!(
-                p,
-                "uint8_t* data_ptr = (uint8_t*)((ARRAY*)bytes_arr)->data_ptr;"
-            );
+            w!(p, "uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;");
             p.nl();
             wln!(p, "fprintf(stderr, \"PANIC: \");");
             wln!(p, "fwrite(data_ptr, 1, len, stderr);");
@@ -972,127 +968,161 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::ShrI8 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a >> (int8_t)(uint8_t)b);"
-            );
+            w!(p, "return a >> b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::ShrU8 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint8_t)a >> (uint8_t)b);");
+            w!(p, "return a >> b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::ShrI32 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static uint64_t _fun_{idx}(U32 a, U32 b) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a >> (int32_t)(uint32_t)b);"
-            );
+            w!(p, "return a >> b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::ShrU32 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint32_t)a >> (uint32_t)b);");
+            w!(p, "return a >> b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
-        BuiltinFunDecl::BitAndI8 | BuiltinFunDecl::BitAndU8 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+        BuiltinFunDecl::BitAndI8 => {
+            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint8_t)a & (uint8_t)b);");
+            w!(p, "return a & b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
-        BuiltinFunDecl::BitAndI32 | BuiltinFunDecl::BitAndU32 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+        BuiltinFunDecl::BitAndU8 => {
+            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint32_t)a & (uint32_t)b);");
+            w!(p, "return a & b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
-        BuiltinFunDecl::BitOrI8 | BuiltinFunDecl::BitOrU8 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+        BuiltinFunDecl::BitAndI32 => {
+            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint8_t)a | (uint8_t)b);");
+            w!(p, "return a & b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
-        BuiltinFunDecl::BitOrI32 | BuiltinFunDecl::BitOrU32 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+        BuiltinFunDecl::BitAndU32 => {
+            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint32_t)a | (uint32_t)b);");
+            w!(p, "return a & b;");
+            p.dedent();
+            p.nl();
+            wln!(p, "}}");
+        }
+
+        BuiltinFunDecl::BitOrI8 => {
+            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
+            p.indent();
+            p.nl();
+            w!(p, "return a | b;");
+            p.dedent();
+            p.nl();
+            wln!(p, "}}");
+        }
+
+        BuiltinFunDecl::BitOrU8 => {
+            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
+            p.indent();
+            p.nl();
+            w!(p, "return a | b;");
+            p.dedent();
+            p.nl();
+            wln!(p, "}}");
+        }
+
+        BuiltinFunDecl::BitOrI32 => {
+            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
+            p.indent();
+            p.nl();
+            w!(p, "return a | b;");
+            p.dedent();
+            p.nl();
+            wln!(p, "}}");
+        }
+
+        BuiltinFunDecl::BitOrU32 => {
+            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
+            p.indent();
+            p.nl();
+            w!(p, "return a | b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::BitXorU32 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint32_t)a ^ (uint32_t)b);");
+            w!(p, "return a ^ b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::ToStrI8 => {
-            gen_tostr_fn(idx, "int8_t", "(int8_t)(uint8_t)", "PRId8", p);
+            gen_tostr_fn(idx, "I8", "PRId8", p);
         }
 
         BuiltinFunDecl::ToStrU8 => {
-            gen_tostr_fn(idx, "uint8_t", "(uint8_t)", "PRIu8", p);
+            gen_tostr_fn(idx, "U8", "PRIu8", p);
         }
 
         BuiltinFunDecl::ToStrI32 => {
-            gen_tostr_fn(idx, "int32_t", "(int32_t)(uint32_t)", "PRId32", p);
+            gen_tostr_fn(idx, "I32", "PRId32", p);
         }
 
         BuiltinFunDecl::ToStrU32 => {
-            gen_tostr_fn(idx, "uint32_t", "(uint32_t)", "PRIu32", p);
+            gen_tostr_fn(idx, "U32", "PRIu32", p);
         }
 
         BuiltinFunDecl::ToStrU64 => {
-            gen_tostr_fn(idx, "uint64_t", "", "PRIu64", p);
+            gen_tostr_fn(idx, "U64", "PRIu64", p);
         }
 
         BuiltinFunDecl::ToStrI64 => {
-            gen_tostr_fn(idx, "int64_t", "(int64_t)", "PRId64", p);
+            gen_tostr_fn(idx, "I64", "PRId64", p);
         }
 
         BuiltinFunDecl::U8AsI8 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            w!(p, "static uint64_t _fun_{idx}(uint64_t a) {{");
             p.indent();
             p.nl();
             w!(p, "return (uint64_t)(uint8_t)(int8_t)(uint8_t)a;");
@@ -1102,145 +1132,133 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::U8AsU32 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            w!(p, "static U32 _fun_{idx}(U8 a) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)(uint32_t)(uint8_t)a;");
+            w!(p, "return (U32)a;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32AsU8 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            w!(p, "static U8 _fun_{idx}(U32 a) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)(uint8_t)(uint32_t)a;");
+            w!(p, "return (U8)a;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32AsI32 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            w!(p, "static I32 _fun_{}(U32 a) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)(uint32_t)(int32_t)(uint32_t)a;");
+            w!(p, "return (I32)a;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32AsU64 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            w!(p, "static U32 _fun_{}(U64 a) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)(uint32_t)a;");
+            w!(p, "return (U32)a;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I8Shl => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a << (int8_t)(uint8_t)b);"
-            );
+            w!(p, "return a << b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Shl => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint8_t)a << (uint8_t)b);");
+            w!(p, "return a << b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Shl => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a << (int32_t)(uint32_t)b);"
-            );
+            w!(p, "return a << b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Shl => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint32_t)a << (uint32_t)b);");
+            w!(p, "return a << b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
-        BuiltinFunDecl::I8Cmp => gen_cmp_fn(idx, "(int8_t)(uint8_t)", pgm, p),
-        BuiltinFunDecl::U8Cmp => gen_cmp_fn(idx, "(uint8_t)", pgm, p),
-        BuiltinFunDecl::I32Cmp => gen_cmp_fn(idx, "(int32_t)(uint32_t)", pgm, p),
-        BuiltinFunDecl::U32Cmp => gen_cmp_fn(idx, "(uint32_t)", pgm, p),
-        BuiltinFunDecl::U64Cmp => gen_cmp_fn(idx, "", pgm, p),
+        BuiltinFunDecl::I8Cmp => gen_cmp_fn(idx, "I8", pgm, p),
+        BuiltinFunDecl::U8Cmp => gen_cmp_fn(idx, "U8", pgm, p),
+        BuiltinFunDecl::I32Cmp => gen_cmp_fn(idx, "I32", pgm, p),
+        BuiltinFunDecl::U32Cmp => gen_cmp_fn(idx, "U32", pgm, p),
+        BuiltinFunDecl::U64Cmp => gen_cmp_fn(idx, "U64", pgm, p),
 
         BuiltinFunDecl::I8Add => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a + (int8_t)(uint8_t)b);"
-            );
+            w!(p, "return a + b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Add => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint8_t)a + (uint8_t)b);");
+            w!(p, "return a + b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Add => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static uint64_t _fun_{idx}(uint64_t a, uint64_t b) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a + (int32_t)(uint32_t)b);"
-            );
+            w!(p, "return a + b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Add => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint32_t)a + (uint32_t)b);");
+            w!(p, "return a + b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U64Add => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U64 _fun_{idx}(U64 a, U64 b) {{");
             p.indent();
             p.nl();
             w!(p, "return a + b;");
@@ -1250,99 +1268,87 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::I8Sub => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a - (int8_t)(uint8_t)b);"
-            );
+            w!(p, "return a - b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Sub => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint8_t)a - (uint8_t)b);");
+            w!(p, "return a - b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Sub => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a - (int32_t)(uint32_t)b);"
-            );
+            w!(p, "return a - b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Sub => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint32_t)a - (uint32_t)b);");
+            w!(p, "return a - b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I8Mul => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a * (int8_t)(uint8_t)b);"
-            );
+            w!(p, "return a * b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Mul => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint8_t)a * (uint8_t)b);");
+            w!(p, "return a * b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Mul => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a * (int32_t)(uint32_t)b);"
-            );
+            w!(p, "return a * b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Mul => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint32_t)a * (uint32_t)b);");
+            w!(p, "return a * b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U64Mul => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U64 _fun_{idx}(U64 a, U64 b) {{");
             p.indent();
             p.nl();
             w!(p, "return a * b;");
@@ -1352,36 +1358,30 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::I8Div => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I8 _fun_{}(I8 a, I8 b) {{", idx);
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a / (int8_t)(uint8_t)b);"
-            );
+            w!(p, "return a / b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Div => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint8_t)a / (uint8_t)b);");
+            w!(p, "return a / b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Div => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a / (int32_t)(uint32_t)b);"
-            );
+            w!(p, "return a / b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
@@ -1397,13 +1397,13 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             wln!(p, "}}");
         }
 
-        BuiltinFunDecl::I8Eq | BuiltinFunDecl::U8Eq => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+        BuiltinFunDecl::I8Eq => {
+            w!(p, "static Bool* _fun_{idx}(I8 a, I8 b) {{");
             p.indent();
             p.nl();
             w!(
                 p,
-                "return ((uint8_t)a == (uint8_t)b) ? {} : {};",
+                "return (a == b) ? (Bool*){} : (Bool*){};",
                 heap_obj_singleton_name(pgm, pgm.true_con_idx),
                 heap_obj_singleton_name(pgm, pgm.false_con_idx)
             );
@@ -1412,13 +1412,43 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             wln!(p, "}}");
         }
 
-        BuiltinFunDecl::I32Eq | BuiltinFunDecl::U32Eq => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+        BuiltinFunDecl::U8Eq => {
+            w!(p, "static Bool* _fun_{idx}(U8 a, U8 b) {{");
             p.indent();
             p.nl();
             w!(
                 p,
-                "return ((uint32_t)a == (uint32_t)b) ? {} : {};",
+                "return (a == b) ? (Bool*){} : (Bool*){};",
+                heap_obj_singleton_name(pgm, pgm.true_con_idx),
+                heap_obj_singleton_name(pgm, pgm.false_con_idx)
+            );
+            p.dedent();
+            p.nl();
+            wln!(p, "}}");
+        }
+
+        BuiltinFunDecl::I32Eq => {
+            w!(p, "static Bool* _fun_{}(I32 a, I32 b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (a == b) ? (Bool*){} : (Bool*){};",
+                heap_obj_singleton_name(pgm, pgm.true_con_idx),
+                heap_obj_singleton_name(pgm, pgm.false_con_idx)
+            );
+            p.dedent();
+            p.nl();
+            wln!(p, "}}");
+        }
+
+        BuiltinFunDecl::U32Eq => {
+            w!(p, "static Bool* _fun_{}(U32 a, U32 b) {{", idx);
+            p.indent();
+            p.nl();
+            w!(
+                p,
+                "return (a == b) ? (Bool*){} : (Bool*){};",
                 heap_obj_singleton_name(pgm, pgm.true_con_idx),
                 heap_obj_singleton_name(pgm, pgm.false_con_idx)
             );
@@ -1428,10 +1458,10 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::U32Mod => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint32_t)a % (uint32_t)b);");
+            w!(p, "return a % b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
@@ -1620,11 +1650,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
                 Repr::U32 => "array_get_u32",
                 Repr::U64 => "array_get_u64",
             };
-            w!(
-                p,
-                "static uint64_t _fun_{}(uint64_t arr, uint64_t idx) {{",
-                idx
-            );
+            w!(p, "static uint64_t _fun_{}(ARRAY* arr, U32 idx) {{", idx);
             p.indent();
             p.nl();
             w!(p, "return {}(arr, (uint32_t)idx);", fn_name);
@@ -1642,7 +1668,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             };
             w!(
                 p,
-                "static uint64_t _fun_{}(uint64_t arr, uint64_t idx, uint64_t val) {{",
+                "static uint64_t _fun_{}(ARRAY* arr, U32 idx, uint64_t val) {{",
                 idx
             );
             p.indent();
@@ -1713,16 +1739,12 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::ReadFileUtf8 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t path_str) {{", idx);
+            w!(p, "static Str* _fun_{}(Str* path_str) {{", idx);
             p.indent();
             p.nl();
-            wln!(p, "Str* s = (Str*)path_str;");
-            wln!(p, "uint64_t bytes_arr = s->_0;");
+            wln!(p, "ARRAY* bytes_arr = path_str->_0;");
             wln!(p, "uint32_t path_len = array_len(bytes_arr);");
-            w!(
-                p,
-                "uint8_t* path_data = (uint8_t*)((ARRAY*)bytes_arr)->data_ptr;"
-            );
+            w!(p, "uint8_t* path_data = (uint8_t*)bytes_arr->data_ptr;");
             p.nl();
             wln!(p, "char* path = (char*)malloc(path_len + 1);");
             wln!(p, "memcpy(path, path_data, path_len);");
@@ -1743,7 +1765,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
                 "if (fread(contents, 1, size, f) != (size_t)size) {{ fprintf(stderr, \"Failed to read file\\n\"); exit(1); }}"
             );
             wln!(p, "fclose(f);");
-            w!(p, "uint64_t result = alloc_str(contents, size);");
+            w!(p, "Str* result = alloc_str(contents, size);");
             p.nl();
             wln!(p, "free(contents);");
             w!(p, "return result;");
@@ -1753,17 +1775,14 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::GetArgs => {
-            w!(p, "static uint64_t _fun_{}(void) {{", idx);
+            w!(p, "static ARRAY* _fun_{}(void) {{", idx);
             p.indent();
             p.nl();
-            wln!(p, "uint64_t arr = array_new_u64(g_argc);");
+            wln!(p, "ARRAY* arr = array_new_u64(g_argc);");
             w!(p, "for (int i = 0; i < g_argc; i++) {{");
             p.indent();
             p.nl();
-            w!(
-                p,
-                "uint64_t arg_str = alloc_str(g_argv[i], strlen(g_argv[i]));",
-            );
+            w!(p, "Str* arg_str = alloc_str(g_argv[i], strlen(g_argv[i]));",);
             p.nl();
             w!(p, "array_set_u64(arr, i, arg_str);");
             p.dedent();
@@ -1777,18 +1796,12 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
     }
 }
 
-fn gen_tostr_fn(idx: usize, c_type: &str, cast: &str, fmt: &str, p: &mut Printer) {
-    w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+fn gen_tostr_fn(idx: usize, arg_ty: &str, fmt: &str, p: &mut Printer) {
+    w!(p, "static Str* _fun_{}({arg_ty} a) {{", idx);
     p.indent();
     p.nl();
     wln!(p, "char buf[32];");
-    w!(
-        p,
-        "int len = snprintf(buf, sizeof(buf), \"%\" {} , ({}){}a);",
-        fmt,
-        c_type,
-        cast
-    );
+    w!(p, "int len = snprintf(buf, sizeof(buf), \"%\" {fmt} , a);",);
     p.nl();
     w!(p, "return alloc_str(buf, len);");
     p.dedent();
@@ -1796,29 +1809,25 @@ fn gen_tostr_fn(idx: usize, c_type: &str, cast: &str, fmt: &str, p: &mut Printer
     wln!(p, "}}");
 }
 
-fn gen_cmp_fn(idx: usize, cast: &str, pgm: &LoweredPgm, p: &mut Printer) {
-    w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+fn gen_cmp_fn(idx: usize, arg_ty: &str, pgm: &LoweredPgm, p: &mut Printer) {
+    w!(p, "static Ordering* _fun_{idx}({arg_ty} a, {arg_ty} b) {{");
     p.indent();
     p.nl();
     w!(
         p,
-        "if ({}a < {}b) return {};",
-        cast,
-        cast,
+        "if (a < b) return (Ordering*){};",
         heap_obj_singleton_name(pgm, pgm.ordering_less_con_idx)
     );
     p.nl();
     w!(
         p,
-        "if ({}a > {}b) return {};",
-        cast,
-        cast,
+        "if (a > b) return (Ordering*){};",
         heap_obj_singleton_name(pgm, pgm.ordering_greater_con_idx)
     );
     p.nl();
     w!(
         p,
-        "return {};",
+        "return (Ordering*){};",
         heap_obj_singleton_name(pgm, pgm.ordering_equal_con_idx)
     );
     p.dedent();
@@ -1857,7 +1866,7 @@ fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p
     for (i, local) in source.locals.iter().enumerate().skip(fun.params.len()) {
         wln!(
             p,
-            "{} _{} = 0; // {}: {}",
+            "{} _{}; // {}: {}",
             c_ty(&local.ty),
             i,
             local.name,
@@ -1866,12 +1875,7 @@ fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p
     }
 
     // Declare result variable
-    w!(
-        p,
-        "{} _result = {};",
-        c_ty(&fun.return_ty),
-        heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
-    );
+    w!(p, "{} _result;", c_ty(&fun.return_ty));
     p.nl();
 
     // Generate body
@@ -1901,7 +1905,7 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     for (i, local) in closure.locals.iter().enumerate().skip(closure.params.len()) {
         wln!(
             p,
-            "{} _{} = 0; // {}: {}",
+            "{} _{}; // {}: {}",
             c_ty(&local.ty),
             i,
             local.name,
