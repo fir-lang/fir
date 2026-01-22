@@ -184,6 +184,41 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         "
     );
 
+    // Generate structs for sum types. These just have the tag and they're mainly to make code
+    // easier to read.
+    for (ty_id, ty_arg_map) in &pgm.type_objs {
+        for (ty_args, heap_objs) in ty_arg_map.iter() {
+            if heap_objs.len() == 1 {
+                // TODO: Single-con sums will cause issues here.
+                continue;
+            }
+            w!(p, "// {}", ty_id);
+            if !ty_args.is_empty() {
+                w!(p, "[");
+                for (i, ty_arg) in ty_args.iter().enumerate() {
+                    if i != 0 {
+                        w!(p, ", ");
+                    }
+                    w!(p, "{}", ty_arg);
+                }
+                w!(p, "]");
+            }
+            p.nl();
+
+            let mut struct_name = ty_id.to_string();
+            for ty_arg in ty_args {
+                struct_name.push('_');
+                ty_to_c(ty_arg, &mut struct_name);
+            }
+            writedoc!(
+                p,
+                "typedef struct {{
+                    uint64_t tag;
+                }} {};", struct_name);
+            p.nl();
+        }
+    }
+
     let heap_objs_sorted = top_sort(&pgm.type_objs, &pgm.heap_objs);
     for scc in &heap_objs_sorted {
         // If SCC has more than one element, forward-declare the structs.
