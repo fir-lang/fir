@@ -214,7 +214,9 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 p,
                 "typedef struct {{
                     uint64_t tag;
-                }} {};", struct_name);
+                }} {};",
+                struct_name
+            );
             p.nl();
         }
     }
@@ -852,11 +854,23 @@ fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
     }
 }
 
-// TODO: Generate `uint32_t` etc. for numbers, `ARRAY*` for all arrays, add `*` suffix to boxed
-// types, ...
 fn c_ty(ty: &mono::Type) -> String {
+    // Special case unboxed types for now.
+    if let mono::Type::Named(mono::NamedType { name, args: _ }) = ty {
+        let name_str = name.as_str();
+        if matches!(
+            name_str,
+            "I8" | "U8" | "I16" | "U16" | "I32" | "U32" | "I64" | "U64"
+        ) {
+            return name_str.to_string();
+        }
+        if matches!(name_str, "Array") {
+            return "ARRAY*".to_string();
+        }
+    }
     let mut s = String::new();
     ty_to_c(ty, &mut s);
+    s.push('*'); // make pointer
     s
 }
 
@@ -939,15 +953,12 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
         }
 
         BuiltinFunDecl::PrintStrNoNl => {
-            w!(p, "static uint64_t _fun_{}(Str* str) {{", idx);
+            w!(p, "static Record* _fun_{}(Str* str) {{", idx);
             p.indent();
             p.nl();
             wln!(p, "ARRAY* bytes_arr = str->_0;");
             wln!(p, "uint32_t len = array_len(bytes_arr);");
-            w!(
-                p,
-                "uint8_t* data_ptr = (uint8_t*)((ARRAY*)bytes_arr)->data_ptr;"
-            );
+            w!(p, "uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;");
             p.nl();
             wln!(p, "fwrite(data_ptr, 1, len, stdout);");
             w!(
