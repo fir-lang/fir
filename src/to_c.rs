@@ -2026,7 +2026,7 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], update_result: bool, cg: &mut Cg
             p.indent();
             p.nl();
             let cond_temp = cg.fresh_temp();
-            w!(p, "uint64_t {} = ", cond_temp);
+            w!(p, "Bool* {cond_temp} = ");
             expr_to_c(&cond.node, locals, cg, p);
             wln!(p, ";");
             w!(
@@ -2106,7 +2106,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     expr_to_c(&arg.node, locals, cg, p);
                     wln!(p, ";");
                 }
-                w!(p, "(uint64_t)_obj;");
+                w!(p, "_obj;");
                 p.dedent();
                 p.nl();
                 w!(p, "}})");
@@ -2421,13 +2421,13 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "uint64_t {} = ", expr_temp);
             expr_to_c(&expr.node, locals, cg, p);
             wln!(p, ";");
-            wln!(p, "uint64_t _is_result;");
+            wln!(p, "Bool* _is_result;");
             w!(p, "if ({}) {{", pat_to_cond(&pat.node, &expr_temp, cg));
             p.indent();
             p.nl();
             w!(
                 p,
-                "_is_result = {};",
+                "_is_result = (Bool*){};",
                 heap_obj_singleton_name(cg.pgm, cg.pgm.true_con_idx)
             );
             p.dedent();
@@ -2437,7 +2437,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.nl();
             w!(
                 p,
-                "_is_result = {};",
+                "_is_result = (Bool*){};",
                 heap_obj_singleton_name(cg.pgm, cg.pgm.false_con_idx)
             );
             p.dedent();
@@ -2477,10 +2477,11 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
         }
 
         Pat::Con(ConPat { con, fields }) => {
+            let struct_name = heap_obj_struct_name(cg.pgm, *con);
             let tag_name = heap_obj_tag_name(cg.pgm, *con);
             let mut cond = format!("(get_tag({}) == {})", scrutinee, tag_name);
             for (i, field_pat) in fields.iter().enumerate() {
-                let field_expr = format!("((uint64_t*){})[{}]", scrutinee, 1 + i);
+                let field_expr = format!("(({struct_name}*){scrutinee})->_{i}");
                 let field_cond = pat_to_cond(&field_pat.node, &field_expr, cg);
                 cond = format!("({} && {})", cond, field_cond);
             }
@@ -2510,7 +2511,7 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
         Pat::Char(c) => {
             let tag_name = heap_obj_tag_name(cg.pgm, cg.pgm.char_con_idx);
             format!(
-                "(get_tag({}) == {} && ((uint64_t*){})[1] == {})",
+                "(get_tag({}) == {} && ((Char*){})->_0 == {})",
                 scrutinee, tag_name, scrutinee, *c as u32
             )
         }
