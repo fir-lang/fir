@@ -573,7 +573,16 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     // functions, but source functions can depend on built-in functions.
     for (i, fun) in pgm.funs.iter().enumerate() {
         if let FunBody::Builtin(builtin) = &fun.body {
-            builtin_fun_to_c(builtin, i, pgm, &mut p);
+            builtin_fun_to_c(
+                builtin,
+                &fun.ty_args,
+                &fun.params,
+                &fun.return_ty,
+                &fun.exceptions,
+                i,
+                pgm,
+                &mut p,
+            );
             p.nl();
         }
     }
@@ -926,7 +935,16 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
     }
 }
 
-fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut Printer) {
+fn builtin_fun_to_c(
+    fun: &BuiltinFunDecl,
+    ty_args: &[mono::Type],
+    params: &[mono::Type],
+    ret: &mono::Type,
+    exn: &mono::Type,
+    idx: usize,
+    pgm: &LoweredPgm,
+    p: &mut Printer,
+) {
     // Debug output of `fun` is too noisy, but it's better than not knowing what the generated
     // functions are for.
     wln!(p, "// {:?}", fun);
@@ -1617,6 +1635,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             wln!(p, "}}");
         }
 
+        // Array functions /////////////////////////////////////////////////////////////////////////
         BuiltinFunDecl::ArrayNew { t } => {
             let repr = Repr::from_mono_ty(t);
             let fn_name = match repr {
@@ -1624,20 +1643,20 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
                 Repr::U32 => "array_new_u32",
                 Repr::U64 => "array_new_u64",
             };
-            w!(p, "static uint64_t _fun_{}(uint64_t len) {{", idx);
+            w!(p, "static ARRAY* _fun_{}(U32 len) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "return {}((uint32_t)len);", fn_name);
+            w!(p, "return {}(len);", fn_name);
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::ArrayLen => {
-            w!(p, "static uint64_t _fun_{}(uint64_t arr) {{", idx);
+            w!(p, "static U32 _fun_{}(ARRAY* arr) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)array_len(arr);");
+            w!(p, "return array_len(arr);");
             p.dedent();
             p.nl();
             wln!(p, "}}");
@@ -1650,10 +1669,15 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
                 Repr::U32 => "array_get_u32",
                 Repr::U64 => "array_get_u64",
             };
-            w!(p, "static uint64_t _fun_{}(ARRAY* arr, U32 idx) {{", idx);
+            w!(
+                p,
+                "static {} _fun_{}(ARRAY* arr, U32 idx) {{",
+                c_ty(ret),
+                idx
+            );
             p.indent();
             p.nl();
-            w!(p, "return {}(arr, (uint32_t)idx);", fn_name);
+            w!(p, "return ({}){}(arr, (uint32_t)idx);", c_ty(ret), fn_name);
             p.dedent();
             p.nl();
             wln!(p, "}}");
@@ -1668,8 +1692,9 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             };
             w!(
                 p,
-                "static uint64_t _fun_{}(ARRAY* arr, U32 idx, uint64_t val) {{",
-                idx
+                "static Record* _fun_{}(ARRAY* arr, U32 idx, {} val) {{",
+                idx,
+                c_ty(&params[2]),
             );
             p.indent();
             p.nl();
@@ -1738,6 +1763,7 @@ fn builtin_fun_to_c(fun: &BuiltinFunDecl, idx: usize, pgm: &LoweredPgm, p: &mut 
             wln!(p, "}}");
         }
 
+        // End of array functions //////////////////////////////////////////////////////////////////
         BuiltinFunDecl::ReadFileUtf8 => {
             w!(p, "static Str* _fun_{}(Str* path_str) {{", idx);
             p.indent();
@@ -2194,12 +2220,12 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "({{");
             p.indent();
             p.nl();
-            w!(p, "uint64_t _and_result = ");
+            w!(p, "Bool* _and_result = ");
             expr_to_c(&left.node, locals, cg, p);
             wln!(p, ";");
             w!(
                 p,
-                "if (_and_result == {}) {{",
+                "if (_and_result == (Bool*){}) {{",
                 heap_obj_singleton_name(cg.pgm, cg.pgm.true_con_idx)
             );
             p.indent();
@@ -2220,12 +2246,12 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "({{");
             p.indent();
             p.nl();
-            w!(p, "uint64_t _or_result = ");
+            w!(p, "Bool* _or_result = ");
             expr_to_c(&left.node, locals, cg, p);
             wln!(p, ";");
             w!(
                 p,
-                "if (_or_result == {}) {{",
+                "if (_or_result == (Bool*){}) {{",
                 heap_obj_singleton_name(cg.pgm, cg.pgm.false_con_idx)
             );
             p.indent();
