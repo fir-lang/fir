@@ -381,12 +381,12 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     }
 
     for (i, fun) in pgm.funs.iter().enumerate() {
-        forward_declare_fun(pgm, fun, i, &mut p);
+        forward_declare_fun(fun, i, &mut p);
     }
     p.nl();
 
     for (i, closure) in pgm.closures.iter().enumerate() {
-        forward_declare_closure(pgm, closure, i, &mut p);
+        forward_declare_closure(closure, i, &mut p);
     }
     p.nl();
 
@@ -491,21 +491,21 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     p.nl();
     for (i, fun) in pgm.funs.iter().enumerate() {
         w!(p, "static uint64_t _fun_closure_{i}_fun(CLOSURE* self");
-        for i in 0..fun_param_count(fun) {
+        for i in 0..fun.params.len() {
             w!(p, ", uint64_t p{i}");
         }
         w!(p, ") {{");
         p.indent();
         p.nl();
         w!(p, "return ((uint64_t(*)(");
-        for i in 0..fun_param_count(fun) {
+        for i in 0..fun.params.len() {
             if i != 0 {
                 w!(p, ", ");
             }
             w!(p, "uint64_t");
         }
         w!(p, "))(_fun_{i}))(");
-        for i in 0..fun_param_count(fun) {
+        for i in 0..fun.params.len() {
             if i != 0 {
                 w!(p, ", ");
             }
@@ -564,12 +564,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     p.print()
 }
 
-fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer) {
-    let param_count = match &fun.body {
-        FunBody::Builtin(builtin) => builtin_fun_param_count(builtin),
-        FunBody::Source(_) => fun.params.len(),
-    };
-
+fn forward_declare_fun(fun: &Fun, idx: usize, p: &mut Printer) {
+    let param_count = fun.params.len();
     w!(p, "static uint64_t _fun_{}(", idx);
     if param_count == 0 {
         w!(p, "void");
@@ -584,94 +580,7 @@ fn forward_declare_fun(_pgm: &LoweredPgm, fun: &Fun, idx: usize, p: &mut Printer
     wln!(p, ");");
 }
 
-fn fun_param_count(fun: &Fun) -> usize {
-    match &fun.body {
-        FunBody::Builtin(fun) => builtin_fun_param_count(fun),
-        FunBody::Source(_) => fun.params.len(),
-    }
-}
-
-/// Returns the number of parameters for a built-in function.
-fn builtin_fun_param_count(fun: &BuiltinFunDecl) -> usize {
-    match fun {
-        BuiltinFunDecl::Panic => 1,
-        BuiltinFunDecl::PrintStrNoNl => 1,
-        BuiltinFunDecl::ShrI8
-        | BuiltinFunDecl::ShrU8
-        | BuiltinFunDecl::ShrI32
-        | BuiltinFunDecl::ShrU32
-        | BuiltinFunDecl::BitAndI8
-        | BuiltinFunDecl::BitAndU8
-        | BuiltinFunDecl::BitAndI32
-        | BuiltinFunDecl::BitAndU32
-        | BuiltinFunDecl::BitOrI8
-        | BuiltinFunDecl::BitOrU8
-        | BuiltinFunDecl::BitOrI32
-        | BuiltinFunDecl::BitOrU32
-        | BuiltinFunDecl::BitXorU32 => 2,
-        BuiltinFunDecl::ToStrI8
-        | BuiltinFunDecl::ToStrU8
-        | BuiltinFunDecl::ToStrI32
-        | BuiltinFunDecl::ToStrU32
-        | BuiltinFunDecl::ToStrU64
-        | BuiltinFunDecl::ToStrI64 => 1,
-        BuiltinFunDecl::U8AsI8
-        | BuiltinFunDecl::U8AsU32
-        | BuiltinFunDecl::U32AsU8
-        | BuiltinFunDecl::U32AsI32
-        | BuiltinFunDecl::U32AsU64 => 1,
-        BuiltinFunDecl::I8Shl
-        | BuiltinFunDecl::U8Shl
-        | BuiltinFunDecl::I32Shl
-        | BuiltinFunDecl::U32Shl => 2,
-        BuiltinFunDecl::I8Cmp
-        | BuiltinFunDecl::U8Cmp
-        | BuiltinFunDecl::I32Cmp
-        | BuiltinFunDecl::U32Cmp
-        | BuiltinFunDecl::U64Cmp => 2,
-        BuiltinFunDecl::I8Add
-        | BuiltinFunDecl::U8Add
-        | BuiltinFunDecl::I32Add
-        | BuiltinFunDecl::U32Add
-        | BuiltinFunDecl::U64Add => 2,
-        BuiltinFunDecl::I8Sub
-        | BuiltinFunDecl::U8Sub
-        | BuiltinFunDecl::I32Sub
-        | BuiltinFunDecl::U32Sub => 2,
-        BuiltinFunDecl::I8Mul
-        | BuiltinFunDecl::U8Mul
-        | BuiltinFunDecl::I32Mul
-        | BuiltinFunDecl::U32Mul
-        | BuiltinFunDecl::U64Mul => 2,
-        BuiltinFunDecl::I8Div
-        | BuiltinFunDecl::U8Div
-        | BuiltinFunDecl::I32Div
-        | BuiltinFunDecl::U32Div => 2,
-        BuiltinFunDecl::I8Eq
-        | BuiltinFunDecl::U8Eq
-        | BuiltinFunDecl::I32Eq
-        | BuiltinFunDecl::U32Eq => 2,
-        BuiltinFunDecl::U32Mod => 2,
-        BuiltinFunDecl::I8Rem
-        | BuiltinFunDecl::U8Rem
-        | BuiltinFunDecl::I32Rem
-        | BuiltinFunDecl::U32Rem => 2,
-        BuiltinFunDecl::I32AsU32 | BuiltinFunDecl::I32Abs => 1,
-        BuiltinFunDecl::I8Neg | BuiltinFunDecl::I32Neg => 1,
-        BuiltinFunDecl::ThrowUnchecked => 1,
-        BuiltinFunDecl::Try { .. } => 1,
-        BuiltinFunDecl::ArrayNew { .. } => 1,
-        BuiltinFunDecl::ArrayLen => 1,
-        BuiltinFunDecl::ArrayGet { .. } => 2,
-        BuiltinFunDecl::ArraySet { .. } => 3,
-        BuiltinFunDecl::ArraySlice { .. } => 3,
-        BuiltinFunDecl::ArrayCopyWithin { .. } => 4,
-        BuiltinFunDecl::ReadFileUtf8 => 1,
-        BuiltinFunDecl::GetArgs => 0,
-    }
-}
-
-fn forward_declare_closure(_pgm: &LoweredPgm, closure: &Closure, idx: usize, p: &mut Printer) {
+fn forward_declare_closure(closure: &Closure, idx: usize, p: &mut Printer) {
     w!(p, "static uint64_t _closure_{}(uint64_t _closure_obj", idx);
     for (i, _) in closure.params.iter().enumerate() {
         w!(p, ", uint64_t _p{}", i);
