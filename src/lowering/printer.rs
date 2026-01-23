@@ -233,7 +233,7 @@ impl Expr {
 
             Expr::Con(idx) => write!(buf, "con{}", idx.0).unwrap(),
 
-            Expr::ConAlloc(idx, args) => {
+            Expr::ConAlloc(idx, args, _con_ty) => {
                 write!(buf, "con{}", idx.0).unwrap();
                 buf.push('(');
                 for (i, expr) in args.iter().enumerate() {

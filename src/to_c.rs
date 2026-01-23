@@ -2109,11 +2109,15 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "_con_closure_{}", heap_obj_idx.0);
         }
 
-        Expr::ConAlloc(heap_obj_idx, args) => {
-            // TODO: Cast return values to the sum type's struct
+        Expr::ConAlloc(heap_obj_idx, args, ty) => {
             if args.is_empty() {
                 // Return singleton
-                w!(p, "{}", heap_obj_singleton_name(cg.pgm, *heap_obj_idx));
+                w!(
+                    p,
+                    "({}){}",
+                    c_ty(ty),
+                    heap_obj_singleton_name(cg.pgm, *heap_obj_idx)
+                );
             } else {
                 let struct_name = heap_obj_struct_name(cg.pgm, *heap_obj_idx);
                 let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
@@ -2127,7 +2131,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     expr_to_c(&arg.node, locals, cg, p);
                     wln!(p, ";");
                 }
-                w!(p, "_obj;");
+                w!(p, "({})_obj;", c_ty(ty));
                 p.dedent();
                 p.nl();
                 w!(p, "}})");

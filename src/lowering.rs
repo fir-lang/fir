@@ -370,7 +370,7 @@ pub enum Expr {
     /// Constructor allocation.
     ///
     /// The argument list may be empty (for nullary constructors).
-    ConAlloc(HeapObjIdx, Vec<L<Expr>>),
+    ConAlloc(HeapObjIdx, Vec<L<Expr>>, mono::Type),
 
     /// Field selection: `<expr>.<id>`.
     FieldSel(FieldSelExpr),
@@ -1541,7 +1541,7 @@ fn lower_expr(
             };
 
             let expr = if let mono::ConFields::Empty = con_fields {
-                Expr::ConAlloc(idx, vec![])
+                Expr::ConAlloc(idx, vec![], con_ty.clone())
             } else {
                 Expr::Con(idx)
             };
@@ -1716,7 +1716,9 @@ fn lower_expr(
                         .collect();
 
                     match &fun.node {
-                        Expr::Con(heap_obj_idx) => Expr::ConAlloc(*heap_obj_idx, args),
+                        Expr::Con(heap_obj_idx) => {
+                            Expr::ConAlloc(*heap_obj_idx, args, (*ret).clone())
+                        }
                         _ => Expr::Call(CallExpr { fun, args }),
                     }
                 }
@@ -1760,7 +1762,9 @@ fn lower_expr(
                         .collect();
 
                     let call_expr = match &fun.node {
-                        Expr::Con(heap_obj_idx) => Expr::ConAlloc(*heap_obj_idx, args),
+                        Expr::Con(heap_obj_idx) => {
+                            Expr::ConAlloc(*heap_obj_idx, args, (*ret).clone())
+                        }
                         _ => Expr::Call(CallExpr { fun, args }),
                     };
 
@@ -1802,25 +1806,29 @@ fn lower_expr(
             }),
         ),
 
-        mono::Expr::Char(char) => (
-            Expr::ConAlloc(
-                *indices
-                    .product_cons
-                    .get(&SmolStr::new_static("Char"))
-                    .unwrap()
-                    .get(&vec![])
-                    .unwrap(),
-                vec![L {
-                    loc: loc.clone(),
-                    node: Expr::Int(u64::from(*char as u32)),
-                }],
-            ),
-            Default::default(),
-            mono::Type::Named(mono::NamedType {
+        mono::Expr::Char(char) => {
+            let char_ty = mono::Type::Named(mono::NamedType {
                 name: SmolStr::new_static("Char"),
                 args: vec![],
-            }),
-        ),
+            });
+            (
+                Expr::ConAlloc(
+                    *indices
+                        .product_cons
+                        .get(&SmolStr::new_static("Char"))
+                        .unwrap()
+                        .get(&vec![])
+                        .unwrap(),
+                    vec![L {
+                        loc: loc.clone(),
+                        node: Expr::Int(u64::from(*char as u32)),
+                    }],
+                    char_ty.clone(),
+                ),
+                Default::default(),
+                char_ty,
+            )
+        }
 
         mono::Expr::BinOp(mono::BinOpExpr {
             left,
@@ -1899,6 +1907,10 @@ fn lower_expr(
                 })
             }
 
+            let ty = mono::Type::Record {
+                fields: field_tys.clone(),
+            };
+
             stmts.push(L {
                 node: Stmt::Expr(Expr::ConAlloc(
                     record_idx,
@@ -1909,17 +1921,12 @@ fn lower_expr(
                             loc: loc.clone(),
                         })
                         .collect(),
+                    ty.clone(),
                 )),
                 loc: loc.clone(),
             });
 
-            (
-                Expr::Do(stmts),
-                Default::default(),
-                mono::Type::Record {
-                    fields: field_tys.clone(),
-                },
-            )
+            (Expr::Do(stmts), Default::default(), ty)
         }
 
         mono::Expr::Return(expr) => {
