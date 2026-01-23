@@ -488,6 +488,7 @@ fn eval<W: Write>(
             field: _,
             idx,
             object_ty: _,
+            ty: _,
         }) => {
             let object = val!(eval(
                 w,
@@ -501,7 +502,11 @@ fn eval<W: Write>(
             ControlFlow::Val(heap[object + 1 + (*idx as u64)])
         }
 
-        Expr::Call(CallExpr { fun, args }) => {
+        Expr::Call(CallExpr {
+            fun,
+            args,
+            fun_ty: _,
+        }) => {
             // See if `fun` is a function to avoid closure allocations.
             let fun: u64 = match &fun.node {
                 Expr::Fun(fun_idx) => {
@@ -678,6 +683,7 @@ fn assign<W: Write>(
             field: _,
             idx,
             object_ty: _,
+            ty: _,
         }) => {
             let object = val!(eval(
                 w,

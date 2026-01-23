@@ -865,6 +865,17 @@ fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
     }
 }
 
+fn is_value_type(ty: &mono::Type) -> bool {
+    if let mono::Type::Named(mono::NamedType { name, args: _ }) = ty {
+        matches!(
+            name.as_str(),
+            "I8" | "U8" | "I16" | "U16" | "I32" | "U32" | "I64" | "U64"
+        )
+    } else {
+        false
+    }
+}
+
 fn c_ty(ty: &mono::Type) -> String {
     // Special case for value types for now.
     if let mono::Type::Named(mono::NamedType { name, args: _ }) = ty {
@@ -878,6 +889,9 @@ fn c_ty(ty: &mono::Type) -> String {
         if matches!(name_str, "Array") {
             return "ARRAY*".to_string();
         }
+    }
+    if let mono::Type::Fn(_) = ty {
+        return "CLOSURE*".to_string();
     }
     if let mono::Type::Never = ty {
         panic!();
@@ -2018,8 +2032,8 @@ fn stmt_to_c(
         Stmt::Let(LetStmt { lhs, rhs, rhs_ty }) => {
             let rhs_temp = cg.fresh_temp();
             w!(p, "{} {} = ", c_ty(rhs_ty), rhs_temp);
-            expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
-            wln!(p, ";");
+            expr_to_c(&rhs.node, &rhs.loc, Some(rhs_ty), locals, cg, p);
+            wln!(p, "; // {}", loc_display(&rhs.loc));
             wln!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, cg));
             if let Some(result_var) = result_var {
                 wln!(p, "{result_var} = {rhs_temp};");
@@ -2028,8 +2042,9 @@ fn stmt_to_c(
 
         Stmt::Assign(AssignStmt { lhs, rhs }) => match &lhs.node {
             Expr::LocalVar(idx) => {
+                let local_ty = &locals[idx.as_usize()].ty;
                 w!(p, "_{} = ", idx.as_usize());
-                expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
+                expr_to_c(&rhs.node, &rhs.loc, Some(local_ty), locals, cg, p);
                 wln!(p, ";");
                 if let Some(result_var) = result_var {
                     wln!(
@@ -2044,13 +2059,14 @@ fn stmt_to_c(
                 field: _,
                 idx,
                 object_ty,
+                ty,
             }) => {
                 let obj_temp = cg.fresh_temp();
                 w!(p, "{} {} = ", c_ty(object_ty), obj_temp);
-                expr_to_c(&object.node, &object.loc, locals, cg, p);
-                wln!(p, ";");
+                expr_to_c(&object.node, &object.loc, Some(object_ty), locals, cg, p);
+                wln!(p, "; // {}", loc_display(&object.loc));
                 w!(p, "{}->_{} = ", obj_temp, idx);
-                expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
+                expr_to_c(&rhs.node, &rhs.loc, Some(ty), locals, cg, p);
                 wln!(p, ";");
                 if let Some(result_var) = result_var {
                     wln!(
@@ -2073,7 +2089,7 @@ fn stmt_to_c(
             if let Some(result_var) = result_var {
                 w!(p, "{result_var} = ");
             }
-            expr_to_c(expr, loc, locals, cg, p);
+            expr_to_c(expr, loc, None, locals, cg, p);
             wln!(p, ";");
         }
 
@@ -2083,7 +2099,7 @@ fn stmt_to_c(
             p.nl();
             let cond_temp = cg.fresh_temp();
             w!(p, "Bool* {cond_temp} = ");
-            expr_to_c(&cond.node, &cond.loc, locals, cg, p);
+            expr_to_c(&cond.node, &cond.loc, None, locals, cg, p);
             wln!(p, ";");
             w!(
                 p,
@@ -2129,7 +2145,19 @@ fn stmt_to_c(
     }
 }
 
-fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
+/// `expected_ty` is used to generate dummy values after `return` statements, based on the type.
+///
+/// In C, `({ ... return x; ... })` has type `void`, which can't be used (i.e. can't be in an
+/// assignment RHS). So we generate `({ ... return x; dummy; })` instead. (where `dummy` is based on
+/// the expected type)
+fn expr_to_c(
+    expr: &Expr,
+    loc: &Loc,
+    expected_ty: Option<&mono::Type>,
+    locals: &[LocalInfo],
+    cg: &mut Cg,
+    p: &mut Printer,
+) {
     match expr {
         Expr::LocalVar(idx) => {
             w!(p, "_{}", idx.as_usize());
@@ -2164,7 +2192,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 wln!(p, "_obj->_tag = {tag_name};");
                 for (i, arg) in args.iter().enumerate() {
                     w!(p, "_obj->_{i} = ");
-                    expr_to_c(&arg.node, &arg.loc, locals, cg, p);
+                    expr_to_c(&arg.node, &arg.loc, None, locals, cg, p);
                     wln!(p, ";");
                 }
                 w!(p, "({})_obj;", c_ty(ty));
@@ -2178,15 +2206,16 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             object,
             field: _,
             idx,
-            object_ty,
+            object_ty: _,
+            ty: _,
         }) => {
             // TODO: We need the object type here to be able to get the struct type
             w!(p, "(");
-            expr_to_c(&object.node, &object.loc, locals, cg, p);
+            expr_to_c(&object.node, &object.loc, None, locals, cg, p);
             w!(p, ")->_{}", idx);
         }
 
-        Expr::Call(CallExpr { fun, args }) => {
+        Expr::Call(CallExpr { fun, args, fun_ty }) => {
             // Check if direct function call
             match &fun.node {
                 Expr::Fun(fun_idx) => {
@@ -2196,7 +2225,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                         if i > 0 {
                             w!(p, ", ");
                         }
-                        expr_to_c(&arg.node, &arg.loc, locals, cg, p);
+                        expr_to_c(&arg.node, &arg.loc, None, locals, cg, p);
                     }
                     w!(p, ")");
                 }
@@ -2207,24 +2236,29 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     p.nl();
                     let fun_temp = cg.fresh_temp();
                     w!(p, "CLOSURE* {} = ", fun_temp);
-                    expr_to_c(other, &fun.loc, locals, cg, p);
+                    expr_to_c(other, &fun.loc, None, locals, cg, p);
                     wln!(p, ";");
                     wln!(p, "uint32_t _tag = get_tag({});", fun_temp);
 
                     // Closure call - need to pass closure object as first arg
-                    w!(p, "uint64_t (*_fn)(uint64_t");
-                    for _ in 0..args.len() {
-                        w!(p, ", uint64_t");
+                    w!(p, "{} (*_fn)(CLOSURE*", c_ty(&fun_ty.ret));
+                    assert_eq!(args.len(), fun_ty.args.len());
+                    let arg_tys: Vec<String> = match &fun_ty.args {
+                        mono::FunArgs::Positional(args) => args.iter().map(c_ty).collect(),
+                        mono::FunArgs::Named(args) => args.values().map(c_ty).collect(),
+                    };
+                    for arg_ty in arg_tys.iter() {
+                        w!(p, ", {arg_ty}");
                     }
-                    w!(p, ") = (uint64_t (*)(uint64_t");
-                    for _ in 0..args.len() {
-                        w!(p, ", uint64_t");
+                    w!(p, ") = ({} (*)(CLOSURE*", c_ty(&fun_ty.ret));
+                    for arg_ty in arg_tys.iter() {
+                        w!(p, ", {arg_ty}");
                     }
-                    wln!(p, "))((uint64_t*){})[ 1];", fun_temp);
+                    wln!(p, "))((CLOSURE*){})->fun;", fun_temp);
                     w!(p, "_fn({}", fun_temp);
                     for arg in args {
                         w!(p, ", ");
-                        expr_to_c(&arg.node, &arg.loc, locals, cg, p);
+                        expr_to_c(&arg.node, &arg.loc, None, locals, cg, p);
                     }
                     w!(p, ");");
                     p.dedent();
@@ -2257,7 +2291,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.indent();
             p.nl();
             w!(p, "Bool* _and_result = ");
-            expr_to_c(&left.node, &left.loc, locals, cg, p);
+            expr_to_c(&left.node, &left.loc, None, locals, cg, p);
             wln!(p, ";");
             w!(
                 p,
@@ -2267,7 +2301,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.indent();
             p.nl();
             w!(p, "_and_result = ");
-            expr_to_c(&right.node, &right.loc, locals, cg, p);
+            expr_to_c(&right.node, &right.loc, None, locals, cg, p);
             w!(p, ";");
             p.dedent();
             p.nl();
@@ -2283,7 +2317,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.indent();
             p.nl();
             w!(p, "Bool* _or_result = ");
-            expr_to_c(&left.node, &left.loc, locals, cg, p);
+            expr_to_c(&left.node, &left.loc, None, locals, cg, p);
             wln!(p, ";");
             w!(
                 p,
@@ -2293,7 +2327,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.indent();
             p.nl();
             w!(p, "_or_result = ");
-            expr_to_c(&right.node, &right.loc, locals, cg, p);
+            expr_to_c(&right.node, &right.loc, None, locals, cg, p);
             w!(p, ";");
             p.dedent();
             p.nl();
@@ -2309,9 +2343,14 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.indent();
             p.nl();
             w!(p, "return ");
-            expr_to_c(&expr.node, &expr.loc, locals, cg, p);
+            expr_to_c(&expr.node, &expr.loc, None, locals, cg, p);
             wln!(p, ";");
-            w!(p, "__builtin_unreachable();");
+            // Generate a dummy value of the expected type (unreachable code)
+            match expected_ty {
+                Some(ty) if is_value_type(ty) => w!(p, "0;"),
+                Some(ty) => w!(p, "({})NULL;", c_ty(ty)),
+                None => w!(p, "0;"),
+            }
             p.dedent();
             p.nl();
             w!(p, "}})");
@@ -2328,10 +2367,10 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.nl();
             let scrut_temp = cg.fresh_temp();
             w!(p, "{} {} = ", c_ty(scrut_ty), scrut_temp);
-            expr_to_c(&scrut.node, &scrut.loc, locals, cg, p);
-            wln!(p, ";");
+            expr_to_c(&scrut.node, &scrut.loc, Some(scrut_ty), locals, cg, p);
+            wln!(p, "; // {}", loc_display(&scrut.loc));
             let match_temp = cg.fresh_temp();
-            wln!(p, "{} {match_temp};", c_ty(expr_ty));
+            wln!(p, "{} {match_temp}; // {}", c_ty(expr_ty), loc_display(loc));
 
             for (i, alt) in alts.iter().enumerate() {
                 if i > 0 {
@@ -2344,7 +2383,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 // Add guard if present
                 if let Some(guard) = &alt.guard {
                     w!(p, " && (");
-                    expr_to_c(&guard.node, &guard.loc, locals, cg, p);
+                    expr_to_c(&guard.node, &guard.loc, None, locals, cg, p);
                     w!(
                         p,
                         " == (Bool*){})",
@@ -2388,7 +2427,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 None
             } else {
                 let temp = cg.fresh_temp();
-                wln!(p, "{} {temp};", c_ty(expr_ty));
+                wln!(p, "{} {temp}; // {}", c_ty(expr_ty), loc_display(loc));
                 Some(temp)
             };
 
@@ -2401,7 +2440,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 p.indent();
                 p.nl();
                 w!(p, "Bool* {} = ", cond_temp);
-                expr_to_c(&cond.node, &cond.loc, locals, cg, p);
+                expr_to_c(&cond.node, &cond.loc, None, locals, cg, p);
                 wln!(p, ";");
                 w!(
                     p,
@@ -2484,7 +2523,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     p.nl();
                 }
             }
-            w!(p, "(uint64_t)_clos;");
+            w!(p, "(CLOSURE*)_clos;");
             p.dedent();
             p.nl();
             w!(p, "}})");
@@ -2496,8 +2535,8 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.nl();
             let expr_temp = cg.fresh_temp();
             w!(p, "{} {} = ", c_ty(expr_ty), expr_temp);
-            expr_to_c(&expr.node, &expr.loc, locals, cg, p);
-            wln!(p, ";");
+            expr_to_c(&expr.node, &expr.loc, Some(expr_ty), locals, cg, p);
+            wln!(p, "; // {}", loc_display(&expr.loc));
             wln!(p, "Bool* _is_result;");
             w!(p, "if ({}) {{", pat_to_cond(&pat.node, &expr_temp, cg));
             p.indent();
@@ -2531,7 +2570,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.indent();
             p.nl();
             let expr_temp = cg.fresh_temp();
-            wln!(p, "{} {expr_temp};", c_ty(ty));
+            wln!(p, "{} {expr_temp}; // {}", c_ty(ty), loc_display(loc));
             stmts_to_c(stmts, Some(&expr_temp), locals, cg, p);
             w!(p, "{expr_temp};");
             p.dedent();
@@ -2541,7 +2580,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
 
         Expr::Variant(expr) => {
             // Variants are represented as their underlying type
-            expr_to_c(&expr.node, &expr.loc, locals, cg, p);
+            expr_to_c(&expr.node, &expr.loc, None, locals, cg, p);
         }
     }
 }

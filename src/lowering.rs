@@ -381,14 +381,27 @@ pub enum Expr {
     Int(u64),
 
     Str(String),
+
     BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
+
     BoolOr(Box<L<Expr>>, Box<L<Expr>>),
+
     Return(Box<L<Expr>>),
+
     Match(MatchExpr),
+
     If(IfExpr),
+
     ClosureAlloc(ClosureIdx),
+
     Is(IsExpr),
-    Do(Vec<L<Stmt>>, mono::Type),
+
+    Do(
+        Vec<L<Stmt>>,
+        /// Type of the whole expression.
+        mono::Type,
+    ),
+
     Variant(Box<L<Expr>>),
 }
 
@@ -406,12 +419,16 @@ pub struct FieldSelExpr {
     pub idx: u32,
 
     pub object_ty: mono::Type,
+
+    /// Type of the selected field.
+    pub ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
     pub args: Vec<L<Expr>>,
+    pub fun_ty: mono::FnType,
 }
 
 #[derive(Debug, Clone)]
@@ -1648,6 +1665,7 @@ fn lower_expr(
                     field: field.clone(),
                     idx: field_idx,
                     object_ty,
+                    ty: field_ty.clone(),
                 }),
                 Default::default(),
                 field_ty,
@@ -1689,12 +1707,8 @@ fn lower_expr(
         mono::Expr::Call(mono::CallExpr { fun, args }) => {
             let (fun, _fun_vars, fun_ty) = lower_bl_expr(fun, closures, indices, scope, mono_pgm);
 
-            let mono::FnType {
-                args: arg_tys,
-                ret,
-                exn: _,
-            } = match fun_ty {
-                mono::Type::Fn(fun_ty) => fun_ty,
+            let fun_ty: mono::FnType = match fun_ty {
+                mono::Type::Fn(fun_ty) => fun_ty.clone(),
 
                 mono::Type::Named(_) | mono::Type::Record { .. } | mono::Type::Variant { .. } => {
                     panic!(
@@ -1709,7 +1723,7 @@ fn lower_expr(
                 }
             };
 
-            let expr: Expr = match arg_tys {
+            let expr: Expr = match &fun_ty.args {
                 mono::FunArgs::Positional(_) => {
                     let args = args
                         .iter()
@@ -1720,9 +1734,13 @@ fn lower_expr(
 
                     match &fun.node {
                         Expr::Con(heap_obj_idx) => {
-                            Expr::ConAlloc(*heap_obj_idx, args, (*ret).clone())
+                            Expr::ConAlloc(*heap_obj_idx, args, (*fun_ty.ret).clone())
                         }
-                        _ => Expr::Call(CallExpr { fun, args }),
+                        _ => Expr::Call(CallExpr {
+                            fun,
+                            args,
+                            fun_ty: fun_ty.clone(),
+                        }),
                     }
                 }
 
@@ -1766,9 +1784,13 @@ fn lower_expr(
 
                     let call_expr = match &fun.node {
                         Expr::Con(heap_obj_idx) => {
-                            Expr::ConAlloc(*heap_obj_idx, args, (*ret).clone())
+                            Expr::ConAlloc(*heap_obj_idx, args, (*fun_ty.ret).clone())
                         }
-                        _ => Expr::Call(CallExpr { fun, args }),
+                        _ => Expr::Call(CallExpr {
+                            fun,
+                            args,
+                            fun_ty: fun_ty.clone(),
+                        }),
                     };
 
                     stmts.push(L {
@@ -1776,11 +1798,11 @@ fn lower_expr(
                         loc: loc.clone(),
                     });
 
-                    Expr::Do(stmts, (*ret).clone())
+                    Expr::Do(stmts, (*fun_ty.ret).clone())
                 }
             };
 
-            (expr, Default::default(), *ret)
+            (expr, Default::default(), *fun_ty.ret)
         }
 
         mono::Expr::Int(int) => {
@@ -2104,10 +2126,11 @@ fn lower_expr(
                 loc: loc.clone(),
             });
 
+            let closure_ty = mono::Type::Fn(sig.ty());
             (
                 Expr::ClosureAlloc(closure_idx),
                 Default::default(),
-                mono::Type::Fn(sig.ty()),
+                closure_ty,
             )
         }
 
@@ -2150,11 +2173,8 @@ fn lower_expr(
             // Note: Type of the expr in the variant won't be a variant type. Use the
             // `VariantExpr`'s type.
             let (expr, vars, _ty) = lower_bl_expr(expr, closures, indices, scope, mono_pgm);
-            (
-                Expr::Variant(expr),
-                vars,
-                mono::Type::Variant { alts: ty.clone() },
-            )
+            let variant_ty = mono::Type::Variant { alts: ty.clone() };
+            (Expr::Variant(expr), vars, variant_ty)
         }
     }
 }

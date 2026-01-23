@@ -250,13 +250,18 @@ impl Expr {
                 field,
                 idx: _,
                 object_ty: _,
+                ty: _,
             }) => {
                 object.node.print(buf, indent);
                 buf.push('.');
                 buf.push_str(field);
             }
 
-            Expr::Call(CallExpr { fun, args }) => {
+            Expr::Call(CallExpr {
+                fun,
+                args,
+                fun_ty: _,
+            }) => {
                 fun.node.print(buf, indent);
                 buf.push('(');
                 for (i, expr) in args.iter().enumerate() {
