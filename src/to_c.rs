@@ -275,7 +275,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             longjmp(current_exn_handler->buf, 1);
         }}
 
-        static uint32_t get_tag(uint64_t obj) {{
+        static uint32_t get_tag(void* obj) {{
             return (uint32_t)*(uint64_t*)obj;
         }}
 
@@ -1006,7 +1006,7 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::ShrI32 => {
-            w!(p, "static uint64_t _fun_{idx}(U32 a, U32 b) {{");
+            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
             p.indent();
             p.nl();
             w!(p, "return a >> b;");
@@ -1140,10 +1140,10 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::U8AsI8 => {
-            w!(p, "static uint64_t _fun_{idx}(uint64_t a) {{");
+            w!(p, "static I8 _fun_{idx}(U8 a) {{");
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)(uint8_t)(int8_t)(uint8_t)a;");
+            w!(p, "return (I8)a;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
@@ -1256,7 +1256,7 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::I32Add => {
-            w!(p, "static uint64_t _fun_{idx}(uint64_t a, uint64_t b) {{");
+            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
             p.indent();
             p.nl();
             w!(p, "return a + b;");
@@ -1406,10 +1406,10 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::U32Div => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U32 _fun_{}(U32 a, U32 b) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint32_t)a / (uint32_t)b);");
+            w!(p, "return a / b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
@@ -1486,87 +1486,80 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::I8Rem => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I8 _fun_{}(I8 a, I8 b) {{", idx);
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint8_t)((int8_t)(uint8_t)a % (int8_t)(uint8_t)b);"
-            );
+            w!(p, "return a % b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U8Rem => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U8 _fun_{}(U8 a, U8 b) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint8_t)a % (uint8_t)b);");
+            w!(p, "return a % b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Rem => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static I32 _fun_{}(I32 a, I32 b) {{", idx);
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return (uint64_t)(uint32_t)((int32_t)(uint32_t)a % (int32_t)(uint32_t)b);"
-            );
+            w!(p, "return a % b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::U32Rem => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a, uint64_t b) {{", idx);
+            w!(p, "static U32 _fun_{}(U32 a, U32 b) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)((uint32_t)a % (uint32_t)b);");
+            w!(p, "return a % b;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32AsU32 => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            w!(p, "static U32 _fun_{}(I32 a) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)(uint32_t)(int32_t)(uint32_t)a;");
+            w!(p, "return (U32)a;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Abs => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            w!(p, "static I32 _fun_{}(I32 a) {{", idx);
             p.indent();
             p.nl();
-            wln!(p, "int32_t v = (int32_t)(uint32_t)a;");
-            w!(p, "return (uint64_t)(uint32_t)(v < 0 ? -v : v);");
+            w!(p, "return (v < 0 ? -v : v);"); // TODO FIXME
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I8Neg => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            w!(p, "static I8 _fun_{}(I8 a) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)(uint8_t)(-(int8_t)(uint8_t)a);");
+            w!(p, "return -a;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
         }
 
         BuiltinFunDecl::I32Neg => {
-            w!(p, "static uint64_t _fun_{}(uint64_t a) {{", idx);
+            w!(p, "static I32 _fun_{}(I32 a) {{", idx);
             p.indent();
             p.nl();
-            w!(p, "return (uint64_t)(uint32_t)(-(int32_t)(uint32_t)a);");
+            w!(p, "return -a;");
             p.dedent();
             p.nl();
             wln!(p, "}}");
@@ -1985,9 +1978,9 @@ fn stmts_to_c(stmts: &[mono::L<Stmt>], locals: &[LocalInfo], cg: &mut Cg, p: &mu
 
 fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], update_result: bool, cg: &mut Cg, p: &mut Printer) {
     match stmt {
-        Stmt::Let(LetStmt { lhs, rhs }) => {
+        Stmt::Let(LetStmt { lhs, rhs, rhs_ty }) => {
             let rhs_temp = cg.fresh_temp();
-            w!(p, "uint64_t {} = ", rhs_temp);
+            w!(p, "{} {} = ", c_ty(rhs_ty), rhs_temp);
             expr_to_c(&rhs.node, locals, cg, p);
             wln!(p, ";");
             wln!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, cg));
@@ -2013,9 +2006,10 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], update_result: bool, cg: &mut Cg
                 object,
                 field: _,
                 idx,
+                object_ty,
             }) => {
                 let obj_temp = cg.fresh_temp();
-                w!(p, "uint64_t {} = ", obj_temp);
+                w!(p, "{} {} = ", c_ty(object_ty), obj_temp);
                 expr_to_c(&object.node, locals, cg, p);
                 wln!(p, ";");
                 // TODO: We need the object type here to be able to get the struct type
@@ -2057,7 +2051,7 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], update_result: bool, cg: &mut Cg
             wln!(p, ";");
             w!(
                 p,
-                "if ({} == {}) break;",
+                "if ({} == (Bool*){}) break;",
                 cond_temp,
                 heap_obj_singleton_name(cg.pgm, cg.pgm.false_con_idx)
             );
@@ -2116,6 +2110,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
         }
 
         Expr::ConAlloc(heap_obj_idx, args) => {
+            // TODO: Cast return values to the sum type's struct
             if args.is_empty() {
                 // Return singleton
                 w!(p, "{}", heap_obj_singleton_name(cg.pgm, *heap_obj_idx));
@@ -2143,11 +2138,12 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             object,
             field: _,
             idx,
+            object_ty,
         }) => {
             // TODO: We need the object type here to be able to get the struct type
-            w!(p, "((uint64_t*)(");
+            w!(p, "(");
             expr_to_c(&object.node, locals, cg, p);
-            w!(p, "))[{}]", 1 + idx);
+            w!(p, ")->_{}", idx);
         }
 
         Expr::Call(CallExpr { fun, args }) => {
@@ -2170,7 +2166,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     p.indent();
                     p.nl();
                     let fun_temp = cg.fresh_temp();
-                    w!(p, "uint64_t {} = ", fun_temp);
+                    w!(p, "CLOSURE* {} = ", fun_temp);
                     expr_to_c(other, locals, cg, p);
                     wln!(p, ";");
                     wln!(p, "uint32_t _tag = get_tag({});", fun_temp);
@@ -2281,13 +2277,17 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "}})");
         }
 
-        Expr::Match(MatchExpr { scrutinee, alts }) => {
+        Expr::Match(MatchExpr {
+            scrut,
+            alts,
+            scrut_ty,
+        }) => {
             w!(p, "({{");
             p.indent();
             p.nl();
             let scrut_temp = cg.fresh_temp();
-            w!(p, "uint64_t {} = ", scrut_temp);
-            expr_to_c(&scrutinee.node, locals, cg, p);
+            w!(p, "{} {} = ", c_ty(scrut_ty), scrut_temp);
+            expr_to_c(&scrut.node, locals, cg, p);
             wln!(p, ";");
             wln!(p, "uint64_t _match_result = 0;");
 
@@ -2305,7 +2305,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     expr_to_c(&guard.node, locals, cg, p);
                     w!(
                         p,
-                        " == {})",
+                        " == (Bool*){})",
                         heap_obj_singleton_name(cg.pgm, cg.pgm.true_con_idx)
                     );
                 }
@@ -2337,11 +2337,12 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
         Expr::If(IfExpr {
             branches,
             else_branch,
+            expr_ty,
         }) => {
             w!(p, "({{");
             p.indent();
             p.nl();
-            wln!(p, "uint64_t _if_result = 0;");
+            wln!(p, "{} _if_result;", c_ty(expr_ty));
 
             for (i, (cond, body)) in branches.iter().enumerate() {
                 if i > 0 {
@@ -2351,12 +2352,12 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 w!(p, "{{");
                 p.indent();
                 p.nl();
-                w!(p, "uint64_t {} = ", cond_temp);
+                w!(p, "Bool* {} = ", cond_temp);
                 expr_to_c(&cond.node, locals, cg, p);
                 wln!(p, ";");
                 w!(
                     p,
-                    "if ({} == {}) {{",
+                    "if ({} == (Bool*){}) {{",
                     cond_temp,
                     heap_obj_singleton_name(cg.pgm, cg.pgm.true_con_idx)
                 );
@@ -2439,12 +2440,12 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "}})");
         }
 
-        Expr::Is(IsExpr { expr, pat }) => {
+        Expr::Is(IsExpr { expr, pat, expr_ty }) => {
             w!(p, "({{");
             p.indent();
             p.nl();
             let expr_temp = cg.fresh_temp();
-            w!(p, "uint64_t {} = ", expr_temp);
+            w!(p, "{} {} = ", c_ty(expr_ty), expr_temp);
             expr_to_c(&expr.node, locals, cg, p);
             wln!(p, ";");
             wln!(p, "Bool* _is_result;");

@@ -177,7 +177,11 @@ impl LoweredPgm {
 impl Stmt {
     pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
-            Stmt::Let(LetStmt { lhs, rhs }) => {
+            Stmt::Let(LetStmt {
+                lhs,
+                rhs,
+                rhs_ty: _,
+            }) => {
                 buf.push_str("let ");
                 lhs.node.print(buf);
                 buf.push_str(" = ");
@@ -245,6 +249,7 @@ impl Expr {
                 object,
                 field,
                 idx: _,
+                object_ty: _,
             }) => {
                 object.node.print(buf, indent);
                 buf.push('.');
@@ -288,9 +293,13 @@ impl Expr {
                 expr.node.print(buf, indent);
             }
 
-            Expr::Match(MatchExpr { scrutinee, alts }) => {
+            Expr::Match(MatchExpr {
+                scrut,
+                alts,
+                scrut_ty: _,
+            }) => {
                 buf.push_str("match ");
-                scrutinee.node.print(buf, indent);
+                scrut.node.print(buf, indent);
                 buf.push_str(":\n");
                 for (i, Alt { pat, guard, rhs }) in alts.iter().enumerate() {
                     if i != 0 {
@@ -313,6 +322,7 @@ impl Expr {
             Expr::If(IfExpr {
                 branches,
                 else_branch,
+                expr_ty: _,
             }) => {
                 buf.push_str("if ");
                 branches[0].0.node.print(buf, indent);
@@ -345,7 +355,11 @@ impl Expr {
 
             Expr::ClosureAlloc(idx) => write!(buf, "closure{}", idx.0).unwrap(),
 
-            Expr::Is(IsExpr { expr, pat }) => {
+            Expr::Is(IsExpr {
+                expr,
+                pat,
+                expr_ty: _,
+            }) => {
                 buf.push('(');
                 expr.node.print(buf, indent);
                 buf.push_str(" is ");

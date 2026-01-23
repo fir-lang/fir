@@ -336,6 +336,7 @@ pub enum Stmt {
 pub struct LetStmt {
     pub lhs: L<Pat>,
     pub rhs: L<Expr>,
+    pub rhs_ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
@@ -403,6 +404,8 @@ pub struct FieldSelExpr {
     /// Note: this is not *offset* of the field from the object's address. E.g. if an object has N
     /// words of header, the field's address will be `object[N + idx]`.
     pub idx: u32,
+
+    pub object_ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
@@ -413,8 +416,9 @@ pub struct CallExpr {
 
 #[derive(Debug, Clone)]
 pub struct MatchExpr {
-    pub scrutinee: Box<L<Expr>>,
+    pub scrut: Box<L<Expr>>,
     pub alts: Vec<Alt>,
+    pub scrut_ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
@@ -428,12 +432,16 @@ pub struct Alt {
 pub struct IfExpr {
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
     pub else_branch: Option<Vec<L<Stmt>>>,
+
+    /// Type of the whole `if` expr.
+    pub expr_ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
 pub struct IsExpr {
     pub expr: Box<L<Expr>>,
     pub pat: L<Pat>,
+    pub expr_ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
@@ -1374,9 +1382,9 @@ fn lower_stmt(
 ) -> (Stmt, mono::Type) {
     match stmt {
         mono::Stmt::Let(mono::LetStmt { lhs, rhs }) => {
-            let rhs = lower_l_expr(rhs, closures, indices, scope, mono_pgm).0;
+            let (rhs, _, rhs_ty) = lower_l_expr(rhs, closures, indices, scope, mono_pgm);
             let lhs = lower_l_pat(lhs, indices, scope, mono_pgm, &mut Default::default());
-            (Stmt::Let(LetStmt { lhs, rhs }), mono::Type::unit())
+            (Stmt::Let(LetStmt { lhs, rhs, rhs_ty }), mono::Type::unit())
         }
 
         mono::Stmt::Assign(mono::AssignStmt { lhs, rhs }) => (
@@ -1545,10 +1553,10 @@ fn lower_expr(
             let (object, _object_vars, object_ty) =
                 lower_bl_expr(object, closures, indices, scope, mono_pgm);
 
-            let (field_ty, field_idx): (mono::Type, u32) = match object_ty {
+            let (field_ty, field_idx): (mono::Type, u32) = match &object_ty {
                 mono::Type::Named(mono::NamedType { name, args }) => {
                     let ty_decl: &mono::TypeDecl =
-                        mono_pgm.ty.get(&name).unwrap().get(&args).unwrap();
+                        mono_pgm.ty.get(name).unwrap().get(args).unwrap();
 
                     match &ty_decl.rhs {
                         None => {
@@ -1613,7 +1621,9 @@ fn lower_expr(
                         panic!(
                             "BUG: {}: FieldSel object with type {} doesn't have the field '{}'",
                             loc_display(loc),
-                            mono::Type::Record { fields },
+                            mono::Type::Record {
+                                fields: fields.clone()
+                            },
                             field
                         )
                     });
@@ -1634,6 +1644,7 @@ fn lower_expr(
                     object,
                     field: field.clone(),
                     idx: field_idx,
+                    object_ty,
                 }),
                 Default::default(),
                 field_ty,
@@ -1917,9 +1928,9 @@ fn lower_expr(
             (Expr::Return(expr), Default::default(), mono::Type::Never)
         }
 
-        mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => {
-            let (scrutinee, scrut_vars, _scrut_ty) =
-                lower_bl_expr(scrutinee, closures, indices, scope, mono_pgm);
+        mono::Expr::Match(mono::MatchExpr { scrut, alts }) => {
+            let (scrut, scrut_vars, scrut_ty) =
+                lower_bl_expr(scrut, closures, indices, scope, mono_pgm);
             scope.bounds.push_scope(scrut_vars);
 
             let mut alt_ty: Option<mono::Type> = None;
@@ -1959,7 +1970,11 @@ fn lower_expr(
             scope.bounds.exit(); // pop scrutinee's variables
 
             (
-                Expr::Match(MatchExpr { scrutinee, alts }),
+                Expr::Match(MatchExpr {
+                    scrut,
+                    alts,
+                    scrut_ty,
+                }),
                 Default::default(),
                 alt_ty.unwrap(),
             )
@@ -1970,28 +1985,29 @@ fn lower_expr(
             else_branch,
         }) => {
             let mut branch_ty: Option<mono::Type> = None;
-            let expr = Expr::If(IfExpr {
-                branches: branches
+            let mut branches_: Vec<(L<Expr>, Vec<L<Stmt>>)> = vec![];
+            let mut else_branch_: Option<Vec<L<Stmt>>> = None;
+
+            for (cond, rhs) in branches.iter() {
+                let (cond, pat_vars, _cond_ty) =
+                    lower_l_expr(cond, closures, indices, scope, mono_pgm);
+                scope.bounds.push_scope(pat_vars);
+                let rhs = rhs
                     .iter()
-                    .map(|(cond, rhs)| {
-                        let (cond, pat_vars, _cond_ty) =
-                            lower_l_expr(cond, closures, indices, scope, mono_pgm);
-                        scope.bounds.push_scope(pat_vars);
-                        let rhs = rhs
-                            .iter()
-                            .map(|stmt| {
-                                let (stmt, stmt_ty) =
-                                    lower_l_stmt(stmt, closures, indices, scope, mono_pgm);
-                                branch_ty = Some(stmt_ty);
-                                stmt
-                            })
-                            .collect();
-                        scope.bounds.exit();
-                        (cond, rhs)
+                    .map(|stmt| {
+                        let (stmt, stmt_ty) =
+                            lower_l_stmt(stmt, closures, indices, scope, mono_pgm);
+                        branch_ty = Some(stmt_ty);
+                        stmt
                     })
-                    .collect(),
-                else_branch: else_branch.as_ref().map(|stmts| {
-                    stmts
+                    .collect();
+                scope.bounds.exit();
+                branches_.push((cond, rhs));
+            }
+
+            if let Some(else_branch) = else_branch {
+                else_branch_ = Some(
+                    else_branch
                         .iter()
                         .map(|stmt| {
                             let (stmt, stmt_ty) =
@@ -1999,9 +2015,16 @@ fn lower_expr(
                             branch_ty = Some(stmt_ty);
                             stmt
                         })
-                        .collect()
-                }),
+                        .collect(),
+                );
+            }
+
+            let expr = Expr::If(IfExpr {
+                branches: branches_,
+                else_branch: else_branch_,
+                expr_ty: branch_ty.clone().unwrap(),
             });
+
             (expr, Default::default(), branch_ty.unwrap())
         }
 
@@ -2073,12 +2096,12 @@ fn lower_expr(
 
         mono::Expr::Is(mono::IsExpr { expr, pat }) => {
             scope.bounds.enter();
-            let (expr, _pat_vars_1, _expr_ty) =
+            let (expr, _pat_vars_1, expr_ty) =
                 lower_bl_expr(expr, closures, indices, scope, mono_pgm);
             let pat = lower_l_pat(pat, indices, scope, mono_pgm, &mut Default::default());
             let pat_vars_2 = scope.bounds.exit();
             (
-                Expr::Is(IsExpr { expr, pat }),
+                Expr::Is(IsExpr { expr, pat, expr_ty }),
                 pat_vars_2,
                 mono::Type::Named(mono::NamedType {
                     name: SmolStr::new_static("Bool"),

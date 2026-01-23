@@ -402,7 +402,11 @@ fn exec<W: Write>(
                 return ControlFlow::Continue(*level);
             }
 
-            Stmt::Let(LetStmt { lhs, rhs }) => {
+            Stmt::Let(LetStmt {
+                lhs,
+                rhs,
+                rhs_ty: _,
+            }) => {
                 let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc, call_stack));
                 if !try_bind_pat(pgm, heap, lhs, locals, val) {
                     panic!("{}: Pattern binding failed", loc_display(&stmt.loc));
@@ -483,6 +487,7 @@ fn eval<W: Write>(
             object,
             field: _,
             idx,
+            object_ty: _,
         }) => {
             let object = val!(eval(
                 w,
@@ -550,14 +555,18 @@ fn eval<W: Write>(
             w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
         ))),
 
-        Expr::Match(MatchExpr { scrutinee, alts }) => {
+        Expr::Match(MatchExpr {
+            scrut,
+            alts,
+            scrut_ty: _,
+        }) => {
             let scrut = val!(eval(
                 w,
                 pgm,
                 heap,
                 locals,
-                &scrutinee.node,
-                &scrutinee.loc,
+                &scrut.node,
+                &scrut.loc,
                 call_stack
             ));
             for Alt { pat, guard, rhs } in alts {
@@ -587,6 +596,7 @@ fn eval<W: Write>(
         Expr::If(IfExpr {
             branches,
             else_branch,
+            expr_ty: _,
         }) => {
             for (cond, stmts) in branches {
                 let cond = val!(eval(
@@ -616,7 +626,11 @@ fn eval<W: Write>(
             ControlFlow::Val(alloc)
         }
 
-        Expr::Is(IsExpr { expr, pat }) => {
+        Expr::Is(IsExpr {
+            expr,
+            pat,
+            expr_ty: _,
+        }) => {
             let val = val!(eval(
                 w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
             ));
@@ -662,6 +676,7 @@ fn assign<W: Write>(
             object,
             field: _,
             idx,
+            object_ty: _,
         }) => {
             let object = val!(eval(
                 w,

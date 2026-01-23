@@ -228,7 +228,10 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordType>) {
 
         mono::Expr::Return(expr) => visit_expr(&expr.node, records),
 
-        mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => {
+        mono::Expr::Match(mono::MatchExpr {
+            scrut: scrutinee,
+            alts,
+        }) => {
             visit_expr(&scrutinee.node, records);
             for alt in alts {
                 visit_pat(&alt.pat.node, records);
