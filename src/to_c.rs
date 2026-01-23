@@ -955,7 +955,7 @@ fn builtin_fun_to_c(
     wln!(p, "// {:?}", fun);
     match fun {
         BuiltinFunDecl::Panic => {
-            w!(p, "static Record* _fun_{}(Str* msg) {{", idx);
+            w!(p, "static {} _fun_{}(Str* msg) {{", c_ty(ret), idx);
             p.indent();
             p.nl();
             wln!(p, "ARRAY* bytes_arr = msg->_0;");
