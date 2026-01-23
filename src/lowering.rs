@@ -1961,7 +1961,9 @@ fn lower_expr(
                         .map(|stmt| {
                             let (stmt, stmt_ty) =
                                 lower_l_stmt(stmt, closures, indices, scope, mono_pgm);
-                            alt_ty = Some(stmt_ty);
+                            if matches!(alt_ty, None | Some(mono::Type::Never)) {
+                                alt_ty = Some(stmt_ty);
+                            }
                             stmt
                         })
                         .collect();
@@ -2008,7 +2010,9 @@ fn lower_expr(
                     .map(|stmt| {
                         let (stmt, stmt_ty) =
                             lower_l_stmt(stmt, closures, indices, scope, mono_pgm);
-                        branch_ty = Some(stmt_ty);
+                        if matches!(branch_ty, None | Some(mono::Type::Never)) {
+                            branch_ty = Some(stmt_ty);
+                        }
                         stmt
                     })
                     .collect();
@@ -2023,7 +2027,9 @@ fn lower_expr(
                         .map(|stmt| {
                             let (stmt, stmt_ty) =
                                 lower_l_stmt(stmt, closures, indices, scope, mono_pgm);
-                            branch_ty = Some(stmt_ty);
+                            if matches!(branch_ty, None | Some(mono::Type::Never)) {
+                                branch_ty = Some(stmt_ty);
+                            }
                             stmt
                         })
                         .collect(),

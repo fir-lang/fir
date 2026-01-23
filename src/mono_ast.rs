@@ -80,6 +80,10 @@ impl Type {
             alts: Default::default(),
         }
     }
+
+    pub(crate) fn is_never(&self) -> bool {
+        matches!(self, Type::Never)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

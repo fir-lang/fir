@@ -864,7 +864,7 @@ fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
 }
 
 fn c_ty(ty: &mono::Type) -> String {
-    // Special case unboxed types for now.
+    // Special case for value types for now.
     if let mono::Type::Named(mono::NamedType { name, args: _ }) = ty {
         let name_str = name.as_str();
         if matches!(
@@ -876,6 +876,9 @@ fn c_ty(ty: &mono::Type) -> String {
         if matches!(name_str, "Array") {
             return "ARRAY*".to_string();
         }
+    }
+    if let mono::Type::Never = ty {
+        panic!();
     }
     let mut s = String::new();
     ty_to_c(ty, &mut s);
@@ -1570,7 +1573,7 @@ fn builtin_fun_to_c(
             p.indent();
             p.nl();
             wln!(p, "throw_exn(exn);");
-            w!(p, "return 0; // unreachable");
+            w!(p, "__builtin_unreachable();");
             p.dedent();
             p.nl();
             wln!(p, "}}");
@@ -2299,7 +2302,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "return ");
             expr_to_c(&expr.node, locals, cg, p);
             wln!(p, ";");
-            w!(p, "0; // unreachable");
+            w!(p, "__builtin_unreachable();");
             p.dedent();
             p.nl();
             w!(p, "}})");
@@ -2345,7 +2348,6 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 p.nl();
                 // Generate RHS
                 stmts_to_c(&alt.rhs, Some(&match_temp), locals, cg, p);
-                w!(p, "_match_result = _result;");
                 p.dedent();
                 p.nl();
                 w!(p, "}}");
@@ -2358,7 +2360,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.dedent();
             p.nl();
             wln!(p, "}}");
-            w!(p, "_match_result;");
+            w!(p, "{match_temp};");
             p.dedent();
             p.nl();
             w!(p, "}})");
@@ -2510,7 +2512,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             p.indent();
             p.nl();
             let expr_temp = cg.fresh_temp();
-            w!(p, "{} {} = ", c_ty(ty), expr_temp);
+            wln!(p, "{} {expr_temp};", c_ty(ty));
             stmts_to_c(stmts, Some(&expr_temp), locals, cg, p);
             w!(p, "{expr_temp};");
             p.dedent();
