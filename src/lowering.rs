@@ -388,7 +388,7 @@ pub enum Expr {
     If(IfExpr),
     ClosureAlloc(ClosureIdx),
     Is(IsExpr),
-    Do(Vec<L<Stmt>>),
+    Do(Vec<L<Stmt>>, mono::Type),
     Variant(Box<L<Expr>>),
 }
 
@@ -419,6 +419,9 @@ pub struct MatchExpr {
     pub scrut: Box<L<Expr>>,
     pub alts: Vec<Alt>,
     pub scrut_ty: mono::Type,
+
+    /// Type of the whole expr.
+    pub expr_ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
@@ -1773,7 +1776,7 @@ fn lower_expr(
                         loc: loc.clone(),
                     });
 
-                    Expr::Do(stmts)
+                    Expr::Do(stmts, (*ret).clone())
                 }
             };
 
@@ -1926,7 +1929,7 @@ fn lower_expr(
                 loc: loc.clone(),
             });
 
-            (Expr::Do(stmts), Default::default(), ty)
+            (Expr::Do(stmts, ty.clone()), Default::default(), ty)
         }
 
         mono::Expr::Return(expr) => {
@@ -1981,6 +1984,7 @@ fn lower_expr(
                     scrut,
                     alts,
                     scrut_ty,
+                    expr_ty: alt_ty.clone().unwrap(),
                 }),
                 Default::default(),
                 alt_ty.unwrap(),
@@ -2130,6 +2134,7 @@ fn lower_expr(
                         stmt
                     })
                     .collect(),
+                body_ty.clone().unwrap(),
             );
             scope.bounds.exit();
             (expr, Default::default(), body_ty.unwrap())

@@ -297,6 +297,7 @@ impl Expr {
                 scrut,
                 alts,
                 scrut_ty: _,
+                expr_ty: _,
             }) => {
                 buf.push_str("match ");
                 scrut.node.print(buf, indent);
@@ -367,7 +368,7 @@ impl Expr {
                 buf.push(')');
             }
 
-            Expr::Do(body) => {
+            Expr::Do(body, _) => {
                 buf.push_str("do:\n");
                 for stmt in body.iter() {
                     buf.push_str(&INDENTS[0..indent as usize + 4]);

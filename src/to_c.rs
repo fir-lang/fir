@@ -937,10 +937,10 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
 
 fn builtin_fun_to_c(
     fun: &BuiltinFunDecl,
-    ty_args: &[mono::Type],
+    _ty_args: &[mono::Type],
     params: &[mono::Type],
     ret: &mono::Type,
-    exn: &mono::Type,
+    _exn: &mono::Type,
     idx: usize,
     pgm: &LoweredPgm,
     p: &mut Printer,
@@ -1898,7 +1898,7 @@ fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p
     p.nl();
 
     // Generate body
-    stmts_to_c(&source.body, &source.locals, cg, p);
+    stmts_to_c(&source.body, Some("_result"), &source.locals, cg, p);
 
     w!(p, "return _result;");
     p.dedent();
@@ -1957,7 +1957,7 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     p.nl();
 
     // Generate body
-    stmts_to_c(&closure.body, &closure.locals, cg, p);
+    stmts_to_c(&closure.body, Some("_result"), &closure.locals, cg, p);
 
     w!(p, "return _result;");
     p.dedent();
@@ -1965,18 +1965,42 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     wln!(p, "}}");
 }
 
-fn stmts_to_c(stmts: &[mono::L<Stmt>], locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
+fn stmts_to_c(
+    stmts: &[mono::L<Stmt>],
+    result_var: Option<&str>,
+    locals: &[LocalInfo],
+    cg: &mut Cg,
+    p: &mut Printer,
+) {
     if stmts.is_empty() {
+        if let Some(result_var) = result_var {
+            wln!(
+                p,
+                "{result_var} = {};",
+                heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
+            );
+        }
         return;
     }
     let last_stmt_idx = stmts.len() - 1;
     for (i, stmt) in stmts.iter().enumerate() {
-        let update_result = i == last_stmt_idx;
-        stmt_to_c(&stmt.node, locals, update_result, cg, p);
+        stmt_to_c(
+            &stmt.node,
+            if i == last_stmt_idx { result_var } else { None },
+            locals,
+            cg,
+            p,
+        );
     }
 }
 
-fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], update_result: bool, cg: &mut Cg, p: &mut Printer) {
+fn stmt_to_c(
+    stmt: &Stmt,
+    result_var: Option<&str>,
+    locals: &[LocalInfo],
+    cg: &mut Cg,
+    p: &mut Printer,
+) {
     match stmt {
         Stmt::Let(LetStmt { lhs, rhs, rhs_ty }) => {
             let rhs_temp = cg.fresh_temp();
@@ -1984,8 +2008,8 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], update_result: bool, cg: &mut Cg
             expr_to_c(&rhs.node, locals, cg, p);
             wln!(p, ";");
             wln!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, cg));
-            if update_result {
-                wln!(p, "_result = {};", rhs_temp);
+            if let Some(result_var) = result_var {
+                wln!(p, "{result_var} = {rhs_temp};");
             }
         }
 
@@ -1994,10 +2018,10 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], update_result: bool, cg: &mut Cg
                 w!(p, "_{} = ", idx.as_usize());
                 expr_to_c(&rhs.node, locals, cg, p);
                 wln!(p, ";");
-                if update_result {
+                if let Some(result_var) = result_var {
                     wln!(
                         p,
-                        "_result = {};",
+                        "{result_var} = {};",
                         heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
                     );
                 }
@@ -2016,10 +2040,10 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], update_result: bool, cg: &mut Cg
                 w!(p, "((uint64_t*){})[{}] = ", obj_temp, 1 + idx);
                 expr_to_c(&rhs.node, locals, cg, p);
                 wln!(p, ";");
-                if update_result {
+                if let Some(result_var) = result_var {
                     wln!(
                         p,
-                        "_result = {};",
+                        "{result_var} = {};",
                         heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
                     );
                 }
@@ -2034,8 +2058,8 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], update_result: bool, cg: &mut Cg
         },
 
         Stmt::Expr(expr) => {
-            if update_result {
-                w!(p, "_result = ");
+            if let Some(result_var) = result_var {
+                w!(p, "{result_var} = ");
             }
             expr_to_c(expr, locals, cg, p);
             wln!(p, ";");
@@ -2056,7 +2080,7 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], update_result: bool, cg: &mut Cg
                 heap_obj_singleton_name(cg.pgm, cg.pgm.false_con_idx)
             );
             p.nl();
-            stmts_to_c(body, locals, cg, p);
+            stmts_to_c(body, None, locals, cg, p);
             if let Some(label) = label {
                 w!(p, "_continue_{}:;", label);
             }
@@ -2066,10 +2090,10 @@ fn stmt_to_c(stmt: &Stmt, locals: &[LocalInfo], update_result: bool, cg: &mut Cg
             if let Some(label) = label {
                 wln!(p, "_break_{}:;", label);
             }
-            if update_result {
+            if let Some(result_var) = result_var {
                 wln!(
                     p,
-                    "_result = {};",
+                    "{result_var} = {};",
                     heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
                 );
             }
@@ -2285,6 +2309,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             scrut,
             alts,
             scrut_ty,
+            expr_ty,
         }) => {
             w!(p, "({{");
             p.indent();
@@ -2293,7 +2318,8 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "{} {} = ", c_ty(scrut_ty), scrut_temp);
             expr_to_c(&scrut.node, locals, cg, p);
             wln!(p, ";");
-            wln!(p, "uint64_t _match_result = 0;");
+            let match_temp = cg.fresh_temp();
+            wln!(p, "{} {match_temp};", c_ty(expr_ty));
 
             for (i, alt) in alts.iter().enumerate() {
                 if i > 0 {
@@ -2318,7 +2344,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 p.indent();
                 p.nl();
                 // Generate RHS
-                stmts_to_c(&alt.rhs, locals, cg, p);
+                stmts_to_c(&alt.rhs, Some(&match_temp), locals, cg, p);
                 w!(p, "_match_result = _result;");
                 p.dedent();
                 p.nl();
@@ -2346,7 +2372,8 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "({{");
             p.indent();
             p.nl();
-            wln!(p, "{} _if_result;", c_ty(expr_ty));
+            let if_temp = cg.fresh_temp();
+            wln!(p, "{} {if_temp};", c_ty(expr_ty));
 
             for (i, (cond, body)) in branches.iter().enumerate() {
                 if i > 0 {
@@ -2367,8 +2394,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 );
                 p.indent();
                 p.nl();
-                stmts_to_c(body, locals, cg, p);
-                w!(p, "_if_result = _result;");
+                stmts_to_c(body, Some(&if_temp), locals, cg, p);
                 p.dedent();
                 p.nl();
                 w!(p, "}}");
@@ -2379,8 +2405,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     w!(p, " else {{");
                     p.indent();
                     p.nl();
-                    stmts_to_c(else_body, locals, cg, p);
-                    w!(p, "_if_result = _result;");
+                    stmts_to_c(else_body, Some(&if_temp), locals, cg, p);
                     p.dedent();
                     p.nl();
                     w!(p, "}}");
@@ -2389,7 +2414,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                     p.nl();
                     w!(
                         p,
-                        "_if_result = {};",
+                        "{if_temp} = {};",
                         heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
                     );
                 }
@@ -2402,7 +2427,7 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
                 w!(p, " }}");
             }
             p.nl();
-            w!(p, "_if_result;");
+            w!(p, "{if_temp};");
             p.dedent();
             p.nl();
             w!(p, "}})");
@@ -2480,12 +2505,14 @@ fn expr_to_c(expr: &Expr, locals: &[LocalInfo], cg: &mut Cg, p: &mut Printer) {
             w!(p, "}})");
         }
 
-        Expr::Do(stmts) => {
+        Expr::Do(stmts, ty) => {
             w!(p, "({{");
             p.indent();
             p.nl();
-            stmts_to_c(stmts, locals, cg, p);
-            w!(p, "_result;");
+            let expr_temp = cg.fresh_temp();
+            w!(p, "{} {} = ", c_ty(ty), expr_temp);
+            stmts_to_c(stmts, Some(&expr_temp), locals, cg, p);
+            w!(p, "{expr_temp};");
             p.dedent();
             p.nl();
             w!(p, "}})");

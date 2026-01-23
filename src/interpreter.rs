@@ -559,6 +559,7 @@ fn eval<W: Write>(
             scrut,
             alts,
             scrut_ty: _,
+            expr_ty: _,
         }) => {
             let scrut = val!(eval(
                 w,
@@ -641,7 +642,7 @@ fn eval<W: Write>(
             })
         }
 
-        Expr::Do(stmts) => exec(w, pgm, heap, locals, stmts, call_stack),
+        Expr::Do(stmts, _) => exec(w, pgm, heap, locals, stmts, call_stack),
 
         Expr::Variant(expr) => {
             // Note: the interpreter can only deal with variants of boxed types. If `expr` is an
