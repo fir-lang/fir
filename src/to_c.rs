@@ -1926,7 +1926,13 @@ fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p
     p.nl();
 
     // Generate body
-    stmts_to_c(&source.body, Some("_result"), &source.locals, cg, p);
+    stmts_to_c(
+        &source.body,
+        Some(("_result", &fun.return_ty)),
+        &source.locals,
+        cg,
+        p,
+    );
 
     w!(p, "return _result;");
     p.dedent();
@@ -1980,7 +1986,13 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     p.nl();
 
     // Generate body
-    stmts_to_c(&closure.body, Some("_result"), &closure.locals, cg, p);
+    stmts_to_c(
+        &closure.body,
+        Some(("_result", &closure.return_ty)),
+        &closure.locals,
+        cg,
+        p,
+    );
 
     w!(p, "return _result;");
     p.dedent();
@@ -1990,13 +2002,13 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
 
 fn stmts_to_c(
     stmts: &[mono::L<Stmt>],
-    result_var: Option<&str>,
+    result_var: Option<(&str, &mono::Type)>,
     locals: &[LocalInfo],
     cg: &mut Cg,
     p: &mut Printer,
 ) {
     if stmts.is_empty() {
-        if let Some(result_var) = result_var {
+        if let Some((result_var, _)) = result_var {
             wln!(
                 p,
                 "{result_var} = {};",
@@ -2021,7 +2033,7 @@ fn stmts_to_c(
 fn stmt_to_c(
     stmt: &Stmt,
     loc: &Loc,
-    result_var: Option<&str>,
+    result_var: Option<(&str, &mono::Type)>,
     locals: &[LocalInfo],
     cg: &mut Cg,
     p: &mut Printer,
@@ -2033,7 +2045,7 @@ fn stmt_to_c(
             expr_to_c(&rhs.node, &rhs.loc, Some(rhs_ty), locals, cg, p);
             wln!(p, "; // {}", loc_display(&rhs.loc));
             wln!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, cg));
-            if let Some(result_var) = result_var {
+            if let Some((result_var, _)) = result_var {
                 wln!(
                     p,
                     "{result_var} = {};",
@@ -2048,7 +2060,7 @@ fn stmt_to_c(
                 w!(p, "_{} = ", idx.as_usize());
                 expr_to_c(&rhs.node, &rhs.loc, Some(local_ty), locals, cg, p);
                 wln!(p, ";");
-                if let Some(result_var) = result_var {
+                if let Some((result_var, _)) = result_var {
                     wln!(
                         p,
                         "{result_var} = {};",
@@ -2070,7 +2082,7 @@ fn stmt_to_c(
                 w!(p, "{}->_{} = ", obj_temp, idx);
                 expr_to_c(&rhs.node, &rhs.loc, Some(ty), locals, cg, p);
                 wln!(p, ";");
-                if let Some(result_var) = result_var {
+                if let Some((result_var, _)) = result_var {
                     wln!(
                         p,
                         "{result_var} = {};",
@@ -2088,10 +2100,17 @@ fn stmt_to_c(
         },
 
         Stmt::Expr(expr) => {
-            if let Some(result_var) = result_var {
+            if let Some((result_var, result_ty)) = result_var {
                 w!(p, "{result_var} = ");
             }
-            expr_to_c(expr, loc, None, locals, cg, p); // TODO: expected type
+            expr_to_c(
+                expr,
+                loc,
+                result_var.map(|(_, result_ty)| result_ty),
+                locals,
+                cg,
+                p,
+            ); // TODO: expected type
             wln!(p, ";");
         }
 
@@ -2127,7 +2146,7 @@ fn stmt_to_c(
             if let Some(label) = label {
                 wln!(p, "_break_{}:;", label);
             }
-            if let Some(result_var) = result_var {
+            if let Some((result_var, _)) = result_var {
                 wln!(
                     p,
                     "{result_var} = {};",
@@ -2401,7 +2420,7 @@ fn expr_to_c(
             match expected_ty {
                 Some(ty) if is_value_type(ty) => w!(p, "0;"),
                 Some(ty) => w!(p, "({})NULL;", c_ty(ty)),
-                None => w!(p, "0;"),
+                None => {}
             }
             p.dedent();
             p.nl();
@@ -2454,7 +2473,7 @@ fn expr_to_c(
                 p.indent();
                 p.nl();
                 // Generate RHS
-                stmts_to_c(&alt.rhs, Some(&match_temp), locals, cg, p);
+                stmts_to_c(&alt.rhs, Some((&match_temp, scrut_ty)), locals, cg, p);
                 p.dedent();
                 p.nl();
                 w!(p, "}}");
@@ -2516,7 +2535,13 @@ fn expr_to_c(
                 );
                 p.indent();
                 p.nl();
-                stmts_to_c(body, if_temp.as_deref(), locals, cg, p);
+                stmts_to_c(
+                    body,
+                    if_temp.as_ref().map(|if_temp| (if_temp.as_str(), expr_ty)),
+                    locals,
+                    cg,
+                    p,
+                );
                 p.dedent();
                 p.nl();
                 w!(p, "}}");
@@ -2527,7 +2552,13 @@ fn expr_to_c(
                     w!(p, " else {{");
                     p.indent();
                     p.nl();
-                    stmts_to_c(else_body, if_temp.as_deref(), locals, cg, p);
+                    stmts_to_c(
+                        else_body,
+                        if_temp.as_ref().map(|if_temp| (if_temp.as_str(), expr_ty)),
+                        locals,
+                        cg,
+                        p,
+                    );
                     p.dedent();
                     p.nl();
                     w!(p, "}}");
@@ -2637,7 +2668,7 @@ fn expr_to_c(
             p.nl();
             let expr_temp = cg.fresh_temp();
             wln!(p, "{} {expr_temp}; // {}", c_ty(ty), loc_display(loc));
-            stmts_to_c(stmts, Some(&expr_temp), locals, cg, p);
+            stmts_to_c(stmts, Some((&expr_temp, ty)), locals, cg, p);
             w!(p, "{expr_temp};");
             p.dedent();
             p.nl();
