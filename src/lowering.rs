@@ -21,7 +21,7 @@ pub struct LoweredPgm {
     /// Maps mono type declarations to their heap object indices.
     ///
     /// Product types will have one index per type. Sum types may have multiple.
-    pub type_objs: HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    pub type_objs: HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
 
     /// Maps record types to their heap object indices.
     pub record_objs: HashMap<RecordType, HeapObjIdx>,
@@ -37,6 +37,12 @@ pub struct LoweredPgm {
     pub ordering_greater_con_idx: HeapObjIdx,
     pub str_con_idx: HeapObjIdx,
     pub unit_con_idx: HeapObjIdx,
+}
+
+#[derive(Debug)]
+pub enum TypeObjs {
+    Product(HeapObjIdx),
+    Sum(Vec<HeapObjIdx>),
 }
 
 pub const CON_CON_IDX: HeapObjIdx = HeapObjIdx(0);
@@ -744,6 +750,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             match &con_decl.rhs {
                 Some(rhs) => match rhs {
                     mono::TypeDeclRhs::Sum(cons) => {
+                        let mut con_indices: Vec<HeapObjIdx> = Vec::with_capacity(cons.len());
                         for mono::ConDecl { name, fields } in cons {
                             let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
                             let name = SmolStr::new(format!("{con_id}_{name}"));
@@ -753,14 +760,14 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 con_ty_args,
                                 fields,
                             ));
-                            lowered_pgm
-                                .type_objs
-                                .entry(con_id.clone())
-                                .or_default()
-                                .entry(con_ty_args.clone())
-                                .or_default()
-                                .push(idx);
+                            con_indices.push(idx);
                         }
+                        let old = lowered_pgm
+                            .type_objs
+                            .entry(con_id.clone())
+                            .or_default()
+                            .insert(con_ty_args.clone(), TypeObjs::Sum(con_indices));
+                        assert!(old.is_none());
                     }
 
                     mono::TypeDeclRhs::Product(fields) => {
@@ -771,13 +778,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             con_ty_args,
                             fields,
                         ));
-                        lowered_pgm
+                        let old = lowered_pgm
                             .type_objs
                             .entry(con_id.clone())
                             .or_default()
-                            .entry(con_ty_args.clone())
-                            .or_default()
-                            .push(idx);
+                            .insert(con_ty_args.clone(), TypeObjs::Product(idx));
+                        assert!(old.is_none());
                     }
                 },
 

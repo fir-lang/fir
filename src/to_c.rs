@@ -189,9 +189,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     // Generate structs for sum types. These just have the tag and they're mainly to make code
     // easier to read.
     for (ty_id, ty_arg_map) in &pgm.type_objs {
-        for (ty_args, heap_objs) in ty_arg_map.iter() {
-            if heap_objs.len() == 1 {
-                // TODO: Single-con sums will cause issues here.
+        for (ty_args, objs) in ty_arg_map.iter() {
+            if let TypeObjs::Product(_) = objs {
                 continue;
             }
             w!(p, "// {}", ty_id);
@@ -2721,7 +2720,7 @@ impl Write for Printer {
 /// - `type_objs`: Maps named types (both products and sums) to their heap object indices.
 /// - `record_objs`: Same as `type_objs`, but for records.
 fn top_sort(
-    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
     record_objs: &HashMap<RecordType, HeapObjIdx>,
     heap_objs: &[HeapObj],
 ) -> Vec<HashSet<HeapObjIdx>> {
@@ -2796,7 +2795,7 @@ impl SccIdxGen {
 }
 
 fn _scc(
-    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
     record_objs: &HashMap<RecordType, HeapObjIdx>,
     heap_objs: &[HeapObj],
     heap_obj_idx: HeapObjIdx,
@@ -2856,7 +2855,7 @@ fn _scc(
 }
 
 fn heap_obj_deps(
-    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
     record_objs: &HashMap<RecordType, HeapObjIdx>,
     heap_objs: &[HeapObj],
     heap_obj_idx: HeapObjIdx,
@@ -2883,7 +2882,7 @@ fn heap_obj_deps(
 }
 
 fn type_heap_obj_deps(
-    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
     record_objs: &HashMap<RecordType, HeapObjIdx>,
     ty: &mono::Type,
     deps: &mut HashSet<HeapObjIdx>,
@@ -2934,7 +2933,7 @@ fn type_heap_obj_deps(
 }
 
 fn named_type_heap_obj_deps(
-    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
     ty: &mono::NamedType,
     deps: &mut HashSet<HeapObjIdx>,
 ) {
@@ -2943,5 +2942,10 @@ fn named_type_heap_obj_deps(
         None => return, // builtin
     };
 
-    deps.extend(ty_map.get(&ty.args).unwrap().iter().cloned());
+    match ty_map.get(&ty.args).unwrap() {
+        TypeObjs::Product(idx) => {
+            deps.insert(*idx);
+        }
+        TypeObjs::Sum(idxs) => deps.extend(idxs.iter().cloned()),
+    }
 }
