@@ -2289,7 +2289,7 @@ fn expr_to_c(
                         mono::FunArgs::Positional(args) => args.iter().collect(),
                         mono::FunArgs::Named(args) => args.values().collect(),
                     };
-                    let arg_ty_strs: Vec<String> = arg_tys.iter().map(|ty| c_ty(*ty)).collect();
+                    let arg_ty_strs: Vec<String> = arg_tys.iter().map(|ty| c_ty(ty)).collect();
                     for arg_ty in arg_ty_strs.iter() {
                         w!(p, ", {arg_ty}");
                     }
@@ -2431,7 +2431,6 @@ fn expr_to_c(
             scrut,
             alts,
             scrut_ty,
-            expr_ty,
         }) => {
             w!(p, "({{");
             p.indent();
@@ -2440,8 +2439,20 @@ fn expr_to_c(
             w!(p, "{} {} = ", c_ty(scrut_ty), scrut_temp);
             expr_to_c(&scrut.node, &scrut.loc, Some(scrut_ty), locals, cg, p);
             wln!(p, "; // {}", loc_display(&scrut.loc));
+
             let match_temp = cg.fresh_temp();
-            wln!(p, "{} {match_temp}; // {}", c_ty(expr_ty), loc_display(loc));
+            let expected_ty: Option<(&str, &mono::Type)> = match expected_ty {
+                Some(expected_ty) => {
+                    wln!(
+                        p,
+                        "{} {match_temp}; // {}",
+                        c_ty(expected_ty),
+                        loc_display(loc)
+                    );
+                    Some((match_temp.as_ref(), expected_ty))
+                }
+                None => None,
+            };
 
             for (i, alt) in alts.iter().enumerate() {
                 if i > 0 {
@@ -2473,7 +2484,7 @@ fn expr_to_c(
                 p.indent();
                 p.nl();
                 // Generate RHS
-                stmts_to_c(&alt.rhs, Some((&match_temp, scrut_ty)), locals, cg, p);
+                stmts_to_c(&alt.rhs, expected_ty, locals, cg, p);
                 p.dedent();
                 p.nl();
                 w!(p, "}}");
@@ -2486,7 +2497,11 @@ fn expr_to_c(
             p.dedent();
             p.nl();
             wln!(p, "}}");
-            w!(p, "{match_temp};");
+
+            if let Some((match_temp, _)) = expected_ty {
+                w!(p, "{match_temp};");
+            }
+
             p.dedent();
             p.nl();
             w!(p, "}})");

@@ -565,7 +565,6 @@ fn eval<W: Write>(
             scrut,
             alts,
             scrut_ty: _,
-            expr_ty: _,
         }) => {
             let scrut = val!(eval(
                 w,

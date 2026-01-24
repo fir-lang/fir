@@ -445,9 +445,6 @@ pub struct MatchExpr {
     pub scrut: Box<L<Expr>>,
     pub alts: Vec<Alt>,
     pub scrut_ty: mono::Type,
-
-    /// Type of the whole expr.
-    pub expr_ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
@@ -2017,9 +2014,9 @@ fn lower_expr(
                     scrut,
                     alts,
                     scrut_ty,
-                    expr_ty: alt_ty.clone().unwrap(),
                 }),
                 Default::default(),
+                // TODO: This type is useless when some of the branches diverge and others return.
                 alt_ty.unwrap(),
             )
         }

@@ -302,7 +302,6 @@ impl Expr {
                 scrut,
                 alts,
                 scrut_ty: _,
-                expr_ty: _,
             }) => {
                 buf.push_str("match ");
                 scrut.node.print(buf, indent);
