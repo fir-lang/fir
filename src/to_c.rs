@@ -205,18 +205,12 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 w!(p, "]");
             }
             p.nl();
-
-            let mut struct_name = ty_id.to_string();
-            for ty_arg in ty_args {
-                struct_name.push('_');
-                ty_to_c(ty_arg, &mut struct_name);
-            }
             writedoc!(
                 p,
                 "typedef struct {{
                     uint64_t tag;
                 }} {};",
-                struct_name
+                sum_struct_name(ty_id, ty_args)
             );
             p.nl();
         }
@@ -790,6 +784,15 @@ fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     }
 }
 
+fn sum_struct_name(ty_id: &Id, ty_args: &[mono::Type]) -> String {
+    let mut struct_name = ty_id.to_string();
+    for ty_arg in ty_args {
+        struct_name.push('_');
+        ty_to_c(ty_arg, &mut struct_name);
+    }
+    struct_name
+}
+
 /// Generate singleton variable name for a nullary source constructor.
 fn source_con_singleton_name(source_con: &SourceConDecl) -> String {
     let mut name = String::from("_singleton_");
@@ -955,7 +958,7 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
 
 fn builtin_fun_to_c(
     fun: &BuiltinFunDecl,
-    _ty_args: &[mono::Type],
+    ty_args: &[mono::Type],
     params: &[mono::Type],
     ret: &mono::Type,
     _exn: &mono::Type,
@@ -1601,7 +1604,13 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::Try { ok_con, err_con } => {
-            w!(p, "static uint64_t _fun_{}(uint64_t cb) {{", idx);
+            // prim try(cb: Fn() a / exn) Result[exn, a] / exn?
+            // Type args: a, exn, exn? (implicit)
+            let cb_ty = match &params[0] {
+                mono::Type::Fn(ty) => ty,
+                _ => panic!(),
+            };
+            w!(p, "static {} _fun_{idx}(CLOSURE* cb) {{", c_ty(ret));
             p.indent();
             p.nl();
             wln!(p, "ExnHandler handler;");
@@ -1611,12 +1620,12 @@ fn builtin_fun_to_c(
             p.indent();
             p.nl();
             wln!(p, "// Call the closure");
-            wln!(p, "CLOSURE* closure = (CLOSURE*)cb;");
+            let cb_ret = c_ty(&cb_ty.ret);
             wln!(
                 p,
-                "uint64_t (*fn)(uint64_t) = (uint64_t (*)(uint64_t))closure->fun;"
+                "{cb_ret} (*fn)(CLOSURE*) = ({cb_ret} (*)(CLOSURE*))cb->fun;"
             );
-            wln!(p, "uint64_t result = fn(cb);");
+            wln!(p, "{cb_ret} result = fn(cb);");
             wln!(p, "current_exn_handler = handler.prev;");
             wln!(p, "// Allocate Ok result");
             let ok_tag_name = heap_obj_tag_name(pgm, *ok_con);
@@ -1627,7 +1636,7 @@ fn builtin_fun_to_c(
             );
             wln!(p, "ok->_tag = {ok_tag_name};");
             wln!(p, "ok->_0 = result;");
-            w!(p, "return (uint64_t)ok;");
+            w!(p, "return ({})ok;", c_ty(ret));
             p.dedent();
             p.nl();
             w!(p, "}} else {{");
@@ -1642,8 +1651,8 @@ fn builtin_fun_to_c(
                 "{err_struct_name}* err = malloc(sizeof({err_struct_name}));"
             );
             wln!(p, "err->_tag = {};", err_tag_name);
-            wln!(p, "err->_0 = handler.exn_value;");
-            w!(p, "return (uint64_t)err;");
+            wln!(p, "err->_0 = ({})handler.exn_value;", c_ty(&ty_args[1]));
+            w!(p, "return ({})err;", c_ty(ret));
             p.dedent();
             p.nl();
             w!(p, "}}");
@@ -1735,16 +1744,11 @@ fn builtin_fun_to_c(
             };
             w!(
                 p,
-                "static uint64_t _fun_{}(uint64_t arr, uint64_t start, uint64_t end) {{",
-                idx
+                "static ARRAY* _fun_{idx}(ARRAY* arr, U32 start, U32 end) {{",
             );
             p.indent();
             p.nl();
-            w!(
-                p,
-                "return {}(arr, (uint32_t)start, (uint32_t)end);",
-                fn_name
-            );
+            w!(p, "return {}(arr, start, end);", fn_name);
             p.dedent();
             p.nl();
             wln!(p, "}}");
@@ -2087,7 +2091,7 @@ fn stmt_to_c(
             if let Some(result_var) = result_var {
                 w!(p, "{result_var} = ");
             }
-            expr_to_c(expr, loc, None, locals, cg, p);
+            expr_to_c(expr, loc, None, locals, cg, p); // TODO: expected type
             wln!(p, ";");
         }
 
@@ -2097,7 +2101,14 @@ fn stmt_to_c(
             p.nl();
             let cond_temp = cg.fresh_temp();
             w!(p, "Bool* {cond_temp} = ");
-            expr_to_c(&cond.node, &cond.loc, None, locals, cg, p);
+            expr_to_c(
+                &cond.node,
+                &cond.loc,
+                Some(&mono::Type::bool()),
+                locals,
+                cg,
+                p,
+            );
             wln!(p, ";");
             w!(
                 p,
@@ -2204,12 +2215,12 @@ fn expr_to_c(
             object,
             field: _,
             idx,
-            object_ty: _,
+            object_ty,
             ty: _,
         }) => {
             // TODO: We need the object type here to be able to get the struct type
             w!(p, "(");
-            expr_to_c(&object.node, &object.loc, None, locals, cg, p);
+            expr_to_c(&object.node, &object.loc, Some(object_ty), locals, cg, p);
             w!(p, ")->_{}", idx);
         }
 
@@ -2223,7 +2234,14 @@ fn expr_to_c(
                         if i > 0 {
                             w!(p, ", ");
                         }
-                        expr_to_c(&arg.node, &arg.loc, None, locals, cg, p);
+                        expr_to_c(
+                            &arg.node,
+                            &arg.loc,
+                            Some(&mono::Type::Fn(fun_ty.clone())),
+                            locals,
+                            cg,
+                            p,
+                        );
                     }
                     w!(p, ")");
                 }
@@ -2234,29 +2252,38 @@ fn expr_to_c(
                     p.nl();
                     let fun_temp = cg.fresh_temp();
                     w!(p, "CLOSURE* {} = ", fun_temp);
-                    expr_to_c(other, &fun.loc, None, locals, cg, p);
+                    expr_to_c(
+                        other,
+                        &fun.loc,
+                        Some(&mono::Type::Fn(fun_ty.clone())),
+                        locals,
+                        cg,
+                        p,
+                    );
                     wln!(p, ";");
                     wln!(p, "uint32_t _tag = get_tag({});", fun_temp);
 
                     // Closure call - need to pass closure object as first arg
                     w!(p, "{} (*_fn)(CLOSURE*", c_ty(&fun_ty.ret));
                     assert_eq!(args.len(), fun_ty.args.len());
-                    let arg_tys: Vec<String> = match &fun_ty.args {
-                        mono::FunArgs::Positional(args) => args.iter().map(c_ty).collect(),
-                        mono::FunArgs::Named(args) => args.values().map(c_ty).collect(),
+                    let arg_tys: Vec<&mono::Type> = match &fun_ty.args {
+                        mono::FunArgs::Positional(args) => args.iter().collect(),
+                        mono::FunArgs::Named(args) => args.values().collect(),
                     };
-                    for arg_ty in arg_tys.iter() {
+                    let arg_ty_strs: Vec<String> = arg_tys.iter().map(|ty| c_ty(*ty)).collect();
+                    for arg_ty in arg_ty_strs.iter() {
                         w!(p, ", {arg_ty}");
                     }
                     w!(p, ") = ({} (*)(CLOSURE*", c_ty(&fun_ty.ret));
-                    for arg_ty in arg_tys.iter() {
+                    for arg_ty in arg_ty_strs.iter() {
                         w!(p, ", {arg_ty}");
                     }
                     wln!(p, "))((CLOSURE*){})->fun;", fun_temp);
                     w!(p, "_fn({}", fun_temp);
-                    for arg in args {
+                    assert_eq!(args.len(), arg_ty_strs.len());
+                    for (arg, arg_ty) in args.iter().zip(arg_tys.iter()) {
                         w!(p, ", ");
-                        expr_to_c(&arg.node, &arg.loc, None, locals, cg, p);
+                        expr_to_c(&arg.node, &arg.loc, Some(arg_ty), locals, cg, p);
                     }
                     w!(p, ");");
                     p.dedent();
@@ -2289,7 +2316,14 @@ fn expr_to_c(
             p.indent();
             p.nl();
             w!(p, "Bool* _and_result = ");
-            expr_to_c(&left.node, &left.loc, None, locals, cg, p);
+            expr_to_c(
+                &left.node,
+                &left.loc,
+                Some(&mono::Type::bool()),
+                locals,
+                cg,
+                p,
+            );
             wln!(p, ";");
             w!(
                 p,
@@ -2299,7 +2333,14 @@ fn expr_to_c(
             p.indent();
             p.nl();
             w!(p, "_and_result = ");
-            expr_to_c(&right.node, &right.loc, None, locals, cg, p);
+            expr_to_c(
+                &right.node,
+                &right.loc,
+                Some(&mono::Type::bool()),
+                locals,
+                cg,
+                p,
+            );
             w!(p, ";");
             p.dedent();
             p.nl();
@@ -2315,7 +2356,14 @@ fn expr_to_c(
             p.indent();
             p.nl();
             w!(p, "Bool* _or_result = ");
-            expr_to_c(&left.node, &left.loc, None, locals, cg, p);
+            expr_to_c(
+                &left.node,
+                &left.loc,
+                Some(&mono::Type::bool()),
+                locals,
+                cg,
+                p,
+            );
             wln!(p, ";");
             w!(
                 p,
@@ -2325,7 +2373,14 @@ fn expr_to_c(
             p.indent();
             p.nl();
             w!(p, "_or_result = ");
-            expr_to_c(&right.node, &right.loc, None, locals, cg, p);
+            expr_to_c(
+                &right.node,
+                &right.loc,
+                Some(&mono::Type::bool()),
+                locals,
+                cg,
+                p,
+            );
             w!(p, ";");
             p.dedent();
             p.nl();
@@ -2341,9 +2396,8 @@ fn expr_to_c(
             p.indent();
             p.nl();
             w!(p, "return ");
-            expr_to_c(&expr.node, &expr.loc, None, locals, cg, p);
+            expr_to_c(&expr.node, &expr.loc, expected_ty, locals, cg, p);
             wln!(p, ";");
-            // Generate a dummy value of the expected type (unreachable code)
             match expected_ty {
                 Some(ty) if is_value_type(ty) => w!(p, "0;"),
                 Some(ty) => w!(p, "({})NULL;", c_ty(ty)),
@@ -2381,7 +2435,14 @@ fn expr_to_c(
                 // Add guard if present
                 if let Some(guard) = &alt.guard {
                     w!(p, " && (");
-                    expr_to_c(&guard.node, &guard.loc, None, locals, cg, p);
+                    expr_to_c(
+                        &guard.node,
+                        &guard.loc,
+                        Some(&mono::Type::bool()),
+                        locals,
+                        cg,
+                        p,
+                    );
                     w!(
                         p,
                         " == (Bool*){})",
@@ -2438,7 +2499,14 @@ fn expr_to_c(
                 p.indent();
                 p.nl();
                 w!(p, "Bool* {} = ", cond_temp);
-                expr_to_c(&cond.node, &cond.loc, None, locals, cg, p);
+                expr_to_c(
+                    &cond.node,
+                    &cond.loc,
+                    Some(&mono::Type::bool()),
+                    locals,
+                    cg,
+                    p,
+                );
                 wln!(p, ";");
                 w!(
                     p,
@@ -2578,7 +2646,7 @@ fn expr_to_c(
 
         Expr::Variant(expr) => {
             // Variants are represented as their underlying type
-            expr_to_c(&expr.node, &expr.loc, None, locals, cg, p);
+            expr_to_c(&expr.node, &expr.loc, None, locals, cg, p); // TODO: expected type
         }
     }
 }

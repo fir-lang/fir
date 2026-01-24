@@ -81,6 +81,13 @@ impl Type {
         }
     }
 
+    pub(crate) fn bool() -> Type {
+        Type::Named(NamedType {
+            name: crate::SmolStr::new_static("Bool"),
+            args: vec![],
+        })
+    }
+
     pub(crate) fn is_never(&self) -> bool {
         matches!(self, Type::Never)
     }
