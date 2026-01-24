@@ -1973,9 +1973,9 @@ fn lower_expr(
             (Expr::Return(expr), Default::default(), mono::Type::Never)
         }
 
-        mono::Expr::Match(mono::MatchExpr { scrut, alts }) => {
+        mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => {
             let (scrut, scrut_vars, scrut_ty) =
-                lower_bl_expr(scrut, closures, indices, scope, mono_pgm);
+                lower_bl_expr(scrutinee, closures, indices, scope, mono_pgm);
             scope.bounds.push_scope(scrut_vars);
 
             let mut alt_ty: Option<mono::Type> = None;

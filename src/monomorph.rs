@@ -746,7 +746,7 @@ fn mono_expr(
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
             mono::Expr::Match(mono::MatchExpr {
-                scrut: mono_bl_expr(scrutinee, ty_map, poly_pgm, mono_pgm, locals),
+                scrutinee: mono_bl_expr(scrutinee, ty_map, poly_pgm, mono_pgm, locals),
                 alts: alts
                     .iter()
                     .map(|ast::Alt { pat, guard, rhs }| {

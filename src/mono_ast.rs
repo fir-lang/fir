@@ -177,7 +177,7 @@ pub struct LetStmt {
 
 #[derive(Debug, Clone)]
 pub struct MatchExpr {
-    pub scrut: Box<L<Expr>>,
+    pub scrutinee: Box<L<Expr>>,
     pub alts: Vec<Alt>,
 }
 
