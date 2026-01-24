@@ -153,11 +153,8 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: Vec
     );
 
     match ret {
-        FunRet::Val(_val) => {
-            // Note: This does not hold because apparently we weren't too careful with how we return
-            // units. So far we never needed to check or use a unit return, so it was fine. If we
-            // want this assertion we should fix unit returning statements and expressions.
-            // debug_assert_eq!(_val, pgm.unit_alloc);
+        FunRet::Val(val) => {
+            debug_assert_eq!(val, pgm.unit_alloc);
         }
         FunRet::Unwind(_) => {
             // TODO: We should show at least the object here somehow, but ideally also the
@@ -439,7 +436,7 @@ fn exec<W: Write>(
                     ControlFlow::Ret(val) => return ControlFlow::Ret(val),
                     ControlFlow::Break(n) => {
                         if n == 0 {
-                            break 0;
+                            break pgm.unit_alloc;
                         } else {
                             return ControlFlow::Break(n - 1);
                         }
