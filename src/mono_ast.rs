@@ -88,6 +88,13 @@ impl Type {
         })
     }
 
+    pub(crate) fn u32() -> Type {
+        Type::Named(NamedType {
+            name: crate::SmolStr::new_static("U32"),
+            args: vec![],
+        })
+    }
+
     pub(crate) fn is_never(&self) -> bool {
         matches!(self, Type::Never)
     }

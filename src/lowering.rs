@@ -379,7 +379,7 @@ pub enum Expr {
     /// Constructor allocation.
     ///
     /// The argument list may be empty (for nullary constructors).
-    ConAlloc(HeapObjIdx, Vec<L<Expr>>, mono::Type),
+    ConAlloc(HeapObjIdx, Vec<L<Expr>>, Vec<mono::Type>, mono::Type),
 
     /// Field selection: `<expr>.<id>`.
     FieldSel(FieldSelExpr),
@@ -1566,7 +1566,7 @@ fn lower_expr(
             };
 
             let expr = if let mono::ConFields::Empty = con_fields {
-                Expr::ConAlloc(idx, vec![], con_ty.clone())
+                Expr::ConAlloc(idx, vec![], vec![], con_ty.clone())
             } else {
                 Expr::Con(idx)
             };
@@ -1729,7 +1729,7 @@ fn lower_expr(
             };
 
             let expr: Expr = match &fun_ty.args {
-                mono::FunArgs::Positional(_) => {
+                mono::FunArgs::Positional(arg_tys) => {
                     let args = args
                         .iter()
                         .map(|mono::CallArg { name: _, expr }| {
@@ -1738,9 +1738,12 @@ fn lower_expr(
                         .collect();
 
                     match &fun.node {
-                        Expr::Con(heap_obj_idx) => {
-                            Expr::ConAlloc(*heap_obj_idx, args, (*fun_ty.ret).clone())
-                        }
+                        Expr::Con(heap_obj_idx) => Expr::ConAlloc(
+                            *heap_obj_idx,
+                            args,
+                            arg_tys.clone(),
+                            (*fun_ty.ret).clone(),
+                        ),
                         _ => Expr::Call(CallExpr {
                             fun,
                             args,
@@ -1788,9 +1791,12 @@ fn lower_expr(
                         .collect();
 
                     let call_expr = match &fun.node {
-                        Expr::Con(heap_obj_idx) => {
-                            Expr::ConAlloc(*heap_obj_idx, args, (*fun_ty.ret).clone())
-                        }
+                        Expr::Con(heap_obj_idx) => Expr::ConAlloc(
+                            *heap_obj_idx,
+                            args,
+                            named_args.values().cloned().collect(),
+                            (*fun_ty.ret).clone(),
+                        ),
                         _ => Expr::Call(CallExpr {
                             fun,
                             args,
@@ -1853,6 +1859,7 @@ fn lower_expr(
                         loc: loc.clone(),
                         node: Expr::Int(u64::from(*char as u32)),
                     }],
+                    vec![mono::Type::u32()],
                     char_ty.clone(),
                 ),
                 Default::default(),
@@ -1951,6 +1958,7 @@ fn lower_expr(
                             loc: loc.clone(),
                         })
                         .collect(),
+                    field_tys.values().cloned().collect(),
                     ty.clone(),
                 )),
                 loc: loc.clone(),

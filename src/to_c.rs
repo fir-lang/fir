@@ -2205,7 +2205,8 @@ fn expr_to_c(
             w!(p, "_con_closure_{}", heap_obj_idx.0);
         }
 
-        Expr::ConAlloc(heap_obj_idx, args, ty) => {
+        Expr::ConAlloc(heap_obj_idx, args, arg_tys, ty) => {
+            assert_eq!(args.len(), arg_tys.len());
             if args.is_empty() {
                 // Return singleton
                 w!(
@@ -2222,9 +2223,9 @@ fn expr_to_c(
                 p.nl();
                 wln!(p, "{struct_name}* _obj = malloc(sizeof({struct_name}));");
                 wln!(p, "_obj->_tag = {tag_name};");
-                for (i, arg) in args.iter().enumerate() {
+                for (i, (arg, arg_ty)) in args.iter().zip(arg_tys.iter()).enumerate() {
                     w!(p, "_obj->_{i} = ");
-                    expr_to_c(&arg.node, &arg.loc, None, locals, cg, p);
+                    expr_to_c(&arg.node, &arg.loc, Some(arg_ty), locals, cg, p);
                     wln!(p, ";");
                 }
                 w!(p, "({})_obj;", c_ty(ty));
