@@ -2036,7 +2036,11 @@ fn stmt_to_c(
             wln!(p, "; // {}", loc_display(&rhs.loc));
             wln!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, cg));
             if let Some(result_var) = result_var {
-                wln!(p, "{result_var} = {rhs_temp};");
+                wln!(
+                    p,
+                    "{result_var} = {};",
+                    heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
+                );
             }
         }
 
