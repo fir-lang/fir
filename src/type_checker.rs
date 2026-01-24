@@ -3,8 +3,8 @@
 mod apply;
 mod convert;
 mod expr;
-mod instantiation;
 pub(crate) mod kind_inference;
+mod normalization;
 mod pat;
 mod pat_coverage;
 pub(crate) mod row_utils;
@@ -16,7 +16,7 @@ mod unification;
 
 pub use crate::utils::loc_display;
 use convert::*;
-use instantiation::normalize_instantiation_types;
+use normalization::normalize_stmt;
 use stmt::check_stmts;
 use traits::*;
 use ty::*;
@@ -1295,7 +1295,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
-            normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
+            normalize_stmt(&mut stmt.node, tys.tys.cons());
         }
     }
 
@@ -1408,7 +1408,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
             resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
 
             for stmt in body.iter_mut() {
-                normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
+                normalize_stmt(&mut stmt.node, tys.tys.cons());
             }
         }
 
