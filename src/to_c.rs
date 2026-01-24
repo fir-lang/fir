@@ -2248,23 +2248,23 @@ fn expr_to_c(
         }
 
         Expr::Call(CallExpr { fun, args, fun_ty }) => {
+            let arg_tys: Vec<&mono::Type> = match &fun_ty.args {
+                mono::FunArgs::Positional(args) => args.iter().collect(),
+                mono::FunArgs::Named(args) => args.values().collect(),
+            };
+
+            assert_eq!(args.len(), arg_tys.len());
+
             // Check if direct function call
             match &fun.node {
                 Expr::Fun(fun_idx) => {
                     // Direct function call
                     w!(p, "_fun_{}(", fun_idx.as_usize());
-                    for (i, arg) in args.iter().enumerate() {
+                    for (i, (arg, arg_ty)) in args.iter().zip(arg_tys.iter()).enumerate() {
                         if i > 0 {
                             w!(p, ", ");
                         }
-                        expr_to_c(
-                            &arg.node,
-                            &arg.loc,
-                            Some(&mono::Type::Fn(fun_ty.clone())),
-                            locals,
-                            cg,
-                            p,
-                        );
+                        expr_to_c(&arg.node, &arg.loc, Some(arg_ty), locals, cg, p);
                     }
                     w!(p, ")");
                 }
@@ -2288,11 +2288,6 @@ fn expr_to_c(
 
                     // Closure call - need to pass closure object as first arg
                     w!(p, "{} (*_fn)(CLOSURE*", c_ty(&fun_ty.ret));
-                    assert_eq!(args.len(), fun_ty.args.len());
-                    let arg_tys: Vec<&mono::Type> = match &fun_ty.args {
-                        mono::FunArgs::Positional(args) => args.iter().collect(),
-                        mono::FunArgs::Named(args) => args.values().collect(),
-                    };
                     let arg_ty_strs: Vec<String> = arg_tys.iter().map(|ty| c_ty(ty)).collect();
                     for arg_ty in arg_ty_strs.iter() {
                         w!(p, ", {arg_ty}");
@@ -2514,18 +2509,20 @@ fn expr_to_c(
         Expr::If(IfExpr {
             branches,
             else_branch,
-            expr_ty,
+            expr_ty: _,
         }) => {
             w!(p, "({{");
             p.indent();
             p.nl();
 
-            let if_temp = if expr_ty.is_never() {
-                None
-            } else {
-                let temp = cg.fresh_temp();
-                wln!(p, "{} {temp}; // {}", c_ty(expr_ty), loc_display(loc));
-                Some(temp)
+            let if_temp = match expected_ty {
+                Some(ty) if ty.is_never() => None,
+                None => None,
+                Some(ty) => {
+                    let temp = cg.fresh_temp();
+                    wln!(p, "{} {temp}; // {}", c_ty(ty), loc_display(loc));
+                    Some(temp)
+                }
             };
 
             for (i, (cond, body)) in branches.iter().enumerate() {
@@ -2556,7 +2553,9 @@ fn expr_to_c(
                 p.nl();
                 stmts_to_c(
                     body,
-                    if_temp.as_ref().map(|if_temp| (if_temp.as_str(), expr_ty)),
+                    if_temp
+                        .as_ref()
+                        .map(|if_temp| (if_temp.as_str(), expected_ty.unwrap())),
                     locals,
                     cg,
                     p,
@@ -2573,7 +2572,9 @@ fn expr_to_c(
                     p.nl();
                     stmts_to_c(
                         else_body,
-                        if_temp.as_ref().map(|if_temp| (if_temp.as_str(), expr_ty)),
+                        if_temp
+                            .as_ref()
+                            .map(|if_temp| (if_temp.as_str(), expected_ty.unwrap())),
                         locals,
                         cg,
                         p,
