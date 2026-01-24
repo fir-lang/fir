@@ -1,0 +1,292 @@
+import [Compiler/Ast]
+
+
+# TODO: the returned types in `checkExpr` should be unified with the expected
+# type. Maybe have two `checkExpr`s: one that always returns the inferred type,
+# and another that takes the inferred type nad unifies with the expected type.
+
+
+## Returns the type of the expression, and binders that the expression binds.
+##
+## Only boolean expressions bind variables.
+##
+## - `<expr> is <pat>` binds the variables that `<pat>` binds.
+##
+## - `<expr1> and <expr2>` binds the variables that `<expr1>` and `<expr2>`
+##   bind. `<expr1>` and `<expr2>` need to bind disjoint set of variables.
+##
+## Other expressions don't bind any variables.
+##
+## Variables bound in `if` and `while` conditionals are used in the bodies.
+checkExpr(
+    expr: Expr,
+    pgm: Program,
+    env: FunTcEnv,
+    expectedTy: Option[Ty],
+    level: U32,
+    loopStack: Vec[Option[LocalId]],
+) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
+    match expr:
+        Expr.Var(expr): _checkVarExpr(expr, pgm, env, expectedTy, level)
+
+        Expr.ConSel(expr): _checkConExpr(expr, pgm, env, expectedTy, level)
+
+        Expr.FieldSel(expr):
+            _checkFieldSelExpr(expr, pgm, env, expectedTy, level, loopStack)
+
+        Expr.MethodSel(..): panic("TODO")
+
+        Expr.AssocFnSel(..): panic("TODO")
+
+        Expr.Call(..): panic("TODO")
+
+        Expr.Int(..): panic("TODO")
+
+        Expr.Str(..): panic("TODO")
+
+        Expr.Char(..): panic("TODO")
+
+        Expr.Self(..): panic("TODO")
+
+        Expr.BinOp(..): panic("TODO")
+
+        Expr.UnOp(..): panic("TODO")
+
+        Expr.Record(..): panic("TODO")
+
+        Expr.Return(..): panic("TODO")
+
+        Expr.Match(..): panic("TODO")
+
+        Expr.If(..): panic("TODO")
+
+        Expr.Fn_(..): panic("TODO")
+
+        Expr.Is(..): panic("TODO")
+
+        Expr.Do(..): panic("TODO")
+
+        Expr.Seq(..): panic("TODO")
+
+        Expr.Paren(expr):
+            _checkParenExpr(expr, pgm, env, expectedTy, level, loopStack)
+
+        Expr.Variant(..): panic("TODO")
+
+
+_checkVarExpr(
+    varExpr: VarExpr,
+    pgm: Program,
+    env: FunTcEnv,
+    expectedTy: Option[Ty],
+    level: U32,
+) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
+    let mod = pgm.module(env._modIdx)
+    let id = varExpr.id
+    let userTyArgs = varExpr.userTyArgs
+    let exprLoc = mod.loc(varExpr)
+
+    assert(varExpr.tyArgs.isEmpty())
+
+    match id.def():
+        VarDefIdx.Local:
+            if userTyArgs is Option.Some(..):
+                throw(
+                    TypeError(
+                        loc = exprLoc,
+                        msg =
+                            "Local variables can't have type parameters, but \``id.name`\`is passed type arguments",
+                    ),
+                )
+            (ty = env.local(id.name), binds = HashMap.empty())
+
+        VarDefIdx.Top(topVarIdx):
+            let scheme = pgm.scheme(topVarIdx)
+
+            let ty = if userTyArgs is Option.Some(userTyArgs):
+                # This should be syntax error:
+                assert(not userTyArgs.args.isEmpty())
+
+                if scheme.qvars.len() != userTyArgs.args.len():
+                    throw(
+                        TypeError(
+                            loc = exprLoc,
+                            msg =
+                                "Variable \``id.name`\` takes `scheme.qvars.len()` type arguments, but applied to `userTyArgs.args.len()`",
+                        ),
+                    )
+
+                let userTyArgsConverted: Vec[Ty] = Vec.fromIter(
+                    userTyArgs.args.iter().map(
+                        \(ty: Type) Ty: convertAstTy(mod, env._termEnv, ty),
+                    ),
+                )
+
+                let ty = scheme.instantiateWithTys(
+                    userTyArgsConverted,
+                    env._preds,
+                    exprLoc,
+                )
+
+                varExpr.tyArgs = userTyArgsConverted
+                ty
+            else:
+                let tyAndVars = scheme.instantiate(
+                    level,
+                    env._varGen,
+                    env._preds,
+                    exprLoc,
+                )
+                varExpr.tyArgs = Vec.fromIter(tyAndVars.vars.iter().map(Ty.UVar))
+                tyAndVars.ty
+
+            (ty = ty, binds = HashMap.empty())
+
+
+_checkConExpr(
+    con: Con,
+    pgm: Program,
+    env: FunTcEnv,
+    expectedTy: Option[Ty],
+    level: U32,
+) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
+    assert(con.tyArgs.isEmpty())
+
+    let mod = pgm.module(env._modIdx)
+
+    let tyCon = pgm.tyCon(con.ty.def())
+    let tyConUseSiteName = mod.tokenText(con.ty.token)
+
+    let details = match tyCon.details:
+        TyConDetails.Trait(..):
+            throw(
+                TypeError(
+                    loc = mod.loc(con),
+                    msg = "Type in constructor selection is a trait",
+                ),
+            )
+
+        TyConDetails.Type(details): details
+
+    # TODO: This does not support renaming constructors
+    let conName = con.con.map(\(id): mod.idText(id)).unwrapOr(tyCon.name)
+
+    let scheme = details.cons.get(conName).unwrapOrElse(
+        \():
+            throw(
+                TypeError(
+                    loc = mod.loc(con),
+                    msg =
+                        "Type `tyConUseSiteName` does not have constructor `conName`",
+                ),
+            ),
+    )
+
+    let conTy: Ty = match con.userTyArgs:
+        Option.None:
+            let (ty, vars) = scheme.instantiate(
+                level,
+                env._varGen,
+                env._preds,
+                mod.loc(con),
+            )
+            con.tyArgs = Vec.fromIter(vars.iter().map(Ty.UVar))
+            ty
+
+        Option.Some(userTyArgs):
+            assert(not userTyArgs.args.isEmpty())
+            let userTyArgsConverted: Vec[Ty] = Vec.fromIter(
+                userTyArgs.args.iter().map(
+                    \(ty): convertAstTy(mod, env._termEnv, ty),
+                ),
+            )
+            let ty = scheme.instantiateWithTys(
+                userTyArgsConverted,
+                env._preds,
+                mod.loc(con),
+            )
+            con.tyArgs = userTyArgsConverted
+            ty
+
+    (ty = conTy, binds = HashMap.empty())
+
+
+makeVariant(varGen: UVarGen, ty: Ty, level: U32, loc: Loc) Ty / TypeError:
+    let extension = Option.Some(
+        Ty.UVar(varGen.newVar(level, Kind.Row(RecordOrVariant.Variant), loc)),
+    )
+
+    match ty.normalize():
+        Ty.Con(id, ..):
+            Ty.Variant(
+                cons = HashMap.[id = Vec.empty()],
+                extension,
+                isRow = Bool.False,
+            )
+
+        Ty.App(conId, args):
+            Ty.Variant(
+                cons = HashMap.[conId = args],
+                extension,
+                isRow = Bool.False,
+            )
+
+        _: throw(TypeError(loc, msg = "Type in variant is not a constructor",))
+
+
+_checkFieldSelExpr(
+    expr: FieldSelExpr,
+    pgm: Program,
+    env: FunTcEnv,
+    expectedTy: Option[Ty],
+    level: U32,
+    loopStack: Vec[Option[LocalId]],
+) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
+    let mod = pgm.module(env._modIdx)
+    let (ty, binds = _) = checkExpr(
+        expr.object,
+        pgm,
+        env,
+        Option.None,
+        level,
+        loopStack,
+    )
+    let ty = ty.normalize()
+    match ty:
+        Ty.Record(labels, extension, isRow):
+            assert(isRow == Bool.False)
+            if expr.userTyArgs is Option.Some(_):
+                throw(
+                    TypeError(
+                        msg = "Record field with type arguments",
+                        loc = mod.loc(expr),
+                    ),
+                )
+            let (rows, extension = _) = collectRecordFields(
+                ty,
+                labels,
+                extension,
+            )
+            let fieldText = mod.idText(expr.field)
+            match rows.get(LocalId(name = fieldText)):
+                Option.Some(fieldTy): (ty = fieldTy, binds = HashMap.empty())
+                Option.None:
+                    throw(
+                        TypeError(
+                            msg = "Record does not have field `fieldText`",
+                            loc = mod.loc(expr),
+                        ),
+                    )
+
+        other: panic("TODO")
+
+
+_checkParenExpr(
+    expr: ParenExpr,
+    pgm: Program,
+    env: FunTcEnv,
+    expectedTy: Option[Ty],
+    level: U32,
+    loopStack: Vec[Option[LocalId]],
+) (ty: Ty, binds: HashMap[LocalId, Ty]) / TypeError:
+    checkExpr(expr.expr, pgm, env, expectedTy, level, loopStack)
