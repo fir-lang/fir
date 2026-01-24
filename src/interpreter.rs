@@ -559,7 +559,7 @@ fn eval<W: Write>(
         ))),
 
         Expr::Match(MatchExpr {
-            scrut,
+            scrutinee,
             alts,
             scrut_ty: _,
         }) => {
@@ -568,8 +568,8 @@ fn eval<W: Write>(
                 pgm,
                 heap,
                 locals,
-                &scrut.node,
-                &scrut.loc,
+                &scrutinee.node,
+                &scrutinee.loc,
                 call_stack
             ));
             for Alt { pat, guard, rhs } in alts {

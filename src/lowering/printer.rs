@@ -299,12 +299,12 @@ impl Expr {
             }
 
             Expr::Match(MatchExpr {
-                scrut,
+                scrutinee,
                 alts,
                 scrut_ty: _,
             }) => {
                 buf.push_str("match ");
-                scrut.node.print(buf, indent);
+                scrutinee.node.print(buf, indent);
                 buf.push_str(":\n");
                 for (i, Alt { pat, guard, rhs }) in alts.iter().enumerate() {
                     if i != 0 {

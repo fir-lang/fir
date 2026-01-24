@@ -442,7 +442,7 @@ pub struct CallExpr {
 
 #[derive(Debug, Clone)]
 pub struct MatchExpr {
-    pub scrut: Box<L<Expr>>,
+    pub scrutinee: Box<L<Expr>>,
     pub alts: Vec<Alt>,
     pub scrut_ty: mono::Type,
 }
@@ -1974,7 +1974,7 @@ fn lower_expr(
         }
 
         mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => {
-            let (scrut, scrut_vars, scrut_ty) =
+            let (scrutinee, scrut_vars, scrut_ty) =
                 lower_bl_expr(scrutinee, closures, indices, scope, mono_pgm);
             scope.bounds.push_scope(scrut_vars);
 
@@ -2016,7 +2016,7 @@ fn lower_expr(
 
             (
                 Expr::Match(MatchExpr {
-                    scrut,
+                    scrutinee,
                     alts,
                     scrut_ty,
                 }),

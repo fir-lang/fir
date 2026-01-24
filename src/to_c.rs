@@ -2428,7 +2428,7 @@ fn expr_to_c(
         }
 
         Expr::Match(MatchExpr {
-            scrut,
+            scrutinee,
             alts,
             scrut_ty,
         }) => {
@@ -2437,8 +2437,15 @@ fn expr_to_c(
             p.nl();
             let scrut_temp = cg.fresh_temp();
             w!(p, "{} {} = ", c_ty(scrut_ty), scrut_temp);
-            expr_to_c(&scrut.node, &scrut.loc, Some(scrut_ty), locals, cg, p);
-            wln!(p, "; // {}", loc_display(&scrut.loc));
+            expr_to_c(
+                &scrutinee.node,
+                &scrutinee.loc,
+                Some(scrut_ty),
+                locals,
+                cg,
+                p,
+            );
+            wln!(p, "; // {}", loc_display(&scrutinee.loc));
 
             let match_temp = cg.fresh_temp();
             let expected_ty: Option<(&str, &mono::Type)> = match expected_ty {
