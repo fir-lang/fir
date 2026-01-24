@@ -23,6 +23,9 @@ pub struct LoweredPgm {
     /// Product types will have one index per type. Sum types may have multiple.
     pub type_objs: HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
 
+    /// Maps record types to their heap object indices.
+    pub record_objs: HashMap<RecordType, HeapObjIdx>,
+
     // Ids of some special cons that the interpreter needs to know.
     //
     // Note that for product types, type and con tags are the same.
@@ -676,6 +679,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         funs: vec![],
         closures: vec![],
         type_objs: Default::default(),
+        record_objs: Default::default(),
         true_con_idx: *sum_con_nums
             .get("Bool")
             .unwrap()
@@ -830,15 +834,15 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     }
 
     // Assign indices to record shapes.
-    let record_shapes = collect_records(mono_pgm);
+    let record_types = collect_records(mono_pgm);
 
     // TODO: We could assign indices to records as we see them during lowering below.
     let mut record_indices: HashMap<RecordType, HeapObjIdx> = Default::default();
-    for record_shape in record_shapes {
+    for record_type in record_types {
         let idx = next_con_idx;
         next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
-        record_indices.insert(record_shape.clone(), idx);
-        lowered_pgm.heap_objs.push(HeapObj::Record(record_shape));
+        record_indices.insert(record_type.clone(), idx);
+        lowered_pgm.heap_objs.push(HeapObj::Record(record_type));
     }
 
     lowered_pgm.unit_con_idx = *record_indices
@@ -1371,6 +1375,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         }
     }
 
+    lowered_pgm.record_objs = indices.records;
     lowered_pgm
 }
 

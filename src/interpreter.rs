@@ -52,6 +52,7 @@ impl Pgm {
             funs,
             closures,
             type_objs: _,
+            record_objs: _,
             true_con_idx,
             false_con_idx,
             char_con_idx,

@@ -223,7 +223,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         }
     }
 
-    let heap_objs_sorted = top_sort(&pgm.type_objs, &pgm.heap_objs);
+    let heap_objs_sorted = top_sort(&pgm.type_objs, &pgm.record_objs, &pgm.heap_objs);
     for scc in &heap_objs_sorted {
         // If SCC has more than one element, forward-declare the structs.
         if scc.len() > 1 {
@@ -2717,8 +2717,12 @@ impl Write for Printer {
 // Top sort
 
 /// Topologically sort user-defined types into SCCs.
+///
+/// - `type_objs`: Maps named types (both products and sums) to their heap object indices.
+/// - `record_objs`: Same as `type_objs`, but for records.
 fn top_sort(
     type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    record_objs: &HashMap<RecordType, HeapObjIdx>,
     heap_objs: &[HeapObj],
 ) -> Vec<HashSet<HeapObjIdx>> {
     let mut idx_gen = SccIdxGen::default();
@@ -2754,6 +2758,7 @@ fn top_sort(
         if nodes[heap_obj_idx].idx.is_none() {
             _scc(
                 type_objs,
+                record_objs,
                 heap_objs,
                 HeapObjIdx(heap_obj_idx as u32),
                 &mut idx_gen,
@@ -2792,6 +2797,7 @@ impl SccIdxGen {
 
 fn _scc(
     type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    record_objs: &HashMap<RecordType, HeapObjIdx>,
     heap_objs: &[HeapObj],
     heap_obj_idx: HeapObjIdx,
     idx_gen: &mut SccIdxGen,
@@ -2808,11 +2814,20 @@ fn _scc(
     stack.push(heap_obj_idx);
 
     // Add dependencies to the output.
-    let deps = heap_obj_deps(type_objs, heap_objs, heap_obj_idx);
+    let deps = heap_obj_deps(type_objs, record_objs, heap_objs, heap_obj_idx);
     for dep_obj in deps {
         if nodes[dep_obj.as_usize()].idx.is_none() {
             // Dependency not visited yet.
-            _scc(type_objs, heap_objs, dep_obj, idx_gen, nodes, stack, output);
+            _scc(
+                type_objs,
+                record_objs,
+                heap_objs,
+                dep_obj,
+                idx_gen,
+                nodes,
+                stack,
+                output,
+            );
             let current_low_link = nodes[heap_obj_idx.as_usize()].low_link.unwrap();
             let dep_low_link = nodes[dep_obj.as_usize()].low_link.unwrap();
             nodes[heap_obj_idx.as_usize()].low_link = Some(current_low_link.min(dep_low_link));
@@ -2842,6 +2857,7 @@ fn _scc(
 
 fn heap_obj_deps(
     type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    record_objs: &HashMap<RecordType, HeapObjIdx>,
     heap_objs: &[HeapObj],
     heap_obj_idx: HeapObjIdx,
 ) -> HashSet<HeapObjIdx> {
@@ -2852,13 +2868,13 @@ fn heap_obj_deps(
 
         HeapObj::Source(source_decl) => {
             for field in source_decl.fields.iter() {
-                type_heap_obj_deps(type_objs, field, &mut deps);
+                type_heap_obj_deps(type_objs, record_objs, field, &mut deps);
             }
         }
 
         HeapObj::Record(record_type) => {
             for field in record_type.fields.values() {
-                type_heap_obj_deps(type_objs, field, &mut deps);
+                type_heap_obj_deps(type_objs, record_objs, field, &mut deps);
             }
         }
     }
@@ -2868,6 +2884,7 @@ fn heap_obj_deps(
 
 fn type_heap_obj_deps(
     type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, Vec<HeapObjIdx>>>,
+    record_objs: &HashMap<RecordType, HeapObjIdx>,
     ty: &mono::Type,
     deps: &mut HashSet<HeapObjIdx>,
 ) {
@@ -2877,8 +2894,14 @@ fn type_heap_obj_deps(
         }
 
         mono::Type::Record { fields } => {
+            let record_idx = record_objs
+                .get(&RecordType {
+                    fields: fields.clone(),
+                })
+                .unwrap();
+            deps.insert(*record_idx);
             for ty in fields.values() {
-                type_heap_obj_deps(type_objs, ty, deps);
+                type_heap_obj_deps(type_objs, record_objs, ty, deps);
             }
         }
 
@@ -2892,18 +2915,18 @@ fn type_heap_obj_deps(
             match args {
                 mono::FunArgs::Positional(args) => {
                     for arg in args {
-                        type_heap_obj_deps(type_objs, arg, deps);
+                        type_heap_obj_deps(type_objs, record_objs, arg, deps);
                     }
                 }
                 mono::FunArgs::Named(args) => {
                     for arg in args.values() {
-                        type_heap_obj_deps(type_objs, arg, deps);
+                        type_heap_obj_deps(type_objs, record_objs, arg, deps);
                     }
                 }
             }
 
-            type_heap_obj_deps(type_objs, ret, deps);
-            type_heap_obj_deps(type_objs, exn, deps);
+            type_heap_obj_deps(type_objs, record_objs, ret, deps);
+            type_heap_obj_deps(type_objs, record_objs, exn, deps);
         }
 
         mono::Type::Never => {}
