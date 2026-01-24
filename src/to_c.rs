@@ -1703,10 +1703,10 @@ fn builtin_fun_to_c(
 
         BuiltinFunDecl::ArraySet { t } => {
             let repr = Repr::from_mono_ty(t);
-            let fn_name = match repr {
-                Repr::U8 => "array_set_u8",
-                Repr::U32 => "array_set_u32",
-                Repr::U64 => "array_set_u64",
+            let (fn_name, cast) = match repr {
+                Repr::U8 => ("array_set_u8", "U8"),
+                Repr::U32 => ("array_set_u32", "U32"),
+                Repr::U64 => ("array_set_u64", "U64"),
             };
             w!(
                 p,
@@ -1716,7 +1716,7 @@ fn builtin_fun_to_c(
             );
             p.indent();
             p.nl();
-            wln!(p, "{}(arr, (uint32_t)idx, val);", fn_name);
+            wln!(p, "{fn_name}(arr, (uint32_t)idx, ({cast})val);");
             w!(
                 p,
                 "return {};",
@@ -1828,7 +1828,7 @@ fn builtin_fun_to_c(
             p.nl();
             w!(p, "Str* arg_str = alloc_str(g_argv[i], strlen(g_argv[i]));",);
             p.nl();
-            w!(p, "array_set_u64(arr, i, arg_str);");
+            w!(p, "array_set_u64(arr, i, (U64)arg_str);");
             p.dedent();
             p.nl();
             wln!(p, "}}");
