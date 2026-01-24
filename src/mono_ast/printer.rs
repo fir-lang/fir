@@ -447,12 +447,9 @@ impl Expr {
                 expr.node.print(buf, 0);
             }
 
-            Expr::Match(MatchExpr {
-                scrut: scrutinee,
-                alts,
-            }) => {
+            Expr::Match(MatchExpr { scrut, alts }) => {
                 buf.push_str("match ");
-                scrutinee.node.print(buf, 0);
+                scrut.node.print(buf, 0);
                 buf.push_str(":\n");
                 for (i, Alt { pat, guard, rhs }) in alts.iter().enumerate() {
                     if i != 0 {
