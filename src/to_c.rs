@@ -1972,12 +1972,7 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     }
 
     // Declare result variable
-    w!(
-        p,
-        "{} _result = {};",
-        c_ty(&closure.return_ty),
-        heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
-    );
+    w!(p, "{} _result;", c_ty(&closure.return_ty));
     p.nl();
 
     // Generate body
