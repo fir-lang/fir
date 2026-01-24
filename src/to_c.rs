@@ -1763,16 +1763,12 @@ fn builtin_fun_to_c(
             };
             w!(
                 p,
-                "static uint64_t _fun_{}(uint64_t arr, uint64_t src, uint64_t dst, uint64_t len) {{",
+                "static Record* _fun_{}(ARRAY* arr, U32 src, U32 dst, U32 len) {{",
                 idx
             );
             p.indent();
             p.nl();
-            w!(
-                p,
-                "{}(arr, (uint32_t)src, (uint32_t)dst, (uint32_t)len);",
-                fn_name
-            );
+            w!(p, "{}(arr, src, dst, len);", fn_name);
             p.nl();
             w!(
                 p,
