@@ -530,6 +530,27 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
             let mut impl_fun_decl = trait_method_decl.fun_decl.clone();
 
+            // Rename copied function's type parameters so that they won't be shadowed by the impl's
+            // type parameters.
+            let mut new_type_params: Vec<(Id, Kind)> =
+                Vec::with_capacity(impl_fun_decl.node.sig.context.type_params.len());
+
+            let renaming_substs: HashMap<Id, ast::Type> = impl_fun_decl
+                .node
+                .sig
+                .context
+                .type_params
+                .iter()
+                .map(|(ty_param, kind)| {
+                    let new_param = SmolStr::new(format!("{}$copy", ty_param));
+                    new_type_params.push((new_param.clone(), kind.clone()));
+                    (ty_param.clone(), ast::Type::Var(new_param))
+                })
+                .collect();
+
+            impl_fun_decl.node.sig.context.type_params = new_type_params;
+            impl_fun_decl.node.sig.subst_ty_ids(&renaming_substs);
+
             // Map type parameters of the trait to the impl types.
             let substs: HashMap<Id, ast::Type> = trait_type_params
                 .iter()
@@ -539,6 +560,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
             if let Some(body) = &mut impl_fun_decl.node.body {
                 for stmt in body {
+                    stmt.node.subst_ty_ids(&renaming_substs);
                     stmt.node.subst_ty_ids(&substs);
                 }
             }
