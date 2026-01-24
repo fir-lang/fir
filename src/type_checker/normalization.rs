@@ -3,7 +3,7 @@ use crate::collections::ScopeMap;
 use crate::interpolation::StrPart;
 use crate::type_checker::TyCon;
 
-pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
+pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
     match stmt {
         ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
 
@@ -34,7 +34,7 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
             normalize_pat(&mut pat.node, cons);
             normalize_expr(&mut expr.node, cons);
             for stmt in body {
-                normalize_instantiation_types(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, cons);
             }
             *expr_ty = Some(expr_ty.as_ref().unwrap().deep_normalize(cons));
         }
@@ -46,7 +46,7 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
         }) => {
             normalize_expr(&mut cond.node, cons);
             for stmt in body {
-                normalize_instantiation_types(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, cons);
             }
         }
     }
@@ -120,7 +120,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
                     normalize_expr(&mut expr.node, cons);
                 }
                 for stmt in rhs {
-                    normalize_instantiation_types(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, cons);
                 }
             }
         }
@@ -132,12 +132,12 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             for (cond, body) in branches {
                 normalize_expr(&mut cond.node, cons);
                 for stmt in body {
-                    normalize_instantiation_types(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, cons);
                 }
             }
             if let Some(else_branch) = else_branch {
                 for stmt in else_branch {
-                    normalize_instantiation_types(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, cons);
                 }
             }
         }
@@ -148,7 +148,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             inferred_ty,
         }) => {
             for stmt in body {
-                normalize_instantiation_types(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, cons);
             }
             if let Some(inferred_ty) = inferred_ty.as_mut() {
                 *inferred_ty = inferred_ty.deep_normalize(cons);
@@ -162,7 +162,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
 
         ast::Expr::Do(stmts) => {
             for stmt in stmts {
-                normalize_instantiation_types(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, cons);
             }
         }
 

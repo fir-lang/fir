@@ -322,7 +322,6 @@ impl FunDecl {
 #[derive(Debug, Clone)]
 pub enum Stmt {
     Let(LetStmt),
-    // LetFn(FunDecl),
     Assign(AssignStmt),
     Expr(Expr),
     For(ForStmt),
@@ -342,7 +341,7 @@ pub enum Stmt {
     },
 }
 
-/// A let statement: `let x: T = expr`.
+/// A let statement: `let <pat>: <type> = <expr>`.
 #[derive(Debug, Clone)]
 pub struct LetStmt {
     pub lhs: L<Pat>,
@@ -474,7 +473,8 @@ pub struct ForStmt {
 
     pub expr: L<Expr>,
 
-    /// Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, item, exn]`.
+    /// Filled in by the type checker: type of `expr`, the iterator type.
+    /// I.e. `iter` in `Iterator[iter, item, exn]`.
     pub expr_ty: Option<Ty>,
 
     pub body: Vec<L<Stmt>>,
