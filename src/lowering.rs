@@ -458,9 +458,6 @@ pub struct Alt {
 pub struct IfExpr {
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
     pub else_branch: Option<Vec<L<Stmt>>>,
-
-    /// Type of the whole `if` expr.
-    pub expr_ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
@@ -2063,7 +2060,6 @@ fn lower_expr(
             let expr = Expr::If(IfExpr {
                 branches: branches_,
                 else_branch: else_branch_,
-                expr_ty: branch_ty.clone().unwrap(),
             });
 
             (expr, Default::default(), branch_ty.unwrap())

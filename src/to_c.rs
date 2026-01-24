@@ -2509,7 +2509,6 @@ fn expr_to_c(
         Expr::If(IfExpr {
             branches,
             else_branch,
-            expr_ty: _,
         }) => {
             w!(p, "({{");
             p.indent();

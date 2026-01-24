@@ -602,7 +602,6 @@ fn eval<W: Write>(
         Expr::If(IfExpr {
             branches,
             else_branch,
-            expr_ty: _,
         }) => {
             for (cond, stmts) in branches {
                 let cond = val!(eval(
