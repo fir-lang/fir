@@ -2697,7 +2697,7 @@ fn expr_to_c(
         Expr::Variant(expr) => {
             // Variants are represented as their underlying type
             w!(p, "((Variant*)");
-            expr_to_c(&expr.node, &expr.loc, None, locals, cg, p); // TODO: expected type
+            expr_to_c(&expr.node, &expr.loc, expected_ty, locals, cg, p);
             w!(p, ")");
         }
     }
@@ -2734,8 +2734,10 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
                     escaped.push(byte as char);
                 }
             }
+            // Note: the type cast below is to handle strings in variants. Variants are currently
+            // `Variant*` so they need to be cast.
             format!(
-                "(get_tag({}) == {} && str_eq({}, \"{}\", {}))",
+                "(get_tag({}) == {} && str_eq((Str*){}, \"{}\", {}))",
                 scrutinee,
                 cg.pgm.str_con_idx.0,
                 scrutinee,
