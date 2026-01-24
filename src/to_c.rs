@@ -183,6 +183,11 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         typedef  int32_t I32;
         typedef uint64_t U64;
         typedef  int64_t I64;
+
+        typedef struct {{
+            uint64_t tag;
+        }} Variant;
+
         "
     );
 
@@ -897,6 +902,9 @@ fn c_ty(ty: &mono::Type) -> String {
     }
     if let mono::Type::Never = ty {
         panic!();
+    }
+    if let mono::Type::Variant { .. } = ty {
+        return "Variant*".to_string();
     }
     let mut s = String::new();
     ty_to_c(ty, &mut s);
@@ -2688,7 +2696,9 @@ fn expr_to_c(
 
         Expr::Variant(expr) => {
             // Variants are represented as their underlying type
+            w!(p, "((Variant*)");
             expr_to_c(&expr.node, &expr.loc, None, locals, cg, p); // TODO: expected type
+            w!(p, ")");
         }
     }
 }
