@@ -609,6 +609,7 @@ BlockExpr: Expr = {
         Expr::Match(MatchExpr {
             scrutinee: Box::new(expr),
             alts,
+            inferred_ty: None,
         }),
 
     "if" <cond:LExpr> ":" NEWLINE INDENT <then_:LStmts> DEDENT

@@ -658,7 +658,11 @@ impl Expr {
                 expr.node.print(buf, 0);
             }
 
-            Expr::Match(MatchExpr { scrutinee, alts }) => {
+            Expr::Match(MatchExpr {
+                scrutinee,
+                alts,
+                inferred_ty: _,
+            }) => {
                 buf.push_str("match ");
                 scrutinee.node.print(buf, indent);
                 buf.push_str(":\n");

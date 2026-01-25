@@ -317,6 +317,7 @@ fn check_stmt(
             crate::type_checker::expr::check_match_expr(
                 tc_state, match_expr, &stmt.loc, None, level, loop_stack,
             );
+            match_expr.inferred_ty = Some(Ty::unit());
             Ty::unit()
         }
 

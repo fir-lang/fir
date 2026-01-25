@@ -744,26 +744,28 @@ fn mono_expr(
             mono::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
         }
 
-        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
-            mono::Expr::Match(mono::MatchExpr {
-                scrutinee: mono_bl_expr(scrutinee, ty_map, poly_pgm, mono_pgm, locals),
-                alts: alts
-                    .iter()
-                    .map(|ast::Alt { pat, guard, rhs }| {
-                        locals.enter();
-                        let alt = mono::Alt {
-                            pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
-                            guard: guard
-                                .as_ref()
-                                .map(|expr| mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals)),
-                            rhs: mono_l_stmts(rhs, ty_map, poly_pgm, mono_pgm, locals),
-                        };
-                        locals.exit();
-                        alt
-                    })
-                    .collect(),
-            })
-        }
+        ast::Expr::Match(ast::MatchExpr {
+            scrutinee,
+            alts,
+            inferred_ty: _,
+        }) => mono::Expr::Match(mono::MatchExpr {
+            scrutinee: mono_bl_expr(scrutinee, ty_map, poly_pgm, mono_pgm, locals),
+            alts: alts
+                .iter()
+                .map(|ast::Alt { pat, guard, rhs }| {
+                    locals.enter();
+                    let alt = mono::Alt {
+                        pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
+                        guard: guard
+                            .as_ref()
+                            .map(|expr| mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals)),
+                        rhs: mono_l_stmts(rhs, ty_map, poly_pgm, mono_pgm, locals),
+                    };
+                    locals.exit();
+                    alt
+                })
+                .collect(),
+        }),
 
         ast::Expr::If(ast::IfExpr {
             branches,

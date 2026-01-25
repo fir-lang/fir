@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: 8fc4c88bf6f23d958cb059d9a97eb4de5b6277d3d7eca054b5f951ba730e2cd6
+// sha3: d3ddcc2f0bed6e21a163c1f0809306de88291ebcd7137a734cc43b8c6a114741
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -47658,6 +47658,7 @@ fn __action87<'a>(
     Expr::Match(MatchExpr {
         scrutinee: Box::new(expr),
         alts,
+        inferred_ty: None,
     })
 }
 

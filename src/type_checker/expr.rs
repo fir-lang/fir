@@ -1162,17 +1162,16 @@ pub(super) fn check_expr(
             }
 
             // Same as above, only useful when `expected_ty` is not available.
-            (
-                unify_expected_ty(
-                    rhs_tys.pop().unwrap(),
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    loc,
-                ),
-                Default::default(),
-            )
+            let expr_ty = unify_expected_ty(
+                rhs_tys.pop().unwrap(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                loc,
+            );
+            match_expr.inferred_ty = Some(expr_ty.clone());
+            (expr_ty, Default::default())
         }
 
         ast::Expr::If(if_expr) => {
@@ -1625,7 +1624,13 @@ pub(super) fn check_match_expr(
 ) -> Vec<Ty> {
     use crate::type_checker::pat_coverage::*;
 
-    let ast::MatchExpr { scrutinee, alts } = expr;
+    let ast::MatchExpr {
+        scrutinee,
+        alts,
+        inferred_ty,
+    } = expr;
+
+    assert!(inferred_ty.is_none());
 
     let (scrut_ty, _) = check_expr(
         tc_state,

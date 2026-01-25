@@ -353,6 +353,7 @@ pub struct LetStmt {
 pub struct MatchExpr {
     pub scrutinee: Box<L<Expr>>,
     pub alts: Vec<Alt>,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -1104,7 +1105,11 @@ impl Expr {
 
             Expr::Return(expr) => expr.node.subst_ty_ids(substs),
 
-            Expr::Match(MatchExpr { scrutinee, alts }) => {
+            Expr::Match(MatchExpr {
+                scrutinee,
+                alts,
+                inferred_ty: _,
+            }) => {
                 scrutinee.node.subst_ty_ids(substs);
                 for Alt { pat: _, guard, rhs } in alts {
                     if let Some(guard) = guard {

@@ -112,7 +112,11 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             normalize_expr(&mut expr.node, cons);
         }
 
-        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
+        ast::Expr::Match(ast::MatchExpr {
+            scrutinee,
+            alts,
+            inferred_ty,
+        }) => {
             normalize_expr(&mut scrutinee.node, cons);
             for ast::Alt { pat, guard, rhs } in alts {
                 normalize_pat(&mut pat.node, cons);
@@ -122,6 +126,9 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
                 for stmt in rhs {
                     normalize_stmt(&mut stmt.node, cons);
                 }
+            }
+            if let Some(inferred_ty) = inferred_ty.as_mut() {
+                *inferred_ty = inferred_ty.deep_normalize(cons);
             }
         }
 
