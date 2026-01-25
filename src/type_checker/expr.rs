@@ -961,7 +961,7 @@ pub(super) fn check_expr(
                                     loc: expr.loc.clone(),
                                 },
                             }],
-                            inferred_ty: Some(Ty::Con(SmolStr::new_static("Con"), Kind::Star)),
+                            inferred_ty: Some(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
                         });
                         desugared_stmts.push(make_push(expr, tc_state.exceptions.clone()));
                     }
@@ -999,7 +999,7 @@ pub(super) fn check_expr(
                             loc: loc.clone(),
                         },
                     }],
-                    inferred_ty: Some(Ty::Con(SmolStr::new_static("Con"), Kind::Star)),
+                    inferred_ty: Some(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
                 })),
             });
 

@@ -1,6 +1,6 @@
 pub mod printer;
 
-pub use crate::ast::{BinOp, Id, IntExpr, L, Loc, Named};
+pub use crate::ast::{Id, IntExpr, L, Loc, Named};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -161,6 +161,7 @@ pub struct LetStmt {
 pub struct MatchExpr {
     pub scrutinee: Box<L<Expr>>,
     pub alts: Vec<Alt>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
@@ -198,9 +199,10 @@ pub struct ConPat {
 
 #[derive(Debug, Clone)]
 pub struct Con {
-    pub ty: Id,
+    pub ty_id: Id,
     pub con: Option<Id>,
     pub ty_args: Vec<Type>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
@@ -242,7 +244,7 @@ pub struct WhileStmt {
 
 #[derive(Debug, Clone)]
 pub enum Expr {
-    LocalVar(Id),               // a local variable
+    LocalVar(Id, Type),         // a local variable
     TopVar(VarExpr),            // a top-level function reference
     ConSel(Con),                // a product or sum constructor
     FieldSel(FieldSelExpr),     // <expr>.<id>
@@ -251,13 +253,14 @@ pub enum Expr {
     Int(IntExpr),
     Str(String),
     Char(char),
-    BinOp(BinOpExpr),
-    Return(Box<L<Expr>>),
+    BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
+    BoolOr(Box<L<Expr>>, Box<L<Expr>>),
+    Return(Box<L<Expr>>, Type),
     Match(MatchExpr),
     If(IfExpr),
     Fn(FnExpr),
     Is(IsExpr),
-    Do(Vec<L<Stmt>>),
+    Do(Vec<L<Stmt>>, Type),
     Record(RecordExpr),
     Variant(VariantExpr),
 }
@@ -266,12 +269,14 @@ pub enum Expr {
 pub struct VarExpr {
     pub id: Id,
     pub ty_args: Vec<Type>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
     pub args: Vec<CallArg>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
@@ -284,20 +289,15 @@ pub struct CallArg {
 pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
     pub field: Id,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
 pub struct AssocFnSelExpr {
-    pub ty: Id,
+    pub ty_id: Id,
     pub member: Id,
     pub ty_args: Vec<Type>,
-}
-
-#[derive(Debug, Clone)]
-pub struct BinOpExpr {
-    pub left: Box<L<Expr>>,
-    pub right: Box<L<Expr>>,
-    pub op: BinOp,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]

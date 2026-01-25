@@ -440,12 +440,15 @@ fn mono_expr(
             id: var,
             user_ty_args: _,
             ty_args,
-            inferred_ty: _,
+            inferred_ty,
         }) => {
             if locals.is_bound(var) {
                 // Local variable, cannot be polymorphic.
                 assert!(ty_args.is_empty());
-                return mono::Expr::LocalVar(var.clone());
+                return mono::Expr::LocalVar(
+                    var.clone(),
+                    mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+                );
             }
 
             let poly_decl = poly_pgm
@@ -463,6 +466,7 @@ fn mono_expr(
             mono::Expr::TopVar(mono::VarExpr {
                 id: var.clone(),
                 ty_args: mono_ty_args,
+                ty: mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
             })
         }
 
@@ -470,20 +474,23 @@ fn mono_expr(
             object,
             field,
             user_ty_args: _,
-            inferred_ty: _,
+            inferred_ty,
         }) => mono::Expr::FieldSel(mono::FieldSelExpr {
             object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals),
             field: field.clone(),
+            ty: mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
         }),
 
         ast::Expr::MethodSel(ast::MethodSelExpr {
             object,       // receiver
             object_ty,    // receiver type
-            method_ty_id, // type that the method belongs to: `trait` or `type`
+            method_ty_id, // trait of type that the method belongs to
             method,       // method or associated function name
             ty_args,      // function type arguments
-            inferred_ty: _,
+            inferred_ty,
         }) => {
+            let inferred_ty = mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+
             let mono_ty_args: Vec<mono::Type> = ty_args
                 .iter()
                 .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
@@ -542,64 +549,76 @@ fn mono_expr(
 
             let receiver_id = SmolStr::new_static("$receiver$");
 
-            let assoc_fn_args: Vec<mono::CallArg> = std::iter::once(receiver_id.clone())
-                .chain(closure_params.iter().map(|(arg, _)| arg.clone()))
-                .map(|arg| mono::CallArg {
-                    name: None,
-                    expr: ast::L {
-                        loc: loc.clone(),
-                        node: mono::Expr::LocalVar(arg.clone()),
-                    },
-                })
-                .collect();
+            let assoc_fn_args: Vec<mono::CallArg> =
+                std::iter::once((receiver_id.clone(), mono_object_ty.clone()))
+                    .chain(
+                        closure_params
+                            .iter()
+                            .map(|(arg, ty)| (arg.clone(), ty.node.clone())),
+                    )
+                    .map(|(arg, ty)| mono::CallArg {
+                        name: None,
+                        expr: ast::L {
+                            loc: loc.clone(),
+                            node: mono::Expr::LocalVar(arg, ty),
+                        },
+                    })
+                    .collect();
 
-            mono::Expr::Do(vec![
-                mono::L {
-                    loc: loc.clone(),
-                    node: mono::Stmt::Let(mono::LetStmt {
-                        lhs: mono::L {
-                            loc: loc.clone(),
-                            node: mono::Pat::Var(mono::VarPat {
-                                var: SmolStr::new_static("$receiver$"),
-                                ty: mono_object_ty,
-                            }),
-                        },
-                        rhs: *mono_object,
-                    }),
-                },
-                mono::L {
-                    loc: loc.clone(),
-                    node: mono::Stmt::Expr(mono::Expr::Fn(mono::FnExpr {
-                        sig: mono::FunSig {
-                            params: closure_params,
-                            return_ty: Some(ast::L::new_dummy((*ret).clone())),
-                            exceptions: Some(ast::L::new_dummy((*exn).clone())),
-                        },
-                        body: vec![mono::L {
-                            loc: loc.clone(),
-                            node: mono::Stmt::Expr(mono::Expr::Call(mono::CallExpr {
-                                fun: Box::new(ast::L {
-                                    loc: loc.clone(),
-                                    node: mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
-                                        ty: method_ty_id.clone(),
-                                        member: method.clone(),
-                                        ty_args: mono_ty_args,
-                                    }),
+            mono::Expr::Do(
+                vec![
+                    mono::L {
+                        loc: loc.clone(),
+                        node: mono::Stmt::Let(mono::LetStmt {
+                            lhs: mono::L {
+                                loc: loc.clone(),
+                                node: mono::Pat::Var(mono::VarPat {
+                                    var: SmolStr::new_static("$receiver$"),
+                                    ty: mono_object_ty,
                                 }),
-                                args: assoc_fn_args,
-                            })),
-                        }],
-                    })),
-                },
-            ])
+                            },
+                            rhs: *mono_object,
+                        }),
+                    },
+                    mono::L {
+                        loc: loc.clone(),
+                        node: mono::Stmt::Expr(mono::Expr::Fn(mono::FnExpr {
+                            sig: mono::FunSig {
+                                params: closure_params,
+                                return_ty: Some(ast::L::new_dummy((*ret).clone())),
+                                exceptions: Some(ast::L::new_dummy((*exn).clone())),
+                            },
+                            body: vec![mono::L {
+                                loc: loc.clone(),
+                                node: mono::Stmt::Expr(mono::Expr::Call(mono::CallExpr {
+                                    fun: Box::new(ast::L {
+                                        loc: loc.clone(),
+                                        node: mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
+                                            ty_id: method_ty_id.clone(),
+                                            member: method.clone(),
+                                            ty_args: mono_ty_args,
+                                            ty: mono::Type::Fn(mono_fun.sig.ty()),
+                                        }),
+                                    }),
+                                    args: assoc_fn_args,
+                                    ty: inferred_ty.clone(),
+                                })),
+                            }],
+                        })),
+                    },
+                ],
+                inferred_ty,
+            )
         }
 
-        ast::Expr::ConSel(ast::Con {
-            ty,
-            con,
-            user_ty_args: _,
-            ty_args,
-        }) => match con {
+        ast::Expr::ConSel(
+            con2 @ ast::Con {
+                ty,
+                con,
+                user_ty_args: _,
+                ty_args,
+            },
+        ) => match con {
             Some(con) => {
                 let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
 
@@ -609,10 +628,12 @@ fn mono_expr(
                     .collect::<Vec<_>>();
 
                 let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
+
                 mono::Expr::ConSel(mono::Con {
-                    ty: mono_ty_id,
+                    ty_id: mono_ty_id,
                     con: Some(con.clone()),
                     ty_args: mono_ty_args,
+                    ty: mono_tc_ty(&con2.ty_(), ty_map, poly_pgm, mono_pgm),
                 })
             }
             None => {
@@ -629,9 +650,10 @@ fn mono_expr(
                 let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
 
                 mono::Expr::ConSel(mono::Con {
-                    ty: mono_ty_id,
+                    ty_id: mono_ty_id,
                     con: None,
                     ty_args: mono_ty_args,
+                    ty: mono_tc_ty(&con2.ty_(), ty_map, poly_pgm, mono_pgm),
                 })
             }
         },
@@ -642,8 +664,10 @@ fn mono_expr(
             member,
             user_ty_args: _,
             ty_args,
-            inferred_ty: _,
+            inferred_ty,
         }) => {
+            let inferred_ty = mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+
             let mono_ty_args: Vec<mono::Type> = ty_args
                 .iter()
                 .map(|ty_arg| mono_tc_ty(ty_arg, ty_map, poly_pgm, mono_pgm))
@@ -664,9 +688,10 @@ fn mono_expr(
                 mono_top_fn(fun_decl, &mono_ty_args, poly_pgm, mono_pgm);
 
                 return mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
-                    ty: ty.clone(),
+                    ty_id: ty.clone(),
                     member: member.clone(),
                     ty_args: mono_ty_args,
+                    ty: inferred_ty,
                 });
             }
 
@@ -674,9 +699,10 @@ fn mono_expr(
             if poly_pgm.traits.contains_key(ty) {
                 mono_method(ty, member, &mono_ty_args, poly_pgm, mono_pgm, loc);
                 return mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
-                    ty: ty.clone(),
+                    ty_id: ty.clone(),
                     member: member.clone(),
                     ty_args: mono_ty_args,
+                    ty: inferred_ty,
                 });
             }
 
@@ -711,7 +737,7 @@ fn mono_expr(
         ast::Expr::Call(ast::CallExpr {
             fun,
             args,
-            inferred_ty: _,
+            inferred_ty,
         }) => mono::Expr::Call(mono::CallExpr {
             fun: mono_bl_expr(fun, ty_map, poly_pgm, mono_pgm, locals),
             args: args
@@ -721,6 +747,7 @@ fn mono_expr(
                     expr: mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals),
                 })
                 .collect(),
+            ty: mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
         }),
 
         ast::Expr::Str(parts) => {
@@ -736,30 +763,41 @@ fn mono_expr(
             mono::Expr::Str(str.clone())
         }
 
-        ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
-            if !matches!(op, ast::BinOp::Or | ast::BinOp::And) {
-                panic!("{}: Non-desugared binop: {:?}", loc_display(loc), op);
-            }
-            mono::Expr::BinOp(mono::BinOpExpr {
-                left: mono_bl_expr(left, ty_map, poly_pgm, mono_pgm, locals),
-                right: mono_bl_expr(right, ty_map, poly_pgm, mono_pgm, locals),
-                op: *op,
-            })
+        ast::Expr::BinOp(ast::BinOpExpr {
+            left,
+            right,
+            op: ast::BinOp::Or,
+        }) => mono::Expr::BoolOr(
+            mono_bl_expr(left, ty_map, poly_pgm, mono_pgm, locals),
+            mono_bl_expr(right, ty_map, poly_pgm, mono_pgm, locals),
+        ),
+
+        ast::Expr::BinOp(ast::BinOpExpr {
+            left,
+            right,
+            op: ast::BinOp::And,
+        }) => mono::Expr::BoolAnd(
+            mono_bl_expr(left, ty_map, poly_pgm, mono_pgm, locals),
+            mono_bl_expr(right, ty_map, poly_pgm, mono_pgm, locals),
+        ),
+
+        ast::Expr::BinOp(ast::BinOpExpr { op, .. }) => {
+            panic!("{}: Non-desugared binop: {:?}", loc_display(loc), op);
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr: _ }) => {
             panic!("{}: Non-desugared unop: {:?}", loc_display(loc), op)
         }
 
-        ast::Expr::Return(ast::ReturnExpr {
-            expr,
-            inferred_ty: _,
-        }) => mono::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals)),
+        ast::Expr::Return(ast::ReturnExpr { expr, inferred_ty }) => mono::Expr::Return(
+            mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals),
+            mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+        ),
 
         ast::Expr::Match(ast::MatchExpr {
             scrutinee,
             alts,
-            inferred_ty: _,
+            inferred_ty,
         }) => mono::Expr::Match(mono::MatchExpr {
             scrutinee: mono_bl_expr(scrutinee, ty_map, poly_pgm, mono_pgm, locals),
             alts: alts
@@ -777,6 +815,7 @@ fn mono_expr(
                     alt
                 })
                 .collect(),
+            ty: mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
         }),
 
         ast::Expr::If(ast::IfExpr {
@@ -866,10 +905,13 @@ fn mono_expr(
             pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
         }),
 
-        ast::Expr::Do(ast::DoExpr {
-            stmts,
-            inferred_ty: _,
-        }) => mono::Expr::Do(mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals)),
+        ast::Expr::Do(ast::DoExpr { stmts, inferred_ty }) => {
+            let inferred_ty = mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+            mono::Expr::Do(
+                mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals),
+                inferred_ty,
+            )
+        }
 
         ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
 
@@ -1240,7 +1282,7 @@ fn mono_pat(
 
         ast::Pat::Con(ast::ConPat {
             con:
-                ast::Con {
+                con2 @ ast::Con {
                     ty,
                     con,
                     user_ty_args: _,
@@ -1270,9 +1312,10 @@ fn mono_pat(
 
             mono::Pat::Con(mono::ConPat {
                 con: mono::Con {
-                    ty: mono_ty_id,
+                    ty_id: mono_ty_id,
                     con: con.clone(),
                     ty_args: mono_ty_args,
+                    ty: mono_tc_ty(&con2.ty_(), ty_map, poly_pgm, mono_pgm),
                 },
                 fields: mono_fields,
             })

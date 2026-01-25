@@ -1457,13 +1457,13 @@ fn lower_expr(
     mono_pgm: &mono::MonoPgm,
 ) -> (Expr, HashMap<Id, LocalIdx>, mono::Type) {
     match expr {
-        mono::Expr::LocalVar(var) => {
+        mono::Expr::LocalVar(var, _) => {
             let local_idx: LocalIdx = scope.use_var(var, loc);
             let local_ty: mono::Type = scope.locals[local_idx.as_usize()].ty.clone();
             (Expr::LocalVar(local_idx), Default::default(), local_ty)
         }
 
-        mono::Expr::TopVar(mono::VarExpr { id, ty_args }) => {
+        mono::Expr::TopVar(mono::VarExpr { id, ty_args, ty: _ }) => {
             let fun_idx: FunIdx = *indices.funs.get(id).unwrap().get(ty_args).unwrap();
             let fun_decl: &mono::FunDecl = mono_pgm.funs.get(id).unwrap().get(ty_args).unwrap();
             let fun_ty = fun_decl.sig.ty();
@@ -1474,25 +1474,35 @@ fn lower_expr(
             )
         }
 
-        mono::Expr::ConSel(mono::Con { ty, con, ty_args }) => {
+        mono::Expr::ConSel(mono::Con {
+            ty_id,
+            con,
+            ty_args,
+            ty: _,
+        }) => {
             let ret_ty = mono::Type::Named(mono::NamedType {
-                name: ty.clone(),
+                name: ty_id.clone(),
                 args: ty_args.clone(),
             });
 
             let idx: HeapObjIdx = match con {
                 Some(con) => *indices
                     .sum_cons
-                    .get(ty)
+                    .get(ty_id)
                     .unwrap()
                     .get(con)
                     .unwrap()
                     .get(ty_args)
                     .unwrap(),
-                None => *indices.product_cons.get(ty).unwrap().get(ty_args).unwrap(),
+                None => *indices
+                    .product_cons
+                    .get(ty_id)
+                    .unwrap()
+                    .get(ty_args)
+                    .unwrap(),
             };
 
-            let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty).unwrap().get(ty_args).unwrap();
+            let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty_id).unwrap().get(ty_args).unwrap();
 
             let con_fields = match &ty_decl.rhs {
                 Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
@@ -1504,7 +1514,7 @@ fn lower_expr(
                     panic!(
                         "BUG: {}: Type {} doesn't have constructor named {}",
                         loc_display(loc),
-                        ty,
+                        ty_id,
                         con.as_ref().unwrap()
                     );
                 }
@@ -1541,7 +1551,11 @@ fn lower_expr(
             (expr, Default::default(), con_ty)
         }
 
-        mono::Expr::FieldSel(mono::FieldSelExpr { object, field }) => {
+        mono::Expr::FieldSel(mono::FieldSelExpr {
+            object,
+            field,
+            ty: _,
+        }) => {
             let (object, _object_vars, object_ty) =
                 lower_bl_expr(object, closures, indices, scope, mono_pgm);
 
@@ -1641,13 +1655,14 @@ fn lower_expr(
         }
 
         mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
-            ty,
+            ty_id,
             member,
             ty_args,
+            ty: _,
         }) => {
             let fun_idx = *indices
                 .assoc_funs
-                .get(ty)
+                .get(ty_id)
                 .unwrap()
                 .get(member)
                 .unwrap()
@@ -1656,7 +1671,7 @@ fn lower_expr(
 
             let fun_decl: &mono::FunDecl = mono_pgm
                 .associated
-                .get(ty)
+                .get(ty_id)
                 .unwrap()
                 .get(member)
                 .unwrap()
@@ -1672,7 +1687,7 @@ fn lower_expr(
             )
         }
 
-        mono::Expr::Call(mono::CallExpr { fun, args }) => {
+        mono::Expr::Call(mono::CallExpr { fun, args, ty: _ }) => {
             let (fun, _fun_vars, fun_ty) = lower_bl_expr(fun, closures, indices, scope, mono_pgm);
 
             let mono::FnType {
@@ -1811,11 +1826,23 @@ fn lower_expr(
             }),
         ),
 
-        mono::Expr::BinOp(mono::BinOpExpr {
-            left,
-            right,
-            op: mono::BinOp::And,
-        }) => {
+        mono::Expr::BoolOr(left, right) => {
+            let (left, left_vars, _) = lower_bl_expr(left, closures, indices, scope, mono_pgm);
+            scope.bounds.push_scope(left_vars);
+            let (right, right_vars, _) = lower_bl_expr(right, closures, indices, scope, mono_pgm);
+            let mut left_vars = scope.bounds.exit();
+            left_vars.extend(right_vars);
+            (
+                Expr::BoolOr(left, right),
+                left_vars,
+                mono::Type::Named(mono::NamedType {
+                    name: SmolStr::new_static("Bool"),
+                    args: vec![],
+                }),
+            )
+        }
+
+        mono::Expr::BoolAnd(left, right) => {
             let (left, left_vars, _) = lower_bl_expr(left, closures, indices, scope, mono_pgm);
             scope.bounds.push_scope(left_vars);
             let (right, right_vars, _) = lower_bl_expr(right, closures, indices, scope, mono_pgm);
@@ -1830,24 +1857,6 @@ fn lower_expr(
                 }),
             )
         }
-
-        mono::Expr::BinOp(mono::BinOpExpr {
-            left,
-            right,
-            op: mono::BinOp::Or,
-        }) => (
-            Expr::BoolOr(
-                lower_bl_expr(left, closures, indices, scope, mono_pgm).0,
-                lower_bl_expr(right, closures, indices, scope, mono_pgm).0,
-            ),
-            Default::default(),
-            mono::Type::Named(mono::NamedType {
-                name: SmolStr::new_static("Bool"),
-                args: vec![],
-            }),
-        ),
-
-        mono::Expr::BinOp(_) => panic!("BUG: {}: Non-desugared BinOp", loc_display(loc)),
 
         mono::Expr::Record(mono::RecordExpr {
             fields,
@@ -1911,13 +1920,17 @@ fn lower_expr(
             )
         }
 
-        mono::Expr::Return(expr) => {
+        mono::Expr::Return(expr, _) => {
             let (expr, _pat_vars, _expr_ty) =
                 lower_bl_expr(expr, closures, indices, scope, mono_pgm);
             (Expr::Return(expr), Default::default(), mono::Type::Never)
         }
 
-        mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => {
+        mono::Expr::Match(mono::MatchExpr {
+            scrutinee,
+            alts,
+            ty: _,
+        }) => {
             let (scrutinee, scrut_vars, _scrut_ty) =
                 lower_bl_expr(scrutinee, closures, indices, scope, mono_pgm);
             scope.bounds.push_scope(scrut_vars);
@@ -2087,7 +2100,7 @@ fn lower_expr(
             )
         }
 
-        mono::Expr::Do(stmts) => {
+        mono::Expr::Do(stmts, _) => {
             scope.bounds.enter();
             let mut body_ty: Option<mono::Type> = None;
             let expr = Expr::Do(
@@ -2183,7 +2196,13 @@ fn lower_pat(
         },
 
         mono::Pat::Con(mono::ConPat {
-            con: mono::Con { ty, con, ty_args },
+            con:
+                mono::Con {
+                    ty_id: ty,
+                    con,
+                    ty_args,
+                    ty: _,
+                },
             fields,
         }) => {
             let con_idx: HeapObjIdx = match con {

@@ -313,16 +313,20 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
-            Expr::LocalVar(id) => {
+            Expr::LocalVar(id, _) => {
                 buf.push_str(id);
             }
 
-            Expr::TopVar(VarExpr { id, ty_args }) => {
+            Expr::TopVar(VarExpr { id, ty_args, ty: _ }) => {
                 buf.push_str(id);
                 print_ty_args(ty_args, buf);
             }
 
-            Expr::FieldSel(FieldSelExpr { object, field }) => {
+            Expr::FieldSel(FieldSelExpr {
+                object,
+                field,
+                ty: _,
+            }) => {
                 object.node.print(buf, 0);
                 buf.push('.');
                 buf.push_str(field);
@@ -333,20 +337,21 @@ impl Expr {
             }
 
             Expr::AssocFnSel(AssocFnSelExpr {
-                ty,
+                ty_id,
                 member,
                 ty_args,
+                ty: _,
             }) => {
-                buf.push_str(ty);
+                buf.push_str(ty_id);
                 buf.push('.');
                 buf.push_str(member);
                 print_ty_args(ty_args, buf);
             }
 
-            Expr::Call(CallExpr { fun, args }) => {
+            Expr::Call(CallExpr { fun, args, ty: _ }) => {
                 let parens = !matches!(
                     &fun.node,
-                    Expr::LocalVar(_)
+                    Expr::LocalVar(_, _)
                         | Expr::TopVar(_)
                         | Expr::FieldSel(_)
                         | Expr::ConSel(_)
@@ -402,7 +407,7 @@ impl Expr {
                 buf.push('\'');
             }
 
-            Expr::BinOp(BinOpExpr { left, right, op }) => {
+            Expr::BoolOr(left, right) => {
                 let left_parens = expr_parens(&left.node);
                 let right_parens = expr_parens(&left.node);
                 if left_parens {
@@ -412,27 +417,7 @@ impl Expr {
                 if left_parens {
                     buf.push(')');
                 }
-                let op_str = match op {
-                    BinOp::Add => "+",
-                    BinOp::Subtract => "-",
-                    BinOp::Equal => "==",
-                    BinOp::NotEqual => "!=",
-                    BinOp::Multiply => "*",
-                    BinOp::Divide => "/",
-                    BinOp::Lt => "<",
-                    BinOp::Gt => ">",
-                    BinOp::LtEq => "<=",
-                    BinOp::GtEq => ">=",
-                    BinOp::And => "&&",
-                    BinOp::Or => "||",
-                    BinOp::BitOr => "|",
-                    BinOp::BitAnd => "&",
-                    BinOp::LeftShift => "<<",
-                    BinOp::RightShift => ">>",
-                };
-                buf.push(' ');
-                buf.push_str(op_str);
-                buf.push(' ');
+                buf.push_str(" or ");
                 if right_parens {
                     buf.push('(');
                 }
@@ -442,12 +427,36 @@ impl Expr {
                 }
             }
 
-            Expr::Return(expr) => {
+            Expr::BoolAnd(left, right) => {
+                let left_parens = expr_parens(&left.node);
+                let right_parens = expr_parens(&left.node);
+                if left_parens {
+                    buf.push('(');
+                }
+                left.node.print(buf, 0);
+                if left_parens {
+                    buf.push(')');
+                }
+                buf.push_str(" and ");
+                if right_parens {
+                    buf.push('(');
+                }
+                right.node.print(buf, 0);
+                if right_parens {
+                    buf.push(')');
+                }
+            }
+
+            Expr::Return(expr, _) => {
                 buf.push_str("return ");
                 expr.node.print(buf, 0);
             }
 
-            Expr::Match(MatchExpr { scrutinee, alts }) => {
+            Expr::Match(MatchExpr {
+                scrutinee,
+                alts,
+                ty: _,
+            }) => {
                 buf.push_str("match ");
                 scrutinee.node.print(buf, 0);
                 buf.push_str(":\n");
@@ -535,7 +544,7 @@ impl Expr {
                 buf.push(')');
             }
 
-            Expr::Do(body) => {
+            Expr::Do(body, _) => {
                 buf.push_str("do:\n");
                 for (i, stmt) in body.iter().enumerate() {
                     if i != 0 {
@@ -644,7 +653,7 @@ impl Pat {
 
 impl Con {
     pub fn print(&self, buf: &mut String) {
-        buf.push_str(&self.ty);
+        buf.push_str(&self.ty_id);
         if let Some(con) = &self.con {
             buf.push('.');
             buf.push_str(con);
@@ -656,7 +665,7 @@ impl Con {
 fn expr_parens(expr: &Expr) -> bool {
     !matches!(
         expr,
-        Expr::LocalVar(_) | Expr::TopVar(_) | Expr::FieldSel(_) | Expr::ConSel(_)
+        Expr::LocalVar(_, _) | Expr::TopVar(_) | Expr::FieldSel(_) | Expr::ConSel(_)
     )
 }
 

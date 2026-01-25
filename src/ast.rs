@@ -436,6 +436,16 @@ pub struct Con {
     pub ty_args: Vec<Ty>,
 }
 
+impl Con {
+    pub fn ty_(&self) -> Ty {
+        if self.ty_args.is_empty() {
+            Ty::Con(self.ty.clone(), Kind::Star)
+        } else {
+            Ty::App(self.ty.clone(), self.ty_args.clone(), Kind::Star)
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct IfExpr {
     // At least one element
