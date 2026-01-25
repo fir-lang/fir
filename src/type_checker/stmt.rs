@@ -125,6 +125,40 @@ fn check_stmt(
         }
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
+            // Desugar `+=`, `-=` etc. to `lhs = lhs.op(rhs)` first.
+            if *op != AssignOp::Eq {
+                let method = match op {
+                    ast::AssignOp::Eq => panic!(), // checked above
+                    ast::AssignOp::PlusEq => "__add",
+                    ast::AssignOp::MinusEq => "__sub",
+                    ast::AssignOp::StarEq => "__mul",
+                    ast::AssignOp::CaretEq => "__bitxor",
+                };
+
+                let lhs_clone = lhs.clone();
+
+                let desugared_rhs = ast::L {
+                    loc: rhs.loc.clone(),
+                    node: ast::Expr::Call(ast::CallExpr {
+                        fun: Box::new(ast::L {
+                            loc: rhs.loc.clone(),
+                            node: ast::Expr::FieldSel(ast::FieldSelExpr {
+                                object: Box::new(lhs_clone),
+                                field: SmolStr::new_static(method),
+                                user_ty_args: vec![],
+                            }),
+                        }),
+                        args: vec![ast::CallArg {
+                            name: None,
+                            expr: (*rhs).clone(),
+                        }],
+                    }),
+                };
+
+                *rhs = desugared_rhs;
+                *op = AssignOp::Eq;
+            }
+
             match &mut lhs.node {
                 ast::Expr::Var(ast::VarExpr {
                     id: var,
@@ -136,59 +170,15 @@ fn check_stmt(
                     let var_ty = tc_state.env.get(var).cloned().unwrap_or_else(|| {
                         panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
                     });
-
-                    let method = match op {
-                        ast::AssignOp::Eq => {
-                            check_expr(
-                                tc_state,
-                                &mut rhs.node,
-                                &rhs.loc,
-                                Some(&var_ty),
-                                level,
-                                loop_stack,
-                            );
-                            return Ty::unit();
-                        }
-
-                        ast::AssignOp::PlusEq => "__add",
-
-                        ast::AssignOp::MinusEq => "__sub",
-
-                        ast::AssignOp::StarEq => "__mul",
-
-                        ast::AssignOp::CaretEq => "__bitxor",
-                    };
-
-                    // `lhs.method(rhs)`
-                    let desugared_rhs = ast::L {
-                        loc: rhs.loc.clone(),
-                        node: ast::Expr::Call(ast::CallExpr {
-                            fun: Box::new(ast::L {
-                                loc: rhs.loc.clone(),
-                                node: ast::Expr::FieldSel(ast::FieldSelExpr {
-                                    object: Box::new(ast::L {
-                                        loc: stmt.loc.clone(),
-                                        node: ast::Expr::Var(ast::VarExpr {
-                                            id: var.clone(),
-                                            user_ty_args: vec![],
-                                            ty_args: vec![],
-                                        }),
-                                    }),
-                                    field: SmolStr::new_static(method),
-                                    user_ty_args: vec![],
-                                }),
-                            }),
-                            args: vec![ast::CallArg {
-                                name: None,
-                                expr: (*rhs).clone(),
-                            }],
-                        }),
-                    };
-
-                    *rhs = desugared_rhs;
-                    *op = AssignOp::Eq;
-
-                    check_expr(tc_state, &mut rhs.node, &rhs.loc, None, level, loop_stack);
+                    check_expr(
+                        tc_state,
+                        &mut rhs.node,
+                        &rhs.loc,
+                        Some(&var_ty),
+                        level,
+                        loop_stack,
+                    );
+                    return Ty::unit();
                 }
 
                 ast::Expr::FieldSel(ast::FieldSelExpr {
@@ -252,52 +242,14 @@ fn check_stmt(
                             lhs_ty_normalized
                         ),
                     };
-
-                    let method = match op {
-                        ast::AssignOp::Eq => {
-                            check_expr(
-                                tc_state,
-                                &mut rhs.node,
-                                &rhs.loc,
-                                Some(&lhs_ty),
-                                level,
-                                loop_stack,
-                            );
-                            return Ty::unit();
-                        }
-
-                        ast::AssignOp::PlusEq => "__add",
-
-                        ast::AssignOp::MinusEq => "__sub",
-
-                        ast::AssignOp::StarEq => "__mul",
-
-                        ast::AssignOp::CaretEq => "__bitxor",
-                    };
-
-                    // `lhs.method(rhs)`
-                    let desugared_rhs = ast::L {
-                        loc: rhs.loc.clone(),
-                        node: ast::Expr::Call(ast::CallExpr {
-                            fun: Box::new(ast::L {
-                                loc: rhs.loc.clone(),
-                                node: ast::Expr::FieldSel(ast::FieldSelExpr {
-                                    object: Box::new(lhs.clone()),
-                                    field: SmolStr::new_static(method),
-                                    user_ty_args: vec![],
-                                }),
-                            }),
-                            args: vec![ast::CallArg {
-                                name: None,
-                                expr: (*rhs).clone(),
-                            }],
-                        }),
-                    };
-
-                    *rhs = desugared_rhs;
-                    *op = AssignOp::Eq;
-
-                    check_expr(tc_state, &mut rhs.node, &rhs.loc, None, level, loop_stack);
+                    check_expr(
+                        tc_state,
+                        &mut rhs.node,
+                        &rhs.loc,
+                        Some(&lhs_ty),
+                        level,
+                        loop_stack,
+                    );
                 }
 
                 _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),
