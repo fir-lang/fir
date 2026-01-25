@@ -652,7 +652,7 @@ InlineExpr: Expr = {
     #[precedence(level = "0")]
     <id:LowerId> <user_ty_args:UserTyArgs> => {
         let str = id.smol_str();
-        Expr::Var(VarExpr { id: str, user_ty_args, ty_args: vec![] })
+        Expr::Var(VarExpr { id: str, user_ty_args, ty_args: vec![], inferred_ty: None })
     },
 
     <id:UpperId> =>

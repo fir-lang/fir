@@ -440,6 +440,7 @@ fn mono_expr(
             id: var,
             user_ty_args: _,
             ty_args,
+            inferred_ty: _,
         }) => {
             if locals.is_bound(var) {
                 // Local variable, cannot be polymorphic.

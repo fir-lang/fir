@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: 569647270ca904d9c0161889dd5a75a326252726eca5b9c8915de5b414d64bb3
+// sha3: 9bbbb20042e0d9395fdbc334986caeb0d7be0a7c2caba45c006f119d94a4a024
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -47782,6 +47782,7 @@ fn __action92<'a>(
             id: str,
             user_ty_args,
             ty_args: vec![],
+            inferred_ty: None,
         })
     }
 }

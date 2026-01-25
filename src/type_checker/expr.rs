@@ -37,7 +37,9 @@ pub(super) fn check_expr(
             id: var,
             user_ty_args,
             ty_args,
+            inferred_ty,
         }) => {
+            assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
             // Check if local.
@@ -49,6 +51,7 @@ pub(super) fn check_expr(
                         var
                     );
                 }
+                *inferred_ty = Some(ty.clone());
                 return (
                     unify_expected_ty(
                         ty.clone(),
@@ -75,6 +78,7 @@ pub(super) fn check_expr(
                     id: var.clone(),
                     user_ty_args: vec![],
                     ty_args: ty_args.into_iter().map(Ty::UVar).collect(),
+                    inferred_ty: Some(ty.clone()),
                 });
 
                 ty
@@ -100,6 +104,7 @@ pub(super) fn check_expr(
                     id: var.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
+                    inferred_ty: Some(ty.clone()),
                 });
 
                 ty
@@ -513,6 +518,7 @@ pub(super) fn check_expr(
                                             id,
                                             user_ty_args: _,
                                             ty_args: _,
+                                            inferred_ty: _,
                                         }) => {
                                             arg.name = Some(id.clone());
                                         }
@@ -826,7 +832,7 @@ pub(super) fn check_expr(
                         loc: loc.clone(),
                         node: ast::Pat::Var(ast::VarPat {
                             var: buf_id.clone(),
-                            ty: Some(Ty::Con(SmolStr::new_static("StrBuf"), Kind::Star)),
+                            ty: Some(str_buf_ty.clone()),
                         }),
                     },
                     ty: None,
@@ -843,16 +849,13 @@ pub(super) fn check_expr(
                                     ty_args: vec![tc_state.exceptions.clone()],
                                     inferred_ty: Some(Ty::Fun {
                                         args: FunArgs::Positional(vec![]),
-                                        ret: Box::new(Ty::Con(
-                                            SmolStr::new_static("StrBuf"),
-                                            Kind::Star,
-                                        )),
+                                        ret: Box::new(str_buf_ty.clone()),
                                         exceptions: Some(Box::new(tc_state.exceptions.clone())),
                                     }),
                                 }),
                             }),
                             args: vec![],
-                            inferred_ty: Some(Ty::Con(SmolStr::new_static("StrBuf"), Kind::Star)),
+                            inferred_ty: Some(str_buf_ty.clone()),
                         }),
                     },
                 }),
@@ -872,7 +875,7 @@ pub(super) fn check_expr(
                                 ty_args: vec![exn.clone()],
                                 inferred_ty: Some(Ty::Fun {
                                     args: FunArgs::Positional(vec![
-                                        Ty::Con(SmolStr::new_static("StrBuf"), Kind::Star),
+                                        str_buf_ty.clone(),
                                         Ty::Con(SmolStr::new_static("Str"), Kind::Star),
                                     ]),
                                     ret: Box::new(Ty::unit()),
@@ -889,6 +892,7 @@ pub(super) fn check_expr(
                                         id: buf_id.clone(),
                                         user_ty_args: vec![],
                                         ty_args: vec![],
+                                        inferred_ty: Some(str_buf_ty.clone()),
                                     }),
                                 },
                             },
@@ -990,6 +994,7 @@ pub(super) fn check_expr(
                                 id: buf_id.clone(),
                                 user_ty_args: vec![],
                                 ty_args: vec![],
+                                inferred_ty: Some(str_buf_ty.clone()),
                             }),
                             loc: loc.clone(),
                         },
@@ -1427,6 +1432,7 @@ pub(super) fn check_expr(
                                 id: SmolStr::new("empty"),
                                 user_ty_args: vec![],
                                 ty_args: vec![],
+                                inferred_ty: None,
                             }),
                         }),
                         args: vec![],
@@ -1475,6 +1481,7 @@ pub(super) fn check_expr(
                                     id: SmolStr::new_static("once"),
                                     user_ty_args: vec![],
                                     ty_args: vec![],
+                                    inferred_ty: None,
                                 }),
                             }),
                             args: vec![ast::CallArg {

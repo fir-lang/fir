@@ -461,6 +461,7 @@ impl Expr {
                 id,
                 user_ty_args,
                 ty_args,
+                inferred_ty: _,
             }) => {
                 buf.push_str(id);
                 print_user_ty_args(user_ty_args, buf);
