@@ -649,6 +649,8 @@ pub struct MethodSelExpr {
     /// (If the method is not a trait method, then we don't care about the type parameter order.. I
     /// think?)
     pub ty_args: Vec<Ty>,
+
+    pub inferred_ty: Option<Ty>,
 }
 
 /// An associated function or method selection:
@@ -1098,7 +1100,9 @@ impl Expr {
                 method_ty_id: _,
                 method: _,
                 ty_args,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 assert!(ty_args.is_empty());
                 object.node.subst_ty_ids(substs);
             }

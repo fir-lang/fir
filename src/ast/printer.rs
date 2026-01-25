@@ -484,6 +484,7 @@ impl Expr {
                 method_ty_id,
                 method,
                 ty_args,
+                inferred_ty: _,
             }) => {
                 object.node.print(buf, indent);
                 buf.push_str(".{");

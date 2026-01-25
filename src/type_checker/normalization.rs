@@ -79,7 +79,9 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             method_ty_id: _,
             method: _,
             ty_args,
+            inferred_ty,
         }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
             *object_ty = Some(object_ty.as_ref().unwrap().deep_normalize(cons));
             ty_args
                 .iter_mut()

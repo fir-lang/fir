@@ -586,8 +586,11 @@ pub(super) fn check_expr(
                 method_ty_id,
                 method,
                 ty_args,
+                inferred_ty,
             }) = &fun.node
             {
+                assert_eq!(inferred_ty.as_ref().unwrap(), &fun_ty);
+
                 // Methods can't have named arguments.
                 args.insert(
                     0,
@@ -1931,18 +1934,21 @@ fn check_field_sel(
         FunArgs::Named(_) => panic!(),
     }
 
+    let ty = Ty::Fun {
+        args,
+        ret,
+        exceptions,
+    };
+
     (
-        Ty::Fun {
-            args,
-            ret,
-            exceptions,
-        },
+        ty.clone(),
         ast::Expr::MethodSel(ast::MethodSelExpr {
             object: Box::new(object.clone()),
             object_ty: Some(object_ty.clone()),
             method_ty_id,
             method: field.clone(),
             ty_args: method_ty_args,
+            inferred_ty: Some(ty),
         }),
     )
 }

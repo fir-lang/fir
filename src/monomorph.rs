@@ -480,6 +480,7 @@ fn mono_expr(
             method_ty_id, // type that the method belongs to: `trait` or `type`
             method,       // method or associated function name
             ty_args,      // function type arguments
+            inferred_ty: _,
         }) => {
             let mono_ty_args: Vec<mono::Type> = ty_args
                 .iter()
