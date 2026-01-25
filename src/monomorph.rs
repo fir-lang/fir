@@ -611,52 +611,54 @@ fn mono_expr(
             )
         }
 
-        ast::Expr::ConSel(
-            con2 @ ast::Con {
-                ty,
-                con,
-                user_ty_args: _,
-                ty_args,
-            },
-        ) => match con {
-            Some(con) => {
-                let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
+        ast::Expr::ConSel(ast::Con {
+            ty,
+            con,
+            user_ty_args: _,
+            ty_args,
+            inferred_ty,
+        }) => {
+            let inferred_ty = mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+            match con {
+                Some(con) => {
+                    let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
 
-                let mono_ty_args = ty_args
-                    .iter()
-                    .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
-                    .collect::<Vec<_>>();
+                    let mono_ty_args = ty_args
+                        .iter()
+                        .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
+                        .collect::<Vec<_>>();
 
-                let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
+                    let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
 
-                mono::Expr::ConSel(mono::Con {
-                    ty_id: mono_ty_id,
-                    con: Some(con.clone()),
-                    ty_args: mono_ty_args,
-                    ty: mono_tc_ty(&con2.ty_(), ty_map, poly_pgm, mono_pgm),
-                })
+                    mono::Expr::ConSel(mono::Con {
+                        ty_id: mono_ty_id,
+                        con: Some(con.clone()),
+                        ty_args: mono_ty_args,
+                        ty: inferred_ty,
+                    })
+                }
+                None => {
+                    let poly_ty_decl = match poly_pgm.ty.get(ty) {
+                        None => panic!("Unknown constructor {ty}"),
+                        Some(ty_decl) => ty_decl,
+                    };
+
+                    let mono_ty_args = ty_args
+                        .iter()
+                        .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
+                        .collect::<Vec<_>>();
+
+                    let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
+
+                    mono::Expr::ConSel(mono::Con {
+                        ty_id: mono_ty_id,
+                        con: None,
+                        ty_args: mono_ty_args,
+                        ty: inferred_ty,
+                    })
+                }
             }
-            None => {
-                let poly_ty_decl = match poly_pgm.ty.get(ty) {
-                    None => panic!("Unknown constructor {ty}"),
-                    Some(ty_decl) => ty_decl,
-                };
-
-                let mono_ty_args = ty_args
-                    .iter()
-                    .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
-                    .collect::<Vec<_>>();
-
-                let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
-
-                mono::Expr::ConSel(mono::Con {
-                    ty_id: mono_ty_id,
-                    con: None,
-                    ty_args: mono_ty_args,
-                    ty: mono_tc_ty(&con2.ty_(), ty_map, poly_pgm, mono_pgm),
-                })
-            }
-        },
+        }
 
         ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
             ty,
@@ -1283,15 +1285,18 @@ fn mono_pat(
 
         ast::Pat::Con(ast::ConPat {
             con:
-                con2 @ ast::Con {
+                ast::Con {
                     ty,
                     con,
                     user_ty_args: _,
                     ty_args,
+                    inferred_ty,
                 },
             fields,
             ignore_rest: _,
         }) => {
+            let inferred_ty = mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+
             let ty_decl = poly_pgm.ty.get(ty).unwrap();
 
             let mono_ty_args: Vec<mono::Type> = ty_args
@@ -1316,7 +1321,7 @@ fn mono_pat(
                     ty_id: mono_ty_id,
                     con: con.clone(),
                     ty_args: mono_ty_args,
-                    ty: mono_tc_ty(&con2.ty_(), ty_map, poly_pgm, mono_pgm),
+                    ty: inferred_ty,
                 },
                 fields: mono_fields,
             })

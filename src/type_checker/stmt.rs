@@ -463,6 +463,11 @@ fn check_stmt(
                                                 con: Some(SmolStr::new_static("Some")),
                                                 user_ty_args: vec![],
                                                 ty_args: vec![item_ty.clone()],
+                                                inferred_ty: Some(Ty::App(
+                                                    SmolStr::new_static("Option"),
+                                                    vec![item_ty.clone()],
+                                                    Kind::Star,
+                                                )),
                                             },
                                             fields: vec![ast::Named {
                                                 name: None,

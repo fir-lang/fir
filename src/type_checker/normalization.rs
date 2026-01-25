@@ -55,7 +55,17 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
                 .for_each(|ty| *ty = ty.deep_normalize(cons))
         }
 
-        ast::Expr::ConSel(ast::Con { ty_args, .. }) => {
+        ast::Expr::ConSel(ast::Con {
+            ty_args,
+            inferred_ty,
+            ..
+        }) => {
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap_or_else(|| panic!("{}", loc_display(loc)))
+                    .deep_normalize(cons),
+            );
             ty_args
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(cons));

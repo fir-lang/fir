@@ -434,16 +434,8 @@ pub struct Con {
 
     /// Inferred type arguments of the constructor's type. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
-}
 
-impl Con {
-    pub fn ty_(&self) -> Ty {
-        if self.ty_args.is_empty() {
-            Ty::Con(self.ty.clone(), Kind::Star)
-        } else {
-            Ty::App(self.ty.clone(), self.ty_args.clone(), Kind::Star)
-        }
-    }
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]

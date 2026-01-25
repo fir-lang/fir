@@ -535,6 +535,7 @@ Stmt: Stmt = {
                 con: Some(SmolStr::new_static("True")),
                 user_ty_args: vec![],
                 ty_args: vec![],
+                inferred_ty: None,
             })),
             body,
         })
@@ -656,23 +657,23 @@ InlineExpr: Expr = {
     },
 
     <id:UpperId> =>
-        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![] }),
+        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None }),
 
     <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
-        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args, ty_args: vec![] }),
+        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args, ty_args: vec![], inferred_ty: None }),
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConSel(Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![] })
+        Expr::ConSel(Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![], inferred_ty: None })
     },
 
     <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConSel(Con { ty, con: Some(con), user_ty_args, ty_args: vec![] })
+        Expr::ConSel(Con { ty, con: Some(con), user_ty_args, ty_args: vec![], inferred_ty: None })
     },
 
     "(" <expr:Expr> ")" => {
@@ -706,7 +707,7 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>
         match expr {
-            Expr::ConSel(Con { ty: id, con: None, user_ty_args: ty_user_ty_args, ty_args: _ }) =>
+            Expr::ConSel(Con { ty: id, con: None, user_ty_args: ty_user_ty_args, ty_args: _, inferred_ty: _ }) =>
                 Expr::AssocFnSel(AssocFnSelExpr {
                     ty: id,
                     ty_user_ty_args,
@@ -987,13 +988,13 @@ Pat: Pat = {
 
 Con: Con = {
     <ty:UpperId> =>
-        Con { ty: ty.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![] },
+        Con { ty: ty.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None },
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![] }
+        Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![], inferred_ty: None }
     },
 }
 

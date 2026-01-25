@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: 9bbbb20042e0d9395fdbc334986caeb0d7be0a7c2caba45c006f119d94a4a024
+// sha3: f7a8829affc1d86e00b24542123a0e5870ee952878606b525e1e96baeb8430d1
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -47436,6 +47436,7 @@ fn __action72<'a>(
                     con: Some(SmolStr::new_static("True")),
                     user_ty_args: vec![],
                     ty_args: vec![],
+                    inferred_ty: None,
                 }),
             ),
             body,
@@ -47799,6 +47800,7 @@ fn __action93<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
         con: None,
         user_ty_args: vec![],
         ty_args: vec![],
+        inferred_ty: None,
     })
 }
 
@@ -47819,6 +47821,7 @@ fn __action94<'a>(
         con: None,
         user_ty_args,
         ty_args: vec![],
+        inferred_ty: None,
     })
 }
 
@@ -47838,6 +47841,7 @@ fn __action95<'a>(module: &'a Rc<str>, (_, path, _): (Loc, Token, Loc)) -> Expr 
             con: Some(con),
             user_ty_args: vec![],
             ty_args: vec![],
+            inferred_ty: None,
         })
     }
 }
@@ -47863,6 +47867,7 @@ fn __action96<'a>(
             con: Some(con),
             user_ty_args,
             ty_args: vec![],
+            inferred_ty: None,
         })
     }
 }
@@ -47990,6 +47995,7 @@ fn __action103<'a>(
             con: None,
             user_ty_args: ty_user_ty_args,
             ty_args: _,
+            inferred_ty: _,
         }) => Expr::AssocFnSel(AssocFnSelExpr {
             ty: id,
             ty_user_ty_args,
@@ -48929,6 +48935,7 @@ fn __action156<'a>(module: &'a Rc<str>, (_, ty, _): (Loc, Token, Loc)) -> Con {
         con: None,
         user_ty_args: vec![],
         ty_args: vec![],
+        inferred_ty: None,
     }
 }
 
@@ -48948,6 +48955,7 @@ fn __action157<'a>(module: &'a Rc<str>, (_, path, _): (Loc, Token, Loc)) -> Con 
             con: Some(con),
             user_ty_args: vec![],
             ty_args: vec![],
+            inferred_ty: None,
         }
     }
 }

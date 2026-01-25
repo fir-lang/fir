@@ -27,10 +27,12 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     con: pat_con_name,
                     user_ty_args,
                     ty_args,
+                    inferred_ty,
                 },
             fields: pat_fields,
             ignore_rest,
         }) => {
+            assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
             assert!(user_ty_args.is_empty());
 
@@ -119,7 +121,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 })
                 .collect();
 
-            apply_con_ty(
+            let ty = apply_con_ty(
                 &con_ty,
                 &pat_field_tys,
                 tc_state.tys.tys.cons(),
@@ -127,7 +129,9 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 level,
                 &pat.loc,
                 *ignore_rest,
-            )
+            );
+            *inferred_ty = Some(ty.clone());
+            ty
         }
 
         ast::Pat::Str(_) => Ty::str(),

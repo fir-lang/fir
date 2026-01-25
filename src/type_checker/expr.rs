@@ -209,7 +209,9 @@ pub(super) fn check_expr(
             con,
             user_ty_args,
             ty_args,
+            inferred_ty,
         }) => {
+            assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
             let ty_con: &TyCon = tc_state
@@ -268,6 +270,7 @@ pub(super) fn check_expr(
                     con: con.clone(),
                     user_ty_args: vec![],
                     ty_args: con_ty_args.into_iter().map(Ty::UVar).collect(),
+                    inferred_ty: Some(con_ty.clone()),
                 });
 
                 con_ty
@@ -297,6 +300,7 @@ pub(super) fn check_expr(
                     con: con.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
+                    inferred_ty: Some(con_ty.clone()),
                 });
 
                 con_ty
