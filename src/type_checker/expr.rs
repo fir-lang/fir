@@ -889,7 +889,7 @@ pub(super) fn check_expr(
                             level,
                             loop_stack,
                         );
-                        let expr_node = replace(&mut expr.node, ast::Expr::Self_);
+                        let expr_node = replace(&mut expr.node, ast::Expr::Char('a'));
                         expr.node = ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
@@ -960,21 +960,6 @@ pub(super) fn check_expr(
             ),
             Default::default(),
         ),
-
-        ast::Expr::Self_ => match tc_state.env.get("self") {
-            Some(self_ty) => (
-                unify_expected_ty(
-                    self_ty.clone(),
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    loc,
-                ),
-                Default::default(),
-            ),
-            None => panic!("{}: Unbound self", loc_display(loc)),
-        },
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
             let method = match op {

@@ -229,6 +229,8 @@ fn mono_top_fn(
     let mut params: Vec<(Id, ast::L<mono::Type>)> =
         Vec::with_capacity(fun_decl.sig.params.len() + 1);
 
+    let mut locals: ScopeSet<Id> = Default::default();
+
     match &fun_decl.sig.self_ {
         ast::SelfParam::No => {}
         ast::SelfParam::Implicit => {
@@ -251,10 +253,12 @@ fn mono_top_fn(
                     args: vec![],
                 })),
             ));
+            locals.insert(SmolStr::new_static("self"));
         }
         ast::SelfParam::Explicit(self_ty) => {
             let self_mono_ty = mono_l_ty(self_ty, &ty_map, poly_pgm, mono_pgm);
             params.push((SmolStr::new_static("self"), self_mono_ty));
+            locals.insert(SmolStr::new_static("self"));
         }
     }
 
@@ -328,7 +332,6 @@ fn mono_top_fn(
         None => return,
     };
 
-    let mut locals: ScopeSet<Id> = Default::default();
     fun_decl
         .sig
         .params
@@ -701,8 +704,6 @@ fn mono_expr(
             mono::Expr::Char(*char)
         }
 
-        ast::Expr::Self_ => mono::Expr::LocalVar(SmolStr::new_static("self")),
-
         ast::Expr::Call(ast::CallExpr { fun, args }) => mono::Expr::Call(mono::CallExpr {
             fun: mono_bl_expr(fun, ty_map, poly_pgm, mono_pgm, locals),
             args: args
@@ -947,12 +948,15 @@ fn mono_method(
                 let mut params: Vec<(Id, ast::L<mono::Type>)> =
                     Vec::with_capacity(method.sig.params.len() + 1);
 
+                let mut locals: ScopeSet<Id> = Default::default();
+
                 match &method.sig.self_ {
                     ast::SelfParam::No => {}
                     ast::SelfParam::Implicit => panic!(),
                     ast::SelfParam::Explicit(self_ty) => {
                         let self_mono_ty = mono_l_ty(self_ty, &substs, poly_pgm, mono_pgm);
                         params.push((SmolStr::new_static("self"), self_mono_ty));
+                        locals.insert(SmolStr::new_static("self"));
                     }
                 }
 
@@ -1004,7 +1008,6 @@ fn mono_method(
                     None => return,
                 };
 
-                let mut locals: ScopeSet<Id> = Default::default();
                 method
                     .sig
                     .params
@@ -1056,6 +1059,8 @@ fn mono_method(
         let mut params: Vec<(Id, ast::L<mono::Type>)> =
             Vec::with_capacity(method.sig.params.len() + 1);
 
+        let mut locals: ScopeSet<Id> = Default::default();
+
         match &method.sig.self_ {
             ast::SelfParam::No => {}
             ast::SelfParam::Implicit => {
@@ -1078,10 +1083,12 @@ fn mono_method(
                         args: vec![],
                     })),
                 ));
+                locals.insert(SmolStr::new_static("self"));
             }
             ast::SelfParam::Explicit(self_ty) => {
                 let self_mono_ty = mono_l_ty(self_ty, &ty_map, poly_pgm, mono_pgm);
                 params.push((SmolStr::new_static("self"), self_mono_ty));
+                locals.insert(SmolStr::new_static("self"));
             }
         }
 
@@ -1133,7 +1140,6 @@ fn mono_method(
             None => return,
         };
 
-        let mut locals: ScopeSet<Id> = Default::default();
         method
             .sig
             .params
