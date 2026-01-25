@@ -295,7 +295,8 @@ impl Expr {
             | Expr::Call(CallExpr { ty, .. })
             | Expr::Do(_, ty)
             | Expr::Return(_, ty)
-            | Expr::Match(MatchExpr { ty, .. }) => ty.clone(),
+            | Expr::Match(MatchExpr { ty, .. })
+            | Expr::If(IfExpr { ty, .. }) => ty.clone(),
 
             Expr::Int(IntExpr { kind, .. }) => {
                 let con = match kind.unwrap() {
@@ -317,8 +318,6 @@ impl Expr {
             Expr::Char(_) => Type::char(),
 
             Expr::BoolAnd(_, _) | Expr::BoolOr(_, _) | Expr::Is(_) => Type::bool(),
-
-            Expr::If(_) => todo!(),
 
             Expr::Fn(FnExpr { sig, .. }) => Type::Fn(sig.ty()),
 
