@@ -2,8 +2,9 @@ use crate::ast::{self, Id};
 use crate::collections::ScopeMap;
 use crate::interpolation::StrPart;
 use crate::type_checker::TyCon;
+use crate::utils::loc_display;
 
-pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
+pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, loc: &ast::Loc, cons: &ScopeMap<Id, TyCon>) {
     match stmt {
         ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
 
@@ -19,24 +20,8 @@ pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
 
         ast::Stmt::Expr(expr) => normalize_expr(expr, cons),
 
-        ast::Stmt::For(ast::ForStmt {
-            label: _,
-            pat,
-            item_ast_ty: _,
-            item_tc_ty,
-            expr,
-            expr_ty,
-            body,
-        }) => {
-            if let Some(tc_ty) = item_tc_ty {
-                *tc_ty = tc_ty.deep_normalize(cons);
-            }
-            normalize_pat(&mut pat.node, cons);
-            normalize_expr(&mut expr.node, cons);
-            for stmt in body {
-                normalize_stmt(&mut stmt.node, cons);
-            }
-            *expr_ty = Some(expr_ty.as_ref().unwrap().deep_normalize(cons));
+        ast::Stmt::For(ast::ForStmt { .. }) => {
+            panic!("{}: Non-desugared for statement", loc_display(loc));
         }
 
         ast::Stmt::While(ast::WhileStmt {
@@ -46,7 +31,7 @@ pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
         }) => {
             normalize_expr(&mut cond.node, cons);
             for stmt in body {
-                normalize_stmt(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
             }
         }
     }
@@ -120,7 +105,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
                     normalize_expr(&mut expr.node, cons);
                 }
                 for stmt in rhs {
-                    normalize_stmt(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
                 }
             }
         }
@@ -132,12 +117,12 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             for (cond, body) in branches {
                 normalize_expr(&mut cond.node, cons);
                 for stmt in body {
-                    normalize_stmt(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
                 }
             }
             if let Some(else_branch) = else_branch {
                 for stmt in else_branch {
-                    normalize_stmt(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
                 }
             }
         }
@@ -148,7 +133,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             inferred_ty,
         }) => {
             for stmt in body {
-                normalize_stmt(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
             }
             if let Some(inferred_ty) = inferred_ty.as_mut() {
                 *inferred_ty = inferred_ty.deep_normalize(cons);
@@ -162,7 +147,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
 
         ast::Expr::Do(stmts) => {
             for stmt in stmts {
-                normalize_stmt(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
             }
         }
 
