@@ -622,7 +622,7 @@ BlockExpr: Expr = {
     },
 
     "do" ":" NEWLINE INDENT <stmts:LStmts> DEDENT => {
-        Expr::Do(stmts)
+        Expr::Do(DoExpr { stmts, inferred_ty: None })
     },
 
     "\\(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"

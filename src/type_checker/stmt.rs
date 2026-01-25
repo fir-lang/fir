@@ -419,80 +419,83 @@ fn check_stmt(
 
             let expr_local = SmolStr::new(format!("temp{}", tc_state.local_gen));
             tc_state.local_gen += 1;
-            stmt.node = ast::Stmt::Expr(ast::Expr::Do(vec![
-                ast::L {
-                    loc: expr.loc.clone(),
-                    node: ast::Stmt::Let(ast::LetStmt {
-                        lhs: ast::L {
-                            loc: expr.loc.clone(),
-                            node: ast::Pat::Var(ast::VarPat {
-                                var: expr_local.clone(),
-                                ty: Some(iter_ty.clone()),
-                            }),
-                        },
-                        ty: None,
-                        rhs: expr.clone(),
-                    }),
-                },
-                ast::L {
-                    loc: stmt.loc.clone(),
-                    node: ast::Stmt::While(ast::WhileStmt {
-                        label: label.clone(),
-                        cond: ast::L {
-                            loc: expr.loc.clone(),
-                            node: ast::Expr::Is(ast::IsExpr {
-                                expr: Box::new(ast::L {
-                                    loc: expr.loc.clone(),
-                                    node: ast::Expr::Call(ast::CallExpr {
-                                        fun: Box::new(ast::L {
-                                            loc: expr.loc.clone(),
-                                            node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                                                ty: SmolStr::new_static("Iterator"),
-                                                ty_user_ty_args: vec![],
-                                                member: SmolStr::new_static("next"),
-                                                user_ty_args: vec![],
-                                                ty_args: vec![
-                                                    iter_ty.clone(),
-                                                    item_ty.clone(),
-                                                    tc_state.exceptions.clone(),
-                                                ],
-                                            }),
-                                        }),
-                                        args: vec![ast::CallArg {
-                                            name: None,
-                                            expr: ast::L {
-                                                loc: expr.loc.clone(),
-                                                node: ast::Expr::Var(ast::VarExpr {
-                                                    id: expr_local.clone(),
-                                                    user_ty_args: vec![],
-                                                    ty_args: vec![],
-                                                }),
-                                            },
-                                        }],
-                                    }),
+            stmt.node = ast::Stmt::Expr(ast::Expr::Do(ast::DoExpr {
+                stmts: vec![
+                    ast::L {
+                        loc: expr.loc.clone(),
+                        node: ast::Stmt::Let(ast::LetStmt {
+                            lhs: ast::L {
+                                loc: expr.loc.clone(),
+                                node: ast::Pat::Var(ast::VarPat {
+                                    var: expr_local.clone(),
+                                    ty: Some(iter_ty.clone()),
                                 }),
-                                pat: ast::L {
-                                    loc: pat.loc.clone(),
-                                    node: ast::Pat::Con(ast::ConPat {
-                                        con: ast::Con {
-                                            ty: SmolStr::new_static("Option"),
-                                            con: Some(SmolStr::new_static("Some")),
-                                            user_ty_args: vec![],
-                                            ty_args: vec![item_ty.clone()],
-                                        },
-                                        fields: vec![ast::Named {
-                                            name: None,
-                                            node: pat.clone(),
-                                        }],
-                                        ignore_rest: false,
+                            },
+                            ty: None,
+                            rhs: expr.clone(),
+                        }),
+                    },
+                    ast::L {
+                        loc: stmt.loc.clone(),
+                        node: ast::Stmt::While(ast::WhileStmt {
+                            label: label.clone(),
+                            cond: ast::L {
+                                loc: expr.loc.clone(),
+                                node: ast::Expr::Is(ast::IsExpr {
+                                    expr: Box::new(ast::L {
+                                        loc: expr.loc.clone(),
+                                        node: ast::Expr::Call(ast::CallExpr {
+                                            fun: Box::new(ast::L {
+                                                loc: expr.loc.clone(),
+                                                node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                                    ty: SmolStr::new_static("Iterator"),
+                                                    ty_user_ty_args: vec![],
+                                                    member: SmolStr::new_static("next"),
+                                                    user_ty_args: vec![],
+                                                    ty_args: vec![
+                                                        iter_ty.clone(),
+                                                        item_ty.clone(),
+                                                        tc_state.exceptions.clone(),
+                                                    ],
+                                                }),
+                                            }),
+                                            args: vec![ast::CallArg {
+                                                name: None,
+                                                expr: ast::L {
+                                                    loc: expr.loc.clone(),
+                                                    node: ast::Expr::Var(ast::VarExpr {
+                                                        id: expr_local.clone(),
+                                                        user_ty_args: vec![],
+                                                        ty_args: vec![],
+                                                    }),
+                                                },
+                                            }],
+                                        }),
                                     }),
-                                },
-                            }),
-                        },
-                        body: body.clone(),
-                    }),
-                },
-            ]));
+                                    pat: ast::L {
+                                        loc: pat.loc.clone(),
+                                        node: ast::Pat::Con(ast::ConPat {
+                                            con: ast::Con {
+                                                ty: SmolStr::new_static("Option"),
+                                                con: Some(SmolStr::new_static("Some")),
+                                                user_ty_args: vec![],
+                                                ty_args: vec![item_ty.clone()],
+                                            },
+                                            fields: vec![ast::Named {
+                                                name: None,
+                                                node: pat.clone(),
+                                            }],
+                                            ignore_rest: false,
+                                        }),
+                                    },
+                                }),
+                            },
+                            body: body.clone(),
+                        }),
+                    },
+                ],
+                inferred_ty: Some(ret.clone()),
+            }));
 
             ret
         }

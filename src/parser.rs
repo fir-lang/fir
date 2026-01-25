@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: 4b7063348298292d696e2f271ddb62999ddee2c3bf845582c243abfc63d388f2
+// sha3: d9fad4303ae44cf09135d20494ef8e741302ac3218919d899a7609e14389368a
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -47703,7 +47703,12 @@ fn __action89<'a>(
     (_, stmts, _): (Loc, Vec<L<Stmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Expr {
-    { Expr::Do(stmts) }
+    {
+        Expr::Do(DoExpr {
+            stmts,
+            inferred_ty: None,
+        })
+    }
 }
 
 #[allow(unused_variables)]

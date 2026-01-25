@@ -753,9 +753,12 @@ impl Expr {
                 buf.push(')');
             }
 
-            Expr::Do(body) => {
+            Expr::Do(DoExpr {
+                stmts,
+                inferred_ty: _,
+            }) => {
                 buf.push_str("do:\n");
-                for (i, stmt) in body.iter().enumerate() {
+                for (i, stmt) in stmts.iter().enumerate() {
                     if i != 0 {
                         buf.push('\n');
                     }

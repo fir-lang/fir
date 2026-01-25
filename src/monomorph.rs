@@ -851,9 +851,10 @@ fn mono_expr(
             pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
         }),
 
-        ast::Expr::Do(stmts) => {
-            mono::Expr::Do(mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals))
-        }
+        ast::Expr::Do(ast::DoExpr {
+            stmts,
+            inferred_ty: _,
+        }) => mono::Expr::Do(mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals)),
 
         ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
 

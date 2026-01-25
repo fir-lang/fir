@@ -160,9 +160,12 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             normalize_pat(&mut pat.node, cons);
         }
 
-        ast::Expr::Do(stmts) => {
+        ast::Expr::Do(ast::DoExpr { stmts, inferred_ty }) => {
             for stmt in stmts {
                 normalize_stmt(&mut stmt.node, cons);
+            }
+            if let Some(inferred_ty) = inferred_ty.as_mut() {
+                *inferred_ty = inferred_ty.deep_normalize(cons);
             }
         }
 

@@ -546,11 +546,14 @@ pub enum Expr {
 
     Is(IsExpr),
 
-    Do(Vec<L<Stmt>>),
+    Do(DoExpr),
 
     /// A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
     Seq {
+        /// The type name: `Vec` in the third example above. `None` in the other examples.
         ty: Option<Id>,
+
+        /// Elements, with optional key part for `<expr> = <expr>` syntax.
         elems: Vec<(Option<L<Expr>>, L<Expr>)>,
     },
 
@@ -739,6 +742,12 @@ pub struct FnExpr {
 pub struct IsExpr {
     pub expr: Box<L<Expr>>,
     pub pat: L<Pat>,
+}
+
+#[derive(Debug, Clone)]
+pub struct DoExpr {
+    pub stmts: Vec<L<Stmt>>,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -1138,7 +1147,10 @@ impl Expr {
                 expr.node.subst_ty_ids(substs);
             }
 
-            Expr::Do(stmts) => {
+            Expr::Do(DoExpr {
+                stmts,
+                inferred_ty: _,
+            }) => {
                 for stmt in stmts {
                     stmt.node.subst_ty_ids(substs);
                 }

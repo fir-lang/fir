@@ -941,7 +941,10 @@ pub(super) fn check_expr(
                 })),
             });
 
-            *expr = ast::Expr::Do(desugared_stmts);
+            *expr = ast::Expr::Do(ast::DoExpr {
+                stmts: desugared_stmts,
+                inferred_ty: Some(ret.0.clone()),
+            });
 
             ret
         }
@@ -1337,10 +1340,12 @@ pub(super) fn check_expr(
             (Ty::bool(), pat_binders)
         }
 
-        ast::Expr::Do(stmts) => {
+        ast::Expr::Do(ast::DoExpr { stmts, inferred_ty }) => {
+            assert!(inferred_ty.is_none());
             tc_state.env.enter();
             let ty = check_stmts(tc_state, stmts, expected_ty, level, loop_stack);
             tc_state.env.exit();
+            *inferred_ty = Some(ty.clone());
             (ty, Default::default())
         }
 
