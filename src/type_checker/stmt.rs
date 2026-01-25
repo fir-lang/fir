@@ -322,6 +322,7 @@ fn check_stmt(
 
         ast::Stmt::Expr(ast::Expr::If(if_expr)) if expected_ty.is_none() => {
             crate::type_checker::expr::check_if_expr(tc_state, if_expr, None, level, loop_stack);
+            if_expr.inferred_ty = Some(Ty::unit());
             Ty::unit()
         }
 

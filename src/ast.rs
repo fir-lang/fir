@@ -440,6 +440,7 @@ pub struct IfExpr {
     // At least one element
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
     pub else_branch: Option<Vec<L<Stmt>>>,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -1118,6 +1119,7 @@ impl Expr {
             Expr::If(IfExpr {
                 branches,
                 else_branch,
+                inferred_ty: _,
             }) => {
                 for (lhs, rhs) in branches {
                     lhs.node.subst_ty_ids(substs);

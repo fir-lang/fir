@@ -686,6 +686,7 @@ impl Expr {
             Expr::If(IfExpr {
                 branches,
                 else_branch,
+                inferred_ty: _,
             }) => {
                 buf.push_str("if ");
                 branches[0].0.node.print(buf, indent);

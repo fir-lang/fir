@@ -128,6 +128,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         ast::Expr::If(ast::IfExpr {
             branches,
             else_branch,
+            inferred_ty,
         }) => {
             for (cond, body) in branches {
                 normalize_expr(&mut cond.node, cons);
@@ -139,6 +140,9 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
                 for stmt in else_branch {
                     normalize_stmt(&mut stmt.node, cons);
                 }
+            }
+            if let Some(inferred_ty) = inferred_ty.as_mut() {
+                *inferred_ty = inferred_ty.deep_normalize(cons);
             }
         }
 

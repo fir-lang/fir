@@ -768,6 +768,7 @@ fn mono_expr(
         ast::Expr::If(ast::IfExpr {
             branches,
             else_branch,
+            inferred_ty: _,
         }) => mono::Expr::If(mono::IfExpr {
             branches: branches
                 .iter()

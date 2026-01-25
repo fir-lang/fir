@@ -1207,7 +1207,9 @@ pub(super) fn check_expr(
                 }
             }
 
-            (branch_tys.pop().unwrap(), Default::default())
+            let expr_ty = branch_tys.pop().unwrap();
+            if_expr.inferred_ty = Some(expr_ty.clone());
+            (expr_ty, Default::default())
         }
 
         ast::Expr::Fn(ast::FnExpr {
@@ -1712,7 +1714,10 @@ pub(super) fn check_if_expr(
     let ast::IfExpr {
         branches,
         else_branch,
+        inferred_ty,
     } = expr;
+
+    assert!(inferred_ty.is_none());
 
     let mut branch_tys: Vec<Ty> = Vec::with_capacity(branches.len() + 1);
 

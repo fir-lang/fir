@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: d9fad4303ae44cf09135d20494ef8e741302ac3218919d899a7609e14389368a
+// sha3: 8fc4c88bf6f23d958cb059d9a97eb4de5b6277d3d7eca054b5f951ba730e2cd6
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -47684,6 +47684,7 @@ fn __action88<'a>(
         Expr::If(IfExpr {
             branches,
             else_branch,
+            inferred_ty: None,
         })
     }
 }

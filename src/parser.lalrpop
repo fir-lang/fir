@@ -618,6 +618,7 @@ BlockExpr: Expr = {
         Expr::If(IfExpr {
             branches,
             else_branch,
+            inferred_ty: None,
         })
     },
 
