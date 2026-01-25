@@ -701,6 +701,7 @@ InlineExpr: Expr = {
         Expr::Call(CallExpr {
             fun: Box::new(L::new(module, l, r, fun)),
             args,
+            inferred_ty: None,
         }),
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>

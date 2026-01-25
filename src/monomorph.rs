@@ -704,7 +704,11 @@ fn mono_expr(
             mono::Expr::Char(*char)
         }
 
-        ast::Expr::Call(ast::CallExpr { fun, args }) => mono::Expr::Call(mono::CallExpr {
+        ast::Expr::Call(ast::CallExpr {
+            fun,
+            args,
+            inferred_ty: _,
+        }) => mono::Expr::Call(mono::CallExpr {
             fun: mono_bl_expr(fun, ty_map, poly_pgm, mono_pgm, locals),
             args: args
                 .iter()

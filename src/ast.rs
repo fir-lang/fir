@@ -580,6 +580,7 @@ pub struct VarExpr {
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
     pub args: Vec<CallArg>,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -1098,7 +1099,11 @@ impl Expr {
                 object.node.subst_ty_ids(substs);
             }
 
-            Expr::Call(CallExpr { fun, args }) => {
+            Expr::Call(CallExpr {
+                fun,
+                args,
+                inferred_ty: _,
+            }) => {
                 fun.node.subst_ty_ids(substs);
                 for CallArg { name: _, expr } in args {
                     expr.node.subst_ty_ids(substs);

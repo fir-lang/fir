@@ -92,7 +92,11 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             normalize_expr(&mut object.node, cons)
         }
 
-        ast::Expr::Call(ast::CallExpr { fun, args }) => {
+        ast::Expr::Call(ast::CallExpr {
+            fun,
+            args,
+            inferred_ty: _,
+        }) => {
             normalize_expr(&mut fun.node, cons);
             for arg in args {
                 normalize_expr(&mut arg.expr.node, cons);

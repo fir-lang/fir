@@ -512,7 +512,11 @@ impl Expr {
                 print_ty_args(ty_args, buf);
             }
 
-            Expr::Call(CallExpr { fun, args }) => {
+            Expr::Call(CallExpr {
+                fun,
+                args,
+                inferred_ty: _,
+            }) => {
                 let parens = !matches!(
                     &fun.node,
                     Expr::Var(_)

@@ -182,6 +182,7 @@ fn check_stmt(
                                 name: None,
                                 expr: (*rhs).clone(),
                             }],
+                            inferred_ty: None,
                         }),
                     };
 
@@ -291,6 +292,7 @@ fn check_stmt(
                                 name: None,
                                 expr: (*rhs).clone(),
                             }],
+                            inferred_ty: None,
                         }),
                     };
 
@@ -472,6 +474,11 @@ fn check_stmt(
                                                     }),
                                                 },
                                             }],
+                                            inferred_ty: Some(Ty::App(
+                                                SmolStr::new_static("Option"),
+                                                vec![pat_ty.clone()],
+                                                Kind::Star,
+                                            )),
                                         }),
                                     }),
                                     pat: ast::L {

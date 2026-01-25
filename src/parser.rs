@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: bec6c71d3dca1ec3e439b0771df11d2238401e19fabe6bdf50a712efd61f6e0b
+// sha3: 4bd3a97e864b9a70f8e7f1619104b0ef9317b233288071c63a167c95957f48b8
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -47964,6 +47964,7 @@ fn __action102<'a>(
     Expr::Call(CallExpr {
         fun: Box::new(L::new(module, l, r, fun)),
         args,
+        inferred_ty: None,
     })
 }
 

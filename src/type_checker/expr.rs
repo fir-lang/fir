@@ -436,7 +436,13 @@ pub(super) fn check_expr(
             )
         }
 
-        ast::Expr::Call(ast::CallExpr { fun, args }) => {
+        ast::Expr::Call(ast::CallExpr {
+            fun,
+            args,
+            inferred_ty,
+        }) => {
+            assert!(inferred_ty.is_none());
+
             let (fun_ty, _) =
                 check_expr(tc_state, &mut fun.node, &fun.loc, None, level, loop_stack);
 
@@ -594,6 +600,8 @@ pub(super) fn check_expr(
                     ty_args: ty_args.clone(),
                 });
             }
+
+            *inferred_ty = Some(ret_ty.clone());
 
             (ret_ty, Default::default())
         }
@@ -822,6 +830,7 @@ pub(super) fn check_expr(
                                 }),
                             }),
                             args: vec![],
+                            inferred_ty: Some(Ty::Con(SmolStr::new_static("StrBuf"), Kind::Star)),
                         }),
                     },
                 }),
@@ -858,6 +867,7 @@ pub(super) fn check_expr(
                                 expr: arg,
                             },
                         ],
+                        inferred_ty: Some(Ty::unit()),
                     })),
                 }
             };
@@ -908,6 +918,7 @@ pub(super) fn check_expr(
                                     loc: expr.loc.clone(),
                                 },
                             }],
+                            inferred_ty: Some(Ty::Con(SmolStr::new_static("Con"), Kind::Star)),
                         });
                         desugared_stmts.push(make_push(expr, tc_state.exceptions.clone()));
                     }
@@ -938,6 +949,7 @@ pub(super) fn check_expr(
                             loc: loc.clone(),
                         },
                     }],
+                    inferred_ty: Some(Ty::Con(SmolStr::new_static("Con"), Kind::Star)),
                 })),
             });
 
@@ -1055,6 +1067,7 @@ pub(super) fn check_expr(
                     name: None,
                     expr: (**right).clone(),
                 }],
+                inferred_ty: None,
             });
 
             check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
@@ -1085,6 +1098,7 @@ pub(super) fn check_expr(
                         name: None,
                         expr: *arg.clone(),
                     }],
+                    inferred_ty: Some(Ty::bool()),
                 });
                 (ty, Default::default())
             }
@@ -1100,6 +1114,7 @@ pub(super) fn check_expr(
                         }),
                     }),
                     args: vec![],
+                    inferred_ty: None,
                 });
                 check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
             }
@@ -1360,6 +1375,7 @@ pub(super) fn check_expr(
                             }),
                         }),
                         args: vec![],
+                        inferred_ty: None,
                     }),
                 }
             } else {
@@ -1410,6 +1426,7 @@ pub(super) fn check_expr(
                                 name: None,
                                 expr: elem,
                             }],
+                            inferred_ty: None,
                         }),
                     });
                 }
@@ -1431,6 +1448,7 @@ pub(super) fn check_expr(
                             name: None,
                             expr: next,
                         }],
+                        inferred_ty: None,
                     }),
                 })
             };
@@ -1454,6 +1472,7 @@ pub(super) fn check_expr(
                             name: None,
                             expr: iter_expr,
                         }],
+                        inferred_ty: None,
                     })
                 }
 
@@ -1479,6 +1498,7 @@ pub(super) fn check_expr(
                                         name: None,
                                         expr: iter_expr,
                                     }],
+                                    inferred_ty: None,
                                 })
                             }
                             None => iter_expr.node,
