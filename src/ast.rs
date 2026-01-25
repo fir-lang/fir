@@ -1102,8 +1102,9 @@ impl Expr {
             Expr::Call(CallExpr {
                 fun,
                 args,
-                inferred_ty: _,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 fun.node.subst_ty_ids(substs);
                 for CallArg { name: _, expr } in args {
                     expr.node.subst_ty_ids(substs);
@@ -1128,16 +1129,17 @@ impl Expr {
                 expr.node.subst_ty_ids(substs);
             }
 
-            Expr::Return(ReturnExpr {
-                expr,
-                inferred_ty: _,
-            }) => expr.node.subst_ty_ids(substs),
+            Expr::Return(ReturnExpr { expr, inferred_ty }) => {
+                assert!(inferred_ty.is_none());
+                expr.node.subst_ty_ids(substs)
+            }
 
             Expr::Match(MatchExpr {
                 scrutinee,
                 alts,
-                inferred_ty: _,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 scrutinee.node.subst_ty_ids(substs);
                 for Alt { pat: _, guard, rhs } in alts {
                     if let Some(guard) = guard {
@@ -1152,8 +1154,9 @@ impl Expr {
             Expr::If(IfExpr {
                 branches,
                 else_branch,
-                inferred_ty: _,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 for (lhs, rhs) in branches {
                     lhs.node.subst_ty_ids(substs);
                     for stmt in rhs {
@@ -1170,8 +1173,9 @@ impl Expr {
             Expr::Fn(FnExpr {
                 sig,
                 body,
-                inferred_ty: _,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 sig.subst_ty_ids(substs);
                 for stmt in body {
                     stmt.node.subst_ty_ids(substs);
@@ -1182,10 +1186,8 @@ impl Expr {
                 expr.node.subst_ty_ids(substs);
             }
 
-            Expr::Do(DoExpr {
-                stmts,
-                inferred_ty: _,
-            }) => {
+            Expr::Do(DoExpr { stmts, inferred_ty }) => {
+                assert!(inferred_ty.is_none());
                 for stmt in stmts {
                     stmt.node.subst_ty_ids(substs);
                 }
@@ -1202,17 +1204,16 @@ impl Expr {
 
             Expr::Record(RecordExpr {
                 fields,
-                inferred_ty: _,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 for (_field_name, field_expr) in fields {
                     field_expr.node.subst_ty_ids(substs);
                 }
             }
 
-            Expr::Variant(VariantExpr {
-                expr,
-                inferred_ty: _,
-            }) => {
+            Expr::Variant(VariantExpr { expr, inferred_ty }) => {
+                assert!(inferred_ty.is_none());
                 expr.node.subst_ty_ids(substs);
             }
         }
