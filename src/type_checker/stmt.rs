@@ -176,6 +176,7 @@ fn check_stmt(
                                     }),
                                     field: SmolStr::new_static(method),
                                     user_ty_args: vec![],
+                                    inferred_ty: None,
                                 }),
                             }),
                             args: vec![ast::CallArg {
@@ -196,8 +197,10 @@ fn check_stmt(
                     object,
                     field,
                     user_ty_args,
+                    inferred_ty,
                 }) => {
                     assert!(user_ty_args.is_empty());
+                    assert!(inferred_ty.is_none());
 
                     let (object_ty, _) = check_expr(
                         tc_state,
@@ -256,7 +259,7 @@ fn check_stmt(
 
                     let method = match op {
                         ast::AssignOp::Eq => {
-                            check_expr(
+                            let (rhs_ty, _) = check_expr(
                                 tc_state,
                                 &mut rhs.node,
                                 &rhs.loc,
@@ -264,6 +267,7 @@ fn check_stmt(
                                 level,
                                 loop_stack,
                             );
+                            *inferred_ty = Some(rhs_ty);
                             return Ty::unit();
                         }
 
@@ -286,6 +290,7 @@ fn check_stmt(
                                     object: Box::new(lhs.clone()),
                                     field: SmolStr::new_static(method),
                                     user_ty_args: vec![],
+                                    inferred_ty: None,
                                 }),
                             }),
                             args: vec![ast::CallArg {
@@ -299,11 +304,19 @@ fn check_stmt(
                     *rhs = desugared_rhs;
                     *op = AssignOp::Eq;
 
-                    check_expr(tc_state, &mut rhs.node, &rhs.loc, None, level, loop_stack);
+                    let (rhs_ty, _) =
+                        check_expr(tc_state, &mut rhs.node, &rhs.loc, None, level, loop_stack);
+
+                    match &mut lhs.node {
+                        ast::Expr::FieldSel(ast::FieldSelExpr { inferred_ty, .. }) => {
+                            *inferred_ty = Some(rhs_ty);
+                        }
+                        _ => panic!(),
+                    };
                 }
 
                 _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),
-            }
+            };
 
             unify_expected_ty(
                 Ty::unit(),

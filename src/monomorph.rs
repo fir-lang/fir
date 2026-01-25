@@ -469,6 +469,7 @@ fn mono_expr(
             object,
             field,
             user_ty_args: _,
+            inferred_ty: _,
         }) => mono::Expr::FieldSel(mono::FieldSelExpr {
             object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals),
             field: field.clone(),

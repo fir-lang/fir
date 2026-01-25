@@ -471,6 +471,7 @@ impl Expr {
                 object,
                 field,
                 user_ty_args,
+                inferred_ty: _,
             }) => {
                 object.node.print(buf, indent);
                 buf.push('.');

@@ -124,7 +124,10 @@ pub(super) fn check_expr(
             object,
             field,
             user_ty_args,
+            inferred_ty,
         }) => {
+            assert!(inferred_ty.is_none());
+
             let ty = {
                 let (object_ty, _) = check_expr(
                     tc_state,
@@ -153,7 +156,7 @@ pub(super) fn check_expr(
                             labels,
                             extension.clone(),
                         );
-                        match labels.get(field) {
+                        let ty = match labels.get(field) {
                             Some(field_ty) => field_ty.clone(),
                             None => panic!(
                                 "{}: Record with fields {:?} does not have field {}",
@@ -161,7 +164,9 @@ pub(super) fn check_expr(
                                 labels.keys().collect::<Vec<_>>(),
                                 field
                             ),
-                        }
+                        };
+                        *inferred_ty = Some(ty.clone());
+                        ty
                     }
 
                     other => {
@@ -1101,6 +1106,7 @@ pub(super) fn check_expr(
                         object: left.clone(),
                         field: SmolStr::new_static(method),
                         user_ty_args: vec![],
+                        inferred_ty: None,
                     }),
                 }),
                 args: vec![ast::CallArg {
@@ -1159,6 +1165,7 @@ pub(super) fn check_expr(
                             object: arg.clone(),
                             field: SmolStr::new_static("__neg"),
                             user_ty_args: vec![],
+                            inferred_ty: None,
                         }),
                     }),
                     args: vec![],
@@ -1490,6 +1497,7 @@ pub(super) fn check_expr(
                                 object: Box::new(elem),
                                 field: SmolStr::new_static("chain"),
                                 user_ty_args: vec![],
+                                inferred_ty: None,
                             }),
                         }),
                         args: vec![ast::CallArg {
@@ -1841,11 +1849,12 @@ fn check_field_sel(
                     panic!("{}: Field passed type arguments", loc_display(loc));
                 }
                 return (
-                    field_ty,
+                    field_ty.clone(),
                     ast::Expr::FieldSel(ast::FieldSelExpr {
                         object: Box::new(object.clone()),
                         field: field.clone(),
                         user_ty_args: vec![],
+                        inferred_ty: Some(field_ty),
                     }),
                 );
             }
@@ -1857,11 +1866,12 @@ fn check_field_sel(
                     panic!("{}: Field passed type arguments", loc_display(loc));
                 }
                 return (
-                    field_ty,
+                    field_ty.clone(),
                     ast::Expr::FieldSel(ast::FieldSelExpr {
                         object: Box::new(object.clone()),
                         field: field.clone(),
                         user_ty_args: vec![],
+                        inferred_ty: Some(field_ty),
                     }),
                 );
             }

@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: 9101200f0f99cd3afb56b25fd34c63b4f67fd5b98591c03f0077f2eb918ce038
+// sha3: 569647270ca904d9c0161889dd5a75a326252726eca5b9c8915de5b414d64bb3
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -48002,6 +48002,7 @@ fn __action103<'a>(
             object: Box::new(L::new(module, l, r, expr)),
             field: field.smol_str(),
             user_ty_args,
+            inferred_ty: None,
         }),
     }
 }

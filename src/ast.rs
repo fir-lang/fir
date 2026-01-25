@@ -602,6 +602,8 @@ pub struct FieldSelExpr {
     /// Since fields can't have `forall` quantifiers, this will only be valid when the field is a
     /// method, in which case the type checker will convert this node into `MethodSelectExpr`.
     pub user_ty_args: Vec<L<Type>>,
+
+    pub inferred_ty: Option<Ty>,
 }
 
 /// A method selection: `<expr>.method`.
@@ -1087,7 +1089,9 @@ impl Expr {
                 object,
                 field: _,
                 user_ty_args,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 object.node.subst_ty_ids(substs);
                 for ty_arg in user_ty_args.iter_mut() {
                     ty_arg.node = ty_arg.node.subst_ids(substs);

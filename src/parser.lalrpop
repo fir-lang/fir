@@ -720,6 +720,7 @@ InlineExpr: Expr = {
                 object: Box::new(L::new(module, l, r, expr)),
                 field: field.smol_str(),
                 user_ty_args,
+                inferred_ty: None,
             }),
         },
 
