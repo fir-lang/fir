@@ -68,9 +68,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             method: _,
             ty_args,
         }) => {
-            if let Some(object_ty) = object_ty {
-                *object_ty = object_ty.deep_normalize(cons);
-            }
+            *object_ty = Some(object_ty.as_ref().unwrap().deep_normalize(cons));
             ty_args
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(cons));
@@ -132,11 +130,9 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             body,
             inferred_ty,
         }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
             for stmt in body {
                 normalize_stmt(&mut stmt.node, &stmt.loc, cons);
-            }
-            if let Some(inferred_ty) = inferred_ty.as_mut() {
-                *inferred_ty = inferred_ty.deep_normalize(cons);
             }
         }
 
@@ -157,15 +153,15 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             fields,
             inferred_ty,
         }) => {
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
             for (_field_name, field_expr) in fields {
                 normalize_expr(&mut field_expr.node, cons);
             }
-            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
         }
 
         ast::Expr::Variant(ast::VariantExpr { expr, inferred_ty }) => {
-            normalize_expr(&mut expr.node, cons);
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
+            normalize_expr(&mut expr.node, cons);
         }
     }
 }
@@ -201,15 +197,15 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             ignore_rest: _,
             inferred_ty,
         }) => {
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
             fields
                 .iter_mut()
                 .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons));
-            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
         }
 
         ast::Pat::Variant(ast::VariantPat { pat, inferred_ty }) => {
-            normalize_pat(&mut pat.node, cons);
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
+            normalize_pat(&mut pat.node, cons);
         }
     }
 }
