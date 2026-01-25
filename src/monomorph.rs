@@ -728,6 +728,9 @@ fn mono_expr(
         }
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
+            if !matches!(op, ast::BinOp::Or | ast::BinOp::And) {
+                panic!("{}: Non-desugared binop: {:?}", loc_display(loc), op);
+            }
             mono::Expr::BinOp(mono::BinOpExpr {
                 left: mono_bl_expr(left, ty_map, poly_pgm, mono_pgm, locals),
                 right: mono_bl_expr(right, ty_map, poly_pgm, mono_pgm, locals),
@@ -735,10 +738,9 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::UnOp(ast::UnOpExpr { op, expr: _ }) => match op {
-            ast::UnOp::Neg => panic!("Neg unop wasn't desugred"),
-            ast::UnOp::Not => panic!("Not unop wasn't desugared"),
-        },
+        ast::Expr::UnOp(ast::UnOpExpr { op, expr: _ }) => {
+            panic!("{}: Non-desugared unop: {:?}", loc_display(loc), op)
+        }
 
         ast::Expr::Return(ast::ReturnExpr {
             expr,

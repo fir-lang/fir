@@ -683,12 +683,17 @@ pub struct BinOpExpr {
     pub left: Box<L<Expr>>,
     pub right: Box<L<Expr>>,
     pub op: BinOp,
+    // Note: we don't need an `inferred_ty` field here as most of the binops are desugared during
+    // type checking, only the bool `and` and `or` are left (as they have special evaluation rules).
+    // So the inferred types are always `Bool` after type checking.
 }
 
 #[derive(Debug, Clone)]
 pub struct UnOpExpr {
     pub op: UnOp,
     pub expr: Box<L<Expr>>,
+    // Note: we don't need an `inferred_ty` field here as these exprs are desugared during type
+    // checking.
 }
 
 #[derive(Debug, Clone)]
