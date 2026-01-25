@@ -900,9 +900,6 @@ fn c_ty(ty: &mono::Type) -> String {
     if let mono::Type::Fn(_) = ty {
         return "CLOSURE*".to_string();
     }
-    if let mono::Type::Never = ty {
-        panic!();
-    }
     if let mono::Type::Variant { .. } = ty {
         return "Variant*".to_string();
     }
@@ -956,10 +953,6 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
             ty_to_c(ret, out);
             out.push('_');
             ty_to_c(exn, out);
-        }
-
-        mono::Type::Never => {
-            out.push_str("Never");
         }
     }
 }
@@ -2523,7 +2516,6 @@ fn expr_to_c(
             p.nl();
 
             let if_temp = match expected_ty {
-                Some(ty) if ty.is_never() => None,
                 None => None,
                 Some(ty) => {
                     let temp = cg.fresh_temp();
@@ -3052,8 +3044,6 @@ fn type_heap_obj_deps(
             type_heap_obj_deps(type_objs, record_objs, ret, deps);
             type_heap_obj_deps(type_objs, record_objs, exn, deps);
         }
-
-        mono::Type::Never => {}
     }
 }
 

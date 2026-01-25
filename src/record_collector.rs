@@ -137,8 +137,6 @@ fn visit_ty(ty: &mono::Type, records: &mut HashSet<RecordType>) {
             visit_ty(ret, records);
             visit_ty(exn, records);
         }
-
-        mono::Type::Never => {}
     }
 }
 
@@ -202,7 +200,7 @@ fn visit_pat(pat: &mono::Pat, records: &mut HashSet<RecordType>) {
 
 fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordType>) {
     match expr {
-        mono::Expr::LocalVar(_)
+        mono::Expr::LocalVar(_, _)
         | mono::Expr::TopVar(_)
         | mono::Expr::ConSel(_)
         | mono::Expr::AssocFnSel(_)
@@ -210,25 +208,39 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordType>) {
         | mono::Expr::Char(_)
         | mono::Expr::Str(_) => {}
 
-        mono::Expr::FieldSel(mono::FieldSelExpr { object, field: _ }) => {
+        mono::Expr::FieldSel(mono::FieldSelExpr {
+            object,
+            field: _,
+            ty,
+        }) => {
+            visit_ty(ty, records);
             visit_expr(&object.node, records);
         }
 
-        mono::Expr::Call(mono::CallExpr { fun, args }) => {
+        mono::Expr::Call(mono::CallExpr { fun, args, ty }) => {
+            visit_ty(ty, records);
             visit_expr(&fun.node, records);
             for arg in args {
                 visit_expr(&arg.expr.node, records);
             }
         }
 
-        mono::Expr::BinOp(mono::BinOpExpr { left, right, op: _ }) => {
+        mono::Expr::BoolOr(left, right) | mono::Expr::BoolAnd(left, right) => {
             visit_expr(&left.node, records);
             visit_expr(&right.node, records);
         }
 
-        mono::Expr::Return(expr) => visit_expr(&expr.node, records),
+        mono::Expr::Return(expr, ty) => {
+            visit_ty(ty, records);
+            visit_expr(&expr.node, records)
+        }
 
-        mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => {
+        mono::Expr::Match(mono::MatchExpr {
+            scrutinee,
+            alts,
+            ty,
+        }) => {
+            visit_ty(ty, records);
             visit_expr(&scrutinee.node, records);
             for alt in alts {
                 visit_pat(&alt.pat.node, records);
@@ -244,7 +256,9 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordType>) {
         mono::Expr::If(mono::IfExpr {
             branches,
             else_branch,
+            ty,
         }) => {
+            visit_ty(ty, records);
             for (expr, stmts) in branches {
                 visit_expr(&expr.node, records);
                 for stmt in stmts {
@@ -270,7 +284,8 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordType>) {
             visit_pat(&pat.node, records);
         }
 
-        mono::Expr::Do(stmts) => {
+        mono::Expr::Do(stmts, ty) => {
+            visit_ty(ty, records);
             for stmt in stmts {
                 visit_stmt(&stmt.node, records);
             }

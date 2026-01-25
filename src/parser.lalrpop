@@ -535,6 +535,7 @@ Stmt: Stmt = {
                 con: Some(SmolStr::new_static("True")),
                 user_ty_args: vec![],
                 ty_args: vec![],
+                inferred_ty: None,
             })),
             body,
         })
@@ -609,6 +610,7 @@ BlockExpr: Expr = {
         Expr::Match(MatchExpr {
             scrutinee: Box::new(expr),
             alts,
+            inferred_ty: None,
         }),
 
     "if" <cond:LExpr> ":" NEWLINE INDENT <then_:LStmts> DEDENT
@@ -618,11 +620,12 @@ BlockExpr: Expr = {
         Expr::If(IfExpr {
             branches,
             else_branch,
+            inferred_ty: None,
         })
     },
 
     "do" ":" NEWLINE INDENT <stmts:LStmts> DEDENT => {
-        Expr::Do(stmts)
+        Expr::Do(DoExpr { stmts, inferred_ty: None })
     },
 
     "\\(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
@@ -650,32 +653,27 @@ InlineExpr: Expr = {
     #[precedence(level = "0")]
     <id:LowerId> <user_ty_args:UserTyArgs> => {
         let str = id.smol_str();
-        if str == "self" {
-            assert!(user_ty_args.is_empty());
-            Expr::Self_
-        } else {
-            Expr::Var(VarExpr { id: str, user_ty_args, ty_args: vec![] })
-        }
+        Expr::Var(VarExpr { id: str, user_ty_args, ty_args: vec![], inferred_ty: None })
     },
 
     <id:UpperId> =>
-        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![] }),
+        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None }),
 
     <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
-        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args, ty_args: vec![] }),
+        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args, ty_args: vec![], inferred_ty: None }),
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConSel(Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![] })
+        Expr::ConSel(Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![], inferred_ty: None })
     },
 
     <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConSel(Con { ty, con: Some(con), user_ty_args, ty_args: vec![] })
+        Expr::ConSel(Con { ty, con: Some(con), user_ty_args, ty_args: vec![], inferred_ty: None })
     },
 
     "(" <expr:Expr> ")" => {
@@ -704,23 +702,26 @@ InlineExpr: Expr = {
         Expr::Call(CallExpr {
             fun: Box::new(L::new(module, l, r, fun)),
             args,
+            inferred_ty: None,
         }),
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>
         match expr {
-            Expr::ConSel(Con { ty: id, con: None, user_ty_args: ty_user_ty_args, ty_args: _ }) =>
+            Expr::ConSel(Con { ty: id, con: None, user_ty_args: ty_user_ty_args, ty_args: _, inferred_ty: _ }) =>
                 Expr::AssocFnSel(AssocFnSelExpr {
                     ty: id,
                     ty_user_ty_args,
                     member: field.smol_str(),
                     user_ty_args,
-                    ty_args: vec![]
+                    ty_args: vec![],
+                    inferred_ty: None,
                 }),
 
             _ => Expr::FieldSel(FieldSelExpr {
                 object: Box::new(L::new(module, l, r, expr)),
                 field: field.smol_str(),
                 user_ty_args,
+                inferred_ty: None,
             }),
         },
 
@@ -879,11 +880,14 @@ InlineExpr: Expr = {
         }),
 
     <l:@L> "return" <r:@R> =>
-        Expr::Return(Box::new(L::new(module, l, r, Expr::Record(RecordExpr { fields: vec![], inferred_ty: None })))),
+        Expr::Return(ReturnExpr {
+            expr: Box::new(L::new(module, l, r, Expr::Record(RecordExpr { fields: vec![], inferred_ty: None }))),
+            inferred_ty: None,
+        }),
 
     #[precedence(level = "12")]
     "return" <expr:LInlineExpr> =>
-        Expr::Return(Box::new(expr)),
+        Expr::Return(ReturnExpr { expr: Box::new(expr), inferred_ty: None }),
 
     "\\(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
          <ret:ReturnType> ":" <body:LInlineExpr> =>
@@ -984,13 +988,13 @@ Pat: Pat = {
 
 Con: Con = {
     <ty:UpperId> =>
-        Con { ty: ty.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![] },
+        Con { ty: ty.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None },
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![] }
+        Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![], inferred_ty: None }
     },
 }
 

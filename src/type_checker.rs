@@ -1295,7 +1295,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
-            normalize_stmt(&mut stmt.node, tys.tys.cons());
+            normalize_stmt(&mut stmt.node, &stmt.loc, tys.tys.cons());
         }
     }
 
@@ -1408,7 +1408,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
             resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
 
             for stmt in body.iter_mut() {
-                normalize_stmt(&mut stmt.node, tys.tys.cons());
+                normalize_stmt(&mut stmt.node, &stmt.loc, tys.tys.cons());
             }
         }
 

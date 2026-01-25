@@ -353,6 +353,7 @@ pub struct LetStmt {
 pub struct MatchExpr {
     pub scrutinee: Box<L<Expr>>,
     pub alts: Vec<Alt>,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -433,6 +434,8 @@ pub struct Con {
 
     /// Inferred type arguments of the constructor's type. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
+
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -440,6 +443,7 @@ pub struct IfExpr {
     // At least one element
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
     pub else_branch: Option<Vec<L<Stmt>>>,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -524,8 +528,6 @@ pub enum Expr {
     /// A character literal.
     Char(char),
 
-    Self_,
-
     /// A binary operator: `x + y`, `i >> 2`.
     ///
     /// Some of the binary operators are desugared to method calls by the type checker.
@@ -536,7 +538,7 @@ pub enum Expr {
     /// Some of the unary operators are desugared to method calls by the type checker.
     UnOp(UnOpExpr),
 
-    Return(Box<L<Expr>>),
+    Return(ReturnExpr),
 
     Match(MatchExpr),
 
@@ -546,11 +548,14 @@ pub enum Expr {
 
     Is(IsExpr),
 
-    Do(Vec<L<Stmt>>),
+    Do(DoExpr),
 
     /// A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
     Seq {
+        /// The type name: `Vec` in the third example above. `None` in the other examples.
         ty: Option<Id>,
+
+        /// Elements, with optional key part for `<expr> = <expr>` syntax.
         elems: Vec<(Option<L<Expr>>, L<Expr>)>,
     },
 
@@ -571,12 +576,15 @@ pub struct VarExpr {
 
     /// Inferred type arguments of the variable. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
+
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
     pub args: Vec<CallArg>,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -598,6 +606,8 @@ pub struct FieldSelExpr {
     /// Since fields can't have `forall` quantifiers, this will only be valid when the field is a
     /// method, in which case the type checker will convert this node into `MethodSelectExpr`.
     pub user_ty_args: Vec<L<Type>>,
+
+    pub inferred_ty: Option<Ty>,
 }
 
 /// A method selection: `<expr>.method`.
@@ -645,6 +655,8 @@ pub struct MethodSelExpr {
     /// (If the method is not a trait method, then we don't care about the type parameter order.. I
     /// think?)
     pub ty_args: Vec<Ty>,
+
+    pub inferred_ty: Option<Ty>,
 }
 
 /// An associated function or method selection:
@@ -671,6 +683,8 @@ pub struct AssocFnSelExpr {
 
     /// Inferred type arguments of the type and associated function. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
+
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -678,12 +692,34 @@ pub struct BinOpExpr {
     pub left: Box<L<Expr>>,
     pub right: Box<L<Expr>>,
     pub op: BinOp,
+    // Note: we don't need an `inferred_ty` field here as most of the binops are desugared during
+    // type checking, only the bool `and` and `or` are left (as they have special evaluation rules).
+    // So the inferred types are always `Bool` after type checking.
 }
 
 #[derive(Debug, Clone)]
 pub struct UnOpExpr {
     pub op: UnOp,
     pub expr: Box<L<Expr>>,
+    // Note: we don't need an `inferred_ty` field here as these exprs are desugared during type
+    // checking.
+}
+
+#[derive(Debug, Clone)]
+pub struct ReturnExpr {
+    pub expr: Box<L<Expr>>,
+
+    /// Inferred type of this expression. Filled in by the type checker.
+    ///
+    /// Note that this is different than the returned expression's (`expr`) type. For example:
+    ///
+    /// ```ignore
+    /// f(x, return "hi", y)
+    /// ```
+    ///
+    /// Here the returned expression's type is `Str`, but the `return` expression's type will depend
+    /// on the `f`'s second argument type.
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -739,6 +775,12 @@ pub struct FnExpr {
 pub struct IsExpr {
     pub expr: Box<L<Expr>>,
     pub pat: L<Pat>,
+}
+
+#[derive(Debug, Clone)]
+pub struct DoExpr {
+    pub stmts: Vec<L<Stmt>>,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -1016,13 +1058,15 @@ impl Stmt {
 impl Expr {
     pub fn subst_ty_ids(&mut self, substs: &HashMap<Id, Type>) {
         match self {
-            Expr::ConSel(_) | Expr::Int(_) | Expr::Char(_) | Expr::Self_ => {}
+            Expr::ConSel(_) | Expr::Int(_) | Expr::Char(_) => {}
 
             Expr::Var(VarExpr {
                 id: _,
                 user_ty_args,
                 ty_args,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 assert!(ty_args.is_empty());
                 for ty_arg in user_ty_args.iter_mut() {
                     ty_arg.node = ty_arg.node.subst_ids(substs);
@@ -1035,7 +1079,9 @@ impl Expr {
                 member: _,
                 user_ty_args,
                 ty_args,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 assert!(ty_args.is_empty());
                 for ty_arg in ty_user_ty_args.iter_mut() {
                     ty_arg.node = ty_arg.node.subst_ids(substs);
@@ -1049,7 +1095,9 @@ impl Expr {
                 object,
                 field: _,
                 user_ty_args,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 object.node.subst_ty_ids(substs);
                 for ty_arg in user_ty_args.iter_mut() {
                     ty_arg.node = ty_arg.node.subst_ids(substs);
@@ -1062,12 +1110,19 @@ impl Expr {
                 method_ty_id: _,
                 method: _,
                 ty_args,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 assert!(ty_args.is_empty());
                 object.node.subst_ty_ids(substs);
             }
 
-            Expr::Call(CallExpr { fun, args }) => {
+            Expr::Call(CallExpr {
+                fun,
+                args,
+                inferred_ty,
+            }) => {
+                assert!(inferred_ty.is_none());
                 fun.node.subst_ty_ids(substs);
                 for CallArg { name: _, expr } in args {
                     expr.node.subst_ty_ids(substs);
@@ -1092,9 +1147,17 @@ impl Expr {
                 expr.node.subst_ty_ids(substs);
             }
 
-            Expr::Return(expr) => expr.node.subst_ty_ids(substs),
+            Expr::Return(ReturnExpr { expr, inferred_ty }) => {
+                assert!(inferred_ty.is_none());
+                expr.node.subst_ty_ids(substs)
+            }
 
-            Expr::Match(MatchExpr { scrutinee, alts }) => {
+            Expr::Match(MatchExpr {
+                scrutinee,
+                alts,
+                inferred_ty,
+            }) => {
+                assert!(inferred_ty.is_none());
                 scrutinee.node.subst_ty_ids(substs);
                 for Alt { pat: _, guard, rhs } in alts {
                     if let Some(guard) = guard {
@@ -1109,7 +1172,9 @@ impl Expr {
             Expr::If(IfExpr {
                 branches,
                 else_branch,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 for (lhs, rhs) in branches {
                     lhs.node.subst_ty_ids(substs);
                     for stmt in rhs {
@@ -1126,8 +1191,9 @@ impl Expr {
             Expr::Fn(FnExpr {
                 sig,
                 body,
-                inferred_ty: _,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 sig.subst_ty_ids(substs);
                 for stmt in body {
                     stmt.node.subst_ty_ids(substs);
@@ -1138,7 +1204,8 @@ impl Expr {
                 expr.node.subst_ty_ids(substs);
             }
 
-            Expr::Do(stmts) => {
+            Expr::Do(DoExpr { stmts, inferred_ty }) => {
+                assert!(inferred_ty.is_none());
                 for stmt in stmts {
                     stmt.node.subst_ty_ids(substs);
                 }
@@ -1155,17 +1222,16 @@ impl Expr {
 
             Expr::Record(RecordExpr {
                 fields,
-                inferred_ty: _,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 for (_field_name, field_expr) in fields {
                     field_expr.node.subst_ty_ids(substs);
                 }
             }
 
-            Expr::Variant(VariantExpr {
-                expr,
-                inferred_ty: _,
-            }) => {
+            Expr::Variant(VariantExpr { expr, inferred_ty }) => {
+                assert!(inferred_ty.is_none());
                 expr.node.subst_ty_ids(substs);
             }
         }

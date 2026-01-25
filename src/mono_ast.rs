@@ -1,6 +1,6 @@
 pub mod printer;
 
-pub use crate::ast::{BinOp, Id, IntExpr, L, Loc, Named};
+pub use crate::ast::{Id, IntExpr, L, Loc, Named};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -63,9 +63,6 @@ pub enum Type {
     },
 
     Fn(FnType),
-
-    /// Type of expressions that don't generate a value. E.g. `continue`, `break`.
-    Never,
 }
 
 impl Type {
@@ -95,8 +92,18 @@ impl Type {
         })
     }
 
-    pub(crate) fn is_never(&self) -> bool {
-        matches!(self, Type::Never)
+    pub(crate) fn str() -> Type {
+        Type::Named(NamedType {
+            name: Id::new_static("Str"),
+            args: vec![],
+        })
+    }
+
+    pub(crate) fn char() -> Type {
+        Type::Named(NamedType {
+            name: Id::new_static("Char"),
+            args: vec![],
+        })
     }
 }
 
@@ -179,6 +186,7 @@ pub struct LetStmt {
 pub struct MatchExpr {
     pub scrutinee: Box<L<Expr>>,
     pub alts: Vec<Alt>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
@@ -216,9 +224,10 @@ pub struct ConPat {
 
 #[derive(Debug, Clone)]
 pub struct Con {
-    pub ty: Id,
+    pub ty_id: Id,
     pub con: Option<Id>,
     pub ty_args: Vec<Type>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
@@ -243,6 +252,7 @@ pub struct VariantPat {
 pub struct IfExpr {
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
     pub else_branch: Option<Vec<L<Stmt>>>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
@@ -260,7 +270,7 @@ pub struct WhileStmt {
 
 #[derive(Debug, Clone)]
 pub enum Expr {
-    LocalVar(Id),               // a local variable
+    LocalVar(Id, Type),         // a local variable
     TopVar(VarExpr),            // a top-level function reference
     ConSel(Con),                // a product or sum constructor
     FieldSel(FieldSelExpr),     // <expr>.<id>
@@ -269,27 +279,74 @@ pub enum Expr {
     Int(IntExpr),
     Str(String),
     Char(char),
-    BinOp(BinOpExpr),
-    Return(Box<L<Expr>>),
+    BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
+    BoolOr(Box<L<Expr>>, Box<L<Expr>>),
+    Return(Box<L<Expr>>, Type),
     Match(MatchExpr),
     If(IfExpr),
     Fn(FnExpr),
     Is(IsExpr),
-    Do(Vec<L<Stmt>>),
+    Do(Vec<L<Stmt>>, Type),
     Record(RecordExpr),
     Variant(VariantExpr),
+}
+
+impl Expr {
+    pub fn ty(&self) -> Type {
+        match self {
+            Expr::LocalVar(_, ty)
+            | Expr::TopVar(VarExpr { ty, .. })
+            | Expr::ConSel(Con { ty, .. })
+            | Expr::FieldSel(FieldSelExpr { ty, .. })
+            | Expr::AssocFnSel(AssocFnSelExpr { ty, .. })
+            | Expr::Call(CallExpr { ty, .. })
+            | Expr::Do(_, ty)
+            | Expr::Return(_, ty)
+            | Expr::Match(MatchExpr { ty, .. })
+            | Expr::If(IfExpr { ty, .. }) => ty.clone(),
+
+            Expr::Int(IntExpr { kind, .. }) => {
+                let con = match kind.unwrap() {
+                    IntKind::I8(_) => "I8",
+                    IntKind::U8(_) => "U8",
+                    IntKind::I32(_) => "I32",
+                    IntKind::U32(_) => "U32",
+                    IntKind::I64(_) => "I64",
+                    IntKind::U64(_) => "U64",
+                };
+                Type::Named(NamedType {
+                    name: Id::new_static(con),
+                    args: vec![],
+                })
+            }
+
+            Expr::Str(_) => Type::str(),
+
+            Expr::Char(_) => Type::char(),
+
+            Expr::BoolAnd(_, _) | Expr::BoolOr(_, _) | Expr::Is(_) => Type::bool(),
+
+            Expr::Fn(FnExpr { sig, .. }) => Type::Fn(sig.ty()),
+
+            Expr::Record(RecordExpr { ty, .. }) => Type::Record { fields: ty.clone() },
+
+            Expr::Variant(VariantExpr { ty, .. }) => Type::Variant { alts: ty.clone() },
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct VarExpr {
     pub id: Id,
     pub ty_args: Vec<Type>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
     pub args: Vec<CallArg>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
@@ -302,20 +359,15 @@ pub struct CallArg {
 pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
     pub field: Id,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
 pub struct AssocFnSelExpr {
-    pub ty: Id,
+    pub ty_id: Id,
     pub member: Id,
     pub ty_args: Vec<Type>,
-}
-
-#[derive(Debug, Clone)]
-pub struct BinOpExpr {
-    pub left: Box<L<Expr>>,
-    pub right: Box<L<Expr>>,
-    pub op: BinOp,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]

@@ -2,41 +2,26 @@ use crate::ast::{self, Id};
 use crate::collections::ScopeMap;
 use crate::interpolation::StrPart;
 use crate::type_checker::TyCon;
+use crate::utils::loc_display;
 
-pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
+pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, loc: &ast::Loc, cons: &ScopeMap<Id, TyCon>) {
     match stmt {
         ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
 
         ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
             normalize_pat(&mut lhs.node, cons);
-            normalize_expr(&mut rhs.node, cons);
+            normalize_expr(&mut rhs.node, &rhs.loc, cons);
         }
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op: _ }) => {
-            normalize_expr(&mut lhs.node, cons);
-            normalize_expr(&mut rhs.node, cons);
+            normalize_expr(&mut lhs.node, loc, cons);
+            normalize_expr(&mut rhs.node, &rhs.loc, cons);
         }
 
-        ast::Stmt::Expr(expr) => normalize_expr(expr, cons),
+        ast::Stmt::Expr(expr) => normalize_expr(expr, loc, cons),
 
-        ast::Stmt::For(ast::ForStmt {
-            label: _,
-            pat,
-            item_ast_ty: _,
-            item_tc_ty,
-            expr,
-            expr_ty,
-            body,
-        }) => {
-            if let Some(tc_ty) = item_tc_ty {
-                *tc_ty = tc_ty.deep_normalize(cons);
-            }
-            normalize_pat(&mut pat.node, cons);
-            normalize_expr(&mut expr.node, cons);
-            for stmt in body {
-                normalize_stmt(&mut stmt.node, cons);
-            }
-            *expr_ty = Some(expr_ty.as_ref().unwrap().deep_normalize(cons));
+        ast::Stmt::For(ast::ForStmt { .. }) => {
+            panic!("{}: Non-desugared for statement", loc_display(loc));
         }
 
         ast::Stmt::While(ast::WhileStmt {
@@ -44,36 +29,80 @@ pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
             cond,
             body,
         }) => {
-            normalize_expr(&mut cond.node, cons);
+            normalize_expr(&mut cond.node, &cond.loc, cons);
             for stmt in body {
-                normalize_stmt(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
             }
         }
     }
 }
 
-fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
+fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCon>) {
     match expr {
-        ast::Expr::Var(ast::VarExpr { ty_args, .. })
-        | ast::Expr::ConSel(ast::Con { ty_args, .. })
-        | ast::Expr::AssocFnSel(ast::AssocFnSelExpr { ty_args, .. }) => ty_args
-            .iter_mut()
-            .for_each(|ty| *ty = ty.deep_normalize(cons)),
+        ast::Expr::Var(ast::VarExpr {
+            ty_args,
+            inferred_ty,
+            ..
+        }) => {
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap_or_else(|| panic!("{}", loc_display(loc)))
+                    .deep_normalize(cons),
+            );
+            ty_args
+                .iter_mut()
+                .for_each(|ty| *ty = ty.deep_normalize(cons))
+        }
 
-        ast::Expr::Int(_) | ast::Expr::Char(_) | ast::Expr::Self_ => {}
+        ast::Expr::ConSel(ast::Con {
+            ty_args,
+            inferred_ty,
+            ..
+        }) => {
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap_or_else(|| panic!("{}", loc_display(loc)))
+                    .deep_normalize(cons),
+            );
+            ty_args
+                .iter_mut()
+                .for_each(|ty| *ty = ty.deep_normalize(cons));
+        }
+
+        ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+            ty_args,
+            inferred_ty,
+            ..
+        }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            ty_args
+                .iter_mut()
+                .for_each(|ty| *ty = ty.deep_normalize(cons))
+        }
+
+        ast::Expr::Int(_) | ast::Expr::Char(_) => {}
 
         ast::Expr::Str(parts) => parts.iter_mut().for_each(|part| match part {
             StrPart::Str(_) => {}
-            StrPart::Expr(expr) => normalize_expr(&mut expr.node, cons),
+            StrPart::Expr(expr) => normalize_expr(&mut expr.node, &expr.loc, cons),
         }),
 
         ast::Expr::FieldSel(ast::FieldSelExpr {
             object,
             field: _,
             user_ty_args,
+            inferred_ty,
         }) => {
             assert!(user_ty_args.is_empty());
-            normalize_expr(&mut object.node, cons)
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap_or_else(|| panic!("{}", loc_display(loc)))
+                    .deep_normalize(cons),
+            );
+            normalize_expr(&mut object.node, &object.loc, cons)
         }
 
         ast::Expr::MethodSel(ast::MethodSelExpr {
@@ -82,45 +111,56 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             method_ty_id: _,
             method: _,
             ty_args,
+            inferred_ty,
         }) => {
-            if let Some(object_ty) = object_ty {
-                *object_ty = object_ty.deep_normalize(cons);
-            }
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            *object_ty = Some(object_ty.as_ref().unwrap().deep_normalize(cons));
             ty_args
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(cons));
-            normalize_expr(&mut object.node, cons)
+            normalize_expr(&mut object.node, &object.loc, cons)
         }
 
-        ast::Expr::Call(ast::CallExpr { fun, args }) => {
-            normalize_expr(&mut fun.node, cons);
+        ast::Expr::Call(ast::CallExpr {
+            fun,
+            args,
+            inferred_ty,
+        }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            normalize_expr(&mut fun.node, &fun.loc, cons);
             for arg in args {
-                normalize_expr(&mut arg.expr.node, cons);
+                normalize_expr(&mut arg.expr.node, &arg.expr.loc, cons);
             }
         }
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op: _ }) => {
-            normalize_expr(&mut left.node, cons);
-            normalize_expr(&mut right.node, cons);
+            normalize_expr(&mut left.node, &left.loc, cons);
+            normalize_expr(&mut right.node, &right.loc, cons);
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op: _, expr }) => {
-            normalize_expr(&mut expr.node, cons);
+            normalize_expr(&mut expr.node, &expr.loc, cons);
         }
 
-        ast::Expr::Return(expr) => {
-            normalize_expr(&mut expr.node, cons);
+        ast::Expr::Return(ast::ReturnExpr { expr, inferred_ty }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            normalize_expr(&mut expr.node, &expr.loc, cons);
         }
 
-        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
-            normalize_expr(&mut scrutinee.node, cons);
+        ast::Expr::Match(ast::MatchExpr {
+            scrutinee,
+            alts,
+            inferred_ty,
+        }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            normalize_expr(&mut scrutinee.node, &scrutinee.loc, cons);
             for ast::Alt { pat, guard, rhs } in alts {
                 normalize_pat(&mut pat.node, cons);
                 if let Some(expr) = guard {
-                    normalize_expr(&mut expr.node, cons);
+                    normalize_expr(&mut expr.node, &expr.loc, cons);
                 }
                 for stmt in rhs {
-                    normalize_stmt(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
                 }
             }
         }
@@ -128,16 +168,18 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         ast::Expr::If(ast::IfExpr {
             branches,
             else_branch,
+            inferred_ty,
         }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
             for (cond, body) in branches {
-                normalize_expr(&mut cond.node, cons);
+                normalize_expr(&mut cond.node, &cond.loc, cons);
                 for stmt in body {
-                    normalize_stmt(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
                 }
             }
             if let Some(else_branch) = else_branch {
                 for stmt in else_branch {
-                    normalize_stmt(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
                 }
             }
         }
@@ -147,22 +189,21 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             body,
             inferred_ty,
         }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
             for stmt in body {
-                normalize_stmt(&mut stmt.node, cons);
-            }
-            if let Some(inferred_ty) = inferred_ty.as_mut() {
-                *inferred_ty = inferred_ty.deep_normalize(cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
             }
         }
 
         ast::Expr::Is(ast::IsExpr { expr, pat }) => {
-            normalize_expr(&mut expr.node, cons);
+            normalize_expr(&mut expr.node, &expr.loc, cons);
             normalize_pat(&mut pat.node, cons);
         }
 
-        ast::Expr::Do(stmts) => {
+        ast::Expr::Do(ast::DoExpr { stmts, inferred_ty }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
             for stmt in stmts {
-                normalize_stmt(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
             }
         }
 
@@ -172,15 +213,15 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             fields,
             inferred_ty,
         }) => {
-            for (_field_name, field_expr) in fields {
-                normalize_expr(&mut field_expr.node, cons);
-            }
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
+            for (_field_name, field_expr) in fields {
+                normalize_expr(&mut field_expr.node, &field_expr.loc, cons);
+            }
         }
 
         ast::Expr::Variant(ast::VariantExpr { expr, inferred_ty }) => {
-            normalize_expr(&mut expr.node, cons);
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
+            normalize_expr(&mut expr.node, &expr.loc, cons);
         }
     }
 }
@@ -216,15 +257,15 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             ignore_rest: _,
             inferred_ty,
         }) => {
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
             fields
                 .iter_mut()
                 .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons));
-            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
         }
 
         ast::Pat::Variant(ast::VariantPat { pat, inferred_ty }) => {
-            normalize_pat(&mut pat.node, cons);
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
+            normalize_pat(&mut pat.node, cons);
         }
     }
 }
