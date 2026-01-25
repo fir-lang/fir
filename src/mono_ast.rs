@@ -80,6 +80,27 @@ impl Type {
             alts: Default::default(),
         }
     }
+
+    pub(crate) fn str() -> Type {
+        Type::Named(NamedType {
+            name: Id::new_static("Str"),
+            args: vec![],
+        })
+    }
+
+    pub(crate) fn char() -> Type {
+        Type::Named(NamedType {
+            name: Id::new_static("Char"),
+            args: vec![],
+        })
+    }
+
+    pub(crate) fn bool() -> Type {
+        Type::Named(NamedType {
+            name: Id::new_static("Bool"),
+            args: vec![],
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -263,6 +284,38 @@ pub enum Expr {
     Do(Vec<L<Stmt>>, Type),
     Record(RecordExpr),
     Variant(VariantExpr),
+}
+
+impl Expr {
+    pub fn ty(&self) -> Type {
+        match self {
+            Expr::LocalVar(_, ty)
+            | Expr::TopVar(VarExpr { ty, .. })
+            | Expr::ConSel(Con { ty, .. })
+            | Expr::FieldSel(FieldSelExpr { ty, .. })
+            | Expr::AssocFnSel(AssocFnSelExpr { ty, .. })
+            | Expr::Call(CallExpr { ty, .. })
+            | Expr::Do(_, ty)
+            | Expr::Return(_, ty)
+            | Expr::Match(MatchExpr { ty, .. }) => ty.clone(),
+
+            Expr::Int(_) => todo!(),
+
+            Expr::Str(_) => Type::str(),
+
+            Expr::Char(_) => Type::char(),
+
+            Expr::BoolAnd(_, _) | Expr::BoolOr(_, _) | Expr::Is(_) => Type::bool(),
+
+            Expr::If(_) => todo!(),
+
+            Expr::Fn(FnExpr { sig, .. }) => Type::Fn(sig.ty()),
+
+            Expr::Record(RecordExpr { ty, .. }) => Type::Record { fields: ty.clone() },
+
+            Expr::Variant(VariantExpr { ty, .. }) => Type::Variant { alts: ty.clone() },
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
