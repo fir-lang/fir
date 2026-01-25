@@ -60,7 +60,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             .iter_mut()
             .for_each(|ty| *ty = ty.deep_normalize(cons)),
 
-        ast::Expr::Int(_) | ast::Expr::Char(_) | ast::Expr::Self_ => {}
+        ast::Expr::Int(_) | ast::Expr::Char(_) => {}
 
         ast::Expr::Str(parts) => parts.iter_mut().for_each(|part| match part {
             StrPart::Str(_) => {}

@@ -650,12 +650,7 @@ InlineExpr: Expr = {
     #[precedence(level = "0")]
     <id:LowerId> <user_ty_args:UserTyArgs> => {
         let str = id.smol_str();
-        if str == "self" {
-            assert!(user_ty_args.is_empty());
-            Expr::Self_
-        } else {
-            Expr::Var(VarExpr { id: str, user_ty_args, ty_args: vec![] })
-        }
+        Expr::Var(VarExpr { id: str, user_ty_args, ty_args: vec![] })
     },
 
     <id:UpperId> =>

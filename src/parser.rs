@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: 4b7063348298292d696e2f271ddb62999ddee2c3bf845582c243abfc63d388f2
+// sha3: f96403d4df1caaf058802e24fd6c0f309c07cbe7e8953b37010a5b1814d82b54
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -47771,16 +47771,11 @@ fn __action92<'a>(
 ) -> Expr {
     {
         let str = id.smol_str();
-        if str == "self" {
-            assert!(user_ty_args.is_empty());
-            Expr::Self_
-        } else {
-            Expr::Var(VarExpr {
-                id: str,
-                user_ty_args,
-                ty_args: vec![],
-            })
-        }
+        Expr::Var(VarExpr {
+            id: str,
+            user_ty_args,
+            ty_args: vec![],
+        })
     }
 }
 

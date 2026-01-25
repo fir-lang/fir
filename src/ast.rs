@@ -524,8 +524,6 @@ pub enum Expr {
     /// A character literal.
     Char(char),
 
-    Self_,
-
     /// A binary operator: `x + y`, `i >> 2`.
     ///
     /// Some of the binary operators are desugared to method calls by the type checker.
@@ -1016,7 +1014,7 @@ impl Stmt {
 impl Expr {
     pub fn subst_ty_ids(&mut self, substs: &HashMap<Id, Type>) {
         match self {
-            Expr::ConSel(_) | Expr::Int(_) | Expr::Char(_) | Expr::Self_ => {}
+            Expr::ConSel(_) | Expr::Int(_) | Expr::Char(_) => {}
 
             Expr::Var(VarExpr {
                 id: _,

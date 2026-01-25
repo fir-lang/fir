@@ -580,8 +580,6 @@ impl Expr {
                 buf.push('\'');
             }
 
-            Expr::Self_ => buf.push_str("self"),
-
             Expr::BinOp(BinOpExpr { left, right, op }) => {
                 let left_parens = expr_parens(&left.node);
                 let right_parens = expr_parens(&right.node);
@@ -980,7 +978,6 @@ fn expr_parens(expr: &Expr) -> bool {
             | Expr::Int(_)
             | Expr::Str(_)
             | Expr::Char(_)
-            | Expr::Self_
             | Expr::Record(_)
             | Expr::Seq { .. }
             | Expr::Variant(_)
