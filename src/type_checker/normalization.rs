@@ -2,8 +2,9 @@ use crate::ast::{self, Id};
 use crate::collections::ScopeMap;
 use crate::interpolation::StrPart;
 use crate::type_checker::TyCon;
+use crate::utils::loc_display;
 
-pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
+pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, loc: &ast::Loc, cons: &ScopeMap<Id, TyCon>) {
     match stmt {
         ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
 
@@ -20,7 +21,7 @@ pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
         ast::Stmt::Expr(expr) => normalize_expr(expr, cons),
 
         ast::Stmt::For(ast::ForStmt { .. }) => {
-            panic!("Non-desugared for statement");
+            panic!("{}: Non-desugared for statement", loc_display(loc));
         }
 
         ast::Stmt::While(ast::WhileStmt {
@@ -30,7 +31,7 @@ pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
         }) => {
             normalize_expr(&mut cond.node, cons);
             for stmt in body {
-                normalize_stmt(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
             }
         }
     }
@@ -113,7 +114,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
                     normalize_expr(&mut expr.node, cons);
                 }
                 for stmt in rhs {
-                    normalize_stmt(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
                 }
             }
         }
@@ -127,12 +128,12 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             for (cond, body) in branches {
                 normalize_expr(&mut cond.node, cons);
                 for stmt in body {
-                    normalize_stmt(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
                 }
             }
             if let Some(else_branch) = else_branch {
                 for stmt in else_branch {
-                    normalize_stmt(&mut stmt.node, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
                 }
             }
         }
@@ -144,7 +145,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         }) => {
             *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
             for stmt in body {
-                normalize_stmt(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
             }
         }
 
@@ -156,7 +157,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         ast::Expr::Do(ast::DoExpr { stmts, inferred_ty }) => {
             *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
             for stmt in stmts {
-                normalize_stmt(&mut stmt.node, cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
             }
         }
 
@@ -166,7 +167,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             fields,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
             for (_field_name, field_expr) in fields {
                 normalize_expr(&mut field_expr.node, cons);
             }
@@ -210,15 +211,15 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             ignore_rest: _,
             inferred_ty,
         }) => {
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
             fields
                 .iter_mut()
                 .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons));
-            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
         }
 
         ast::Pat::Variant(ast::VariantPat { pat, inferred_ty }) => {
-            normalize_pat(&mut pat.node, cons);
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
+            normalize_pat(&mut pat.node, cons);
         }
     }
 }
