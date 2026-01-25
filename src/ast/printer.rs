@@ -503,6 +503,7 @@ impl Expr {
                 member,
                 user_ty_args,
                 ty_args,
+                inferred_ty: _,
             }) => {
                 buf.push_str(ty);
                 print_user_ty_args(ty_user_ty_args, buf);

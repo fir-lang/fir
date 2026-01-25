@@ -712,7 +712,8 @@ InlineExpr: Expr = {
                     ty_user_ty_args,
                     member: field.smol_str(),
                     user_ty_args,
-                    ty_args: vec![]
+                    ty_args: vec![],
+                    inferred_ty: None,
                 }),
 
             _ => Expr::FieldSel(FieldSelExpr {

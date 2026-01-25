@@ -451,6 +451,7 @@ fn check_stmt(
                                         node: ast::Expr::Call(ast::CallExpr {
                                             fun: Box::new(ast::L {
                                                 loc: expr.loc.clone(),
+                                                // Iterator.next[iter, item, exn](self: iter) Option[item] / exn
                                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                                                     ty: SmolStr::new_static("Iterator"),
                                                     ty_user_ty_args: vec![],
@@ -461,6 +462,19 @@ fn check_stmt(
                                                         item_ty.clone(),
                                                         tc_state.exceptions.clone(),
                                                     ],
+                                                    inferred_ty: Some(Ty::Fun {
+                                                        args: FunArgs::Positional(vec![
+                                                            iter_ty.clone(),
+                                                        ]),
+                                                        ret: Box::new(Ty::App(
+                                                            SmolStr::new_static("Option"),
+                                                            vec![item_ty.clone()],
+                                                            Kind::Star,
+                                                        )),
+                                                        exceptions: Some(Box::new(
+                                                            tc_state.exceptions.clone(),
+                                                        )),
+                                                    }),
                                                 }),
                                             }),
                                             args: vec![ast::CallArg {

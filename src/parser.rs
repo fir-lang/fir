@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: 4bd3a97e864b9a70f8e7f1619104b0ef9317b233288071c63a167c95957f48b8
+// sha3: 9101200f0f99cd3afb56b25fd34c63b4f67fd5b98591c03f0077f2eb918ce038
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -47995,6 +47995,7 @@ fn __action103<'a>(
             member: field.smol_str(),
             user_ty_args,
             ty_args: vec![],
+            inferred_ty: None,
         }),
 
         _ => Expr::FieldSel(FieldSelExpr {

@@ -311,7 +311,9 @@ pub(super) fn check_expr(
             member,
             user_ty_args,
             ty_args,
+            inferred_ty,
         }) => {
+            assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
             if !ty_user_ty_args.is_empty() {
@@ -394,6 +396,7 @@ pub(super) fn check_expr(
                     member: member.clone(),
                     user_ty_args: vec![],
                     ty_args: method_ty_args.into_iter().map(Ty::UVar).collect(),
+                    inferred_ty: Some(method_ty.clone()),
                 });
 
                 method_ty
@@ -418,22 +421,22 @@ pub(super) fn check_expr(
                     member: member.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
+                    inferred_ty: Some(method_ty.clone()),
                 });
 
                 method_ty
             };
 
-            (
-                unify_expected_ty(
-                    method_ty,
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    loc,
-                ),
-                Default::default(),
-            )
+            let expr_ty = unify_expected_ty(
+                method_ty,
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                loc,
+            );
+
+            (expr_ty, Default::default())
         }
 
         ast::Expr::Call(ast::CallExpr {
@@ -446,7 +449,9 @@ pub(super) fn check_expr(
             let (fun_ty, _) =
                 check_expr(tc_state, &mut fun.node, &fun.loc, None, level, loop_stack);
 
-            let ret_ty = match fun_ty.normalize(tc_state.tys.tys.cons()) {
+            let fun_ty = fun_ty.normalize(tc_state.tys.tys.cons());
+
+            let ret_ty = match &fun_ty {
                 Ty::Fun {
                     args: param_tys,
                     ret: ret_ty,
@@ -462,7 +467,7 @@ pub(super) fn check_expr(
                     }
 
                     let ret_ty = unify_expected_ty(
-                        *ret_ty,
+                        (**ret_ty).clone(),
                         expected_ty,
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
@@ -598,6 +603,7 @@ pub(super) fn check_expr(
                     member: method.clone(),
                     user_ty_args: vec![], // unused after type checking
                     ty_args: ty_args.clone(),
+                    inferred_ty: Some(fun_ty.clone()),
                 });
             }
 
@@ -827,6 +833,14 @@ pub(super) fn check_expr(
                                     member: SmolStr::new_static("empty"),
                                     user_ty_args: vec![],
                                     ty_args: vec![tc_state.exceptions.clone()],
+                                    inferred_ty: Some(Ty::Fun {
+                                        args: FunArgs::Positional(vec![]),
+                                        ret: Box::new(Ty::Con(
+                                            SmolStr::new_static("StrBuf"),
+                                            Kind::Star,
+                                        )),
+                                        exceptions: Some(Box::new(tc_state.exceptions.clone())),
+                                    }),
                                 }),
                             }),
                             args: vec![],
@@ -847,7 +861,15 @@ pub(super) fn check_expr(
                                 ty_user_ty_args: vec![],
                                 member: SmolStr::new_static("pushStr"),
                                 user_ty_args: vec![],
-                                ty_args: vec![exn],
+                                ty_args: vec![exn.clone()],
+                                inferred_ty: Some(Ty::Fun {
+                                    args: FunArgs::Positional(vec![
+                                        Ty::Con(SmolStr::new_static("StrBuf"), Kind::Star),
+                                        Ty::Con(SmolStr::new_static("Str"), Kind::Star),
+                                    ]),
+                                    ret: Box::new(Ty::unit()),
+                                    exceptions: Some(Box::new(exn)),
+                                }),
                             }),
                         }),
                         args: vec![
@@ -902,12 +924,21 @@ pub(super) fn check_expr(
                         let expr_node = replace(&mut expr.node, ast::Expr::Char('a'));
                         expr.node = ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
+                                // ToStr.toStr[t, exn](self: t) Str / exn
                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                                     ty: SmolStr::new_static("ToStr"),
                                     ty_user_ty_args: vec![],
                                     member: SmolStr::new_static("toStr"),
                                     user_ty_args: vec![],
-                                    ty_args: vec![part_ty, tc_state.exceptions.clone()],
+                                    ty_args: vec![part_ty.clone(), tc_state.exceptions.clone()],
+                                    inferred_ty: Some(Ty::Fun {
+                                        args: FunArgs::Positional(vec![part_ty]),
+                                        ret: Box::new(Ty::Con(
+                                            SmolStr::new_static("Str"),
+                                            Kind::Star,
+                                        )),
+                                        exceptions: Some(Box::new(tc_state.exceptions.clone())),
+                                    }),
                                 }),
                                 loc: expr.loc.clone(),
                             }),
@@ -929,12 +960,18 @@ pub(super) fn check_expr(
                 loc: loc.clone(),
                 node: ast::Stmt::Expr(ast::Expr::Call(ast::CallExpr {
                     fun: Box::new(ast::L {
+                        // ToStr.toStr[t, exn](self: t) Str / exn
                         node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                             ty: SmolStr::new_static("ToStr"),
                             ty_user_ty_args: vec![],
                             member: SmolStr::new_static("toStr"),
                             user_ty_args: vec![],
-                            ty_args: vec![str_buf_ty, tc_state.exceptions.clone()],
+                            ty_args: vec![str_buf_ty.clone(), tc_state.exceptions.clone()],
+                            inferred_ty: Some(Ty::Fun {
+                                args: FunArgs::Positional(vec![str_buf_ty.clone()]),
+                                ret: Box::new(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
+                                exceptions: Some(Box::new(tc_state.exceptions.clone())),
+                            }),
                         }),
                         loc: loc.clone(),
                     }),
@@ -1092,6 +1129,14 @@ pub(super) fn check_expr(
                             member: SmolStr::new_static("__not"),
                             user_ty_args: vec![],
                             ty_args: vec![tc_state.exceptions.clone()],
+                            inferred_ty: Some(Ty::Fun {
+                                args: FunArgs::Positional(vec![Ty::Con(
+                                    SmolStr::new("Bool"),
+                                    Kind::Star,
+                                )]),
+                                ret: Box::new(Ty::Con(SmolStr::new("Bool"), Kind::Star)),
+                                exceptions: Some(Box::new(tc_state.exceptions.clone())),
+                            }),
                         }),
                     }),
                     args: vec![ast::CallArg {
@@ -1463,6 +1508,7 @@ pub(super) fn check_expr(
                             member: SmolStr::new_static("fromIter"),
                             user_ty_args: vec![],
                             ty_args: vec![],
+                            inferred_ty: None,
                         }),
                     };
 
@@ -1489,6 +1535,7 @@ pub(super) fn check_expr(
                                         member: SmolStr::new_static("fromIter"),
                                         user_ty_args: vec![],
                                         ty_args: vec![],
+                                        inferred_ty: None,
                                     }),
                                 };
 

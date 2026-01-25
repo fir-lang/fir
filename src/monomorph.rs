@@ -639,6 +639,7 @@ fn mono_expr(
             member,
             user_ty_args: _,
             ty_args,
+            inferred_ty: _,
         }) => {
             let mono_ty_args: Vec<mono::Type> = ty_args
                 .iter()

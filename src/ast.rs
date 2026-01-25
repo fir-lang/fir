@@ -675,6 +675,8 @@ pub struct AssocFnSelExpr {
 
     /// Inferred type arguments of the type and associated function. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
+
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -1067,7 +1069,9 @@ impl Expr {
                 member: _,
                 user_ty_args,
                 ty_args,
+                inferred_ty,
             }) => {
+                assert!(inferred_ty.is_none());
                 assert!(ty_args.is_empty());
                 for ty_arg in ty_user_ty_args.iter_mut() {
                     ty_arg.node = ty_arg.node.subst_ids(substs);

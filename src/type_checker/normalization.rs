@@ -40,10 +40,22 @@ pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, loc: &ast::Loc, cons: &ScopeM
 fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
     match expr {
         ast::Expr::Var(ast::VarExpr { ty_args, .. })
-        | ast::Expr::ConSel(ast::Con { ty_args, .. })
-        | ast::Expr::AssocFnSel(ast::AssocFnSelExpr { ty_args, .. }) => ty_args
-            .iter_mut()
-            .for_each(|ty| *ty = ty.deep_normalize(cons)),
+        | ast::Expr::ConSel(ast::Con { ty_args, .. }) => {
+            ty_args
+                .iter_mut()
+                .for_each(|ty| *ty = ty.deep_normalize(cons));
+        }
+
+        ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+            ty_args,
+            inferred_ty,
+            ..
+        }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            ty_args
+                .iter_mut()
+                .for_each(|ty| *ty = ty.deep_normalize(cons))
+        }
 
         ast::Expr::Int(_) | ast::Expr::Char(_) => {}
 
