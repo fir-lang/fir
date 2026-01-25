@@ -538,7 +538,7 @@ pub enum Expr {
     /// Some of the unary operators are desugared to method calls by the type checker.
     UnOp(UnOpExpr),
 
-    Return(Box<L<Expr>>),
+    Return(ReturnExpr),
 
     Match(MatchExpr),
 
@@ -689,6 +689,23 @@ pub struct BinOpExpr {
 pub struct UnOpExpr {
     pub op: UnOp,
     pub expr: Box<L<Expr>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ReturnExpr {
+    pub expr: Box<L<Expr>>,
+
+    /// Inferred type of this expression. Filled in by the type checker.
+    ///
+    /// Note that this is different than the returned expression's (`expr`) type. For example:
+    ///
+    /// ```ignore
+    /// f(x, return "hi", y)
+    /// ```
+    ///
+    /// Here the returned expression's type is `Str`, but the `return` expression's type will depend
+    /// on the `f`'s second argument type.
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -1103,7 +1120,10 @@ impl Expr {
                 expr.node.subst_ty_ids(substs);
             }
 
-            Expr::Return(expr) => expr.node.subst_ty_ids(substs),
+            Expr::Return(ReturnExpr {
+                expr,
+                inferred_ty: _,
+            }) => expr.node.subst_ty_ids(substs),
 
             Expr::Match(MatchExpr {
                 scrutinee,

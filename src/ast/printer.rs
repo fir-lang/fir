@@ -653,7 +653,10 @@ impl Expr {
                 buf.push(')');
             }
 
-            Expr::Return(expr) => {
+            Expr::Return(ReturnExpr {
+                expr,
+                inferred_ty: _,
+            }) => {
                 buf.push_str("return ");
                 expr.node.print(buf, 0);
             }

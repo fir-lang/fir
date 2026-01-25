@@ -1120,7 +1120,8 @@ pub(super) fn check_expr(
             }
         },
 
-        ast::Expr::Return(expr) => {
+        ast::Expr::Return(ast::ReturnExpr { expr, inferred_ty }) => {
+            assert!(inferred_ty.is_none());
             let return_ty = tc_state.return_ty.clone();
             check_expr(
                 tc_state,
@@ -1130,16 +1131,15 @@ pub(super) fn check_expr(
                 level,
                 loop_stack,
             );
-            (
-                expected_ty.cloned().unwrap_or_else(|| {
-                    Ty::UVar(
-                        tc_state
-                            .var_gen
-                            .new_var(level, Kind::Star, expr.loc.clone()),
-                    )
-                }),
-                Default::default(),
-            )
+            let expr_ty = expected_ty.cloned().unwrap_or_else(|| {
+                Ty::UVar(
+                    tc_state
+                        .var_gen
+                        .new_var(level, Kind::Star, expr.loc.clone()),
+                )
+            });
+            *inferred_ty = Some(expr_ty.clone());
+            (expr_ty, Default::default())
         }
 
         ast::Expr::Match(match_expr) => {

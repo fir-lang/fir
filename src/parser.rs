@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: d3ddcc2f0bed6e21a163c1f0809306de88291ebcd7137a734cc43b8c6a114741
+// sha3: e6c2b7f0ad502d53a2805f94406b43df78597015f71875adc7d6bb170fcaa674
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -48585,15 +48585,18 @@ fn __action134<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> Expr {
-    Expr::Return(Box::new(L::new(
-        module,
-        l,
-        r,
-        Expr::Record(RecordExpr {
-            fields: vec![],
-            inferred_ty: None,
-        }),
-    )))
+    Expr::Return(ReturnExpr {
+        expr: Box::new(L::new(
+            module,
+            l,
+            r,
+            Expr::Record(RecordExpr {
+                fields: vec![],
+                inferred_ty: None,
+            }),
+        )),
+        inferred_ty: None,
+    })
 }
 
 #[allow(unused_variables)]
@@ -48617,7 +48620,10 @@ fn __action136<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
 ) -> Expr {
-    Expr::Return(Box::new(expr))
+    Expr::Return(ReturnExpr {
+        expr: Box::new(expr),
+        inferred_ty: None,
+    })
 }
 
 #[allow(unused_variables)]

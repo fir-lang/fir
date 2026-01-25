@@ -108,8 +108,11 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             normalize_expr(&mut expr.node, cons);
         }
 
-        ast::Expr::Return(expr) => {
+        ast::Expr::Return(ast::ReturnExpr { expr, inferred_ty }) => {
             normalize_expr(&mut expr.node, cons);
+            if let Some(inferred_ty) = inferred_ty.as_mut() {
+                *inferred_ty = inferred_ty.deep_normalize(cons);
+            }
         }
 
         ast::Expr::Match(ast::MatchExpr {

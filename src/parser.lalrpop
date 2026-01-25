@@ -881,11 +881,14 @@ InlineExpr: Expr = {
         }),
 
     <l:@L> "return" <r:@R> =>
-        Expr::Return(Box::new(L::new(module, l, r, Expr::Record(RecordExpr { fields: vec![], inferred_ty: None })))),
+        Expr::Return(ReturnExpr {
+            expr: Box::new(L::new(module, l, r, Expr::Record(RecordExpr { fields: vec![], inferred_ty: None }))),
+            inferred_ty: None,
+        }),
 
     #[precedence(level = "12")]
     "return" <expr:LInlineExpr> =>
-        Expr::Return(Box::new(expr)),
+        Expr::Return(ReturnExpr { expr: Box::new(expr), inferred_ty: None }),
 
     "\\(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
          <ret:ReturnType> ":" <body:LInlineExpr> =>

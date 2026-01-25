@@ -740,9 +740,10 @@ fn mono_expr(
             ast::UnOp::Not => panic!("Not unop wasn't desugared"),
         },
 
-        ast::Expr::Return(expr) => {
-            mono::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
-        }
+        ast::Expr::Return(ast::ReturnExpr {
+            expr,
+            inferred_ty: _,
+        }) => mono::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals)),
 
         ast::Expr::Match(ast::MatchExpr {
             scrutinee,
