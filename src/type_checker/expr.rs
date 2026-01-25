@@ -597,7 +597,7 @@ pub(super) fn check_expr(
             // call to avoid closure allocation.
             if let ast::Expr::MethodSel(ast::MethodSelExpr {
                 object,
-                object_ty: _,
+                object_ty,
                 method_ty_id,
                 method,
                 ty_args,
@@ -615,13 +615,34 @@ pub(super) fn check_expr(
                     },
                 );
 
+                let assoc_fn_ty = match &fun_ty {
+                    Ty::Fun {
+                        args: FunArgs::Positional(method_args),
+                        ret,
+                        exceptions,
+                    } => {
+                        let mut full_args = vec![object_ty.clone().unwrap()];
+                        full_args.extend(method_args.iter().cloned());
+                        Ty::Fun {
+                            args: FunArgs::Positional(full_args),
+                            ret: ret.clone(),
+                            exceptions: exceptions.clone(),
+                        }
+                    }
+                    _ => panic!(
+                        "{}: Method type is not a function with positional args: {:?}",
+                        loc_display(loc),
+                        fun_ty
+                    ),
+                };
+
                 fun.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                     ty: method_ty_id.clone(),
                     ty_user_ty_args: vec![], // unused after type checking
                     member: method.clone(),
                     user_ty_args: vec![], // unused after type checking
                     ty_args: ty_args.clone(),
-                    inferred_ty: Some(fun_ty.clone()),
+                    inferred_ty: Some(assoc_fn_ty),
                 });
             }
 
