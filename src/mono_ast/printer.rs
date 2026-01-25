@@ -202,10 +202,6 @@ impl Type {
                 buf.push_str(" / ");
                 exn.print(buf);
             }
-
-            Type::Never => {
-                buf.push('!');
-            }
         }
     }
 }
@@ -484,6 +480,7 @@ impl Expr {
             Expr::If(IfExpr {
                 branches,
                 else_branch,
+                ty: _,
             }) => {
                 buf.push_str("if ");
                 branches[0].0.node.print(buf, 0);

@@ -137,8 +137,6 @@ fn visit_ty(ty: &mono::Type, records: &mut HashSet<RecordType>) {
             visit_ty(ret, records);
             visit_ty(exn, records);
         }
-
-        mono::Type::Never => {}
     }
 }
 
@@ -258,7 +256,9 @@ fn visit_expr(expr: &mono::Expr, records: &mut HashSet<RecordType>) {
         mono::Expr::If(mono::IfExpr {
             branches,
             else_branch,
+            ty,
         }) => {
+            visit_ty(ty, records);
             for (expr, stmts) in branches {
                 visit_expr(&expr.node, records);
                 for stmt in stmts {

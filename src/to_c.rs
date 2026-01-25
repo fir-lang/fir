@@ -851,10 +851,6 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
             out.push('_');
             ty_to_c(exn, out);
         }
-
-        mono::Type::Never => {
-            out.push_str("Never");
-        }
     }
 }
 
@@ -2700,8 +2696,6 @@ fn type_heap_obj_deps(
             type_heap_obj_deps(type_objs, ret, deps);
             type_heap_obj_deps(type_objs, exn, deps);
         }
-
-        mono::Type::Never => {}
     }
 }
 

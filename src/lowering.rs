@@ -112,10 +112,7 @@ impl Repr {
                 }
             }
 
-            mono::Type::Record { .. }
-            | mono::Type::Variant { .. }
-            | mono::Type::Fn(_)
-            | mono::Type::Never => Repr::U64,
+            mono::Type::Record { .. } | mono::Type::Variant { .. } | mono::Type::Fn(_) => Repr::U64,
         }
     }
 
@@ -1450,7 +1447,6 @@ fn lower_expr(
 
         mono::Expr::TopVar(mono::VarExpr { id, ty_args, ty: _ }) => {
             let fun_idx: FunIdx = *indices.funs.get(id).unwrap().get(ty_args).unwrap();
-            let fun_decl: &mono::FunDecl = mono_pgm.funs.get(id).unwrap().get(ty_args).unwrap();
             (Expr::Fun(fun_idx), Default::default())
         }
 
@@ -1460,11 +1456,6 @@ fn lower_expr(
             ty_args,
             ty: _,
         }) => {
-            let ret_ty = mono::Type::Named(mono::NamedType {
-                name: ty_id.clone(),
-                args: ty_args.clone(),
-            });
-
             let idx: HeapObjIdx = match con {
                 Some(con) => *indices
                     .sum_cons
@@ -1504,24 +1495,6 @@ fn lower_expr(
                 None => &mono::ConFields::Empty,
             };
 
-            let con_ty = match con_fields {
-                mono::ConFields::Empty => ret_ty,
-
-                mono::ConFields::Named(args) => mono::Type::Fn(mono::FnType {
-                    args: mono::FunArgs::Named(
-                        args.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
-                    ),
-                    ret: Box::new(ret_ty),
-                    exn: Box::new(mono::Type::empty()),
-                }),
-
-                mono::ConFields::Unnamed(args) => mono::Type::Fn(mono::FnType {
-                    args: mono::FunArgs::Positional(args.clone()),
-                    ret: Box::new(ret_ty),
-                    exn: Box::new(mono::Type::empty()),
-                }),
-            };
-
             let expr = if let mono::ConFields::Empty = con_fields {
                 Expr::ConAlloc(idx, vec![])
             } else {
@@ -1540,7 +1513,7 @@ fn lower_expr(
 
             let (object, _object_vars) = lower_bl_expr(object, closures, indices, scope, mono_pgm);
 
-            let (field_ty, field_idx): (mono::Type, u32) = match object_ty {
+            let field_idx: u32 = match object_ty {
                 mono::Type::Named(mono::NamedType { name, args }) => {
                     let ty_decl: &mono::TypeDecl =
                         mono_pgm.ty.get(&name).unwrap().get(&args).unwrap();
@@ -1563,24 +1536,14 @@ fn lower_expr(
                                 );
                             }
                             mono::ConFields::Named(named_fields) => {
-                                let mut field_ty: Option<mono::Type> = None;
                                 let mut field_idx: u32 = 0;
-                                for (field_idx_, (ty_field_name, ty_field_ty)) in
-                                    named_fields.iter().enumerate()
-                                {
+                                for (field_idx_, ty_field_name) in named_fields.keys().enumerate() {
                                     if ty_field_name == field {
-                                        field_ty = Some(ty_field_ty.clone());
                                         field_idx = field_idx_ as u32;
                                         break;
                                     }
                                 }
-                                let field_ty = field_ty.unwrap_or_else(|| {
-                                    panic!(
-                                        "{}: FieldSel object doesn't have named field",
-                                        loc_display(loc)
-                                    )
-                                });
-                                (field_ty, field_idx)
+                                field_idx
                             }
                             mono::ConFields::Unnamed(_) => {
                                 panic!(
@@ -1593,26 +1556,14 @@ fn lower_expr(
                 }
 
                 mono::Type::Record { fields } => {
-                    let mut field_ty: Option<mono::Type> = None;
                     let mut field_idx: u32 = 0;
-                    for (field_idx_, (record_field_name, record_field_ty)) in
-                        fields.iter().enumerate()
-                    {
+                    for (field_idx_, record_field_name) in fields.keys().enumerate() {
                         if record_field_name == field {
-                            field_ty = Some(record_field_ty.clone());
                             field_idx = field_idx_ as u32;
                             break;
                         }
                     }
-                    let field_ty = field_ty.unwrap_or_else(|| {
-                        panic!(
-                            "BUG: {}: FieldSel object with type {} doesn't have the field '{}'",
-                            loc_display(loc),
-                            mono::Type::Record { fields },
-                            field
-                        )
-                    });
-                    (field_ty, field_idx)
+                    field_idx
                 }
 
                 mono::Type::Variant { .. } => {
@@ -1620,8 +1571,6 @@ fn lower_expr(
                 }
 
                 mono::Type::Fn(_) => panic!("BUG: {}: FieldSel of function", loc_display(loc)),
-
-                mono::Type::Never => (mono::Type::Never, 0),
             };
 
             (
@@ -1670,10 +1619,6 @@ fn lower_expr(
                         loc_display(loc),
                         fun_ty,
                     )
-                }
-
-                mono::Type::Never => {
-                    return (fun.node, Default::default());
                 }
             };
 
@@ -1749,18 +1694,14 @@ fn lower_expr(
 
         mono::Expr::Int(int) => {
             let kind = int.kind.unwrap();
-            let (int_ty_con, value) = match kind {
-                ast::IntKind::I8(val) => ("I8", val as u8 as u64),
-                ast::IntKind::U8(val) => ("U8", val as u64),
-                ast::IntKind::I32(val) => ("I32", val as u32 as u64),
-                ast::IntKind::U32(val) => ("U32", val as u64),
-                ast::IntKind::I64(val) => ("I64", val as u64),
-                ast::IntKind::U64(val) => ("U64", val),
+            let value = match kind {
+                ast::IntKind::I8(val) => val as u8 as u64,
+                ast::IntKind::U8(val) => val as u64,
+                ast::IntKind::I32(val) => val as u32 as u64,
+                ast::IntKind::U32(val) => val as u64,
+                ast::IntKind::I64(val) => val as u64,
+                ast::IntKind::U64(val) => val,
             };
-            let ty: mono::Type = mono::Type::Named(mono::NamedType {
-                name: SmolStr::new_static(int_ty_con),
-                args: vec![],
-            });
             (Expr::Int(value), Default::default())
         }
 
@@ -1908,6 +1849,7 @@ fn lower_expr(
         mono::Expr::If(mono::IfExpr {
             branches,
             else_branch,
+            ty: _,
         }) => {
             let expr = Expr::If(IfExpr {
                 branches: branches
@@ -2006,7 +1948,6 @@ fn lower_expr(
 
         mono::Expr::Do(stmts, _) => {
             scope.bounds.enter();
-            let mut body_ty: Option<mono::Type> = None;
             let expr = Expr::Do(
                 stmts
                     .iter()
@@ -2017,7 +1958,7 @@ fn lower_expr(
             (expr, Default::default())
         }
 
-        mono::Expr::Variant(mono::VariantExpr { expr, ty }) => {
+        mono::Expr::Variant(mono::VariantExpr { expr, ty: _ }) => {
             // Note: Type of the expr in the variant won't be a variant type. Use the
             // `VariantExpr`'s type.
             let (expr, vars) = lower_bl_expr(expr, closures, indices, scope, mono_pgm);

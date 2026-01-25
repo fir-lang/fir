@@ -821,7 +821,7 @@ fn mono_expr(
         ast::Expr::If(ast::IfExpr {
             branches,
             else_branch,
-            inferred_ty: _,
+            inferred_ty,
         }) => mono::Expr::If(mono::IfExpr {
             branches: branches
                 .iter()
@@ -839,6 +839,7 @@ fn mono_expr(
                 locals.exit();
                 stmts
             }),
+            ty: mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
         }),
 
         ast::Expr::Fn(ast::FnExpr {
@@ -1958,11 +1959,6 @@ fn get_record_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::Type> {
                 other
             )
         }
-
-        mono::Type::Never => {
-            // This can't happen as we only infer `Never` during lowering.
-            panic!()
-        }
     }
 }
 
@@ -1976,11 +1972,6 @@ fn get_variant_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::NamedType>
                 loc_display(loc),
                 other
             )
-        }
-
-        mono::Type::Never => {
-            // This can't happen as we only infer `Never` during lowering.
-            panic!()
         }
     }
 }

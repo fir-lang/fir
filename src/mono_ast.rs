@@ -63,9 +63,6 @@ pub enum Type {
     },
 
     Fn(FnType),
-
-    /// Type of expressions that don't generate a value. E.g. `continue`, `break`.
-    Never,
 }
 
 impl Type {
@@ -248,6 +245,7 @@ pub struct VariantPat {
 pub struct IfExpr {
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
     pub else_branch: Option<Vec<L<Stmt>>>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
@@ -299,7 +297,20 @@ impl Expr {
             | Expr::Return(_, ty)
             | Expr::Match(MatchExpr { ty, .. }) => ty.clone(),
 
-            Expr::Int(_) => todo!(),
+            Expr::Int(IntExpr { kind, .. }) => {
+                let con = match kind.unwrap() {
+                    IntKind::I8(_) => "I8",
+                    IntKind::U8(_) => "U8",
+                    IntKind::I32(_) => "I32",
+                    IntKind::U32(_) => "U32",
+                    IntKind::I64(_) => "I64",
+                    IntKind::U64(_) => "U64",
+                };
+                Type::Named(NamedType {
+                    name: Id::new_static(con),
+                    args: vec![],
+                })
+            }
 
             Expr::Str(_) => Type::str(),
 
