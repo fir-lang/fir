@@ -554,7 +554,7 @@ fn eval<W: Write>(
             }
         }
 
-        Expr::Return(expr) => ControlFlow::Ret(val!(eval(
+        Expr::Return(expr, _) => ControlFlow::Ret(val!(eval(
             w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
         ))),
 

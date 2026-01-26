@@ -2097,7 +2097,7 @@ fn stmt_to_c(
         },
 
         Stmt::Expr(expr) => {
-            if let Some((result_var, result_ty)) = result_var {
+            if let Some((result_var, _result_ty)) = result_var {
                 w!(p, "{result_var} = ");
             }
             expr_to_c(
@@ -2107,7 +2107,7 @@ fn stmt_to_c(
                 locals,
                 cg,
                 p,
-            ); // TODO: expected type
+            );
             wln!(p, ";");
         }
 
@@ -2403,17 +2403,17 @@ fn expr_to_c(
             w!(p, "}})");
         }
 
-        Expr::Return(expr) => {
+        Expr::Return(expr, ty) => {
             w!(p, "({{");
             p.indent();
             p.nl();
             w!(p, "return ");
-            expr_to_c(&expr.node, &expr.loc, expected_ty, locals, cg, p);
+            expr_to_c(&expr.node, &expr.loc, None, locals, cg, p);
             wln!(p, ";");
-            match expected_ty {
-                Some(ty) if is_value_type(ty) => w!(p, "0;"),
-                Some(ty) => w!(p, "({})NULL;", c_ty(ty)),
-                None => {}
+            if is_value_type(ty) {
+                w!(p, "0;");
+            } else {
+                w!(p, "({})NULL;", c_ty(ty));
             }
             p.dedent();
             p.nl();

@@ -392,7 +392,14 @@ pub enum Expr {
 
     BoolOr(Box<L<Expr>>, Box<L<Expr>>),
 
-    Return(Box<L<Expr>>),
+    Return(
+        /// The returned expression.
+        Box<L<Expr>>,
+        /// Type of the `return` expression.
+        ///
+        /// Note: this is not the the type of the returned expression!
+        mono::Type,
+    ),
 
     Match(MatchExpr),
 
@@ -1860,9 +1867,9 @@ fn lower_expr(
             (Expr::Do(stmts, ty), Default::default())
         }
 
-        mono::Expr::Return(expr, _) => {
+        mono::Expr::Return(expr, ty) => {
             let (expr, _pat_vars) = lower_bl_expr(expr, closures, indices, scope, mono_pgm);
-            (Expr::Return(expr), Default::default())
+            (Expr::Return(expr, ty.clone()), Default::default())
         }
 
         mono::Expr::Match(mono::MatchExpr {

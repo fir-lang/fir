@@ -293,7 +293,7 @@ impl Expr {
                 e2.node.print(buf, indent);
             }
 
-            Expr::Return(expr) => {
+            Expr::Return(expr, _) => {
                 buf.push_str("return ");
                 expr.node.print(buf, indent);
             }
