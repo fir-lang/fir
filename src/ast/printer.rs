@@ -461,6 +461,7 @@ impl Expr {
                 id,
                 user_ty_args,
                 ty_args,
+                inferred_ty: _,
             }) => {
                 buf.push_str(id);
                 print_user_ty_args(user_ty_args, buf);
@@ -471,6 +472,7 @@ impl Expr {
                 object,
                 field,
                 user_ty_args,
+                inferred_ty: _,
             }) => {
                 object.node.print(buf, indent);
                 buf.push('.');
@@ -484,6 +486,7 @@ impl Expr {
                 method_ty_id,
                 method,
                 ty_args,
+                inferred_ty: _,
             }) => {
                 object.node.print(buf, indent);
                 buf.push_str(".{");
@@ -503,6 +506,7 @@ impl Expr {
                 member,
                 user_ty_args,
                 ty_args,
+                inferred_ty: _,
             }) => {
                 buf.push_str(ty);
                 print_user_ty_args(ty_user_ty_args, buf);
@@ -512,7 +516,11 @@ impl Expr {
                 print_ty_args(ty_args, buf);
             }
 
-            Expr::Call(CallExpr { fun, args }) => {
+            Expr::Call(CallExpr {
+                fun,
+                args,
+                inferred_ty: _,
+            }) => {
                 let parens = !matches!(
                     &fun.node,
                     Expr::Var(_)
@@ -651,12 +659,19 @@ impl Expr {
                 buf.push(')');
             }
 
-            Expr::Return(expr) => {
+            Expr::Return(ReturnExpr {
+                expr,
+                inferred_ty: _,
+            }) => {
                 buf.push_str("return ");
                 expr.node.print(buf, 0);
             }
 
-            Expr::Match(MatchExpr { scrutinee, alts }) => {
+            Expr::Match(MatchExpr {
+                scrutinee,
+                alts,
+                inferred_ty: _,
+            }) => {
                 buf.push_str("match ");
                 scrutinee.node.print(buf, indent);
                 buf.push_str(":\n");
@@ -684,6 +699,7 @@ impl Expr {
             Expr::If(IfExpr {
                 branches,
                 else_branch,
+                inferred_ty: _,
             }) => {
                 buf.push_str("if ");
                 branches[0].0.node.print(buf, indent);
@@ -751,9 +767,12 @@ impl Expr {
                 buf.push(')');
             }
 
-            Expr::Do(body) => {
+            Expr::Do(DoExpr {
+                stmts,
+                inferred_ty: _,
+            }) => {
                 buf.push_str("do:\n");
-                for (i, stmt) in body.iter().enumerate() {
+                for (i, stmt) in stmts.iter().enumerate() {
                     if i != 0 {
                         buf.push('\n');
                     }

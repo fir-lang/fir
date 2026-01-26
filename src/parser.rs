@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: f96403d4df1caaf058802e24fd6c0f309c07cbe7e8953b37010a5b1814d82b54
+// sha3: f7a8829affc1d86e00b24542123a0e5870ee952878606b525e1e96baeb8430d1
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -47436,6 +47436,7 @@ fn __action72<'a>(
                     con: Some(SmolStr::new_static("True")),
                     user_ty_args: vec![],
                     ty_args: vec![],
+                    inferred_ty: None,
                 }),
             ),
             body,
@@ -47658,6 +47659,7 @@ fn __action87<'a>(
     Expr::Match(MatchExpr {
         scrutinee: Box::new(expr),
         alts,
+        inferred_ty: None,
     })
 }
 
@@ -47684,6 +47686,7 @@ fn __action88<'a>(
         Expr::If(IfExpr {
             branches,
             else_branch,
+            inferred_ty: None,
         })
     }
 }
@@ -47703,7 +47706,12 @@ fn __action89<'a>(
     (_, stmts, _): (Loc, Vec<L<Stmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Expr {
-    { Expr::Do(stmts) }
+    {
+        Expr::Do(DoExpr {
+            stmts,
+            inferred_ty: None,
+        })
+    }
 }
 
 #[allow(unused_variables)]
@@ -47775,6 +47783,7 @@ fn __action92<'a>(
             id: str,
             user_ty_args,
             ty_args: vec![],
+            inferred_ty: None,
         })
     }
 }
@@ -47791,6 +47800,7 @@ fn __action93<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
         con: None,
         user_ty_args: vec![],
         ty_args: vec![],
+        inferred_ty: None,
     })
 }
 
@@ -47811,6 +47821,7 @@ fn __action94<'a>(
         con: None,
         user_ty_args,
         ty_args: vec![],
+        inferred_ty: None,
     })
 }
 
@@ -47830,6 +47841,7 @@ fn __action95<'a>(module: &'a Rc<str>, (_, path, _): (Loc, Token, Loc)) -> Expr 
             con: Some(con),
             user_ty_args: vec![],
             ty_args: vec![],
+            inferred_ty: None,
         })
     }
 }
@@ -47855,6 +47867,7 @@ fn __action96<'a>(
             con: Some(con),
             user_ty_args,
             ty_args: vec![],
+            inferred_ty: None,
         })
     }
 }
@@ -47957,6 +47970,7 @@ fn __action102<'a>(
     Expr::Call(CallExpr {
         fun: Box::new(L::new(module, l, r, fun)),
         args,
+        inferred_ty: None,
     })
 }
 
@@ -47981,18 +47995,21 @@ fn __action103<'a>(
             con: None,
             user_ty_args: ty_user_ty_args,
             ty_args: _,
+            inferred_ty: _,
         }) => Expr::AssocFnSel(AssocFnSelExpr {
             ty: id,
             ty_user_ty_args,
             member: field.smol_str(),
             user_ty_args,
             ty_args: vec![],
+            inferred_ty: None,
         }),
 
         _ => Expr::FieldSel(FieldSelExpr {
             object: Box::new(L::new(module, l, r, expr)),
             field: field.smol_str(),
             user_ty_args,
+            inferred_ty: None,
         }),
     }
 }
@@ -48573,15 +48590,18 @@ fn __action134<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> Expr {
-    Expr::Return(Box::new(L::new(
-        module,
-        l,
-        r,
-        Expr::Record(RecordExpr {
-            fields: vec![],
-            inferred_ty: None,
-        }),
-    )))
+    Expr::Return(ReturnExpr {
+        expr: Box::new(L::new(
+            module,
+            l,
+            r,
+            Expr::Record(RecordExpr {
+                fields: vec![],
+                inferred_ty: None,
+            }),
+        )),
+        inferred_ty: None,
+    })
 }
 
 #[allow(unused_variables)]
@@ -48605,7 +48625,10 @@ fn __action136<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
 ) -> Expr {
-    Expr::Return(Box::new(expr))
+    Expr::Return(ReturnExpr {
+        expr: Box::new(expr),
+        inferred_ty: None,
+    })
 }
 
 #[allow(unused_variables)]
@@ -48912,6 +48935,7 @@ fn __action156<'a>(module: &'a Rc<str>, (_, ty, _): (Loc, Token, Loc)) -> Con {
         con: None,
         user_ty_args: vec![],
         ty_args: vec![],
+        inferred_ty: None,
     }
 }
 
@@ -48931,6 +48955,7 @@ fn __action157<'a>(module: &'a Rc<str>, (_, path, _): (Loc, Token, Loc)) -> Con 
             con: Some(con),
             user_ty_args: vec![],
             ty_args: vec![],
+            inferred_ty: None,
         }
     }
 }

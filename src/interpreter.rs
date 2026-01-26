@@ -52,6 +52,7 @@ impl Pgm {
             funs,
             closures,
             type_objs: _,
+            record_objs: _,
             true_con_idx,
             false_con_idx,
             char_con_idx,
@@ -399,7 +400,11 @@ fn exec<W: Write>(
                 return ControlFlow::Continue(*level);
             }
 
-            Stmt::Let(LetStmt { lhs, rhs }) => {
+            Stmt::Let(LetStmt {
+                lhs,
+                rhs,
+                rhs_ty: _,
+            }) => {
                 let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc, call_stack));
                 if !try_bind_pat(pgm, heap, lhs, locals, val) {
                     panic!("{}: Pattern binding failed", loc_display(&stmt.loc));
@@ -468,7 +473,7 @@ fn eval<W: Write>(
 
         Expr::Con(con_idx) => ControlFlow::Val(heap.allocate_con(con_idx.as_u64())),
 
-        Expr::ConAlloc(con_idx, args) => {
+        Expr::ConAlloc(con_idx, args, _arg_tys, _con_ty) => {
             if args.is_empty() {
                 ControlFlow::Val(pgm.allocs[con_idx.as_usize()])
             } else {
@@ -480,6 +485,7 @@ fn eval<W: Write>(
             object,
             field: _,
             idx,
+            object_ty: _,
         }) => {
             let object = val!(eval(
                 w,
@@ -493,7 +499,11 @@ fn eval<W: Write>(
             ControlFlow::Val(heap[object + 1 + (*idx as u64)])
         }
 
-        Expr::Call(CallExpr { fun, args }) => {
+        Expr::Call(CallExpr {
+            fun,
+            args,
+            fun_ty: _,
+        }) => {
             // See if `fun` is a function to avoid closure allocations.
             let fun: u64 = match &fun.node {
                 Expr::Fun(fun_idx) => {
@@ -543,11 +553,16 @@ fn eval<W: Write>(
             }
         }
 
-        Expr::Return(expr) => ControlFlow::Ret(val!(eval(
+        Expr::Return(expr, _) => ControlFlow::Ret(val!(eval(
             w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
         ))),
 
-        Expr::Match(MatchExpr { scrutinee, alts }) => {
+        Expr::Match(MatchExpr {
+            scrutinee,
+            alts,
+            scrut_ty: _,
+            ty: _,
+        }) => {
             let scrut = val!(eval(
                 w,
                 pgm,
@@ -584,6 +599,7 @@ fn eval<W: Write>(
         Expr::If(IfExpr {
             branches,
             else_branch,
+            ty: _,
         }) => {
             for (cond, stmts) in branches {
                 let cond = val!(eval(
@@ -613,7 +629,11 @@ fn eval<W: Write>(
             ControlFlow::Val(alloc)
         }
 
-        Expr::Is(IsExpr { expr, pat }) => {
+        Expr::Is(IsExpr {
+            expr,
+            pat,
+            expr_ty: _,
+        }) => {
             let val = val!(eval(
                 w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
             ));
@@ -624,7 +644,7 @@ fn eval<W: Write>(
             })
         }
 
-        Expr::Do(stmts) => exec(w, pgm, heap, locals, stmts, call_stack),
+        Expr::Do(stmts, _) => exec(w, pgm, heap, locals, stmts, call_stack),
 
         Expr::Variant(expr) => {
             // Note: the interpreter can only deal with variants of boxed types. If `expr` is an
@@ -659,6 +679,7 @@ fn assign<W: Write>(
             object,
             field: _,
             idx,
+            object_ty: _,
         }) => {
             let object = val!(eval(
                 w,

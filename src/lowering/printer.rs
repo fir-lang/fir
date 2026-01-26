@@ -177,7 +177,11 @@ impl LoweredPgm {
 impl Stmt {
     pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
-            Stmt::Let(LetStmt { lhs, rhs }) => {
+            Stmt::Let(LetStmt {
+                lhs,
+                rhs,
+                rhs_ty: _,
+            }) => {
                 buf.push_str("let ");
                 lhs.node.print(buf);
                 buf.push_str(" = ");
@@ -229,7 +233,7 @@ impl Expr {
 
             Expr::Con(idx) => write!(buf, "con{}", idx.0).unwrap(),
 
-            Expr::ConAlloc(idx, args) => {
+            Expr::ConAlloc(idx, args, _arg_tys, _con_ty) => {
                 write!(buf, "con{}", idx.0).unwrap();
                 buf.push('(');
                 for (i, expr) in args.iter().enumerate() {
@@ -245,13 +249,18 @@ impl Expr {
                 object,
                 field,
                 idx: _,
+                object_ty: _,
             }) => {
                 object.node.print(buf, indent);
                 buf.push('.');
                 buf.push_str(field);
             }
 
-            Expr::Call(CallExpr { fun, args }) => {
+            Expr::Call(CallExpr {
+                fun,
+                args,
+                fun_ty: _,
+            }) => {
                 fun.node.print(buf, indent);
                 buf.push('(');
                 for (i, expr) in args.iter().enumerate() {
@@ -283,12 +292,17 @@ impl Expr {
                 e2.node.print(buf, indent);
             }
 
-            Expr::Return(expr) => {
+            Expr::Return(expr, _) => {
                 buf.push_str("return ");
                 expr.node.print(buf, indent);
             }
 
-            Expr::Match(MatchExpr { scrutinee, alts }) => {
+            Expr::Match(MatchExpr {
+                scrutinee,
+                alts,
+                scrut_ty: _,
+                ty: _,
+            }) => {
                 buf.push_str("match ");
                 scrutinee.node.print(buf, indent);
                 buf.push_str(":\n");
@@ -313,6 +327,7 @@ impl Expr {
             Expr::If(IfExpr {
                 branches,
                 else_branch,
+                ty: _,
             }) => {
                 buf.push_str("if ");
                 branches[0].0.node.print(buf, indent);
@@ -345,7 +360,11 @@ impl Expr {
 
             Expr::ClosureAlloc(idx) => write!(buf, "closure{}", idx.0).unwrap(),
 
-            Expr::Is(IsExpr { expr, pat }) => {
+            Expr::Is(IsExpr {
+                expr,
+                pat,
+                expr_ty: _,
+            }) => {
                 buf.push('(');
                 expr.node.print(buf, indent);
                 buf.push_str(" is ");
@@ -353,7 +372,7 @@ impl Expr {
                 buf.push(')');
             }
 
-            Expr::Do(body) => {
+            Expr::Do(body, _) => {
                 buf.push_str("do:\n");
                 for stmt in body.iter() {
                     buf.push_str(&INDENTS[0..indent as usize + 4]);

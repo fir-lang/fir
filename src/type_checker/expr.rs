@@ -37,7 +37,9 @@ pub(super) fn check_expr(
             id: var,
             user_ty_args,
             ty_args,
+            inferred_ty,
         }) => {
+            assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
             // Check if local.
@@ -49,6 +51,7 @@ pub(super) fn check_expr(
                         var
                     );
                 }
+                *inferred_ty = Some(ty.clone());
                 return (
                     unify_expected_ty(
                         ty.clone(),
@@ -75,6 +78,7 @@ pub(super) fn check_expr(
                     id: var.clone(),
                     user_ty_args: vec![],
                     ty_args: ty_args.into_iter().map(Ty::UVar).collect(),
+                    inferred_ty: Some(ty.clone()),
                 });
 
                 ty
@@ -100,6 +104,7 @@ pub(super) fn check_expr(
                     id: var.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
+                    inferred_ty: Some(ty.clone()),
                 });
 
                 ty
@@ -124,7 +129,10 @@ pub(super) fn check_expr(
             object,
             field,
             user_ty_args,
+            inferred_ty,
         }) => {
+            assert!(inferred_ty.is_none());
+
             let ty = {
                 let (object_ty, _) = check_expr(
                     tc_state,
@@ -153,7 +161,7 @@ pub(super) fn check_expr(
                             labels,
                             extension.clone(),
                         );
-                        match labels.get(field) {
+                        let ty = match labels.get(field) {
                             Some(field_ty) => field_ty.clone(),
                             None => panic!(
                                 "{}: Record with fields {:?} does not have field {}",
@@ -161,7 +169,9 @@ pub(super) fn check_expr(
                                 labels.keys().collect::<Vec<_>>(),
                                 field
                             ),
-                        }
+                        };
+                        *inferred_ty = Some(ty.clone());
+                        ty
                     }
 
                     other => {
@@ -199,7 +209,9 @@ pub(super) fn check_expr(
             con,
             user_ty_args,
             ty_args,
+            inferred_ty,
         }) => {
+            assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
             let ty_con: &TyCon = tc_state
@@ -258,6 +270,7 @@ pub(super) fn check_expr(
                     con: con.clone(),
                     user_ty_args: vec![],
                     ty_args: con_ty_args.into_iter().map(Ty::UVar).collect(),
+                    inferred_ty: Some(con_ty.clone()),
                 });
 
                 con_ty
@@ -287,6 +300,7 @@ pub(super) fn check_expr(
                     con: con.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
+                    inferred_ty: Some(con_ty.clone()),
                 });
 
                 con_ty
@@ -311,7 +325,9 @@ pub(super) fn check_expr(
             member,
             user_ty_args,
             ty_args,
+            inferred_ty,
         }) => {
+            assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
             if !ty_user_ty_args.is_empty() {
@@ -394,6 +410,7 @@ pub(super) fn check_expr(
                     member: member.clone(),
                     user_ty_args: vec![],
                     ty_args: method_ty_args.into_iter().map(Ty::UVar).collect(),
+                    inferred_ty: Some(method_ty.clone()),
                 });
 
                 method_ty
@@ -418,29 +435,37 @@ pub(super) fn check_expr(
                     member: member.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
+                    inferred_ty: Some(method_ty.clone()),
                 });
 
                 method_ty
             };
 
-            (
-                unify_expected_ty(
-                    method_ty,
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    loc,
-                ),
-                Default::default(),
-            )
+            let expr_ty = unify_expected_ty(
+                method_ty,
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                loc,
+            );
+
+            (expr_ty, Default::default())
         }
 
-        ast::Expr::Call(ast::CallExpr { fun, args }) => {
+        ast::Expr::Call(ast::CallExpr {
+            fun,
+            args,
+            inferred_ty,
+        }) => {
+            assert!(inferred_ty.is_none());
+
             let (fun_ty, _) =
                 check_expr(tc_state, &mut fun.node, &fun.loc, None, level, loop_stack);
 
-            let ret_ty = match fun_ty.normalize(tc_state.tys.tys.cons()) {
+            let fun_ty = fun_ty.normalize(tc_state.tys.tys.cons());
+
+            let ret_ty = match &fun_ty {
                 Ty::Fun {
                     args: param_tys,
                     ret: ret_ty,
@@ -456,7 +481,7 @@ pub(super) fn check_expr(
                     }
 
                     let ret_ty = unify_expected_ty(
-                        *ret_ty,
+                        (**ret_ty).clone(),
                         expected_ty,
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
@@ -497,6 +522,7 @@ pub(super) fn check_expr(
                                             id,
                                             user_ty_args: _,
                                             ty_args: _,
+                                            inferred_ty: _,
                                         }) => {
                                             arg.name = Some(id.clone());
                                         }
@@ -571,12 +597,15 @@ pub(super) fn check_expr(
             // call to avoid closure allocation.
             if let ast::Expr::MethodSel(ast::MethodSelExpr {
                 object,
-                object_ty: _,
+                object_ty,
                 method_ty_id,
                 method,
                 ty_args,
+                inferred_ty,
             }) = &fun.node
             {
+                assert_eq!(inferred_ty.as_ref().unwrap(), &fun_ty);
+
                 // Methods can't have named arguments.
                 args.insert(
                     0,
@@ -586,14 +615,38 @@ pub(super) fn check_expr(
                     },
                 );
 
+                let assoc_fn_ty = match &fun_ty {
+                    Ty::Fun {
+                        args: FunArgs::Positional(method_args),
+                        ret,
+                        exceptions,
+                    } => {
+                        let mut full_args = vec![object_ty.clone().unwrap()];
+                        full_args.extend(method_args.iter().cloned());
+                        Ty::Fun {
+                            args: FunArgs::Positional(full_args),
+                            ret: ret.clone(),
+                            exceptions: exceptions.clone(),
+                        }
+                    }
+                    _ => panic!(
+                        "{}: Method type is not a function with positional args: {:?}",
+                        loc_display(loc),
+                        fun_ty
+                    ),
+                };
+
                 fun.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                     ty: method_ty_id.clone(),
                     ty_user_ty_args: vec![], // unused after type checking
                     member: method.clone(),
                     user_ty_args: vec![], // unused after type checking
                     ty_args: ty_args.clone(),
+                    inferred_ty: Some(assoc_fn_ty),
                 });
             }
+
+            *inferred_ty = Some(ret_ty.clone());
 
             (ret_ty, Default::default())
         }
@@ -804,7 +857,7 @@ pub(super) fn check_expr(
                         loc: loc.clone(),
                         node: ast::Pat::Var(ast::VarPat {
                             var: buf_id.clone(),
-                            ty: Some(Ty::Con(SmolStr::new_static("StrBuf"), Kind::Star)),
+                            ty: Some(str_buf_ty.clone()),
                         }),
                     },
                     ty: None,
@@ -819,9 +872,15 @@ pub(super) fn check_expr(
                                     member: SmolStr::new_static("empty"),
                                     user_ty_args: vec![],
                                     ty_args: vec![tc_state.exceptions.clone()],
+                                    inferred_ty: Some(Ty::Fun {
+                                        args: FunArgs::Positional(vec![]),
+                                        ret: Box::new(str_buf_ty.clone()),
+                                        exceptions: Some(Box::new(tc_state.exceptions.clone())),
+                                    }),
                                 }),
                             }),
                             args: vec![],
+                            inferred_ty: Some(str_buf_ty.clone()),
                         }),
                     },
                 }),
@@ -838,7 +897,15 @@ pub(super) fn check_expr(
                                 ty_user_ty_args: vec![],
                                 member: SmolStr::new_static("pushStr"),
                                 user_ty_args: vec![],
-                                ty_args: vec![exn],
+                                ty_args: vec![exn.clone()],
+                                inferred_ty: Some(Ty::Fun {
+                                    args: FunArgs::Positional(vec![
+                                        str_buf_ty.clone(),
+                                        Ty::Con(SmolStr::new_static("Str"), Kind::Star),
+                                    ]),
+                                    ret: Box::new(Ty::unit()),
+                                    exceptions: Some(Box::new(exn)),
+                                }),
                             }),
                         }),
                         args: vec![
@@ -850,6 +917,7 @@ pub(super) fn check_expr(
                                         id: buf_id.clone(),
                                         user_ty_args: vec![],
                                         ty_args: vec![],
+                                        inferred_ty: Some(str_buf_ty.clone()),
                                     }),
                                 },
                             },
@@ -858,6 +926,7 @@ pub(super) fn check_expr(
                                 expr: arg,
                             },
                         ],
+                        inferred_ty: Some(Ty::unit()),
                     })),
                 }
             };
@@ -892,12 +961,21 @@ pub(super) fn check_expr(
                         let expr_node = replace(&mut expr.node, ast::Expr::Char('a'));
                         expr.node = ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
+                                // ToStr.toStr[t, exn](self: t) Str / exn
                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                                     ty: SmolStr::new_static("ToStr"),
                                     ty_user_ty_args: vec![],
                                     member: SmolStr::new_static("toStr"),
                                     user_ty_args: vec![],
-                                    ty_args: vec![part_ty, tc_state.exceptions.clone()],
+                                    ty_args: vec![part_ty.clone(), tc_state.exceptions.clone()],
+                                    inferred_ty: Some(Ty::Fun {
+                                        args: FunArgs::Positional(vec![part_ty]),
+                                        ret: Box::new(Ty::Con(
+                                            SmolStr::new_static("Str"),
+                                            Kind::Star,
+                                        )),
+                                        exceptions: Some(Box::new(tc_state.exceptions.clone())),
+                                    }),
                                 }),
                                 loc: expr.loc.clone(),
                             }),
@@ -908,6 +986,7 @@ pub(super) fn check_expr(
                                     loc: expr.loc.clone(),
                                 },
                             }],
+                            inferred_ty: Some(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
                         });
                         desugared_stmts.push(make_push(expr, tc_state.exceptions.clone()));
                     }
@@ -918,12 +997,18 @@ pub(super) fn check_expr(
                 loc: loc.clone(),
                 node: ast::Stmt::Expr(ast::Expr::Call(ast::CallExpr {
                     fun: Box::new(ast::L {
+                        // ToStr.toStr[t, exn](self: t) Str / exn
                         node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                             ty: SmolStr::new_static("ToStr"),
                             ty_user_ty_args: vec![],
                             member: SmolStr::new_static("toStr"),
                             user_ty_args: vec![],
-                            ty_args: vec![str_buf_ty, tc_state.exceptions.clone()],
+                            ty_args: vec![str_buf_ty.clone(), tc_state.exceptions.clone()],
+                            inferred_ty: Some(Ty::Fun {
+                                args: FunArgs::Positional(vec![str_buf_ty.clone()]),
+                                ret: Box::new(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
+                                exceptions: Some(Box::new(tc_state.exceptions.clone())),
+                            }),
                         }),
                         loc: loc.clone(),
                     }),
@@ -934,14 +1019,19 @@ pub(super) fn check_expr(
                                 id: buf_id.clone(),
                                 user_ty_args: vec![],
                                 ty_args: vec![],
+                                inferred_ty: Some(str_buf_ty.clone()),
                             }),
                             loc: loc.clone(),
                         },
                     }],
+                    inferred_ty: Some(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
                 })),
             });
 
-            *expr = ast::Expr::Do(desugared_stmts);
+            *expr = ast::Expr::Do(ast::DoExpr {
+                stmts: desugared_stmts,
+                inferred_ty: Some(ret.0.clone()),
+            });
 
             ret
         }
@@ -1046,12 +1136,14 @@ pub(super) fn check_expr(
                         object: left.clone(),
                         field: SmolStr::new_static(method),
                         user_ty_args: vec![],
+                        inferred_ty: None,
                     }),
                 }),
                 args: vec![ast::CallArg {
                     name: None,
                     expr: (**right).clone(),
                 }],
+                inferred_ty: None,
             });
 
             check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
@@ -1076,12 +1168,21 @@ pub(super) fn check_expr(
                             member: SmolStr::new_static("__not"),
                             user_ty_args: vec![],
                             ty_args: vec![tc_state.exceptions.clone()],
+                            inferred_ty: Some(Ty::Fun {
+                                args: FunArgs::Positional(vec![Ty::Con(
+                                    SmolStr::new("Bool"),
+                                    Kind::Star,
+                                )]),
+                                ret: Box::new(Ty::Con(SmolStr::new("Bool"), Kind::Star)),
+                                exceptions: Some(Box::new(tc_state.exceptions.clone())),
+                            }),
                         }),
                     }),
                     args: vec![ast::CallArg {
                         name: None,
                         expr: *arg.clone(),
                     }],
+                    inferred_ty: Some(Ty::bool()),
                 });
                 (ty, Default::default())
             }
@@ -1094,15 +1195,18 @@ pub(super) fn check_expr(
                             object: arg.clone(),
                             field: SmolStr::new_static("__neg"),
                             user_ty_args: vec![],
+                            inferred_ty: None,
                         }),
                     }),
                     args: vec![],
+                    inferred_ty: None,
                 });
                 check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
             }
         },
 
-        ast::Expr::Return(expr) => {
+        ast::Expr::Return(ast::ReturnExpr { expr, inferred_ty }) => {
+            assert!(inferred_ty.is_none());
             let return_ty = tc_state.return_ty.clone();
             check_expr(
                 tc_state,
@@ -1112,16 +1216,15 @@ pub(super) fn check_expr(
                 level,
                 loop_stack,
             );
-            (
-                expected_ty.cloned().unwrap_or_else(|| {
-                    Ty::UVar(
-                        tc_state
-                            .var_gen
-                            .new_var(level, Kind::Star, expr.loc.clone()),
-                    )
-                }),
-                Default::default(),
-            )
+            let expr_ty = expected_ty.cloned().unwrap_or_else(|| {
+                Ty::UVar(
+                    tc_state
+                        .var_gen
+                        .new_var(level, Kind::Star, expr.loc.clone()),
+                )
+            });
+            *inferred_ty = Some(expr_ty.clone());
+            (expr_ty, Default::default())
         }
 
         ast::Expr::Match(match_expr) => {
@@ -1144,17 +1247,16 @@ pub(super) fn check_expr(
             }
 
             // Same as above, only useful when `expected_ty` is not available.
-            (
-                unify_expected_ty(
-                    rhs_tys.pop().unwrap(),
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    loc,
-                ),
-                Default::default(),
-            )
+            let expr_ty = unify_expected_ty(
+                rhs_tys.pop().unwrap(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                loc,
+            );
+            match_expr.inferred_ty = Some(expr_ty.clone());
+            (expr_ty, Default::default())
         }
 
         ast::Expr::If(if_expr) => {
@@ -1189,7 +1291,9 @@ pub(super) fn check_expr(
                 }
             }
 
-            (branch_tys.pop().unwrap(), Default::default())
+            let expr_ty = branch_tys.pop().unwrap();
+            if_expr.inferred_ty = Some(expr_ty.clone());
+            (expr_ty, Default::default())
         }
 
         ast::Expr::Fn(ast::FnExpr {
@@ -1322,10 +1426,12 @@ pub(super) fn check_expr(
             (Ty::bool(), pat_binders)
         }
 
-        ast::Expr::Do(stmts) => {
+        ast::Expr::Do(ast::DoExpr { stmts, inferred_ty }) => {
+            assert!(inferred_ty.is_none());
             tc_state.env.enter();
             let ty = check_stmts(tc_state, stmts, expected_ty, level, loop_stack);
             tc_state.env.exit();
+            *inferred_ty = Some(ty.clone());
             (ty, Default::default())
         }
 
@@ -1351,9 +1457,11 @@ pub(super) fn check_expr(
                                 id: SmolStr::new("empty"),
                                 user_ty_args: vec![],
                                 ty_args: vec![],
+                                inferred_ty: None,
                             }),
                         }),
                         args: vec![],
+                        inferred_ty: None,
                     }),
                 }
             } else {
@@ -1398,12 +1506,14 @@ pub(super) fn check_expr(
                                     id: SmolStr::new_static("once"),
                                     user_ty_args: vec![],
                                     ty_args: vec![],
+                                    inferred_ty: None,
                                 }),
                             }),
                             args: vec![ast::CallArg {
                                 name: None,
                                 expr: elem,
                             }],
+                            inferred_ty: None,
                         }),
                     });
                 }
@@ -1419,12 +1529,14 @@ pub(super) fn check_expr(
                                 object: Box::new(elem),
                                 field: SmolStr::new_static("chain"),
                                 user_ty_args: vec![],
+                                inferred_ty: None,
                             }),
                         }),
                         args: vec![ast::CallArg {
                             name: None,
                             expr: next,
                         }],
+                        inferred_ty: None,
                     }),
                 })
             };
@@ -1439,6 +1551,7 @@ pub(super) fn check_expr(
                             member: SmolStr::new_static("fromIter"),
                             user_ty_args: vec![],
                             ty_args: vec![],
+                            inferred_ty: None,
                         }),
                     };
 
@@ -1448,6 +1561,7 @@ pub(super) fn check_expr(
                             name: None,
                             expr: iter_expr,
                         }],
+                        inferred_ty: None,
                     })
                 }
 
@@ -1464,6 +1578,7 @@ pub(super) fn check_expr(
                                         member: SmolStr::new_static("fromIter"),
                                         user_ty_args: vec![],
                                         ty_args: vec![],
+                                        inferred_ty: None,
                                     }),
                                 };
 
@@ -1473,6 +1588,7 @@ pub(super) fn check_expr(
                                         name: None,
                                         expr: iter_expr,
                                     }],
+                                    inferred_ty: None,
                                 })
                             }
                             None => iter_expr.node,
@@ -1603,7 +1719,13 @@ pub(super) fn check_match_expr(
 ) -> Vec<Ty> {
     use crate::type_checker::pat_coverage::*;
 
-    let ast::MatchExpr { scrutinee, alts } = expr;
+    let ast::MatchExpr {
+        scrutinee,
+        alts,
+        inferred_ty,
+    } = expr;
+
+    assert!(inferred_ty.is_none());
 
     let (scrut_ty, _) = check_expr(
         tc_state,
@@ -1692,7 +1814,10 @@ pub(super) fn check_if_expr(
     let ast::IfExpr {
         branches,
         else_branch,
+        inferred_ty,
     } = expr;
+
+    assert!(inferred_ty.is_none());
 
     let mut branch_tys: Vec<Ty> = Vec::with_capacity(branches.len() + 1);
 
@@ -1756,11 +1881,12 @@ fn check_field_sel(
                     panic!("{}: Field passed type arguments", loc_display(loc));
                 }
                 return (
-                    field_ty,
+                    field_ty.clone(),
                     ast::Expr::FieldSel(ast::FieldSelExpr {
                         object: Box::new(object.clone()),
                         field: field.clone(),
                         user_ty_args: vec![],
+                        inferred_ty: Some(field_ty),
                     }),
                 );
             }
@@ -1772,11 +1898,12 @@ fn check_field_sel(
                     panic!("{}: Field passed type arguments", loc_display(loc));
                 }
                 return (
-                    field_ty,
+                    field_ty.clone(),
                     ast::Expr::FieldSel(ast::FieldSelExpr {
                         object: Box::new(object.clone()),
                         field: field.clone(),
                         user_ty_args: vec![],
+                        inferred_ty: Some(field_ty),
                     }),
                 );
             }
@@ -1849,18 +1976,21 @@ fn check_field_sel(
         FunArgs::Named(_) => panic!(),
     }
 
+    let ty = Ty::Fun {
+        args,
+        ret,
+        exceptions,
+    };
+
     (
-        Ty::Fun {
-            args,
-            ret,
-            exceptions,
-        },
+        ty.clone(),
         ast::Expr::MethodSel(ast::MethodSelExpr {
             object: Box::new(object.clone()),
             object_ty: Some(object_ty.clone()),
             method_ty_id,
             method: field.clone(),
             ty_args: method_ty_args,
+            inferred_ty: Some(ty),
         }),
     )
 }
