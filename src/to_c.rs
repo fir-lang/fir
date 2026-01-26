@@ -1950,7 +1950,6 @@ fn stmt_to_c(
                 field: _,
                 idx,
                 object_ty,
-                ty,
             }) => {
                 let obj_temp = cg.fresh_temp();
                 w!(p, "{} {} = ", c_ty(object_ty), obj_temp);
@@ -2084,7 +2083,6 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             field: _,
             idx,
             object_ty,
-            ty: _,
         }) => {
             w!(p, "(");
             expr_to_c(&object.node, &object.loc, locals, cg, p);

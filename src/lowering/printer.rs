@@ -250,7 +250,6 @@ impl Expr {
                 field,
                 idx: _,
                 object_ty: _,
-                ty: _,
             }) => {
                 object.node.print(buf, indent);
                 buf.push('.');

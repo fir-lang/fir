@@ -486,7 +486,6 @@ fn eval<W: Write>(
             field: _,
             idx,
             object_ty: _,
-            ty: _,
         }) => {
             let object = val!(eval(
                 w,
@@ -681,7 +680,6 @@ fn assign<W: Write>(
             field: _,
             idx,
             object_ty: _,
-            ty: _,
         }) => {
             let object = val!(eval(
                 w,

@@ -432,9 +432,6 @@ pub struct FieldSelExpr {
     pub idx: u32,
 
     pub object_ty: mono::Type,
-
-    /// Type of the selected field.
-    pub ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
@@ -1547,7 +1544,11 @@ fn lower_expr(
             (expr, Default::default())
         }
 
-        mono::Expr::FieldSel(mono::FieldSelExpr { object, field, ty }) => {
+        mono::Expr::FieldSel(mono::FieldSelExpr {
+            object,
+            field,
+            ty: _,
+        }) => {
             let object_ty = object.node.ty();
 
             let (object, _object_vars) = lower_bl_expr(object, closures, indices, scope, mono_pgm);
@@ -1618,7 +1619,6 @@ fn lower_expr(
                     field: field.clone(),
                     idx: field_idx,
                     object_ty,
-                    ty: ty.clone(),
                 }),
                 Default::default(),
             )
