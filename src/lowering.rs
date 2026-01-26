@@ -449,6 +449,7 @@ pub struct MatchExpr {
     pub scrutinee: Box<L<Expr>>,
     pub alts: Vec<Alt>,
     pub scrut_ty: mono::Type,
+    pub ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
@@ -462,6 +463,7 @@ pub struct Alt {
 pub struct IfExpr {
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
     pub else_branch: Option<Vec<L<Stmt>>>,
+    pub ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
@@ -1875,7 +1877,7 @@ fn lower_expr(
         mono::Expr::Match(mono::MatchExpr {
             scrutinee,
             alts,
-            ty: _,
+            ty,
         }) => {
             let scrut_ty = scrutinee.node.ty();
 
@@ -1917,6 +1919,7 @@ fn lower_expr(
                     scrutinee,
                     alts,
                     scrut_ty,
+                    ty: ty.clone(),
                 }),
                 Default::default(),
             )
@@ -1925,7 +1928,7 @@ fn lower_expr(
         mono::Expr::If(mono::IfExpr {
             branches,
             else_branch,
-            ty: _,
+            ty,
         }) => (
             Expr::If(IfExpr {
                 branches: branches
@@ -1948,6 +1951,7 @@ fn lower_expr(
                         .map(|stmt| lower_l_stmt(stmt, closures, indices, scope, mono_pgm))
                         .collect()
                 }),
+                ty: ty.clone(),
             }),
             Default::default(),
         ),

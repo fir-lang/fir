@@ -562,6 +562,7 @@ fn eval<W: Write>(
             scrutinee,
             alts,
             scrut_ty: _,
+            ty: _,
         }) => {
             let scrut = val!(eval(
                 w,
@@ -599,6 +600,7 @@ fn eval<W: Write>(
         Expr::If(IfExpr {
             branches,
             else_branch,
+            ty: _,
         }) => {
             for (cond, stmts) in branches {
                 let cond = val!(eval(

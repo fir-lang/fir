@@ -105,6 +105,13 @@ impl Type {
             args: vec![],
         })
     }
+
+    pub(crate) fn is_unit(&self) -> bool {
+        if let Type::Record { fields, .. } = self {
+            return fields.is_empty();
+        }
+        false
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

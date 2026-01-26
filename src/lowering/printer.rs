@@ -302,6 +302,7 @@ impl Expr {
                 scrutinee,
                 alts,
                 scrut_ty: _,
+                ty: _,
             }) => {
                 buf.push_str("match ");
                 scrutinee.node.print(buf, indent);
@@ -327,6 +328,7 @@ impl Expr {
             Expr::If(IfExpr {
                 branches,
                 else_branch,
+                ty: _,
             }) => {
                 buf.push_str("if ");
                 branches[0].0.node.print(buf, indent);
