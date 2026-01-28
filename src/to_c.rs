@@ -8,8 +8,6 @@ TODOs:
   (`checkedAdd`, `uncheckedAdd` etc.)
 */
 
-#![allow(unused_variables)]
-
 use crate::ast::{Id, Loc};
 use crate::collections::*;
 use crate::lowering::*;
@@ -1933,7 +1931,6 @@ fn stmt_to_c(
 
         Stmt::Assign(AssignStmt { lhs, rhs }) => match &lhs.node {
             Expr::LocalVar(idx) => {
-                let local_ty = &locals[idx.as_usize()].ty;
                 w!(p, "_{} = ", idx.as_usize());
                 expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
                 wln!(p, ";");
@@ -2066,7 +2063,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 p.nl();
                 wln!(p, "{struct_name}* _obj = malloc(sizeof({struct_name}));");
                 wln!(p, "_obj->_tag = {tag_name};");
-                for (i, (arg, arg_ty)) in args.iter().zip(arg_tys.iter()).enumerate() {
+                for (i, arg) in args.iter().enumerate() {
                     w!(p, "_obj->_{i} = ");
                     expr_to_c(&arg.node, &arg.loc, locals, cg, p);
                     wln!(p, ";");
@@ -2082,7 +2079,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             object,
             field: _,
             idx,
-            object_ty,
+            object_ty: _,
         }) => {
             w!(p, "(");
             expr_to_c(&object.node, &object.loc, locals, cg, p);
@@ -2101,7 +2098,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 Expr::Fun(fun_idx) => {
                     // Direct function call
                     w!(p, "_fun_{}(", fun_idx.as_usize());
-                    for (i, (arg, arg_ty)) in args.iter().zip(arg_tys.iter()).enumerate() {
+                    for (i, arg) in args.iter().enumerate() {
                         if i > 0 {
                             w!(p, ", ");
                         }
@@ -2133,7 +2130,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     wln!(p, "))((CLOSURE*){})->fun;", fun_temp);
                     w!(p, "_fn({}", fun_temp);
                     assert_eq!(args.len(), arg_ty_strs.len());
-                    for (arg, arg_ty) in args.iter().zip(arg_tys.iter()) {
+                    for arg in args.iter() {
                         w!(p, ", ");
                         expr_to_c(&arg.node, &arg.loc, locals, cg, p);
                     }
