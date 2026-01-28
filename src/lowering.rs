@@ -6,8 +6,8 @@ pub mod printer;
 use crate::ast;
 use crate::collections::*;
 use crate::mono_ast::{self as mono, Id, L, Loc};
-pub(crate) use crate::record_collector::RecordType;
-use crate::record_collector::collect_records;
+pub(crate) use crate::type_collector::RecordType;
+use crate::type_collector::collect_anonymous_types;
 use crate::utils::loc_display;
 
 use smol_str::SmolStr;
@@ -866,7 +866,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     }
 
     // Assign indices to record shapes.
-    let record_types = collect_records(mono_pgm);
+    let (record_types, _variant_types) = collect_anonymous_types(mono_pgm);
 
     // TODO: We could assign indices to records as we see them during lowering below.
     let mut record_indices: HashMap<RecordType, HeapObjIdx> = Default::default();
