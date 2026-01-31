@@ -125,8 +125,12 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                         let struct_name = record_struct_name(record);
                         wln!(p, "typedef struct {} {};", struct_name, struct_name);
                     }
-                    HeapObj::Builtin(_) => {
-                        panic!("Builtin in SCC");
+                    HeapObj::Builtin(BuiltinConDecl::Array { t }) => {
+                        let struct_name = array_struct_name(t);
+                        wln!(p, "typedef struct {struct_name} {struct_name};");
+                    }
+                    HeapObj::Builtin(builtin) => {
+                        panic!("Builtin in SCC: {builtin:?}");
                     }
                 }
             }
@@ -144,6 +148,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         }
     }
 
+    let array_u8_tag = pgm.array_u8_con_idx.as_u64();
+    let array_u64_tag = pgm.array_u64_con_idx.as_u64();
     writedoc!(
         p,
         "
@@ -169,117 +175,19 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             return (uint32_t)*(uint64_t*)obj;
         }}
 
-        // Array allocation and access functions.
-
-        static ARRAY* array_new_u8(uint32_t len) {{
-            size_t data_words = (len + 7) / 8;
-            ARRAY* arr = (ARRAY*)malloc(sizeof(ARRAY) + (data_words * sizeof(uint64_t)));
-            arr->tag = ARRAY_TAG;
-            arr->data_ptr = (uint64_t*)(arr + 1);
-            arr->len = len;
-            memset(arr + 1, 0, data_words * sizeof(uint64_t));
-            return arr;
-        }}
-
-        static uint8_t array_get_u8(ARRAY* arr, uint32_t idx) {{
-            uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
-            return data_ptr[idx];
-        }}
-
-        static void array_set_u8(ARRAY* arr, uint32_t idx, uint8_t val) {{
-            uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
-            data_ptr[idx] = val;
-        }}
-
-        static ARRAY* array_slice_u8(ARRAY* arr, uint32_t start, uint32_t end) {{
-            ARRAY* new_arr = (ARRAY*)malloc(sizeof(ARRAY));
-            new_arr->tag = ARRAY_TAG;
-            uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
-            new_arr->data_ptr = (uint64_t*)(data_ptr + start);
-            new_arr->len = end - start;
-            return new_arr;
-        }}
-
-        static void array_copy_within_u8(ARRAY* arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
-            memmove(data_ptr + dst, data_ptr + src, len);
-        }}
-
-        static ARRAY* array_new_u32(uint32_t len) {{
-            size_t data_words = (len + 1) / 2;
-            ARRAY* arr = (ARRAY*)malloc(sizeof(ARRAY) + (data_words * sizeof(uint64_t)));
-            arr->tag = ARRAY_TAG;
-            arr->data_ptr = (uint64_t*)(arr + 1);
-            arr->len = len;
-            memset(arr + 1, 0, data_words * sizeof(uint64_t));
-            return arr;
-        }}
-
-        static uint32_t array_get_u32(ARRAY* arr, uint32_t idx) {{
-            uint32_t* data_ptr = (uint32_t*)arr->data_ptr;
-            return data_ptr[idx];
-        }}
-
-        static void array_set_u32(ARRAY* arr, uint32_t idx, uint32_t val) {{
-            uint32_t* data_ptr = (uint32_t*)arr->data_ptr;
-            data_ptr[idx] = val;
-        }}
-
-        static ARRAY* array_slice_u32(ARRAY* arr, uint32_t start, uint32_t end) {{
-            ARRAY* new_arr = (ARRAY*)malloc(sizeof(ARRAY));
-            new_arr->tag = ARRAY_TAG;
-            uint32_t* data_ptr = (uint32_t*)arr->data_ptr;
-            new_arr->data_ptr = (uint64_t*)(data_ptr + start);
-            new_arr->len = end - start;
-            return new_arr;
-        }}
-
-        static void array_copy_within_u32(ARRAY* arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint32_t* data_ptr = (uint32_t*)arr->data_ptr;
-            memmove(data_ptr + dst, data_ptr + src, len * sizeof(uint32_t));
-        }}
-
-        static ARRAY* array_new_u64(uint32_t len) {{
-            ARRAY* arr = (ARRAY*)malloc(sizeof(ARRAY) + (len * sizeof(uint64_t)));
-            arr->tag = ARRAY_TAG;
+        static Array_U64* array_new_u64(uint32_t len) {{
+            Array_U64* arr = (Array_U64*)malloc(sizeof(Array_U64) + (len * sizeof(uint64_t)));
+            arr->tag = {array_u64_tag};
             arr->data_ptr = (uint64_t*)(arr + 1);
             arr->len = len;
             memset(arr + 1, 0, len * sizeof(uint64_t));
             return arr;
         }}
 
-        static uint64_t array_get_u64(ARRAY* arr, uint32_t idx) {{
-            uint64_t* data_ptr = (uint64_t*)arr->data_ptr;
-            return data_ptr[idx];
-        }}
-
-        static void array_set_u64(ARRAY* arr, uint32_t idx, uint64_t val) {{
-            uint64_t* data_ptr = (uint64_t*)arr->data_ptr;
-            data_ptr[idx] = val;
-        }}
-
-        static ARRAY* array_slice_u64(ARRAY* arr, uint32_t start, uint32_t end) {{
-            ARRAY* new_arr = (ARRAY*)malloc(sizeof(ARRAY));
-            new_arr->tag = ARRAY_TAG;
-            uint64_t* data_ptr = (uint64_t*)arr->data_ptr;
-            new_arr->data_ptr = data_ptr + start;
-            new_arr->len = end - start;
-            return new_arr;
-        }}
-
-        static void array_copy_within_u64(ARRAY* arr, uint32_t src, uint32_t dst, uint32_t len) {{
-            uint64_t* data_ptr = (uint64_t*)arr->data_ptr;
-            memmove(data_ptr + dst, data_ptr + src, len * sizeof(uint64_t));
-        }}
-
-        static uint32_t array_len(ARRAY* arr) {{
-            return (uint32_t)arr->len;
-        }}
-
         // String comparison for pattern matching
         static bool str_eq(Str* s1, const char* str2, size_t len2) {{
-            ARRAY* bytes_arr = s1->_0;
-            uint32_t len1 = array_len(bytes_arr);
+            Array_U8* bytes_arr = s1->_0;
+            uint32_t len1 = (uint32_t)bytes_arr->len;
             if (len1 != len2) return false;
             uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
             return memcmp(data_ptr, str2, len1) == 0;
@@ -287,7 +195,13 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
         // Allocate string from bytes
         static Str* alloc_str(const char* bytes, size_t len) {{
-            ARRAY* arr = array_new_u8(len);
+            size_t data_words = (len + 7) / 8;
+            Array_U8* arr = malloc(sizeof(Array_U8) + (data_words * sizeof(uint64_t)));
+            arr->tag = {array_u8_tag};
+            arr->data_ptr = (uint8_t*)(arr + 1);
+            arr->len = len;
+            memset(arr + 1, 0, data_words * sizeof(uint64_t));
+
             uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
             memcpy(data_ptr, bytes, len);
 
@@ -592,17 +506,18 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
             );
         }
 
-        BuiltinConDecl::Array => {
-            wln!(p, "#define ARRAY_TAG {}", tag);
+        BuiltinConDecl::Array { t } => {
+            let struct_name = array_struct_name(t);
+            let t = c_ty(t);
             writedoc!(
                 p,
                 "
-                typedef struct {{
+                typedef struct {struct_name} {{
                     uint64_t tag;
-                    uint64_t* data_ptr; // initially points to the the `data` at the end
+                    {t}* data_ptr; // initially points to the the `data` at the end
                     uint64_t len;
-                    uint64_t data[];
-                }} ARRAY;
+                    {t} data[];
+                }} {struct_name};
                 "
             );
         }
@@ -660,6 +575,14 @@ fn record_struct_name(record: &RecordType) -> String {
         name.push('_');
         ty_to_c(field_ty, &mut name);
     }
+    name
+}
+
+fn array_struct_name(t: &mono::Type) -> String {
+    let mut name = String::from("Array_");
+    let t = c_ty(t);
+    let t_no_star = t.as_str().strip_suffix("*").unwrap_or(t.as_ref());
+    name.push_str(t_no_star);
     name
 }
 
@@ -783,9 +706,6 @@ fn c_ty(ty: &mono::Type) -> String {
         ) {
             return name_str.to_string();
         }
-        if matches!(name_str, "Array") {
-            return "ARRAY*".to_string();
-        }
     }
     if let mono::Type::Fn(_) = ty {
         return "CLOSURE*".to_string();
@@ -821,28 +741,8 @@ fn ty_to_c(ty: &mono::Type, out: &mut String) {
             }
         }
 
-        mono::Type::Fn(mono::FnType { args, ret, exn }) => {
-            out.push_str("Fn");
-            match args {
-                mono::FunArgs::Positional(positional_args) => {
-                    for arg in positional_args {
-                        out.push('_');
-                        ty_to_c(arg, out);
-                    }
-                }
-                mono::FunArgs::Named(named_args) => {
-                    for (name, arg) in named_args {
-                        out.push('_');
-                        out.push_str(name);
-                        out.push('_');
-                        ty_to_c(arg, out);
-                    }
-                }
-            }
-            out.push('_');
-            ty_to_c(ret, out);
-            out.push('_');
-            ty_to_c(exn, out);
+        mono::Type::Fn(_) => {
+            out.push_str("CLOSURE");
         }
     }
 }
@@ -866,8 +766,8 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static {} _fun_{idx}(Str* msg) {{
-                    ARRAY* bytes_arr = msg->_0;
-                    uint32_t len = array_len(bytes_arr);
+                    Array_U8* bytes_arr = msg->_0;
+                    uint32_t len = (uint32_t)bytes_arr->len;
                     uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
                     fprintf(stderr, \"PANIC: \");
                     fwrite(data_ptr, 1, len, stderr);
@@ -884,8 +784,8 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static Record* _fun_{idx}(Str* str) {{
-                    ARRAY* bytes_arr = str->_0;
-                    uint32_t len = array_len(bytes_arr);
+                    Array_U8* bytes_arr = str->_0;
+                    uint32_t len = (uint32_t)bytes_arr->len;
                     uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
                     fwrite(data_ptr, 1, len, stdout);
                     return {};
@@ -1551,122 +1451,115 @@ fn builtin_fun_to_c(
         }
 
         // Array functions /////////////////////////////////////////////////////////////////////////
-        BuiltinFunDecl::ArrayNew { t } => {
-            let repr = Repr::from_mono_ty(t);
-            let fn_name = match repr {
-                Repr::U8 => "array_new_u8",
-                Repr::U32 => "array_new_u32",
-                Repr::U64 => "array_new_u64",
-            };
-            w!(p, "static ARRAY* _fun_{}(U32 len) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return {}(len);", fn_name);
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+        BuiltinFunDecl::ArrayNew { t, con_idx } => {
+            let con_tag = con_idx.as_u64();
+            let t_ty = c_ty(t);
+            let mut t_ty_name = String::new();
+            ty_to_c(t, &mut t_ty_name);
+            let array_ty = c_ty(&mono::Type::Named(mono::NamedType {
+                name: Id::new_static("Array"),
+                args: vec![t.clone()],
+            }));
+            writedoc!(
+                p,
+                "
+                static {array_ty} _fun_{idx}(U32 len) {{
+                    size_t data_bytes = (size_t)len * sizeof({t_ty});
+                    size_t data_words = (data_bytes + 7) / 8;
+                    {array_ty} arr = ({array_ty})malloc(sizeof(Array_{t_ty_name}) + (data_words * sizeof(uint64_t)));
+                    arr->tag = {con_tag};
+                    arr->data_ptr = ({t_ty}*)(arr + 1);
+                    arr->len = len;
+                    memset(arr + 1, 0, data_words * sizeof(uint64_t));
+                    return arr;
+                }}
+                "
+            );
         }
 
-        BuiltinFunDecl::ArrayLen => {
-            w!(p, "static U32 _fun_{}(ARRAY* arr) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return array_len(arr);");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+        BuiltinFunDecl::ArrayLen { t } => {
+            let array_ty = c_ty(&mono::Type::Named(mono::NamedType {
+                name: Id::new_static("Array"),
+                args: vec![t.clone()],
+            }));
+            writedoc!(
+                p,
+                "
+                static U32 _fun_{idx}({array_ty} arr) {{
+                    return (U32)arr->len;
+                }}
+                "
+            );
         }
 
         BuiltinFunDecl::ArrayGet { t } => {
-            let repr = Repr::from_mono_ty(t);
-            let fn_name = match repr {
-                Repr::U8 => "array_get_u8",
-                Repr::U32 => "array_get_u32",
-                Repr::U64 => "array_get_u64",
-            };
-            w!(
+            let t_ty = c_ty(t);
+            let array_ty = c_ty(&mono::Type::Named(mono::NamedType {
+                name: Id::new_static("Array"),
+                args: vec![t.clone()],
+            }));
+            writedoc!(
                 p,
-                "static {} _fun_{}(ARRAY* arr, U32 idx) {{",
-                c_ty(ret),
-                idx
+                "
+                static {t_ty} _fun_{idx}({array_ty} arr, U32 idx) {{
+                    return arr->data_ptr[idx];
+                }}
+                "
             );
-            p.indent();
-            p.nl();
-            w!(p, "return ({}){fn_name}(arr, idx);", c_ty(ret));
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ArraySet { t } => {
-            let repr = Repr::from_mono_ty(t);
-            let (fn_name, cast) = match repr {
-                Repr::U8 => ("array_set_u8", "U8"),
-                Repr::U32 => ("array_set_u32", "U32"),
-                Repr::U64 => ("array_set_u64", "U64"),
-            };
-            w!(
+            let t_ty = c_ty(t);
+            let array_ty = c_ty(&mono::Type::Named(mono::NamedType {
+                name: Id::new_static("Array"),
+                args: vec![t.clone()],
+            }));
+            writedoc!(
                 p,
-                "static Record* _fun_{}(ARRAY* arr, U32 idx, {} val) {{",
-                idx,
-                c_ty(&params[2]),
-            );
-            p.indent();
-            p.nl();
-            wln!(p, "{fn_name}(arr, (uint32_t)idx, ({cast})val);");
-            w!(
-                p,
-                "return {};",
+                "
+                static Record* _fun_{idx}({array_ty} arr, U32 idx, {t_ty} val) {{
+                    arr->data_ptr[idx] = val;
+                    return {};
+                }}
+                ",
                 heap_obj_singleton_name(pgm, pgm.unit_con_idx)
             );
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
         }
 
-        BuiltinFunDecl::ArraySlice { t } => {
-            let repr = Repr::from_mono_ty(t);
-            let fn_name = match repr {
-                Repr::U8 => "array_slice_u8",
-                Repr::U32 => "array_slice_u32",
-                Repr::U64 => "array_slice_u64",
-            };
-            w!(
+        BuiltinFunDecl::ArraySlice { t, con_idx } => {
+            let con_tag = con_idx.as_u64();
+            let t_ty = c_ty(t);
+            let array_struct_name = array_struct_name(t);
+            writedoc!(
                 p,
-                "static ARRAY* _fun_{idx}(ARRAY* arr, U32 start, U32 end) {{",
+                "
+                static {array_struct_name}* _fun_{idx}({array_struct_name}* arr, U32 start, U32 end) {{
+                    {array_struct_name}* new_arr = ({array_struct_name}*)malloc(sizeof({array_struct_name}));
+                    new_arr->tag = {con_tag};
+                    {t_ty}* data_ptr = arr->data_ptr;
+                    new_arr->data_ptr = data_ptr + start;
+                    new_arr->len = end - start;
+                    return new_arr;
+                }}
+                ",
             );
-            p.indent();
-            p.nl();
-            w!(p, "return {}(arr, start, end);", fn_name);
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ArrayCopyWithin { t } => {
-            let repr = Repr::from_mono_ty(t);
-            let fn_name = match repr {
-                Repr::U8 => "array_copy_within_u8",
-                Repr::U32 => "array_copy_within_u32",
-                Repr::U64 => "array_copy_within_u64",
-            };
-            w!(
+            let t_ty = c_ty(t);
+            let array_ty = c_ty(&mono::Type::Named(mono::NamedType {
+                name: Id::new_static("Array"),
+                args: vec![t.clone()],
+            }));
+            writedoc!(
                 p,
-                "static Record* _fun_{}(ARRAY* arr, U32 src, U32 dst, U32 len) {{",
-                idx
+                "
+                static Record* _fun_{idx}({array_ty} arr, U32 src, U32 dst, U32 len) {{
+                    {t_ty}* data_ptr = arr->data_ptr;
+                    memmove(data_ptr + dst, data_ptr + src, len * sizeof({t_ty}));
+                }}
+                ",
             );
-            p.indent();
-            p.nl();
-            w!(p, "{}(arr, src, dst, len);", fn_name);
-            p.nl();
-            w!(
-                p,
-                "return {};",
-                heap_obj_singleton_name(pgm, pgm.unit_con_idx)
-            );
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
         }
 
         // End of array functions //////////////////////////////////////////////////////////////////
@@ -1675,9 +1568,9 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static Str* _fun_{idx}(Str* path_str) {{
-                    ARRAY* bytes_arr = path_str->_0;
-                    uint32_t path_len = array_len(bytes_arr);
-                    uint8_t* path_data = (uint8_t*)bytes_arr->data_ptr;
+                    Array_U8* bytes_arr = path_str->_0;
+                    uint32_t path_len = (uint32_t)bytes_arr->len;
+                    uint8_t* path_data = bytes_arr->data_ptr;
                     char* path = (char*)malloc(path_len + 1);
                     memcpy(path, path_data, path_len);
                     path[path_len] = '\\0';
@@ -1699,14 +1592,18 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::GetArgs => {
+            let array_str_tag = pgm.array_str_con_idx.unwrap().as_u64();
             writedoc!(
                 p,
                 "
-                static ARRAY* _fun_{idx}(void) {{
-                    ARRAY* arr = array_new_u64(g_argc);
+                static Array_Str* _fun_{idx}(void) {{
+                    Array_Str* arr = (Array_Str*)malloc(sizeof(Array_Str) + (g_argc * sizeof(Str*)));
+                    arr->tag = {array_str_tag};
+                    arr->data_ptr = (Str**)(arr + 1);
+                    arr->len = g_argc;
                     for (int i = 0; i < g_argc; i++) {{
                         Str* arg_str = alloc_str(g_argv[i], strlen(g_argv[i]));
-                        array_set_u64(arr, i, (U64)arg_str);
+                        arr->data_ptr[i] = arg_str;
                     }}
                     return arr;
                 }}
@@ -2623,6 +2520,7 @@ fn top_sort(
         .enumerate()
         .map(|(heap_obj_idx, heap_obj)| SccNode {
             idx: match heap_obj {
+                HeapObj::Builtin(BuiltinConDecl::Array { .. }) => None,
                 HeapObj::Builtin(_) => {
                     output.push(std::iter::once(HeapObjIdx(heap_obj_idx as u32)).collect());
                     Some(idx_gen.next())
@@ -2746,6 +2644,10 @@ fn heap_obj_deps(
     let mut deps: HashSet<HeapObjIdx> = Default::default();
 
     match &heap_objs[heap_obj_idx.as_usize()] {
+        HeapObj::Builtin(BuiltinConDecl::Array { t }) => {
+            type_heap_obj_deps(type_objs, record_objs, t, &mut deps);
+        }
+
         HeapObj::Builtin(_) => {}
 
         HeapObj::Source(source_decl) => {

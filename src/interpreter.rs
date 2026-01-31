@@ -32,6 +32,12 @@ struct Pgm {
     unit_alloc: u64,
     char_con_idx: HeapObjIdx,
     str_con_idx: HeapObjIdx,
+
+    // Used to allocate `Str._bytes` arrays.
+    array_u8_con_idx: HeapObjIdx,
+
+    // Used to allocate the `Array[Str]` values for `getArgs`.
+    array_u64_con_idx: HeapObjIdx,
 }
 
 /// A call stack frame.
@@ -61,6 +67,9 @@ impl Pgm {
             ordering_greater_con_idx,
             str_con_idx,
             unit_con_idx,
+            array_u8_con_idx,
+            array_u64_con_idx,
+            array_str_con_idx: _,
         } = lowered_pgm;
 
         let mut allocs: Vec<u64> = vec![u64::MAX; heap_objs.len()];
@@ -105,6 +114,8 @@ impl Pgm {
             unit_alloc,
             char_con_idx,
             str_con_idx,
+            array_u8_con_idx,
+            array_u64_con_idx,
         }
     }
 }
@@ -527,9 +538,11 @@ fn eval<W: Write>(
 
         Expr::Int(int) => ControlFlow::Val(*int),
 
-        Expr::Str(str) => {
-            ControlFlow::Val(heap.allocate_str(pgm.str_con_idx.as_u64(), str.as_bytes()))
-        }
+        Expr::Str(str) => ControlFlow::Val(heap.allocate_str(
+            pgm.str_con_idx.as_u64(),
+            pgm.array_u8_con_idx,
+            str.as_bytes(),
+        )),
 
         Expr::BoolAnd(left, right) => {
             let left = val!(eval(
@@ -901,6 +914,7 @@ fn call_builtin_fun<W: Write>(
             let i = args[0];
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx,
                 format!("{}", val_as_i8(i)).as_bytes(),
             ))
         }
@@ -910,6 +924,7 @@ fn call_builtin_fun<W: Write>(
             let i = args[0];
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx,
                 format!("{}", val_as_u8(i)).as_bytes(),
             ))
         }
@@ -919,6 +934,7 @@ fn call_builtin_fun<W: Write>(
             let i = args[0];
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx,
                 format!("{}", val_as_i32(i)).as_bytes(),
             ))
         }
@@ -928,6 +944,7 @@ fn call_builtin_fun<W: Write>(
             let i = args[0];
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx,
                 format!("{}", val_as_u32(i)).as_bytes(),
             ))
         }
@@ -935,13 +952,21 @@ fn call_builtin_fun<W: Write>(
         BuiltinFunDecl::ToStrI64 => {
             debug_assert_eq!(args.len(), 1);
             let i = val_as_i64(args[0]);
-            FunRet::Val(heap.allocate_str(pgm.str_con_idx.as_u64(), format!("{}", i).as_bytes()))
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx,
+                format!("{}", i).as_bytes(),
+            ))
         }
 
         BuiltinFunDecl::ToStrU64 => {
             debug_assert_eq!(args.len(), 1);
             let i = args[0];
-            FunRet::Val(heap.allocate_str(pgm.str_con_idx.as_u64(), format!("{}", i).as_bytes()))
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx,
+                format!("{}", i).as_bytes(),
+            ))
         }
 
         BuiltinFunDecl::U8AsI8 => {
@@ -1285,22 +1310,22 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(object)
         }
 
-        BuiltinFunDecl::ArrayNew { t } => {
+        BuiltinFunDecl::ArrayNew { t, con_idx } => {
             debug_assert_eq!(args.len(), 1);
             let cap = val_as_u32(args[0]);
             let repr = Repr::from_mono_ty(t);
-            FunRet::Val(heap.allocate_array(repr, cap))
+            FunRet::Val(heap.allocate_array(repr, *con_idx, cap))
         }
 
-        BuiltinFunDecl::ArraySlice { t: _ } => {
+        BuiltinFunDecl::ArraySlice { t: _, con_idx } => {
             debug_assert_eq!(args.len(), 3); // array, start, end
             let array = args[0];
             let start = val_as_u32(args[1]);
             let end = val_as_u32(args[2]);
-            FunRet::Val(heap.array_slice(array, start, end, loc, call_stack))
+            FunRet::Val(heap.array_slice(array, *con_idx, start, end, loc, call_stack))
         }
 
-        BuiltinFunDecl::ArrayLen => {
+        BuiltinFunDecl::ArrayLen { t: _ } => {
             debug_assert_eq!(args.len(), 1);
             let array = args[0];
             FunRet::Val(heap[array + heap::ARRAY_LEN_FIELD_IDX])
@@ -1337,14 +1362,23 @@ fn call_builtin_fun<W: Write>(
             let path = args[0];
             let path_str = std::str::from_utf8(heap.str_bytes(path)).unwrap();
             let file_contents = crate::read_file_utf8(path_str);
-            FunRet::Val(heap.allocate_str(pgm.str_con_idx.as_u64(), file_contents.as_bytes()))
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx,
+                file_contents.as_bytes(),
+            ))
         }
 
         BuiltinFunDecl::GetArgs => {
             debug_assert_eq!(args.len(), 0);
-            let arg_array = heap.allocate_array(Repr::U64, pgm.cli_args.len() as u32);
+            let arg_array =
+                heap.allocate_array(Repr::U64, pgm.array_u64_con_idx, pgm.cli_args.len() as u32);
             for (i, arg) in pgm.cli_args.iter().enumerate() {
-                let arg_val = heap.allocate_str(pgm.str_con_idx.as_u64(), arg.as_bytes());
+                let arg_val = heap.allocate_str(
+                    pgm.str_con_idx.as_u64(),
+                    pgm.array_u8_con_idx,
+                    arg.as_bytes(),
+                );
                 heap.array_set(arg_array, i as u32, arg_val, Repr::U64, loc, &[]);
             }
             FunRet::Val(arg_array)

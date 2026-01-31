@@ -37,6 +37,14 @@ pub struct LoweredPgm {
     pub ordering_greater_con_idx: HeapObjIdx,
     pub str_con_idx: HeapObjIdx,
     pub unit_con_idx: HeapObjIdx,
+    pub array_u8_con_idx: HeapObjIdx,
+    pub array_u64_con_idx: HeapObjIdx,
+
+    // To be able to allocate `Array[Str]` in `prim getArgs() Array[Str]`.
+    //
+    // This is optional as not all programs will use `getArgs`. If a program uses `getArgs`,
+    // `Array[Str]` will also be compiled, so this will always be available.
+    pub array_str_con_idx: Option<HeapObjIdx>,
 }
 
 #[derive(Debug)]
@@ -48,8 +56,7 @@ pub enum TypeObjs {
 pub const CON_CON_IDX: HeapObjIdx = HeapObjIdx(0);
 pub const FUN_CON_IDX: HeapObjIdx = HeapObjIdx(1);
 pub const CLOSURE_CON_IDX: HeapObjIdx = HeapObjIdx(2);
-pub const ARRAY_CON_IDX: HeapObjIdx = HeapObjIdx(3);
-const FIRST_FREE_CON_IDX: HeapObjIdx = HeapObjIdx(4);
+const FIRST_FREE_CON_IDX: HeapObjIdx = HeapObjIdx(3);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunIdx(u32);
@@ -237,9 +244,12 @@ pub enum BuiltinFunDecl {
 
     ArrayNew {
         t: mono::Type,
+        con_idx: HeapObjIdx,
     },
 
-    ArrayLen,
+    ArrayLen {
+        t: mono::Type,
+    },
 
     ArrayGet {
         t: mono::Type,
@@ -251,6 +261,7 @@ pub enum BuiltinFunDecl {
 
     ArraySlice {
         t: mono::Type,
+        con_idx: HeapObjIdx,
     },
 
     ArrayCopyWithin {
@@ -305,11 +316,9 @@ pub enum BuiltinConDecl {
     /// Tag of this constructor is `CLOSURE_CON_IDX`.
     Closure,
 
-    /// For now we have one array constructor. This works currently because all values are 64-bit
-    /// wide (so stores are loads are the same for all values) and we don't have GC.
-    ///
-    /// Tag of this constructor is `ARRAY_CON_IDX`.
-    Array,
+    Array {
+        t: mono::Type,
+    },
 
     // Integers are value types (not boxed), so they don't have tags.
     I8,
@@ -624,10 +633,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 }
 
                 Some(mono::TypeDeclRhs::Product(_)) | None => {
-                    if con_id == "Array" {
-                        // Skip `Array`: all array types use the same hard-coded index ARRAY_CON_IDX.
-                        continue;
-                    }
                     product_con_nums
                         .entry(con_id.clone())
                         .or_default()
@@ -721,6 +726,20 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         char_con_idx: *product_con_nums.get("Char").unwrap().get(&vec![]).unwrap(),
         str_con_idx: *product_con_nums.get("Str").unwrap().get(&vec![]).unwrap(),
         unit_con_idx: HeapObjIdx(u32::MAX), // updated below
+        array_u8_con_idx: *product_con_nums
+            .get("Array")
+            .unwrap()
+            .get(&vec![mono::Type::u8()])
+            .unwrap(),
+        array_u64_con_idx: *product_con_nums
+            .get("Array")
+            .unwrap()
+            .get(&vec![mono::Type::u64()])
+            .unwrap(),
+        array_str_con_idx: product_con_nums
+            .get("Array")
+            .and_then(|ty_map| ty_map.get(&vec![mono::Type::str()]))
+            .copied(),
     };
 
     // Lower the program. Note that the iteration order here should be the same as above to add
@@ -738,9 +757,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     lowered_pgm
         .heap_objs
         .push(HeapObj::Builtin(BuiltinConDecl::Closure)); // CLOSURE_CON_IDX = 2
-    lowered_pgm
-        .heap_objs
-        .push(HeapObj::Builtin(BuiltinConDecl::Array)); // ARRAY_CON_IDX = 3
 
     for (con_id, con_ty_map) in &mono_pgm.ty {
         for (con_ty_args, con_decl) in con_ty_map {
@@ -785,8 +801,21 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 },
 
                 None => match con_id.as_str() {
-                    // Array is handled separately with a hard-coded index (ARRAY_CON_IDX).
-                    "Array" => {}
+                    "Array" => {
+                        assert_eq!(con_ty_args.len(), 1);
+                        let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
+                        lowered_pgm
+                            .heap_objs
+                            .push(HeapObj::Builtin(BuiltinConDecl::Array {
+                                t: con_ty_args[0].clone(),
+                            }));
+                        let old = lowered_pgm
+                            .type_objs
+                            .entry(con_id.clone())
+                            .or_default()
+                            .insert(con_ty_args.clone(), TypeObjs::Product(idx));
+                        assert!(old.is_none());
+                    }
 
                     "I8" => {
                         assert_eq!(con_ty_args.len(), 0);
@@ -1282,14 +1311,20 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 // prim Array.new(len: U32) Array[t]
                                 assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
                                 let t = fun_ty_args[0].clone();
-                                BuiltinFunDecl::ArrayNew { t }
+                                let con_idx = *indices
+                                    .product_cons
+                                    .get("Array")
+                                    .unwrap()
+                                    .get(&vec![t.clone()])
+                                    .unwrap();
+                                BuiltinFunDecl::ArrayNew { t, con_idx }
                             }
 
                             ("Array", "len") => {
                                 // prim Array.len(self: Array[t]) U32
                                 assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
-                                // All arrays have the length in the same location, ignore `t`.
-                                BuiltinFunDecl::ArrayLen
+                                let t = fun_ty_args[0].clone();
+                                BuiltinFunDecl::ArrayLen { t }
                             }
 
                             ("Array", "get") => {
@@ -1310,7 +1345,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 // prim Array.slice(self: Array[t], start: U32, end: U32)
                                 assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
                                 let t = fun_ty_args[0].clone();
-                                BuiltinFunDecl::ArraySlice { t }
+                                let con_idx = *indices
+                                    .product_cons
+                                    .get("Array")
+                                    .unwrap()
+                                    .get(&vec![t.clone()])
+                                    .unwrap();
+                                BuiltinFunDecl::ArraySlice { t, con_idx }
                             }
 
                             ("Array", "copyWithin") => {

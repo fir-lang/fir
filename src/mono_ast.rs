@@ -92,6 +92,13 @@ impl Type {
         })
     }
 
+    pub(crate) fn u64() -> Type {
+        Type::Named(NamedType {
+            name: crate::SmolStr::new_static("U64"),
+            args: vec![],
+        })
+    }
+
     pub(crate) fn str() -> Type {
         Type::Named(NamedType {
             name: Id::new_static("Str"),
@@ -102,6 +109,13 @@ impl Type {
     pub(crate) fn char() -> Type {
         Type::Named(NamedType {
             name: Id::new_static("Char"),
+            args: vec![],
+        })
+    }
+
+    pub(crate) fn u8() -> Type {
+        Type::Named(NamedType {
+            name: Id::new_static("U8"),
             args: vec![],
         })
     }

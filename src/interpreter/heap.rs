@@ -69,14 +69,14 @@ impl Heap {
     // - Pointer to data
     // - Length of data (in number of elements)
     // This layout allows slicing the array.
-    pub fn allocate_array(&mut self, repr: Repr, len: u32) -> u64 {
+    pub fn allocate_array(&mut self, repr: Repr, con_idx: HeapObjIdx, len: u32) -> u64 {
         let elem_size_in_bytes = repr.elem_size_in_bytes();
         let len_words = (len as usize) * elem_size_in_bytes.div_ceil(8);
 
         // Allocate in one go. Bump alloc is cheap so we could also allocate separately.
         let array_obj_addr = self.allocate(len_words + 3);
         let data_addr = array_obj_addr + 3;
-        self[array_obj_addr] = ARRAY_CON_IDX.as_u64();
+        self[array_obj_addr] = con_idx.as_u64();
         debug_assert_eq!(ARRAY_DATA_ADDR_FIELD_IDX, 1);
 
         // Scale data address based on element size to be able to slice the array at element-sized
@@ -97,6 +97,7 @@ impl Heap {
     pub fn array_slice(
         &mut self,
         array: u64,
+        con_idx: HeapObjIdx,
         start: u32,
         end: u32,
         loc: &ast::Loc,
@@ -118,7 +119,7 @@ impl Heap {
 
         let data_addr = self[array + ARRAY_DATA_ADDR_FIELD_IDX];
         let array_obj_addr = self.allocate(3);
-        self[array_obj_addr] = ARRAY_CON_IDX.as_u64();
+        self[array_obj_addr] = con_idx.as_u64();
         assert_eq!(ARRAY_DATA_ADDR_FIELD_IDX, 1);
         self[array_obj_addr + 1] = data_addr + u64::from(start);
         assert_eq!(ARRAY_LEN_FIELD_IDX, 2);
@@ -243,8 +244,8 @@ impl Heap {
         }
     }
 
-    pub fn allocate_str(&mut self, str_tag: u64, string: &[u8]) -> u64 {
-        let array = self.allocate_array(Repr::U8, string.len() as u32);
+    pub fn allocate_str(&mut self, str_tag: u64, array_u8_tag: HeapObjIdx, string: &[u8]) -> u64 {
+        let array = self.allocate_array(Repr::U8, array_u8_tag, string.len() as u32);
         let data = self[array + ARRAY_DATA_ADDR_FIELD_IDX];
 
         let bytes: &mut [u8] =
@@ -255,27 +256,6 @@ impl Heap {
         self[alloc] = str_tag;
         self[alloc + 1] = array; // _bytes: Array[U8]
         alloc
-    }
-
-    #[allow(unused)]
-    pub fn allocate_str_view(
-        &mut self,
-        str_tag: u64,
-        str: u64,
-        byte_start: u32,
-        byte_len: u32,
-        loc: &ast::Loc,
-        call_stack: &[Frame],
-    ) -> u64 {
-        let array = self[str + 1];
-        let sliced_array =
-            self.array_slice(array, byte_start, byte_start + byte_len, loc, call_stack);
-
-        let new_str = self.allocate(2);
-        self[new_str] = str_tag;
-        self[new_str + 1] = sliced_array;
-
-        new_str
     }
 
     pub fn str_bytes(&self, str_addr: u64) -> &[u8] {
