@@ -65,15 +65,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         #include <stdlib.h>
         #include <string.h>
 
-        typedef  uint8_t  U8;
-        typedef   int8_t  I8;
-        typedef uint16_t U16;
-        typedef  int16_t I16;
-        typedef uint32_t U32;
-        typedef  int32_t I32;
-        typedef uint64_t U64;
-        typedef  int64_t I64;
-
         typedef struct {{
             uint64_t tag;
         }} Variant;
@@ -524,26 +515,32 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
 
         BuiltinConDecl::I8 => {
             wln!(p, "// I8 tag {}", tag);
+            wln!(p, "typedef int8_t I8;");
         }
 
         BuiltinConDecl::U8 => {
             wln!(p, "// U8 tag {}", tag);
+            wln!(p, "typedef uint8_t U8;");
         }
 
         BuiltinConDecl::I32 => {
             wln!(p, "// I32 tag {}", tag);
+            wln!(p, "typedef int32_t I32;");
         }
 
         BuiltinConDecl::U32 => {
             wln!(p, "// U32 tag {}", tag);
+            wln!(p, "typedef uint32_t U32;");
         }
 
         BuiltinConDecl::I64 => {
             wln!(p, "// I64 tag {}", tag);
+            wln!(p, "typedef int64_t I64;");
         }
 
         BuiltinConDecl::U64 => {
             wln!(p, "// U64 tag {}", tag);
+            wln!(p, "typedef uint64_t U64;");
         }
     }
 }
