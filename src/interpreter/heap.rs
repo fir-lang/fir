@@ -70,18 +70,24 @@ impl Heap {
     // - Length of data (in number of elements)
     // This layout allows slicing the array.
     pub fn allocate_array(&mut self, repr: Repr, len: u32) -> u64 {
-        let len_words = (len as usize) * repr.elem_size_in_bytes().div_ceil(8);
+        let elem_size_in_bytes = repr.elem_size_in_bytes();
+        let len_words = (len as usize) * elem_size_in_bytes.div_ceil(8);
+
         // Allocate in one go. Bump alloc is cheap so we could also allocate separately.
         let array_obj_addr = self.allocate(len_words + 3);
         let data_addr = array_obj_addr + 3;
         self[array_obj_addr] = ARRAY_CON_IDX.as_u64();
         debug_assert_eq!(ARRAY_DATA_ADDR_FIELD_IDX, 1);
-        self[array_obj_addr + ARRAY_DATA_ADDR_FIELD_IDX] = data_addr
-            * match repr {
-                Repr::U8 => 8,
-                Repr::U32 => 2,
-                Repr::U64 => 1,
-            };
+
+        // Scale data address based on element size to be able to slice the array at element-sized
+        // (rather than word-sized) chunks.
+        //
+        // E.g. when we have a `U8` array and we're slicing for `array.slice(1, array.len())`, the
+        // data address should be `array.data + 1` and the array should index second byte of the
+        // first word with `array.get(0)`.
+        let scale = 8 / elem_size_in_bytes;
+        self[array_obj_addr + ARRAY_DATA_ADDR_FIELD_IDX] = data_addr * (scale as u64);
+
         debug_assert_eq!(ARRAY_LEN_FIELD_IDX, 2);
         self[array_obj_addr + ARRAY_LEN_FIELD_IDX] = u32_as_val(len);
         self.values[data_addr as usize..(data_addr as usize) + len_words].fill(0);
