@@ -528,7 +528,7 @@ fn eval<W: Write>(
         Expr::Int(int) => ControlFlow::Val(*int),
 
         Expr::Str(str) => {
-            ControlFlow::Val(heap.allocate_str(pgm.str_con_idx.as_u64(), Repr::U8, str.as_bytes()))
+            ControlFlow::Val(heap.allocate_str(pgm.str_con_idx.as_u64(), str.as_bytes()))
         }
 
         Expr::BoolAnd(left, right) => {
@@ -901,7 +901,6 @@ fn call_builtin_fun<W: Write>(
             let i = args[0];
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
-                Repr::U8,
                 format!("{}", val_as_i8(i)).as_bytes(),
             ))
         }
@@ -911,7 +910,6 @@ fn call_builtin_fun<W: Write>(
             let i = args[0];
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
-                Repr::U8,
                 format!("{}", val_as_u8(i)).as_bytes(),
             ))
         }
@@ -921,7 +919,6 @@ fn call_builtin_fun<W: Write>(
             let i = args[0];
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
-                Repr::U8,
                 format!("{}", val_as_i32(i)).as_bytes(),
             ))
         }
@@ -931,7 +928,6 @@ fn call_builtin_fun<W: Write>(
             let i = args[0];
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
-                Repr::U8,
                 format!("{}", val_as_u32(i)).as_bytes(),
             ))
         }
@@ -939,21 +935,13 @@ fn call_builtin_fun<W: Write>(
         BuiltinFunDecl::ToStrI64 => {
             debug_assert_eq!(args.len(), 1);
             let i = val_as_i64(args[0]);
-            FunRet::Val(heap.allocate_str(
-                pgm.str_con_idx.as_u64(),
-                Repr::U8,
-                format!("{}", i).as_bytes(),
-            ))
+            FunRet::Val(heap.allocate_str(pgm.str_con_idx.as_u64(), format!("{}", i).as_bytes()))
         }
 
         BuiltinFunDecl::ToStrU64 => {
             debug_assert_eq!(args.len(), 1);
             let i = args[0];
-            FunRet::Val(heap.allocate_str(
-                pgm.str_con_idx.as_u64(),
-                Repr::U8,
-                format!("{}", i).as_bytes(),
-            ))
+            FunRet::Val(heap.allocate_str(pgm.str_con_idx.as_u64(), format!("{}", i).as_bytes()))
         }
 
         BuiltinFunDecl::U8AsI8 => {
@@ -1349,18 +1337,14 @@ fn call_builtin_fun<W: Write>(
             let path = args[0];
             let path_str = std::str::from_utf8(heap.str_bytes(path)).unwrap();
             let file_contents = crate::read_file_utf8(path_str);
-            FunRet::Val(heap.allocate_str(
-                pgm.str_con_idx.as_u64(),
-                Repr::U8,
-                file_contents.as_bytes(),
-            ))
+            FunRet::Val(heap.allocate_str(pgm.str_con_idx.as_u64(), file_contents.as_bytes()))
         }
 
         BuiltinFunDecl::GetArgs => {
             debug_assert_eq!(args.len(), 0);
             let arg_array = heap.allocate_array(Repr::U64, pgm.cli_args.len() as u32);
             for (i, arg) in pgm.cli_args.iter().enumerate() {
-                let arg_val = heap.allocate_str(pgm.str_con_idx.as_u64(), Repr::U8, arg.as_bytes());
+                let arg_val = heap.allocate_str(pgm.str_con_idx.as_u64(), arg.as_bytes());
                 heap.array_set(arg_array, i as u32, arg_val, Repr::U64, loc, &[]);
             }
             FunRet::Val(arg_array)

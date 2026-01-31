@@ -243,8 +243,8 @@ impl Heap {
         }
     }
 
-    pub fn allocate_str(&mut self, str_tag: u64, array_repr: Repr, string: &[u8]) -> u64 {
-        let array = self.allocate_array(array_repr, string.len() as u32);
+    pub fn allocate_str(&mut self, str_tag: u64, string: &[u8]) -> u64 {
+        let array = self.allocate_array(Repr::U8, string.len() as u32);
         let data = self[array + ARRAY_DATA_ADDR_FIELD_IDX];
 
         let bytes: &mut [u8] =
