@@ -862,39 +862,37 @@ fn builtin_fun_to_c(
     wln!(p, "// {:?}", fun);
     match fun {
         BuiltinFunDecl::Panic => {
-            w!(p, "static {} _fun_{}(Str* msg) {{", c_ty(ret), idx);
-            p.indent();
-            p.nl();
-            wln!(p, "ARRAY* bytes_arr = msg->_0;");
-            wln!(p, "uint32_t len = array_len(bytes_arr);");
-            w!(p, "uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;");
-            p.nl();
-            wln!(p, "fprintf(stderr, \"PANIC: \");");
-            wln!(p, "fwrite(data_ptr, 1, len, stderr);");
-            wln!(p, "fprintf(stderr, \"\\n\");");
-            w!(p, "exit(1);");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            writedoc!(
+                p,
+                "
+                static {} _fun_{idx}(Str* msg) {{
+                    ARRAY* bytes_arr = msg->_0;
+                    uint32_t len = array_len(bytes_arr);
+                    uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
+                    fprintf(stderr, \"PANIC: \");
+                    fwrite(data_ptr, 1, len, stderr);
+                    fprintf(stderr, \"\\n\");
+                    exit(1);
+                }}
+                ",
+                c_ty(ret)
+            );
         }
 
         BuiltinFunDecl::PrintStrNoNl => {
-            w!(p, "static Record* _fun_{}(Str* str) {{", idx);
-            p.indent();
-            p.nl();
-            wln!(p, "ARRAY* bytes_arr = str->_0;");
-            wln!(p, "uint32_t len = array_len(bytes_arr);");
-            w!(p, "uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;");
-            p.nl();
-            wln!(p, "fwrite(data_ptr, 1, len, stdout);");
-            w!(
+            writedoc!(
                 p,
-                "return {};",
+                "
+                static Record* _fun_{idx}(Str* str) {{
+                    ARRAY* bytes_arr = str->_0;
+                    uint32_t len = array_len(bytes_arr);
+                    uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
+                    fwrite(data_ptr, 1, len, stdout);
+                    return {};
+                }}
+                ",
                 heap_obj_singleton_name(pgm, pgm.unit_con_idx)
             );
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
         }
 
         BuiltinFunDecl::ShrI8 => {
@@ -1673,59 +1671,47 @@ fn builtin_fun_to_c(
 
         // End of array functions //////////////////////////////////////////////////////////////////
         BuiltinFunDecl::ReadFileUtf8 => {
-            w!(p, "static Str* _fun_{}(Str* path_str) {{", idx);
-            p.indent();
-            p.nl();
-            wln!(p, "ARRAY* bytes_arr = path_str->_0;");
-            wln!(p, "uint32_t path_len = array_len(bytes_arr);");
-            w!(p, "uint8_t* path_data = (uint8_t*)bytes_arr->data_ptr;");
-            p.nl();
-            wln!(p, "char* path = (char*)malloc(path_len + 1);");
-            wln!(p, "memcpy(path, path_data, path_len);");
-            wln!(p, "path[path_len] = '\\0';");
-            wln!(p, "FILE* f = fopen(path, \"rb\");");
-            wln!(p, "free(path);");
-            w!(
+            writedoc!(
                 p,
-                "if (!f) {{ fprintf(stderr, \"Failed to open file\\n\"); exit(1); }}"
+                "
+                static Str* _fun_{idx}(Str* path_str) {{
+                    ARRAY* bytes_arr = path_str->_0;
+                    uint32_t path_len = array_len(bytes_arr);
+                    uint8_t* path_data = (uint8_t*)bytes_arr->data_ptr;
+                    char* path = (char*)malloc(path_len + 1);
+                    memcpy(path, path_data, path_len);
+                    path[path_len] = '\\0';
+                    FILE* f = fopen(path, \"rb\");
+                    free(path);
+                    if (!f) {{ fprintf(stderr, \"Failed to open file\\n\"); exit(1); }}
+                    fseek(f, 0, SEEK_END);
+                    long size = ftell(f);
+                    fseek(f, 0, SEEK_SET);
+                    char* contents = (char*)malloc(size);
+                    if (fread(contents, 1, size, f) != (size_t)size) {{ fprintf(stderr, \"Failed to read file\\n\"); exit(1); }}
+                    fclose(f);
+                    Str* result = alloc_str(contents, size);
+                    free(contents);
+                    return result;
+                }}
+                ",
             );
-            p.nl();
-            wln!(p, "fseek(f, 0, SEEK_END);");
-            wln!(p, "long size = ftell(f);");
-            wln!(p, "fseek(f, 0, SEEK_SET);");
-            wln!(p, "char* contents = (char*)malloc(size);");
-            wln!(
-                p,
-                "if (fread(contents, 1, size, f) != (size_t)size) {{ fprintf(stderr, \"Failed to read file\\n\"); exit(1); }}"
-            );
-            wln!(p, "fclose(f);");
-            w!(p, "Str* result = alloc_str(contents, size);");
-            p.nl();
-            wln!(p, "free(contents);");
-            w!(p, "return result;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
         }
 
         BuiltinFunDecl::GetArgs => {
-            w!(p, "static ARRAY* _fun_{}(void) {{", idx);
-            p.indent();
-            p.nl();
-            wln!(p, "ARRAY* arr = array_new_u64(g_argc);");
-            w!(p, "for (int i = 0; i < g_argc; i++) {{");
-            p.indent();
-            p.nl();
-            w!(p, "Str* arg_str = alloc_str(g_argv[i], strlen(g_argv[i]));",);
-            p.nl();
-            w!(p, "array_set_u64(arr, i, (U64)arg_str);");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-            w!(p, "return arr;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            writedoc!(
+                p,
+                "
+                static ARRAY* _fun_{idx}(void) {{
+                    ARRAY* arr = array_new_u64(g_argc);
+                    for (int i = 0; i < g_argc; i++) {{
+                        Str* arg_str = alloc_str(g_argv[i], strlen(g_argv[i]));
+                        array_set_u64(arr, i, (U64)arg_str);
+                    }}
+                    return arr;
+                }}
+                ",
+            );
         }
     }
 }
