@@ -181,14 +181,14 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             return arr;
         }}
 
-        static uint64_t array_get_u8(ARRAY* arr, uint32_t idx) {{
+        static uint8_t array_get_u8(ARRAY* arr, uint32_t idx) {{
             uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
-            return (uint64_t)data_ptr[idx];
+            return data_ptr[idx];
         }}
 
-        static void array_set_u8(ARRAY* arr, uint32_t idx, uint64_t val) {{
+        static void array_set_u8(ARRAY* arr, uint32_t idx, uint8_t val) {{
             uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
-            data_ptr[idx] = (uint8_t)val;
+            data_ptr[idx] = val;
         }}
 
         static ARRAY* array_slice_u8(ARRAY* arr, uint32_t start, uint32_t end) {{
@@ -215,14 +215,14 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             return arr;
         }}
 
-        static uint64_t array_get_u32(ARRAY* arr, uint32_t idx) {{
+        static uint32_t array_get_u32(ARRAY* arr, uint32_t idx) {{
             uint32_t* data_ptr = (uint32_t*)arr->data_ptr;
-            return (uint64_t)data_ptr[idx];
+            return data_ptr[idx];
         }}
 
-        static void array_set_u32(ARRAY* arr, uint32_t idx, uint64_t val) {{
+        static void array_set_u32(ARRAY* arr, uint32_t idx, uint32_t val) {{
             uint32_t* data_ptr = (uint32_t*)arr->data_ptr;
-            data_ptr[idx] = (uint32_t)val;
+            data_ptr[idx] = val;
         }}
 
         static ARRAY* array_slice_u32(ARRAY* arr, uint32_t start, uint32_t end) {{
@@ -1594,7 +1594,7 @@ fn builtin_fun_to_c(
             );
             p.indent();
             p.nl();
-            w!(p, "return ({}){}(arr, (uint32_t)idx);", c_ty(ret), fn_name);
+            w!(p, "return ({}){fn_name}(arr, idx);", c_ty(ret));
             p.dedent();
             p.nl();
             wln!(p, "}}");
