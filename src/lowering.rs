@@ -23,8 +23,15 @@ pub struct LoweredPgm {
     /// Product types will have one index per type. Sum types may have multiple.
     pub type_objs: HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
 
-    /// Maps record types to their heap object indices.
+    /// For C backend: maps record types to their heap object indices.
     pub record_objs: HashMap<RecordType, HeapObjIdx>,
+
+    /// For C backend: maps variant types to their heap object indices.
+    ///
+    /// Note: variants don't have their own tags, they use the tags of the types in the variant
+    /// instead. These tags are to make it easy to refer to a variant type in AST nodes, dependency
+    /// analysis etc.
+    pub variant_objs: HashMap<VariantType, HeapObjIdx>,
 
     // Ids of some special cons that the interpreter needs to know.
     //
@@ -689,6 +696,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         closures: vec![],
         type_objs: Default::default(),
         record_objs: Default::default(),
+        variant_objs: Default::default(),
         true_con_idx: *sum_con_nums
             .get("Bool")
             .unwrap()
@@ -1428,6 +1436,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     }
 
     lowered_pgm.record_objs = indices.records;
+    lowered_pgm.variant_objs = variant_indices;
     lowered_pgm
 }
 
