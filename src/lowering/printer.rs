@@ -229,14 +229,19 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
-            Expr::LocalVar(idx) => write!(buf, "local{}", idx.0).unwrap(),
+            Expr::LocalVar(idx) => write!(buf, "local{}", idx.as_usize()).unwrap(),
 
-            Expr::Fun(idx) => write!(buf, "fun{}", idx.0).unwrap(),
+            Expr::Fun(idx) => write!(buf, "fun{}", idx.as_usize()).unwrap(),
 
-            Expr::Con(idx) => write!(buf, "con{}", idx.0).unwrap(),
+            Expr::Con(idx) => write!(buf, "con{}", idx.as_usize()).unwrap(),
 
-            Expr::ConAlloc(idx, args, _arg_tys, _con_ty) => {
-                write!(buf, "con{}", idx.0).unwrap();
+            Expr::ConAlloc {
+                con_idx,
+                args,
+                arg_tys: _,
+                ret_ty: _,
+            } => {
+                write!(buf, "con{}", con_idx.as_usize()).unwrap();
                 buf.push('(');
                 for (i, expr) in args.iter().enumerate() {
                     if i != 0 {

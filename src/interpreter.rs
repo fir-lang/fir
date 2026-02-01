@@ -485,7 +485,12 @@ fn eval<W: Write>(
 
         Expr::Con(con_idx) => ControlFlow::Val(heap.allocate_con(con_idx.as_u64())),
 
-        Expr::ConAlloc(con_idx, args, _arg_tys, _con_ty) => {
+        Expr::ConAlloc {
+            con_idx,
+            args,
+            arg_tys: _,
+            ret_ty: _,
+        } => {
             if args.is_empty() {
                 ControlFlow::Val(pgm.allocs[con_idx.as_usize()])
             } else {
