@@ -665,7 +665,7 @@ fn eval<W: Write>(
 
         Expr::Do(stmts, _) => exec(w, pgm, heap, locals, stmts, call_stack),
 
-        Expr::Variant(expr) => {
+        Expr::Variant { expr, ty: _ } => {
             // Note: the interpreter can only deal with variants of boxed types. If `expr` is an
             // unboxed type things will go wrong.
             //

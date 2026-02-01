@@ -2012,7 +2012,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             w!(p, "}})");
         }
 
-        Expr::Variant(expr) => {
+        Expr::Variant { expr, ty: _ } => {
             // Variants are represented as their underlying type
             w!(p, "((Variant*)");
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);

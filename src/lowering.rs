@@ -437,7 +437,10 @@ pub enum Expr {
         mono::Type,
     ),
 
-    Variant(Box<L<Expr>>),
+    Variant {
+        expr: Box<L<Expr>>,
+        ty: OrdMap<Id, mono::NamedType>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -2111,11 +2114,17 @@ fn lower_expr(
             (expr, Default::default())
         }
 
-        mono::Expr::Variant(mono::VariantExpr { expr, ty: _ }) => {
+        mono::Expr::Variant(mono::VariantExpr { expr, ty }) => {
             // Note: Type of the expr in the variant won't be a variant type. Use the
             // `VariantExpr`'s type.
             let (expr, vars) = lower_bl_expr(expr, closures, indices, scope, mono_pgm);
-            (Expr::Variant(expr), vars)
+            (
+                Expr::Variant {
+                    expr,
+                    ty: ty.clone(),
+                },
+                vars,
+            )
         }
     }
 }
