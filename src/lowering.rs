@@ -6,8 +6,8 @@ pub mod printer;
 use crate::ast;
 use crate::collections::*;
 use crate::mono_ast::{self as mono, Id, L, Loc};
-pub(crate) use crate::type_collector::RecordType;
 use crate::type_collector::collect_anonymous_types;
+pub(crate) use crate::type_collector::{RecordType, VariantType};
 use crate::utils::loc_display;
 
 use smol_str::SmolStr;
@@ -291,6 +291,7 @@ pub enum HeapObj {
     Builtin(BuiltinConDecl),
     Source(SourceConDecl),
     Record(RecordType),
+    Variant(VariantType),
 }
 
 #[derive(Debug)]
@@ -866,15 +867,22 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     }
 
     // Assign indices to record shapes.
-    let (record_types, _variant_types) = collect_anonymous_types(mono_pgm);
+    let (record_types, variant_types) = collect_anonymous_types(mono_pgm);
 
-    // TODO: We could assign indices to records as we see them during lowering below.
     let mut record_indices: HashMap<RecordType, HeapObjIdx> = Default::default();
     for record_type in record_types {
         let idx = next_con_idx;
         next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
         record_indices.insert(record_type.clone(), idx);
         lowered_pgm.heap_objs.push(HeapObj::Record(record_type));
+    }
+
+    let mut variant_indices: HashMap<VariantType, HeapObjIdx> = Default::default();
+    for variant_type in variant_types {
+        let idx = next_con_idx;
+        next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
+        variant_indices.insert(variant_type.clone(), idx);
+        lowered_pgm.heap_objs.push(HeapObj::Variant(variant_type));
     }
 
     lowered_pgm.unit_con_idx = *record_indices

@@ -77,7 +77,7 @@ impl Pgm {
         // Allocate singletons for constructors without fields.
         for (i, heap_obj) in heap_objs.iter().enumerate() {
             match heap_obj {
-                HeapObj::Builtin(_) => continue,
+                HeapObj::Builtin(_) | HeapObj::Variant(_) => continue,
 
                 HeapObj::Source(source_con) => {
                     if source_con.fields.is_empty() {

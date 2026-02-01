@@ -116,6 +116,10 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                         let struct_name = record_struct_name(record);
                         wln!(p, "typedef struct {} {};", struct_name, struct_name);
                     }
+                    HeapObj::Variant(variant) => {
+                        let struct_name = variant_struct_name(variant);
+                        wln!(p, "typedef struct {struct_name} {struct_name};");
+                    }
                     HeapObj::Builtin(BuiltinConDecl::Array { t }) => {
                         let struct_name = array_struct_name(t);
                         wln!(p, "typedef struct {struct_name} {struct_name};");
@@ -474,6 +478,7 @@ fn heap_obj_to_c(heap_obj: &HeapObj, tag: u32, p: &mut Printer) {
         HeapObj::Builtin(builtin) => builtin_con_decl_to_c(builtin, tag, p),
         HeapObj::Source(source_con) => source_con_decl_to_c(source_con, tag, p),
         HeapObj::Record(record) => record_decl_to_c(record, tag, p),
+        HeapObj::Variant(_) => todo!(),
     }
 }
 
@@ -583,10 +588,15 @@ fn array_struct_name(t: &mono::Type) -> String {
     name
 }
 
+fn variant_struct_name(t: &VariantType) -> String {
+    todo!()
+}
+
 fn heap_obj_struct_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
         HeapObj::Source(source_con) => source_con_struct_name(source_con),
         HeapObj::Record(record) => record_struct_name(record),
+        HeapObj::Variant(variant) => variant_struct_name(variant),
         HeapObj::Builtin(_) => panic!("Builtin in heap_obj_struct_name"),
     }
 }
@@ -595,6 +605,7 @@ fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
         HeapObj::Source(source_con) => source_con_tag_name(source_con),
         HeapObj::Record(record) => format!("TAG_{}", record_struct_name(record)),
+        HeapObj::Variant(_) => panic!("Variants don't have runtime tags"),
         HeapObj::Builtin(_) => panic!("Builtin in heap_obj_tag_name"),
     }
 }
@@ -624,6 +635,7 @@ fn heap_obj_singleton_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
         HeapObj::Source(source_con) => source_con_singleton_name(source_con),
         HeapObj::Record(record) => format!("_singleton_{}", record_struct_name(record)),
+        HeapObj::Variant(_) => panic!("Variants don't have singletons"),
         HeapObj::Builtin(_) => panic!("Builtin heap objects don't have singletons"),
     }
 }
@@ -2144,7 +2156,7 @@ fn top_sort(
                     output.push(std::iter::once(HeapObjIdx(heap_obj_idx as u32)).collect());
                     Some(idx_gen.next())
                 }
-                HeapObj::Source(_) | HeapObj::Record(_) => None,
+                HeapObj::Source(_) | HeapObj::Record(_) | HeapObj::Variant(_) => None,
             },
             low_link: None,
             on_stack: false,
@@ -2278,6 +2290,12 @@ fn heap_obj_deps(
         HeapObj::Record(record_type) => {
             for field in record_type.fields.values() {
                 type_heap_obj_deps(type_objs, record_objs, field, &mut deps);
+            }
+        }
+
+        HeapObj::Variant(variant_type) => {
+            for named_ty in variant_type.alts.values() {
+                named_type_heap_obj_deps(type_objs, named_ty, &mut deps);
             }
         }
     }

@@ -37,6 +37,8 @@ impl LoweredPgm {
                 }
 
                 HeapObj::Record(record) => write!(buf, "{record:?}").unwrap(),
+
+                HeapObj::Variant(variant) => write!(buf, "{variant:?}").unwrap(),
             }
             buf.push('\n');
         }
