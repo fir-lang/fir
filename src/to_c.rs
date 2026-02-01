@@ -659,19 +659,19 @@ fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, p: &mut Printer) {
     let tag_name = source_con_tag_name(source_con);
     let struct_name = source_con_struct_name(source_con);
 
-    wln!(p, "#define {} {}", tag_name, tag);
+    wln!(p, "#define {tag_name} {tag}");
 
-    w!(p, "typedef struct {} {{", struct_name);
+    w!(p, "typedef struct {struct_name} {{");
     p.indent();
     p.nl();
     w!(p, "uint64_t _tag;");
     for (i, ty) in fields.iter().enumerate() {
         p.nl();
-        w!(p, "{} _{};", c_ty(ty), i);
+        w!(p, "{} _{i};", c_ty(ty));
     }
     p.dedent();
     p.nl();
-    wln!(p, "}} {};", struct_name);
+    wln!(p, "}} {struct_name};");
 }
 
 fn record_decl_to_c(record: &RecordType, tag: u32, p: &mut Printer) {
