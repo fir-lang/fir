@@ -385,7 +385,12 @@ pub enum Expr {
     /// Constructor allocation.
     ///
     /// The argument list may be empty (for nullary constructors).
-    ConAlloc(HeapObjIdx, Vec<L<Expr>>, Vec<mono::Type>, mono::Type),
+    ConAlloc {
+        con_idx: HeapObjIdx,
+        args: Vec<L<Expr>>,
+        arg_tys: Vec<mono::Type>,
+        ret_ty: mono::Type,
+    },
 
     /// Field selection: `<expr>.<id>`.
     FieldSel(FieldSelExpr),
@@ -1577,7 +1582,12 @@ fn lower_expr(
             };
 
             let expr = if let mono::ConFields::Empty = con_fields {
-                Expr::ConAlloc(idx, vec![], vec![], ty.clone())
+                Expr::ConAlloc {
+                    con_idx: idx,
+                    args: vec![],
+                    arg_tys: vec![],
+                    ret_ty: ty.clone(),
+                }
             } else {
                 Expr::Con(idx)
             };
@@ -1714,9 +1724,12 @@ fn lower_expr(
                         .collect();
 
                     match &fun.node {
-                        Expr::Con(heap_obj_idx) => {
-                            Expr::ConAlloc(*heap_obj_idx, args, arg_tys.clone(), (*ret).clone())
-                        }
+                        Expr::Con(heap_obj_idx) => Expr::ConAlloc {
+                            con_idx: *heap_obj_idx,
+                            args,
+                            arg_tys: arg_tys.clone(),
+                            ret_ty: (*ret).clone(),
+                        },
                         _ => Expr::Call(CallExpr {
                             fun,
                             args,
@@ -1768,12 +1781,12 @@ fn lower_expr(
                         .collect();
 
                     let call_expr = match &fun.node {
-                        Expr::Con(heap_obj_idx) => Expr::ConAlloc(
-                            *heap_obj_idx,
+                        Expr::Con(heap_obj_idx) => Expr::ConAlloc {
+                            con_idx: *heap_obj_idx,
                             args,
-                            named_args.values().cloned().collect(),
-                            (*ret).clone(),
-                        ),
+                            arg_tys: named_args.values().cloned().collect(),
+                            ret_ty: (*ret).clone(),
+                        },
                         _ => Expr::Call(CallExpr {
                             fun,
                             args,
@@ -1813,20 +1826,20 @@ fn lower_expr(
         mono::Expr::Str(str) => (Expr::Str(str.clone()), Default::default()),
 
         mono::Expr::Char(char) => (
-            Expr::ConAlloc(
-                *indices
+            Expr::ConAlloc {
+                con_idx: *indices
                     .product_cons
                     .get(&SmolStr::new_static("Char"))
                     .unwrap()
                     .get(&vec![])
                     .unwrap(),
-                vec![L {
+                args: vec![L {
                     loc: loc.clone(),
                     node: Expr::Int(u64::from(*char as u32)),
                 }],
-                vec![mono::Type::u32()],
-                mono::Type::char(),
-            ),
+                arg_tys: vec![mono::Type::u32()],
+                ret_ty: mono::Type::char(),
+            },
             Default::default(),
         ),
 
@@ -1892,18 +1905,18 @@ fn lower_expr(
             };
 
             stmts.push(L {
-                node: Stmt::Expr(Expr::ConAlloc(
-                    record_idx,
-                    field_tys
+                node: Stmt::Expr(Expr::ConAlloc {
+                    con_idx: record_idx,
+                    args: field_tys
                         .keys()
                         .map(|name| L {
                             node: Expr::LocalVar(*arg_locals.get(name).unwrap()),
                             loc: loc.clone(),
                         })
                         .collect(),
-                    field_tys.values().cloned().collect(),
-                    ty.clone(),
-                )),
+                    arg_tys: field_tys.values().cloned().collect(),
+                    ret_ty: ty.clone(),
+                }),
                 loc: loc.clone(),
             });
 

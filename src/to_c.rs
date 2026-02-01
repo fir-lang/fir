@@ -79,14 +79,14 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             if let TypeObjs::Product(_) = objs {
                 continue;
             }
-            w!(p, "// {}", ty_id);
+            w!(p, "// {ty_id}");
             if !ty_args.is_empty() {
                 w!(p, "[");
                 for (i, ty_arg) in ty_args.iter().enumerate() {
                     if i != 0 {
                         w!(p, ", ");
                     }
-                    w!(p, "{}", ty_arg);
+                    w!(p, "{ty_arg}");
                 }
                 w!(p, "]");
             }
@@ -110,11 +110,11 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 match &pgm.heap_objs[heap_obj_idx.as_usize()] {
                     HeapObj::Source(source_con) => {
                         let struct_name = source_con_struct_name(source_con);
-                        wln!(p, "typedef struct {} {};", struct_name, struct_name);
+                        wln!(p, "typedef struct {struct_name} {struct_name};");
                     }
                     HeapObj::Record(record) => {
                         let struct_name = record_struct_name(record);
-                        wln!(p, "typedef struct {} {};", struct_name, struct_name);
+                        wln!(p, "typedef struct {struct_name} {struct_name};");
                     }
                     HeapObj::Builtin(BuiltinConDecl::Array { t }) => {
                         let struct_name = array_struct_name(t);
@@ -243,12 +243,9 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 let tag_name = source_con_tag_name(source_con);
                 wln!(
                     p,
-                    "static {} {}_data = {{ ._tag = {} }};",
-                    struct_name,
-                    singleton_name,
-                    tag_name
+                    "static {struct_name} {singleton_name}_data = {{ ._tag = {tag_name} }};",
                 );
-                wln!(p, "#define {} (&{}_data)", singleton_name, singleton_name);
+                wln!(p, "#define {singleton_name} (&{singleton_name}_data)");
             }
             HeapObj::Record(record) if record.fields.is_empty() => {
                 let struct_name = record_struct_name(record);
@@ -256,12 +253,9 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 let singleton_name = format!("_singleton_{}", struct_name);
                 wln!(
                     p,
-                    "static {} {}_data = {{ {} }};",
-                    struct_name,
-                    singleton_name,
-                    tag_name
+                    "static {struct_name} {singleton_name}_data = {{ ._tag = {tag_name} }};",
                 );
-                wln!(p, "#define {} (&{}_data)", singleton_name, singleton_name);
+                wln!(p, "#define {singleton_name} (&{singleton_name}_data)");
             }
             _ => {}
         }
@@ -318,12 +312,11 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     for (i, fun) in pgm.funs.iter().enumerate() {
         w!(
             p,
-            "static {} _fun_closure_{}_fun(CLOSURE* self",
+            "static {} _fun_closure_{i}_fun(CLOSURE* self",
             c_ty(&fun.return_ty),
-            i
         );
         for (i, ty) in fun.params.iter().enumerate() {
-            w!(p, ", {} p{}", c_ty(ty), i);
+            w!(p, ", {} p{i}", c_ty(ty));
         }
         w!(p, ") {{");
         p.indent();
@@ -1548,13 +1541,18 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             w!(p, "_con_closure_{}", heap_obj_idx.0);
         }
 
-        Expr::ConAlloc(heap_obj_idx, args, arg_tys, ty) => {
+        Expr::ConAlloc {
+            con_idx: heap_obj_idx,
+            args,
+            arg_tys,
+            ret_ty,
+        } => {
             assert_eq!(args.len(), arg_tys.len());
             if args.is_empty() {
                 w!(
                     p,
                     "({}){}",
-                    c_ty(ty),
+                    c_ty(ret_ty),
                     heap_obj_singleton_name(cg.pgm, *heap_obj_idx)
                 );
             } else {
@@ -1570,7 +1568,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     expr_to_c(&arg.node, &arg.loc, locals, cg, p);
                     wln!(p, ";");
                 }
-                w!(p, "({})_obj;", c_ty(ty));
+                w!(p, "({})_obj;", c_ty(ret_ty));
                 p.dedent();
                 p.nl();
                 w!(p, "}})");
