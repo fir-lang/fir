@@ -478,7 +478,7 @@ fn heap_obj_to_c(heap_obj: &HeapObj, tag: u32, p: &mut Printer) {
         HeapObj::Builtin(builtin) => builtin_con_decl_to_c(builtin, tag, p),
         HeapObj::Source(source_con) => source_con_decl_to_c(source_con, tag, p),
         HeapObj::Record(record) => record_decl_to_c(record, tag, p),
-        HeapObj::Variant(_) => todo!(),
+        HeapObj::Variant(variant) => variant_decl_to_c(variant, tag, p),
     }
 }
 
@@ -580,16 +580,21 @@ fn record_struct_name(record: &RecordType) -> String {
     name
 }
 
+fn variant_struct_name(variant: &VariantType) -> String {
+    let mut name = String::from("Variant");
+    for named_ty in variant.alts.values() {
+        name.push('_');
+        named_ty_to_c(named_ty, &mut name);
+    }
+    name
+}
+
 fn array_struct_name(t: &mono::Type) -> String {
     let mut name = String::from("Array_");
     let t = c_ty(t);
     let t_no_star = t.as_str().strip_suffix("*").unwrap_or(t.as_ref());
     name.push_str(t_no_star);
     name
-}
-
-fn variant_struct_name(t: &VariantType) -> String {
-    todo!()
 }
 
 fn heap_obj_struct_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
@@ -684,6 +689,10 @@ fn record_decl_to_c(record: &RecordType, tag: u32, p: &mut Printer) {
     p.dedent();
     p.nl();
     wln!(p, "}} {};", struct_name);
+}
+
+fn variant_decl_to_c(variant: &VariantType, tag: u32, p: &mut Printer) {
+    let struct_name = variant_struct_name(variant);
 }
 
 fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
