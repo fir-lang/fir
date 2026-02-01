@@ -792,134 +792,46 @@ fn builtin_fun_to_c(
             );
         }
 
-        BuiltinFunDecl::ShrI8 => {
-            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a >> b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::ShrI8 => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a >> b; }}"),
 
-        BuiltinFunDecl::ShrU8 => {
-            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a >> b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::ShrU8 => wln!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{ return a >> b; }}"),
 
-        BuiltinFunDecl::ShrI32 => {
-            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a >> b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::ShrI32 => wln!(
+            p,
+            "static I32 _fun_{idx}(I32 a, I32 b) {{ return a >> b; }}"
+        ),
 
-        BuiltinFunDecl::ShrU32 => {
-            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a >> b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::ShrU32 => wln!(
+            p,
+            "static U32 _fun_{idx}(U32 a, U32 b) {{ return a >> b; }}"
+        ),
 
-        BuiltinFunDecl::BitAndI8 => {
-            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a & b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::BitAndI8 => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a & b; }}"),
 
-        BuiltinFunDecl::BitAndU8 => {
-            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a & b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::BitAndU8 => wln!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{ return a & b; }}"),
 
         BuiltinFunDecl::BitAndI32 => {
-            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a & b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{ return a & b; }}")
         }
 
         BuiltinFunDecl::BitAndU32 => {
-            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a & b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{ return a & b; }}")
         }
 
-        BuiltinFunDecl::BitOrI8 => {
-            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a | b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::BitOrI8 => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a | b; }}"),
 
-        BuiltinFunDecl::BitOrU8 => {
-            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a | b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::BitOrU8 => wln!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{ return a | b; }}"),
 
         BuiltinFunDecl::BitOrI32 => {
-            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a | b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{ return a | b; }}")
         }
 
         BuiltinFunDecl::BitOrU32 => {
-            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a | b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{ return a | b; }}")
         }
 
         BuiltinFunDecl::BitXorU32 => {
-            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a ^ b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{ return a ^ b; }}")
         }
 
         BuiltinFunDecl::ToStrI8 => {
@@ -946,95 +858,29 @@ fn builtin_fun_to_c(
             gen_tostr_fn(idx, "I64", "PRId64", p);
         }
 
-        BuiltinFunDecl::U8AsI8 => {
-            w!(p, "static I8 _fun_{idx}(U8 a) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return (I8)a;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U8AsI8 => wln!(p, "static I8 _fun_{idx}(U8 a) {{ return (I8)a; }}"),
 
-        BuiltinFunDecl::U8AsU32 => {
-            w!(p, "static U32 _fun_{idx}(U8 a) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return (U32)a;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U8AsU32 => wln!(p, "static U32 _fun_{idx}(U8 a) {{ return (U32)a; }}"),
 
-        BuiltinFunDecl::U32AsU8 => {
-            w!(p, "static U8 _fun_{idx}(U32 a) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return (U8)a;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U32AsU8 => wln!(p, "static U8 _fun_{idx}(U32 a) {{ return (U8)a; }}"),
 
-        BuiltinFunDecl::U32AsI32 => {
-            w!(p, "static I32 _fun_{}(U32 a) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return (I32)a;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U32AsI32 => wln!(p, "static I32 _fun_{idx}(U32 a) {{ return (I32)a; }}"),
 
-        BuiltinFunDecl::U32AsU64 => {
-            w!(p, "static U32 _fun_{}(U64 a) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return (U32)a;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U32AsU64 => wln!(p, "static U64 _fun_{idx}(U32 a) {{ return (U64)a; }}"),
 
-        BuiltinFunDecl::I8Shl => {
-            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a << b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::I8Shl => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a << b; }}"),
 
-        BuiltinFunDecl::U8Shl => {
-            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a << b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U8Shl => wln!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{ return a << b; }}"),
 
-        BuiltinFunDecl::I32Shl => {
-            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a << b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::I32Shl => wln!(
+            p,
+            "static I32 _fun_{idx}(I32 a, I32 b) {{ return a << b; }}"
+        ),
 
-        BuiltinFunDecl::U32Shl => {
-            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a << b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U32Shl => wln!(
+            p,
+            "static U32 _fun_{idx}(U32 a, U32 b) {{ return a << b; }}"
+        ),
 
         BuiltinFunDecl::I8Cmp => gen_cmp_fn(idx, "I8", pgm, p),
         BuiltinFunDecl::U8Cmp => gen_cmp_fn(idx, "U8", pgm, p),
@@ -1042,335 +888,111 @@ fn builtin_fun_to_c(
         BuiltinFunDecl::U32Cmp => gen_cmp_fn(idx, "U32", pgm, p),
         BuiltinFunDecl::U64Cmp => gen_cmp_fn(idx, "U64", pgm, p),
 
-        BuiltinFunDecl::I8Add => {
-            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a + b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::I8Add => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a + b; }}"),
 
-        BuiltinFunDecl::U8Add => {
-            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a + b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U8Add => wln!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{ return a + b; }}"),
 
         BuiltinFunDecl::I32Add => {
-            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a + b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{ return a + b; }}")
         }
 
         BuiltinFunDecl::U32Add => {
-            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a + b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{ return a + b; }}")
         }
 
         BuiltinFunDecl::U64Add => {
-            w!(p, "static U64 _fun_{idx}(U64 a, U64 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a + b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static U64 _fun_{idx}(U64 a, U64 b) {{ return a + b; }}")
         }
 
-        BuiltinFunDecl::I8Sub => {
-            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a - b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::I8Sub => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a - b; }}"),
 
-        BuiltinFunDecl::U8Sub => {
-            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a - b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U8Sub => wln!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{ return a - b; }}"),
 
         BuiltinFunDecl::I32Sub => {
-            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a - b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{ return a - b; }}")
         }
 
         BuiltinFunDecl::U32Sub => {
-            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a - b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{ return a - b; }}")
         }
 
-        BuiltinFunDecl::I8Mul => {
-            w!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a * b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::I8Mul => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a * b; }}"),
 
-        BuiltinFunDecl::U8Mul => {
-            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a * b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U8Mul => wln!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{ return a * b; }}"),
 
         BuiltinFunDecl::I32Mul => {
-            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a * b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{ return a * b; }}")
         }
 
         BuiltinFunDecl::U32Mul => {
-            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a * b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{ return a * b; }}")
         }
 
         BuiltinFunDecl::U64Mul => {
-            w!(p, "static U64 _fun_{idx}(U64 a, U64 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a * b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static U64 _fun_{idx}(U64 a, U64 b) {{ return a * b; }}")
         }
 
-        BuiltinFunDecl::I8Div => {
-            w!(p, "static I8 _fun_{}(I8 a, I8 b) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return a / b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::I8Div => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a / b; }}"),
 
-        BuiltinFunDecl::U8Div => {
-            w!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a / b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U8Div => wln!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{ return a / b; }}"),
 
         BuiltinFunDecl::I32Div => {
-            w!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a / b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{ return a / b; }}")
         }
 
         BuiltinFunDecl::U32Div => {
-            w!(p, "static U32 _fun_{}(U32 a, U32 b) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return a / b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{ return a / b; }}")
         }
 
-        BuiltinFunDecl::I8Eq => {
-            w!(p, "static Bool* _fun_{idx}(I8 a, I8 b) {{");
-            p.indent();
-            p.nl();
-            w!(
+        BuiltinFunDecl::I8Eq
+        | BuiltinFunDecl::U8Eq
+        | BuiltinFunDecl::I32Eq
+        | BuiltinFunDecl::U32Eq => {
+            let ty = match fun {
+                BuiltinFunDecl::I8Eq => "I8",
+                BuiltinFunDecl::U8Eq => "U8",
+                BuiltinFunDecl::I32Eq => "I32",
+                BuiltinFunDecl::U32Eq => "U32",
+                _ => unreachable!(),
+            };
+            let true_name = heap_obj_singleton_name(pgm, pgm.true_con_idx);
+            let false_name = heap_obj_singleton_name(pgm, pgm.false_con_idx);
+            wln!(
                 p,
-                "return (a == b) ? (Bool*){} : (Bool*){};",
-                heap_obj_singleton_name(pgm, pgm.true_con_idx),
-                heap_obj_singleton_name(pgm, pgm.false_con_idx)
+                "static Bool* _fun_{idx}({ty} a, {ty} b) {{ return (a == b) ? (Bool*){true_name} : (Bool*){false_name}; }}"
             );
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
         }
 
-        BuiltinFunDecl::U8Eq => {
-            w!(p, "static Bool* _fun_{idx}(U8 a, U8 b) {{");
-            p.indent();
-            p.nl();
-            w!(
-                p,
-                "return (a == b) ? (Bool*){} : (Bool*){};",
-                heap_obj_singleton_name(pgm, pgm.true_con_idx),
-                heap_obj_singleton_name(pgm, pgm.false_con_idx)
-            );
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
-
-        BuiltinFunDecl::I32Eq => {
-            w!(p, "static Bool* _fun_{}(I32 a, I32 b) {{", idx);
-            p.indent();
-            p.nl();
-            w!(
-                p,
-                "return (a == b) ? (Bool*){} : (Bool*){};",
-                heap_obj_singleton_name(pgm, pgm.true_con_idx),
-                heap_obj_singleton_name(pgm, pgm.false_con_idx)
-            );
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
-
-        BuiltinFunDecl::U32Eq => {
-            w!(p, "static Bool* _fun_{}(U32 a, U32 b) {{", idx);
-            p.indent();
-            p.nl();
-            w!(
-                p,
-                "return (a == b) ? (Bool*){} : (Bool*){};",
-                heap_obj_singleton_name(pgm, pgm.true_con_idx),
-                heap_obj_singleton_name(pgm, pgm.false_con_idx)
-            );
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
-
+        // TODO: This is rem, not mod.
         BuiltinFunDecl::U32Mod => {
-            w!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{");
-            p.indent();
-            p.nl();
-            w!(p, "return a % b;"); // TODO: I think is rem, not mod.
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{ return a % b; }}")
         }
 
-        BuiltinFunDecl::I8Rem => {
-            w!(p, "static I8 _fun_{}(I8 a, I8 b) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return a % b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::I8Rem => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a % b; }}"),
 
-        BuiltinFunDecl::U8Rem => {
-            w!(p, "static U8 _fun_{}(U8 a, U8 b) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return a % b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::U8Rem => wln!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{ return a % b; }}"),
 
         BuiltinFunDecl::I32Rem => {
-            w!(p, "static I32 _fun_{}(I32 a, I32 b) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return a % b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static I32 _fun_{idx}(I32 a, I32 b) {{ return a % b; }}")
         }
 
         BuiltinFunDecl::U32Rem => {
-            w!(p, "static U32 _fun_{}(U32 a, U32 b) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return a % b;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+            wln!(p, "static U32 _fun_{idx}(U32 a, U32 b) {{ return a % b; }}")
         }
 
-        BuiltinFunDecl::I32AsU32 => {
-            w!(p, "static U32 _fun_{}(I32 a) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return (U32)a;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        BuiltinFunDecl::I32AsU32 => wln!(p, "static U32 _fun_{idx}(I32 a) {{ return (U32)a; }}"),
 
-        BuiltinFunDecl::I32Abs => {
-            w!(p, "static I32 _fun_{}(I32 a) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return (v < 0 ? -v : v);"); // TODO FIXME
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        // TODO: UB, overflows
+        BuiltinFunDecl::I32Abs => wln!(
+            p,
+            "static I32 _fun_{idx}(I32 a) {{ return (v < 0 ? -v : v); }}"
+        ),
 
-        BuiltinFunDecl::I8Neg => {
-            w!(p, "static I8 _fun_{}(I8 a) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return -a;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        // TODO: UB, overflows
+        BuiltinFunDecl::I8Neg => wln!(p, "static I8 _fun_{idx}(I8 a) {{ return -a; }}"),
 
-        BuiltinFunDecl::I32Neg => {
-            w!(p, "static I32 _fun_{}(I32 a) {{", idx);
-            p.indent();
-            p.nl();
-            w!(p, "return -a;");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
-        }
+        // TODO: UB, overflows
+        BuiltinFunDecl::I32Neg => wln!(p, "static I32 _fun_{idx}(I32 a) {{ return -a; }}"),
 
         BuiltinFunDecl::ThrowUnchecked => {
             w!(
