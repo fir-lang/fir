@@ -2055,6 +2055,7 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
         Pat::Con(ConPat { con, fields }) => {
             let struct_name = heap_obj_struct_name(cg.pgm, *con);
             let tag_name = heap_obj_tag_name(cg.pgm, *con);
+            // let get_tag_expr = gen_get_tag(&cg.pgm, scrutinee, ty); TODO
             let mut cond = format!("(get_tag({}) == {})", scrutinee, tag_name);
             for (i, field_pat) in fields.iter().enumerate() {
                 let field_expr = format!("(({struct_name}*){scrutinee})->_{i}");
@@ -2127,6 +2128,42 @@ fn generate_main_fn(pgm: &LoweredPgm, main: &str, p: &mut Printer) {
     p.nl();
     wln!(p, "}}");
 }
+
+fn gen_get_tag(pgm: &LoweredPgm, expr: &str, ty: &mono::Type) -> String {
+    // For product types, use the tag macro.
+    match ty {
+        mono::Type::Named(mono::NamedType { name, args }) => {
+            match pgm.type_objs.get(name).unwrap().get(args).unwrap() {
+                TypeObjs::Product(heap_obj_idx) => heap_obj_tag_name(pgm, *heap_obj_idx),
+                TypeObjs::Sum(_) => {
+                    // TODO: handle unboxed values
+                    format!("(get_tag({expr}))")
+                }
+            }
+        }
+
+        mono::Type::Record { fields } => {
+            let heap_obj_idx = *pgm
+                .record_objs
+                .get(&RecordType {
+                    fields: fields.clone(),
+                })
+                .unwrap();
+            heap_obj_tag_name(pgm, heap_obj_idx)
+        }
+
+        mono::Type::Variant { alts: _ } => {
+            // TODO: Currently variants only hold boxed objects, and represented as the boxed object
+            // directly.
+            format!("(get_tag({expr}))")
+        }
+
+        mono::Type::Fn(_) => "CLOSURE_TAG".to_string(),
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Printing utils
 
 #[derive(Debug, Default)]
 struct Printer {
