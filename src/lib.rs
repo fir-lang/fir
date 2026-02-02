@@ -193,7 +193,15 @@ mod native {
             gcc_cmd
                 .arg(file.path().as_os_str())
                 .arg("-o")
-                .arg(out_file_path);
+                .arg(out_file_path)
+                .arg("-Wall")
+                .arg("-Wextra")
+                .arg("-Wno-unused-variable")
+                .arg("-Wno-unused-function")
+                .arg("-Wno-unused-but-set-variable")
+                .arg("-Wno-unused-value")
+                .arg("-Wno-unused-parameter")
+                .arg("-Wno-unused-label");
             // dbg!(&gcc_cmd);
             let output = gcc_cmd.output().unwrap();
             let stdout = String::from_utf8_lossy(&output.stdout);
