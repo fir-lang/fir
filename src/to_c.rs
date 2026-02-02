@@ -1207,8 +1207,10 @@ fn builtin_fun_to_c(
                 static Record* _fun_{idx}({array_ty} arr, U32 src, U32 dst, U32 len) {{
                     {t_ty}* data_ptr = arr->data_ptr;
                     memmove(data_ptr + dst, data_ptr + src, len * sizeof({t_ty}));
+                    return {};
                 }}
                 ",
+                heap_obj_singleton_name(pgm, pgm.unit_con_idx)
             );
         }
 
