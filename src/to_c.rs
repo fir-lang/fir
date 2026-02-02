@@ -1617,7 +1617,6 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     w!(p, "CLOSURE* {} = ", fun_temp);
                     expr_to_c(other, &fun.loc, locals, cg, p);
                     wln!(p, ";");
-                    wln!(p, "uint32_t _tag = get_tag({});", fun_temp);
 
                     // Closure call - need to pass closure object as first arg
                     w!(p, "{} (*_fn)(CLOSURE*", c_ty(&fun_ty.ret));
