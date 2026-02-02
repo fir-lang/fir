@@ -2014,8 +2014,29 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             w!(p, "}})");
         }
 
-        Expr::Variant { expr, ty: _ } => {
-            // Variants are represented as their underlying type
+        Expr::Variant {
+            expr,
+            expr_ty,
+            variant_ty,
+        } => {
+            /*
+            ~ <expr>
+
+            ==>
+
+            ({ <expr_ty> temp1 = <expr compilation>;
+               uint64_t temp2 = get_tag(temp1);
+               <variant_ty> temp3 = { .tag = temp2, .alt._N = temp1 };
+               temp3; })
+
+            where:
+
+            - `get_tag` is type-specific tag getter
+            - `N` is the index of the named type in the variant type
+            */
+            let variant_struct_name = variant_struct_name(&VariantType {
+                alts: variant_ty.clone(),
+            });
             w!(p, "((Variant*)");
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);
             w!(p, ")");

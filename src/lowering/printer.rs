@@ -387,7 +387,11 @@ impl Expr {
                 }
             }
 
-            Expr::Variant { expr, ty: _ } => {
+            Expr::Variant {
+                expr,
+                expr_ty: _,
+                variant_ty: _,
+            } => {
                 buf.push('~');
                 expr.node.print(buf, indent);
             }
