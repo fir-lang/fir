@@ -1877,6 +1877,7 @@ fn mono_ty_decl(
         mono::TypeDecl {
             name: mono_ty_id.clone(),
             rhs: None,
+            value: ty_decl.value,
         },
     );
 
@@ -1905,6 +1906,7 @@ fn mono_ty_decl(
         mono::TypeDecl {
             name: mono_ty_id.clone(),
             rhs,
+            value: ty_decl.value,
         },
     );
 

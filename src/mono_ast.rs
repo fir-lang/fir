@@ -23,6 +23,7 @@ pub struct MonoPgm {
 pub struct TypeDecl {
     pub name: Id,
     pub rhs: Option<TypeDeclRhs>,
+    pub value: bool,
 }
 
 #[derive(Debug, Clone)]

@@ -2129,15 +2129,34 @@ fn generate_main_fn(pgm: &LoweredPgm, main: &str, p: &mut Printer) {
     wln!(p, "}}");
 }
 
+/// Generate the C expression to get the tag of the expression `expr`, which should have the type `ty`.
+///
+/// For product types: the tag will be the macro that defines the tag.
+///
+/// For sum types: the tag will be extracted from the expression and the code will depend on whether
+/// the sum type is a value type or not.
+///
+/// - For boxed sum types: the generated code will read the tag word of the heap allocated object.
+/// - For unboxed sum types: the generated code will read the tag from the struct of the sum type.
 fn gen_get_tag(pgm: &LoweredPgm, expr: &str, ty: &mono::Type) -> String {
     // For product types, use the tag macro.
     match ty {
         mono::Type::Named(mono::NamedType { name, args }) => {
             match pgm.type_objs.get(name).unwrap().get(args).unwrap() {
                 TypeObjs::Product(heap_obj_idx) => heap_obj_tag_name(pgm, *heap_obj_idx),
-                TypeObjs::Sum(_) => {
-                    // TODO: handle unboxed values
-                    format!("(get_tag({expr}))")
+
+                TypeObjs::Sum {
+                    con_indices: _,
+                    value: true,
+                } => {
+                    format!("((uint32_t)({expr})._tag)")
+                }
+
+                TypeObjs::Sum {
+                    con_indices: _,
+                    value: false,
+                } => {
+                    format!("((uint32_t)*(uint64_t*)({expr}))")
                 }
             }
         }
@@ -2153,9 +2172,7 @@ fn gen_get_tag(pgm: &LoweredPgm, expr: &str, ty: &mono::Type) -> String {
         }
 
         mono::Type::Variant { alts: _ } => {
-            // TODO: Currently variants only hold boxed objects, and represented as the boxed object
-            // directly.
-            format!("(get_tag({expr}))")
+            format!("((uint32_t)({expr})._tag)")
         }
 
         mono::Type::Fn(_) => "CLOSURE_TAG".to_string(),
@@ -2465,6 +2482,9 @@ fn named_type_heap_obj_deps(
         TypeObjs::Product(idx) => {
             deps.insert(*idx);
         }
-        TypeObjs::Sum(idxs) => deps.extend(idxs.iter().cloned()),
+        TypeObjs::Sum {
+            con_indices,
+            value: _,
+        } => deps.extend(con_indices.iter().cloned()),
     }
 }

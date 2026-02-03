@@ -57,7 +57,10 @@ pub struct LoweredPgm {
 #[derive(Debug)]
 pub enum TypeObjs {
     Product(HeapObjIdx),
-    Sum(Vec<HeapObjIdx>),
+    Sum {
+        con_indices: Vec<HeapObjIdx>,
+        value: bool,
+    },
 }
 
 pub const CON_CON_IDX: HeapObjIdx = HeapObjIdx(0);
@@ -781,6 +784,9 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             match &con_decl.rhs {
                 Some(rhs) => match rhs {
                     mono::TypeDeclRhs::Sum(cons) => {
+                        // For sum types, we generate an index representing the type itself (rather
+                        // than its consturctors). This index is used in dependency anlaysis, and to
+                        // get the type details during code generation.
                         let mut con_indices: Vec<HeapObjIdx> = Vec::with_capacity(cons.len());
                         for mono::ConDecl { name, fields } in cons {
                             let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
@@ -797,7 +803,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             .type_objs
                             .entry(con_id.clone())
                             .or_default()
-                            .insert(con_ty_args.clone(), TypeObjs::Sum(con_indices));
+                            .insert(
+                                con_ty_args.clone(),
+                                TypeObjs::Sum {
+                                    con_indices,
+                                    value: con_decl.value,
+                                },
+                            );
                         assert!(old.is_none());
                     }
 
