@@ -780,10 +780,10 @@ fn try_bind_pat(pgm: &Pgm, heap: &mut Heap, pat: &L<Pat>, locals: &mut [u64], va
             true
         }
 
-        Pat::Variant(p) => {
+        Pat::Variant { pat, variant_ty: _ } => {
             // `p` needs to match a boxed type, but we can't check this here (e.g. in an `assert`).
             // See the documentation in `Expr::Variant` evaluator.
-            try_bind_pat(pgm, heap, p, locals, value)
+            try_bind_pat(pgm, heap, pat, locals, value)
         }
     }
 }

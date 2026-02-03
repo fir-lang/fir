@@ -507,7 +507,10 @@ pub enum Pat {
     Str(String),
     Char(char),
     Or(Box<L<Pat>>, Box<L<Pat>>),
-    Variant(Box<L<Pat>>),
+    Variant {
+        pat: Box<L<Pat>>,
+        variant_ty: OrdMap<Id, mono::NamedType>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -2352,13 +2355,10 @@ fn lower_pat(
             lower_bl_pat(p2, indices, scope, mono_pgm, mapped_binders),
         ),
 
-        mono::Pat::Variant(mono::VariantPat { pat, ty: _ }) => Pat::Variant(Box::new(lower_l_pat(
-            pat,
-            indices,
-            scope,
-            mono_pgm,
-            mapped_binders,
-        ))),
+        mono::Pat::Variant(mono::VariantPat { pat, ty }) => Pat::Variant {
+            pat: Box::new(lower_l_pat(pat, indices, scope, mono_pgm, mapped_binders)),
+            variant_ty: ty.clone(),
+        },
     }
 }
 

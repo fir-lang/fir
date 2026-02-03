@@ -437,9 +437,9 @@ impl Pat {
                 p2.node.print(buf);
             }
 
-            Pat::Variant(p) => {
+            Pat::Variant { pat, variant_ty: _ } => {
                 buf.push('~');
-                p.node.print(buf);
+                pat.node.print(buf);
             }
         }
     }

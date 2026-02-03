@@ -2101,7 +2101,16 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
             format!("({} || {})", c1, c2)
         }
 
-        Pat::Variant(inner) => pat_to_cond(&inner.node, scrutinee, cg),
+        Pat::Variant { pat, variant_ty } => {
+            /*
+            ~ <pat>
+
+            ==>
+
+            ??? TODO
+            */
+            pat_to_cond(&pat.node, scrutinee, cg)
+        }
     }
 }
 
