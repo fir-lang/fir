@@ -501,7 +501,7 @@ pub struct IsExpr {
 
 #[derive(Debug, Clone)]
 pub enum Pat {
-    Var(LocalIdx),
+    Var(VarPat),
     Con(ConPat),
     Ignore,
     Str(String),
@@ -511,6 +511,17 @@ pub enum Pat {
         pat: Box<L<Pat>>,
         variant_ty: OrdMap<Id, mono::NamedType>,
     },
+}
+
+#[derive(Debug, Clone)]
+pub struct VarPat {
+    pub idx: LocalIdx,
+
+    /// When the binder was refined by pattern matching, the local in `SourceFunDecl` will have the
+    /// refined type, and this will be the original type.
+    ///
+    /// When pattern matching, we should convert the original type to the local's type.
+    pub original_ty: mono::Type,
 }
 
 #[derive(Debug, Clone)]
@@ -2191,22 +2202,28 @@ fn lower_pat(
 
     // This map is to map binders in alternatives of or patterns to the same local.
     //
-    // Only in or pattern alternatives we allow same binders, so if we see a binder for the second
-    // time, we must be checking another alternative of an or pattern.
+    // Only in or-pattern alternatives we allow same binders, so if we see a binder for the second
+    // time, we must be checking another alternative of an or-pattern.
     mapped_binders: &mut HashMap<Id, LocalIdx>,
 ) -> Pat {
     match pat {
         mono::Pat::Var(mono::VarPat { var, ty, refined }) => match mapped_binders.get(var) {
-            Some(idx) => Pat::Var(*idx),
+            Some(idx) => Pat::Var(VarPat {
+                idx: *idx,
+                original_ty: ty.clone(),
+            }),
             None => {
                 let var_idx = LocalIdx(scope.locals.len() as u32);
                 scope.locals.push(LocalInfo {
                     name: var.clone(),
-                    ty: ty.clone(),
+                    ty: refined.as_ref().unwrap_or(ty).clone(),
                 });
                 scope.bounds.insert(var.clone(), var_idx);
                 mapped_binders.insert(var.clone(), var_idx);
-                Pat::Var(var_idx)
+                Pat::Var(VarPat {
+                    idx: var_idx,
+                    original_ty: ty.clone(),
+                })
             }
         },
 

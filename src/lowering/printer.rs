@@ -402,7 +402,10 @@ impl Expr {
 impl Pat {
     pub fn print(&self, buf: &mut String) {
         match self {
-            Pat::Var(idx) => write!(buf, "local{}", idx.0).unwrap(),
+            Pat::Var(VarPat {
+                idx,
+                original_ty: _,
+            }) => write!(buf, "local{}", idx.0).unwrap(),
 
             Pat::Con(ConPat { con, fields }) => {
                 write!(buf, "con{}(", con.0).unwrap();

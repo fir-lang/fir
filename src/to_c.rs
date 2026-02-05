@@ -2048,7 +2048,10 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
     match pat {
         Pat::Ignore => "1".to_string(),
 
-        Pat::Var(idx) => {
+        Pat::Var(VarPat {
+            idx,
+            original_ty: _,
+        }) => {
             format!("({{ _{} = {}; 1; }})", idx.as_usize(), scrutinee)
         }
 

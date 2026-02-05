@@ -734,8 +734,11 @@ fn assign<W: Write>(
 /// compiled version `StrView`s will be allocated on stack.
 fn try_bind_pat(pgm: &Pgm, heap: &mut Heap, pat: &L<Pat>, locals: &mut [u64], value: u64) -> bool {
     match &pat.node {
-        Pat::Var(var) => {
-            locals[var.as_usize()] = value;
+        Pat::Var(VarPat {
+            idx,
+            original_ty: _,
+        }) => {
+            locals[idx.as_usize()] = value;
             true
         }
 
