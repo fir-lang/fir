@@ -1,4 +1,4 @@
-type Char(
+value type Char(
     _codePoint: U32,
 )
 
