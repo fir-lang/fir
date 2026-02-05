@@ -239,10 +239,18 @@ fn visit_pat(
             }
         }
 
-        mono::Pat::Variant(mono::VariantPat { pat, ty }) => {
-            ty.values()
+        mono::Pat::Variant(mono::VariantPat {
+            pat,
+            variant_ty,
+            pat_ty,
+        }) => {
+            variant_ty
+                .values()
                 .for_each(|ty| visit_named_ty(ty, records, variants));
-            variants.insert(VariantType { alts: ty.clone() });
+            visit_ty(pat_ty, records, variants);
+            variants.insert(VariantType {
+                alts: variant_ty.clone(),
+            });
             visit_pat(&pat.node, records, variants);
         }
     }

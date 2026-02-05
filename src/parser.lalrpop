@@ -951,7 +951,7 @@ LPat: L<Pat> = {
 
 Pat: Pat = {
     #[precedence(level = "0")]
-    <id:LowerId> => Pat::Var(VarPat { var: id.smol_str(), ty: None }),
+    <id:LowerId> => Pat::Var(VarPat { var: id.smol_str(), ty: None, refined: None }),
 
     <con:ConPat> => Pat::Con(con),
 
@@ -974,7 +974,7 @@ Pat: Pat = {
     <char:CharLit> => Pat::Char(parse_char_lit(&char.text)),
 
     <l:@L> "~" <pat:Pat> <r:@R> =>
-        Pat::Variant(VariantPat { pat: Box::new(L::new(module, l, r, pat)), inferred_ty: None }),
+        Pat::Variant(VariantPat { pat: Box::new(L::new(module, l, r, pat)), inferred_ty: None, inferred_pat_ty: None }),
 
     #[precedence(level = "1")]
     #[assoc(side = "right")]

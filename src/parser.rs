@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: f7a8829affc1d86e00b24542123a0e5870ee952878606b525e1e96baeb8430d1
+// sha3: 7cce679c0a9108b8107aba89173064c3c44ce886f9d92d415bbe0b1ddb93c5c7
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -48799,6 +48799,7 @@ fn __action147<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Pat {
     Pat::Var(VarPat {
         var: id.smol_str(),
         ty: None,
+        refined: None,
     })
 }
 
@@ -48886,6 +48887,7 @@ fn __action153<'a>(
     Pat::Variant(VariantPat {
         pat: Box::new(L::new(module, l, r, pat)),
         inferred_ty: None,
+        inferred_pat_ty: None,
     })
 }
 

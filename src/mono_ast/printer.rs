@@ -576,10 +576,14 @@ impl Expr {
 impl Pat {
     pub fn print(&self, buf: &mut String) {
         match self {
-            Pat::Var(VarPat { var, ty }) => {
+            Pat::Var(VarPat { var, ty, refined }) => {
                 buf.push_str(var);
                 buf.push_str(": ");
                 ty.print(buf);
+                if let Some(refined) = refined {
+                    buf.push_str(" ~> ");
+                    refined.print(buf);
+                }
             }
 
             Pat::Con(ConPat { con, fields }) => {
@@ -640,7 +644,11 @@ impl Pat {
                 buf.push(')');
             }
 
-            Pat::Variant(VariantPat { pat, ty: _ }) => {
+            Pat::Variant(VariantPat {
+                pat,
+                variant_ty: _,
+                pat_ty: _,
+            }) => {
                 buf.push('~');
                 pat.node.print(buf);
             }

@@ -37,6 +37,8 @@ impl LoweredPgm {
                 }
 
                 HeapObj::Record(record) => write!(buf, "{record:?}").unwrap(),
+
+                HeapObj::Variant(variant) => write!(buf, "{variant:?}").unwrap(),
             }
             buf.push('\n');
         }
@@ -385,7 +387,11 @@ impl Expr {
                 }
             }
 
-            Expr::Variant(expr) => {
+            Expr::Variant {
+                expr,
+                expr_ty: _,
+                variant_ty: _,
+            } => {
                 buf.push('~');
                 expr.node.print(buf, indent);
             }
@@ -396,7 +402,10 @@ impl Expr {
 impl Pat {
     pub fn print(&self, buf: &mut String) {
         match self {
-            Pat::Var(idx) => write!(buf, "local{}", idx.0).unwrap(),
+            Pat::Var(VarPat {
+                idx,
+                original_ty: _,
+            }) => write!(buf, "local{}", idx.0).unwrap(),
 
             Pat::Con(ConPat { con, fields }) => {
                 write!(buf, "con{}(", con.0).unwrap();
@@ -431,9 +440,13 @@ impl Pat {
                 p2.node.print(buf);
             }
 
-            Pat::Variant(p) => {
+            Pat::Variant {
+                pat,
+                variant_ty: _,
+                pat_ty: _,
+            } => {
                 buf.push('~');
-                p.node.print(buf);
+                pat.node.print(buf);
             }
         }
     }

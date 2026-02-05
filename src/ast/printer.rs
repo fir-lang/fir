@@ -814,10 +814,13 @@ impl Expr {
 impl Pat {
     pub fn print(&self, buf: &mut String) {
         match self {
-            Pat::Var(VarPat { var, ty }) => {
+            Pat::Var(VarPat { var, ty, refined }) => {
                 buf.push_str(var);
                 if let Some(ty) = ty {
                     write!(buf, ": {ty}").unwrap();
+                }
+                if let Some(refined) = refined {
+                    write!(buf, " ~> {refined}").unwrap();
                 }
             }
 
@@ -901,7 +904,11 @@ impl Pat {
                 buf.push(')');
             }
 
-            Pat::Variant(VariantPat { pat, inferred_ty }) => {
+            Pat::Variant(VariantPat {
+                pat,
+                inferred_ty,
+                inferred_pat_ty: _,
+            }) => {
                 buf.push('~');
                 pat.node.print(buf);
                 if let Some(ty) = inferred_ty {

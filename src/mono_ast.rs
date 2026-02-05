@@ -23,6 +23,7 @@ pub struct MonoPgm {
 pub struct TypeDecl {
     pub name: Id,
     pub rhs: Option<TypeDeclRhs>,
+    pub value: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -233,6 +234,7 @@ pub enum Pat {
 pub struct VarPat {
     pub var: Id,
     pub ty: Type,
+    pub refined: Option<Type>,
 }
 
 #[derive(Debug, Clone)]
@@ -266,7 +268,8 @@ pub struct RecordPat {
 #[derive(Debug, Clone)]
 pub struct VariantPat {
     pub pat: Box<L<Pat>>,
-    pub ty: OrdMap<Id, NamedType>, // the variant type
+    pub variant_ty: OrdMap<Id, NamedType>,
+    pub pat_ty: Type,
 }
 
 #[derive(Debug, Clone)]

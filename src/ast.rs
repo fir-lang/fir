@@ -396,6 +396,10 @@ pub struct VarPat {
 
     /// Inferred type of the binder. Filled in by the type checker.
     pub ty: Option<Ty>,
+
+    /// Only after type checking: when the binder type is refined by pattern matching, this holds
+    /// the refined type.
+    pub refined: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -419,6 +423,7 @@ pub struct RecordPat {
 pub struct VariantPat {
     pub pat: Box<L<Pat>>,
     pub inferred_ty: Option<Ty>,
+    pub inferred_pat_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]

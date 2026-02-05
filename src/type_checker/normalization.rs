@@ -228,8 +228,15 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
 
 fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
     match pat {
-        ast::Pat::Var(ast::VarPat { var: _, ty }) => {
+        ast::Pat::Var(ast::VarPat {
+            var: _,
+            ty,
+            refined,
+        }) => {
             *ty = Some(ty.as_ref().unwrap().deep_normalize(cons));
+            if let Some(ty) = refined {
+                *ty = ty.deep_normalize(cons);
+            }
         }
 
         ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) => {}
@@ -263,8 +270,13 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
                 .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons));
         }
 
-        ast::Pat::Variant(ast::VariantPat { pat, inferred_ty }) => {
+        ast::Pat::Variant(ast::VariantPat {
+            pat,
+            inferred_ty,
+            inferred_pat_ty,
+        }) => {
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
+            *inferred_pat_ty = Some(inferred_pat_ty.as_mut().unwrap().deep_normalize(cons));
             normalize_pat(&mut pat.node, cons);
         }
     }

@@ -65,10 +65,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         #include <stdlib.h>
         #include <string.h>
 
-        typedef struct {{
-            uint64_t tag;
-        }} Variant;
-
         "
     );
 
@@ -102,7 +98,12 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         }
     }
 
-    let heap_objs_sorted = top_sort(&pgm.type_objs, &pgm.record_objs, &pgm.heap_objs);
+    let heap_objs_sorted = top_sort(
+        &pgm.type_objs,
+        &pgm.record_objs,
+        &pgm.variant_objs,
+        &pgm.heap_objs,
+    );
     for scc in &heap_objs_sorted {
         // If SCC has more than one element, forward-declare the structs.
         if scc.len() > 1 {
@@ -114,6 +115,10 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                     }
                     HeapObj::Record(record) => {
                         let struct_name = record_struct_name(record);
+                        wln!(p, "typedef struct {struct_name} {struct_name};");
+                    }
+                    HeapObj::Variant(variant) => {
+                        let struct_name = variant_struct_name(variant);
                         wln!(p, "typedef struct {struct_name} {struct_name};");
                     }
                     HeapObj::Builtin(BuiltinConDecl::Array { t }) => {
@@ -148,12 +153,12 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         typedef struct ExnHandler {{
             jmp_buf buf;
             struct ExnHandler* prev;
-            uint64_t exn_value;
+            void* exn_value;  // pointer to boxed exception value
         }} ExnHandler;
 
         static ExnHandler* current_exn_handler = NULL;
 
-        static void throw_exn(uint64_t exn) {{
+        static void throw_exn(void* exn) {{
             if (current_exn_handler == NULL) {{
                 fprintf(stderr, \"Uncaught exception\\n\");
                 exit(1);
@@ -467,6 +472,7 @@ fn heap_obj_to_c(heap_obj: &HeapObj, tag: u32, p: &mut Printer) {
         HeapObj::Builtin(builtin) => builtin_con_decl_to_c(builtin, tag, p),
         HeapObj::Source(source_con) => source_con_decl_to_c(source_con, tag, p),
         HeapObj::Record(record) => record_decl_to_c(record, tag, p),
+        HeapObj::Variant(variant) => variant_decl_to_c(variant, tag, p),
     }
 }
 
@@ -568,6 +574,15 @@ fn record_struct_name(record: &RecordType) -> String {
     name
 }
 
+fn variant_struct_name(variant: &VariantType) -> String {
+    let mut name = String::from("Variant");
+    for named_ty in variant.alts.values() {
+        name.push('_');
+        named_ty_to_c(named_ty, &mut name);
+    }
+    name
+}
+
 fn array_struct_name(t: &mono::Type) -> String {
     let mut name = String::from("Array_");
     let t = c_ty(t);
@@ -580,6 +595,7 @@ fn heap_obj_struct_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
         HeapObj::Source(source_con) => source_con_struct_name(source_con),
         HeapObj::Record(record) => record_struct_name(record),
+        HeapObj::Variant(variant) => variant_struct_name(variant),
         HeapObj::Builtin(_) => panic!("Builtin in heap_obj_struct_name"),
     }
 }
@@ -588,6 +604,7 @@ fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
         HeapObj::Source(source_con) => source_con_tag_name(source_con),
         HeapObj::Record(record) => format!("TAG_{}", record_struct_name(record)),
+        HeapObj::Variant(_) => panic!("Variants don't have runtime tags"),
         HeapObj::Builtin(_) => panic!("Builtin in heap_obj_tag_name"),
     }
 }
@@ -617,6 +634,7 @@ fn heap_obj_singleton_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
         HeapObj::Source(source_con) => source_con_singleton_name(source_con),
         HeapObj::Record(record) => format!("_singleton_{}", record_struct_name(record)),
+        HeapObj::Variant(_) => panic!("Variants don't have singletons"),
         HeapObj::Builtin(_) => panic!("Builtin heap objects don't have singletons"),
     }
 }
@@ -634,37 +652,58 @@ fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, p: &mut Printer) {
     let tag_name = source_con_tag_name(source_con);
     let struct_name = source_con_struct_name(source_con);
 
-    wln!(p, "#define {} {}", tag_name, tag);
+    wln!(p, "#define {tag_name} {tag}");
 
-    w!(p, "typedef struct {} {{", struct_name);
+    w!(p, "typedef struct {struct_name} {{");
     p.indent();
     p.nl();
     w!(p, "uint64_t _tag;");
     for (i, ty) in fields.iter().enumerate() {
         p.nl();
-        w!(p, "{} _{};", c_ty(ty), i);
+        w!(p, "{} _{i};", c_ty(ty));
     }
     p.dedent();
     p.nl();
-    wln!(p, "}} {};", struct_name);
+    wln!(p, "}} {struct_name};");
 }
 
 fn record_decl_to_c(record: &RecordType, tag: u32, p: &mut Printer) {
     let struct_name = record_struct_name(record);
 
-    wln!(p, "#define TAG_{} {}", struct_name, tag);
+    wln!(p, "#define TAG_{struct_name} {tag}");
 
-    w!(p, "typedef struct {} {{", struct_name);
+    w!(p, "typedef struct {struct_name} {{");
     p.indent();
     p.nl();
     w!(p, "uint64_t _tag;");
     for (i, (_field_name, field_ty)) in record.fields.iter().enumerate() {
         p.nl();
-        w!(p, "{} _{};", c_ty(field_ty), i);
+        w!(p, "{} _{i};", c_ty(field_ty));
     }
     p.dedent();
     p.nl();
-    wln!(p, "}} {};", struct_name);
+    wln!(p, "}} {struct_name};");
+}
+
+fn variant_decl_to_c(variant: &VariantType, tag: u32, p: &mut Printer) {
+    let struct_name = variant_struct_name(variant);
+    wln!(p, "// tag = {tag}");
+    w!(p, "typedef struct {} {{", struct_name);
+    p.indent();
+    p.nl();
+    wln!(p, "uint64_t _tag;");
+    w!(p, "union {{");
+    p.indent();
+    for (i, alt) in variant.alts.values().enumerate() {
+        p.nl();
+        w!(p, "{} _{i};", c_ty(&mono::Type::Named(alt.clone())));
+    }
+    p.dedent();
+    p.nl();
+    w!(p, "}} _alt;");
+    p.dedent();
+    p.nl();
+    wln!(p, "}} {struct_name};");
 }
 
 fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
@@ -700,12 +739,11 @@ fn c_ty(ty: &mono::Type) -> String {
     if let mono::Type::Fn(_) = ty {
         return "CLOSURE*".to_string();
     }
-    if let mono::Type::Variant { .. } = ty {
-        return "Variant*".to_string();
-    }
     let mut s = String::new();
     ty_to_c(ty, &mut s);
-    s.push('*'); // make pointer
+    if !matches!(ty, mono::Type::Variant { .. }) {
+        s.push('*'); // make pointer
+    }
     s
 }
 
@@ -988,16 +1026,13 @@ fn builtin_fun_to_c(
         BuiltinFunDecl::I32Neg => wln!(p, "static I32 _fun_{idx}(I32 a) {{ return -a; }}"),
 
         BuiltinFunDecl::ThrowUnchecked => {
-            w!(
-                p,
-                "static {} _fun_{}({} exn) {{",
-                c_ty(ret),
-                idx,
-                c_ty(&params[0])
-            );
+            let exn_ty = c_ty(&params[0]);
+            w!(p, "static {} _fun_{}({} exn) {{", c_ty(ret), idx, exn_ty);
             p.indent();
             p.nl();
-            wln!(p, "throw_exn((uint64_t)exn);");
+            wln!(p, "{exn_ty}* boxed = malloc(sizeof({exn_ty}));");
+            wln!(p, "*boxed = exn;");
+            wln!(p, "throw_exn(boxed);");
             w!(p, "__builtin_unreachable();");
             p.dedent();
             p.nl();
@@ -1052,7 +1087,8 @@ fn builtin_fun_to_c(
                 "{err_struct_name}* err = malloc(sizeof({err_struct_name}));"
             );
             wln!(p, "err->_tag = {};", err_tag_name);
-            wln!(p, "err->_0 = ({})handler.exn_value;", c_ty(&ty_args[1]));
+            let exn_ty = c_ty(&ty_args[1]);
+            wln!(p, "err->_0 = *({exn_ty}*)handler.exn_value;");
             w!(p, "return ({})err;", c_ty(ret));
             p.dedent();
             p.nl();
@@ -1416,7 +1452,11 @@ fn stmt_to_c(
             w!(p, "{} {} = ", c_ty(rhs_ty), rhs_temp);
             expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
             wln!(p, "; // {}", loc_display(&rhs.loc));
-            wln!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, cg));
+            wln!(
+                p,
+                "{};",
+                pat_to_cond(&lhs.node, &rhs_temp, rhs_ty, None, locals, cg)
+            );
             if let Some(result_var) = result_var {
                 wln!(
                     p,
@@ -1759,7 +1799,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     w!(p, " else ");
                 }
                 // Generate pattern match condition
-                let cond = pat_to_cond(&alt.pat.node, &scrut_temp, cg);
+                let cond = pat_to_cond(&alt.pat.node, &scrut_temp, scrut_ty, None, locals, cg);
                 w!(p, "if ({}", cond);
 
                 // Add guard if present
@@ -1935,7 +1975,11 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);
             wln!(p, "; // {}", loc_display(&expr.loc));
             wln!(p, "Bool* _is_result;");
-            w!(p, "if ({}) {{", pat_to_cond(&pat.node, &expr_temp, cg));
+            w!(
+                p,
+                "if ({}) {{",
+                pat_to_cond(&pat.node, &expr_temp, expr_ty, None, locals, cg)
+            );
             p.indent();
             p.nl();
             w!(
@@ -1975,32 +2019,232 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             w!(p, "}})");
         }
 
-        Expr::Variant(expr) => {
-            // Variants are represented as their underlying type
-            w!(p, "((Variant*)");
+        Expr::Variant {
+            expr,
+            expr_ty,
+            variant_ty,
+        } => {
+            /*
+            ~ <expr>
+
+            ==>
+
+            ({ <expr_ty> temp1 = <expr compilation>;
+               uint64_t temp2 = get_tag(temp1);
+               <variant_ty> temp3 = { .tag = temp2, .alt._N = temp1 };
+               temp3; })
+
+            where:
+
+            - `get_tag` is type-specific tag getter
+            - `N` is the index of the named type in the variant type
+            */
+
+            w!(p, "({{");
+            p.indent();
+            p.nl();
+
+            // TODO: Check that variant exprs are named types in an earlier pass.
+            let expr_named_ty = match expr_ty {
+                mono::Type::Named(named_ty) => named_ty,
+                _ => panic!(),
+            };
+
+            let alt_idx = variant_ty
+                .iter()
+                .enumerate()
+                .find_map(|(idx, (_, alt_ty))| {
+                    if alt_ty == expr_named_ty {
+                        Some(idx)
+                    } else {
+                        None
+                    }
+                })
+                .unwrap();
+
+            let variant_struct_name = variant_struct_name(&VariantType {
+                alts: variant_ty.clone(),
+            });
+
+            let expr_temp = cg.fresh_temp();
+            w!(p, "{} {expr_temp} = ", c_ty(expr_ty));
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);
-            w!(p, ")");
+            wln!(p, "; // {}", loc_display(&expr.loc));
+
+            let expr_tag_temp = cg.fresh_temp();
+            wln!(
+                p,
+                "uint32_t {expr_tag_temp} = {};",
+                gen_get_tag(cg.pgm, &expr_temp, expr_ty)
+            );
+
+            let variant_temp = cg.fresh_temp();
+            wln!(
+                p,
+                "{variant_struct_name} {variant_temp} = {{ ._tag = {expr_tag_temp}, ._alt._{alt_idx} = {expr_temp} }};"
+            );
+            w!(p, "{variant_temp};");
+
+            p.dedent();
+            p.nl();
+            w!(p, "}})");
         }
     }
 }
 
+/// Given a pattern type inside a variant pattern, find which alternative in the variant it matches.
+/// Returns the index of the alternative.
+fn find_variant_alt_index(pat_ty: &mono::Type, variant_ty: &OrdMap<Id, mono::NamedType>) -> usize {
+    let type_name = match pat_ty {
+        mono::Type::Named(named_ty) => named_ty.name.as_str(),
+        _ => panic!("Non-named type in variant pattern: {:?}", pat_ty),
+    };
+
+    variant_ty
+        .iter()
+        .enumerate()
+        .find_map(|(idx, (name, _))| {
+            if name.as_str() == type_name {
+                Some(idx)
+            } else {
+                None
+            }
+        })
+        .unwrap_or_else(|| panic!("Type {type_name} not found in variant alternatives"))
+}
+
+/// Check if we need to convert between two variant types. Returns true if both types are variants
+/// and they differ.
+fn needs_variant_conversion(from_ty: &mono::Type, to_ty: &mono::Type) -> bool {
+    match (from_ty, to_ty) {
+        (mono::Type::Variant { alts: from_alts }, mono::Type::Variant { alts: to_alts }) => {
+            from_alts != to_alts
+        }
+        _ => false,
+    }
+}
+
+/// Generate code to convert a value from one variant type to another: unpack the value from the
+/// source variant and repack it into the target variant.
+fn gen_variant_conversion(
+    scrutinee: &str,
+    from_ty: &mono::Type,
+    to_ty: &mono::Type,
+    cg: &mut Cg,
+) -> String {
+    let (from_alts, to_alts) = match (from_ty, to_ty) {
+        (mono::Type::Variant { alts: from }, mono::Type::Variant { alts: to }) => (from, to),
+        _ => panic!("gen_variant_conversion called with non-variant types"),
+    };
+
+    let to_variant_ty = VariantType {
+        alts: to_alts.clone(),
+    };
+    let to_struct_name = variant_struct_name(&to_variant_ty);
+
+    // Handle empty target variant - this is an unreachable case at runtime,
+    // but we still need to generate valid C code. Just copy the tag.
+    if to_alts.is_empty() {
+        let temp = cg.fresh_temp();
+        return format!(
+            "({{ {to_struct_name} {temp}; {temp}._tag = ({scrutinee})._tag; {temp}; }})"
+        );
+    }
+
+    // Find the mapping from source alternative index to target alternative index.
+    // The value's tag tells us which alternative is active in the source.
+    // We need to find the corresponding alternative in the target and repack.
+
+    // Generate a compound expression that:
+    // 1. Reads the tag from the source
+    // 2. Based on the tag, copies the value to the appropriate field in the target
+
+    let temp = cg.fresh_temp();
+    let mut cases = String::new();
+
+    for (to_idx, (type_name, named_ty)) in to_alts.iter().enumerate() {
+        // Find this type in the source variant
+        let (from_idx, _) = from_alts
+            .iter()
+            .enumerate()
+            .find(|(_, (name, _))| *name == type_name)
+            .unwrap_or_else(|| {
+                panic!(
+                    "Type {} not found in source variant during conversion",
+                    type_name
+                )
+            });
+
+        let alt_ty = mono::Type::Named(named_ty.clone());
+        let expected_tag = gen_get_tag(cg.pgm, &format!("({scrutinee})._alt._{from_idx}"), &alt_ty);
+
+        if !cases.is_empty() {
+            cases.push_str(" else ");
+        }
+        cases.push_str(&format!(
+            "if (({scrutinee})._tag == {expected_tag}) {{ {temp}._tag = {expected_tag}; {temp}._alt._{to_idx} = ({scrutinee})._alt._{from_idx}; }}"
+        ));
+    }
+
+    // Add a fallback case (should never happen if types are correct)
+    cases.push_str(" else { fprintf(stderr, \"Invalid variant conversion\\n\"); exit(1); }");
+
+    format!("({{ {to_struct_name} {temp}; {cases} {temp}; }})")
+}
+
 /// Generate a C condition expression for pattern matching.
-fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
+///
+/// - `scrutinee` is the expression being matched against.
+///
+/// - `scrutinee_ty` is the type of the scrutinee (used for generating tag checks with `gen_get_tag`).
+///
+/// - `tag_expr` is an optional override for how to get the tag. When `Some`, use that expression
+///   directly (e.g., for variant patterns where we check the variant's `_tag` field). When `None`,
+///   derive the tag from the scrutinee using `gen_get_tag`.
+fn pat_to_cond(
+    pat: &Pat,
+    scrutinee: &str,
+    scrutinee_ty: &mono::Type,
+    tag_expr: Option<&str>,
+    locals: &[LocalInfo],
+    cg: &mut Cg,
+) -> String {
     match pat {
         Pat::Ignore => "1".to_string(),
 
-        Pat::Var(idx) => {
-            format!("({{ _{} = {}; 1; }})", idx.as_usize(), scrutinee)
+        Pat::Var(VarPat { idx, original_ty }) => {
+            let refined_ty = &locals[idx.as_usize()].ty;
+            if needs_variant_conversion(original_ty, refined_ty) {
+                let conversion = gen_variant_conversion(scrutinee, original_ty, refined_ty, cg);
+                format!("({{ _{} = {}; 1; }})", idx.as_usize(), conversion)
+            } else {
+                format!("({{ _{} = {}; 1; }})", idx.as_usize(), scrutinee)
+            }
         }
 
         Pat::Con(ConPat { con, fields }) => {
             let struct_name = heap_obj_struct_name(cg.pgm, *con);
             let tag_name = heap_obj_tag_name(cg.pgm, *con);
-            let mut cond = format!("(get_tag({}) == {})", scrutinee, tag_name);
+            let tag_check = match tag_expr {
+                Some(expr) => format!("({expr} == {tag_name})"),
+                None => {
+                    let get_tag = gen_get_tag(cg.pgm, scrutinee, scrutinee_ty);
+                    format!("({get_tag} == {tag_name})")
+                }
+            };
+            let field_tys: Vec<mono::Type> = match &cg.pgm.heap_objs[con.as_usize()] {
+                HeapObj::Source(source_con) => source_con.fields.clone(),
+                HeapObj::Record(record) => record.fields.values().cloned().collect(),
+                HeapObj::Builtin(_) => panic!("Builtin constructor {:?} in Pat::Con", con),
+                HeapObj::Variant(_) => panic!("Variant in Pat::Con"),
+            };
+            let mut cond = tag_check;
             for (i, field_pat) in fields.iter().enumerate() {
                 let field_expr = format!("(({struct_name}*){scrutinee})->_{i}");
-                let field_cond = pat_to_cond(&field_pat.node, &field_expr, cg);
-                cond = format!("({} && {})", cond, field_cond);
+                let field_ty = &field_tys[i];
+                let field_cond =
+                    pat_to_cond(&field_pat.node, &field_expr, field_ty, None, locals, cg);
+                cond = format!("({cond} && {field_cond})");
             }
             cond
         }
@@ -2009,39 +2253,59 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
             let mut escaped = String::new();
             for byte in s.bytes() {
                 if byte == b'"' || byte == b'\\' || !(32..=126).contains(&byte) {
-                    // Same as `Expr::Str`, use octal escape here instead of hex.
                     escaped.push_str(&format!("\\{:03o}", byte));
                 } else {
                     escaped.push(byte as char);
                 }
             }
-            // Note: the type cast below is to handle strings in variants. Variants are currently
-            // `Variant*` so they need to be cast.
+            let tag_check = match tag_expr {
+                Some(expr) => format!("({expr} == {})", cg.pgm.str_con_idx.0),
+                None => {
+                    let get_tag = gen_get_tag(cg.pgm, scrutinee, scrutinee_ty);
+                    format!("({get_tag} == {})", cg.pgm.str_con_idx.0)
+                }
+            };
             format!(
-                "(get_tag({}) == {} && str_eq((Str*){}, \"{}\", {}))",
-                scrutinee,
-                cg.pgm.str_con_idx.0,
-                scrutinee,
-                escaped,
+                "({tag_check} && str_eq((Str*){scrutinee}, \"{escaped}\", {}))",
                 s.len()
             )
         }
 
         Pat::Char(c) => {
             let tag_name = heap_obj_tag_name(cg.pgm, cg.pgm.char_con_idx);
-            format!(
-                "(get_tag({}) == {} && ((Char*){})->_0 == {})",
-                scrutinee, tag_name, scrutinee, *c as u32
-            )
+            let tag_check = match tag_expr {
+                Some(expr) => format!("({expr} == {tag_name})"),
+                None => {
+                    let get_tag = gen_get_tag(cg.pgm, scrutinee, scrutinee_ty);
+                    format!("({get_tag} == {tag_name})")
+                }
+            };
+            format!("({tag_check} && ((Char*){scrutinee})->_0 == {})", *c as u32)
         }
 
         Pat::Or(p1, p2) => {
-            let c1 = pat_to_cond(&p1.node, scrutinee, cg);
-            let c2 = pat_to_cond(&p2.node, scrutinee, cg);
-            format!("({} || {})", c1, c2)
+            let c1 = pat_to_cond(&p1.node, scrutinee, scrutinee_ty, tag_expr, locals, cg);
+            let c2 = pat_to_cond(&p2.node, scrutinee, scrutinee_ty, tag_expr, locals, cg);
+            format!("({c1} || {c2})")
         }
 
-        Pat::Variant(inner) => pat_to_cond(&inner.node, scrutinee, cg),
+        Pat::Variant {
+            pat,
+            variant_ty,
+            pat_ty,
+        } => {
+            let alt_idx = find_variant_alt_index(pat_ty, variant_ty);
+            let inner_expr = format!("({scrutinee})._alt._{alt_idx}");
+            let variant_tag_expr = format!("({scrutinee})._tag");
+            pat_to_cond(
+                &pat.node,
+                &inner_expr,
+                pat_ty,
+                Some(&variant_tag_expr),
+                locals,
+                cg,
+            )
+        }
     }
 }
 
@@ -2068,6 +2332,59 @@ fn generate_main_fn(pgm: &LoweredPgm, main: &str, p: &mut Printer) {
     p.nl();
     wln!(p, "}}");
 }
+
+/// Generate the C expression to get the tag of the expression `expr`, which should have the type `ty`.
+///
+/// For product types: the tag will be the macro that defines the tag.
+///
+/// For sum types: the tag will be extracted from the expression and the code will depend on whether
+/// the sum type is a value type or not.
+///
+/// - For boxed sum types: the generated code will read the tag word of the heap allocated object.
+/// - For unboxed sum types: the generated code will read the tag from the struct of the sum type.
+fn gen_get_tag(pgm: &LoweredPgm, expr: &str, ty: &mono::Type) -> String {
+    // For product types, use the tag macro.
+    match ty {
+        mono::Type::Named(mono::NamedType { name, args }) => {
+            match pgm.type_objs.get(name).unwrap().get(args).unwrap() {
+                TypeObjs::Product(heap_obj_idx) => heap_obj_tag_name(pgm, *heap_obj_idx),
+
+                TypeObjs::Sum {
+                    con_indices: _,
+                    value: true,
+                } => {
+                    format!("((uint32_t)({expr})._tag)")
+                }
+
+                TypeObjs::Sum {
+                    con_indices: _,
+                    value: false,
+                } => {
+                    format!("((uint32_t)*(uint64_t*)({expr}))")
+                }
+            }
+        }
+
+        mono::Type::Record { fields } => {
+            let heap_obj_idx = *pgm
+                .record_objs
+                .get(&RecordType {
+                    fields: fields.clone(),
+                })
+                .unwrap();
+            heap_obj_tag_name(pgm, heap_obj_idx)
+        }
+
+        mono::Type::Variant { alts: _ } => {
+            format!("((uint32_t)({expr})._tag)")
+        }
+
+        mono::Type::Fn(_) => "CLOSURE_TAG".to_string(),
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Printing utils
 
 #[derive(Debug, Default)]
 struct Printer {
@@ -2120,6 +2437,7 @@ impl Write for Printer {
 fn top_sort(
     type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
     record_objs: &HashMap<RecordType, HeapObjIdx>,
+    variant_objs: &HashMap<VariantType, HeapObjIdx>,
     heap_objs: &[HeapObj],
 ) -> Vec<HashSet<HeapObjIdx>> {
     let mut idx_gen = SccIdxGen::default();
@@ -2143,7 +2461,7 @@ fn top_sort(
                     output.push(std::iter::once(HeapObjIdx(heap_obj_idx as u32)).collect());
                     Some(idx_gen.next())
                 }
-                HeapObj::Source(_) | HeapObj::Record(_) => None,
+                HeapObj::Source(_) | HeapObj::Record(_) | HeapObj::Variant(_) => None,
             },
             low_link: None,
             on_stack: false,
@@ -2157,6 +2475,7 @@ fn top_sort(
             _scc(
                 type_objs,
                 record_objs,
+                variant_objs,
                 heap_objs,
                 HeapObjIdx(heap_obj_idx as u32),
                 &mut idx_gen,
@@ -2196,6 +2515,7 @@ impl SccIdxGen {
 fn _scc(
     type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
     record_objs: &HashMap<RecordType, HeapObjIdx>,
+    variant_objs: &HashMap<VariantType, HeapObjIdx>,
     heap_objs: &[HeapObj],
     heap_obj_idx: HeapObjIdx,
     idx_gen: &mut SccIdxGen,
@@ -2212,13 +2532,20 @@ fn _scc(
     stack.push(heap_obj_idx);
 
     // Add dependencies to the output.
-    let deps = heap_obj_deps(type_objs, record_objs, heap_objs, heap_obj_idx);
+    let deps = heap_obj_deps(
+        type_objs,
+        record_objs,
+        variant_objs,
+        heap_objs,
+        heap_obj_idx,
+    );
     for dep_obj in deps {
         if nodes[dep_obj.as_usize()].idx.is_none() {
             // Dependency not visited yet.
             _scc(
                 type_objs,
                 record_objs,
+                variant_objs,
                 heap_objs,
                 dep_obj,
                 idx_gen,
@@ -2256,6 +2583,7 @@ fn _scc(
 fn heap_obj_deps(
     type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
     record_objs: &HashMap<RecordType, HeapObjIdx>,
+    variant_objs: &HashMap<VariantType, HeapObjIdx>,
     heap_objs: &[HeapObj],
     heap_obj_idx: HeapObjIdx,
 ) -> HashSet<HeapObjIdx> {
@@ -2263,20 +2591,26 @@ fn heap_obj_deps(
 
     match &heap_objs[heap_obj_idx.as_usize()] {
         HeapObj::Builtin(BuiltinConDecl::Array { t }) => {
-            type_heap_obj_deps(type_objs, record_objs, t, &mut deps);
+            type_heap_obj_deps(type_objs, record_objs, variant_objs, t, &mut deps);
         }
 
         HeapObj::Builtin(_) => {}
 
         HeapObj::Source(source_decl) => {
             for field in source_decl.fields.iter() {
-                type_heap_obj_deps(type_objs, record_objs, field, &mut deps);
+                type_heap_obj_deps(type_objs, record_objs, variant_objs, field, &mut deps);
             }
         }
 
         HeapObj::Record(record_type) => {
             for field in record_type.fields.values() {
-                type_heap_obj_deps(type_objs, record_objs, field, &mut deps);
+                type_heap_obj_deps(type_objs, record_objs, variant_objs, field, &mut deps);
+            }
+        }
+
+        HeapObj::Variant(variant_type) => {
+            for named_ty in variant_type.alts.values() {
+                named_type_heap_obj_deps(type_objs, named_ty, &mut deps);
             }
         }
     }
@@ -2287,6 +2621,7 @@ fn heap_obj_deps(
 fn type_heap_obj_deps(
     type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
     record_objs: &HashMap<RecordType, HeapObjIdx>,
+    variant_objs: &HashMap<VariantType, HeapObjIdx>,
     ty: &mono::Type,
     deps: &mut HashSet<HeapObjIdx>,
 ) {
@@ -2296,18 +2631,22 @@ fn type_heap_obj_deps(
         }
 
         mono::Type::Record { fields } => {
-            let record_idx = record_objs
+            let record_idx = *record_objs
                 .get(&RecordType {
                     fields: fields.clone(),
                 })
                 .unwrap();
-            deps.insert(*record_idx);
+            deps.insert(record_idx);
             for ty in fields.values() {
-                type_heap_obj_deps(type_objs, record_objs, ty, deps);
+                type_heap_obj_deps(type_objs, record_objs, variant_objs, ty, deps);
             }
         }
 
         mono::Type::Variant { alts } => {
+            let variant_idx = *variant_objs
+                .get(&VariantType { alts: alts.clone() })
+                .unwrap();
+            deps.insert(variant_idx);
             for ty in alts.values() {
                 named_type_heap_obj_deps(type_objs, ty, deps);
             }
@@ -2317,18 +2656,18 @@ fn type_heap_obj_deps(
             match args {
                 mono::FunArgs::Positional(args) => {
                     for arg in args {
-                        type_heap_obj_deps(type_objs, record_objs, arg, deps);
+                        type_heap_obj_deps(type_objs, record_objs, variant_objs, arg, deps);
                     }
                 }
                 mono::FunArgs::Named(args) => {
                     for arg in args.values() {
-                        type_heap_obj_deps(type_objs, record_objs, arg, deps);
+                        type_heap_obj_deps(type_objs, record_objs, variant_objs, arg, deps);
                     }
                 }
             }
 
-            type_heap_obj_deps(type_objs, record_objs, ret, deps);
-            type_heap_obj_deps(type_objs, record_objs, exn, deps);
+            type_heap_obj_deps(type_objs, record_objs, variant_objs, ret, deps);
+            type_heap_obj_deps(type_objs, record_objs, variant_objs, exn, deps);
         }
     }
 }
@@ -2347,6 +2686,9 @@ fn named_type_heap_obj_deps(
         TypeObjs::Product(idx) => {
             deps.insert(*idx);
         }
-        TypeObjs::Sum(idxs) => deps.extend(idxs.iter().cloned()),
+        TypeObjs::Sum {
+            con_indices,
+            value: _,
+        } => deps.extend(con_indices.iter().cloned()),
     }
 }

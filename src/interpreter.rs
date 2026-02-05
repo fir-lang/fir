@@ -59,6 +59,7 @@ impl Pgm {
             closures,
             type_objs: _,
             record_objs: _,
+            variant_objs: _,
             true_con_idx,
             false_con_idx,
             char_con_idx,
@@ -77,7 +78,7 @@ impl Pgm {
         // Allocate singletons for constructors without fields.
         for (i, heap_obj) in heap_objs.iter().enumerate() {
             match heap_obj {
-                HeapObj::Builtin(_) => continue,
+                HeapObj::Builtin(_) | HeapObj::Variant(_) => continue,
 
                 HeapObj::Source(source_con) => {
                     if source_con.fields.is_empty() {
@@ -664,7 +665,11 @@ fn eval<W: Write>(
 
         Expr::Do(stmts, _) => exec(w, pgm, heap, locals, stmts, call_stack),
 
-        Expr::Variant(expr) => {
+        Expr::Variant {
+            expr,
+            expr_ty: _,
+            variant_ty: _,
+        } => {
             // Note: the interpreter can only deal with variants of boxed types. If `expr` is an
             // unboxed type things will go wrong.
             //
@@ -729,8 +734,11 @@ fn assign<W: Write>(
 /// compiled version `StrView`s will be allocated on stack.
 fn try_bind_pat(pgm: &Pgm, heap: &mut Heap, pat: &L<Pat>, locals: &mut [u64], value: u64) -> bool {
     match &pat.node {
-        Pat::Var(var) => {
-            locals[var.as_usize()] = value;
+        Pat::Var(VarPat {
+            idx,
+            original_ty: _,
+        }) => {
+            locals[idx.as_usize()] = value;
             true
         }
 
@@ -775,10 +783,14 @@ fn try_bind_pat(pgm: &Pgm, heap: &mut Heap, pat: &L<Pat>, locals: &mut [u64], va
             true
         }
 
-        Pat::Variant(p) => {
+        Pat::Variant {
+            pat,
+            variant_ty: _,
+            pat_ty: _,
+        } => {
             // `p` needs to match a boxed type, but we can't check this here (e.g. in an `assert`).
             // See the documentation in `Expr::Variant` evaluator.
-            try_bind_pat(pgm, heap, p, locals, value)
+            try_bind_pat(pgm, heap, pat, locals, value)
         }
     }
 }

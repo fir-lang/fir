@@ -392,6 +392,7 @@ fn check_stmt(
                                 node: ast::Pat::Var(ast::VarPat {
                                     var: expr_local.clone(),
                                     ty: Some(iter_ty.clone()),
+                                    refined: None,
                                 }),
                             },
                             ty: None,

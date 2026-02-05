@@ -575,6 +575,7 @@ fn mono_expr(
                                 node: mono::Pat::Var(mono::VarPat {
                                     var: SmolStr::new_static("$receiver$"),
                                     ty: mono_object_ty,
+                                    refined: None,
                                 }),
                             },
                             rhs: *mono_object,
@@ -1263,12 +1264,16 @@ fn mono_pat(
     loc: &ast::Loc,
 ) -> mono::Pat {
     match pat {
-        ast::Pat::Var(ast::VarPat { var, ty }) => {
+        ast::Pat::Var(ast::VarPat { var, ty, refined }) => {
             let mono_ty = mono_tc_ty(ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+            let refined = refined
+                .as_ref()
+                .map(|refined| mono_tc_ty(refined, ty_map, poly_pgm, mono_pgm));
             locals.insert(var.clone());
             mono::Pat::Var(mono::VarPat {
                 var: var.clone(),
                 ty: mono_ty,
+                refined,
             })
         }
 
@@ -1342,15 +1347,23 @@ fn mono_pat(
             ),
         }),
 
-        ast::Pat::Variant(ast::VariantPat { pat, inferred_ty }) => {
-            mono::Pat::Variant(mono::VariantPat {
-                pat: mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
-                ty: get_variant_ty(
-                    mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
-                    loc,
-                ),
-            })
-        }
+        ast::Pat::Variant(ast::VariantPat {
+            pat,
+            inferred_ty,
+            inferred_pat_ty,
+        }) => mono::Pat::Variant(mono::VariantPat {
+            pat: mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
+            variant_ty: get_variant_ty(
+                mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+                loc,
+            ),
+            pat_ty: mono_tc_ty(
+                inferred_pat_ty.as_ref().unwrap(),
+                ty_map,
+                poly_pgm,
+                mono_pgm,
+            ),
+        }),
     }
 }
 
@@ -1877,6 +1890,7 @@ fn mono_ty_decl(
         mono::TypeDecl {
             name: mono_ty_id.clone(),
             rhs: None,
+            value: ty_decl.value,
         },
     );
 
@@ -1905,6 +1919,7 @@ fn mono_ty_decl(
         mono::TypeDecl {
             name: mono_ty_id.clone(),
             rhs,
+            value: ty_decl.value,
         },
     );
 
