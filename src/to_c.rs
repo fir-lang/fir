@@ -727,7 +727,6 @@ fn is_value_type(ty: &mono::Type) -> bool {
 }
 
 fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
-    // Special case for value types for now.
     if let mono::Type::Named(mono::NamedType { name, args: _ }) = ty {
         let name_str = name.as_str();
         if matches!(
@@ -737,15 +736,20 @@ fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
             return name_str.to_string();
         }
     }
-    if let mono::Type::Fn(_) = ty {
-        return "CLOSURE*".to_string();
-    }
+    let value = match ty {
+        mono::Type::Named(mono::NamedType { name, args }) => {
+            match pgm.type_objs.get(name).unwrap().get(args).unwrap() {
+                TypeObjs::Product { value, .. } | TypeObjs::Sum { value, .. } => *value,
+            }
+        }
+        mono::Type::Record { .. } | mono::Type::Variant { .. } => true,
+        mono::Type::Fn(_) => return "CLOSURE*".to_string(),
+    };
     let mut s = String::new();
     ty_to_c(ty, &mut s);
-    if !matches!(ty, mono::Type::Variant { .. }) {
+    if !value {
         s.push('*'); // make pointer
     }
-    let _ = pgm; // TODO: use pgm to check value-ness
     s
 }
 
@@ -1607,7 +1611,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
         }
 
         Expr::ConAlloc {
-            con_idx: heap_obj_idx,
+            con_idx,
             args,
             arg_tys,
             ret_ty,
@@ -1618,11 +1622,11 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     p,
                     "({}){}",
                     c_ty(ret_ty, &cg.pgm),
-                    heap_obj_singleton_name(cg.pgm, *heap_obj_idx)
+                    heap_obj_singleton_name(cg.pgm, *con_idx)
                 );
             } else {
-                let struct_name = heap_obj_struct_name(cg.pgm, *heap_obj_idx);
-                let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
+                let struct_name = heap_obj_struct_name(cg.pgm, *con_idx);
+                let tag_name = heap_obj_tag_name(cg.pgm, *con_idx);
                 w!(p, "({{");
                 p.indent();
                 p.nl();
