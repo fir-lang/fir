@@ -1452,7 +1452,11 @@ fn stmt_to_c(
             w!(p, "{} {} = ", c_ty(rhs_ty), rhs_temp);
             expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
             wln!(p, "; // {}", loc_display(&rhs.loc));
-            wln!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, locals, cg));
+            wln!(
+                p,
+                "{};",
+                pat_to_cond(&lhs.node, &rhs_temp, None, locals, cg)
+            );
             if let Some(result_var) = result_var {
                 wln!(
                     p,
@@ -1795,7 +1799,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     w!(p, " else ");
                 }
                 // Generate pattern match condition
-                let cond = pat_to_cond(&alt.pat.node, &scrut_temp, locals, cg);
+                let cond = pat_to_cond(&alt.pat.node, &scrut_temp, None, locals, cg);
                 w!(p, "if ({}", cond);
 
                 // Add guard if present
@@ -1974,7 +1978,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             w!(
                 p,
                 "if ({}) {{",
-                pat_to_cond(&pat.node, &expr_temp, locals, cg)
+                pat_to_cond(&pat.node, &expr_temp, None, locals, cg)
             );
             p.indent();
             p.nl();
@@ -2189,13 +2193,24 @@ fn gen_variant_conversion(
 }
 
 /// Generate a C condition expression for pattern matching.
-fn pat_to_cond(pat: &Pat, scrutinee: &str, locals: &[LocalInfo], cg: &mut Cg) -> String {
+///
+/// - `scrutinee` is the expression being matched against.
+///
+/// - `tag_expr` is an optional override for how to get the tag. When `Some`, use that expression
+///   directly (e.g., for variant patterns where we check the variant's `_tag` field). When `None`,
+///   derive the tag from the scrutinee using `get_tag(scrutinee)`.
+fn pat_to_cond(
+    pat: &Pat,
+    scrutinee: &str,
+    tag_expr: Option<&str>,
+    locals: &[LocalInfo],
+    cg: &mut Cg,
+) -> String {
     match pat {
         Pat::Ignore => "1".to_string(),
 
         Pat::Var(VarPat { idx, original_ty }) => {
             let refined_ty = &locals[idx.as_usize()].ty;
-
             if needs_variant_conversion(original_ty, refined_ty) {
                 let conversion = gen_variant_conversion(scrutinee, original_ty, refined_ty, cg);
                 format!("({{ _{} = {}; 1; }})", idx.as_usize(), conversion)
@@ -2207,12 +2222,15 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, locals: &[LocalInfo], cg: &mut Cg) ->
         Pat::Con(ConPat { con, fields }) => {
             let struct_name = heap_obj_struct_name(cg.pgm, *con);
             let tag_name = heap_obj_tag_name(cg.pgm, *con);
-            // let get_tag_expr = gen_get_tag(&cg.pgm, scrutinee, ty); TODO
-            let mut cond = format!("(get_tag({}) == {})", scrutinee, tag_name);
+            let tag_check = match tag_expr {
+                Some(expr) => format!("({expr} == {tag_name})"),
+                None => format!("(get_tag({scrutinee}) == {tag_name})"),
+            };
+            let mut cond = tag_check;
             for (i, field_pat) in fields.iter().enumerate() {
                 let field_expr = format!("(({struct_name}*){scrutinee})->_{i}");
-                let field_cond = pat_to_cond(&field_pat.node, &field_expr, locals, cg);
-                cond = format!("({} && {})", cond, field_cond);
+                let field_cond = pat_to_cond(&field_pat.node, &field_expr, None, locals, cg);
+                cond = format!("({cond} && {field_cond})");
             }
             cond
         }
@@ -2221,36 +2239,34 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, locals: &[LocalInfo], cg: &mut Cg) ->
             let mut escaped = String::new();
             for byte in s.bytes() {
                 if byte == b'"' || byte == b'\\' || !(32..=126).contains(&byte) {
-                    // Same as `Expr::Str`, use octal escape here instead of hex.
                     escaped.push_str(&format!("\\{:03o}", byte));
                 } else {
                     escaped.push(byte as char);
                 }
             }
-            // Note: the type cast below is to handle strings in variants. Variants are currently
-            // `Variant*` so they need to be cast.
+            let tag_check = match tag_expr {
+                Some(expr) => format!("({expr} == {})", cg.pgm.str_con_idx.0),
+                None => format!("(get_tag({scrutinee}) == {})", cg.pgm.str_con_idx.0),
+            };
             format!(
-                "(get_tag({}) == {} && str_eq((Str*){}, \"{}\", {}))",
-                scrutinee,
-                cg.pgm.str_con_idx.0,
-                scrutinee,
-                escaped,
+                "({tag_check} && str_eq((Str*){scrutinee}, \"{escaped}\", {}))",
                 s.len()
             )
         }
 
         Pat::Char(c) => {
             let tag_name = heap_obj_tag_name(cg.pgm, cg.pgm.char_con_idx);
-            format!(
-                "(get_tag({}) == {} && ((Char*){})->_0 == {})",
-                scrutinee, tag_name, scrutinee, *c as u32
-            )
+            let tag_check = match tag_expr {
+                Some(expr) => format!("({expr} == {tag_name})"),
+                None => format!("(get_tag({scrutinee}) == {tag_name})"),
+            };
+            format!("({tag_check} && ((Char*){scrutinee})->_0 == {})", *c as u32)
         }
 
         Pat::Or(p1, p2) => {
-            let c1 = pat_to_cond(&p1.node, scrutinee, locals, cg);
-            let c2 = pat_to_cond(&p2.node, scrutinee, locals, cg);
-            format!("({} || {})", c1, c2)
+            let c1 = pat_to_cond(&p1.node, scrutinee, tag_expr, locals, cg);
+            let c2 = pat_to_cond(&p2.node, scrutinee, tag_expr, locals, cg);
+            format!("({c1} || {c2})")
         }
 
         Pat::Variant {
@@ -2260,10 +2276,8 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, locals: &[LocalInfo], cg: &mut Cg) ->
         } => {
             let alt_idx = find_variant_alt_index(pat_ty, variant_ty);
             let inner_expr = format!("({scrutinee})._alt._{alt_idx}");
-            let expected_tag = gen_get_tag(cg.pgm, &inner_expr, pat_ty);
-            let tag_check = format!("(({scrutinee})._tag == {expected_tag})");
-            let inner_cond = pat_to_cond(&pat.node, &inner_expr, locals, cg);
-            format!("({tag_check} && {inner_cond})")
+            let variant_tag_expr = format!("({scrutinee})._tag");
+            pat_to_cond(&pat.node, &inner_expr, Some(&variant_tag_expr), locals, cg)
         }
     }
 }
