@@ -153,12 +153,12 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         typedef struct ExnHandler {{
             jmp_buf buf;
             struct ExnHandler* prev;
-            uint64_t exn_value;
+            void* exn_value;  // pointer to boxed exception value
         }} ExnHandler;
 
         static ExnHandler* current_exn_handler = NULL;
 
-        static void throw_exn(uint64_t exn) {{
+        static void throw_exn(void* exn) {{
             if (current_exn_handler == NULL) {{
                 fprintf(stderr, \"Uncaught exception\\n\");
                 exit(1);
@@ -1026,16 +1026,13 @@ fn builtin_fun_to_c(
         BuiltinFunDecl::I32Neg => wln!(p, "static I32 _fun_{idx}(I32 a) {{ return -a; }}"),
 
         BuiltinFunDecl::ThrowUnchecked => {
-            w!(
-                p,
-                "static {} _fun_{}({} exn) {{",
-                c_ty(ret),
-                idx,
-                c_ty(&params[0])
-            );
+            let exn_ty = c_ty(&params[0]);
+            w!(p, "static {} _fun_{}({} exn) {{", c_ty(ret), idx, exn_ty);
             p.indent();
             p.nl();
-            wln!(p, "throw_exn((uint64_t)exn);");
+            wln!(p, "{exn_ty}* boxed = malloc(sizeof({exn_ty}));");
+            wln!(p, "*boxed = exn;");
+            wln!(p, "throw_exn(boxed);");
             w!(p, "__builtin_unreachable();");
             p.dedent();
             p.nl();
@@ -1090,7 +1087,8 @@ fn builtin_fun_to_c(
                 "{err_struct_name}* err = malloc(sizeof({err_struct_name}));"
             );
             wln!(p, "err->_tag = {};", err_tag_name);
-            wln!(p, "err->_0 = ({})handler.exn_value;", c_ty(&ty_args[1]));
+            let exn_ty = c_ty(&ty_args[1]);
+            wln!(p, "err->_0 = *({exn_ty}*)handler.exn_value;");
             w!(p, "return ({})err;", c_ty(ret));
             p.dedent();
             p.nl();
