@@ -576,7 +576,7 @@ impl Expr {
 impl Pat {
     pub fn print(&self, buf: &mut String) {
         match self {
-            Pat::Var(VarPat { var, ty }) => {
+            Pat::Var(VarPat { var, ty, refined }) => {
                 buf.push_str(var);
                 buf.push_str(": ");
                 ty.print(buf);

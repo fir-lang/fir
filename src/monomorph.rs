@@ -575,6 +575,7 @@ fn mono_expr(
                                 node: mono::Pat::Var(mono::VarPat {
                                     var: SmolStr::new_static("$receiver$"),
                                     ty: mono_object_ty,
+                                    refined: None,
                                 }),
                             },
                             rhs: *mono_object,
@@ -1265,10 +1266,14 @@ fn mono_pat(
     match pat {
         ast::Pat::Var(ast::VarPat { var, ty, refined }) => {
             let mono_ty = mono_tc_ty(ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+            let refined = refined
+                .as_ref()
+                .map(|refined| mono_tc_ty(refined, ty_map, poly_pgm, mono_pgm));
             locals.insert(var.clone());
             mono::Pat::Var(mono::VarPat {
                 var: var.clone(),
                 ty: mono_ty,
+                refined,
             })
         }
 

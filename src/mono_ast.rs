@@ -234,6 +234,7 @@ pub enum Pat {
 pub struct VarPat {
     pub var: Id,
     pub ty: Type,
+    pub refined: Option<Type>,
 }
 
 #[derive(Debug, Clone)]

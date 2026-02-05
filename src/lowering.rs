@@ -2196,7 +2196,7 @@ fn lower_pat(
     mapped_binders: &mut HashMap<Id, LocalIdx>,
 ) -> Pat {
     match pat {
-        mono::Pat::Var(mono::VarPat { var, ty }) => match mapped_binders.get(var) {
+        mono::Pat::Var(mono::VarPat { var, ty, refined }) => match mapped_binders.get(var) {
             Some(idx) => Pat::Var(*idx),
             None => {
                 let var_idx = LocalIdx(scope.locals.len() as u32);
