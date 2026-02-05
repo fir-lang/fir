@@ -1263,7 +1263,7 @@ fn mono_pat(
     loc: &ast::Loc,
 ) -> mono::Pat {
     match pat {
-        ast::Pat::Var(ast::VarPat { var, ty }) => {
+        ast::Pat::Var(ast::VarPat { var, ty, refined }) => {
             let mono_ty = mono_tc_ty(ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
             locals.insert(var.clone());
             mono::Pat::Var(mono::VarPat {

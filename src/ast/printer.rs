@@ -814,11 +814,13 @@ impl Expr {
 impl Pat {
     pub fn print(&self, buf: &mut String) {
         match self {
-            Pat::Var(VarPat { var, ty }) => {
+            Pat::Var(VarPat { var, ty, refined }) => {
                 buf.push_str(var);
                 if let Some(ty) = ty {
-                    buf.push_str(": ");
-                    write!(buf, "{ty}").unwrap();
+                    write!(buf, ": {ty}").unwrap();
+                }
+                if let Some(refined) = refined {
+                    write!(buf, " ~> {refined}").unwrap();
                 }
             }
 

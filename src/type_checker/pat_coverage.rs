@@ -42,8 +42,12 @@ struct PatMatrix {
 struct Row {
     /// `match` arm index the row is generated from.
     arm_index: ArmIndex,
+
     pats: Vec<ast::L<ast::Pat>>,
+
+    /// Maps variables in the row to types they're bound.
     bound_vars: HashMap<Id, HashSet<Ty>>,
+
     guarded: bool,
 }
 
@@ -52,7 +56,7 @@ pub(crate) struct CoverageInfo {
     /// Maps arm indices to variables bound in the arms.
     pub(crate) bound_vars: Vec<HashMap<Id, HashSet<Ty>>>,
 
-    /// Maps arm indices to whether its useful.
+    /// Maps arm indices to whether they're useful.
     pub(crate) usefulness: Vec<bool>,
 }
 
@@ -502,7 +506,11 @@ impl PatMatrix {
                                             // pat should be variable with the same name as the
                                             // field. (type checker checks this)
                                             match &named_field.node.node {
-                                                ast::Pat::Var(ast::VarPat { var, ty: _ }) => var,
+                                                ast::Pat::Var(ast::VarPat {
+                                                    var,
+                                                    ty: _,
+                                                    refined: _,
+                                                }) => var,
                                                 _ => panic!(),
                                             }
                                         }

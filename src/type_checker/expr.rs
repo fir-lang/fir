@@ -858,6 +858,7 @@ pub(super) fn check_expr(
                         node: ast::Pat::Var(ast::VarPat {
                             var: buf_id.clone(),
                             ty: Some(str_buf_ty.clone()),
+                            refined: None,
                         }),
                     },
                     ty: None,
@@ -1777,7 +1778,22 @@ pub(super) fn check_match_expr(
     for (alt_idx, (ast::Alt { pat, guard, rhs }, mut alt_scope)) in
         alts.iter_mut().zip(alt_envs.into_iter()).enumerate()
     {
-        refine_binders(&mut alt_scope, &info.bound_vars[alt_idx], &pat.loc);
+        let refined_binders = refine_binders(&info.bound_vars[alt_idx], &pat.loc);
+
+        if cfg!(debug_assertions) {
+            let scope_vars: HashSet<&Id> = alt_scope.keys().collect();
+            let binders_vars: HashSet<&Id> = refined_binders.keys().collect();
+            assert_eq!(scope_vars, binders_vars);
+        }
+
+        add_coercions(
+            &mut pat.node,
+            &refined_binders,
+            tc_state.tys.tys.cons(),
+            &pat.loc,
+        );
+
+        alt_scope.extend(refined_binders);
 
         tc_state.env.push_scope(alt_scope);
 
@@ -2149,12 +2165,8 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
     }
 }
 
-fn refine_binders(scope: &mut HashMap<Id, Ty>, binders: &HashMap<Id, HashSet<Ty>>, loc: &ast::Loc) {
-    if cfg!(debug_assertions) {
-        let scope_vars: HashSet<&Id> = scope.keys().collect();
-        let binders_vars: HashSet<&Id> = binders.keys().collect();
-        assert_eq!(scope_vars, binders_vars);
-    }
+fn refine_binders(binders: &HashMap<Id, HashSet<Ty>>, loc: &ast::Loc) -> HashMap<Id, Ty> {
+    let mut refined_binders: HashMap<Id, Ty> = Default::default();
 
     for (var, tys) in binders.iter() {
         // println!("{} --> {:?}", var, tys);
@@ -2162,7 +2174,8 @@ fn refine_binders(scope: &mut HashMap<Id, Ty>, binders: &HashMap<Id, HashSet<Ty>
 
         if tys.len() == 1 {
             // println!("{} --> {}", var, tys.iter().next().unwrap().clone());
-            scope.insert(var.clone(), tys.iter().next().unwrap().clone());
+            let old = refined_binders.insert(var.clone(), tys.iter().next().unwrap().clone());
+            assert_eq!(old, None);
         } else {
             let mut labels: OrdMap<Id, Ty> = Default::default();
             let mut extension: Option<Box<Ty>> = None;
@@ -2208,7 +2221,57 @@ fn refine_binders(scope: &mut HashMap<Id, Ty>, binders: &HashMap<Id, HashSet<Ty>
 
             // println!("{} --> {}", var, new_ty);
 
-            scope.insert(var.clone(), new_ty);
+            let old = refined_binders.insert(var.clone(), new_ty);
+            assert_eq!(old, None);
+        }
+    }
+
+    refined_binders
+}
+
+fn add_coercions(
+    pat: &mut ast::Pat,
+    refined_binders: &HashMap<Id, Ty>,
+    cons: &ScopeMap<Id, TyCon>,
+    _loc: &ast::Loc,
+) {
+    match pat {
+        ast::Pat::Var(ast::VarPat { var, ty, refined }) => {
+            assert_eq!(refined, &mut None);
+            let refined_ty = refined_binders.get(var).unwrap().deep_normalize(cons);
+            let ty = ty.as_ref().unwrap().deep_normalize(cons);
+            if refined_ty != ty {
+                *refined = Some(refined_ty);
+            }
+        }
+
+        ast::Pat::Con(ast::ConPat {
+            con: _,
+            fields,
+            ignore_rest: _,
+        })
+        | ast::Pat::Record(ast::RecordPat {
+            fields,
+            ignore_rest: _,
+            inferred_ty: _,
+        }) => {
+            for field in fields {
+                add_coercions(&mut field.node.node, refined_binders, cons, &field.node.loc);
+            }
+        }
+
+        ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) => {}
+
+        ast::Pat::Or(p1, p2) => {
+            add_coercions(&mut p1.node, refined_binders, cons, &p1.loc);
+            add_coercions(&mut p2.node, refined_binders, cons, &p2.loc);
+        }
+
+        ast::Pat::Variant(ast::VariantPat {
+            pat,
+            inferred_ty: _,
+        }) => {
+            add_coercions(&mut pat.node, refined_binders, cons, &pat.loc);
         }
     }
 }
