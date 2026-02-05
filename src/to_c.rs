@@ -72,7 +72,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     // easier to read.
     for (ty_id, ty_arg_map) in &pgm.type_objs {
         for (ty_args, objs) in ty_arg_map.iter() {
-            if let TypeObjs::Product(_) = objs {
+            if let TypeObjs::Product { .. } = objs {
                 continue;
             }
             w!(p, "// {ty_id}");
@@ -2347,7 +2347,7 @@ fn gen_get_tag(pgm: &LoweredPgm, expr: &str, ty: &mono::Type) -> String {
     match ty {
         mono::Type::Named(mono::NamedType { name, args }) => {
             match pgm.type_objs.get(name).unwrap().get(args).unwrap() {
-                TypeObjs::Product(heap_obj_idx) => heap_obj_tag_name(pgm, *heap_obj_idx),
+                TypeObjs::Product { idx, value: _ } => heap_obj_tag_name(pgm, *idx),
 
                 TypeObjs::Sum {
                     con_indices: _,
@@ -2683,7 +2683,7 @@ fn named_type_heap_obj_deps(
     };
 
     match ty_map.get(&ty.args).unwrap() {
-        TypeObjs::Product(idx) => {
+        TypeObjs::Product { idx, value: _ } => {
             deps.insert(*idx);
         }
         TypeObjs::Sum {

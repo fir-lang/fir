@@ -56,7 +56,10 @@ pub struct LoweredPgm {
 
 #[derive(Debug)]
 pub enum TypeObjs {
-    Product(HeapObjIdx),
+    Product {
+        idx: HeapObjIdx,
+        value: bool,
+    },
     Sum {
         con_indices: Vec<HeapObjIdx>,
         value: bool,
@@ -840,7 +843,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             .type_objs
                             .entry(con_id.clone())
                             .or_default()
-                            .insert(con_ty_args.clone(), TypeObjs::Product(idx));
+                            .insert(
+                                con_ty_args.clone(),
+                                TypeObjs::Product {
+                                    idx,
+                                    value: con_decl.value,
+                                },
+                            );
                         assert!(old.is_none());
                     }
                 },
@@ -858,7 +867,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             .type_objs
                             .entry(con_id.clone())
                             .or_default()
-                            .insert(con_ty_args.clone(), TypeObjs::Product(idx));
+                            .insert(
+                                con_ty_args.clone(),
+                                TypeObjs::Product {
+                                    idx,
+                                    value: con_decl.value,
+                                },
+                            );
                         assert!(old.is_none());
                     }
 
