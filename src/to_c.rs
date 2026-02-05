@@ -696,9 +696,7 @@ fn variant_decl_to_c(variant: &VariantType, tag: u32, p: &mut Printer) {
     p.indent();
     for (i, alt) in variant.alts.values().enumerate() {
         p.nl();
-        let mut ty = String::new();
-        named_ty_to_c(alt, &mut ty);
-        w!(p, "{ty} _{i};");
+        w!(p, "{} _{i};", c_ty(&mono::Type::Named(alt.clone())));
     }
     p.dedent();
     p.nl();
@@ -743,7 +741,9 @@ fn c_ty(ty: &mono::Type) -> String {
     }
     let mut s = String::new();
     ty_to_c(ty, &mut s);
-    s.push('*'); // make pointer
+    if !matches!(ty, mono::Type::Variant { .. }) {
+        s.push('*'); // make pointer
+    }
     s
 }
 
@@ -2033,12 +2033,55 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             - `get_tag` is type-specific tag getter
             - `N` is the index of the named type in the variant type
             */
+
+            w!(p, "({{");
+            p.indent();
+            p.nl();
+
+            // TODO: Check that variant exprs are named types in an earlier pass.
+            let expr_named_ty = match expr_ty {
+                mono::Type::Named(named_ty) => named_ty,
+                _ => panic!(),
+            };
+
+            let alt_idx = variant_ty
+                .iter()
+                .enumerate()
+                .find_map(|(idx, (_, alt_ty))| {
+                    if alt_ty == expr_named_ty {
+                        Some(idx)
+                    } else {
+                        None
+                    }
+                })
+                .unwrap();
+
             let variant_struct_name = variant_struct_name(&VariantType {
                 alts: variant_ty.clone(),
             });
-            w!(p, "((Variant*)");
+
+            let expr_temp = cg.fresh_temp();
+            w!(p, "{} {expr_temp} = ", c_ty(expr_ty));
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);
-            w!(p, ")");
+            wln!(p, "; // {}", loc_display(&expr.loc));
+
+            let expr_tag_temp = cg.fresh_temp();
+            wln!(
+                p,
+                "uint32_t {expr_tag_temp} = {};",
+                gen_get_tag(cg.pgm, &expr_temp, expr_ty)
+            );
+
+            let variant_temp = cg.fresh_temp();
+            wln!(
+                p,
+                "{variant_struct_name} {variant_temp} = {{ ._tag = {expr_tag_temp}, ._alt._{alt_idx} = {expr_temp} }};"
+            );
+            w!(p, "{variant_temp};");
+
+            p.dedent();
+            p.nl();
+            w!(p, "}})");
         }
     }
 }
