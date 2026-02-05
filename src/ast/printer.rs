@@ -877,8 +877,8 @@ impl Pat {
                     buf.push_str("..");
                 }
                 buf.push(')');
-                if let Some(inferred_ty) = inferred_ty {
-                    write!(buf, " #| inferred type = {inferred_ty} |# ").unwrap();
+                if let Some(ty) = inferred_ty {
+                    write!(buf, ": {ty}").unwrap();
                 }
             }
 
@@ -904,12 +904,12 @@ impl Pat {
                 buf.push(')');
             }
 
-            Pat::Variant(VariantPat {
-                pat,
-                inferred_ty: _,
-            }) => {
+            Pat::Variant(VariantPat { pat, inferred_ty }) => {
                 buf.push('~');
                 pat.node.print(buf);
+                if let Some(ty) = inferred_ty {
+                    write!(buf, ": {ty}").unwrap();
+                }
             }
         }
     }
