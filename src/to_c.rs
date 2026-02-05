@@ -1452,7 +1452,7 @@ fn stmt_to_c(
             w!(p, "{} {} = ", c_ty(rhs_ty), rhs_temp);
             expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
             wln!(p, "; // {}", loc_display(&rhs.loc));
-            wln!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, cg));
+            wln!(p, "{};", pat_to_cond(&lhs.node, &rhs_temp, locals, cg));
             if let Some(result_var) = result_var {
                 wln!(
                     p,
@@ -1795,7 +1795,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     w!(p, " else ");
                 }
                 // Generate pattern match condition
-                let cond = pat_to_cond(&alt.pat.node, &scrut_temp, cg);
+                let cond = pat_to_cond(&alt.pat.node, &scrut_temp, locals, cg);
                 w!(p, "if ({}", cond);
 
                 // Add guard if present
@@ -1971,7 +1971,11 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);
             wln!(p, "; // {}", loc_display(&expr.loc));
             wln!(p, "Bool* _is_result;");
-            w!(p, "if ({}) {{", pat_to_cond(&pat.node, &expr_temp, cg));
+            w!(
+                p,
+                "if ({}) {{",
+                pat_to_cond(&pat.node, &expr_temp, locals, cg)
+            );
             p.indent();
             p.nl();
             w!(
@@ -2105,16 +2109,99 @@ fn find_variant_alt_index(pat_ty: &mono::Type, variant_ty: &OrdMap<Id, mono::Nam
         .unwrap_or_else(|| panic!("Type {type_name} not found in variant alternatives"))
 }
 
+/// Check if we need to convert between two variant types. Returns true if both types are variants
+/// and they differ.
+fn needs_variant_conversion(from_ty: &mono::Type, to_ty: &mono::Type) -> bool {
+    match (from_ty, to_ty) {
+        (mono::Type::Variant { alts: from_alts }, mono::Type::Variant { alts: to_alts }) => {
+            from_alts != to_alts
+        }
+        _ => false,
+    }
+}
+
+/// Generate code to convert a value from one variant type to another: unpack the value from the
+/// source variant and repack it into the target variant.
+fn gen_variant_conversion(
+    scrutinee: &str,
+    from_ty: &mono::Type,
+    to_ty: &mono::Type,
+    cg: &mut Cg,
+) -> String {
+    let (from_alts, to_alts) = match (from_ty, to_ty) {
+        (mono::Type::Variant { alts: from }, mono::Type::Variant { alts: to }) => (from, to),
+        _ => panic!("gen_variant_conversion called with non-variant types"),
+    };
+
+    let to_variant_ty = VariantType {
+        alts: to_alts.clone(),
+    };
+    let to_struct_name = variant_struct_name(&to_variant_ty);
+
+    // Handle empty target variant - this is an unreachable case at runtime,
+    // but we still need to generate valid C code. Just copy the tag.
+    if to_alts.is_empty() {
+        let temp = cg.fresh_temp();
+        return format!(
+            "({{ {to_struct_name} {temp}; {temp}._tag = ({scrutinee})._tag; {temp}; }})"
+        );
+    }
+
+    // Find the mapping from source alternative index to target alternative index.
+    // The value's tag tells us which alternative is active in the source.
+    // We need to find the corresponding alternative in the target and repack.
+
+    // Generate a compound expression that:
+    // 1. Reads the tag from the source
+    // 2. Based on the tag, copies the value to the appropriate field in the target
+
+    let temp = cg.fresh_temp();
+    let mut cases = String::new();
+
+    for (to_idx, (type_name, named_ty)) in to_alts.iter().enumerate() {
+        // Find this type in the source variant
+        let (from_idx, _) = from_alts
+            .iter()
+            .enumerate()
+            .find(|(_, (name, _))| *name == type_name)
+            .unwrap_or_else(|| {
+                panic!(
+                    "Type {} not found in source variant during conversion",
+                    type_name
+                )
+            });
+
+        let alt_ty = mono::Type::Named(named_ty.clone());
+        let expected_tag = gen_get_tag(cg.pgm, &format!("({scrutinee})._alt._{from_idx}"), &alt_ty);
+
+        if !cases.is_empty() {
+            cases.push_str(" else ");
+        }
+        cases.push_str(&format!(
+            "if (({scrutinee})._tag == {expected_tag}) {{ {temp}._tag = {expected_tag}; {temp}._alt._{to_idx} = ({scrutinee})._alt._{from_idx}; }}"
+        ));
+    }
+
+    // Add a fallback case (should never happen if types are correct)
+    cases.push_str(" else { fprintf(stderr, \"Invalid variant conversion\\n\"); exit(1); }");
+
+    format!("({{ {to_struct_name} {temp}; {cases} {temp}; }})")
+}
+
 /// Generate a C condition expression for pattern matching.
-fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
+fn pat_to_cond(pat: &Pat, scrutinee: &str, locals: &[LocalInfo], cg: &mut Cg) -> String {
     match pat {
         Pat::Ignore => "1".to_string(),
 
-        Pat::Var(VarPat {
-            idx,
-            original_ty: _,
-        }) => {
-            format!("({{ _{} = {}; 1; }})", idx.as_usize(), scrutinee)
+        Pat::Var(VarPat { idx, original_ty }) => {
+            let refined_ty = &locals[idx.as_usize()].ty;
+
+            if needs_variant_conversion(original_ty, refined_ty) {
+                let conversion = gen_variant_conversion(scrutinee, original_ty, refined_ty, cg);
+                format!("({{ _{} = {}; 1; }})", idx.as_usize(), conversion)
+            } else {
+                format!("({{ _{} = {}; 1; }})", idx.as_usize(), scrutinee)
+            }
         }
 
         Pat::Con(ConPat { con, fields }) => {
@@ -2124,7 +2211,7 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
             let mut cond = format!("(get_tag({}) == {})", scrutinee, tag_name);
             for (i, field_pat) in fields.iter().enumerate() {
                 let field_expr = format!("(({struct_name}*){scrutinee})->_{i}");
-                let field_cond = pat_to_cond(&field_pat.node, &field_expr, cg);
+                let field_cond = pat_to_cond(&field_pat.node, &field_expr, locals, cg);
                 cond = format!("({} && {})", cond, field_cond);
             }
             cond
@@ -2161,8 +2248,8 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
         }
 
         Pat::Or(p1, p2) => {
-            let c1 = pat_to_cond(&p1.node, scrutinee, cg);
-            let c2 = pat_to_cond(&p2.node, scrutinee, cg);
+            let c1 = pat_to_cond(&p1.node, scrutinee, locals, cg);
+            let c2 = pat_to_cond(&p2.node, scrutinee, locals, cg);
             format!("({} || {})", c1, c2)
         }
 
@@ -2175,7 +2262,7 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
             let inner_expr = format!("({scrutinee})._alt._{alt_idx}");
             let expected_tag = gen_get_tag(cg.pgm, &inner_expr, pat_ty);
             let tag_check = format!("(({scrutinee})._tag == {expected_tag})");
-            let inner_cond = pat_to_cond(&pat.node, &inner_expr, cg);
+            let inner_cond = pat_to_cond(&pat.node, &inner_expr, locals, cg);
             format!("({tag_check} && {inner_cond})")
         }
     }

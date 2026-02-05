@@ -580,6 +580,10 @@ impl Pat {
                 buf.push_str(var);
                 buf.push_str(": ");
                 ty.print(buf);
+                if let Some(refined) = refined {
+                    buf.push_str(" ~> ");
+                    refined.print(buf);
+                }
             }
 
             Pat::Con(ConPat { con, fields }) => {
