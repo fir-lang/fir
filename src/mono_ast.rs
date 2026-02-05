@@ -268,7 +268,8 @@ pub struct RecordPat {
 #[derive(Debug, Clone)]
 pub struct VariantPat {
     pub pat: Box<L<Pat>>,
-    pub ty: OrdMap<Id, NamedType>, // the variant type
+    pub variant_ty: OrdMap<Id, NamedType>,
+    pub pat_ty: Type,
 }
 
 #[derive(Debug, Clone)]

@@ -256,12 +256,21 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             ty
         }
 
-        ast::Pat::Variant(ast::VariantPat { pat, inferred_ty }) => {
+        ast::Pat::Variant(ast::VariantPat {
+            pat,
+            inferred_ty,
+            inferred_pat_ty,
+        }) => {
             assert!(inferred_ty.is_none());
+            assert!(inferred_pat_ty.is_none());
+
             let pat_ty = check_pat(tc_state, pat, level);
+            *inferred_pat_ty = Some(pat_ty.clone());
+
             let variant_ty =
                 crate::type_checker::expr::make_variant(tc_state, pat_ty, level, &pat.loc);
             *inferred_ty = Some(variant_ty.clone());
+
             variant_ty
         }
     }

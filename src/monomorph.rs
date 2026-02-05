@@ -1347,15 +1347,23 @@ fn mono_pat(
             ),
         }),
 
-        ast::Pat::Variant(ast::VariantPat { pat, inferred_ty }) => {
-            mono::Pat::Variant(mono::VariantPat {
-                pat: mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
-                ty: get_variant_ty(
-                    mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
-                    loc,
-                ),
-            })
-        }
+        ast::Pat::Variant(ast::VariantPat {
+            pat,
+            inferred_ty,
+            inferred_pat_ty,
+        }) => mono::Pat::Variant(mono::VariantPat {
+            pat: mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
+            variant_ty: get_variant_ty(
+                mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+                loc,
+            ),
+            pat_ty: mono_tc_ty(
+                inferred_pat_ty.as_ref().unwrap(),
+                ty_map,
+                poly_pgm,
+                mono_pgm,
+            ),
+        }),
     }
 }
 

@@ -2086,6 +2086,27 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
     }
 }
 
+/// Given a pattern type inside a variant pattern, find which alternative in the variant it matches.
+/// Returns the index of the alternative.
+fn find_variant_alt_index(pat_ty: &mono::Type, variant_ty: &OrdMap<Id, mono::NamedType>) -> usize {
+    let type_name = match pat_ty {
+        mono::Type::Named(named_ty) => named_ty.name.as_str(),
+        _ => panic!("Non-named type in variant pattern: {:?}", pat_ty),
+    };
+
+    variant_ty
+        .iter()
+        .enumerate()
+        .find_map(|(idx, (name, _))| {
+            if name.as_str() == type_name {
+                Some(idx)
+            } else {
+                None
+            }
+        })
+        .unwrap_or_else(|| panic!("Type {type_name} not found in variant alternatives"))
+}
+
 /// Generate a C condition expression for pattern matching.
 fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
     match pat {
@@ -2147,15 +2168,17 @@ fn pat_to_cond(pat: &Pat, scrutinee: &str, cg: &mut Cg) -> String {
             format!("({} || {})", c1, c2)
         }
 
-        Pat::Variant { pat, variant_ty } => {
-            /*
-            ~ <pat>
-
-            ==>
-
-            ??? TODO
-            */
-            pat_to_cond(&pat.node, scrutinee, cg)
+        Pat::Variant {
+            pat,
+            variant_ty,
+            pat_ty,
+        } => {
+            let alt_idx = find_variant_alt_index(pat_ty, variant_ty);
+            let inner_expr = format!("({scrutinee})._alt._{alt_idx}");
+            let expected_tag = gen_get_tag(cg.pgm, &inner_expr, pat_ty);
+            let tag_check = format!("(({scrutinee})._tag == {expected_tag})");
+            let inner_cond = pat_to_cond(&pat.node, &inner_expr, cg);
+            format!("({tag_check} && {inner_cond})")
         }
     }
 }

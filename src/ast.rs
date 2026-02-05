@@ -423,6 +423,7 @@ pub struct RecordPat {
 pub struct VariantPat {
     pub pat: Box<L<Pat>>,
     pub inferred_ty: Option<Ty>,
+    pub inferred_pat_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]

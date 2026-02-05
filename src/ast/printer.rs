@@ -904,7 +904,11 @@ impl Pat {
                 buf.push(')');
             }
 
-            Pat::Variant(VariantPat { pat, inferred_ty }) => {
+            Pat::Variant(VariantPat {
+                pat,
+                inferred_ty,
+                inferred_pat_ty: _,
+            }) => {
                 buf.push('~');
                 pat.node.print(buf);
                 if let Some(ty) = inferred_ty {

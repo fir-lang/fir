@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: 52383218fe8655612aba1731ca84f6a2562106485c38d26a48f5cecea992b73e
+// sha3: 7cce679c0a9108b8107aba89173064c3c44ce886f9d92d415bbe0b1ddb93c5c7
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -48887,6 +48887,7 @@ fn __action153<'a>(
     Pat::Variant(VariantPat {
         pat: Box::new(L::new(module, l, r, pat)),
         inferred_ty: None,
+        inferred_pat_ty: None,
     })
 }
 

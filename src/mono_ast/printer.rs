@@ -640,7 +640,11 @@ impl Pat {
                 buf.push(')');
             }
 
-            Pat::Variant(VariantPat { pat, ty: _ }) => {
+            Pat::Variant(VariantPat {
+                pat,
+                variant_ty: _,
+                pat_ty: _,
+            }) => {
                 buf.push('~');
                 pat.node.print(buf);
             }

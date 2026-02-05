@@ -2270,6 +2270,7 @@ fn add_coercions(
         ast::Pat::Variant(ast::VariantPat {
             pat,
             inferred_ty: _,
+            inferred_pat_ty: _,
         }) => {
             add_coercions(&mut pat.node, refined_binders, cons, &pat.loc);
         }

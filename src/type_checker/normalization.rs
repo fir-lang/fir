@@ -270,8 +270,13 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
                 .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons));
         }
 
-        ast::Pat::Variant(ast::VariantPat { pat, inferred_ty }) => {
+        ast::Pat::Variant(ast::VariantPat {
+            pat,
+            inferred_ty,
+            inferred_pat_ty,
+        }) => {
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
+            *inferred_pat_ty = Some(inferred_pat_ty.as_mut().unwrap().deep_normalize(cons));
             normalize_pat(&mut pat.node, cons);
         }
     }
