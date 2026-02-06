@@ -349,6 +349,7 @@ pub struct SourceConDecl {
     pub idx: HeapObjIdx,
     pub ty_args: Vec<mono::Type>,
     pub fields: Vec<mono::Type>,
+    pub value: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -814,6 +815,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 &name,
                                 con_ty_args,
                                 fields,
+                                con_decl.value,
                             ));
                             con_indices.push(idx);
                         }
@@ -838,6 +840,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             con_id,
                             con_ty_args,
                             fields,
+                            con_decl.value,
                         ));
                         let old = lowered_pgm
                             .type_objs
@@ -1496,6 +1499,7 @@ fn lower_source_con(
     con_id: &SmolStr,
     con_ty_args: &[mono::Type],
     fields: &mono::ConFields,
+    value: bool,
 ) -> HeapObj {
     HeapObj::Source(SourceConDecl {
         name: con_id.clone(),
@@ -1506,6 +1510,7 @@ fn lower_source_con(
             mono::ConFields::Named(fields) => fields.values().cloned().collect(),
             mono::ConFields::Unnamed(fields) => fields.to_vec(),
         },
+        value,
     })
 }
 

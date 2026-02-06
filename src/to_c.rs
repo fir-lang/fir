@@ -105,26 +105,24 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         &pgm.heap_objs,
     );
     for scc in &heap_objs_sorted {
-        // If SCC has more than one element, forward-declare the structs.
+        // If SCC has more than one element, forward-declare boxed types to break cycles. Then
+        // unboxed types can be declared in one go.
         if scc.len() > 1 {
             for heap_obj_idx in scc {
                 match &pgm.heap_objs[heap_obj_idx.as_usize()] {
-                    HeapObj::Source(source_con) => {
+                    HeapObj::Source(source_con) if !source_con.value => {
                         let struct_name = source_con_struct_name(source_con);
                         wln!(p, "typedef struct {struct_name} {struct_name};");
                     }
-                    HeapObj::Record(record) => {
-                        let struct_name = record_struct_name(record);
-                        wln!(p, "typedef struct {struct_name} {struct_name};");
-                    }
-                    HeapObj::Variant(variant) => {
-                        let struct_name = variant_struct_name(variant);
-                        wln!(p, "typedef struct {struct_name} {struct_name};");
-                    }
-                    HeapObj::Builtin(BuiltinConDecl::Array { t }) => {
-                        let struct_name = array_struct_name(t, pgm);
-                        wln!(p, "typedef struct {struct_name} {struct_name};");
-                    }
+
+                    // Value types can't be forward declared as they'll be used directly (instead of
+                    // as pointer) in other types. Forward declaring boxed types will break the
+                    // cycles so we can declare these directly below.
+                    HeapObj::Source(_)
+                    | HeapObj::Record(_)
+                    | HeapObj::Variant(_)
+                    | HeapObj::Builtin(BuiltinConDecl::Array { .. }) => {}
+
                     HeapObj::Builtin(builtin) => {
                         panic!("Builtin in SCC: {builtin:?}");
                     }
@@ -662,6 +660,7 @@ fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, pgm: &LoweredPgm, 
         idx,
         ty_args: _,
         fields,
+        value: _,
     } = source_con;
 
     assert_eq!(idx.0, tag);
