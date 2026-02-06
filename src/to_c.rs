@@ -70,9 +70,14 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
     // Generate structs for sum types. These just have the tag and they're mainly to make code
     // easier to read.
-    for (ty_id, ty_arg_map) in &pgm.type_objs {
-        for (ty_args, objs) in ty_arg_map.iter() {
-            if let TypeObjs::Product(_) = objs {
+    for (ty_id, ty_arg_map) in &pgm.named_tys {
+        for (ty_args, ty_idx) in ty_arg_map.iter() {
+            let ty_decl = &pgm.types[ty_idx.as_usize()];
+            let named_ty_decl = match ty_decl {
+                TypeDecl::Named(decl) => decl,
+                TypeDecl::Record(_, _) | TypeDecl::Variant(_) => continue,
+            };
+            if !named_ty_decl.sum {
                 continue;
             }
             w!(p, "// {ty_id}");
@@ -98,48 +103,54 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         }
     }
 
-    let heap_objs_sorted = top_sort(
-        &pgm.type_objs,
-        &pgm.record_objs,
-        &pgm.variant_objs,
-        &pgm.heap_objs,
+    // Generate the CLOSURE type before other types. CLOSURE is a special built-in that doesn't have
+    // a TypeDecl entry, so it's not part of the dependency-sorted types.
+    let closure_tag = CLOSURE_CON_IDX.0;
+    wln!(p, "#define CLOSURE_TAG {closure_tag}");
+    writedoc!(
+        p,
+        "
+        typedef struct {{
+            uint64_t tag;
+            void (*fun)(void);
+            // captures here ...
+        }} CLOSURE;
+
+        "
+    );
+
+    let heap_objs_sorted: Vec<HashSet<TypeIdx>> = top_sort(
+        &pgm.named_tys,
+        &pgm.record_tys,
+        &pgm.variant_tys,
+        &pgm.types,
     );
     for scc in &heap_objs_sorted {
         // If SCC has more than one element, forward-declare the structs.
         if scc.len() > 1 {
-            for heap_obj_idx in scc {
-                match &pgm.heap_objs[heap_obj_idx.as_usize()] {
-                    HeapObj::Source(source_con) => {
-                        let struct_name = source_con_struct_name(source_con);
-                        wln!(p, "typedef struct {struct_name} {struct_name};");
+            for type_idx in scc {
+                let struct_name = match &pgm.types[type_idx.as_usize()] {
+                    TypeDecl::Named(named_type) => {
+                        // Sum types are already forward-declared above as tag-only structs.
+                        if named_type.sum {
+                            continue;
+                        }
+                        named_type_struct_name(&named_type.name, &named_type.ty_args)
                     }
-                    HeapObj::Record(record) => {
-                        let struct_name = record_struct_name(record);
-                        wln!(p, "typedef struct {struct_name} {struct_name};");
-                    }
-                    HeapObj::Variant(variant) => {
-                        let struct_name = variant_struct_name(variant);
-                        wln!(p, "typedef struct {struct_name} {struct_name};");
-                    }
-                    HeapObj::Builtin(BuiltinConDecl::Array { t }) => {
-                        let struct_name = array_struct_name(t);
-                        wln!(p, "typedef struct {struct_name} {struct_name};");
-                    }
-                    HeapObj::Builtin(builtin) => {
-                        panic!("Builtin in SCC: {builtin:?}");
-                    }
-                }
+
+                    TypeDecl::Record(record_type, _) => record_struct_name(record_type),
+
+                    TypeDecl::Variant(variant_type) => variant_struct_name(variant_type),
+                };
+
+                wln!(p, "typedef struct {struct_name} {struct_name};");
             }
             p.nl();
         }
 
         // Generate struct definitions.
-        for heap_obj_idx in scc {
-            heap_obj_to_c(
-                &pgm.heap_objs[heap_obj_idx.as_usize()],
-                heap_obj_idx.0,
-                &mut p,
-            );
+        for type_idx in scc {
+            ty_decl_to_c(&pgm.types[type_idx.as_usize()], &mut p);
             p.nl();
         }
     }
@@ -244,8 +255,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         match heap_obj {
             HeapObj::Source(source_con) if source_con.fields.is_empty() => {
                 let singleton_name = source_con_singleton_name(source_con);
-                let struct_name = source_con_struct_name(source_con);
-                let tag_name = source_con_tag_name(source_con);
+                let struct_name = source_con_struct_name(&source_con.name, &source_con.ty_args);
+                let tag_name = source_con_tag_name(&source_con.name, &source_con.ty_args);
                 wln!(
                     p,
                     "static {struct_name} {singleton_name}_data = {{ ._tag = {tag_name} }};",
@@ -467,33 +478,78 @@ fn gen_closure_struct(closure: &Closure, idx: usize, p: &mut Printer) {
     p.nl();
 }
 
-fn heap_obj_to_c(heap_obj: &HeapObj, tag: u32, p: &mut Printer) {
-    match heap_obj {
-        HeapObj::Builtin(builtin) => builtin_con_decl_to_c(builtin, tag, p),
-        HeapObj::Source(source_con) => source_con_decl_to_c(source_con, tag, p),
-        HeapObj::Record(record) => record_decl_to_c(record, tag, p),
-        HeapObj::Variant(variant) => variant_decl_to_c(variant, tag, p),
+fn ty_decl_to_c(ty: &TypeDecl, p: &mut Printer) {
+    match ty {
+        TypeDecl::Named(named_ty) => named_ty_decl_to_c(named_ty, p),
+
+        TypeDecl::Record(record_ty, heap_obj_idx) => record_decl_to_c(record_ty, heap_obj_idx.0, p),
+
+        TypeDecl::Variant(variant_ty) => {
+            variant_decl_to_c(variant_ty, p);
+        }
     }
+}
+
+fn named_ty_decl_to_c(ty: &NamedTypeDecl, p: &mut Printer) {
+    match &ty.rhs {
+        NamedTypeRhs::Source(rhs) => source_decl_to_c(ty, rhs, p),
+        NamedTypeRhs::Builtin(rhs, tag) => builtin_con_decl_to_c(rhs, tag.0, p),
+    }
+}
+
+fn source_decl_to_c(ty: &NamedTypeDecl, rhs: &mono::TypeDeclRhs, p: &mut Printer) {
+    let con_indices = &ty.con_indices;
+    match rhs {
+        mono::TypeDeclRhs::Sum(cons) => {
+            assert_eq!(cons.len(), con_indices.len());
+            for (con, &con_idx) in cons.iter().zip(con_indices.iter()) {
+                let con_name: Id = format!("{}_{}", ty.name, con.name).into();
+                gen_source_con_struct(&con_name, &ty.ty_args, &con.fields, con_idx, p);
+            }
+        }
+        mono::TypeDeclRhs::Product(fields) => {
+            assert_eq!(con_indices.len(), 1);
+            gen_source_con_struct(&ty.name, &ty.ty_args, fields, con_indices[0], p);
+        }
+    }
+}
+
+fn gen_source_con_struct(
+    name: &Id,
+    ty_args: &[mono::Type],
+    fields: &mono::ConFields,
+    idx: HeapObjIdx,
+    p: &mut Printer,
+) {
+    let tag = idx.0;
+    let tag_name = source_con_tag_name(name, ty_args);
+    let struct_name = source_con_struct_name(name, ty_args);
+
+    wln!(p, "#define {tag_name} {tag}");
+
+    w!(p, "typedef struct {struct_name} {{");
+    p.indent();
+    p.nl();
+    w!(p, "uint64_t _tag;");
+    let field_tys: Vec<&mono::Type> = match fields {
+        mono::ConFields::Empty => vec![],
+        mono::ConFields::Named(fields) => fields.values().collect(),
+        mono::ConFields::Unnamed(fields) => fields.iter().collect(),
+    };
+    for (i, field_ty) in field_tys.iter().enumerate() {
+        p.nl();
+        w!(p, "{} _{i};", c_ty(field_ty));
+    }
+    p.dedent();
+    p.nl();
+    wln!(p, "}} {struct_name};");
 }
 
 fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
     match builtin {
-        BuiltinConDecl::Con | BuiltinConDecl::Fun => {
-            // These types are not used in the C backend, instead we generate static `CLOSURE`s.
-        }
-
-        BuiltinConDecl::Closure => {
-            wln!(p, "#define CLOSURE_TAG {}", tag);
-            writedoc!(
-                p,
-                "
-                typedef struct {{
-                    uint64_t tag;
-                    void (*fun)(void);
-                    uint64_t captures[];
-                }} CLOSURE;
-                "
-            );
+        BuiltinConDecl::Con | BuiltinConDecl::Fun | BuiltinConDecl::Closure => {
+            // Con and Fun are not used in the C backend.
+            // Closure is generated separately before the topo-sorted types.
         }
 
         BuiltinConDecl::Array { t } => {
@@ -544,19 +600,28 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
     }
 }
 
-fn source_con_tag_name(source_con: &SourceConDecl) -> String {
+fn source_con_tag_name(name: &Id, ty_args: &[mono::Type]) -> String {
     let mut tag_name = String::from("TAG_");
-    tag_name.push_str(&source_con.name);
-    for ty_arg in &source_con.ty_args {
+    tag_name.push_str(name);
+    for ty_arg in ty_args.iter() {
         tag_name.push('_');
         ty_to_c(ty_arg, &mut tag_name);
     }
     tag_name
 }
 
-fn source_con_struct_name(source_con: &SourceConDecl) -> String {
-    let mut name = source_con.name.to_string();
-    for ty_arg in &source_con.ty_args {
+fn source_con_struct_name(name: &Id, ty_args: &[mono::Type]) -> String {
+    let mut name = name.to_string();
+    for ty_arg in ty_args.iter() {
+        name.push('_');
+        ty_to_c(ty_arg, &mut name);
+    }
+    name
+}
+
+fn named_type_struct_name(name: &Id, ty_args: &[mono::Type]) -> String {
+    let mut name = name.to_string();
+    for ty_arg in ty_args {
         name.push('_');
         ty_to_c(ty_arg, &mut name);
     }
@@ -593,7 +658,9 @@ fn array_struct_name(t: &mono::Type) -> String {
 
 fn heap_obj_struct_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
-        HeapObj::Source(source_con) => source_con_struct_name(source_con),
+        HeapObj::Source(source_con) => {
+            source_con_struct_name(&source_con.name, &source_con.ty_args)
+        }
         HeapObj::Record(record) => record_struct_name(record),
         HeapObj::Variant(variant) => variant_struct_name(variant),
         HeapObj::Builtin(_) => panic!("Builtin in heap_obj_struct_name"),
@@ -602,7 +669,7 @@ fn heap_obj_struct_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
 
 fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
-        HeapObj::Source(source_con) => source_con_tag_name(source_con),
+        HeapObj::Source(source_con) => source_con_tag_name(&source_con.name, &source_con.ty_args),
         HeapObj::Record(record) => format!("TAG_{}", record_struct_name(record)),
         HeapObj::Variant(_) => panic!("Variants don't have runtime tags"),
         HeapObj::Builtin(_) => panic!("Builtin in heap_obj_tag_name"),
@@ -639,34 +706,6 @@ fn heap_obj_singleton_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     }
 }
 
-fn source_con_decl_to_c(source_con: &SourceConDecl, tag: u32, p: &mut Printer) {
-    let SourceConDecl {
-        name: _,
-        idx,
-        ty_args: _,
-        fields,
-    } = source_con;
-
-    assert_eq!(idx.0, tag);
-
-    let tag_name = source_con_tag_name(source_con);
-    let struct_name = source_con_struct_name(source_con);
-
-    wln!(p, "#define {tag_name} {tag}");
-
-    w!(p, "typedef struct {struct_name} {{");
-    p.indent();
-    p.nl();
-    w!(p, "uint64_t _tag;");
-    for (i, ty) in fields.iter().enumerate() {
-        p.nl();
-        w!(p, "{} _{i};", c_ty(ty));
-    }
-    p.dedent();
-    p.nl();
-    wln!(p, "}} {struct_name};");
-}
-
 fn record_decl_to_c(record: &RecordType, tag: u32, p: &mut Printer) {
     let struct_name = record_struct_name(record);
 
@@ -685,9 +724,8 @@ fn record_decl_to_c(record: &RecordType, tag: u32, p: &mut Printer) {
     wln!(p, "}} {struct_name};");
 }
 
-fn variant_decl_to_c(variant: &VariantType, tag: u32, p: &mut Printer) {
+fn variant_decl_to_c(variant: &VariantType, p: &mut Printer) {
     let struct_name = variant_struct_name(variant);
-    wln!(p, "// tag = {tag}");
     w!(p, "typedef struct {} {{", struct_name);
     p.indent();
     p.nl();
@@ -2346,33 +2384,32 @@ fn gen_get_tag(pgm: &LoweredPgm, expr: &str, ty: &mono::Type) -> String {
     // For product types, use the tag macro.
     match ty {
         mono::Type::Named(mono::NamedType { name, args }) => {
-            match pgm.type_objs.get(name).unwrap().get(args).unwrap() {
-                TypeObjs::Product(heap_obj_idx) => heap_obj_tag_name(pgm, *heap_obj_idx),
-
-                TypeObjs::Sum {
-                    con_indices: _,
-                    value: true,
-                } => {
-                    format!("((uint32_t)({expr})._tag)")
-                }
-
-                TypeObjs::Sum {
-                    con_indices: _,
-                    value: false,
-                } => {
-                    format!("((uint32_t)*(uint64_t*)({expr}))")
-                }
+            let idx = *pgm.named_tys.get(name).unwrap().get(args).unwrap();
+            let named_ty = match &pgm.types[idx.as_usize()] {
+                TypeDecl::Named(ty) => ty,
+                _ => panic!(),
+            };
+            if named_ty.con_indices.len() == 1 {
+                return heap_obj_tag_name(pgm, named_ty.con_indices[0]);
             }
+            if named_ty.value {
+                return format!("((uint32_t)({expr})._tag)");
+            }
+            format!("((uint32_t)*(uint64_t*)({expr}))")
         }
 
         mono::Type::Record { fields } => {
-            let heap_obj_idx = *pgm
-                .record_objs
+            let idx = *pgm
+                .record_tys
                 .get(&RecordType {
                     fields: fields.clone(),
                 })
                 .unwrap();
-            heap_obj_tag_name(pgm, heap_obj_idx)
+            let idx = match &pgm.types[idx.as_usize()] {
+                TypeDecl::Record(_, idx) => *idx,
+                _ => panic!(),
+            };
+            heap_obj_tag_name(pgm, idx)
         }
 
         mono::Type::Variant { alts: _ } => {
@@ -2435,49 +2472,34 @@ impl Write for Printer {
 /// - `type_objs`: Maps named types (both products and sums) to their heap object indices.
 /// - `record_objs`: Same as `type_objs`, but for records.
 fn top_sort(
-    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
-    record_objs: &HashMap<RecordType, HeapObjIdx>,
-    variant_objs: &HashMap<VariantType, HeapObjIdx>,
-    heap_objs: &[HeapObj],
-) -> Vec<HashSet<HeapObjIdx>> {
+    named_tys: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    record_tys: &HashMap<RecordType, TypeIdx>,
+    variant_tys: &HashMap<VariantType, TypeIdx>,
+    types: &[TypeDecl],
+) -> Vec<HashSet<TypeIdx>> {
     let mut idx_gen = SccIdxGen::default();
 
-    let mut output: Vec<HashSet<HeapObjIdx>> = Vec::with_capacity(heap_objs.len());
+    let mut output: Vec<HashSet<TypeIdx>> = Vec::with_capacity(types.len());
 
-    // Because the object indices are consecutive numbers from 0 to number of objects, we can use an
-    // array to map object indices to things.
-    //
-    // Assign the first indices to built-ins right away: they can't be analysed and they don't have
-    // dependencies, and user-defined types can depend on them. So they need to come first. (I think
-    // they may already come first in `heap_objs` so they'll get the first SCC indices, but we don't
-    // have to rely on that, we can just give the the first indices here)
-    let mut nodes: Box<[SccNode]> = heap_objs
+    let mut nodes: Box<[SccNode]> = types
         .iter()
-        .enumerate()
-        .map(|(heap_obj_idx, heap_obj)| SccNode {
-            idx: match heap_obj {
-                HeapObj::Builtin(BuiltinConDecl::Array { .. }) => None,
-                HeapObj::Builtin(_) => {
-                    output.push(std::iter::once(HeapObjIdx(heap_obj_idx as u32)).collect());
-                    Some(idx_gen.next())
-                }
-                HeapObj::Source(_) | HeapObj::Record(_) | HeapObj::Variant(_) => None,
-            },
+        .map(|_| SccNode {
+            idx: None,
             low_link: None,
             on_stack: false,
         })
         .collect();
 
-    let mut stack: Vec<HeapObjIdx> = Vec::with_capacity(10);
+    let mut stack: Vec<TypeIdx> = Vec::with_capacity(10);
 
-    for (heap_obj_idx, _) in heap_objs.iter().enumerate() {
-        if nodes[heap_obj_idx].idx.is_none() {
+    for (type_idx, _) in types.iter().enumerate() {
+        if nodes[type_idx].idx.is_none() {
             _scc(
-                type_objs,
-                record_objs,
-                variant_objs,
-                heap_objs,
-                HeapObjIdx(heap_obj_idx as u32),
+                named_tys,
+                record_tys,
+                variant_tys,
+                types,
+                TypeIdx(type_idx as u32),
                 &mut idx_gen,
                 &mut nodes,
                 &mut stack,
@@ -2513,32 +2535,26 @@ impl SccIdxGen {
 }
 
 fn _scc(
-    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
-    record_objs: &HashMap<RecordType, HeapObjIdx>,
-    variant_objs: &HashMap<VariantType, HeapObjIdx>,
-    heap_objs: &[HeapObj],
-    heap_obj_idx: HeapObjIdx,
+    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    record_objs: &HashMap<RecordType, TypeIdx>,
+    variant_objs: &HashMap<VariantType, TypeIdx>,
+    types: &[TypeDecl],
+    type_idx: TypeIdx,
     idx_gen: &mut SccIdxGen,
     nodes: &mut [SccNode],
-    stack: &mut Vec<HeapObjIdx>,
-    output: &mut Vec<HashSet<HeapObjIdx>>,
+    stack: &mut Vec<TypeIdx>,
+    output: &mut Vec<HashSet<TypeIdx>>,
 ) {
     let idx = idx_gen.next();
 
-    nodes[heap_obj_idx.as_usize()].idx = Some(idx);
-    nodes[heap_obj_idx.as_usize()].low_link = Some(idx);
-    nodes[heap_obj_idx.as_usize()].on_stack = true;
+    nodes[type_idx.as_usize()].idx = Some(idx);
+    nodes[type_idx.as_usize()].low_link = Some(idx);
+    nodes[type_idx.as_usize()].on_stack = true;
 
-    stack.push(heap_obj_idx);
+    stack.push(type_idx);
 
     // Add dependencies to the output.
-    let deps = heap_obj_deps(
-        type_objs,
-        record_objs,
-        variant_objs,
-        heap_objs,
-        heap_obj_idx,
-    );
+    let deps = type_decl_deps(type_objs, record_objs, variant_objs, types, type_idx);
     for dep_obj in deps {
         if nodes[dep_obj.as_usize()].idx.is_none() {
             // Dependency not visited yet.
@@ -2546,32 +2562,32 @@ fn _scc(
                 type_objs,
                 record_objs,
                 variant_objs,
-                heap_objs,
+                types,
                 dep_obj,
                 idx_gen,
                 nodes,
                 stack,
                 output,
             );
-            let current_low_link = nodes[heap_obj_idx.as_usize()].low_link.unwrap();
+            let current_low_link = nodes[type_idx.as_usize()].low_link.unwrap();
             let dep_low_link = nodes[dep_obj.as_usize()].low_link.unwrap();
-            nodes[heap_obj_idx.as_usize()].low_link = Some(current_low_link.min(dep_low_link));
+            nodes[type_idx.as_usize()].low_link = Some(current_low_link.min(dep_low_link));
         } else if nodes[dep_obj.as_usize()].on_stack {
             // Dependency is on stack, so in the current SCC.
-            let current_low_link = nodes[heap_obj_idx.as_usize()].low_link.unwrap();
+            let current_low_link = nodes[type_idx.as_usize()].low_link.unwrap();
             let dep_idx = nodes[dep_obj.as_usize()].idx.unwrap();
-            nodes[heap_obj_idx.as_usize()].low_link = Some(current_low_link.min(dep_idx));
+            nodes[type_idx.as_usize()].low_link = Some(current_low_link.min(dep_idx));
         }
     }
 
     // If current node is  aroot node, pop the stack and generate an SCC.
-    if nodes[heap_obj_idx.as_usize()].low_link == nodes[heap_obj_idx.as_usize()].idx {
-        let mut scc: HashSet<HeapObjIdx> = Default::default();
+    if nodes[type_idx.as_usize()].low_link == nodes[type_idx.as_usize()].idx {
+        let mut scc: HashSet<TypeIdx> = Default::default();
         loop {
             let dep = stack.pop().unwrap();
             nodes[dep.as_usize()].on_stack = false;
             scc.insert(dep);
-            if dep == heap_obj_idx {
+            if dep == type_idx {
                 break;
             }
         }
@@ -2580,75 +2596,132 @@ fn _scc(
     }
 }
 
-fn heap_obj_deps(
-    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
-    record_objs: &HashMap<RecordType, HeapObjIdx>,
-    variant_objs: &HashMap<VariantType, HeapObjIdx>,
-    heap_objs: &[HeapObj],
-    heap_obj_idx: HeapObjIdx,
-) -> HashSet<HeapObjIdx> {
-    let mut deps: HashSet<HeapObjIdx> = Default::default();
-
-    match &heap_objs[heap_obj_idx.as_usize()] {
-        HeapObj::Builtin(BuiltinConDecl::Array { t }) => {
-            type_heap_obj_deps(type_objs, record_objs, variant_objs, t, &mut deps);
-        }
-
-        HeapObj::Builtin(_) => {}
-
-        HeapObj::Source(source_decl) => {
-            for field in source_decl.fields.iter() {
-                type_heap_obj_deps(type_objs, record_objs, variant_objs, field, &mut deps);
-            }
-        }
-
-        HeapObj::Record(record_type) => {
-            for field in record_type.fields.values() {
-                type_heap_obj_deps(type_objs, record_objs, variant_objs, field, &mut deps);
-            }
-        }
-
-        HeapObj::Variant(variant_type) => {
-            for named_ty in variant_type.alts.values() {
-                named_type_heap_obj_deps(type_objs, named_ty, &mut deps);
-            }
-        }
-    }
-
+fn type_decl_deps(
+    named_tys: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    record_tys: &HashMap<RecordType, TypeIdx>,
+    variant_tys: &HashMap<VariantType, TypeIdx>,
+    types: &[TypeDecl],
+    type_idx: TypeIdx,
+) -> HashSet<TypeIdx> {
+    let mut deps = Default::default();
+    type_decl_deps_(
+        named_tys,
+        record_tys,
+        variant_tys,
+        types,
+        type_idx,
+        &mut deps,
+    );
     deps
 }
 
-fn type_heap_obj_deps(
-    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
-    record_objs: &HashMap<RecordType, HeapObjIdx>,
-    variant_objs: &HashMap<VariantType, HeapObjIdx>,
+fn type_decl_deps_(
+    named_tys: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    record_tys: &HashMap<RecordType, TypeIdx>,
+    variant_tys: &HashMap<VariantType, TypeIdx>,
+    types: &[TypeDecl],
+    type_idx: TypeIdx,
+    deps: &mut HashSet<TypeIdx>,
+) {
+    match &types[type_idx.as_usize()] {
+        TypeDecl::Named(NamedTypeDecl { rhs, ty_args, .. }) => match rhs {
+            NamedTypeRhs::Source(rhs) => match rhs {
+                mono::TypeDeclRhs::Sum(cons) => {
+                    for con in cons {
+                        match &con.fields {
+                            mono::ConFields::Empty => {}
+                            mono::ConFields::Named(fields) => {
+                                for field in fields.values() {
+                                    type_deps(
+                                        named_tys,
+                                        record_tys,
+                                        variant_tys,
+                                        types,
+                                        field,
+                                        deps,
+                                    );
+                                }
+                            }
+                            mono::ConFields::Unnamed(fields) => {
+                                for field in fields.iter() {
+                                    type_deps(
+                                        named_tys,
+                                        record_tys,
+                                        variant_tys,
+                                        types,
+                                        field,
+                                        deps,
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+                mono::TypeDeclRhs::Product(fields) => match fields {
+                    mono::ConFields::Empty => {}
+                    mono::ConFields::Named(fields) => {
+                        for field in fields.values() {
+                            type_deps(named_tys, record_tys, variant_tys, types, field, deps);
+                        }
+                    }
+                    mono::ConFields::Unnamed(fields) => {
+                        for field in fields.iter() {
+                            type_deps(named_tys, record_tys, variant_tys, types, field, deps);
+                        }
+                    }
+                },
+            },
+            NamedTypeRhs::Builtin(_, _) => {
+                for ty in ty_args {
+                    type_deps(named_tys, record_tys, variant_tys, types, ty, deps);
+                }
+            }
+        },
+
+        TypeDecl::Record(RecordType { fields }, _) => {
+            for field in fields.values() {
+                type_deps(named_tys, record_tys, variant_tys, types, field, deps);
+            }
+        }
+
+        TypeDecl::Variant(VariantType { alts }) => {
+            for named_ty in alts.values() {
+                named_type_deps(named_tys, record_tys, variant_tys, types, named_ty, deps);
+            }
+        }
+    }
+}
+
+fn type_deps(
+    named_tys: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    record_tys: &HashMap<RecordType, TypeIdx>,
+    variant_tys: &HashMap<VariantType, TypeIdx>,
+    types: &[TypeDecl],
     ty: &mono::Type,
-    deps: &mut HashSet<HeapObjIdx>,
+    deps: &mut HashSet<TypeIdx>,
 ) {
     match ty {
         mono::Type::Named(ty) => {
-            named_type_heap_obj_deps(type_objs, ty, deps);
+            named_type_deps(named_tys, record_tys, variant_tys, types, ty, deps);
         }
 
         mono::Type::Record { fields } => {
-            let record_idx = *record_objs
-                .get(&RecordType {
-                    fields: fields.clone(),
-                })
-                .unwrap();
-            deps.insert(record_idx);
-            for ty in fields.values() {
-                type_heap_obj_deps(type_objs, record_objs, variant_objs, ty, deps);
+            let record_type = RecordType {
+                fields: fields.clone(),
+            };
+            if let Some(&idx) = record_tys.get(&record_type)
+                && deps.insert(idx)
+            {
+                type_decl_deps_(named_tys, record_tys, variant_tys, types, idx, deps);
             }
         }
 
         mono::Type::Variant { alts } => {
-            let variant_idx = *variant_objs
-                .get(&VariantType { alts: alts.clone() })
-                .unwrap();
-            deps.insert(variant_idx);
-            for ty in alts.values() {
-                named_type_heap_obj_deps(type_objs, ty, deps);
+            let variant_type = VariantType { alts: alts.clone() };
+            if let Some(&idx) = variant_tys.get(&variant_type)
+                && deps.insert(idx)
+            {
+                type_decl_deps_(named_tys, record_tys, variant_tys, types, idx, deps);
             }
         }
 
@@ -2656,39 +2729,32 @@ fn type_heap_obj_deps(
             match args {
                 mono::FunArgs::Positional(args) => {
                     for arg in args {
-                        type_heap_obj_deps(type_objs, record_objs, variant_objs, arg, deps);
+                        type_deps(named_tys, record_tys, variant_tys, types, arg, deps);
                     }
                 }
                 mono::FunArgs::Named(args) => {
                     for arg in args.values() {
-                        type_heap_obj_deps(type_objs, record_objs, variant_objs, arg, deps);
+                        type_deps(named_tys, record_tys, variant_tys, types, arg, deps);
                     }
                 }
             }
 
-            type_heap_obj_deps(type_objs, record_objs, variant_objs, ret, deps);
-            type_heap_obj_deps(type_objs, record_objs, variant_objs, exn, deps);
+            type_deps(named_tys, record_tys, variant_tys, types, ret, deps);
+            type_deps(named_tys, record_tys, variant_tys, types, exn, deps);
         }
     }
 }
 
-fn named_type_heap_obj_deps(
-    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
+fn named_type_deps(
+    named_tys: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    record_tys: &HashMap<RecordType, TypeIdx>,
+    variant_tys: &HashMap<VariantType, TypeIdx>,
+    types: &[TypeDecl],
     ty: &mono::NamedType,
-    deps: &mut HashSet<HeapObjIdx>,
+    deps: &mut HashSet<TypeIdx>,
 ) {
-    let ty_map = match type_objs.get(&ty.name) {
-        Some(ty_map) => ty_map,
-        None => return, // builtin
-    };
-
-    match ty_map.get(&ty.args).unwrap() {
-        TypeObjs::Product(idx) => {
-            deps.insert(*idx);
-        }
-        TypeObjs::Sum {
-            con_indices,
-            value: _,
-        } => deps.extend(con_indices.iter().cloned()),
+    let idx = *named_tys.get(&ty.name).unwrap().get(&ty.args).unwrap();
+    if deps.insert(idx) {
+        type_decl_deps_(named_tys, record_tys, variant_tys, types, idx, deps);
     }
 }

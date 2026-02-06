@@ -18,20 +18,12 @@ pub struct LoweredPgm {
     pub funs: Vec<Fun>,
     pub closures: Vec<Closure>,
 
-    /// Maps mono type declarations to their heap object indices.
-    ///
-    /// Product types will have one index per type. Sum types may have multiple.
-    pub type_objs: HashMap<Id, HashMap<Vec<mono::Type>, TypeObjs>>,
+    pub named_tys: HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    pub record_tys: HashMap<RecordType, TypeIdx>,
+    pub variant_tys: HashMap<VariantType, TypeIdx>,
 
-    /// For C backend: maps record types to their heap object indices.
-    pub record_objs: HashMap<RecordType, HeapObjIdx>,
-
-    /// For C backend: maps variant types to their heap object indices.
-    ///
-    /// Note: variants don't have their own tags, they use the tags of the types in the variant
-    /// instead. These tags are to make it easy to refer to a variant type in AST nodes, dependency
-    /// analysis etc.
-    pub variant_objs: HashMap<VariantType, HeapObjIdx>,
+    /// Indexed by `TypeIdx`.
+    pub types: Vec<TypeDecl>,
 
     // Ids of some special cons that the interpreter needs to know.
     //
@@ -54,13 +46,36 @@ pub struct LoweredPgm {
     pub array_str_con_idx: Option<HeapObjIdx>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TypeIdx(pub u32);
+
+impl TypeIdx {
+    pub fn as_usize(&self) -> usize {
+        self.0 as usize
+    }
+}
+
 #[derive(Debug)]
-pub enum TypeObjs {
-    Product(HeapObjIdx),
-    Sum {
-        con_indices: Vec<HeapObjIdx>,
-        value: bool,
-    },
+pub enum TypeDecl {
+    Named(NamedTypeDecl),
+    Record(RecordType, HeapObjIdx),
+    Variant(VariantType),
+}
+
+#[derive(Debug)]
+pub struct NamedTypeDecl {
+    pub name: Id,
+    pub ty_args: Vec<mono::Type>,
+    pub rhs: NamedTypeRhs,
+    pub con_indices: Vec<HeapObjIdx>,
+    pub sum: bool,
+    pub value: bool,
+}
+
+#[derive(Debug)]
+pub enum NamedTypeRhs {
+    Source(mono::TypeDeclRhs),
+    Builtin(BuiltinConDecl, HeapObjIdx),
 }
 
 pub const CON_CON_IDX: HeapObjIdx = HeapObjIdx(0);
@@ -304,7 +319,7 @@ pub enum HeapObj {
     Variant(VariantType),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BuiltinConDecl {
     /// Constructor closure, e.g. `Option.Some`, `Char`.
     ///
@@ -721,9 +736,10 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         heap_objs: vec![],
         funs: vec![],
         closures: vec![],
-        type_objs: Default::default(),
-        record_objs: Default::default(),
-        variant_objs: Default::default(),
+        named_tys: Default::default(),
+        record_tys: Default::default(),
+        variant_tys: Default::default(),
+        types: vec![],
         true_con_idx: *sum_con_nums
             .get("Bool")
             .unwrap()
@@ -796,117 +812,106 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
 
     for (con_id, con_ty_map) in &mono_pgm.ty {
         for (con_ty_args, con_decl) in con_ty_map {
-            match &con_decl.rhs {
-                Some(rhs) => match rhs {
-                    mono::TypeDeclRhs::Sum(cons) => {
-                        // For sum types, we generate an index representing the type itself (rather
-                        // than its consturctors). This index is used in dependency anlaysis, and to
-                        // get the type details during code generation.
-                        let mut con_indices: Vec<HeapObjIdx> = Vec::with_capacity(cons.len());
-                        for mono::ConDecl { name, fields } in cons {
+            let mut con_indices: Vec<HeapObjIdx> = vec![];
+            let mut sum = false;
+            let rhs: NamedTypeRhs = match &con_decl.rhs {
+                Some(rhs) => {
+                    match rhs {
+                        mono::TypeDeclRhs::Sum(cons) => {
+                            sum = true;
+                            // For sum types, we generate an index representing the type itself (rather
+                            // than its consturctors). This index is used in dependency anlaysis, and to
+                            // get the type details during code generation.
+                            for mono::ConDecl { name, fields } in cons {
+                                let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
+                                let name = SmolStr::new(format!("{con_id}_{name}"));
+                                lowered_pgm.heap_objs.push(lower_source_con(
+                                    idx,
+                                    &name,
+                                    con_ty_args,
+                                    fields,
+                                ));
+                                con_indices.push(idx);
+                            }
+                        }
+
+                        mono::TypeDeclRhs::Product(fields) => {
                             let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                            let name = SmolStr::new(format!("{con_id}_{name}"));
                             lowered_pgm.heap_objs.push(lower_source_con(
                                 idx,
-                                &name,
+                                con_id,
                                 con_ty_args,
                                 fields,
                             ));
                             con_indices.push(idx);
                         }
-                        let old = lowered_pgm
-                            .type_objs
-                            .entry(con_id.clone())
-                            .or_default()
-                            .insert(
-                                con_ty_args.clone(),
-                                TypeObjs::Sum {
-                                    con_indices,
-                                    value: con_decl.value,
-                                },
-                            );
-                        assert!(old.is_none());
                     }
+                    NamedTypeRhs::Source(rhs.clone())
+                }
 
-                    mono::TypeDeclRhs::Product(fields) => {
-                        let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                        lowered_pgm.heap_objs.push(lower_source_con(
-                            idx,
-                            con_id,
-                            con_ty_args,
-                            fields,
-                        ));
-                        let old = lowered_pgm
-                            .type_objs
-                            .entry(con_id.clone())
-                            .or_default()
-                            .insert(con_ty_args.clone(), TypeObjs::Product(idx));
-                        assert!(old.is_none());
-                    }
-                },
-
-                None => match con_id.as_str() {
-                    "Array" => {
-                        assert_eq!(con_ty_args.len(), 1);
-                        let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                        lowered_pgm
-                            .heap_objs
-                            .push(HeapObj::Builtin(BuiltinConDecl::Array {
+                None => {
+                    let con = match con_id.as_str() {
+                        "Array" => {
+                            assert_eq!(con_ty_args.len(), 1);
+                            BuiltinConDecl::Array {
                                 t: con_ty_args[0].clone(),
-                            }));
-                        let old = lowered_pgm
-                            .type_objs
-                            .entry(con_id.clone())
-                            .or_default()
-                            .insert(con_ty_args.clone(), TypeObjs::Product(idx));
-                        assert!(old.is_none());
-                    }
+                            }
+                        }
 
-                    "I8" => {
-                        assert_eq!(con_ty_args.len(), 0);
-                        lowered_pgm
-                            .heap_objs
-                            .push(HeapObj::Builtin(BuiltinConDecl::I8));
-                    }
+                        "I8" => {
+                            assert_eq!(con_ty_args.len(), 0);
+                            BuiltinConDecl::I8
+                        }
 
-                    "U8" => {
-                        assert_eq!(con_ty_args.len(), 0);
-                        lowered_pgm
-                            .heap_objs
-                            .push(HeapObj::Builtin(BuiltinConDecl::U8));
-                    }
+                        "U8" => {
+                            assert_eq!(con_ty_args.len(), 0);
+                            BuiltinConDecl::U8
+                        }
 
-                    "I32" => {
-                        assert_eq!(con_ty_args.len(), 0);
-                        lowered_pgm
-                            .heap_objs
-                            .push(HeapObj::Builtin(BuiltinConDecl::I32));
-                    }
+                        "I32" => {
+                            assert_eq!(con_ty_args.len(), 0);
+                            BuiltinConDecl::I32
+                        }
 
-                    "U32" => {
-                        assert_eq!(con_ty_args.len(), 0);
-                        lowered_pgm
-                            .heap_objs
-                            .push(HeapObj::Builtin(BuiltinConDecl::U32));
-                    }
+                        "U32" => {
+                            assert_eq!(con_ty_args.len(), 0);
+                            BuiltinConDecl::U32
+                        }
 
-                    "I64" => {
-                        assert_eq!(con_ty_args.len(), 0);
-                        lowered_pgm
-                            .heap_objs
-                            .push(HeapObj::Builtin(BuiltinConDecl::I64));
-                    }
+                        "I64" => {
+                            assert_eq!(con_ty_args.len(), 0);
+                            BuiltinConDecl::I64
+                        }
 
-                    "U64" => {
-                        assert_eq!(con_ty_args.len(), 0);
-                        lowered_pgm
-                            .heap_objs
-                            .push(HeapObj::Builtin(BuiltinConDecl::U64));
-                    }
+                        "U64" => {
+                            assert_eq!(con_ty_args.len(), 0);
+                            BuiltinConDecl::U64
+                        }
 
-                    other => panic!("Unknown built-in type: {other}"),
-                },
-            }
+                        other => panic!("Unknown built-in type: {other}"),
+                    };
+
+                    let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
+                    lowered_pgm.heap_objs.push(HeapObj::Builtin(con.clone()));
+                    con_indices.push(idx);
+                    NamedTypeRhs::Builtin(con, idx)
+                }
+            };
+
+            let ty_idx = TypeIdx(lowered_pgm.types.len() as u32);
+            lowered_pgm
+                .named_tys
+                .entry(con_id.clone())
+                .or_default()
+                .insert(con_ty_args.clone(), ty_idx);
+            lowered_pgm.types.push(TypeDecl::Named(NamedTypeDecl {
+                name: con_id.clone(),
+                ty_args: con_ty_args.clone(),
+                rhs,
+                con_indices,
+                sum,
+                value: con_decl.value,
+            }));
         }
     }
 
@@ -918,7 +923,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         let idx = next_con_idx;
         next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
         record_indices.insert(record_type.clone(), idx);
-        lowered_pgm.heap_objs.push(HeapObj::Record(record_type));
+        lowered_pgm
+            .heap_objs
+            .push(HeapObj::Record(record_type.clone()));
+        let ty_idx = TypeIdx(lowered_pgm.types.len() as u32);
+        lowered_pgm.record_tys.insert(record_type.clone(), ty_idx);
+        lowered_pgm.types.push(TypeDecl::Record(record_type, idx));
     }
 
     let mut variant_indices: HashMap<VariantType, HeapObjIdx> = Default::default();
@@ -926,7 +936,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         let idx = next_con_idx;
         next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
         variant_indices.insert(variant_type.clone(), idx);
-        lowered_pgm.heap_objs.push(HeapObj::Variant(variant_type));
+        lowered_pgm
+            .heap_objs
+            .push(HeapObj::Variant(variant_type.clone()));
+        let ty_idx = TypeIdx(lowered_pgm.types.len() as u32);
+        lowered_pgm.variant_tys.insert(variant_type.clone(), ty_idx);
+        lowered_pgm.types.push(TypeDecl::Variant(variant_type));
     }
 
     lowered_pgm.unit_con_idx = *record_indices
@@ -1471,8 +1486,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         }
     }
 
-    lowered_pgm.record_objs = indices.records;
-    lowered_pgm.variant_objs = variant_indices;
     lowered_pgm
 }
 
