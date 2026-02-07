@@ -201,7 +201,8 @@ mod native {
                 .arg("-Wno-unused-but-set-variable")
                 .arg("-Wno-unused-value")
                 .arg("-Wno-unused-parameter")
-                .arg("-Wno-unused-label");
+                .arg("-Wno-unused-label")
+                .arg("-Wno-infinite-recursion");
             // dbg!(&gcc_cmd);
             let output = gcc_cmd.output().unwrap();
             let stdout = String::from_utf8_lossy(&output.stdout);

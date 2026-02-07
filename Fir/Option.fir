@@ -1,5 +1,5 @@
 #[derive(ToDoc)]
-type Option[t]:
+value type Option[t]:
     None
     Some(t)
 

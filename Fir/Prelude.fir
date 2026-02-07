@@ -171,7 +171,7 @@ printNoNl[ToStr[a]](a: a):
 prim panic(msg: Str) a
 
 
-type Ordering:
+value type Ordering:
     Less
     Equal
     Greater
@@ -185,7 +185,7 @@ impl ToStr[Ordering]:
             Ordering.Greater: "Ordering.Greater"
 
 
-type Bool:
+value type Bool:
     False
     True
 
