@@ -91,10 +91,12 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         &pgm.types,
     );
     for scc in &heap_objs_sorted {
-        // Forward-declare boxed types to break cycles.
+        // Forward-declare all non-builtins to break cycles. Note that we can't forward declare just
+        // non-value types, in `Array` structs we can refer to value types in a pointer type (the
+        // `data_ptr` field), so value types also need to be forward declared.
         for type_idx in scc {
             if let TypeDecl::Named(named_type) = &pgm.types[type_idx.as_usize()]
-                && !named_type.value
+                && matches!(&named_type.rhs, NamedTypeRhs::Source(_))
             {
                 let struct_name = named_type_struct_name(&named_type.name, &named_type.ty_args);
                 wln!(p, "typedef struct {struct_name} {struct_name};");

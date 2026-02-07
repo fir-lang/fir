@@ -41,6 +41,7 @@ compiler_unit_test: build_compiler
     ./target/Compiler Compiler/Main.fir
     ./Compiler/tests/tokenize.sh
     ./Compiler/tests/scan.sh
+    ./Compiler/tests/parse.sh
 
 compiler_parser_test:
     ./Compiler/tests/parse.sh
