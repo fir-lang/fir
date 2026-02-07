@@ -1,4 +1,4 @@
-type StrBuf(
+value type StrBuf(
     # UTF-8 encoding of the string.
     _bytes: Vec[U8],
 )

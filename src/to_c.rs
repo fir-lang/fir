@@ -150,7 +150,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
         // Generate struct definitions.
         for type_idx in scc {
-            ty_decl_to_c(&pgm.types[type_idx.as_usize()], &mut p);
+            ty_decl_to_c(&pgm.types[type_idx.as_usize()], pgm, &mut p);
             p.nl();
         }
     }
@@ -192,8 +192,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         }}
 
         // String comparison for pattern matching
-        static bool str_eq(Str* s1, const char* str2, size_t len2) {{
-            Array_U8* bytes_arr = s1->_0;
+        static bool str_eq(Str s1, const char* str2, size_t len2) {{
+            Array_U8* bytes_arr = s1._0;
             uint32_t len1 = (uint32_t)bytes_arr->len;
             if (len1 != len2) return false;
             uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
@@ -201,7 +201,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         }}
 
         // Allocate string from bytes
-        static Str* alloc_str(const char* bytes, size_t len) {{
+        static Str alloc_str(const char* bytes, size_t len) {{
             size_t data_words = (len + 7) / 8;
             Array_U8* arr = malloc(sizeof(Array_U8) + (data_words * sizeof(uint64_t)));
             arr->tag = {array_u8_tag};
@@ -212,10 +212,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
             memcpy(data_ptr, bytes, len);
 
-            Str* str = (Str*)malloc(sizeof(Str));
-            str->_tag = TAG_Str;
-            str->_0 = arr;
-            return str;
+            return (Str){{ ._tag = TAG_Str, ._0 = arr }};
         }}
 
         // Globals for CLI args
@@ -230,18 +227,18 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         wln!(p, "// Closure structs for closures with captures");
         p.nl();
         for (i, closure) in pgm.closures.iter().enumerate() {
-            gen_closure_struct(closure, i, &mut p);
+            gen_closure_struct(closure, i, pgm, &mut p);
         }
         p.nl();
     }
 
     for (i, fun) in pgm.funs.iter().enumerate() {
-        forward_declare_fun(fun, i, &mut p);
+        forward_declare_fun(fun, i, pgm, &mut p);
     }
     p.nl();
 
     for (i, closure) in pgm.closures.iter().enumerate() {
-        forward_declare_closure(closure, i, &mut p);
+        forward_declare_closure(closure, i, pgm, &mut p);
     }
     p.nl();
 
@@ -257,11 +254,16 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 let singleton_name = source_con_singleton_name(source_con);
                 let struct_name = source_con_struct_name(&source_con.name, &source_con.ty_args);
                 let tag_name = source_con_tag_name(&source_con.name, &source_con.ty_args);
+                let value = source_con.value;
                 wln!(
                     p,
                     "static {struct_name} {singleton_name}_data = {{ ._tag = {tag_name} }};",
                 );
-                wln!(p, "#define {singleton_name} (&{singleton_name}_data)");
+                if value {
+                    wln!(p, "#define {singleton_name} ({singleton_name}_data)");
+                } else {
+                    wln!(p, "#define {singleton_name} (&{singleton_name}_data)");
+                }
             }
             HeapObj::Record(record) if record.fields.is_empty() => {
                 let struct_name = record_struct_name(record);
@@ -271,7 +273,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                     p,
                     "static {struct_name} {singleton_name}_data = {{ ._tag = {tag_name} }};",
                 );
-                wln!(p, "#define {singleton_name} (&{singleton_name}_data)");
+                wln!(p, "#define {singleton_name} ({singleton_name}_data)");
             }
             _ => {}
         }
@@ -288,7 +290,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             HeapObj::Source(source_con) if !source_con.fields.is_empty() => {
                 w!(p, "static uint64_t _con_closure_{tag}_fun(CLOSURE* self");
                 for (i, ty) in source_con.fields.iter().enumerate() {
-                    w!(p, ", {} p{i}", c_ty(ty));
+                    w!(p, ", {} p{i}", c_ty(ty, pgm));
                 }
                 w!(p, ") {{");
                 p.indent();
@@ -329,20 +331,20 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         w!(
             p,
             "static {} _fun_closure_{i}_fun(CLOSURE* self",
-            c_ty(&fun.return_ty),
+            c_ty(&fun.return_ty, pgm),
         );
         for (i, ty) in fun.params.iter().enumerate() {
-            w!(p, ", {} p{i}", c_ty(ty));
+            w!(p, ", {} p{i}", c_ty(ty, pgm));
         }
         w!(p, ") {{");
         p.indent();
         p.nl();
-        w!(p, "return (({}(*)(", c_ty(&fun.return_ty));
+        w!(p, "return (({}(*)(", c_ty(&fun.return_ty, pgm));
         for (i, ty) in fun.params.iter().enumerate() {
             if i != 0 {
                 w!(p, ", ");
             }
-            w!(p, "{}", c_ty(ty));
+            w!(p, "{}", c_ty(ty, pgm));
         }
         w!(p, "))(_fun_{i}))(");
         for i in 0..fun.params.len() {
@@ -410,7 +412,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     p.print()
 }
 
-fn forward_declare_fun(fun: &Fun, idx: usize, p: &mut Printer) {
+fn forward_declare_fun(fun: &Fun, idx: usize, pgm: &LoweredPgm, p: &mut Printer) {
     w!(p, "// {} {}", loc_display(&fun.name.loc), fun.name.node);
     if !fun.ty_args.is_empty() {
         w!(p, "[");
@@ -426,7 +428,7 @@ fn forward_declare_fun(fun: &Fun, idx: usize, p: &mut Printer) {
     }
     p.nl();
     let param_count = fun.params.len();
-    w!(p, "static {} _fun_{}(", c_ty(&fun.return_ty), idx);
+    w!(p, "static {} _fun_{}(", c_ty(&fun.return_ty, pgm), idx);
     if param_count == 0 {
         w!(p, "void");
     } else {
@@ -434,27 +436,27 @@ fn forward_declare_fun(fun: &Fun, idx: usize, p: &mut Printer) {
             if i > 0 {
                 w!(p, ", ");
             }
-            w!(p, "{} _p{}", c_ty(ty), i);
+            w!(p, "{} _p{}", c_ty(ty, pgm), i);
         }
     }
     wln!(p, ");");
 }
 
-fn forward_declare_closure(closure: &Closure, idx: usize, p: &mut Printer) {
+fn forward_declare_closure(closure: &Closure, idx: usize, pgm: &LoweredPgm, p: &mut Printer) {
     wln!(p, "// {}", loc_display(&closure.loc));
     w!(
         p,
         "static {} _closure_{}(CLOSURE* _closure_obj",
-        c_ty(&closure.return_ty),
+        c_ty(&closure.return_ty, pgm),
         idx
     );
     for (i, ty) in closure.params.iter().enumerate() {
-        w!(p, ", {} _p{}", c_ty(ty), i);
+        w!(p, ", {} _p{}", c_ty(ty, pgm), i);
     }
     wln!(p, ");");
 }
 
-fn gen_closure_struct(closure: &Closure, idx: usize, p: &mut Printer) {
+fn gen_closure_struct(closure: &Closure, idx: usize, pgm: &LoweredPgm, p: &mut Printer) {
     if closure.fvs.is_empty() {
         return;
     }
@@ -470,7 +472,7 @@ fn gen_closure_struct(closure: &Closure, idx: usize, p: &mut Printer) {
             p.nl();
         }
         let ty = &closure.locals[fv.use_idx.as_usize()].ty;
-        w!(p, "{} _{}; // {}", c_ty(ty), i, fv.id);
+        w!(p, "{} _{}; // {}", c_ty(ty, pgm), i, fv.id);
     }
     p.dedent();
     p.nl();
@@ -478,38 +480,45 @@ fn gen_closure_struct(closure: &Closure, idx: usize, p: &mut Printer) {
     p.nl();
 }
 
-fn ty_decl_to_c(ty: &TypeDecl, p: &mut Printer) {
+fn ty_decl_to_c(ty: &TypeDecl, pgm: &LoweredPgm, p: &mut Printer) {
     match ty {
-        TypeDecl::Named(named_ty) => named_ty_decl_to_c(named_ty, p),
+        TypeDecl::Named(named_ty) => named_ty_decl_to_c(named_ty, pgm, p),
 
-        TypeDecl::Record(record_ty, heap_obj_idx) => record_decl_to_c(record_ty, heap_obj_idx.0, p),
+        TypeDecl::Record(record_ty, heap_obj_idx) => {
+            record_decl_to_c(record_ty, heap_obj_idx.0, pgm, p)
+        }
 
         TypeDecl::Variant(variant_ty) => {
-            variant_decl_to_c(variant_ty, p);
+            variant_decl_to_c(variant_ty, pgm, p);
         }
     }
 }
 
-fn named_ty_decl_to_c(ty: &NamedTypeDecl, p: &mut Printer) {
+fn named_ty_decl_to_c(ty: &NamedTypeDecl, pgm: &LoweredPgm, p: &mut Printer) {
     match &ty.rhs {
-        NamedTypeRhs::Source(rhs) => source_decl_to_c(ty, rhs, p),
-        NamedTypeRhs::Builtin(rhs, tag) => builtin_con_decl_to_c(rhs, tag.0, p),
+        NamedTypeRhs::Source(rhs) => source_decl_to_c(ty, rhs, pgm, p),
+        NamedTypeRhs::Builtin(rhs, tag) => builtin_con_decl_to_c(rhs, tag.0, pgm, p),
     }
 }
 
-fn source_decl_to_c(ty: &NamedTypeDecl, rhs: &mono::TypeDeclRhs, p: &mut Printer) {
+fn source_decl_to_c(
+    ty: &NamedTypeDecl,
+    rhs: &mono::TypeDeclRhs,
+    pgm: &LoweredPgm,
+    p: &mut Printer,
+) {
     let con_indices = &ty.con_indices;
     match rhs {
         mono::TypeDeclRhs::Sum(cons) => {
             assert_eq!(cons.len(), con_indices.len());
             for (con, &con_idx) in cons.iter().zip(con_indices.iter()) {
                 let con_name: Id = format!("{}_{}", ty.name, con.name).into();
-                gen_source_con_struct(&con_name, &ty.ty_args, &con.fields, con_idx, p);
+                gen_source_con_struct(&con_name, &ty.ty_args, &con.fields, con_idx, pgm, p);
             }
         }
         mono::TypeDeclRhs::Product(fields) => {
             assert_eq!(con_indices.len(), 1);
-            gen_source_con_struct(&ty.name, &ty.ty_args, fields, con_indices[0], p);
+            gen_source_con_struct(&ty.name, &ty.ty_args, fields, con_indices[0], pgm, p);
         }
     }
 }
@@ -519,6 +528,7 @@ fn gen_source_con_struct(
     ty_args: &[mono::Type],
     fields: &mono::ConFields,
     idx: HeapObjIdx,
+    pgm: &LoweredPgm,
     p: &mut Printer,
 ) {
     let tag = idx.0;
@@ -538,14 +548,14 @@ fn gen_source_con_struct(
     };
     for (i, field_ty) in field_tys.iter().enumerate() {
         p.nl();
-        w!(p, "{} _{i};", c_ty(field_ty));
+        w!(p, "{} _{i};", c_ty(field_ty, pgm));
     }
     p.dedent();
     p.nl();
     wln!(p, "}} {struct_name};");
 }
 
-fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
+fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, pgm: &LoweredPgm, p: &mut Printer) {
     match builtin {
         BuiltinConDecl::Con | BuiltinConDecl::Fun | BuiltinConDecl::Closure => {
             // Con and Fun are not used in the C backend.
@@ -553,8 +563,8 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, p: &mut Printer) {
         }
 
         BuiltinConDecl::Array { t } => {
-            let struct_name = array_struct_name(t);
-            let t = c_ty(t);
+            let struct_name = array_struct_name(t, pgm);
+            let t = c_ty(t, pgm);
             writedoc!(
                 p,
                 "
@@ -648,9 +658,9 @@ fn variant_struct_name(variant: &VariantType) -> String {
     name
 }
 
-fn array_struct_name(t: &mono::Type) -> String {
+fn array_struct_name(t: &mono::Type, pgm: &LoweredPgm) -> String {
     let mut name = String::from("Array_");
-    let t = c_ty(t);
+    let t = c_ty(t, pgm);
     let t_no_star = t.as_str().strip_suffix("*").unwrap_or(t.as_ref());
     name.push_str(t_no_star);
     name
@@ -706,7 +716,7 @@ fn heap_obj_singleton_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     }
 }
 
-fn record_decl_to_c(record: &RecordType, tag: u32, p: &mut Printer) {
+fn record_decl_to_c(record: &RecordType, tag: u32, pgm: &LoweredPgm, p: &mut Printer) {
     let struct_name = record_struct_name(record);
 
     wln!(p, "#define TAG_{struct_name} {tag}");
@@ -717,14 +727,14 @@ fn record_decl_to_c(record: &RecordType, tag: u32, p: &mut Printer) {
     w!(p, "uint64_t _tag;");
     for (i, (_field_name, field_ty)) in record.fields.iter().enumerate() {
         p.nl();
-        w!(p, "{} _{i};", c_ty(field_ty));
+        w!(p, "{} _{i};", c_ty(field_ty, pgm));
     }
     p.dedent();
     p.nl();
     wln!(p, "}} {struct_name};");
 }
 
-fn variant_decl_to_c(variant: &VariantType, p: &mut Printer) {
+fn variant_decl_to_c(variant: &VariantType, pgm: &LoweredPgm, p: &mut Printer) {
     let struct_name = variant_struct_name(variant);
     w!(p, "typedef struct {} {{", struct_name);
     p.indent();
@@ -734,7 +744,7 @@ fn variant_decl_to_c(variant: &VariantType, p: &mut Printer) {
     p.indent();
     for (i, alt) in variant.alts.values().enumerate() {
         p.nl();
-        w!(p, "{} _{i};", c_ty(&mono::Type::Named(alt.clone())));
+        w!(p, "{} _{i};", c_ty(&mono::Type::Named(alt.clone()), pgm));
     }
     p.dedent();
     p.nl();
@@ -752,18 +762,26 @@ fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
     }
 }
 
-fn is_value_type(ty: &mono::Type) -> bool {
-    if let mono::Type::Named(mono::NamedType { name, args: _ }) = ty {
-        matches!(
+fn is_value_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
+    if let mono::Type::Named(mono::NamedType { name, args: _ }) = ty
+        && matches!(
             name.as_str(),
             "I8" | "U8" | "I16" | "U16" | "I32" | "U32" | "I64" | "U64"
         )
-    } else {
-        false
+    {
+        return true;
+    }
+    match ty {
+        mono::Type::Named(_) => match pgm.decl(ty) {
+            TypeDecl::Named(decl) => decl.value,
+            _ => false,
+        },
+        mono::Type::Record { .. } | mono::Type::Variant { .. } => true,
+        mono::Type::Fn(_) => false,
     }
 }
 
-fn c_ty(ty: &mono::Type) -> String {
+fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
     // Special case for value types for now.
     if let mono::Type::Named(mono::NamedType { name, args: _ }) = ty {
         let name_str = name.as_str();
@@ -777,9 +795,13 @@ fn c_ty(ty: &mono::Type) -> String {
     if let mono::Type::Fn(_) = ty {
         return "CLOSURE*".to_string();
     }
+    let ptr = match pgm.decl(ty) {
+        TypeDecl::Named(decl) => !decl.value,
+        TypeDecl::Record(_, _) | TypeDecl::Variant(_) => false,
+    };
     let mut s = String::new();
     ty_to_c(ty, &mut s);
-    if !matches!(ty, mono::Type::Variant { .. }) {
+    if ptr {
         s.push('*'); // make pointer
     }
     s
@@ -831,8 +853,8 @@ fn builtin_fun_to_c(
             writedoc!(
                 p,
                 "
-                static {} _fun_{idx}(Str* msg) {{
-                    Array_U8* bytes_arr = msg->_0;
+                static {} _fun_{idx}(Str msg) {{
+                    Array_U8* bytes_arr = msg._0;
                     uint32_t len = (uint32_t)bytes_arr->len;
                     uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
                     fprintf(stderr, \"PANIC: \");
@@ -841,23 +863,24 @@ fn builtin_fun_to_c(
                     exit(1);
                 }}
                 ",
-                c_ty(ret)
+                c_ty(ret, pgm)
             );
         }
 
         BuiltinFunDecl::PrintStrNoNl => {
+            let ret_ty = c_ty(ret, pgm);
+            let unit = heap_obj_singleton_name(pgm, pgm.unit_con_idx);
             writedoc!(
                 p,
                 "
-                static Record* _fun_{idx}(Str* str) {{
-                    Array_U8* bytes_arr = str->_0;
+                static {ret_ty} _fun_{idx}(Str str) {{
+                    Array_U8* bytes_arr = str._0;
                     uint32_t len = (uint32_t)bytes_arr->len;
                     uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
                     fwrite(data_ptr, 1, len, stdout);
-                    return {};
+                    return {unit};
                 }}
                 ",
-                heap_obj_singleton_name(pgm, pgm.unit_con_idx)
             );
         }
 
@@ -1064,8 +1087,14 @@ fn builtin_fun_to_c(
         BuiltinFunDecl::I32Neg => wln!(p, "static I32 _fun_{idx}(I32 a) {{ return -a; }}"),
 
         BuiltinFunDecl::ThrowUnchecked => {
-            let exn_ty = c_ty(&params[0]);
-            w!(p, "static {} _fun_{}({} exn) {{", c_ty(ret), idx, exn_ty);
+            let exn_ty = c_ty(&params[0], pgm);
+            w!(
+                p,
+                "static {} _fun_{}({} exn) {{",
+                c_ty(ret, pgm),
+                idx,
+                exn_ty
+            );
             p.indent();
             p.nl();
             wln!(p, "{exn_ty}* boxed = malloc(sizeof({exn_ty}));");
@@ -1084,7 +1113,7 @@ fn builtin_fun_to_c(
                 mono::Type::Fn(ty) => ty,
                 _ => panic!(),
             };
-            w!(p, "static {} _fun_{idx}(CLOSURE* cb) {{", c_ty(ret));
+            w!(p, "static {} _fun_{idx}(CLOSURE* cb) {{", c_ty(ret, pgm));
             p.indent();
             p.nl();
             wln!(p, "ExnHandler handler;");
@@ -1094,7 +1123,7 @@ fn builtin_fun_to_c(
             p.indent();
             p.nl();
             wln!(p, "// Call the closure");
-            let cb_ret = c_ty(&cb_ty.ret);
+            let cb_ret = c_ty(&cb_ty.ret, pgm);
             wln!(
                 p,
                 "{cb_ret} (*fn)(CLOSURE*) = ({cb_ret} (*)(CLOSURE*))cb->fun;"
@@ -1110,7 +1139,7 @@ fn builtin_fun_to_c(
             );
             wln!(p, "ok->_tag = {ok_tag_name};");
             wln!(p, "ok->_0 = result;");
-            w!(p, "return ({})ok;", c_ty(ret));
+            w!(p, "return ({})ok;", c_ty(ret, pgm));
             p.dedent();
             p.nl();
             w!(p, "}} else {{");
@@ -1125,9 +1154,9 @@ fn builtin_fun_to_c(
                 "{err_struct_name}* err = malloc(sizeof({err_struct_name}));"
             );
             wln!(p, "err->_tag = {};", err_tag_name);
-            let exn_ty = c_ty(&ty_args[1]);
+            let exn_ty = c_ty(&ty_args[1], pgm);
             wln!(p, "err->_0 = *({exn_ty}*)handler.exn_value;");
-            w!(p, "return ({})err;", c_ty(ret));
+            w!(p, "return ({})err;", c_ty(ret, pgm));
             p.dedent();
             p.nl();
             w!(p, "}}");
@@ -1139,13 +1168,16 @@ fn builtin_fun_to_c(
         // Array functions /////////////////////////////////////////////////////////////////////////
         BuiltinFunDecl::ArrayNew { t, con_idx } => {
             let con_tag = con_idx.as_u64();
-            let t_ty = c_ty(t);
+            let t_ty = c_ty(t, pgm);
             let mut t_ty_name = String::new();
             ty_to_c(t, &mut t_ty_name);
-            let array_ty = c_ty(&mono::Type::Named(mono::NamedType {
-                name: Id::new_static("Array"),
-                args: vec![t.clone()],
-            }));
+            let array_ty = c_ty(
+                &mono::Type::Named(mono::NamedType {
+                    name: Id::new_static("Array"),
+                    args: vec![t.clone()],
+                }),
+                pgm,
+            );
             writedoc!(
                 p,
                 "
@@ -1164,10 +1196,13 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::ArrayLen { t } => {
-            let array_ty = c_ty(&mono::Type::Named(mono::NamedType {
-                name: Id::new_static("Array"),
-                args: vec![t.clone()],
-            }));
+            let array_ty = c_ty(
+                &mono::Type::Named(mono::NamedType {
+                    name: Id::new_static("Array"),
+                    args: vec![t.clone()],
+                }),
+                pgm,
+            );
             writedoc!(
                 p,
                 "
@@ -1179,11 +1214,14 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::ArrayGet { t } => {
-            let t_ty = c_ty(t);
-            let array_ty = c_ty(&mono::Type::Named(mono::NamedType {
-                name: Id::new_static("Array"),
-                args: vec![t.clone()],
-            }));
+            let t_ty = c_ty(t, pgm);
+            let array_ty = c_ty(
+                &mono::Type::Named(mono::NamedType {
+                    name: Id::new_static("Array"),
+                    args: vec![t.clone()],
+                }),
+                pgm,
+            );
             writedoc!(
                 p,
                 "
@@ -1195,27 +1233,31 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::ArraySet { t } => {
-            let t_ty = c_ty(t);
-            let array_ty = c_ty(&mono::Type::Named(mono::NamedType {
-                name: Id::new_static("Array"),
-                args: vec![t.clone()],
-            }));
+            let t_ty = c_ty(t, pgm);
+            let array_ty = c_ty(
+                &mono::Type::Named(mono::NamedType {
+                    name: Id::new_static("Array"),
+                    args: vec![t.clone()],
+                }),
+                pgm,
+            );
+            let ret_ty = c_ty(ret, pgm);
+            let unit = heap_obj_singleton_name(pgm, pgm.unit_con_idx);
             writedoc!(
                 p,
                 "
-                static Record* _fun_{idx}({array_ty} arr, U32 idx, {t_ty} val) {{
+                static {ret_ty} _fun_{idx}({array_ty} arr, U32 idx, {t_ty} val) {{
                     arr->data_ptr[idx] = val;
-                    return {};
+                    return {unit};
                 }}
                 ",
-                heap_obj_singleton_name(pgm, pgm.unit_con_idx)
             );
         }
 
         BuiltinFunDecl::ArraySlice { t, con_idx } => {
             let con_tag = con_idx.as_u64();
-            let t_ty = c_ty(t);
-            let array_struct_name = array_struct_name(t);
+            let t_ty = c_ty(t, pgm);
+            let array_struct_name = array_struct_name(t, pgm);
             writedoc!(
                 p,
                 "
@@ -1232,21 +1274,25 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::ArrayCopyWithin { t } => {
-            let t_ty = c_ty(t);
-            let array_ty = c_ty(&mono::Type::Named(mono::NamedType {
-                name: Id::new_static("Array"),
-                args: vec![t.clone()],
-            }));
+            let t_ty = c_ty(t, pgm);
+            let array_ty = c_ty(
+                &mono::Type::Named(mono::NamedType {
+                    name: Id::new_static("Array"),
+                    args: vec![t.clone()],
+                }),
+                pgm,
+            );
+            let ret_ty = c_ty(ret, pgm);
+            let unit = heap_obj_singleton_name(pgm, pgm.unit_con_idx);
             writedoc!(
                 p,
                 "
-                static Record* _fun_{idx}({array_ty} arr, U32 src, U32 dst, U32 len) {{
+                static {ret_ty} _fun_{idx}({array_ty} arr, U32 src, U32 dst, U32 len) {{
                     {t_ty}* data_ptr = arr->data_ptr;
                     memmove(data_ptr + dst, data_ptr + src, len * sizeof({t_ty}));
-                    return {};
+                    return {unit};
                 }}
                 ",
-                heap_obj_singleton_name(pgm, pgm.unit_con_idx)
             );
         }
 
@@ -1255,8 +1301,8 @@ fn builtin_fun_to_c(
             writedoc!(
                 p,
                 "
-                static Str* _fun_{idx}(Str* path_str) {{
-                    Array_U8* bytes_arr = path_str->_0;
+                static Str _fun_{idx}(Str path_str) {{
+                    Array_U8* bytes_arr = path_str._0;
                     uint32_t path_len = (uint32_t)bytes_arr->len;
                     uint8_t* path_data = bytes_arr->data_ptr;
                     char* path = (char*)malloc(path_len + 1);
@@ -1271,7 +1317,7 @@ fn builtin_fun_to_c(
                     char* contents = (char*)malloc(size);
                     if (fread(contents, 1, size, f) != (size_t)size) {{ fprintf(stderr, \"Failed to read file\\n\"); exit(1); }}
                     fclose(f);
-                    Str* result = alloc_str(contents, size);
+                    Str result = alloc_str(contents, size);
                     free(contents);
                     return result;
                 }}
@@ -1285,12 +1331,12 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static Array_Str* _fun_{idx}(void) {{
-                    Array_Str* arr = (Array_Str*)malloc(sizeof(Array_Str) + (g_argc * sizeof(Str*)));
+                    Array_Str* arr = (Array_Str*)malloc(sizeof(Array_Str) + (g_argc * sizeof(Str)));
                     arr->tag = {array_str_tag};
-                    arr->data_ptr = (Str**)(arr + 1);
+                    arr->data_ptr = (Str*)(arr + 1);
                     arr->len = g_argc;
                     for (int i = 0; i < g_argc; i++) {{
-                        Str* arg_str = alloc_str(g_argv[i], strlen(g_argv[i]));
+                        Str arg_str = alloc_str(g_argv[i], strlen(g_argv[i]));
                         arr->data_ptr[i] = arg_str;
                     }}
                     return arr;
@@ -1302,7 +1348,7 @@ fn builtin_fun_to_c(
 }
 
 fn gen_tostr_fn(idx: usize, arg_ty: &str, fmt: &str, p: &mut Printer) {
-    w!(p, "static Str* _fun_{}({arg_ty} a) {{", idx);
+    w!(p, "static Str _fun_{}({arg_ty} a) {{", idx);
     p.indent();
     p.nl();
     wln!(p, "char buf[32];");
@@ -1356,12 +1402,12 @@ fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p
         w!(p, "]");
     }
     p.nl();
-    w!(p, "static {} _fun_{}(", c_ty(&fun.return_ty), idx);
+    w!(p, "static {} _fun_{}(", c_ty(&fun.return_ty, cg.pgm), idx);
     for (i, ty) in fun.params.iter().enumerate() {
         if i > 0 {
             w!(p, ", ");
         }
-        w!(p, "{} _{}", c_ty(ty), i);
+        w!(p, "{} _{}", c_ty(ty, cg.pgm), i);
     }
     w!(p, ") {{");
     p.indent();
@@ -1372,7 +1418,7 @@ fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p
         wln!(
             p,
             "{} _{}; // {}: {}",
-            c_ty(&local.ty),
+            c_ty(&local.ty, cg.pgm),
             i,
             local.name,
             local.ty
@@ -1380,7 +1426,7 @@ fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p
     }
 
     // Declare result variable
-    w!(p, "{} _result;", c_ty(&fun.return_ty));
+    w!(p, "{} _result;", c_ty(&fun.return_ty, cg.pgm));
     p.nl();
 
     // Generate body
@@ -1396,11 +1442,11 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     w!(
         p,
         "static {} _closure_{}(CLOSURE* _closure_obj",
-        c_ty(&closure.return_ty),
+        c_ty(&closure.return_ty, cg.pgm),
         idx
     );
     for (i, ty) in closure.params.iter().enumerate() {
-        w!(p, ", {} _{}", c_ty(ty), i);
+        w!(p, ", {} _{}", c_ty(ty, cg.pgm), i);
     }
     w!(p, ") {{");
     p.indent();
@@ -1411,7 +1457,7 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
         wln!(
             p,
             "{} _{}; // {}: {}",
-            c_ty(&local.ty),
+            c_ty(&local.ty, cg.pgm),
             i,
             local.name,
             local.ty
@@ -1434,7 +1480,7 @@ fn closure_to_c(closure: &Closure, idx: usize, cg: &mut Cg, p: &mut Printer) {
     }
 
     // Declare result variable
-    w!(p, "{} _result;", c_ty(&closure.return_ty));
+    w!(p, "{} _result;", c_ty(&closure.return_ty, cg.pgm));
     p.nl();
 
     // Generate body
@@ -1487,7 +1533,7 @@ fn stmt_to_c(
     match stmt {
         Stmt::Let(LetStmt { lhs, rhs, rhs_ty }) => {
             let rhs_temp = cg.fresh_temp();
-            w!(p, "{} {} = ", c_ty(rhs_ty), rhs_temp);
+            w!(p, "{} {} = ", c_ty(rhs_ty, cg.pgm), rhs_temp);
             expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
             wln!(p, "; // {}", loc_display(&rhs.loc));
             wln!(
@@ -1524,7 +1570,7 @@ fn stmt_to_c(
                 object_ty,
             }) => {
                 let obj_temp = cg.fresh_temp();
-                w!(p, "{} {} = ", c_ty(object_ty), obj_temp);
+                w!(p, "{} {} = ", c_ty(object_ty, cg.pgm), obj_temp);
                 expr_to_c(&object.node, &object.loc, locals, cg, p);
                 wln!(p, "; // {}", loc_display(&object.loc));
                 w!(p, "{}->_{} = ", obj_temp, idx);
@@ -1632,9 +1678,18 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 w!(
                     p,
                     "({}){}",
-                    c_ty(ret_ty),
+                    c_ty(ret_ty, cg.pgm),
                     heap_obj_singleton_name(cg.pgm, *heap_obj_idx)
                 );
+            } else if is_value_type(ret_ty, cg.pgm) {
+                let struct_name = heap_obj_struct_name(cg.pgm, *heap_obj_idx);
+                let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
+                w!(p, "(({struct_name}){{ ._tag = {tag_name}");
+                for (i, arg) in args.iter().enumerate() {
+                    w!(p, ", ._{i} = ");
+                    expr_to_c(&arg.node, &arg.loc, locals, cg, p);
+                }
+                w!(p, " }})");
             } else {
                 let struct_name = heap_obj_struct_name(cg.pgm, *heap_obj_idx);
                 let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
@@ -1648,7 +1703,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     expr_to_c(&arg.node, &arg.loc, locals, cg, p);
                     wln!(p, ";");
                 }
-                w!(p, "({})_obj;", c_ty(ret_ty));
+                w!(p, "({})_obj;", c_ty(ret_ty, cg.pgm));
                 p.dedent();
                 p.nl();
                 w!(p, "}})");
@@ -1659,11 +1714,15 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             object,
             field: _,
             idx,
-            object_ty: _,
+            object_ty,
         }) => {
             w!(p, "(");
             expr_to_c(&object.node, &object.loc, locals, cg, p);
-            w!(p, ")->_{}", idx);
+            if is_value_type(object_ty, cg.pgm) {
+                w!(p, ")._{}", idx);
+            } else {
+                w!(p, ")->_{}", idx);
+            }
         }
 
         Expr::Call(CallExpr { fun, args, fun_ty }) => {
@@ -1697,12 +1756,13 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     wln!(p, ";");
 
                     // Closure call - need to pass closure object as first arg
-                    w!(p, "{} (*_fn)(CLOSURE*", c_ty(&fun_ty.ret));
-                    let arg_ty_strs: Vec<String> = arg_tys.iter().map(|ty| c_ty(ty)).collect();
+                    w!(p, "{} (*_fn)(CLOSURE*", c_ty(&fun_ty.ret, cg.pgm));
+                    let arg_ty_strs: Vec<String> =
+                        arg_tys.iter().map(|ty| c_ty(ty, cg.pgm)).collect();
                     for arg_ty in arg_ty_strs.iter() {
                         w!(p, ", {arg_ty}");
                     }
-                    w!(p, ") = ({} (*)(CLOSURE*", c_ty(&fun_ty.ret));
+                    w!(p, ") = ({} (*)(CLOSURE*", c_ty(&fun_ty.ret, cg.pgm));
                     for arg_ty in arg_ty_strs.iter() {
                         w!(p, ", {arg_ty}");
                     }
@@ -1798,10 +1858,11 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             w!(p, "return ");
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);
             wln!(p, ";");
-            if is_value_type(ty) {
-                w!(p, "0;");
+            if is_value_type(ty, cg.pgm) {
+                let c = c_ty(ty, cg.pgm);
+                w!(p, "({c}){{0}};");
             } else {
-                w!(p, "({})NULL;", c_ty(ty));
+                w!(p, "({})NULL;", c_ty(ty, cg.pgm));
             }
             p.dedent();
             p.nl();
@@ -1820,7 +1881,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.indent();
             p.nl();
             let scrut_temp = cg.fresh_temp();
-            w!(p, "{} {} = ", c_ty(scrut_ty), scrut_temp);
+            w!(p, "{} {} = ", c_ty(scrut_ty, cg.pgm), scrut_temp);
             expr_to_c(&scrutinee.node, &scrutinee.loc, locals, cg, p);
             wln!(p, "; // {}", loc_display(&scrutinee.loc));
 
@@ -1828,7 +1889,12 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 None
             } else {
                 let match_temp = cg.fresh_temp();
-                wln!(p, "{} {match_temp}; // {}", c_ty(ty), loc_display(loc));
+                wln!(
+                    p,
+                    "{} {match_temp}; // {}",
+                    c_ty(ty, cg.pgm),
+                    loc_display(loc)
+                );
                 Some(match_temp)
             };
 
@@ -1900,7 +1966,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 None
             } else {
                 let if_temp = cg.fresh_temp();
-                wln!(p, "{} {if_temp}; // {}", c_ty(ty), loc_display(loc));
+                wln!(p, "{} {if_temp}; // {}", c_ty(ty, cg.pgm), loc_display(loc));
                 Some(if_temp)
             };
 
@@ -2009,7 +2075,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.indent();
             p.nl();
             let expr_temp = cg.fresh_temp();
-            w!(p, "{} {} = ", c_ty(expr_ty), expr_temp);
+            w!(p, "{} {} = ", c_ty(expr_ty, cg.pgm), expr_temp);
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);
             wln!(p, "; // {}", loc_display(&expr.loc));
             wln!(p, "Bool* _is_result;");
@@ -2049,7 +2115,12 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.indent();
             p.nl();
             let expr_temp = cg.fresh_temp();
-            wln!(p, "{} {expr_temp}; // {}", c_ty(ty), loc_display(loc));
+            wln!(
+                p,
+                "{} {expr_temp}; // {}",
+                c_ty(ty, cg.pgm),
+                loc_display(loc)
+            );
             stmts_to_c(stmts, Some(&expr_temp), locals, cg, p);
             w!(p, "{expr_temp};");
             p.dedent();
@@ -2105,7 +2176,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             });
 
             let expr_temp = cg.fresh_temp();
-            w!(p, "{} {expr_temp} = ", c_ty(expr_ty));
+            w!(p, "{} {expr_temp} = ", c_ty(expr_ty, cg.pgm));
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);
             wln!(p, "; // {}", loc_display(&expr.loc));
 
@@ -2277,8 +2348,13 @@ fn pat_to_cond(
                 HeapObj::Variant(_) => panic!("Variant in Pat::Con"),
             };
             let mut cond = tag_check;
+            let value = is_value_type(scrutinee_ty, cg.pgm);
             for (i, field_pat) in fields.iter().enumerate() {
-                let field_expr = format!("(({struct_name}*){scrutinee})->_{i}");
+                let field_expr = if value {
+                    format!("({scrutinee})._{i}")
+                } else {
+                    format!("(({struct_name}*){scrutinee})->_{i}")
+                };
                 let field_ty = &field_tys[i];
                 let field_cond =
                     pat_to_cond(&field_pat.node, &field_expr, field_ty, None, locals, cg);
@@ -2304,7 +2380,7 @@ fn pat_to_cond(
                 }
             };
             format!(
-                "({tag_check} && str_eq((Str*){scrutinee}, \"{escaped}\", {}))",
+                "({tag_check} && str_eq({scrutinee}, \"{escaped}\", {}))",
                 s.len()
             )
         }
@@ -2318,7 +2394,7 @@ fn pat_to_cond(
                     format!("({get_tag} == {tag_name})")
                 }
             };
-            format!("({tag_check} && ((Char*){scrutinee})->_0 == {})", *c as u32)
+            format!("({tag_check} && ({scrutinee})._0 == {})", *c as u32)
         }
 
         Pat::Or(p1, p2) => {
