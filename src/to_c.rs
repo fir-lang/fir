@@ -133,7 +133,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     }
 
     let array_u8_tag = pgm.array_u8_con_idx.as_u64();
-    let array_u64_tag = pgm.array_u64_con_idx.as_u64();
     writedoc!(
         p,
         "
@@ -157,15 +156,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
         static uint32_t get_tag(void* obj) {{
             return (uint32_t)*(uint64_t*)obj;
-        }}
-
-        static Array_U64* array_new_u64(uint32_t len) {{
-            Array_U64* arr = (Array_U64*)malloc(sizeof(Array_U64) + (len * sizeof(uint64_t)));
-            arr->tag = {array_u64_tag};
-            arr->data_ptr = (uint64_t*)(arr + 1);
-            arr->len = len;
-            memset(arr + 1, 0, len * sizeof(uint64_t));
-            return arr;
         }}
 
         // String comparison for pattern matching
