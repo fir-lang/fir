@@ -22,6 +22,7 @@ impl LoweredPgm {
                     idx,
                     ty_args,
                     fields,
+                    sum: _,
                     value: _,
                 }) => {
                     assert_eq!(idx.0 as usize, heap_obj_idx);

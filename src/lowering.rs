@@ -38,12 +38,6 @@ pub struct LoweredPgm {
     pub unit_con_idx: HeapObjIdx,
     pub array_u8_con_idx: HeapObjIdx,
     pub array_u64_con_idx: HeapObjIdx,
-
-    // To be able to allocate `Array[Str]` in `prim getArgs() Array[Str]`.
-    //
-    // This is optional as not all programs will use `getArgs`. If a program uses `getArgs`,
-    // `Array[Str]` will also be compiled, so this will always be available.
-    pub array_str_con_idx: Option<HeapObjIdx>,
 }
 
 impl LoweredPgm {
@@ -389,6 +383,7 @@ pub struct SourceConDecl {
     pub idx: HeapObjIdx,
     pub ty_args: Vec<mono::Type>,
     pub fields: Vec<mono::Type>,
+    pub sum: bool,
     pub value: bool,
 }
 
@@ -817,10 +812,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             .unwrap()
             .get(&vec![mono::Type::u64()])
             .unwrap(),
-        array_str_con_idx: product_con_nums
-            .get("Array")
-            .and_then(|ty_map| ty_map.get(&vec![mono::Type::str()]))
-            .copied(),
     };
 
     // Lower the program. Note that the iteration order here should be the same as above to add
@@ -860,6 +851,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                     &name,
                                     con_ty_args,
                                     fields,
+                                    true, // sum
                                     con_decl.value,
                                 ));
                                 con_indices.push(idx);
@@ -873,6 +865,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 con_id,
                                 con_ty_args,
                                 fields,
+                                false, // product
                                 con_decl.value,
                             ));
                             con_indices.push(idx);
@@ -1529,6 +1522,7 @@ fn lower_source_con(
     con_id: &SmolStr,
     con_ty_args: &[mono::Type],
     fields: &mono::ConFields,
+    sum: bool,
     value: bool,
 ) -> HeapObj {
     HeapObj::Source(SourceConDecl {
@@ -1540,6 +1534,7 @@ fn lower_source_con(
             mono::ConFields::Named(fields) => fields.values().cloned().collect(),
             mono::ConFields::Unnamed(fields) => fields.to_vec(),
         },
+        sum,
         value,
     })
 }

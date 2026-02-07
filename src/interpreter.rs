@@ -71,7 +71,6 @@ impl Pgm {
             unit_con_idx,
             array_u8_con_idx,
             array_u64_con_idx,
-            array_str_con_idx: _,
         } = lowered_pgm;
 
         let mut allocs: Vec<u64> = vec![u64::MAX; heap_objs.len()];
