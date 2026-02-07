@@ -655,9 +655,8 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, pgm: &LoweredPgm, p
                 "
                 typedef struct {struct_name} {{
                     uint64_t tag;
-                    {t}* data_ptr; // initially points to the the `data` at the end
+                    {t}* data_ptr; // initially points to the the end of this struct
                     uint64_t len;
-                    {t} data[];
                 }} {struct_name};
                 "
             );
