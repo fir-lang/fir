@@ -95,18 +95,6 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         for type_idx in scc {
             if let TypeDecl::Named(named_type) = &pgm.types[type_idx.as_usize()]
                 && !named_type.value
-                && !matches!(
-                    named_type.rhs,
-                    NamedTypeRhs::Builtin(
-                        BuiltinConDecl::I8
-                            | BuiltinConDecl::U8
-                            | BuiltinConDecl::I32
-                            | BuiltinConDecl::U32
-                            | BuiltinConDecl::I64
-                            | BuiltinConDecl::U64,
-                        _
-                    )
-                )
             {
                 let struct_name = named_type_struct_name(&named_type.name, &named_type.ty_args);
                 wln!(p, "typedef struct {struct_name} {struct_name};");
@@ -160,25 +148,18 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
         // String comparison for pattern matching
         static bool str_eq(Str s1, const char* str2, size_t len2) {{
-            Array_U8* bytes_arr = s1._0;
-            uint32_t len1 = (uint32_t)bytes_arr->len;
+            Array_U8 bytes_arr = s1._0;
+            uint32_t len1 = (uint32_t)bytes_arr.len;
             if (len1 != len2) return false;
-            uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
+            uint8_t* data_ptr = bytes_arr.data_ptr;
             return memcmp(data_ptr, str2, len1) == 0;
         }}
 
         // Allocate string from bytes
         static Str alloc_str(const char* bytes, size_t len) {{
-            size_t data_words = (len + 7) / 8;
-            Array_U8* arr = malloc(sizeof(Array_U8) + (data_words * sizeof(uint64_t)));
-            arr->tag = {array_u8_tag};
-            arr->data_ptr = (uint8_t*)(arr + 1);
-            arr->len = len;
-            memset(arr + 1, 0, data_words * sizeof(uint64_t));
-
-            uint8_t* data_ptr = (uint8_t*)arr->data_ptr;
-            memcpy(data_ptr, bytes, len);
-
+            uint8_t* data = malloc(len);
+            memcpy(data, bytes, len);
+            Array_U8 arr = {{ .tag = {array_u8_tag}, .data_ptr = data, .len = len }};
             return (Str){{ ._tag = TAG_Str, ._0 = arr }};
         }}
 
@@ -866,7 +847,7 @@ fn is_value_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
     if let mono::Type::Named(mono::NamedType { name, args: _ }) = ty
         && matches!(
             name.as_str(),
-            "I8" | "U8" | "I16" | "U16" | "I32" | "U32" | "I64" | "U64"
+            "I8" | "U8" | "I16" | "U16" | "I32" | "U32" | "I64" | "U64" | "Array"
         )
     {
         return true;
@@ -887,9 +868,11 @@ fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
         let name_str = name.as_str();
         if matches!(
             name_str,
-            "I8" | "U8" | "I16" | "U16" | "I32" | "U32" | "I64" | "U64"
+            "I8" | "U8" | "I16" | "U16" | "I32" | "U32" | "I64" | "U64" | "Array"
         ) {
-            return name_str.to_string();
+            let mut s = String::new();
+            ty_to_c(ty, &mut s);
+            return s;
         }
     }
     if let mono::Type::Fn(_) = ty {
@@ -954,9 +937,9 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static {} _fun_{idx}(Str msg) {{
-                    Array_U8* bytes_arr = msg._0;
-                    uint32_t len = (uint32_t)bytes_arr->len;
-                    uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
+                    Array_U8 bytes_arr = msg._0;
+                    uint32_t len = (uint32_t)bytes_arr.len;
+                    uint8_t* data_ptr = bytes_arr.data_ptr;
                     fprintf(stderr, \"PANIC: \");
                     fwrite(data_ptr, 1, len, stderr);
                     fprintf(stderr, \"\\n\");
@@ -974,9 +957,9 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static {ret_ty} _fun_{idx}(Str str) {{
-                    Array_U8* bytes_arr = str._0;
-                    uint32_t len = (uint32_t)bytes_arr->len;
-                    uint8_t* data_ptr = (uint8_t*)bytes_arr->data_ptr;
+                    Array_U8 bytes_arr = str._0;
+                    uint32_t len = (uint32_t)bytes_arr.len;
+                    uint8_t* data_ptr = bytes_arr.data_ptr;
                     fwrite(data_ptr, 1, len, stdout);
                     return {unit};
                 }}
@@ -1282,14 +1265,9 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static {array_ty} _fun_{idx}(U32 len) {{
-                    size_t data_bytes = (size_t)len * sizeof({t_ty});
-                    size_t data_words = (data_bytes + 7) / 8;
-                    {array_ty} arr = ({array_ty})malloc(sizeof(Array_{t_ty_name}) + (data_words * sizeof(uint64_t)));
-                    arr->tag = {con_tag};
-                    arr->data_ptr = ({t_ty}*)(arr + 1);
-                    arr->len = len;
-                    memset(arr + 1, 0, data_words * sizeof(uint64_t));
-                    return arr;
+                    {t_ty}* data_ptr = malloc(sizeof({t_ty}) * (size_t)len);
+                    memset(data_ptr, 0, sizeof({t_ty}) * (size_t)len);
+                    return ({array_ty}){{ .tag = {con_tag}, .data_ptr = data_ptr, .len = len }};
                 }}
                 "
             );
@@ -1307,7 +1285,7 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static U32 _fun_{idx}({array_ty} arr) {{
-                    return (U32)arr->len;
+                    return (U32)arr.len;
                 }}
                 "
             );
@@ -1326,7 +1304,7 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static {t_ty} _fun_{idx}({array_ty} arr, U32 idx) {{
-                    return arr->data_ptr[idx];
+                    return arr.data_ptr[idx];
                 }}
                 "
             );
@@ -1347,7 +1325,7 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static {ret_ty} _fun_{idx}({array_ty} arr, U32 idx, {t_ty} val) {{
-                    arr->data_ptr[idx] = val;
+                    arr.data_ptr[idx] = val;
                     return {unit};
                 }}
                 ",
@@ -1356,18 +1334,12 @@ fn builtin_fun_to_c(
 
         BuiltinFunDecl::ArraySlice { t, con_idx } => {
             let con_tag = con_idx.as_u64();
-            let t_ty = c_ty(t, pgm);
             let array_struct_name = array_struct_name(t, pgm);
             writedoc!(
                 p,
                 "
-                static {array_struct_name}* _fun_{idx}({array_struct_name}* arr, U32 start, U32 end) {{
-                    {array_struct_name}* new_arr = ({array_struct_name}*)malloc(sizeof({array_struct_name}));
-                    new_arr->tag = {con_tag};
-                    {t_ty}* data_ptr = arr->data_ptr;
-                    new_arr->data_ptr = data_ptr + start;
-                    new_arr->len = end - start;
-                    return new_arr;
+                static {array_struct_name} _fun_{idx}({array_struct_name} arr, U32 start, U32 end) {{
+                    return ({array_struct_name}){{ .tag = {con_tag}, .data_ptr = arr.data_ptr + start, .len = end - start }};
                 }}
                 ",
             );
@@ -1388,7 +1360,7 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static {ret_ty} _fun_{idx}({array_ty} arr, U32 src, U32 dst, U32 len) {{
-                    {t_ty}* data_ptr = arr->data_ptr;
+                    {t_ty}* data_ptr = arr.data_ptr;
                     memmove(data_ptr + dst, data_ptr + src, len * sizeof({t_ty}));
                     return {unit};
                 }}
@@ -1402,9 +1374,9 @@ fn builtin_fun_to_c(
                 p,
                 "
                 static Str _fun_{idx}(Str path_str) {{
-                    Array_U8* bytes_arr = path_str._0;
-                    uint32_t path_len = (uint32_t)bytes_arr->len;
-                    uint8_t* path_data = bytes_arr->data_ptr;
+                    Array_U8 bytes_arr = path_str._0;
+                    uint32_t path_len = (uint32_t)bytes_arr.len;
+                    uint8_t* path_data = bytes_arr.data_ptr;
                     char* path = (char*)malloc(path_len + 1);
                     memcpy(path, path_data, path_len);
                     path[path_len] = '\\0';
@@ -1430,16 +1402,13 @@ fn builtin_fun_to_c(
             writedoc!(
                 p,
                 "
-                static Array_Str* _fun_{idx}(void) {{
-                    Array_Str* arr = (Array_Str*)malloc(sizeof(Array_Str) + (g_argc * sizeof(Str)));
-                    arr->tag = {array_str_tag};
-                    arr->data_ptr = (Str*)(arr + 1);
-                    arr->len = g_argc;
+                static Array_Str _fun_{idx}(void) {{
+                    Str* data_ptr = malloc(g_argc * sizeof(Str));
                     for (int i = 0; i < g_argc; i++) {{
                         Str arg_str = alloc_str(g_argv[i], strlen(g_argv[i]));
-                        arr->data_ptr[i] = arg_str;
+                        data_ptr[i] = arg_str;
                     }}
-                    return arr;
+                    return (Array_Str){{ .tag = {array_str_tag}, .data_ptr = data_ptr, .len = g_argc }};
                 }}
                 ",
             );

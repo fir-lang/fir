@@ -843,6 +843,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         for (con_ty_args, con_decl) in con_ty_map {
             let mut con_indices: Vec<HeapObjIdx> = vec![];
             let mut sum = false;
+            let mut value = con_decl.value;
             let rhs: NamedTypeRhs = match &con_decl.rhs {
                 Some(rhs) => {
                     match rhs {
@@ -881,6 +882,9 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 }
 
                 None => {
+                    // We don't have the syntax to mark prim types as values, but they're all values
+                    // currently.
+                    value = true;
                     let con = match con_id.as_str() {
                         "Array" => {
                             assert_eq!(con_ty_args.len(), 1);
@@ -941,7 +945,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 rhs,
                 con_indices,
                 sum,
-                value: con_decl.value,
+                value,
             }));
         }
     }
