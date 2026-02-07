@@ -70,13 +70,10 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
     // Generate the CLOSURE type before other types. CLOSURE is a special built-in that doesn't have
     // a TypeDecl entry, so it's not part of the dependency-sorted types.
-    let closure_tag = CLOSURE_CON_IDX.0;
-    wln!(p, "#define CLOSURE_TAG {closure_tag}");
     writedoc!(
         p,
         "
         typedef struct {{
-            uint64_t tag;
             void (*fun)(void);
             // captures here ...
         }} CLOSURE;
@@ -328,7 +325,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
                 w!(
                     p,
-                    "static CLOSURE _con_closure_{tag}_data = {{ .tag = CLOSURE_TAG, .fun = (void(*)(void))_con_closure_{tag}_fun }};",
+                    "static CLOSURE _con_closure_{tag}_data = {{ .fun = (void(*)(void))_con_closure_{tag}_fun }};",
                 );
                 p.nl();
 
@@ -379,7 +376,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
         w!(
             p,
-            "static CLOSURE _fun_closure_{i}_data = {{ .tag = CLOSURE_TAG, .fun = (void(*)(void))_fun_closure_{i}_fun }};",
+            "static CLOSURE _fun_closure_{i}_data = {{ .fun = (void(*)(void))_fun_closure_{i}_fun }};",
         );
         p.nl();
 
@@ -484,7 +481,6 @@ fn gen_closure_struct(closure: &Closure, idx: usize, pgm: &LoweredPgm, p: &mut P
     w!(p, "typedef struct {{");
     p.indent();
     p.nl();
-    wln!(p, "uint64_t tag;");
     wln!(p, "void (*fun)(void);");
     for (i, fv) in closure.fvs.iter().enumerate() {
         if i != 0 {
@@ -2098,7 +2094,6 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.nl();
             if closure.fvs.is_empty() {
                 wln!(p, "CLOSURE* _clos = (CLOSURE*)malloc(sizeof(CLOSURE));");
-                wln!(p, "_clos->tag = CLOSURE_TAG;");
                 w!(p, "_clos->fun = (void(*)(void))_closure_{};", idx);
                 p.nl();
             } else {
@@ -2106,7 +2101,6 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     p,
                     "_Closure_{idx}* _clos = (_Closure_{idx}*)malloc(sizeof(_Closure_{idx}));"
                 );
-                wln!(p, "_clos->tag = CLOSURE_TAG;");
                 w!(p, "_clos->fun = (void(*)(void))_closure_{};", idx);
                 p.nl();
                 for (i, fv) in closure.fvs.iter().enumerate() {

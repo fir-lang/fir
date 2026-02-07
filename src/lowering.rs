@@ -368,7 +368,6 @@ pub enum BuiltinConDecl {
         t: mono::Type,
     },
 
-    // Integers are value types (not boxed), so they don't have tags.
     I8,
     U8,
     I32,
