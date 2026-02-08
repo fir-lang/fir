@@ -5,7 +5,7 @@ import [
 ]
 
 
-type ExprPrefix:
+value type ExprPrefix:
     Tilde(TokenIdx)
     Minus(TokenIdx)
     Not(TokenIdx)

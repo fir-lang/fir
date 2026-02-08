@@ -11,7 +11,7 @@ trait Tokens[t]:
 
 
 #[derive(ToDoc)]
-type Id(
+value type Id(
     token: TokenIdx,
 )
 

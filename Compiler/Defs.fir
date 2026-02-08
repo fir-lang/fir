@@ -17,7 +17,7 @@ import [
 ## This type is used both in binder position (e.g. function arguments, patterns,
 ## type arguments) and use position (e.g. expressions, type variables).
 #[derive(ToDoc)]
-type LocalId(
+value type LocalId(
     name: Str,
 )
 
@@ -102,7 +102,7 @@ TyId.def(self) TyDefIdx:
 
 
 #[derive(ToDoc)]
-type VarDefIdx:
+value type VarDefIdx:
     Local
     Top(TopVarDefIdx)
 
@@ -116,7 +116,7 @@ impl Eq[VarDefIdx]:
 
 
 #[derive(ToDoc)]
-type TopVarDefIdx(
+value type TopVarDefIdx(
     ## Module of the variable.
     _mod: ModuleIdx,
 
@@ -161,7 +161,7 @@ impl Eq[AssocVarDefIdx]:
 
 
 #[derive(ToDoc)]
-type TyDefIdx(
+value type TyDefIdx(
     ## The type's module.
     _mod: ModuleIdx,
 

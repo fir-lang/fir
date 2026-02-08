@@ -9,7 +9,7 @@ type ParseTree[t, nt]:
 
 # Indicates an unexpected token (when `cursor` is smaller than the length of the input) or
 # unexpected end-of-input (when `cursor` is the length of the input).
-type ParseError(
+value type ParseError(
     cursor: U32,
 )
 

@@ -8,13 +8,13 @@ import [
 
 
 #[derive(ToDoc)]
-type PackageUri(
+value type PackageUri(
     _uri: Str,
 )
 
 
 #[derive(ToDoc)]
-type ModuleIdx(
+value type ModuleIdx(
     ## Index of the module in the program.
     _idx: U32,
 )

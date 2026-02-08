@@ -1,4 +1,4 @@
-type AssertionError(
+value type AssertionError(
     msg: Str,
 )
 
