@@ -107,6 +107,8 @@ generate_parser:
 
 update_generated_files:
     #!/usr/bin/env bash
+    shopt -s globstar
+
     lalrpop src/parser.lalrpop
 
     if [ ! -f "target/Peg" ]; then
@@ -117,11 +119,15 @@ update_generated_files:
         exit 1
     fi
 
-    ./target/Peg Tool/Peg/PegGrammar.peg > Tool/Peg/PegGrammar.fir
-    ./target/Peg Tool/Peg/TestGrammar.peg > Tool/Peg/TestGrammar.fir
-    ./target/Peg Compiler/Grammar.peg > Compiler/Grammar.fir
+    generated=()
 
-    Tool/Format/Format.sh Tool/Peg/{PegGrammar,TestGrammar}.fir Compiler/Grammar.fir
+    for f in **/*.peg; do
+        target="${f%.peg}.fir"
+        generated+=($target)
+        ./target/Peg $f > $target
+    done
+
+    Tool/Format/Format.sh "${generated[@]}"
 
 check_generated_files: update_generated_files
     git -P diff
