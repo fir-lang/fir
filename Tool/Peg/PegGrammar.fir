@@ -753,6 +753,22 @@ symbolPrefix(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
         \():
             let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
             if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Amp, ..):
+                nodes.push(ParseTree.Terminal(sym))
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                ParseTree.NonTerminal(kind = NonTerminal.SymbolPrefix, nodes)
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
+            if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Underscore, ..):
                 nodes.push(ParseTree.Terminal(sym))
                 state._cursor += 1

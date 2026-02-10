@@ -19,7 +19,12 @@ type NonTerminal:
     IgnoreGroupAThenB
     NonTerminals
     NonTerminalsBacktrack
-    NegLookahead
+    NegLookahead1
+    NegLookahead2
+    NegLookahead3
+    PosLookahead1
+    PosLookahead2
+    PosLookahead3
     EndOfInputTest
     BracketedOneOrMoreA
     ErrorCursorBug
@@ -42,7 +47,12 @@ impl ToStr[NonTerminal]:
             NonTerminal.IgnoreGroupAThenB: "IgnoreGroupAThenB"
             NonTerminal.NonTerminals: "NonTerminals"
             NonTerminal.NonTerminalsBacktrack: "NonTerminalsBacktrack"
-            NonTerminal.NegLookahead: "NegLookahead"
+            NonTerminal.NegLookahead1: "NegLookahead1"
+            NonTerminal.NegLookahead2: "NegLookahead2"
+            NonTerminal.NegLookahead3: "NegLookahead3"
+            NonTerminal.PosLookahead1: "PosLookahead1"
+            NonTerminal.PosLookahead2: "PosLookahead2"
+            NonTerminal.PosLookahead3: "PosLookahead3"
             NonTerminal.EndOfInputTest: "EndOfInputTest"
             NonTerminal.BracketedOneOrMoreA: "BracketedOneOrMoreA"
             NonTerminal.ErrorCursorBug: "ErrorCursorBug"
@@ -91,8 +101,30 @@ impl Eq[NonTerminal]:
                 left = NonTerminal.NonTerminalsBacktrack,
                 right = NonTerminal.NonTerminalsBacktrack,
             ): Bool.True
-            (left = NonTerminal.NegLookahead, right = NonTerminal.NegLookahead):
-                Bool.True
+            (
+                left = NonTerminal.NegLookahead1,
+                right = NonTerminal.NegLookahead1,
+            ): Bool.True
+            (
+                left = NonTerminal.NegLookahead2,
+                right = NonTerminal.NegLookahead2,
+            ): Bool.True
+            (
+                left = NonTerminal.NegLookahead3,
+                right = NonTerminal.NegLookahead3,
+            ): Bool.True
+            (
+                left = NonTerminal.PosLookahead1,
+                right = NonTerminal.PosLookahead1,
+            ): Bool.True
+            (
+                left = NonTerminal.PosLookahead2,
+                right = NonTerminal.PosLookahead2,
+            ): Bool.True
+            (
+                left = NonTerminal.PosLookahead3,
+                right = NonTerminal.PosLookahead3,
+            ): Bool.True
             (
                 left = NonTerminal.EndOfInputTest,
                 right = NonTerminal.EndOfInputTest,
@@ -503,7 +535,7 @@ nonTerminalsBacktrack(state: ParserState[Token]) ParseTree[Token, NonTerminal] /
     throw(state.updateErrorCursor(state._cursor))
 
 
-negLookahead(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+negLookahead1(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -529,7 +561,186 @@ negLookahead(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
                     throw(state.updateErrorCursor(state._cursor))
             nodes.push(terminalAOrB(state))
             let val = do:
-                ParseTree.NonTerminal(kind = NonTerminal.NegLookahead, nodes)
+                ParseTree.NonTerminal(kind = NonTerminal.NegLookahead1, nodes)
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+negLookahead2(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
+            nodes.push(terminalAOrB(state))
+            let state0 = state.clone()
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym
+                                is Token(
+                                    kind = TokenKind.LowerId,
+                                    text = "a",
+                                    ..
+                                ):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor)),
+            )
+            match symResult:
+                Result.Err(err): state.cloneFrom(state0)
+                Result.Ok(_):
+                    state.cloneFrom(state0)
+                    throw(state.updateErrorCursor(state._cursor))
+            nodes.push(terminalAOrB(state))
+            let val = do:
+                ParseTree.NonTerminal(kind = NonTerminal.NegLookahead2, nodes)
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+negLookahead3(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
+            nodes.push(terminalAOrB(state))
+            nodes.push(terminalAOrB(state))
+            let state0 = state.clone()
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym
+                                is Token(
+                                    kind = TokenKind.LowerId,
+                                    text = "a",
+                                    ..
+                                ):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor)),
+            )
+            match symResult:
+                Result.Err(err): state.cloneFrom(state0)
+                Result.Ok(_):
+                    state.cloneFrom(state0)
+                    throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                ParseTree.NonTerminal(kind = NonTerminal.NegLookahead3, nodes)
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+posLookahead1(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
+            let state0 = state.clone()
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym
+                                is Token(
+                                    kind = TokenKind.LowerId,
+                                    text = "a",
+                                    ..
+                                ):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor)),
+            )
+            match symResult:
+                Result.Err(err):
+                    state.cloneFrom(state0)
+                    throw(state.updateErrorCursor(state._cursor))
+                Result.Ok(_): state.cloneFrom(state0)
+            nodes.push(terminalAOrB(state))
+            let val = do:
+                ParseTree.NonTerminal(kind = NonTerminal.PosLookahead1, nodes)
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+posLookahead2(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
+            nodes.push(terminalAOrB(state))
+            let state0 = state.clone()
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym
+                                is Token(
+                                    kind = TokenKind.LowerId,
+                                    text = "a",
+                                    ..
+                                ):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor)),
+            )
+            match symResult:
+                Result.Err(err):
+                    state.cloneFrom(state0)
+                    throw(state.updateErrorCursor(state._cursor))
+                Result.Ok(_): state.cloneFrom(state0)
+            nodes.push(terminalAOrB(state))
+            let val = do:
+                ParseTree.NonTerminal(kind = NonTerminal.PosLookahead2, nodes)
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+posLookahead3(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
+            nodes.push(terminalAOrB(state))
+            nodes.push(terminalAOrB(state))
+            let state0 = state.clone()
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym
+                                is Token(
+                                    kind = TokenKind.LowerId,
+                                    text = "a",
+                                    ..
+                                ):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor)),
+            )
+            match symResult:
+                Result.Err(err):
+                    state.cloneFrom(state0)
+                    throw(state.updateErrorCursor(state._cursor))
+                Result.Ok(_): state.cloneFrom(state0)
+            let val = do:
+                ParseTree.NonTerminal(kind = NonTerminal.PosLookahead3, nodes)
             val,
     )
     match altResult:

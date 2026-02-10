@@ -34,6 +34,7 @@ Terminals:
     "/" = Token(kind = TokenKind.Slash, ..)
     "$" = Token(kind = TokenKind.Dollar, ..)
     "^" = Token(kind = TokenKind.Caret, ..)
+    "&" = Token(kind = TokenKind.Amp, ..)
     "BeginStr" = Token(kind = TokenKind.BeginStr, ..)
     "EndStr" = Token(kind = TokenKind.EndStr, ..)
     "ANY" = Token(..)
@@ -84,6 +85,8 @@ symbol:
 
 symbolPrefix:
     "-"                 # negative lookahead (fails when symbol succeeds)
+    "&"                 # positive lookahead (succeeds when symbol succeeds,
+                        #                     without consuming input)
     "_"                 # silence, or ignore (don't push match to the tree)
 
     # Binder: it doesn't make sense to combine these with negative lookahead

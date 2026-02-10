@@ -52,8 +52,23 @@ nonTerminalsBacktrack:
     terminalAOrB terminalAOrB
     "c" "a"
 
-negLookahead:
+negLookahead1:
     -"a" terminalAOrB
+
+negLookahead2:
+    terminalAOrB -"a" terminalAOrB
+
+negLookahead3:
+    terminalAOrB terminalAOrB -"a"
+
+posLookahead1:
+    &"a" terminalAOrB
+
+posLookahead2:
+    terminalAOrB &"a" terminalAOrB
+
+posLookahead3:
+    terminalAOrB terminalAOrB &"a"
 
 endOfInputTest:
     "a" "b" $

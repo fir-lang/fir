@@ -36,8 +36,25 @@ main():
     runTest("'a a' as nonTerminals", "a a", nonTerminals)
     runTest("'a b' as nonTerminals", "a b", nonTerminals)
     runTest("'c a' as nonTerminalsBacktrack", "c a", nonTerminalsBacktrack)
-    runTest("'b' as negLookahead", "b", negLookahead)
-    runTest("'a' as negLookahead (should fail)", "a", negLookahead)
+
+    runTest("'b' as negLookahead1", "b", negLookahead1)
+    runTest("'a' as negLookahead1 (should fail)", "a", negLookahead1)
+
+    runTest("'a b' as negLookahead2", "a b", negLookahead2)
+    runTest("'a a' as negLookahead2 (should fail)", "a a", negLookahead2)
+
+    runTest("'a b c' as negLookahead3 (should fail)", "a b c", negLookahead3)
+    runTest("'a a a' as negLookahead3 (should fail)", "a a a", negLookahead3)
+
+    runTest("'a' as posLookahead1", "a", posLookahead1)
+    runTest("'b' as posLookahead1 (should fail)", "b", posLookahead1)
+
+    runTest("'a a' as posLookahead2", "a a", posLookahead2)
+    runTest("'a b' as posLookahead2 (should fail)", "a b", posLookahead2)
+
+    runTest("'a a a' as posLookahead3 (should fail)", "a a a", posLookahead3)
+    runTest("'a a b' as posLookahead3 (should fail)", "a a b", posLookahead3)
+
     runTest("'a a c' as oneOrMoreAThenB (should fail)", "a a c", oneOrMoreAThenB)
     runTest("'a b' as endOfInputTest", "a b", endOfInputTest)
     runTest("'a b ' as endOfInputTest", "a b ", endOfInputTest)
@@ -208,11 +225,41 @@ main():
 # 'c a' as nonTerminalsBacktrack
 # NonTerminalsBacktrack(LowerId(1:1:"c"), LowerId(1:3:"a"))
 # 
-# 'b' as negLookahead
-# NegLookahead(TerminalAOrB(LowerId(1:1:"b")))
+# 'b' as negLookahead1
+# NegLookahead1(TerminalAOrB(LowerId(1:1:"b")))
 # 
-# 'a' as negLookahead (should fail)
+# 'a' as negLookahead1 (should fail)
 # ERR: unexpected token or end of input at cursor 0
+# 
+# 'a b' as negLookahead2
+# NegLookahead2(TerminalAOrB(LowerId(1:1:"a")), TerminalAOrB(LowerId(1:3:"b")))
+# 
+# 'a a' as negLookahead2 (should fail)
+# ERR: unexpected token or end of input at cursor 1
+# 
+# 'a b c' as negLookahead3 (should fail)
+# ERR: parser didn't consume all input, input len = 3, cursor after parsing = 2
+# 
+# 'a a a' as negLookahead3 (should fail)
+# ERR: unexpected token or end of input at cursor 2
+# 
+# 'a' as posLookahead1
+# PosLookahead1(TerminalAOrB(LowerId(1:1:"a")))
+# 
+# 'b' as posLookahead1 (should fail)
+# ERR: unexpected token or end of input at cursor 0
+# 
+# 'a a' as posLookahead2
+# PosLookahead2(TerminalAOrB(LowerId(1:1:"a")), TerminalAOrB(LowerId(1:3:"a")))
+# 
+# 'a b' as posLookahead2 (should fail)
+# ERR: unexpected token or end of input at cursor 1
+# 
+# 'a a a' as posLookahead3 (should fail)
+# ERR: parser didn't consume all input, input len = 3, cursor after parsing = 2
+# 
+# 'a a b' as posLookahead3 (should fail)
+# ERR: unexpected token or end of input at cursor 2
 # 
 # 'a a c' as oneOrMoreAThenB (should fail)
 # ERR: unexpected token or end of input at cursor 2

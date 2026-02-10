@@ -302,6 +302,9 @@ convertSymbol(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
             Token(kind = TokenKind.Minus, ..):
                 symbol = Symbol.NegLookahead(symbol)
 
+            Token(kind = TokenKind.Amp, ..):
+                symbol = Symbol.PosLookahead(symbol)
+
             Token(kind = TokenKind.Underscore, ..):
                 symbol = Symbol.Ignore(symbol)
 
@@ -419,6 +422,13 @@ type Symbol:
     ## `-` prefix.
     NegLookahead(Symbol)
 
+    ## Positive lookahead: succeeds without incrementing the cursor if parsing succeeds.
+    ##
+    ## We can't use `+` as the syntax here as it's used for `OneOrMore`. So we follow the original
+    ## PEG syntax and use `&`.
+    # TODO: Maybe also use the original syntax (`!`) for negative lookahead, for consistency.
+    PosLookahead(Symbol)
+
     ## Binder: `x=symbol`. Binds the result of parsing `symbol` to variable `x`, to be used in the
     ## semantic action of the production.
     Bind(Str, Symbol)
@@ -426,7 +436,7 @@ type Symbol:
     ## Succeeds when the cursor is at the end. Fails with "unexpected token" otherwise.
     EndOfInput
 
-    ## The '^' symbol representing the current cursor position in the token vector.
+    ## The '^' symbol representing the current cursor position in the token array.
     Cursor
 
 
@@ -965,6 +975,43 @@ generateSymbolParser(
                                 + Doc.str("state.cloneFrom(state0)")
                                 + Doc.hardLine()
                                 + makeThrow(),
+                        ),
+                )
+
+        Symbol.PosLookahead(symbol):
+            Doc.str("let state0 = state.clone()")
+                + Doc.hardLine()
+                + Doc.nested(
+                    4,
+                    Doc.str("let symResult = try(\\():")
+                        + Doc.hardLine()
+                        + generateSymbolParser(
+                            symbol,
+                            terminalPats,
+                            SymbolCont.Ignore,
+                        ),
+                )
+                + Doc.hardLine()
+                + Doc.str(")")
+                + Doc.hardLine()
+                + Doc.nested(
+                    4,
+                    Doc.str("match symResult:")
+                        + Doc.hardLine()
+                        + Doc.nested(
+                            4,
+                            Doc.str("Result.Err(err):")
+                                + Doc.hardLine()
+                                + Doc.str("state.cloneFrom(state0)")
+                                + Doc.hardLine()
+                                + makeThrow(),
+                        )
+                        + Doc.hardLine()
+                        + Doc.nested(
+                            4,
+                            Doc.str("Result.Ok(_):")
+                                + Doc.hardLine()
+                                + Doc.str("state.cloneFrom(state0)"),
                         ),
                 )
 
