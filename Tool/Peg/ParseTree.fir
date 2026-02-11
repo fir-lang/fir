@@ -103,13 +103,12 @@ type ParserState[t](
 )
 
 
-impl Clone[ParserState[t]]:
-    clone(self: ParserState[t]) ParserState[t]:
-        ParserState(
-            _tokens = self._tokens,
-            _cursor = self._cursor,
-            _errorCursor = self._errorCursor,
-        )
+ParserState.clone(self: ParserState[t]) ParserState[t]:
+    ParserState(
+        _tokens = self._tokens,
+        _cursor = self._cursor,
+        _errorCursor = self._errorCursor,
+    )
 
 
 ParserState.cloneFrom(self: ParserState[t], other: ParserState[t]):
