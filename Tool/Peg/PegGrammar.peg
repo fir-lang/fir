@@ -23,7 +23,6 @@ Terminals:
     "?" = Token(kind = TokenKind.Question, ..)
     "*" = Token(kind = TokenKind.Star, ..)
     "_" = Token(kind = TokenKind.Underscore, ..)
-    "-" = Token(kind = TokenKind.Minus, ..)
     "=" = Token(kind = TokenKind.Eq, ..)
     "\\(" = Token(kind = TokenKind.BackslashLParen, ..)
     "(" = Token(kind = TokenKind.LParen, ..)
@@ -35,6 +34,7 @@ Terminals:
     "$" = Token(kind = TokenKind.Dollar, ..)
     "^" = Token(kind = TokenKind.Caret, ..)
     "&" = Token(kind = TokenKind.Amp, ..)
+    "!" = Token(kind = TokenKind.Exclamation, ..)
     "BeginStr" = Token(kind = TokenKind.BeginStr, ..)
     "EndStr" = Token(kind = TokenKind.EndStr, ..)
     "ANY" = Token(..)
@@ -68,7 +68,7 @@ terminalsDecl:
     (_"Terminals" _":" _"NEWLINE" _"INDENT" terminalDecl+ _"DEDENT")?
 
 terminalDecl:
-    _"BeginStr" "EndStr" _"=" (-"NEWLINE" "ANY")+ _"NEWLINE"
+    _"BeginStr" "EndStr" _"=" (!"NEWLINE" "ANY")+ _"NEWLINE"
 
 nonTerminalDecls:
     nonTerminalDecl*
@@ -84,7 +84,7 @@ symbol:
     "$"         # end of input
 
 symbolPrefix:
-    "-"                 # negative lookahead (fails when symbol succeeds)
+    "!"                 # negative lookahead (fails when symbol succeeds)
     "&"                 # positive lookahead (succeeds when symbol succeeds,
                         #                     without consuming input)
     "_"                 # silence, or ignore (don't push match to the tree)
@@ -123,7 +123,7 @@ inlineTokenTreeSingle:
     "row[" indentedTokenTree "]"
     "{" indentedTokenTree "}"
     "INDENT" indentedTokenTree "DEDENT"
-    -inlineTokenTreeTerminator "ANY"
+    !inlineTokenTreeTerminator "ANY"
 
 inlineTokenTreeTerminator:
     ")"
@@ -143,7 +143,7 @@ indentedTokenTreeSingle:
     "row[" indentedTokenTree "]"
     "{" indentedTokenTree "}"
     "INDENT" indentedTokenTree "DEDENT"
-    -indentedTokenTreeTerminator "ANY"
+    !indentedTokenTreeTerminator "ANY"
 
 indentedTokenTreeTerminator:
     ")"

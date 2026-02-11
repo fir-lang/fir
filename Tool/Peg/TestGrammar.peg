@@ -53,13 +53,13 @@ nonTerminalsBacktrack:
     "c" "a"
 
 negLookahead1:
-    -"a" terminalAOrB
+    !"a" terminalAOrB
 
 negLookahead2:
-    terminalAOrB -"a" terminalAOrB
+    terminalAOrB !"a" terminalAOrB
 
 negLookahead3:
-    terminalAOrB terminalAOrB -"a"
+    terminalAOrB terminalAOrB !"a"
 
 posLookahead1:
     &"a" terminalAOrB

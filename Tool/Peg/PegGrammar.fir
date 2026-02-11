@@ -737,7 +737,7 @@ symbolPrefix(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
         \():
             let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
             if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Minus, ..):
+                    and sym is Token(kind = TokenKind.Exclamation, ..):
                 nodes.push(ParseTree.Terminal(sym))
                 state._cursor += 1
             else:

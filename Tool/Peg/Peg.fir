@@ -299,7 +299,7 @@ convertSymbol(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
     if nodes.get(0)
             is ParseTree.NonTerminal(kind = NonTerminal.SymbolPrefix, nodes):
         match nodes.get(0).asTerminal():
-            Token(kind = TokenKind.Minus, ..):
+            Token(kind = TokenKind.Exclamation, ..):
                 symbol = Symbol.NegLookahead(symbol)
 
             Token(kind = TokenKind.Amp, ..):
@@ -419,14 +419,13 @@ type Symbol:
     Ignore(Symbol)
 
     ## Negative lookahead: succeeds without incrementing the cursor if parsing fails. Parsed from
-    ## `-` prefix.
+    ## `!` prefix.
     NegLookahead(Symbol)
 
     ## Positive lookahead: succeeds without incrementing the cursor if parsing succeeds.
     ##
     ## We can't use `+` as the syntax here as it's used for `OneOrMore`. So we follow the original
     ## PEG syntax and use `&`.
-    # TODO: Maybe also use the original syntax (`!`) for negative lookahead, for consistency.
     PosLookahead(Symbol)
 
     ## Binder: `x=symbol`. Binds the result of parsing `symbol` to variable `x`, to be used in the
