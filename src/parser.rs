@@ -1,4 +1,4 @@
-// auto-generated: "lalrpop 0.22.2"
+// auto-generated: "lalrpop 0.23.0"
 // sha3: 7cce679c0a9108b8107aba89173064c3c44ce886f9d92d415bbe0b1ddb93c5c7
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -17,7 +17,7 @@ use self::__lalrpop_util::state_machine as __state_machine;
 extern crate alloc;
 
 #[rustfmt::skip]
-#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::match_single_binding)]
+#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::match_single_binding, clippy::clone_on_copy, clippy::unit_arg)]
 mod __parse__LExpr {
 
     use crate::ast::*;
@@ -4985,7 +4985,7 @@ mod __parse__LExpr {
                     nonterminal_produced: 171,
                 }
             }
-            _ => panic!("invalid reduction index {__reduce_index}",)
+            _ => panic!("invalid reduction index {__reduce_index}")
         }
     }
     pub struct LExprParser {
@@ -6321,8 +6321,8 @@ mod __parse__LExpr {
             417 => {
                 // __LExpr = LExpr => ActionFn(1);
                 let __sym0 = __pop_Variant56(__symbols);
-                let __start = __sym0.0;
-                let __end = __sym0.2;
+                let __start = __sym0.0.clone();
+                let __end = __sym0.2.clone();
                 let __nt = super::__action1::<>(module, __sym0);
                 return Some(Ok(__nt));
             }
@@ -7276,8 +7276,8 @@ mod __parse__LExpr {
     {
         // ","? = "," => ActionFn(187);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action187::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 0)
@@ -7309,8 +7309,8 @@ mod __parse__LExpr {
     {
         // "prim"? = "prim" => ActionFn(223);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action223::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 1)
@@ -7342,8 +7342,8 @@ mod __parse__LExpr {
     {
         // "value"? = "value" => ActionFn(235);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action235::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 2)
@@ -7377,8 +7377,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant2(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action191::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (2, 3)
@@ -7410,8 +7410,8 @@ mod __parse__LExpr {
     {
         // ("," <ImportPath>)* = ("," <ImportPath>)+ => ActionFn(190);
         let __sym0 = __pop_Variant3(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action190::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (1, 4)
@@ -7429,8 +7429,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant2(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action354::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (2, 5)
@@ -7449,8 +7449,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant3(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action355::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (3, 5)
@@ -7468,8 +7468,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action282::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (2, 6)
@@ -7501,8 +7501,8 @@ mod __parse__LExpr {
     {
         // ("," <LType>)* = ("," <LType>)+ => ActionFn(281);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action281::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (1, 7)
@@ -7520,8 +7520,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action360::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (2, 8)
@@ -7540,8 +7540,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action361::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (3, 8)
@@ -7559,8 +7559,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action308::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 9)
@@ -7592,8 +7592,8 @@ mod __parse__LExpr {
     {
         // ("/" <UpperId>)* = ("/" <UpperId>)+ => ActionFn(307);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action307::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 10)
@@ -7611,8 +7611,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action364::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (2, 11)
@@ -7631,8 +7631,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action365::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (3, 11)
@@ -7650,8 +7650,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action219::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (2, 12)
@@ -7669,8 +7669,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action368::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (2, 13)
@@ -7709,8 +7709,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action210::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant8(__nt), __end));
         (7, 14)
@@ -7742,8 +7742,8 @@ mod __parse__LExpr {
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)* = ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ => ActionFn(209);
         let __sym0 = __pop_Variant9(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action209::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (1, 15)
@@ -7766,8 +7766,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action379::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (7, 16)
@@ -7791,8 +7791,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant9(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action380::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (8, 16)
@@ -7814,8 +7814,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action207::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (6, 17)
@@ -7837,8 +7837,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action383::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant11(__nt), __end));
         (6, 18)
@@ -7874,8 +7874,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action388::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (4, 19)
@@ -7893,8 +7893,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action389::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (2, 19)
@@ -7926,8 +7926,8 @@ mod __parse__LExpr {
     {
         // (<(<LowerId> <(":" <LType>)?>)> ",")* = (<(<LowerId> <(":" <LType>)?>)> ",")+ => ActionFn(278);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action278::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (1, 20)
@@ -7947,8 +7947,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action392::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (4, 21)
@@ -7966,8 +7966,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action393::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (2, 21)
@@ -7988,8 +7988,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action394::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (5, 21)
@@ -8008,8 +8008,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action395::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (3, 21)
@@ -8028,8 +8028,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action200::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant14(__nt), __end));
         (3, 22)
@@ -8061,8 +8061,8 @@ mod __parse__LExpr {
     {
         // (<BeginInterpolation> <LExpr> EndInterpolation)* = (<BeginInterpolation> <LExpr> EndInterpolation)+ => ActionFn(199);
         let __sym0 = __pop_Variant15(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action199::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (1, 23)
@@ -8081,8 +8081,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action398::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (3, 24)
@@ -8102,8 +8102,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant15(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action399::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (4, 24)
@@ -8121,8 +8121,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action294::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (2, 25)
@@ -8154,8 +8154,8 @@ mod __parse__LExpr {
     {
         // (<CallArg> ",")* = (<CallArg> ",")+ => ActionFn(293);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action293::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (1, 26)
@@ -8173,8 +8173,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action402::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (2, 27)
@@ -8193,8 +8193,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant16(__symbols);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action403::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (3, 27)
@@ -8212,8 +8212,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action243::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (2, 28)
@@ -8245,8 +8245,8 @@ mod __parse__LExpr {
     {
         // (<Field> ",")* = (<Field> ",")+ => ActionFn(242);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action242::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (1, 29)
@@ -8264,8 +8264,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action406::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (2, 30)
@@ -8284,8 +8284,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant18(__symbols);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action407::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (3, 30)
@@ -8303,8 +8303,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action194::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (2, 31)
@@ -8336,8 +8336,8 @@ mod __parse__LExpr {
     {
         // (<FieldPat> ",")* = (<FieldPat> ",")+ => ActionFn(303);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action303::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (1, 32)
@@ -8355,8 +8355,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action410::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (2, 33)
@@ -8375,8 +8375,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant20(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action411::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (3, 33)
@@ -8394,8 +8394,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action313::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (2, 34)
@@ -8427,8 +8427,8 @@ mod __parse__LExpr {
     {
         // (<LLowerId> ",")* = (<LLowerId> ",")+ => ActionFn(312);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action312::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (1, 35)
@@ -8446,8 +8446,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action414::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (2, 36)
@@ -8466,8 +8466,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action415::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (3, 36)
@@ -8485,8 +8485,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action253::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (2, 37)
@@ -8518,8 +8518,8 @@ mod __parse__LExpr {
     {
         // (<LType> ",")* = (<LType> ",")+ => ActionFn(252);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action252::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (1, 38)
@@ -8537,8 +8537,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action418::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (2, 39)
@@ -8557,8 +8557,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action419::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (3, 39)
@@ -8576,8 +8576,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action248::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 40)
@@ -8609,8 +8609,8 @@ mod __parse__LExpr {
     {
         // (<LowerId> ",")* = (<LowerId> ",")+ => ActionFn(247);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action247::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 41)
@@ -8628,8 +8628,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action422::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (2, 42)
@@ -8648,8 +8648,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action423::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (3, 42)
@@ -8667,8 +8667,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action230::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 43)
@@ -8686,8 +8686,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action426::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (2, 44)
@@ -8722,8 +8722,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action369::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (3, 45)
@@ -8739,8 +8739,8 @@ mod __parse__LExpr {
     {
         // (<LowerId> <(":" <LType>)?>) = LowerId => ActionFn(370);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action370::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (1, 45)
@@ -8759,8 +8759,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action390::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (3, 46)
@@ -8776,8 +8776,8 @@ mod __parse__LExpr {
     {
         // (<LowerId> <(":" <LType>)?>)? = LowerId => ActionFn(391);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action391::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (1, 46)
@@ -8811,8 +8811,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action263::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (2, 47)
@@ -8844,8 +8844,8 @@ mod __parse__LExpr {
     {
         // (<NamedType> ",")* = (<NamedType> ",")+ => ActionFn(262);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action262::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (1, 48)
@@ -8863,8 +8863,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action435::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (2, 49)
@@ -8883,8 +8883,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant25(__symbols);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action436::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (3, 49)
@@ -8902,8 +8902,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action268::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (2, 50)
@@ -8935,8 +8935,8 @@ mod __parse__LExpr {
     {
         // (<Param> ",")* = (<Param> ",")+ => ActionFn(267);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action267::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (1, 51)
@@ -8954,8 +8954,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action439::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (2, 52)
@@ -8974,8 +8974,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant27(__symbols);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action440::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (3, 52)
@@ -8993,8 +8993,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action287::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (2, 53)
@@ -9026,8 +9026,8 @@ mod __parse__LExpr {
     {
         // (<ParenExpr> ",")* = (<ParenExpr> ",")+ => ActionFn(286);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action286::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (1, 54)
@@ -9045,8 +9045,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action443::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (2, 55)
@@ -9065,8 +9065,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant29(__symbols);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action444::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (3, 55)
@@ -9084,8 +9084,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action258::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (2, 56)
@@ -9117,8 +9117,8 @@ mod __parse__LExpr {
     {
         // (<RecordTypeField> ",")* = (<RecordTypeField> ",")+ => ActionFn(257);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action257::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (1, 57)
@@ -9136,8 +9136,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action447::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (2, 58)
@@ -9156,8 +9156,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action448::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (3, 58)
@@ -9175,8 +9175,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action299::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (2, 59)
@@ -9208,8 +9208,8 @@ mod __parse__LExpr {
     {
         // (<SeqElem> ",")* = (<SeqElem> ",")+ => ActionFn(298);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action298::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (1, 60)
@@ -9227,8 +9227,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action451::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (2, 61)
@@ -9247,8 +9247,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action452::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (3, 61)
@@ -9302,8 +9302,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action74::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (6, 64)
@@ -9327,8 +9327,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action75::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (8, 64)
@@ -9347,8 +9347,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant59(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action76::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (3, 64)
@@ -9369,8 +9369,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action77::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (5, 64)
@@ -9402,8 +9402,8 @@ mod __parse__LExpr {
     {
         // Alt* = Alt+ => ActionFn(212);
         let __sym0 = __pop_Variant37(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action212::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 65)
@@ -9419,8 +9419,8 @@ mod __parse__LExpr {
     {
         // Alt+ = Alt => ActionFn(271);
         let __sym0 = __pop_Variant36(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action271::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 66)
@@ -9438,8 +9438,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant36(__symbols);
         let __sym0 = __pop_Variant37(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action272::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (2, 66)
@@ -9471,8 +9471,8 @@ mod __parse__LExpr {
     {
         // Alts = Alt+ => ActionFn(594);
         let __sym0 = __pop_Variant37(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action594::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (1, 67)
@@ -9488,8 +9488,8 @@ mod __parse__LExpr {
     {
         // AssignOp = "=" => ActionFn(78);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action78::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -9505,8 +9505,8 @@ mod __parse__LExpr {
     {
         // AssignOp = "+=" => ActionFn(79);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action79::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -9522,8 +9522,8 @@ mod __parse__LExpr {
     {
         // AssignOp = "-=" => ActionFn(80);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action80::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -9539,8 +9539,8 @@ mod __parse__LExpr {
     {
         // AssignOp = "*=" => ActionFn(81);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action81::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -9556,8 +9556,8 @@ mod __parse__LExpr {
     {
         // AssignOp = "^=" => ActionFn(82);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action82::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -9580,8 +9580,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action87::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (7, 69)
@@ -9610,8 +9610,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym12.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym12.2.clone();
         let __nt = super::__action384::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (13, 69)
@@ -9634,8 +9634,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action385::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (7, 69)
@@ -9665,8 +9665,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym13.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym13.2.clone();
         let __nt = super::__action386::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (14, 69)
@@ -9690,8 +9690,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action387::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (8, 69)
@@ -9713,8 +9713,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action89::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (6, 69)
@@ -9739,8 +9739,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant71(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym8.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym8.2.clone();
         let __nt = super::__action90::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (9, 69)
@@ -9759,8 +9759,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action140::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (3, 70)
@@ -9776,8 +9776,8 @@ mod __parse__LExpr {
     {
         // CallArg = LExpr => ActionFn(141);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action141::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (1, 70)
@@ -9793,8 +9793,8 @@ mod __parse__LExpr {
     {
         // CallArg? = CallArg => ActionFn(290);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action290::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant41(__nt), __end));
         (1, 71)
@@ -9826,8 +9826,8 @@ mod __parse__LExpr {
     {
         // Con = UpperId => ActionFn(156);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action156::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant42(__nt), __end));
         (1, 72)
@@ -9843,8 +9843,8 @@ mod __parse__LExpr {
     {
         // Con = UpperIdPath => ActionFn(157);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action157::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant42(__nt), __end));
         (1, 72)
@@ -9862,8 +9862,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action15::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (2, 73)
@@ -9884,8 +9884,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant73(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action455::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (5, 73)
@@ -9901,8 +9901,8 @@ mod __parse__LExpr {
     {
         // ConDecl+ = ConDecl => ActionFn(231);
         let __sym0 = __pop_Variant43(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action231::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (1, 74)
@@ -9920,8 +9920,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant43(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action232::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 74)
@@ -9937,8 +9937,8 @@ mod __parse__LExpr {
     {
         // ConDecls = ConDecl+ => ActionFn(14);
         let __sym0 = __pop_Variant44(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action14::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant45(__nt), __end));
         (1, 75)
@@ -9954,8 +9954,8 @@ mod __parse__LExpr {
     {
         // ConPat = Con => ActionFn(158);
         let __sym0 = __pop_Variant42(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action158::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (1, 76)
@@ -9975,8 +9975,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant50(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant42(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action159::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (4, 76)
@@ -10011,8 +10011,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action172::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant47(__nt), __end));
         (3, 77)
@@ -10028,8 +10028,8 @@ mod __parse__LExpr {
     {
         // Expr = InlineExpr => ActionFn(84);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action84::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 78)
@@ -10045,8 +10045,8 @@ mod __parse__LExpr {
     {
         // Expr = BlockExpr => ActionFn(85);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action85::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 78)
@@ -10065,8 +10065,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action427::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (3, 79)
@@ -10082,8 +10082,8 @@ mod __parse__LExpr {
     {
         // Field = LType => ActionFn(428);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action428::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (1, 79)
@@ -10099,8 +10099,8 @@ mod __parse__LExpr {
     {
         // Field? = Field => ActionFn(239);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action239::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant48(__nt), __end));
         (1, 80)
@@ -10135,8 +10135,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant58(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action163::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (3, 81)
@@ -10152,8 +10152,8 @@ mod __parse__LExpr {
     {
         // FieldPat = LPat => ActionFn(164);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action164::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (1, 81)
@@ -10169,8 +10169,8 @@ mod __parse__LExpr {
     {
         // FieldPat? = FieldPat => ActionFn(300);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action300::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (1, 82)
@@ -10202,8 +10202,8 @@ mod __parse__LExpr {
     {
         // FieldPats = ".." => ActionFn(160);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action160::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (1, 83)
@@ -10219,8 +10219,8 @@ mod __parse__LExpr {
     {
         // FieldPats = Sep<FieldPat, ","> => ActionFn(161);
         let __sym0 = __pop_Variant74(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action161::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (1, 83)
@@ -10238,8 +10238,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action162::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (2, 83)
@@ -10261,8 +10261,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant53(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action526::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (6, 84)
@@ -10281,8 +10281,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant53(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action527::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (3, 84)
@@ -10300,8 +10300,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant53(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action528::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (2, 84)
@@ -10321,8 +10321,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant53(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action529::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (4, 84)
@@ -10338,8 +10338,8 @@ mod __parse__LExpr {
     {
         // FunDecl+ = FunDecl => ActionFn(183);
         let __sym0 = __pop_Variant51(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action183::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (1, 85)
@@ -10357,8 +10357,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant51(__symbols);
         let __sym0 = __pop_Variant52(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action184::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (2, 85)
@@ -10378,8 +10378,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant63(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action48::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant53(__nt), __end));
         (4, 86)
@@ -10405,8 +10405,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant22(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym9.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym9.2.clone();
         let __nt = super::__action530::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (10, 87)
@@ -10427,8 +10427,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant22(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action531::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (5, 87)
@@ -10450,8 +10450,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action532::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 88)
@@ -10474,8 +10474,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action533::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (7, 88)
@@ -10496,8 +10496,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action534::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (5, 88)
@@ -10519,8 +10519,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action535::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 88)
@@ -10536,8 +10536,8 @@ mod __parse__LExpr {
     {
         // ImportPath = Sep1<UpperId, "/"> => ActionFn(166);
         let __sym0 = __pop_Variant70(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action166::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (1, 89)
@@ -10555,8 +10555,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action136::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 90)
@@ -10578,8 +10578,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant71(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action137::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (6, 90)
@@ -10595,8 +10595,8 @@ mod __parse__LExpr {
     {
         // InlineExpr = InlineExpr11 => ActionFn(138);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action138::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 90)
@@ -10614,8 +10614,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action92::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 91)
@@ -10631,8 +10631,8 @@ mod __parse__LExpr {
     {
         // InlineExpr0 = UpperId => ActionFn(93);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action93::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -10651,8 +10651,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action94::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -10668,8 +10668,8 @@ mod __parse__LExpr {
     {
         // InlineExpr0 = UpperIdPath => ActionFn(95);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action95::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -10688,8 +10688,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action96::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -10708,8 +10708,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action97::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -10728,8 +10728,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant78(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action98::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -10745,8 +10745,8 @@ mod __parse__LExpr {
     {
         // InlineExpr0 = IntLit => ActionFn(466);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action466::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -10764,8 +10764,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action400::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 91)
@@ -10784,8 +10784,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant15(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action401::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -10801,8 +10801,8 @@ mod __parse__LExpr {
     {
         // InlineExpr0 = CharLit => ActionFn(101);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action101::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -10822,8 +10822,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant72(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action536::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (4, 91)
@@ -10843,8 +10843,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action537::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (4, 91)
@@ -10863,8 +10863,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant80(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action104::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -10883,8 +10883,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant80(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action105::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -10903,8 +10903,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action538::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 92)
@@ -10920,8 +10920,8 @@ mod __parse__LExpr {
     {
         // InlineExpr10 = InlineExpr9 => ActionFn(132);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action132::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 92)
@@ -10940,8 +10940,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action539::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 93)
@@ -10957,8 +10957,8 @@ mod __parse__LExpr {
     {
         // InlineExpr11 = "return" => ActionFn(540);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action540::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 93)
@@ -10974,8 +10974,8 @@ mod __parse__LExpr {
     {
         // InlineExpr11 = InlineExpr10 => ActionFn(135);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action135::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 93)
@@ -10993,8 +10993,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action541::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 94)
@@ -11012,8 +11012,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action542::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 94)
@@ -11031,8 +11031,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action543::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 94)
@@ -11048,8 +11048,8 @@ mod __parse__LExpr {
     {
         // InlineExpr2 = InlineExpr0 => ActionFn(109);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action109::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 94)
@@ -11068,8 +11068,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action544::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 95)
@@ -11088,8 +11088,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action545::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 95)
@@ -11105,8 +11105,8 @@ mod __parse__LExpr {
     {
         // InlineExpr4 = InlineExpr2 => ActionFn(112);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action112::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 95)
@@ -11125,8 +11125,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action546::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 96)
@@ -11145,8 +11145,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action547::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 96)
@@ -11162,8 +11162,8 @@ mod __parse__LExpr {
     {
         // InlineExpr5 = InlineExpr4 => ActionFn(115);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action115::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 96)
@@ -11182,8 +11182,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action548::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 97)
@@ -11202,8 +11202,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action549::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 97)
@@ -11219,8 +11219,8 @@ mod __parse__LExpr {
     {
         // InlineExpr6 = InlineExpr5 => ActionFn(118);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action118::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 97)
@@ -11239,8 +11239,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action550::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 98)
@@ -11256,8 +11256,8 @@ mod __parse__LExpr {
     {
         // InlineExpr7 = InlineExpr6 => ActionFn(120);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action120::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 98)
@@ -11276,8 +11276,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action551::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 99)
@@ -11293,8 +11293,8 @@ mod __parse__LExpr {
     {
         // InlineExpr8 = InlineExpr7 => ActionFn(122);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action122::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 99)
@@ -11313,8 +11313,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action552::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -11333,8 +11333,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action553::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -11353,8 +11353,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action554::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -11373,8 +11373,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action555::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -11393,8 +11393,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action556::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -11413,8 +11413,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action557::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -11433,8 +11433,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant65(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action558::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -11450,8 +11450,8 @@ mod __parse__LExpr {
     {
         // InlineExpr9 = InlineExpr8 => ActionFn(130);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action130::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 100)
@@ -11467,8 +11467,8 @@ mod __parse__LExpr {
     {
         // LBlockExpr = BlockExpr => ActionFn(559);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action559::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (1, 101)
@@ -11484,8 +11484,8 @@ mod __parse__LExpr {
     {
         // LExpr = Expr => ActionFn(560);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action560::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (1, 102)
@@ -11501,8 +11501,8 @@ mod __parse__LExpr {
     {
         // LInlineExpr = InlineExpr => ActionFn(561);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action561::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (1, 103)
@@ -11518,8 +11518,8 @@ mod __parse__LExpr {
     {
         // LLowerId = LowerId => ActionFn(562);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action562::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 104)
@@ -11535,8 +11535,8 @@ mod __parse__LExpr {
     {
         // LLowerId? = LLowerId => ActionFn(309);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action309::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (1, 105)
@@ -11568,8 +11568,8 @@ mod __parse__LExpr {
     {
         // LPat = Pat => ActionFn(563);
         let __sym0 = __pop_Variant65(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action563::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant58(__nt), __end));
         (1, 106)
@@ -11585,8 +11585,8 @@ mod __parse__LExpr {
     {
         // LStmt = Stmt => ActionFn(564);
         let __sym0 = __pop_Variant82(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action564::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant59(__nt), __end));
         (1, 107)
@@ -11618,8 +11618,8 @@ mod __parse__LExpr {
     {
         // LStmt* = LStmt+ => ActionFn(216);
         let __sym0 = __pop_Variant60(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action216::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (1, 108)
@@ -11635,8 +11635,8 @@ mod __parse__LExpr {
     {
         // LStmt+ = LStmt => ActionFn(269);
         let __sym0 = __pop_Variant59(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action269::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (1, 109)
@@ -11654,8 +11654,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant59(__symbols);
         let __sym0 = __pop_Variant60(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action270::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (2, 109)
@@ -11687,8 +11687,8 @@ mod __parse__LExpr {
     {
         // LStmts = LStmt+ => ActionFn(612);
         let __sym0 = __pop_Variant60(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action612::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (1, 110)
@@ -11704,8 +11704,8 @@ mod __parse__LExpr {
     {
         // LType = Type => ActionFn(565);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action565::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 111)
@@ -11721,8 +11721,8 @@ mod __parse__LExpr {
     {
         // LType? = LType => ActionFn(249);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action249::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (1, 112)
@@ -11754,8 +11754,8 @@ mod __parse__LExpr {
     {
         // LTypeNamed = TypeNamed => ActionFn(566);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action566::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 113)
@@ -11771,8 +11771,8 @@ mod __parse__LExpr {
     {
         // LTypeNoFn = TypeNoFn => ActionFn(567);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action567::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 114)
@@ -11788,8 +11788,8 @@ mod __parse__LExpr {
     {
         // LUpperId = UpperId => ActionFn(568);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action568::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 115)
@@ -11805,8 +11805,8 @@ mod __parse__LExpr {
     {
         // LUpperIdLBracket = UpperIdLBracket => ActionFn(569);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action569::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 116)
@@ -11822,8 +11822,8 @@ mod __parse__LExpr {
     {
         // Label? = Label => ActionFn(213);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action213::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 117)
@@ -11855,8 +11855,8 @@ mod __parse__LExpr {
     {
         // LowerId? = LowerId => ActionFn(244);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action244::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 118)
@@ -11904,8 +11904,8 @@ mod __parse__LExpr {
     {
         // NEWLINE* = NEWLINE+ => ActionFn(180);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action180::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 119)
@@ -11921,8 +11921,8 @@ mod __parse__LExpr {
     {
         // NEWLINE+ = NEWLINE => ActionFn(316);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action316::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 120)
@@ -11940,8 +11940,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action317::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (2, 120)
@@ -11957,8 +11957,8 @@ mod __parse__LExpr {
     {
         // NamedType = UpperId => ActionFn(38);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action38::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (1, 121)
@@ -11977,8 +11977,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action39::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (3, 121)
@@ -11994,8 +11994,8 @@ mod __parse__LExpr {
     {
         // NamedType? = NamedType => ActionFn(259);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action259::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 122)
@@ -12030,8 +12030,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action371::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (3, 123)
@@ -12047,8 +12047,8 @@ mod __parse__LExpr {
     {
         // Param = LowerId => ActionFn(372);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action372::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (1, 123)
@@ -12064,8 +12064,8 @@ mod __parse__LExpr {
     {
         // Param? = Param => ActionFn(264);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action264::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant62(__nt), __end));
         (1, 124)
@@ -12100,8 +12100,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant77(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action501::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant63(__nt), __end));
         (3, 125)
@@ -12120,8 +12120,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action139::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (3, 126)
@@ -12137,8 +12137,8 @@ mod __parse__LExpr {
     {
         // ParenExpr? = ParenExpr => ActionFn(283);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action283::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant64(__nt), __end));
         (1, 127)
@@ -12172,8 +12172,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action59::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (2, 128)
@@ -12189,8 +12189,8 @@ mod __parse__LExpr {
     {
         // ParentTy? = ParentTy => ActionFn(221);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action221::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (1, 129)
@@ -12225,8 +12225,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant65(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant65(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action570::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (3, 130)
@@ -12242,8 +12242,8 @@ mod __parse__LExpr {
     {
         // Pat = Pat0 => ActionFn(155);
         let __sym0 = __pop_Variant65(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action155::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 130)
@@ -12259,8 +12259,8 @@ mod __parse__LExpr {
     {
         // Pat0 = LowerId => ActionFn(147);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action147::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -12276,8 +12276,8 @@ mod __parse__LExpr {
     {
         // Pat0 = ConPat => ActionFn(148);
         let __sym0 = __pop_Variant46(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action148::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -12296,8 +12296,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant50(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action149::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (3, 131)
@@ -12313,8 +12313,8 @@ mod __parse__LExpr {
     {
         // Pat0 = "_" => ActionFn(150);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action150::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -12332,8 +12332,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action151::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (2, 131)
@@ -12349,8 +12349,8 @@ mod __parse__LExpr {
     {
         // Pat0 = CharLit => ActionFn(152);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action152::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -12368,8 +12368,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant65(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action571::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (2, 131)
@@ -12388,8 +12388,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant88(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action44::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (3, 132)
@@ -12405,8 +12405,8 @@ mod __parse__LExpr {
     {
         // RecordTypeField? = RecordTypeField => ActionFn(254);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action254::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant66(__nt), __end));
         (1, 133)
@@ -12454,8 +12454,8 @@ mod __parse__LExpr {
     {
         // ReturnType = LTypeNoFn => ActionFn(56);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action56::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant67(__nt), __end));
         (1, 134)
@@ -12474,8 +12474,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action57::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant67(__nt), __end));
         (3, 134)
@@ -12493,8 +12493,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action58::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant67(__nt), __end));
         (2, 134)
@@ -12528,8 +12528,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action41::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant68(__nt), __end));
         (2, 135)
@@ -12545,8 +12545,8 @@ mod __parse__LExpr {
     {
         // Sep1<LType, ","> = LType => ActionFn(362);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action362::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (1, 136)
@@ -12564,8 +12564,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant5(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action363::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (2, 136)
@@ -12581,8 +12581,8 @@ mod __parse__LExpr {
     {
         // Sep1<UpperId, "/"> = UpperId => ActionFn(366);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action366::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (1, 137)
@@ -12600,8 +12600,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant6(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action367::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (2, 137)
@@ -12620,8 +12620,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action429::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (3, 138)
@@ -12637,8 +12637,8 @@ mod __parse__LExpr {
     {
         // Sep<(<LowerId> <(":" <LType>)?>), ","> = LowerId => ActionFn(430);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action430::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (1, 138)
@@ -12674,8 +12674,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action432::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (4, 138)
@@ -12693,8 +12693,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action433::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (2, 138)
@@ -12710,8 +12710,8 @@ mod __parse__LExpr {
     {
         // Sep<(<LowerId> <(":" <LType>)?>), ","> = (<(<LowerId> <(":" <LType>)?>)> ",")+ => ActionFn(434);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action434::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (1, 138)
@@ -12727,8 +12727,8 @@ mod __parse__LExpr {
     {
         // Sep<CallArg, ","> = CallArg => ActionFn(595);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action595::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant72(__nt), __end));
         (1, 139)
@@ -12762,8 +12762,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant16(__symbols);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action597::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant72(__nt), __end));
         (2, 139)
@@ -12779,8 +12779,8 @@ mod __parse__LExpr {
     {
         // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(598);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action598::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant72(__nt), __end));
         (1, 139)
@@ -12796,8 +12796,8 @@ mod __parse__LExpr {
     {
         // Sep<Field, ","> = Field => ActionFn(599);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action599::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant73(__nt), __end));
         (1, 140)
@@ -12831,8 +12831,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant18(__symbols);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action601::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant73(__nt), __end));
         (2, 140)
@@ -12848,8 +12848,8 @@ mod __parse__LExpr {
     {
         // Sep<Field, ","> = (<Field> ",")+ => ActionFn(602);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action602::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant73(__nt), __end));
         (1, 140)
@@ -12865,8 +12865,8 @@ mod __parse__LExpr {
     {
         // Sep<FieldPat, ","> = FieldPat => ActionFn(603);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action603::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant74(__nt), __end));
         (1, 141)
@@ -12900,8 +12900,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant20(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action605::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant74(__nt), __end));
         (2, 141)
@@ -12917,8 +12917,8 @@ mod __parse__LExpr {
     {
         // Sep<FieldPat, ","> = (<FieldPat> ",")+ => ActionFn(606);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action606::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant74(__nt), __end));
         (1, 141)
@@ -12934,8 +12934,8 @@ mod __parse__LExpr {
     {
         // Sep<LLowerId, ","> = LLowerId => ActionFn(607);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action607::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (1, 142)
@@ -12969,8 +12969,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action609::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (2, 142)
@@ -12986,8 +12986,8 @@ mod __parse__LExpr {
     {
         // Sep<LLowerId, ","> = (<LLowerId> ",")+ => ActionFn(610);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action610::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (1, 142)
@@ -13003,8 +13003,8 @@ mod __parse__LExpr {
     {
         // Sep<LType, ","> = LType => ActionFn(613);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action613::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (1, 143)
@@ -13038,8 +13038,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action615::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (2, 143)
@@ -13055,8 +13055,8 @@ mod __parse__LExpr {
     {
         // Sep<LType, ","> = (<LType> ",")+ => ActionFn(616);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action616::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (1, 143)
@@ -13072,8 +13072,8 @@ mod __parse__LExpr {
     {
         // Sep<LowerId, ","> = LowerId => ActionFn(629);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action629::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (1, 144)
@@ -13107,8 +13107,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action631::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (2, 144)
@@ -13124,8 +13124,8 @@ mod __parse__LExpr {
     {
         // Sep<LowerId, ","> = (<LowerId> ",")+ => ActionFn(632);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action632::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (1, 144)
@@ -13141,8 +13141,8 @@ mod __parse__LExpr {
     {
         // Sep<NamedType, ","> = NamedType => ActionFn(643);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action643::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 145)
@@ -13176,8 +13176,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant25(__symbols);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action645::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (2, 145)
@@ -13193,8 +13193,8 @@ mod __parse__LExpr {
     {
         // Sep<NamedType, ","> = (<NamedType> ",")+ => ActionFn(646);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action646::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 145)
@@ -13210,8 +13210,8 @@ mod __parse__LExpr {
     {
         // Sep<Param, ","> = Param => ActionFn(647);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action647::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 146)
@@ -13245,8 +13245,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant27(__symbols);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action649::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (2, 146)
@@ -13262,8 +13262,8 @@ mod __parse__LExpr {
     {
         // Sep<Param, ","> = (<Param> ",")+ => ActionFn(650);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action650::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 146)
@@ -13279,8 +13279,8 @@ mod __parse__LExpr {
     {
         // Sep<ParenExpr, ","> = ParenExpr => ActionFn(651);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action651::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant78(__nt), __end));
         (1, 147)
@@ -13314,8 +13314,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant29(__symbols);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action653::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant78(__nt), __end));
         (2, 147)
@@ -13331,8 +13331,8 @@ mod __parse__LExpr {
     {
         // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(654);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action654::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant78(__nt), __end));
         (1, 147)
@@ -13348,8 +13348,8 @@ mod __parse__LExpr {
     {
         // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(657);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action657::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
@@ -13383,8 +13383,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action659::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (2, 148)
@@ -13400,8 +13400,8 @@ mod __parse__LExpr {
     {
         // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(660);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action660::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
@@ -13417,8 +13417,8 @@ mod __parse__LExpr {
     {
         // Sep<SeqElem, ","> = SeqElem => ActionFn(661);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action661::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
@@ -13452,8 +13452,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action663::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (2, 149)
@@ -13469,8 +13469,8 @@ mod __parse__LExpr {
     {
         // Sep<SeqElem, ","> = (<SeqElem> ",")+ => ActionFn(664);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action664::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
@@ -13486,8 +13486,8 @@ mod __parse__LExpr {
     {
         // SeqElem = LInlineExpr => ActionFn(144);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action144::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (1, 150)
@@ -13506,8 +13506,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action145::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (3, 150)
@@ -13523,8 +13523,8 @@ mod __parse__LExpr {
     {
         // SeqElem? = SeqElem => ActionFn(295);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action295::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (1, 151)
@@ -13559,8 +13559,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action617::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (3, 152)
@@ -13578,8 +13578,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action618::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 152)
@@ -13598,8 +13598,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action619::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (3, 152)
@@ -13617,8 +13617,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action620::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 152)
@@ -13641,8 +13641,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action373::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (7, 152)
@@ -13663,8 +13663,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action374::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (5, 152)
@@ -13686,8 +13686,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action375::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (6, 152)
@@ -13707,8 +13707,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action376::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (4, 152)
@@ -13728,8 +13728,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant39(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action66::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (4, 152)
@@ -13748,8 +13748,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant39(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action67::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (3, 152)
@@ -13767,8 +13767,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action572::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 152)
@@ -13784,8 +13784,8 @@ mod __parse__LExpr {
     {
         // Stmt = BlockExpr => ActionFn(573);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action573::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (1, 152)
@@ -13813,8 +13813,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant58(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym11.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym11.2.clone();
         let __nt = super::__action621::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (12, 152)
@@ -13841,8 +13841,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym10.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym10.2.clone();
         let __nt = super::__action622::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (11, 152)
@@ -13868,8 +13868,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant58(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym9.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym9.2.clone();
         let __nt = super::__action623::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (10, 152)
@@ -13894,8 +13894,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym8.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym8.2.clone();
         let __nt = super::__action624::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (9, 152)
@@ -13919,8 +13919,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action625::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (8, 152)
@@ -13943,8 +13943,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action626::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (7, 152)
@@ -13967,8 +13967,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action627::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (7, 152)
@@ -13990,8 +13990,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action628::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (6, 152)
@@ -14007,8 +14007,8 @@ mod __parse__LExpr {
     {
         // TopDecl = TypeDecl => ActionFn(633);
         let __sym0 = __pop_Variant90(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action633::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -14026,8 +14026,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant90(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action634::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -14043,8 +14043,8 @@ mod __parse__LExpr {
     {
         // TopDecl = TopFunDecl => ActionFn(635);
         let __sym0 = __pop_Variant51(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action635::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -14062,8 +14062,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant51(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action636::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -14079,8 +14079,8 @@ mod __parse__LExpr {
     {
         // TopDecl = ImportDecl => ActionFn(637);
         let __sym0 = __pop_Variant55(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action637::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -14098,8 +14098,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant55(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action638::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -14115,8 +14115,8 @@ mod __parse__LExpr {
     {
         // TopDecl = TraitDecl => ActionFn(639);
         let __sym0 = __pop_Variant87(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action639::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -14134,8 +14134,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant87(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action640::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -14151,8 +14151,8 @@ mod __parse__LExpr {
     {
         // TopDecl = ImplDecl => ActionFn(641);
         let __sym0 = __pop_Variant54(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action641::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -14170,8 +14170,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant54(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action642::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -14203,8 +14203,8 @@ mod __parse__LExpr {
     {
         // TopDecl* = TopDecl+ => ActionFn(182);
         let __sym0 = __pop_Variant84(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action182::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 154)
@@ -14220,8 +14220,8 @@ mod __parse__LExpr {
     {
         // TopDecl+ = TopDecl => ActionFn(314);
         let __sym0 = __pop_Variant83(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action314::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 155)
@@ -14239,8 +14239,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant83(__symbols);
         let __sym0 = __pop_Variant84(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action315::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (2, 155)
@@ -14272,8 +14272,8 @@ mod __parse__LExpr {
     {
         // TopDecls = TopDecl+ => ActionFn(666);
         let __sym0 = __pop_Variant84(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action666::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (1, 156)
@@ -14295,8 +14295,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant86(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action580::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (6, 157)
@@ -14315,8 +14315,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant86(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action581::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (3, 157)
@@ -14334,8 +14334,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant86(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action582::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (2, 157)
@@ -14355,8 +14355,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant86(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action583::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (4, 157)
@@ -14377,8 +14377,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant47(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action655::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (5, 158)
@@ -14398,8 +14398,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant63(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action656::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (4, 158)
@@ -14424,8 +14424,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant75(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym8.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym8.2.clone();
         let __nt = super::__action584::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (9, 159)
@@ -14445,8 +14445,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant75(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action585::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (4, 159)
@@ -14467,8 +14467,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant69(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action22::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (5, 160)
@@ -14488,8 +14488,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action23::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -14509,8 +14509,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action24::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -14530,8 +14530,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action25::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -14551,8 +14551,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action26::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -14568,8 +14568,8 @@ mod __parse__LExpr {
     {
         // Type = Type0 => ActionFn(27);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action27::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 160)
@@ -14585,8 +14585,8 @@ mod __parse__LExpr {
     {
         // Type0 = TypeNamed => ActionFn(20);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action20::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 161)
@@ -14602,8 +14602,8 @@ mod __parse__LExpr {
     {
         // Type0 = LowerId => ActionFn(21);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action21::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 161)
@@ -14622,8 +14622,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action586::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant89(__nt), __end));
         (3, 162)
@@ -14639,8 +14639,8 @@ mod __parse__LExpr {
     {
         // TypeArg = LType => ActionFn(43);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action43::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant89(__nt), __end));
         (1, 162)
@@ -14660,8 +14660,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action587::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (4, 163)
@@ -14680,8 +14680,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant91(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action588::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (3, 163)
@@ -14702,8 +14702,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action589::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (5, 163)
@@ -14723,8 +14723,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action590::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (4, 163)
@@ -14744,8 +14744,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action591::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (4, 163)
@@ -14766,8 +14766,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action592::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (5, 163)
@@ -14783,8 +14783,8 @@ mod __parse__LExpr {
     {
         // TypeDeclRhs = NEWLINE => ActionFn(10);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action10::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (1, 164)
@@ -14805,8 +14805,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action11::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (5, 164)
@@ -14826,8 +14826,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant73(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action525::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (4, 164)
@@ -14843,8 +14843,8 @@ mod __parse__LExpr {
     {
         // TypeNamed = UpperId => ActionFn(36);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action36::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 165)
@@ -14863,8 +14863,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action37::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (3, 165)
@@ -14880,8 +14880,8 @@ mod __parse__LExpr {
     {
         // TypeNoFn = TypeNamed => ActionFn(28);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action28::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 166)
@@ -14897,8 +14897,8 @@ mod __parse__LExpr {
     {
         // TypeNoFn = LowerId => ActionFn(29);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action29::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 166)
@@ -14917,8 +14917,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant88(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action30::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (3, 166)
@@ -14938,8 +14938,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action31::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -14959,8 +14959,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action32::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -14980,8 +14980,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action33::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -15001,8 +15001,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action34::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -15020,8 +15020,8 @@ mod __parse__LExpr {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant70(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action13::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (2, 167)
@@ -15040,8 +15040,8 @@ mod __parse__LExpr {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action142::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (3, 168)
@@ -15073,8 +15073,8 @@ mod __parse__LExpr {
     {
         // __LStmt = LStmt => ActionFn(0);
         let __sym0 = __pop_Variant59(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action0::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant59(__nt), __end));
         (1, 170)
@@ -15090,8 +15090,8 @@ mod __parse__LExpr {
     {
         // __TopDecls = TopDecls => ActionFn(2);
         let __sym0 = __pop_Variant85(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action2::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (1, 171)
@@ -15101,7 +15101,7 @@ mod __parse__LExpr {
 pub use self::__parse__LExpr::LExprParser;
 
 #[rustfmt::skip]
-#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::match_single_binding)]
+#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::match_single_binding, clippy::clone_on_copy, clippy::unit_arg)]
 mod __parse__LStmt {
 
     use crate::ast::*;
@@ -20069,7 +20069,7 @@ mod __parse__LStmt {
                     nonterminal_produced: 171,
                 }
             }
-            _ => panic!("invalid reduction index {__reduce_index}",)
+            _ => panic!("invalid reduction index {__reduce_index}")
         }
     }
     pub struct LStmtParser {
@@ -21408,8 +21408,8 @@ mod __parse__LStmt {
             418 => {
                 // __LStmt = LStmt => ActionFn(0);
                 let __sym0 = __pop_Variant59(__symbols);
-                let __start = __sym0.0;
-                let __end = __sym0.2;
+                let __start = __sym0.0.clone();
+                let __end = __sym0.2.clone();
                 let __nt = super::__action0::<>(module, __sym0);
                 return Some(Ok(__nt));
             }
@@ -22360,8 +22360,8 @@ mod __parse__LStmt {
     {
         // ","? = "," => ActionFn(187);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action187::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 0)
@@ -22393,8 +22393,8 @@ mod __parse__LStmt {
     {
         // "prim"? = "prim" => ActionFn(223);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action223::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 1)
@@ -22426,8 +22426,8 @@ mod __parse__LStmt {
     {
         // "value"? = "value" => ActionFn(235);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action235::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 2)
@@ -22461,8 +22461,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant2(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action191::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (2, 3)
@@ -22494,8 +22494,8 @@ mod __parse__LStmt {
     {
         // ("," <ImportPath>)* = ("," <ImportPath>)+ => ActionFn(190);
         let __sym0 = __pop_Variant3(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action190::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (1, 4)
@@ -22513,8 +22513,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant2(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action354::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (2, 5)
@@ -22533,8 +22533,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant3(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action355::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (3, 5)
@@ -22552,8 +22552,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action282::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (2, 6)
@@ -22585,8 +22585,8 @@ mod __parse__LStmt {
     {
         // ("," <LType>)* = ("," <LType>)+ => ActionFn(281);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action281::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (1, 7)
@@ -22604,8 +22604,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action360::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (2, 8)
@@ -22624,8 +22624,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action361::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (3, 8)
@@ -22643,8 +22643,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action308::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 9)
@@ -22676,8 +22676,8 @@ mod __parse__LStmt {
     {
         // ("/" <UpperId>)* = ("/" <UpperId>)+ => ActionFn(307);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action307::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 10)
@@ -22695,8 +22695,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action364::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (2, 11)
@@ -22715,8 +22715,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action365::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (3, 11)
@@ -22734,8 +22734,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action219::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (2, 12)
@@ -22753,8 +22753,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action368::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (2, 13)
@@ -22793,8 +22793,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action210::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant8(__nt), __end));
         (7, 14)
@@ -22826,8 +22826,8 @@ mod __parse__LStmt {
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)* = ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ => ActionFn(209);
         let __sym0 = __pop_Variant9(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action209::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (1, 15)
@@ -22850,8 +22850,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action379::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (7, 16)
@@ -22875,8 +22875,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant9(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action380::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (8, 16)
@@ -22898,8 +22898,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action207::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (6, 17)
@@ -22921,8 +22921,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action383::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant11(__nt), __end));
         (6, 18)
@@ -22958,8 +22958,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action388::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (4, 19)
@@ -22977,8 +22977,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action389::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (2, 19)
@@ -23010,8 +23010,8 @@ mod __parse__LStmt {
     {
         // (<(<LowerId> <(":" <LType>)?>)> ",")* = (<(<LowerId> <(":" <LType>)?>)> ",")+ => ActionFn(278);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action278::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (1, 20)
@@ -23031,8 +23031,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action392::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (4, 21)
@@ -23050,8 +23050,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action393::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (2, 21)
@@ -23072,8 +23072,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action394::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (5, 21)
@@ -23092,8 +23092,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action395::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (3, 21)
@@ -23112,8 +23112,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action200::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant14(__nt), __end));
         (3, 22)
@@ -23145,8 +23145,8 @@ mod __parse__LStmt {
     {
         // (<BeginInterpolation> <LExpr> EndInterpolation)* = (<BeginInterpolation> <LExpr> EndInterpolation)+ => ActionFn(199);
         let __sym0 = __pop_Variant15(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action199::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (1, 23)
@@ -23165,8 +23165,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action398::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (3, 24)
@@ -23186,8 +23186,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant15(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action399::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (4, 24)
@@ -23205,8 +23205,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action294::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (2, 25)
@@ -23238,8 +23238,8 @@ mod __parse__LStmt {
     {
         // (<CallArg> ",")* = (<CallArg> ",")+ => ActionFn(293);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action293::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (1, 26)
@@ -23257,8 +23257,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action402::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (2, 27)
@@ -23277,8 +23277,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant16(__symbols);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action403::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (3, 27)
@@ -23296,8 +23296,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action243::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (2, 28)
@@ -23329,8 +23329,8 @@ mod __parse__LStmt {
     {
         // (<Field> ",")* = (<Field> ",")+ => ActionFn(242);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action242::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (1, 29)
@@ -23348,8 +23348,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action406::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (2, 30)
@@ -23368,8 +23368,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant18(__symbols);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action407::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (3, 30)
@@ -23387,8 +23387,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action194::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (2, 31)
@@ -23420,8 +23420,8 @@ mod __parse__LStmt {
     {
         // (<FieldPat> ",")* = (<FieldPat> ",")+ => ActionFn(303);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action303::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (1, 32)
@@ -23439,8 +23439,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action410::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (2, 33)
@@ -23459,8 +23459,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant20(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action411::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (3, 33)
@@ -23478,8 +23478,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action313::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (2, 34)
@@ -23511,8 +23511,8 @@ mod __parse__LStmt {
     {
         // (<LLowerId> ",")* = (<LLowerId> ",")+ => ActionFn(312);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action312::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (1, 35)
@@ -23530,8 +23530,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action414::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (2, 36)
@@ -23550,8 +23550,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action415::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (3, 36)
@@ -23569,8 +23569,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action253::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (2, 37)
@@ -23602,8 +23602,8 @@ mod __parse__LStmt {
     {
         // (<LType> ",")* = (<LType> ",")+ => ActionFn(252);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action252::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (1, 38)
@@ -23621,8 +23621,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action418::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (2, 39)
@@ -23641,8 +23641,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action419::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (3, 39)
@@ -23660,8 +23660,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action248::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 40)
@@ -23693,8 +23693,8 @@ mod __parse__LStmt {
     {
         // (<LowerId> ",")* = (<LowerId> ",")+ => ActionFn(247);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action247::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 41)
@@ -23712,8 +23712,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action422::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (2, 42)
@@ -23732,8 +23732,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action423::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (3, 42)
@@ -23751,8 +23751,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action230::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 43)
@@ -23770,8 +23770,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action426::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (2, 44)
@@ -23806,8 +23806,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action369::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (3, 45)
@@ -23823,8 +23823,8 @@ mod __parse__LStmt {
     {
         // (<LowerId> <(":" <LType>)?>) = LowerId => ActionFn(370);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action370::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (1, 45)
@@ -23843,8 +23843,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action390::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (3, 46)
@@ -23860,8 +23860,8 @@ mod __parse__LStmt {
     {
         // (<LowerId> <(":" <LType>)?>)? = LowerId => ActionFn(391);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action391::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (1, 46)
@@ -23895,8 +23895,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action263::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (2, 47)
@@ -23928,8 +23928,8 @@ mod __parse__LStmt {
     {
         // (<NamedType> ",")* = (<NamedType> ",")+ => ActionFn(262);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action262::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (1, 48)
@@ -23947,8 +23947,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action435::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (2, 49)
@@ -23967,8 +23967,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant25(__symbols);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action436::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (3, 49)
@@ -23986,8 +23986,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action268::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (2, 50)
@@ -24019,8 +24019,8 @@ mod __parse__LStmt {
     {
         // (<Param> ",")* = (<Param> ",")+ => ActionFn(267);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action267::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (1, 51)
@@ -24038,8 +24038,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action439::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (2, 52)
@@ -24058,8 +24058,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant27(__symbols);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action440::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (3, 52)
@@ -24077,8 +24077,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action287::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (2, 53)
@@ -24110,8 +24110,8 @@ mod __parse__LStmt {
     {
         // (<ParenExpr> ",")* = (<ParenExpr> ",")+ => ActionFn(286);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action286::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (1, 54)
@@ -24129,8 +24129,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action443::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (2, 55)
@@ -24149,8 +24149,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant29(__symbols);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action444::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (3, 55)
@@ -24168,8 +24168,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action258::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (2, 56)
@@ -24201,8 +24201,8 @@ mod __parse__LStmt {
     {
         // (<RecordTypeField> ",")* = (<RecordTypeField> ",")+ => ActionFn(257);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action257::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (1, 57)
@@ -24220,8 +24220,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action447::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (2, 58)
@@ -24240,8 +24240,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action448::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (3, 58)
@@ -24259,8 +24259,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action299::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (2, 59)
@@ -24292,8 +24292,8 @@ mod __parse__LStmt {
     {
         // (<SeqElem> ",")* = (<SeqElem> ",")+ => ActionFn(298);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action298::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (1, 60)
@@ -24311,8 +24311,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action451::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (2, 61)
@@ -24331,8 +24331,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action452::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (3, 61)
@@ -24386,8 +24386,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action74::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (6, 64)
@@ -24411,8 +24411,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action75::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (8, 64)
@@ -24431,8 +24431,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant59(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action76::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (3, 64)
@@ -24453,8 +24453,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action77::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (5, 64)
@@ -24486,8 +24486,8 @@ mod __parse__LStmt {
     {
         // Alt* = Alt+ => ActionFn(212);
         let __sym0 = __pop_Variant37(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action212::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 65)
@@ -24503,8 +24503,8 @@ mod __parse__LStmt {
     {
         // Alt+ = Alt => ActionFn(271);
         let __sym0 = __pop_Variant36(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action271::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 66)
@@ -24522,8 +24522,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant36(__symbols);
         let __sym0 = __pop_Variant37(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action272::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (2, 66)
@@ -24555,8 +24555,8 @@ mod __parse__LStmt {
     {
         // Alts = Alt+ => ActionFn(594);
         let __sym0 = __pop_Variant37(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action594::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (1, 67)
@@ -24572,8 +24572,8 @@ mod __parse__LStmt {
     {
         // AssignOp = "=" => ActionFn(78);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action78::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -24589,8 +24589,8 @@ mod __parse__LStmt {
     {
         // AssignOp = "+=" => ActionFn(79);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action79::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -24606,8 +24606,8 @@ mod __parse__LStmt {
     {
         // AssignOp = "-=" => ActionFn(80);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action80::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -24623,8 +24623,8 @@ mod __parse__LStmt {
     {
         // AssignOp = "*=" => ActionFn(81);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action81::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -24640,8 +24640,8 @@ mod __parse__LStmt {
     {
         // AssignOp = "^=" => ActionFn(82);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action82::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -24664,8 +24664,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action87::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (7, 69)
@@ -24694,8 +24694,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym12.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym12.2.clone();
         let __nt = super::__action384::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (13, 69)
@@ -24718,8 +24718,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action385::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (7, 69)
@@ -24749,8 +24749,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym13.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym13.2.clone();
         let __nt = super::__action386::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (14, 69)
@@ -24774,8 +24774,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action387::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (8, 69)
@@ -24797,8 +24797,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action89::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (6, 69)
@@ -24823,8 +24823,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant71(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym8.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym8.2.clone();
         let __nt = super::__action90::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (9, 69)
@@ -24843,8 +24843,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action140::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (3, 70)
@@ -24860,8 +24860,8 @@ mod __parse__LStmt {
     {
         // CallArg = LExpr => ActionFn(141);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action141::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (1, 70)
@@ -24877,8 +24877,8 @@ mod __parse__LStmt {
     {
         // CallArg? = CallArg => ActionFn(290);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action290::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant41(__nt), __end));
         (1, 71)
@@ -24910,8 +24910,8 @@ mod __parse__LStmt {
     {
         // Con = UpperId => ActionFn(156);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action156::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant42(__nt), __end));
         (1, 72)
@@ -24927,8 +24927,8 @@ mod __parse__LStmt {
     {
         // Con = UpperIdPath => ActionFn(157);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action157::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant42(__nt), __end));
         (1, 72)
@@ -24946,8 +24946,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action15::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (2, 73)
@@ -24968,8 +24968,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant73(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action455::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (5, 73)
@@ -24985,8 +24985,8 @@ mod __parse__LStmt {
     {
         // ConDecl+ = ConDecl => ActionFn(231);
         let __sym0 = __pop_Variant43(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action231::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (1, 74)
@@ -25004,8 +25004,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant43(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action232::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 74)
@@ -25021,8 +25021,8 @@ mod __parse__LStmt {
     {
         // ConDecls = ConDecl+ => ActionFn(14);
         let __sym0 = __pop_Variant44(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action14::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant45(__nt), __end));
         (1, 75)
@@ -25038,8 +25038,8 @@ mod __parse__LStmt {
     {
         // ConPat = Con => ActionFn(158);
         let __sym0 = __pop_Variant42(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action158::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (1, 76)
@@ -25059,8 +25059,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant50(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant42(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action159::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (4, 76)
@@ -25095,8 +25095,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action172::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant47(__nt), __end));
         (3, 77)
@@ -25112,8 +25112,8 @@ mod __parse__LStmt {
     {
         // Expr = InlineExpr => ActionFn(84);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action84::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 78)
@@ -25129,8 +25129,8 @@ mod __parse__LStmt {
     {
         // Expr = BlockExpr => ActionFn(85);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action85::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 78)
@@ -25149,8 +25149,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action427::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (3, 79)
@@ -25166,8 +25166,8 @@ mod __parse__LStmt {
     {
         // Field = LType => ActionFn(428);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action428::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (1, 79)
@@ -25183,8 +25183,8 @@ mod __parse__LStmt {
     {
         // Field? = Field => ActionFn(239);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action239::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant48(__nt), __end));
         (1, 80)
@@ -25219,8 +25219,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant58(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action163::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (3, 81)
@@ -25236,8 +25236,8 @@ mod __parse__LStmt {
     {
         // FieldPat = LPat => ActionFn(164);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action164::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (1, 81)
@@ -25253,8 +25253,8 @@ mod __parse__LStmt {
     {
         // FieldPat? = FieldPat => ActionFn(300);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action300::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (1, 82)
@@ -25286,8 +25286,8 @@ mod __parse__LStmt {
     {
         // FieldPats = ".." => ActionFn(160);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action160::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (1, 83)
@@ -25303,8 +25303,8 @@ mod __parse__LStmt {
     {
         // FieldPats = Sep<FieldPat, ","> => ActionFn(161);
         let __sym0 = __pop_Variant74(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action161::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (1, 83)
@@ -25322,8 +25322,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action162::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (2, 83)
@@ -25345,8 +25345,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant53(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action526::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (6, 84)
@@ -25365,8 +25365,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant53(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action527::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (3, 84)
@@ -25384,8 +25384,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant53(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action528::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (2, 84)
@@ -25405,8 +25405,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant53(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action529::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (4, 84)
@@ -25422,8 +25422,8 @@ mod __parse__LStmt {
     {
         // FunDecl+ = FunDecl => ActionFn(183);
         let __sym0 = __pop_Variant51(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action183::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (1, 85)
@@ -25441,8 +25441,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant51(__symbols);
         let __sym0 = __pop_Variant52(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action184::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (2, 85)
@@ -25462,8 +25462,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant63(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action48::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant53(__nt), __end));
         (4, 86)
@@ -25489,8 +25489,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant22(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym9.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym9.2.clone();
         let __nt = super::__action530::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (10, 87)
@@ -25511,8 +25511,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant22(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action531::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (5, 87)
@@ -25534,8 +25534,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action532::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 88)
@@ -25558,8 +25558,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action533::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (7, 88)
@@ -25580,8 +25580,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action534::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (5, 88)
@@ -25603,8 +25603,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action535::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 88)
@@ -25620,8 +25620,8 @@ mod __parse__LStmt {
     {
         // ImportPath = Sep1<UpperId, "/"> => ActionFn(166);
         let __sym0 = __pop_Variant70(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action166::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (1, 89)
@@ -25639,8 +25639,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action136::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 90)
@@ -25662,8 +25662,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant71(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action137::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (6, 90)
@@ -25679,8 +25679,8 @@ mod __parse__LStmt {
     {
         // InlineExpr = InlineExpr11 => ActionFn(138);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action138::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 90)
@@ -25698,8 +25698,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action92::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 91)
@@ -25715,8 +25715,8 @@ mod __parse__LStmt {
     {
         // InlineExpr0 = UpperId => ActionFn(93);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action93::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -25735,8 +25735,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action94::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -25752,8 +25752,8 @@ mod __parse__LStmt {
     {
         // InlineExpr0 = UpperIdPath => ActionFn(95);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action95::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -25772,8 +25772,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action96::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -25792,8 +25792,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action97::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -25812,8 +25812,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant78(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action98::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -25829,8 +25829,8 @@ mod __parse__LStmt {
     {
         // InlineExpr0 = IntLit => ActionFn(466);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action466::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -25848,8 +25848,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action400::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 91)
@@ -25868,8 +25868,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant15(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action401::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -25885,8 +25885,8 @@ mod __parse__LStmt {
     {
         // InlineExpr0 = CharLit => ActionFn(101);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action101::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -25906,8 +25906,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant72(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action536::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (4, 91)
@@ -25927,8 +25927,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action537::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (4, 91)
@@ -25947,8 +25947,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant80(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action104::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -25967,8 +25967,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant80(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action105::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -25987,8 +25987,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action538::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 92)
@@ -26004,8 +26004,8 @@ mod __parse__LStmt {
     {
         // InlineExpr10 = InlineExpr9 => ActionFn(132);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action132::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 92)
@@ -26024,8 +26024,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action539::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 93)
@@ -26041,8 +26041,8 @@ mod __parse__LStmt {
     {
         // InlineExpr11 = "return" => ActionFn(540);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action540::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 93)
@@ -26058,8 +26058,8 @@ mod __parse__LStmt {
     {
         // InlineExpr11 = InlineExpr10 => ActionFn(135);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action135::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 93)
@@ -26077,8 +26077,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action541::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 94)
@@ -26096,8 +26096,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action542::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 94)
@@ -26115,8 +26115,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action543::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 94)
@@ -26132,8 +26132,8 @@ mod __parse__LStmt {
     {
         // InlineExpr2 = InlineExpr0 => ActionFn(109);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action109::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 94)
@@ -26152,8 +26152,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action544::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 95)
@@ -26172,8 +26172,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action545::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 95)
@@ -26189,8 +26189,8 @@ mod __parse__LStmt {
     {
         // InlineExpr4 = InlineExpr2 => ActionFn(112);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action112::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 95)
@@ -26209,8 +26209,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action546::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 96)
@@ -26229,8 +26229,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action547::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 96)
@@ -26246,8 +26246,8 @@ mod __parse__LStmt {
     {
         // InlineExpr5 = InlineExpr4 => ActionFn(115);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action115::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 96)
@@ -26266,8 +26266,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action548::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 97)
@@ -26286,8 +26286,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action549::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 97)
@@ -26303,8 +26303,8 @@ mod __parse__LStmt {
     {
         // InlineExpr6 = InlineExpr5 => ActionFn(118);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action118::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 97)
@@ -26323,8 +26323,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action550::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 98)
@@ -26340,8 +26340,8 @@ mod __parse__LStmt {
     {
         // InlineExpr7 = InlineExpr6 => ActionFn(120);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action120::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 98)
@@ -26360,8 +26360,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action551::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 99)
@@ -26377,8 +26377,8 @@ mod __parse__LStmt {
     {
         // InlineExpr8 = InlineExpr7 => ActionFn(122);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action122::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 99)
@@ -26397,8 +26397,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action552::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -26417,8 +26417,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action553::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -26437,8 +26437,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action554::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -26457,8 +26457,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action555::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -26477,8 +26477,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action556::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -26497,8 +26497,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action557::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -26517,8 +26517,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant65(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action558::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -26534,8 +26534,8 @@ mod __parse__LStmt {
     {
         // InlineExpr9 = InlineExpr8 => ActionFn(130);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action130::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 100)
@@ -26551,8 +26551,8 @@ mod __parse__LStmt {
     {
         // LBlockExpr = BlockExpr => ActionFn(559);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action559::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (1, 101)
@@ -26568,8 +26568,8 @@ mod __parse__LStmt {
     {
         // LExpr = Expr => ActionFn(560);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action560::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (1, 102)
@@ -26585,8 +26585,8 @@ mod __parse__LStmt {
     {
         // LInlineExpr = InlineExpr => ActionFn(561);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action561::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (1, 103)
@@ -26602,8 +26602,8 @@ mod __parse__LStmt {
     {
         // LLowerId = LowerId => ActionFn(562);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action562::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 104)
@@ -26619,8 +26619,8 @@ mod __parse__LStmt {
     {
         // LLowerId? = LLowerId => ActionFn(309);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action309::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (1, 105)
@@ -26652,8 +26652,8 @@ mod __parse__LStmt {
     {
         // LPat = Pat => ActionFn(563);
         let __sym0 = __pop_Variant65(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action563::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant58(__nt), __end));
         (1, 106)
@@ -26669,8 +26669,8 @@ mod __parse__LStmt {
     {
         // LStmt = Stmt => ActionFn(564);
         let __sym0 = __pop_Variant82(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action564::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant59(__nt), __end));
         (1, 107)
@@ -26702,8 +26702,8 @@ mod __parse__LStmt {
     {
         // LStmt* = LStmt+ => ActionFn(216);
         let __sym0 = __pop_Variant60(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action216::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (1, 108)
@@ -26719,8 +26719,8 @@ mod __parse__LStmt {
     {
         // LStmt+ = LStmt => ActionFn(269);
         let __sym0 = __pop_Variant59(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action269::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (1, 109)
@@ -26738,8 +26738,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant59(__symbols);
         let __sym0 = __pop_Variant60(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action270::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (2, 109)
@@ -26771,8 +26771,8 @@ mod __parse__LStmt {
     {
         // LStmts = LStmt+ => ActionFn(612);
         let __sym0 = __pop_Variant60(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action612::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (1, 110)
@@ -26788,8 +26788,8 @@ mod __parse__LStmt {
     {
         // LType = Type => ActionFn(565);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action565::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 111)
@@ -26805,8 +26805,8 @@ mod __parse__LStmt {
     {
         // LType? = LType => ActionFn(249);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action249::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (1, 112)
@@ -26838,8 +26838,8 @@ mod __parse__LStmt {
     {
         // LTypeNamed = TypeNamed => ActionFn(566);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action566::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 113)
@@ -26855,8 +26855,8 @@ mod __parse__LStmt {
     {
         // LTypeNoFn = TypeNoFn => ActionFn(567);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action567::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 114)
@@ -26872,8 +26872,8 @@ mod __parse__LStmt {
     {
         // LUpperId = UpperId => ActionFn(568);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action568::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 115)
@@ -26889,8 +26889,8 @@ mod __parse__LStmt {
     {
         // LUpperIdLBracket = UpperIdLBracket => ActionFn(569);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action569::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 116)
@@ -26906,8 +26906,8 @@ mod __parse__LStmt {
     {
         // Label? = Label => ActionFn(213);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action213::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 117)
@@ -26939,8 +26939,8 @@ mod __parse__LStmt {
     {
         // LowerId? = LowerId => ActionFn(244);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action244::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 118)
@@ -26988,8 +26988,8 @@ mod __parse__LStmt {
     {
         // NEWLINE* = NEWLINE+ => ActionFn(180);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action180::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 119)
@@ -27005,8 +27005,8 @@ mod __parse__LStmt {
     {
         // NEWLINE+ = NEWLINE => ActionFn(316);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action316::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 120)
@@ -27024,8 +27024,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action317::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (2, 120)
@@ -27041,8 +27041,8 @@ mod __parse__LStmt {
     {
         // NamedType = UpperId => ActionFn(38);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action38::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (1, 121)
@@ -27061,8 +27061,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action39::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (3, 121)
@@ -27078,8 +27078,8 @@ mod __parse__LStmt {
     {
         // NamedType? = NamedType => ActionFn(259);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action259::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 122)
@@ -27114,8 +27114,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action371::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (3, 123)
@@ -27131,8 +27131,8 @@ mod __parse__LStmt {
     {
         // Param = LowerId => ActionFn(372);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action372::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (1, 123)
@@ -27148,8 +27148,8 @@ mod __parse__LStmt {
     {
         // Param? = Param => ActionFn(264);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action264::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant62(__nt), __end));
         (1, 124)
@@ -27184,8 +27184,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant77(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action501::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant63(__nt), __end));
         (3, 125)
@@ -27204,8 +27204,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action139::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (3, 126)
@@ -27221,8 +27221,8 @@ mod __parse__LStmt {
     {
         // ParenExpr? = ParenExpr => ActionFn(283);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action283::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant64(__nt), __end));
         (1, 127)
@@ -27256,8 +27256,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action59::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (2, 128)
@@ -27273,8 +27273,8 @@ mod __parse__LStmt {
     {
         // ParentTy? = ParentTy => ActionFn(221);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action221::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (1, 129)
@@ -27309,8 +27309,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant65(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant65(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action570::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (3, 130)
@@ -27326,8 +27326,8 @@ mod __parse__LStmt {
     {
         // Pat = Pat0 => ActionFn(155);
         let __sym0 = __pop_Variant65(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action155::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 130)
@@ -27343,8 +27343,8 @@ mod __parse__LStmt {
     {
         // Pat0 = LowerId => ActionFn(147);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action147::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -27360,8 +27360,8 @@ mod __parse__LStmt {
     {
         // Pat0 = ConPat => ActionFn(148);
         let __sym0 = __pop_Variant46(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action148::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -27380,8 +27380,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant50(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action149::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (3, 131)
@@ -27397,8 +27397,8 @@ mod __parse__LStmt {
     {
         // Pat0 = "_" => ActionFn(150);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action150::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -27416,8 +27416,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action151::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (2, 131)
@@ -27433,8 +27433,8 @@ mod __parse__LStmt {
     {
         // Pat0 = CharLit => ActionFn(152);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action152::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -27452,8 +27452,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant65(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action571::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (2, 131)
@@ -27472,8 +27472,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant88(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action44::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (3, 132)
@@ -27489,8 +27489,8 @@ mod __parse__LStmt {
     {
         // RecordTypeField? = RecordTypeField => ActionFn(254);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action254::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant66(__nt), __end));
         (1, 133)
@@ -27538,8 +27538,8 @@ mod __parse__LStmt {
     {
         // ReturnType = LTypeNoFn => ActionFn(56);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action56::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant67(__nt), __end));
         (1, 134)
@@ -27558,8 +27558,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action57::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant67(__nt), __end));
         (3, 134)
@@ -27577,8 +27577,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action58::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant67(__nt), __end));
         (2, 134)
@@ -27612,8 +27612,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action41::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant68(__nt), __end));
         (2, 135)
@@ -27629,8 +27629,8 @@ mod __parse__LStmt {
     {
         // Sep1<LType, ","> = LType => ActionFn(362);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action362::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (1, 136)
@@ -27648,8 +27648,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant5(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action363::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (2, 136)
@@ -27665,8 +27665,8 @@ mod __parse__LStmt {
     {
         // Sep1<UpperId, "/"> = UpperId => ActionFn(366);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action366::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (1, 137)
@@ -27684,8 +27684,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant6(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action367::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (2, 137)
@@ -27704,8 +27704,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action429::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (3, 138)
@@ -27721,8 +27721,8 @@ mod __parse__LStmt {
     {
         // Sep<(<LowerId> <(":" <LType>)?>), ","> = LowerId => ActionFn(430);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action430::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (1, 138)
@@ -27758,8 +27758,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action432::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (4, 138)
@@ -27777,8 +27777,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action433::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (2, 138)
@@ -27794,8 +27794,8 @@ mod __parse__LStmt {
     {
         // Sep<(<LowerId> <(":" <LType>)?>), ","> = (<(<LowerId> <(":" <LType>)?>)> ",")+ => ActionFn(434);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action434::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (1, 138)
@@ -27811,8 +27811,8 @@ mod __parse__LStmt {
     {
         // Sep<CallArg, ","> = CallArg => ActionFn(595);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action595::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant72(__nt), __end));
         (1, 139)
@@ -27846,8 +27846,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant16(__symbols);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action597::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant72(__nt), __end));
         (2, 139)
@@ -27863,8 +27863,8 @@ mod __parse__LStmt {
     {
         // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(598);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action598::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant72(__nt), __end));
         (1, 139)
@@ -27880,8 +27880,8 @@ mod __parse__LStmt {
     {
         // Sep<Field, ","> = Field => ActionFn(599);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action599::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant73(__nt), __end));
         (1, 140)
@@ -27915,8 +27915,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant18(__symbols);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action601::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant73(__nt), __end));
         (2, 140)
@@ -27932,8 +27932,8 @@ mod __parse__LStmt {
     {
         // Sep<Field, ","> = (<Field> ",")+ => ActionFn(602);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action602::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant73(__nt), __end));
         (1, 140)
@@ -27949,8 +27949,8 @@ mod __parse__LStmt {
     {
         // Sep<FieldPat, ","> = FieldPat => ActionFn(603);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action603::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant74(__nt), __end));
         (1, 141)
@@ -27984,8 +27984,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant20(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action605::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant74(__nt), __end));
         (2, 141)
@@ -28001,8 +28001,8 @@ mod __parse__LStmt {
     {
         // Sep<FieldPat, ","> = (<FieldPat> ",")+ => ActionFn(606);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action606::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant74(__nt), __end));
         (1, 141)
@@ -28018,8 +28018,8 @@ mod __parse__LStmt {
     {
         // Sep<LLowerId, ","> = LLowerId => ActionFn(607);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action607::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (1, 142)
@@ -28053,8 +28053,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action609::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (2, 142)
@@ -28070,8 +28070,8 @@ mod __parse__LStmt {
     {
         // Sep<LLowerId, ","> = (<LLowerId> ",")+ => ActionFn(610);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action610::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (1, 142)
@@ -28087,8 +28087,8 @@ mod __parse__LStmt {
     {
         // Sep<LType, ","> = LType => ActionFn(613);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action613::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (1, 143)
@@ -28122,8 +28122,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action615::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (2, 143)
@@ -28139,8 +28139,8 @@ mod __parse__LStmt {
     {
         // Sep<LType, ","> = (<LType> ",")+ => ActionFn(616);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action616::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (1, 143)
@@ -28156,8 +28156,8 @@ mod __parse__LStmt {
     {
         // Sep<LowerId, ","> = LowerId => ActionFn(629);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action629::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (1, 144)
@@ -28191,8 +28191,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action631::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (2, 144)
@@ -28208,8 +28208,8 @@ mod __parse__LStmt {
     {
         // Sep<LowerId, ","> = (<LowerId> ",")+ => ActionFn(632);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action632::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (1, 144)
@@ -28225,8 +28225,8 @@ mod __parse__LStmt {
     {
         // Sep<NamedType, ","> = NamedType => ActionFn(643);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action643::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 145)
@@ -28260,8 +28260,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant25(__symbols);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action645::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (2, 145)
@@ -28277,8 +28277,8 @@ mod __parse__LStmt {
     {
         // Sep<NamedType, ","> = (<NamedType> ",")+ => ActionFn(646);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action646::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 145)
@@ -28294,8 +28294,8 @@ mod __parse__LStmt {
     {
         // Sep<Param, ","> = Param => ActionFn(647);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action647::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 146)
@@ -28329,8 +28329,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant27(__symbols);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action649::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (2, 146)
@@ -28346,8 +28346,8 @@ mod __parse__LStmt {
     {
         // Sep<Param, ","> = (<Param> ",")+ => ActionFn(650);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action650::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 146)
@@ -28363,8 +28363,8 @@ mod __parse__LStmt {
     {
         // Sep<ParenExpr, ","> = ParenExpr => ActionFn(651);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action651::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant78(__nt), __end));
         (1, 147)
@@ -28398,8 +28398,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant29(__symbols);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action653::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant78(__nt), __end));
         (2, 147)
@@ -28415,8 +28415,8 @@ mod __parse__LStmt {
     {
         // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(654);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action654::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant78(__nt), __end));
         (1, 147)
@@ -28432,8 +28432,8 @@ mod __parse__LStmt {
     {
         // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(657);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action657::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
@@ -28467,8 +28467,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action659::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (2, 148)
@@ -28484,8 +28484,8 @@ mod __parse__LStmt {
     {
         // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(660);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action660::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
@@ -28501,8 +28501,8 @@ mod __parse__LStmt {
     {
         // Sep<SeqElem, ","> = SeqElem => ActionFn(661);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action661::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
@@ -28536,8 +28536,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action663::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (2, 149)
@@ -28553,8 +28553,8 @@ mod __parse__LStmt {
     {
         // Sep<SeqElem, ","> = (<SeqElem> ",")+ => ActionFn(664);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action664::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
@@ -28570,8 +28570,8 @@ mod __parse__LStmt {
     {
         // SeqElem = LInlineExpr => ActionFn(144);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action144::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (1, 150)
@@ -28590,8 +28590,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action145::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (3, 150)
@@ -28607,8 +28607,8 @@ mod __parse__LStmt {
     {
         // SeqElem? = SeqElem => ActionFn(295);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action295::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (1, 151)
@@ -28643,8 +28643,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action617::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (3, 152)
@@ -28662,8 +28662,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action618::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 152)
@@ -28682,8 +28682,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action619::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (3, 152)
@@ -28701,8 +28701,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action620::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 152)
@@ -28725,8 +28725,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action373::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (7, 152)
@@ -28747,8 +28747,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action374::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (5, 152)
@@ -28770,8 +28770,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action375::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (6, 152)
@@ -28791,8 +28791,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action376::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (4, 152)
@@ -28812,8 +28812,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant39(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action66::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (4, 152)
@@ -28832,8 +28832,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant39(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action67::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (3, 152)
@@ -28851,8 +28851,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action572::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 152)
@@ -28868,8 +28868,8 @@ mod __parse__LStmt {
     {
         // Stmt = BlockExpr => ActionFn(573);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action573::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (1, 152)
@@ -28897,8 +28897,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant58(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym11.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym11.2.clone();
         let __nt = super::__action621::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (12, 152)
@@ -28925,8 +28925,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym10.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym10.2.clone();
         let __nt = super::__action622::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (11, 152)
@@ -28952,8 +28952,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant58(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym9.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym9.2.clone();
         let __nt = super::__action623::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (10, 152)
@@ -28978,8 +28978,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym8.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym8.2.clone();
         let __nt = super::__action624::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (9, 152)
@@ -29003,8 +29003,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action625::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (8, 152)
@@ -29027,8 +29027,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action626::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (7, 152)
@@ -29051,8 +29051,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action627::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (7, 152)
@@ -29074,8 +29074,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action628::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (6, 152)
@@ -29091,8 +29091,8 @@ mod __parse__LStmt {
     {
         // TopDecl = TypeDecl => ActionFn(633);
         let __sym0 = __pop_Variant90(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action633::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -29110,8 +29110,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant90(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action634::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -29127,8 +29127,8 @@ mod __parse__LStmt {
     {
         // TopDecl = TopFunDecl => ActionFn(635);
         let __sym0 = __pop_Variant51(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action635::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -29146,8 +29146,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant51(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action636::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -29163,8 +29163,8 @@ mod __parse__LStmt {
     {
         // TopDecl = ImportDecl => ActionFn(637);
         let __sym0 = __pop_Variant55(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action637::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -29182,8 +29182,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant55(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action638::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -29199,8 +29199,8 @@ mod __parse__LStmt {
     {
         // TopDecl = TraitDecl => ActionFn(639);
         let __sym0 = __pop_Variant87(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action639::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -29218,8 +29218,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant87(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action640::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -29235,8 +29235,8 @@ mod __parse__LStmt {
     {
         // TopDecl = ImplDecl => ActionFn(641);
         let __sym0 = __pop_Variant54(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action641::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -29254,8 +29254,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant54(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action642::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -29287,8 +29287,8 @@ mod __parse__LStmt {
     {
         // TopDecl* = TopDecl+ => ActionFn(182);
         let __sym0 = __pop_Variant84(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action182::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 154)
@@ -29304,8 +29304,8 @@ mod __parse__LStmt {
     {
         // TopDecl+ = TopDecl => ActionFn(314);
         let __sym0 = __pop_Variant83(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action314::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 155)
@@ -29323,8 +29323,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant83(__symbols);
         let __sym0 = __pop_Variant84(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action315::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (2, 155)
@@ -29356,8 +29356,8 @@ mod __parse__LStmt {
     {
         // TopDecls = TopDecl+ => ActionFn(666);
         let __sym0 = __pop_Variant84(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action666::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (1, 156)
@@ -29379,8 +29379,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant86(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action580::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (6, 157)
@@ -29399,8 +29399,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant86(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action581::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (3, 157)
@@ -29418,8 +29418,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant86(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action582::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (2, 157)
@@ -29439,8 +29439,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant86(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action583::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (4, 157)
@@ -29461,8 +29461,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant47(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action655::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (5, 158)
@@ -29482,8 +29482,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant63(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action656::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (4, 158)
@@ -29508,8 +29508,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant75(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym8.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym8.2.clone();
         let __nt = super::__action584::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (9, 159)
@@ -29529,8 +29529,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant75(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action585::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (4, 159)
@@ -29551,8 +29551,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant69(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action22::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (5, 160)
@@ -29572,8 +29572,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action23::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -29593,8 +29593,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action24::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -29614,8 +29614,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action25::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -29635,8 +29635,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action26::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -29652,8 +29652,8 @@ mod __parse__LStmt {
     {
         // Type = Type0 => ActionFn(27);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action27::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 160)
@@ -29669,8 +29669,8 @@ mod __parse__LStmt {
     {
         // Type0 = TypeNamed => ActionFn(20);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action20::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 161)
@@ -29686,8 +29686,8 @@ mod __parse__LStmt {
     {
         // Type0 = LowerId => ActionFn(21);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action21::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 161)
@@ -29706,8 +29706,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action586::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant89(__nt), __end));
         (3, 162)
@@ -29723,8 +29723,8 @@ mod __parse__LStmt {
     {
         // TypeArg = LType => ActionFn(43);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action43::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant89(__nt), __end));
         (1, 162)
@@ -29744,8 +29744,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action587::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (4, 163)
@@ -29764,8 +29764,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant91(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action588::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (3, 163)
@@ -29786,8 +29786,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action589::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (5, 163)
@@ -29807,8 +29807,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action590::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (4, 163)
@@ -29828,8 +29828,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action591::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (4, 163)
@@ -29850,8 +29850,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action592::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (5, 163)
@@ -29867,8 +29867,8 @@ mod __parse__LStmt {
     {
         // TypeDeclRhs = NEWLINE => ActionFn(10);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action10::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (1, 164)
@@ -29889,8 +29889,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action11::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (5, 164)
@@ -29910,8 +29910,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant73(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action525::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (4, 164)
@@ -29927,8 +29927,8 @@ mod __parse__LStmt {
     {
         // TypeNamed = UpperId => ActionFn(36);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action36::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 165)
@@ -29947,8 +29947,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action37::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (3, 165)
@@ -29964,8 +29964,8 @@ mod __parse__LStmt {
     {
         // TypeNoFn = TypeNamed => ActionFn(28);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action28::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 166)
@@ -29981,8 +29981,8 @@ mod __parse__LStmt {
     {
         // TypeNoFn = LowerId => ActionFn(29);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action29::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 166)
@@ -30001,8 +30001,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant88(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action30::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (3, 166)
@@ -30022,8 +30022,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action31::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -30043,8 +30043,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action32::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -30064,8 +30064,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action33::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -30085,8 +30085,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action34::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -30104,8 +30104,8 @@ mod __parse__LStmt {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant70(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action13::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (2, 167)
@@ -30124,8 +30124,8 @@ mod __parse__LStmt {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action142::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (3, 168)
@@ -30157,8 +30157,8 @@ mod __parse__LStmt {
     {
         // __LExpr = LExpr => ActionFn(1);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action1::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (1, 169)
@@ -30174,8 +30174,8 @@ mod __parse__LStmt {
     {
         // __TopDecls = TopDecls => ActionFn(2);
         let __sym0 = __pop_Variant85(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action2::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (1, 171)
@@ -30185,7 +30185,7 @@ mod __parse__LStmt {
 pub use self::__parse__LStmt::LStmtParser;
 
 #[rustfmt::skip]
-#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::match_single_binding)]
+#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::match_single_binding, clippy::clone_on_copy, clippy::unit_arg)]
 mod __parse__TopDecls {
 
     use crate::ast::*;
@@ -35975,7 +35975,7 @@ mod __parse__TopDecls {
                 }
             }
             419 => __state_machine::SimulatedReduce::Accept,
-            _ => panic!("invalid reduction index {__reduce_index}",)
+            _ => panic!("invalid reduction index {__reduce_index}")
         }
     }
     pub struct TopDeclsParser {
@@ -37317,8 +37317,8 @@ mod __parse__TopDecls {
             419 => {
                 // __TopDecls = TopDecls => ActionFn(2);
                 let __sym0 = __pop_Variant85(__symbols);
-                let __start = __sym0.0;
-                let __end = __sym0.2;
+                let __start = __sym0.0.clone();
+                let __end = __sym0.2.clone();
                 let __nt = super::__action2::<>(module, __sym0);
                 return Some(Ok(__nt));
             }
@@ -38266,8 +38266,8 @@ mod __parse__TopDecls {
     {
         // ","? = "," => ActionFn(187);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action187::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 0)
@@ -38299,8 +38299,8 @@ mod __parse__TopDecls {
     {
         // "prim"? = "prim" => ActionFn(223);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action223::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 1)
@@ -38332,8 +38332,8 @@ mod __parse__TopDecls {
     {
         // "value"? = "value" => ActionFn(235);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action235::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 2)
@@ -38367,8 +38367,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant2(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action191::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (2, 3)
@@ -38400,8 +38400,8 @@ mod __parse__TopDecls {
     {
         // ("," <ImportPath>)* = ("," <ImportPath>)+ => ActionFn(190);
         let __sym0 = __pop_Variant3(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action190::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (1, 4)
@@ -38419,8 +38419,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant2(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action354::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (2, 5)
@@ -38439,8 +38439,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant3(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action355::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (3, 5)
@@ -38458,8 +38458,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action282::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (2, 6)
@@ -38491,8 +38491,8 @@ mod __parse__TopDecls {
     {
         // ("," <LType>)* = ("," <LType>)+ => ActionFn(281);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action281::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (1, 7)
@@ -38510,8 +38510,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action360::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (2, 8)
@@ -38530,8 +38530,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action361::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (3, 8)
@@ -38549,8 +38549,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action308::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 9)
@@ -38582,8 +38582,8 @@ mod __parse__TopDecls {
     {
         // ("/" <UpperId>)* = ("/" <UpperId>)+ => ActionFn(307);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action307::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 10)
@@ -38601,8 +38601,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action364::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (2, 11)
@@ -38621,8 +38621,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action365::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (3, 11)
@@ -38640,8 +38640,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action219::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (2, 12)
@@ -38659,8 +38659,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action368::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (2, 13)
@@ -38699,8 +38699,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action210::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant8(__nt), __end));
         (7, 14)
@@ -38732,8 +38732,8 @@ mod __parse__TopDecls {
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)* = ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ => ActionFn(209);
         let __sym0 = __pop_Variant9(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action209::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (1, 15)
@@ -38756,8 +38756,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action379::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (7, 16)
@@ -38781,8 +38781,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant9(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action380::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (8, 16)
@@ -38804,8 +38804,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action207::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (6, 17)
@@ -38827,8 +38827,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action383::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant11(__nt), __end));
         (6, 18)
@@ -38864,8 +38864,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action388::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (4, 19)
@@ -38883,8 +38883,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action389::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (2, 19)
@@ -38916,8 +38916,8 @@ mod __parse__TopDecls {
     {
         // (<(<LowerId> <(":" <LType>)?>)> ",")* = (<(<LowerId> <(":" <LType>)?>)> ",")+ => ActionFn(278);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action278::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (1, 20)
@@ -38937,8 +38937,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action392::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (4, 21)
@@ -38956,8 +38956,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action393::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (2, 21)
@@ -38978,8 +38978,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action394::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (5, 21)
@@ -38998,8 +38998,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action395::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (3, 21)
@@ -39018,8 +39018,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action200::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant14(__nt), __end));
         (3, 22)
@@ -39051,8 +39051,8 @@ mod __parse__TopDecls {
     {
         // (<BeginInterpolation> <LExpr> EndInterpolation)* = (<BeginInterpolation> <LExpr> EndInterpolation)+ => ActionFn(199);
         let __sym0 = __pop_Variant15(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action199::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (1, 23)
@@ -39071,8 +39071,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action398::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (3, 24)
@@ -39092,8 +39092,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant15(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action399::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (4, 24)
@@ -39111,8 +39111,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action294::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (2, 25)
@@ -39144,8 +39144,8 @@ mod __parse__TopDecls {
     {
         // (<CallArg> ",")* = (<CallArg> ",")+ => ActionFn(293);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action293::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (1, 26)
@@ -39163,8 +39163,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action402::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (2, 27)
@@ -39183,8 +39183,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant16(__symbols);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action403::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (3, 27)
@@ -39202,8 +39202,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action243::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (2, 28)
@@ -39235,8 +39235,8 @@ mod __parse__TopDecls {
     {
         // (<Field> ",")* = (<Field> ",")+ => ActionFn(242);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action242::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (1, 29)
@@ -39254,8 +39254,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action406::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (2, 30)
@@ -39274,8 +39274,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant18(__symbols);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action407::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (3, 30)
@@ -39293,8 +39293,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action194::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (2, 31)
@@ -39326,8 +39326,8 @@ mod __parse__TopDecls {
     {
         // (<FieldPat> ",")* = (<FieldPat> ",")+ => ActionFn(303);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action303::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (1, 32)
@@ -39345,8 +39345,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action410::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (2, 33)
@@ -39365,8 +39365,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant20(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action411::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (3, 33)
@@ -39384,8 +39384,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action313::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (2, 34)
@@ -39417,8 +39417,8 @@ mod __parse__TopDecls {
     {
         // (<LLowerId> ",")* = (<LLowerId> ",")+ => ActionFn(312);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action312::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (1, 35)
@@ -39436,8 +39436,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action414::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (2, 36)
@@ -39456,8 +39456,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action415::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (3, 36)
@@ -39475,8 +39475,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action253::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (2, 37)
@@ -39508,8 +39508,8 @@ mod __parse__TopDecls {
     {
         // (<LType> ",")* = (<LType> ",")+ => ActionFn(252);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action252::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (1, 38)
@@ -39527,8 +39527,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action418::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (2, 39)
@@ -39547,8 +39547,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action419::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (3, 39)
@@ -39566,8 +39566,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action248::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 40)
@@ -39599,8 +39599,8 @@ mod __parse__TopDecls {
     {
         // (<LowerId> ",")* = (<LowerId> ",")+ => ActionFn(247);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action247::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 41)
@@ -39618,8 +39618,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action422::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (2, 42)
@@ -39638,8 +39638,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action423::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (3, 42)
@@ -39657,8 +39657,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action230::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 43)
@@ -39676,8 +39676,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action426::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (2, 44)
@@ -39712,8 +39712,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action369::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (3, 45)
@@ -39729,8 +39729,8 @@ mod __parse__TopDecls {
     {
         // (<LowerId> <(":" <LType>)?>) = LowerId => ActionFn(370);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action370::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (1, 45)
@@ -39749,8 +39749,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action390::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (3, 46)
@@ -39766,8 +39766,8 @@ mod __parse__TopDecls {
     {
         // (<LowerId> <(":" <LType>)?>)? = LowerId => ActionFn(391);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action391::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (1, 46)
@@ -39801,8 +39801,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action263::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (2, 47)
@@ -39834,8 +39834,8 @@ mod __parse__TopDecls {
     {
         // (<NamedType> ",")* = (<NamedType> ",")+ => ActionFn(262);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action262::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (1, 48)
@@ -39853,8 +39853,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action435::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (2, 49)
@@ -39873,8 +39873,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant25(__symbols);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action436::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (3, 49)
@@ -39892,8 +39892,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action268::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (2, 50)
@@ -39925,8 +39925,8 @@ mod __parse__TopDecls {
     {
         // (<Param> ",")* = (<Param> ",")+ => ActionFn(267);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action267::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (1, 51)
@@ -39944,8 +39944,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action439::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (2, 52)
@@ -39964,8 +39964,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant27(__symbols);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action440::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (3, 52)
@@ -39983,8 +39983,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action287::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (2, 53)
@@ -40016,8 +40016,8 @@ mod __parse__TopDecls {
     {
         // (<ParenExpr> ",")* = (<ParenExpr> ",")+ => ActionFn(286);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action286::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (1, 54)
@@ -40035,8 +40035,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action443::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (2, 55)
@@ -40055,8 +40055,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant29(__symbols);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action444::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (3, 55)
@@ -40074,8 +40074,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action258::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (2, 56)
@@ -40107,8 +40107,8 @@ mod __parse__TopDecls {
     {
         // (<RecordTypeField> ",")* = (<RecordTypeField> ",")+ => ActionFn(257);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action257::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (1, 57)
@@ -40126,8 +40126,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action447::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (2, 58)
@@ -40146,8 +40146,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action448::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (3, 58)
@@ -40165,8 +40165,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action299::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (2, 59)
@@ -40198,8 +40198,8 @@ mod __parse__TopDecls {
     {
         // (<SeqElem> ",")* = (<SeqElem> ",")+ => ActionFn(298);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action298::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (1, 60)
@@ -40217,8 +40217,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action451::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (2, 61)
@@ -40237,8 +40237,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action452::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (3, 61)
@@ -40292,8 +40292,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action74::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (6, 64)
@@ -40317,8 +40317,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action75::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (8, 64)
@@ -40337,8 +40337,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant59(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action76::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (3, 64)
@@ -40359,8 +40359,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action77::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (5, 64)
@@ -40392,8 +40392,8 @@ mod __parse__TopDecls {
     {
         // Alt* = Alt+ => ActionFn(212);
         let __sym0 = __pop_Variant37(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action212::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 65)
@@ -40409,8 +40409,8 @@ mod __parse__TopDecls {
     {
         // Alt+ = Alt => ActionFn(271);
         let __sym0 = __pop_Variant36(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action271::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 66)
@@ -40428,8 +40428,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant36(__symbols);
         let __sym0 = __pop_Variant37(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action272::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (2, 66)
@@ -40461,8 +40461,8 @@ mod __parse__TopDecls {
     {
         // Alts = Alt+ => ActionFn(594);
         let __sym0 = __pop_Variant37(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action594::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (1, 67)
@@ -40478,8 +40478,8 @@ mod __parse__TopDecls {
     {
         // AssignOp = "=" => ActionFn(78);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action78::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -40495,8 +40495,8 @@ mod __parse__TopDecls {
     {
         // AssignOp = "+=" => ActionFn(79);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action79::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -40512,8 +40512,8 @@ mod __parse__TopDecls {
     {
         // AssignOp = "-=" => ActionFn(80);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action80::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -40529,8 +40529,8 @@ mod __parse__TopDecls {
     {
         // AssignOp = "*=" => ActionFn(81);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action81::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -40546,8 +40546,8 @@ mod __parse__TopDecls {
     {
         // AssignOp = "^=" => ActionFn(82);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action82::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (1, 68)
@@ -40570,8 +40570,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action87::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (7, 69)
@@ -40600,8 +40600,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym12.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym12.2.clone();
         let __nt = super::__action384::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (13, 69)
@@ -40624,8 +40624,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action385::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (7, 69)
@@ -40655,8 +40655,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym13.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym13.2.clone();
         let __nt = super::__action386::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (14, 69)
@@ -40680,8 +40680,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action387::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (8, 69)
@@ -40703,8 +40703,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action89::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (6, 69)
@@ -40729,8 +40729,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant71(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym8.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym8.2.clone();
         let __nt = super::__action90::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (9, 69)
@@ -40749,8 +40749,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action140::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (3, 70)
@@ -40766,8 +40766,8 @@ mod __parse__TopDecls {
     {
         // CallArg = LExpr => ActionFn(141);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action141::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (1, 70)
@@ -40783,8 +40783,8 @@ mod __parse__TopDecls {
     {
         // CallArg? = CallArg => ActionFn(290);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action290::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant41(__nt), __end));
         (1, 71)
@@ -40816,8 +40816,8 @@ mod __parse__TopDecls {
     {
         // Con = UpperId => ActionFn(156);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action156::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant42(__nt), __end));
         (1, 72)
@@ -40833,8 +40833,8 @@ mod __parse__TopDecls {
     {
         // Con = UpperIdPath => ActionFn(157);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action157::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant42(__nt), __end));
         (1, 72)
@@ -40852,8 +40852,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action15::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (2, 73)
@@ -40874,8 +40874,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant73(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action455::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (5, 73)
@@ -40891,8 +40891,8 @@ mod __parse__TopDecls {
     {
         // ConDecl+ = ConDecl => ActionFn(231);
         let __sym0 = __pop_Variant43(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action231::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (1, 74)
@@ -40910,8 +40910,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant43(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action232::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 74)
@@ -40927,8 +40927,8 @@ mod __parse__TopDecls {
     {
         // ConDecls = ConDecl+ => ActionFn(14);
         let __sym0 = __pop_Variant44(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action14::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant45(__nt), __end));
         (1, 75)
@@ -40944,8 +40944,8 @@ mod __parse__TopDecls {
     {
         // ConPat = Con => ActionFn(158);
         let __sym0 = __pop_Variant42(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action158::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (1, 76)
@@ -40965,8 +40965,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant50(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant42(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action159::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (4, 76)
@@ -41001,8 +41001,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action172::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant47(__nt), __end));
         (3, 77)
@@ -41018,8 +41018,8 @@ mod __parse__TopDecls {
     {
         // Expr = InlineExpr => ActionFn(84);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action84::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 78)
@@ -41035,8 +41035,8 @@ mod __parse__TopDecls {
     {
         // Expr = BlockExpr => ActionFn(85);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action85::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 78)
@@ -41055,8 +41055,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action427::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (3, 79)
@@ -41072,8 +41072,8 @@ mod __parse__TopDecls {
     {
         // Field = LType => ActionFn(428);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action428::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (1, 79)
@@ -41089,8 +41089,8 @@ mod __parse__TopDecls {
     {
         // Field? = Field => ActionFn(239);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action239::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant48(__nt), __end));
         (1, 80)
@@ -41125,8 +41125,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant58(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action163::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (3, 81)
@@ -41142,8 +41142,8 @@ mod __parse__TopDecls {
     {
         // FieldPat = LPat => ActionFn(164);
         let __sym0 = __pop_Variant58(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action164::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (1, 81)
@@ -41159,8 +41159,8 @@ mod __parse__TopDecls {
     {
         // FieldPat? = FieldPat => ActionFn(300);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action300::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (1, 82)
@@ -41192,8 +41192,8 @@ mod __parse__TopDecls {
     {
         // FieldPats = ".." => ActionFn(160);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action160::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (1, 83)
@@ -41209,8 +41209,8 @@ mod __parse__TopDecls {
     {
         // FieldPats = Sep<FieldPat, ","> => ActionFn(161);
         let __sym0 = __pop_Variant74(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action161::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (1, 83)
@@ -41228,8 +41228,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action162::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (2, 83)
@@ -41251,8 +41251,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant53(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action526::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (6, 84)
@@ -41271,8 +41271,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant53(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action527::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (3, 84)
@@ -41290,8 +41290,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant53(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action528::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (2, 84)
@@ -41311,8 +41311,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant53(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action529::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (4, 84)
@@ -41328,8 +41328,8 @@ mod __parse__TopDecls {
     {
         // FunDecl+ = FunDecl => ActionFn(183);
         let __sym0 = __pop_Variant51(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action183::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (1, 85)
@@ -41347,8 +41347,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant51(__symbols);
         let __sym0 = __pop_Variant52(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action184::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (2, 85)
@@ -41368,8 +41368,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant63(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action48::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant53(__nt), __end));
         (4, 86)
@@ -41395,8 +41395,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant22(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym9.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym9.2.clone();
         let __nt = super::__action530::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (10, 87)
@@ -41417,8 +41417,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant22(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action531::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (5, 87)
@@ -41440,8 +41440,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action532::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 88)
@@ -41464,8 +41464,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action533::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (7, 88)
@@ -41486,8 +41486,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action534::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (5, 88)
@@ -41509,8 +41509,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action535::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 88)
@@ -41526,8 +41526,8 @@ mod __parse__TopDecls {
     {
         // ImportPath = Sep1<UpperId, "/"> => ActionFn(166);
         let __sym0 = __pop_Variant70(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action166::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (1, 89)
@@ -41545,8 +41545,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action136::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 90)
@@ -41568,8 +41568,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant71(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action137::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (6, 90)
@@ -41585,8 +41585,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr = InlineExpr11 => ActionFn(138);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action138::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 90)
@@ -41604,8 +41604,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action92::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 91)
@@ -41621,8 +41621,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr0 = UpperId => ActionFn(93);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action93::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -41641,8 +41641,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action94::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -41658,8 +41658,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr0 = UpperIdPath => ActionFn(95);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action95::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -41678,8 +41678,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action96::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -41698,8 +41698,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action97::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -41718,8 +41718,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant78(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action98::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -41735,8 +41735,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr0 = IntLit => ActionFn(466);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action466::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -41754,8 +41754,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action400::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 91)
@@ -41774,8 +41774,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant15(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action401::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -41791,8 +41791,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr0 = CharLit => ActionFn(101);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action101::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 91)
@@ -41812,8 +41812,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant72(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action536::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (4, 91)
@@ -41833,8 +41833,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action537::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (4, 91)
@@ -41853,8 +41853,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant80(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action104::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -41873,8 +41873,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant80(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action105::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 91)
@@ -41893,8 +41893,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action538::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 92)
@@ -41910,8 +41910,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr10 = InlineExpr9 => ActionFn(132);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action132::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 92)
@@ -41930,8 +41930,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action539::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 93)
@@ -41947,8 +41947,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr11 = "return" => ActionFn(540);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action540::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 93)
@@ -41964,8 +41964,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr11 = InlineExpr10 => ActionFn(135);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action135::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 93)
@@ -41983,8 +41983,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action541::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 94)
@@ -42002,8 +42002,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action542::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 94)
@@ -42021,8 +42021,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant40(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action543::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (2, 94)
@@ -42038,8 +42038,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr2 = InlineExpr0 => ActionFn(109);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action109::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 94)
@@ -42058,8 +42058,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action544::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 95)
@@ -42078,8 +42078,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action545::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 95)
@@ -42095,8 +42095,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr4 = InlineExpr2 => ActionFn(112);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action112::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 95)
@@ -42115,8 +42115,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action546::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 96)
@@ -42135,8 +42135,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action547::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 96)
@@ -42152,8 +42152,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr5 = InlineExpr4 => ActionFn(115);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action115::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 96)
@@ -42172,8 +42172,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action548::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 97)
@@ -42192,8 +42192,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action549::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 97)
@@ -42209,8 +42209,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr6 = InlineExpr5 => ActionFn(118);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action118::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 97)
@@ -42229,8 +42229,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action550::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 98)
@@ -42246,8 +42246,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr7 = InlineExpr6 => ActionFn(120);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action120::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 98)
@@ -42266,8 +42266,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action551::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 99)
@@ -42283,8 +42283,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr8 = InlineExpr7 => ActionFn(122);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action122::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 99)
@@ -42303,8 +42303,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action552::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -42323,8 +42323,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action553::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -42343,8 +42343,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action554::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -42363,8 +42363,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action555::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -42383,8 +42383,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action556::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -42403,8 +42403,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant40(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action557::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -42423,8 +42423,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant65(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action558::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (3, 100)
@@ -42440,8 +42440,8 @@ mod __parse__TopDecls {
     {
         // InlineExpr9 = InlineExpr8 => ActionFn(130);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action130::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 100)
@@ -42457,8 +42457,8 @@ mod __parse__TopDecls {
     {
         // LBlockExpr = BlockExpr => ActionFn(559);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action559::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (1, 101)
@@ -42474,8 +42474,8 @@ mod __parse__TopDecls {
     {
         // LExpr = Expr => ActionFn(560);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action560::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (1, 102)
@@ -42491,8 +42491,8 @@ mod __parse__TopDecls {
     {
         // LInlineExpr = InlineExpr => ActionFn(561);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action561::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (1, 103)
@@ -42508,8 +42508,8 @@ mod __parse__TopDecls {
     {
         // LLowerId = LowerId => ActionFn(562);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action562::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 104)
@@ -42525,8 +42525,8 @@ mod __parse__TopDecls {
     {
         // LLowerId? = LLowerId => ActionFn(309);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action309::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (1, 105)
@@ -42558,8 +42558,8 @@ mod __parse__TopDecls {
     {
         // LPat = Pat => ActionFn(563);
         let __sym0 = __pop_Variant65(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action563::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant58(__nt), __end));
         (1, 106)
@@ -42575,8 +42575,8 @@ mod __parse__TopDecls {
     {
         // LStmt = Stmt => ActionFn(564);
         let __sym0 = __pop_Variant82(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action564::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant59(__nt), __end));
         (1, 107)
@@ -42608,8 +42608,8 @@ mod __parse__TopDecls {
     {
         // LStmt* = LStmt+ => ActionFn(216);
         let __sym0 = __pop_Variant60(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action216::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (1, 108)
@@ -42625,8 +42625,8 @@ mod __parse__TopDecls {
     {
         // LStmt+ = LStmt => ActionFn(269);
         let __sym0 = __pop_Variant59(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action269::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (1, 109)
@@ -42644,8 +42644,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant59(__symbols);
         let __sym0 = __pop_Variant60(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action270::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (2, 109)
@@ -42677,8 +42677,8 @@ mod __parse__TopDecls {
     {
         // LStmts = LStmt+ => ActionFn(612);
         let __sym0 = __pop_Variant60(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action612::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (1, 110)
@@ -42694,8 +42694,8 @@ mod __parse__TopDecls {
     {
         // LType = Type => ActionFn(565);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action565::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 111)
@@ -42711,8 +42711,8 @@ mod __parse__TopDecls {
     {
         // LType? = LType => ActionFn(249);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action249::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (1, 112)
@@ -42744,8 +42744,8 @@ mod __parse__TopDecls {
     {
         // LTypeNamed = TypeNamed => ActionFn(566);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action566::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 113)
@@ -42761,8 +42761,8 @@ mod __parse__TopDecls {
     {
         // LTypeNoFn = TypeNoFn => ActionFn(567);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action567::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 114)
@@ -42778,8 +42778,8 @@ mod __parse__TopDecls {
     {
         // LUpperId = UpperId => ActionFn(568);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action568::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 115)
@@ -42795,8 +42795,8 @@ mod __parse__TopDecls {
     {
         // LUpperIdLBracket = UpperIdLBracket => ActionFn(569);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action569::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 116)
@@ -42812,8 +42812,8 @@ mod __parse__TopDecls {
     {
         // Label? = Label => ActionFn(213);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action213::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 117)
@@ -42845,8 +42845,8 @@ mod __parse__TopDecls {
     {
         // LowerId? = LowerId => ActionFn(244);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action244::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 118)
@@ -42894,8 +42894,8 @@ mod __parse__TopDecls {
     {
         // NEWLINE* = NEWLINE+ => ActionFn(180);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action180::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 119)
@@ -42911,8 +42911,8 @@ mod __parse__TopDecls {
     {
         // NEWLINE+ = NEWLINE => ActionFn(316);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action316::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (1, 120)
@@ -42930,8 +42930,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action317::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (2, 120)
@@ -42947,8 +42947,8 @@ mod __parse__TopDecls {
     {
         // NamedType = UpperId => ActionFn(38);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action38::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (1, 121)
@@ -42967,8 +42967,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action39::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (3, 121)
@@ -42984,8 +42984,8 @@ mod __parse__TopDecls {
     {
         // NamedType? = NamedType => ActionFn(259);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action259::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 122)
@@ -43020,8 +43020,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action371::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (3, 123)
@@ -43037,8 +43037,8 @@ mod __parse__TopDecls {
     {
         // Param = LowerId => ActionFn(372);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action372::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (1, 123)
@@ -43054,8 +43054,8 @@ mod __parse__TopDecls {
     {
         // Param? = Param => ActionFn(264);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action264::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant62(__nt), __end));
         (1, 124)
@@ -43090,8 +43090,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant77(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action501::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant63(__nt), __end));
         (3, 125)
@@ -43110,8 +43110,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action139::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (3, 126)
@@ -43127,8 +43127,8 @@ mod __parse__TopDecls {
     {
         // ParenExpr? = ParenExpr => ActionFn(283);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action283::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant64(__nt), __end));
         (1, 127)
@@ -43162,8 +43162,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action59::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (2, 128)
@@ -43179,8 +43179,8 @@ mod __parse__TopDecls {
     {
         // ParentTy? = ParentTy => ActionFn(221);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action221::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (1, 129)
@@ -43215,8 +43215,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant65(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant65(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action570::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (3, 130)
@@ -43232,8 +43232,8 @@ mod __parse__TopDecls {
     {
         // Pat = Pat0 => ActionFn(155);
         let __sym0 = __pop_Variant65(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action155::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 130)
@@ -43249,8 +43249,8 @@ mod __parse__TopDecls {
     {
         // Pat0 = LowerId => ActionFn(147);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action147::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -43266,8 +43266,8 @@ mod __parse__TopDecls {
     {
         // Pat0 = ConPat => ActionFn(148);
         let __sym0 = __pop_Variant46(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action148::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -43286,8 +43286,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant50(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action149::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (3, 131)
@@ -43303,8 +43303,8 @@ mod __parse__TopDecls {
     {
         // Pat0 = "_" => ActionFn(150);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action150::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -43322,8 +43322,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action151::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (2, 131)
@@ -43339,8 +43339,8 @@ mod __parse__TopDecls {
     {
         // Pat0 = CharLit => ActionFn(152);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action152::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 131)
@@ -43358,8 +43358,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant65(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action571::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (2, 131)
@@ -43378,8 +43378,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant88(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action44::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (3, 132)
@@ -43395,8 +43395,8 @@ mod __parse__TopDecls {
     {
         // RecordTypeField? = RecordTypeField => ActionFn(254);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action254::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant66(__nt), __end));
         (1, 133)
@@ -43444,8 +43444,8 @@ mod __parse__TopDecls {
     {
         // ReturnType = LTypeNoFn => ActionFn(56);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action56::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant67(__nt), __end));
         (1, 134)
@@ -43464,8 +43464,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action57::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant67(__nt), __end));
         (3, 134)
@@ -43483,8 +43483,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action58::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant67(__nt), __end));
         (2, 134)
@@ -43518,8 +43518,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action41::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant68(__nt), __end));
         (2, 135)
@@ -43535,8 +43535,8 @@ mod __parse__TopDecls {
     {
         // Sep1<LType, ","> = LType => ActionFn(362);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action362::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (1, 136)
@@ -43554,8 +43554,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant5(__symbols);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action363::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (2, 136)
@@ -43571,8 +43571,8 @@ mod __parse__TopDecls {
     {
         // Sep1<UpperId, "/"> = UpperId => ActionFn(366);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action366::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (1, 137)
@@ -43590,8 +43590,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant6(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action367::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (2, 137)
@@ -43610,8 +43610,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action429::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (3, 138)
@@ -43627,8 +43627,8 @@ mod __parse__TopDecls {
     {
         // Sep<(<LowerId> <(":" <LType>)?>), ","> = LowerId => ActionFn(430);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action430::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (1, 138)
@@ -43664,8 +43664,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action432::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (4, 138)
@@ -43683,8 +43683,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action433::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (2, 138)
@@ -43700,8 +43700,8 @@ mod __parse__TopDecls {
     {
         // Sep<(<LowerId> <(":" <LType>)?>), ","> = (<(<LowerId> <(":" <LType>)?>)> ",")+ => ActionFn(434);
         let __sym0 = __pop_Variant13(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action434::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (1, 138)
@@ -43717,8 +43717,8 @@ mod __parse__TopDecls {
     {
         // Sep<CallArg, ","> = CallArg => ActionFn(595);
         let __sym0 = __pop_Variant16(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action595::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant72(__nt), __end));
         (1, 139)
@@ -43752,8 +43752,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant16(__symbols);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action597::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant72(__nt), __end));
         (2, 139)
@@ -43769,8 +43769,8 @@ mod __parse__TopDecls {
     {
         // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(598);
         let __sym0 = __pop_Variant17(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action598::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant72(__nt), __end));
         (1, 139)
@@ -43786,8 +43786,8 @@ mod __parse__TopDecls {
     {
         // Sep<Field, ","> = Field => ActionFn(599);
         let __sym0 = __pop_Variant18(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action599::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant73(__nt), __end));
         (1, 140)
@@ -43821,8 +43821,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant18(__symbols);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action601::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant73(__nt), __end));
         (2, 140)
@@ -43838,8 +43838,8 @@ mod __parse__TopDecls {
     {
         // Sep<Field, ","> = (<Field> ",")+ => ActionFn(602);
         let __sym0 = __pop_Variant19(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action602::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant73(__nt), __end));
         (1, 140)
@@ -43855,8 +43855,8 @@ mod __parse__TopDecls {
     {
         // Sep<FieldPat, ","> = FieldPat => ActionFn(603);
         let __sym0 = __pop_Variant20(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action603::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant74(__nt), __end));
         (1, 141)
@@ -43890,8 +43890,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant20(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action605::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant74(__nt), __end));
         (2, 141)
@@ -43907,8 +43907,8 @@ mod __parse__TopDecls {
     {
         // Sep<FieldPat, ","> = (<FieldPat> ",")+ => ActionFn(606);
         let __sym0 = __pop_Variant21(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action606::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant74(__nt), __end));
         (1, 141)
@@ -43924,8 +43924,8 @@ mod __parse__TopDecls {
     {
         // Sep<LLowerId, ","> = LLowerId => ActionFn(607);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action607::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (1, 142)
@@ -43959,8 +43959,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action609::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (2, 142)
@@ -43976,8 +43976,8 @@ mod __parse__TopDecls {
     {
         // Sep<LLowerId, ","> = (<LLowerId> ",")+ => ActionFn(610);
         let __sym0 = __pop_Variant23(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action610::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (1, 142)
@@ -43993,8 +43993,8 @@ mod __parse__TopDecls {
     {
         // Sep<LType, ","> = LType => ActionFn(613);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action613::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (1, 143)
@@ -44028,8 +44028,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action615::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (2, 143)
@@ -44045,8 +44045,8 @@ mod __parse__TopDecls {
     {
         // Sep<LType, ","> = (<LType> ",")+ => ActionFn(616);
         let __sym0 = __pop_Variant5(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action616::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (1, 143)
@@ -44062,8 +44062,8 @@ mod __parse__TopDecls {
     {
         // Sep<LowerId, ","> = LowerId => ActionFn(629);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action629::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (1, 144)
@@ -44097,8 +44097,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action631::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (2, 144)
@@ -44114,8 +44114,8 @@ mod __parse__TopDecls {
     {
         // Sep<LowerId, ","> = (<LowerId> ",")+ => ActionFn(632);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action632::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant70(__nt), __end));
         (1, 144)
@@ -44131,8 +44131,8 @@ mod __parse__TopDecls {
     {
         // Sep<NamedType, ","> = NamedType => ActionFn(643);
         let __sym0 = __pop_Variant25(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action643::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 145)
@@ -44166,8 +44166,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant25(__symbols);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action645::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (2, 145)
@@ -44183,8 +44183,8 @@ mod __parse__TopDecls {
     {
         // Sep<NamedType, ","> = (<NamedType> ",")+ => ActionFn(646);
         let __sym0 = __pop_Variant26(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action646::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 145)
@@ -44200,8 +44200,8 @@ mod __parse__TopDecls {
     {
         // Sep<Param, ","> = Param => ActionFn(647);
         let __sym0 = __pop_Variant27(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action647::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 146)
@@ -44235,8 +44235,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant27(__symbols);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action649::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (2, 146)
@@ -44252,8 +44252,8 @@ mod __parse__TopDecls {
     {
         // Sep<Param, ","> = (<Param> ",")+ => ActionFn(650);
         let __sym0 = __pop_Variant28(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action650::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 146)
@@ -44269,8 +44269,8 @@ mod __parse__TopDecls {
     {
         // Sep<ParenExpr, ","> = ParenExpr => ActionFn(651);
         let __sym0 = __pop_Variant29(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action651::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant78(__nt), __end));
         (1, 147)
@@ -44304,8 +44304,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant29(__symbols);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action653::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant78(__nt), __end));
         (2, 147)
@@ -44321,8 +44321,8 @@ mod __parse__TopDecls {
     {
         // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(654);
         let __sym0 = __pop_Variant30(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action654::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant78(__nt), __end));
         (1, 147)
@@ -44338,8 +44338,8 @@ mod __parse__TopDecls {
     {
         // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(657);
         let __sym0 = __pop_Variant31(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action657::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
@@ -44373,8 +44373,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action659::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (2, 148)
@@ -44390,8 +44390,8 @@ mod __parse__TopDecls {
     {
         // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(660);
         let __sym0 = __pop_Variant32(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action660::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
@@ -44407,8 +44407,8 @@ mod __parse__TopDecls {
     {
         // Sep<SeqElem, ","> = SeqElem => ActionFn(661);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action661::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
@@ -44442,8 +44442,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action663::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (2, 149)
@@ -44459,8 +44459,8 @@ mod __parse__TopDecls {
     {
         // Sep<SeqElem, ","> = (<SeqElem> ",")+ => ActionFn(664);
         let __sym0 = __pop_Variant34(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action664::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
@@ -44476,8 +44476,8 @@ mod __parse__TopDecls {
     {
         // SeqElem = LInlineExpr => ActionFn(144);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action144::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (1, 150)
@@ -44496,8 +44496,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action145::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (3, 150)
@@ -44513,8 +44513,8 @@ mod __parse__TopDecls {
     {
         // SeqElem? = SeqElem => ActionFn(295);
         let __sym0 = __pop_Variant33(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action295::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (1, 151)
@@ -44549,8 +44549,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action617::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (3, 152)
@@ -44568,8 +44568,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action618::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 152)
@@ -44588,8 +44588,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action619::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (3, 152)
@@ -44607,8 +44607,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action620::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 152)
@@ -44631,8 +44631,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action373::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (7, 152)
@@ -44653,8 +44653,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action374::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (5, 152)
@@ -44676,8 +44676,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action375::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (6, 152)
@@ -44697,8 +44697,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action376::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (4, 152)
@@ -44718,8 +44718,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant39(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action66::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (4, 152)
@@ -44738,8 +44738,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant39(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action67::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (3, 152)
@@ -44757,8 +44757,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action572::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 152)
@@ -44774,8 +44774,8 @@ mod __parse__TopDecls {
     {
         // Stmt = BlockExpr => ActionFn(573);
         let __sym0 = __pop_Variant40(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action573::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (1, 152)
@@ -44803,8 +44803,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant58(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym11.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym11.2.clone();
         let __nt = super::__action621::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (12, 152)
@@ -44831,8 +44831,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym10.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym10.2.clone();
         let __nt = super::__action622::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (11, 152)
@@ -44858,8 +44858,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant58(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym9.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym9.2.clone();
         let __nt = super::__action623::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (10, 152)
@@ -44884,8 +44884,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant58(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym8.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym8.2.clone();
         let __nt = super::__action624::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (9, 152)
@@ -44909,8 +44909,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym7.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym7.2.clone();
         let __nt = super::__action625::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (8, 152)
@@ -44933,8 +44933,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action626::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (7, 152)
@@ -44957,8 +44957,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym6.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym6.2.clone();
         let __nt = super::__action627::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (7, 152)
@@ -44980,8 +44980,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action628::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (6, 152)
@@ -44997,8 +44997,8 @@ mod __parse__TopDecls {
     {
         // TopDecl = TypeDecl => ActionFn(633);
         let __sym0 = __pop_Variant90(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action633::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -45016,8 +45016,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant90(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action634::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -45033,8 +45033,8 @@ mod __parse__TopDecls {
     {
         // TopDecl = TopFunDecl => ActionFn(635);
         let __sym0 = __pop_Variant51(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action635::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -45052,8 +45052,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant51(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action636::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -45069,8 +45069,8 @@ mod __parse__TopDecls {
     {
         // TopDecl = ImportDecl => ActionFn(637);
         let __sym0 = __pop_Variant55(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action637::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -45088,8 +45088,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant55(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action638::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -45105,8 +45105,8 @@ mod __parse__TopDecls {
     {
         // TopDecl = TraitDecl => ActionFn(639);
         let __sym0 = __pop_Variant87(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action639::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -45124,8 +45124,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant87(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action640::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -45141,8 +45141,8 @@ mod __parse__TopDecls {
     {
         // TopDecl = ImplDecl => ActionFn(641);
         let __sym0 = __pop_Variant54(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action641::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 153)
@@ -45160,8 +45160,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant54(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action642::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 153)
@@ -45193,8 +45193,8 @@ mod __parse__TopDecls {
     {
         // TopDecl* = TopDecl+ => ActionFn(182);
         let __sym0 = __pop_Variant84(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action182::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 154)
@@ -45210,8 +45210,8 @@ mod __parse__TopDecls {
     {
         // TopDecl+ = TopDecl => ActionFn(314);
         let __sym0 = __pop_Variant83(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action314::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 155)
@@ -45229,8 +45229,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant83(__symbols);
         let __sym0 = __pop_Variant84(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action315::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (2, 155)
@@ -45262,8 +45262,8 @@ mod __parse__TopDecls {
     {
         // TopDecls = TopDecl+ => ActionFn(666);
         let __sym0 = __pop_Variant84(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action666::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (1, 156)
@@ -45285,8 +45285,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant86(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym5.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym5.2.clone();
         let __nt = super::__action580::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (6, 157)
@@ -45305,8 +45305,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant86(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action581::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (3, 157)
@@ -45324,8 +45324,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant86(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action582::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (2, 157)
@@ -45345,8 +45345,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant56(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant86(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action583::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (4, 157)
@@ -45367,8 +45367,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant47(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action655::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (5, 158)
@@ -45388,8 +45388,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant63(__symbols);
         let __sym1 = __pop_Variant47(__symbols);
         let __sym0 = __pop_Variant22(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action656::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (4, 158)
@@ -45414,8 +45414,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant75(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym8.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym8.2.clone();
         let __nt = super::__action584::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (9, 159)
@@ -45435,8 +45435,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant75(__symbols);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action585::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (4, 159)
@@ -45457,8 +45457,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant69(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action22::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (5, 160)
@@ -45478,8 +45478,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action23::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -45499,8 +45499,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action24::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -45520,8 +45520,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action25::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -45541,8 +45541,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action26::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 160)
@@ -45558,8 +45558,8 @@ mod __parse__TopDecls {
     {
         // Type = Type0 => ActionFn(27);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action27::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 160)
@@ -45575,8 +45575,8 @@ mod __parse__TopDecls {
     {
         // Type0 = TypeNamed => ActionFn(20);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action20::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 161)
@@ -45592,8 +45592,8 @@ mod __parse__TopDecls {
     {
         // Type0 = LowerId => ActionFn(21);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action21::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 161)
@@ -45612,8 +45612,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action586::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant89(__nt), __end));
         (3, 162)
@@ -45629,8 +45629,8 @@ mod __parse__TopDecls {
     {
         // TypeArg = LType => ActionFn(43);
         let __sym0 = __pop_Variant4(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action43::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant89(__nt), __end));
         (1, 162)
@@ -45650,8 +45650,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action587::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (4, 163)
@@ -45670,8 +45670,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant91(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action588::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (3, 163)
@@ -45692,8 +45692,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action589::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (5, 163)
@@ -45713,8 +45713,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant2(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action590::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (4, 163)
@@ -45734,8 +45734,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action591::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (4, 163)
@@ -45756,8 +45756,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action592::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (5, 163)
@@ -45773,8 +45773,8 @@ mod __parse__TopDecls {
     {
         // TypeDeclRhs = NEWLINE => ActionFn(10);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action10::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (1, 164)
@@ -45795,8 +45795,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym4.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym4.2.clone();
         let __nt = super::__action11::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (5, 164)
@@ -45816,8 +45816,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant73(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action525::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (4, 164)
@@ -45833,8 +45833,8 @@ mod __parse__TopDecls {
     {
         // TypeNamed = UpperId => ActionFn(36);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action36::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 165)
@@ -45853,8 +45853,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action37::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (3, 165)
@@ -45870,8 +45870,8 @@ mod __parse__TopDecls {
     {
         // TypeNoFn = TypeNamed => ActionFn(28);
         let __sym0 = __pop_Variant88(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action28::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 166)
@@ -45887,8 +45887,8 @@ mod __parse__TopDecls {
     {
         // TypeNoFn = LowerId => ActionFn(29);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action29::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 166)
@@ -45907,8 +45907,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant88(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action30::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (3, 166)
@@ -45928,8 +45928,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action31::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -45949,8 +45949,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant79(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action32::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -45970,8 +45970,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action33::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -45991,8 +45991,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant68(__symbols);
         let __sym1 = __pop_Variant76(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym3.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym3.2.clone();
         let __nt = super::__action34::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (4, 166)
@@ -46010,8 +46010,8 @@ mod __parse__TopDecls {
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant70(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym1.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym1.2.clone();
         let __nt = super::__action13::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (2, 167)
@@ -46030,8 +46030,8 @@ mod __parse__TopDecls {
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant69(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym2.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym2.2.clone();
         let __nt = super::__action142::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant69(__nt), __end));
         (3, 168)
@@ -46063,8 +46063,8 @@ mod __parse__TopDecls {
     {
         // __LExpr = LExpr => ActionFn(1);
         let __sym0 = __pop_Variant56(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action1::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (1, 169)
@@ -46080,8 +46080,8 @@ mod __parse__TopDecls {
     {
         // __LStmt = LStmt => ActionFn(0);
         let __sym0 = __pop_Variant59(__symbols);
-        let __start = __sym0.0;
-        let __end = __sym0.2;
+        let __start = __sym0.0.clone();
+        let __end = __sym0.2.clone();
         let __nt = super::__action0::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant59(__nt), __end));
         (1, 170)
