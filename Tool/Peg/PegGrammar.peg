@@ -60,8 +60,6 @@ typeDecls:
     typeDecl*
 
 typeDecl:
-    # NB. We can generalize the right-hand side to types using the compiler's
-    # type parser.
     _"type" "UpperId" _"=" "UpperId" _"NEWLINE"
 
 terminalsDecl:

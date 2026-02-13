@@ -177,7 +177,7 @@ _parseFile(path: Str) (decls: Vec[TopDecl], tokens: Array[Token]):
             panic("`path`:`line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens.takeArray()
 
-    match try(\(): module(ParserState.new(tokens))):
+    match try(\(): module(ParserState.new(tokens, ()))):
         Result.Err(cursor):
             match tokens.getOpt(cursor):
                 Option.None: panic("`path`: unexpected end of input")

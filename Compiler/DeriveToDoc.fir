@@ -34,7 +34,7 @@ genModule(modStr: Str):
             panic("Scanner error: `line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens.takeArray()
 
-    let parserState = ParserState.new(tokens)
+    let parserState = ParserState.new(tokens, ())
 
     let tree = match try(\(): module(parserState)):
         Result.Err(err):

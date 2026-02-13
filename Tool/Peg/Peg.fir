@@ -29,7 +29,7 @@ main():
     if tokens.len() == 0:
         panic("Empty file")
 
-    let parserState = ParserState.new(tokens)
+    let parserState = ParserState.new(tokens, ())
 
     let grammar = match try(\(): grammar(parserState)):
         Result.Err(cursor):
@@ -112,6 +112,7 @@ main():
         let doc = generateNonTerminal(
             grammar.terminalType,
             grammar.nonTerminalType,
+            grammar.userStateType.unwrapOr("()"),
             nonTerminalDecl,
             terminalPats,
         )
@@ -139,6 +140,7 @@ type Grammar(
     imports: Vec[Str],
     terminalType: Str,
     nonTerminalType: Str,
+    userStateType: Option[Str],
     terminalsDecl: TerminalsDecl,
     nonTerminalDecls: Vec[NonTerminalDecl],
 )
@@ -170,6 +172,7 @@ convertParseTree(tree: ParseTree[Token, NonTerminal]) Grammar:
     let typeDecls = grammar.get(1).asNonTerminal(NonTerminal.TypeDecls)
     let terminalType: Option[Str] = Option.None
     let nonTerminalType: Option[Str] = Option.None
+    let userStateType: Option[Str] = Option.None
     for typeDecl: ParseTree[Token, NonTerminal] in typeDecls.iter():
         let nodes = typeDecl.asNonTerminal(NonTerminal.TypeDecl)
         let typeName = nodes.get(0).asTerminal().text
@@ -183,6 +186,10 @@ convertParseTree(tree: ParseTree[Token, NonTerminal]) Grammar:
                 if nonTerminalType is Option.Some(_):
                     panic("Non-terminal type declared multiple times.")
                 nonTerminalType = Option.Some(typeValue)
+            "State":
+                if userStateType is Option.Some(_):
+                    panic("User state type declared multiple times.")
+                userStateType = Option.Some(typeValue)
             other: panic("Unknown type declaration: `other`")
 
     if terminalType is Option.None:
@@ -211,6 +218,7 @@ convertParseTree(tree: ParseTree[Token, NonTerminal]) Grammar:
         imports,
         terminalType = terminalType.unwrap(),
         nonTerminalType = nonTerminalType.unwrap(),
+        userStateType,
         terminalsDecl,
         nonTerminalDecls = converted,
     )
@@ -487,6 +495,7 @@ generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
 generateNonTerminal(
     terminalType: Str,
     nonTerminalType: Str,
+    userStateType: Str,
     decl: NonTerminalDecl,
     terminalPats: HashMap[Str, Vec[Token]],
 ) Doc / exn:
@@ -494,10 +503,9 @@ generateNonTerminal(
         Option.Some(ty): Doc.str(generateType(ty))
         Option.None: Doc.str("ParseTree[`terminalType`, `nonTerminalType`]")
 
-    let doc = Doc.str("`decl.name`(state: ParserState[`terminalType`]) ")
-        + returnTy
-        + Doc.str(" / U32:")
-        + Doc.hardLine()
+    let doc = Doc.str(
+        "`decl.name`(state: ParserState[`terminalType`, `userStateType`]) ",
+    ) + returnTy + Doc.str(" / U32:") + Doc.hardLine()
 
     doc += Doc.str("let cursor0 = state._cursor") + Doc.hardLine()
 

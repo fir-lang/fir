@@ -16,7 +16,16 @@ impl ToStr[TestError]:
 
 runParser(
     input: Str,
-    parseFn: Fn(ParserState[Token]) tree / U32,
+    parseFn: Fn(ParserState[Token, ()]) tree / U32,
+    runScan: Bool,
+) tree / TestError:
+    runParserState(input, parseFn, (), runScan)
+
+
+runParserState(
+    input: Str,
+    parseFn: Fn(ParserState[Token, s]) tree / U32,
+    state: s,
     runScan: Bool,
 ) tree / TestError:
     let (tokens, error) = tokenize("<test input>", input)
@@ -34,7 +43,7 @@ runParser(
     else:
         tokens.takeArray()
 
-    let parserState = ParserState.new(tokens)
+    let parserState = ParserState.new(tokens, state)
 
     let tree = match try(\(): parseFn(parserState)):
         Result.Err(err): throw(TestError.ParseError(err))
@@ -53,13 +62,22 @@ runParser(
 
 
 ## Print test name, run the given parser function on the input, print errors and trees.
-runTest[ToStr[nt]](
+runTest[ToDoc[pt]](
     testName: Str,
     input: Str,
-    parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
+    parseFn: Fn(ParserState[Token, ()]) pt / U32,
+) / exn:
+    runTestState(testName, input, parseFn, ())
+
+
+runTestState[ToDoc[pt]](
+    testName: Str,
+    input: Str,
+    parseFn: Fn(ParserState[Token, st]) pt / U32,
+    state: st,
 ) / exn:
     print(testName)
-    match try(\(): runParser(input, parseFn, Bool.False)):
+    match try(\(): runParserState(input, parseFn, state, Bool.False)):
         Result.Ok(tree): print(tree.toDoc().render(80))
         Result.Err(err): print("ERR: `err`")
     print("")
@@ -70,7 +88,7 @@ runTest[ToStr[nt]](
 ## Difference from `runTest` is that this prints the input, `runTest` prints the given test name.
 runTest_[ToStr[nt]](
     input: Str,
-    parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
+    parseFn: Fn(ParserState[Token, ()]) ParseTree[Token, nt] / U32,
 ) / exn:
     print(input)
     match try(\(): runParser(input, parseFn, Bool.False)):
@@ -82,7 +100,7 @@ runTest_[ToStr[nt]](
 ## Same as `runTest_`, but runs scanner after lexer.
 runTestScanner_[ToStr[nt]](
     input: Str,
-    parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
+    parseFn: Fn(ParserState[Token, ()]) ParseTree[Token, nt] / U32,
 ) / exn:
     print(input)
     match try(\(): runParser(input, parseFn, Bool.True)):
@@ -93,7 +111,7 @@ runTestScanner_[ToStr[nt]](
 
 runTestIndent[ToStr[nt]](
     input: Str,
-    parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
+    parseFn: Fn(ParserState[Token, ()]) ParseTree[Token, nt] / U32,
 ) Bool / exn:
     print(input)
     let result = match try(\(): runParser(input, parseFn, Bool.True)):

@@ -143,6 +143,21 @@ impl ToStr[()]:
         "()"
 
 
+impl ToDoc[()]:
+    toDoc(self: ()) Doc:
+        Doc.str("()")
+
+
+impl ToStr[[]]:
+    toStr(self: []) Str:
+        "unreachable"
+
+
+impl ToDoc[[]]:
+    toDoc(self: []) Doc:
+        panic("unreachable")
+
+
 trait ToDoc[t]:
     toDoc(self: t) Doc
 

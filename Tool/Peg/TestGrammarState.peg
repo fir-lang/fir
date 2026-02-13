@@ -1,0 +1,23 @@
+import [
+    Compiler/Token,
+    Tool/Peg/ParseTree,
+    Tool/Peg/TestState,
+]
+
+type Terminal = Token
+type NonTerminal = NonTerminal
+type State = UserState
+
+Terminals:
+    "a" = Token(kind = TokenKind.LowerId, text = "a", ..)
+    "b" = Token(kind = TokenKind.LowerId, text = "b", ..)
+    "c" = Token(kind = TokenKind.LowerId, text = "c", ..)
+    "," = Token(kind = TokenKind.Comma, ..)
+
+abcs ():
+    abc+: ()
+
+abc ():
+    "a": state.state().a += 1
+    "b": state.state().b += 1
+    "c": state.state().c += 1

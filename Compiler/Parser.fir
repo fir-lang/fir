@@ -33,7 +33,7 @@ main():
             panic("`line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens.takeArray()
 
-    let mod = match try(\(): module(ParserState.new(tokens))):
+    let mod = match try(\(): module(ParserState.new(tokens, ()))):
         Result.Err(cursor):
             if cursor == tokens.len():
                 panic("Parse error: unexpected end of input")

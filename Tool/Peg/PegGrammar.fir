@@ -190,7 +190,7 @@ impl Eq[NonTerminal]:
             _: Bool.False
 
 
-grammar(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+grammar(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -224,7 +224,7 @@ grammar(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-importDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+importDecl(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -291,7 +291,7 @@ importDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-path(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+path(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -335,7 +335,7 @@ path(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-typeDecls(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+typeDecls(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -360,7 +360,7 @@ typeDecls(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-typeDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+typeDecl(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -402,7 +402,7 @@ typeDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-terminalsDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+terminalsDecl(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -469,7 +469,7 @@ terminalsDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-terminalDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+terminalDecl(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -559,7 +559,7 @@ terminalDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-nonTerminalDecls(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+nonTerminalDecls(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -584,7 +584,7 @@ nonTerminalDecls(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-nonTerminalDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+nonTerminalDecl(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -648,7 +648,7 @@ nonTerminalDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-nonTerminalAlt(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+nonTerminalAlt(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -675,7 +675,7 @@ nonTerminalAlt(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-symbol(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+symbol(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -731,7 +731,7 @@ symbol(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-symbolPrefix(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+symbolPrefix(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -805,7 +805,7 @@ symbolPrefix(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-symbolNonRec(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+symbolNonRec(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -894,7 +894,7 @@ symbolNonRec(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-symbolSuffix(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+symbolSuffix(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -947,7 +947,7 @@ symbolSuffix(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-nonTerminalRhs(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+nonTerminalRhs(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1043,7 +1043,7 @@ nonTerminalRhs(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-inlineTokenTree(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+inlineTokenTree(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1070,7 +1070,7 @@ inlineTokenTree(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-inlineTokenTreeSingle(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+inlineTokenTreeSingle(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1282,7 +1282,7 @@ inlineTokenTreeSingle(state: ParserState[Token]) ParseTree[Token, NonTerminal] /
     throw(state.updateErrorCursor(state._cursor))
 
 
-inlineTokenTreeTerminator(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+inlineTokenTreeTerminator(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1382,7 +1382,7 @@ inlineTokenTreeTerminator(state: ParserState[Token]) ParseTree[Token, NonTermina
     throw(state.updateErrorCursor(state._cursor))
 
 
-indentedTokenTree(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+indentedTokenTree(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1412,7 +1412,7 @@ indentedTokenTree(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32
     throw(state.updateErrorCursor(state._cursor))
 
 
-indentedTokenTreeSingle(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+indentedTokenTreeSingle(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1624,7 +1624,7 @@ indentedTokenTreeSingle(state: ParserState[Token]) ParseTree[Token, NonTerminal]
     throw(state.updateErrorCursor(state._cursor))
 
 
-indentedTokenTreeTerminator(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+indentedTokenTreeTerminator(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1705,7 +1705,7 @@ indentedTokenTreeTerminator(state: ParserState[Token]) ParseTree[Token, NonTermi
     throw(state.updateErrorCursor(state._cursor))
 
 
-type_(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+type_(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1770,7 +1770,7 @@ type_(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-recordType(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+recordType(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1870,7 +1870,7 @@ recordType(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-recordTypeStart(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+recordTypeStart(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1907,7 +1907,7 @@ recordTypeStart(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-recordTypeCont(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+recordTypeCont(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1951,7 +1951,7 @@ recordTypeCont(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-variantType(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+variantType(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2051,7 +2051,7 @@ variantType(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-variantTypeStart(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+variantTypeStart(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2088,7 +2088,7 @@ variantTypeStart(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-variantTypeCont(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+variantTypeCont(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2132,7 +2132,7 @@ variantTypeCont(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-fnType(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+fnType(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2189,7 +2189,7 @@ fnType(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-namedType(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+namedType(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2275,7 +2275,7 @@ namedType(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-recordTypeFields(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+recordTypeFields(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2375,7 +2375,7 @@ recordTypeFields(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-recordTypeField(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+recordTypeField(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2414,7 +2414,7 @@ recordTypeField(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-variantAlt(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+variantAlt(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2464,7 +2464,7 @@ variantAlt(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-fnArgTys(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+fnArgTys(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2516,7 +2516,7 @@ fnArgTys(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-returnTy(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+returnTy(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():

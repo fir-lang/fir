@@ -47,26 +47,27 @@ impl ToStr[ParseError]:
         "unexpected token or end of input at cursor `self.cursor`"
 
 
-ParseTree.toDoc[ToStr[t], ToStr[nt]](self: ParseTree[t, nt]) Doc:
-    match self:
-        ParseTree.Terminal(t): Doc.str(t.toStr())
+impl[ToStr[t], ToStr[nt]] ToDoc[ParseTree[t, nt]]:
+    toDoc(self: ParseTree[t, nt]) Doc:
+        match self:
+            ParseTree.Terminal(t): Doc.str(t.toStr())
 
-        ParseTree.NonTerminal(kind, nodes):
-            if nodes.len() == 0:
-                return Doc.str(kind.toStr())
+            ParseTree.NonTerminal(kind, nodes):
+                if nodes.len() == 0:
+                    return Doc.str(kind.toStr())
 
-            let doc = Doc.str(kind.toStr()) + Doc.char('(') + Doc.break_(0)
-            let nodeIdx: U32 = 0
-            for node: ParseTree[t, nt] in nodes.iter():
-                if nodeIdx != 0:
-                    doc += Doc.char(',') + Doc.break_(1)
-                doc += node.toDoc()
-                nodeIdx += 1
+                let doc = Doc.str(kind.toStr()) + Doc.char('(') + Doc.break_(0)
+                let nodeIdx: U32 = 0
+                for node: ParseTree[t, nt] in nodes.iter():
+                    if nodeIdx != 0:
+                        doc += Doc.char(',') + Doc.break_(1)
+                    doc += node.toDoc()
+                    nodeIdx += 1
 
-            # Add a trailing comma when splitting the node list into lines.
-            doc += Doc.whenNotFlat(Doc.char(','))
+                # Add a trailing comma when splitting the node list into lines.
+                doc += Doc.whenNotFlat(Doc.char(','))
 
-            (doc.nest(4) + Doc.break_(0) + Doc.char(')')).group()
+                (doc.nest(4) + Doc.break_(0) + Doc.char(')')).group()
 
 
 ParseTree.asTerminal(self: ParseTree[t, nt]) t:
@@ -96,46 +97,60 @@ trait TriviaTokens[t]:
     isTrivia(self: t) Bool
 
 
-type ParserState[t](
+type ParserState[t, s](
     _tokens: Array[t],
     _cursor: U32,
     _errorCursor: Option[U32],
+    _userState: s,
 )
 
 
-impl Clone[ParserState[t]]:
-    clone(self: ParserState[t]) ParserState[t]:
-        ParserState(
-            _tokens = self._tokens,
-            _cursor = self._cursor,
-            _errorCursor = self._errorCursor,
-        )
+ParserState.state(self: ParserState[t, s]) s:
+    self._userState
 
 
-ParserState.cloneFrom(self: ParserState[t], other: ParserState[t]):
+# Clone used to save parser state which will then used to backtrack.
+#
+# This deliberately doesn't clone the user state, as the user state may be
+# large + not support `Clone`.
+ParserState.clone(self: ParserState[t, s]) ParserState[t, s]:
+    ParserState(
+        _tokens = self._tokens,
+        _cursor = self._cursor,
+        _errorCursor = self._errorCursor,
+        _userState = self._userState,
+    )
+
+
+ParserState.cloneFrom(self: ParserState[t, s], other: ParserState[t, s]):
     self._tokens = other._tokens
     self._cursor = other._cursor
     self._errorCursor = other._errorCursor
 
 
-ParserState.new(tokens: Array[t]) ParserState[t]:
-    ParserState(_tokens = tokens, _cursor = 0, _errorCursor = Option.None,)
+ParserState.new(tokens: Array[t], userState: s) ParserState[t, s]:
+    ParserState(
+        _tokens = tokens,
+        _cursor = 0,
+        _errorCursor = Option.None,
+        _userState = userState,
+    )
 
 
 ## Whether the whole input is consumed.
-ParserState.allConsumed(self: ParserState[t]) Bool:
+ParserState.allConsumed(self: ParserState[t, st]) Bool:
     self._tokens.len() == self._cursor
 
 
 ## Returns the most advanced cursor in which an unexpected token was found.
 ##
 ## The cursor can point to the end of the input, which means an unexpected end-of-file was found.
-ParserState.getErrorCursor(self: ParserState[t]) Option[U32]:
+ParserState.getErrorCursor(self: ParserState[t, st]) Option[U32]:
     self._errorCursor
 
 
 ## For generated code.
-ParserState.peek[TriviaTokens[t]](self: ParserState[t]) Option[t]:
+ParserState.peek[TriviaTokens[t]](self: ParserState[t, st]) Option[t]:
     loop:
         match self._tokens.getOpt(self._cursor):
             Option.Some(t) if t.isTrivia():
@@ -148,7 +163,7 @@ ParserState.peek[TriviaTokens[t]](self: ParserState[t]) Option[t]:
 
 
 ## For generated code.
-ParserState.updateErrorCursor(self: ParserState[t], newErrorCursor: U32) U32:
+ParserState.updateErrorCursor(self: ParserState[t, st], newErrorCursor: U32) U32:
     match self._errorCursor:
         Option.None:
             self._errorCursor = Option.Some(newErrorCursor)
@@ -162,6 +177,6 @@ ParserState.updateErrorCursor(self: ParserState[t], newErrorCursor: U32) U32:
 
 
 ## For generated code.
-ParserState.nextCursor[TriviaTokens[t]](self: ParserState[t]) U32:
+ParserState.nextCursor[TriviaTokens[t]](self: ParserState[t, st]) U32:
     self.peek()
     self._cursor
