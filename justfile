@@ -85,15 +85,22 @@ build:
     cargo build
 
 build_tools:
-    mkdir -p target
-
+    #!/usr/bin/env bash
+    set -e
     set -x
 
-    cargo run --bin fir2c -- Tool/Format/Format.fir --no-run > target/Format.c
-    gcc target/Format.c -o target/Format -O3
+    mkdir -p target
 
-    cargo run --bin fir2c -- Tool/Peg/Peg.fir --no-run > target/Peg.c
-    gcc target/Peg.c -o target/Peg -O3
+    tools=(
+        "Tool/Format/Format.fir"
+        "Tool/Peg/Peg.fir"
+    )
+
+    for tool in "${tools[@]}"; do
+        name=$(basename "${tool%.fir}")
+        cargo run --bin fir2c -- "$tool" --no-run > "target/$name.c"
+        gcc "target/$name.c" -o "target/$name" -O3
+    done
 
 build_compiler:
     mkdir -p target
