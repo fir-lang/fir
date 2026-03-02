@@ -96,10 +96,19 @@ build_tools:
         "Tool/Peg/Peg.fir"
     )
 
+    pids=()
+
     for tool in "${tools[@]}"; do
         name=$(basename "${tool%.fir}")
-        cargo run --bin fir2c -- "$tool" --no-run > "target/$name.c"
-        gcc "target/$name.c" -o "target/$name" -O3
+        (
+            cargo run --quiet --bin fir2c -- "$tool" --no-run > "target/$name.c"
+            gcc "target/$name.c" -o "target/$name" -O3
+        ) &
+        pids+=($!)
+    done
+
+    for pid in "${pids[@]}"; do
+        wait "$pid"
     done
 
 build_compiler:
