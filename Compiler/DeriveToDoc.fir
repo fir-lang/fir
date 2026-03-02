@@ -4,12 +4,11 @@ import [
     Compiler/Grammar,
     Compiler/Lexer,
     Compiler/Scanner,
-    Tool/Format/Format,
     Tool/Peg/PegTestLib,
 ]
 
 
-deriveToDoc():
+main():
     let args = getArgs()
 
     if args.len() < 2:
@@ -19,11 +18,12 @@ deriveToDoc():
     let mode = args.get(1)
     match mode:
         "--test": test()
-        "--file": genModule(readFileUtf8(args.get(2)))
+        "--item": gen(args.get(2))
+        "--file": gen(readFileUtf8(args.get(2)))
         other: print("Unknown mode: `other`")
 
 
-genModule(modStr: Str):
+gen(modStr: Str):
     let (tokens, error) = tokenize("<ToDoc module>", modStr)
 
     if error is Option.Some(error):
@@ -48,11 +48,10 @@ genModule(modStr: Str):
             "Parser didn't consume all input, input len = `inputLen`, cursor after parsing = `cursor`",
         )
 
-    # print(genModule_(tree, tokens.takeArray()).render(80))
-    print(formatModuleStr("test", genModule_(tree, tokens).render(80)),)
+    print(genModule(tree, tokens).render(80))
 
 
-genModule_(module: Vec[TopDecl], tokens: Array[Token]) Doc:
+genModule(module: Vec[TopDecl], tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
     for item: TopDecl in module.iter():
@@ -286,18 +285,16 @@ typeDeclFirstToken(decl: TypeDecl, tokens: Array[Token]) TokenIdx:
 
 
 test():
-    genModule(
-        "\
+    gen("\
 #[derive(ToDoc)]
 type S1[t]:
     S1A
     S1B(t)
-    S1C(t, U32)",
-    )
+    S1C(t, U32)",)
 
     print("")
 
-    genModule(
+    gen(
         "\
 #[derive(ToDoc)]
 type S2[t]:
@@ -310,19 +307,19 @@ type S2[t]:
 
     print("")
 
-    genModule("\
+    gen("\
 #[derive(ToDoc)]
 type NamedType")
 
     print("")
 
-    genModule("\
+    gen("\
 #[derive(ToDoc)]
 type NamedType(name: Id)")
 
     print("")
 
-    genModule(
+    gen(
         "\
 #[derive(ToDoc)]
 type NamedType(
@@ -332,12 +329,13 @@ type NamedType(
     )
 
 
-# args after: --main deriveToDoc -- --test
+# args after: -- --test
 # expected stdout:
 # impl[ToDoc[t]] ToDoc[S1[t]]:
 #     toDoc(self: S1[t]) Doc:
 #         match self:
-#             S1.S1A: Doc.str("S1.S1A")
+#             S1.S1A:
+#                 Doc.str("S1.S1A")
 #             S1.S1B(i0):
 #                 let args = Doc.break_(0)
 #                 args += i0.toDoc()
@@ -351,26 +349,23 @@ type NamedType(
 #                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
 #                 Doc.grouped(Doc.str("S1.S1C") + Doc.char('(') + args)
 # 
+# 
+# 
 # impl[ToDoc[t]] ToDoc[S2[t]]:
 #     toDoc(self: S2[t]) Doc:
 #         match self:
-#             S2.S2A: Doc.str("S2.S2A")
+#             S2.S2A:
+#                 Doc.str("S2.S2A")
 #             S2.S2B(x):
 #                 let args = Doc.break_(0)
-#                 args += Doc.grouped(
-#                     Doc.str("x =") + Doc.nested(4, Doc.break_(1) + x.toDoc()),
-#                 )
+#                 args += Doc.grouped(Doc.str("x =") + Doc.nested(4, Doc.break_(1) + x.toDoc()))
 #                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
 #                 Doc.str("S2.S2B") + Doc.char('(') + args
 #             S2.S2C(x, y):
 #                 let args = Doc.break_(0)
-#                 args += Doc.grouped(
-#                     Doc.str("x =") + Doc.nested(4, Doc.break_(1) + x.toDoc()),
-#                 )
+#                 args += Doc.grouped(Doc.str("x =") + Doc.nested(4, Doc.break_(1) + x.toDoc()))
 #                 args += Doc.char(',') + Doc.break_(1)
-#                 args += Doc.grouped(
-#                     Doc.str("y =") + Doc.nested(4, Doc.break_(1) + y.toDoc()),
-#                 )
+#                 args += Doc.grouped(Doc.str("y =") + Doc.nested(4, Doc.break_(1) + y.toDoc()))
 #                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
 #                 Doc.str("S2.S2C") + Doc.char('(') + args
 #             S2.S2D(i0):
@@ -386,28 +381,26 @@ type NamedType(
 #                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
 #                 Doc.grouped(Doc.str("S2.S2E") + Doc.char('(') + args)
 # 
+# 
+# 
 # impl ToDoc[NamedType]:
 #     toDoc(self: NamedType) Doc:
 #         Doc.grouped(Doc.str("NamedType") + Doc.char('(') + args)
 # 
+# 
 # impl ToDoc[NamedType]:
 #     toDoc(self: NamedType) Doc:
 #         let args = Doc.break_(0)
-#         args += Doc.grouped(
-#             Doc.str("name =") + Doc.nested(4, Doc.break_(1) + self.name.toDoc()),
-#         )
+#         args += Doc.grouped(Doc.str("name =") + Doc.nested(4, Doc.break_(1) + self.name.toDoc()))
 #         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
 #         Doc.grouped(Doc.str("NamedType") + Doc.char('(') + args)
 # 
+# 
 # impl ToDoc[NamedType]:
 #     toDoc(self: NamedType) Doc:
 #         let args = Doc.break_(0)
-#         args += Doc.grouped(
-#             Doc.str("name =") + Doc.nested(4, Doc.break_(1) + self.name.toDoc()),
-#         )
+#         args += Doc.grouped(Doc.str("name =") + Doc.nested(4, Doc.break_(1) + self.name.toDoc()))
 #         args += Doc.char(',') + Doc.break_(1)
-#         args += Doc.grouped(
-#             Doc.str("args =") + Doc.nested(4, Doc.break_(1) + self.args.toDoc()),
-#         )
+#         args += Doc.grouped(Doc.str("args =") + Doc.nested(4, Doc.break_(1) + self.args.toDoc()))
 #         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
 #         Doc.grouped(Doc.str("NamedType") + Doc.char('(') + args)
