@@ -143,8 +143,8 @@ pub(super) fn check_expr(
                     loop_stack,
                 );
 
-                let ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
-                match &ty_normalized {
+                let object_ty = object_ty.normalize(tc_state.tys.tys.cons());
+                match &object_ty {
                     Ty::Anonymous {
                         labels,
                         extension,
@@ -156,7 +156,7 @@ pub(super) fn check_expr(
                         }
                         let (labels, _) = crate::type_checker::row_utils::collect_rows(
                             tc_state.tys.tys.cons(),
-                            &ty_normalized,
+                            &object_ty,
                             RecordOrVariant::Record,
                             labels,
                             extension.clone(),
