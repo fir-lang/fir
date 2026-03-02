@@ -27,12 +27,14 @@ lexgen::lexer! {
         // Skip comments
         '#',
         '#' '\n',
-        '#' (_ # ['|' '\n']) (_ # '\n')* '\n',
+        '#' (_ # ['|' '\n' '[']) (_ # '\n')* '\n',
 
         "#|" => |lexer| {
             lexer.state().stack.push(State::Init);
             lexer.switch(LexerRule::Comment)
         },
+
+        "#[" = TokenKind::HashLBracket,
 
         '`' =? |lexer| {
             match lexer.state().stack.pop() {

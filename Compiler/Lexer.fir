@@ -180,6 +180,11 @@ Lexer._nextInit(self) Option[Token] / Error:
     if self._byteIdx == self._input.len():
         return Option.None
 
+    let byteIdx = self._byteIdx
+    let line = self._line
+    let col = self._col
+    let input = self._input.substr(self._byteIdx, self._input.len())
+
     if self._nextChar() == '#':
         self._byteIdx += 1
         self._col += 1
@@ -188,13 +193,20 @@ Lexer._nextInit(self) Option[Token] / Error:
             self._byteIdx += 1
             self._col += 1
             return Option.Some(self._multiLineComment())
+        elif self._byteIdx < self._input.len() and self._nextChar() == '[':
+            self._byteIdx += 1
+            self._col += 1
+            return Option.Some(
+                Token(
+                    kind = TokenKind.HashLBracket,
+                    text = "#[",
+                    byteIdx,
+                    line,
+                    col,
+                ),
+            )
         else:
             return Option.Some(self._singleLineComment())
-
-    let byteIdx = self._byteIdx
-    let line = self._line
-    let col = self._col
-    let input = self._input.substr(self._byteIdx, self._input.len())
 
     if input.startsWith("as") and not _isIdContStr(input.substr(2, input.len())):
         self._byteIdx += 2

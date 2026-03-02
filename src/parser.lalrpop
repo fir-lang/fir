@@ -32,6 +32,7 @@ extern {
         "row(" => Token { kind: TokenKind::LParenRow, .. },
         ")" => Token { kind: TokenKind::RParen, .. },
         "[" => Token { kind: TokenKind::LBracket, .. },
+        "#[" => Token { kind: TokenKind::HashLBracket, .. },
         "row[" => Token { kind: TokenKind::LBracketRow, .. },
         "]" => Token { kind: TokenKind::RBracket, .. },
         ":" => Token { kind: TokenKind::Colon, .. },
@@ -137,6 +138,12 @@ LLowerId: L<Id> = {
     <l:@L> <id:LowerId> <r:@R> => L::new(module, l, r, id.smol_str()),
 }
 
+Attribute: Attribute = {
+    "#[" <expr:LInlineExpr> "]" NEWLINE => {
+        Attribute { expr }
+    },
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Type declarations
@@ -144,8 +151,9 @@ LLowerId: L<Id> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TypeDecl: L<TypeDecl> = {
-    <l:@L> <value:"value"?> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
+    <l:@L> <attr:Attribute?> <value:"value"?> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            attr,
             value: value.is_some(),
             name: type_name.smol_str(),
             type_params: vec![],
@@ -153,8 +161,9 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(rhs),
         }),
 
-    <l:@L> <value:"value"?> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
+    <l:@L> <attr:Attribute?> <value:"value"?> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            attr,
             value: value.is_some(),
             name: type_name.smol_str(),
             type_params,
@@ -164,6 +173,7 @@ TypeDecl: L<TypeDecl> = {
 
     <l:@L> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            attr: None,
             value: false,
             name: type_name.smol_str(),
             type_params: vec![],
@@ -173,6 +183,7 @@ TypeDecl: L<TypeDecl> = {
 
     <l:@L> "prim" "type" <type_name:UpperIdLBracket> <type_params:TypeParams> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            attr: None,
             value: false,
             name: type_name.smol_str(),
             type_params,

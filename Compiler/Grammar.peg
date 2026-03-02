@@ -45,6 +45,7 @@ Terminals:
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
     "[" = Token(kind = TokenKind.LBracket, ..)
+    "#[" = Token(kind = TokenKind.HashLBracket, ..)
     "]" = Token(kind = TokenKind.RBracket, ..)
     ":" = Token(kind = TokenKind.Colon, ..)
     "," = Token(kind = TokenKind.Comma, ..)
@@ -278,8 +279,9 @@ returnTy (ret: Option[Type], exn: Option[Type]):
 
 typeDecl TypeDecl:
     # Sum type: at least one constructors
-    val=^ valToken="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
+    attr=attr? val=^ valToken="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
         TypeDecl(
+            attr,
             value_ = valToken.map(\(a): TokenIdx(idx = val)),
             prim_ = Option.None,
             name = newId(name),
@@ -291,11 +293,12 @@ typeDecl TypeDecl:
         )
 
     # Product type
-    val=^ valToken="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
+    attr=attr? val=^ valToken="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
         let fs = match fs:
             Option.Some(fs): fs.fields
             Option.None: ConFields.Empty
         TypeDecl(
+            attr,
             value_ = valToken.map(\(a): TokenIdx(idx = val)),
             prim_ = Option.None,
             name = newId(name),
@@ -308,6 +311,7 @@ typeDecl TypeDecl:
 
     prim_=^ "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
         TypeDecl(
+            attr = Option.None,
             value_ = Option.None,
             prim_ = Option.Some(TokenIdx(idx = prim_)),
             name = newId(name),
@@ -1061,3 +1065,12 @@ funSig (id: Id, sig: FunSig):
                 lparen = TokenIdx(idx = lparen),
             ),
         )
+
+
+# --------------------------------------------------------------------------------------------------
+# Attributes
+
+
+attr Attribute:
+    open=^ "#[" expr=expr close=^ "]" "NEWLINE":
+        Attribute(expr, open = TokenIdx(idx = open), close = TokenIdx(idx = close))

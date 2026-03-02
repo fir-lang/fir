@@ -141,14 +141,22 @@ type TokenKind:
     # Delimiters
     LBrace
     LBracket
-    LBracketRow
-    BackslashLParen
+    LBracketRow # "row[", starts a variant row type
+
+
+    BackslashLParen # "\(", starts a lambda
+
+
     LParen
-    LParenRow
+    LParenRow # "row(", starts a record row type
+
+
     RBrace
     RBracket
     RParen
     SingleQuote
+    HashLBracket # "#[", starts an attribute
+
 
     # Punctuation
     Colon
@@ -363,6 +371,7 @@ impl ToStr[TokenKind]:
             TokenKind.Var: "Var"
             TokenKind.Value: "Value"
             TokenKind.While: "While"
+            TokenKind.HashLBracket: "HashLBracket"
 
 
 impl Eq[TokenKind]:
@@ -467,6 +476,8 @@ impl Eq[TokenKind]:
             (left = TokenKind.Var, right = TokenKind.Var): Bool.True
             (left = TokenKind.Value, right = TokenKind.Value): Bool.True
             (left = TokenKind.While, right = TokenKind.While): Bool.True
+            (left = TokenKind.HashLBracket, right = TokenKind.HashLBracket):
+                Bool.True
             _: Bool.False
 
 

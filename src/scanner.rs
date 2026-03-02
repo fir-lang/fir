@@ -89,7 +89,10 @@ pub fn scan_indented<I>(
                 last_loc = new_tokens.last().unwrap().2;
             }
 
-            TokenKind::LBracket | TokenKind::LBracketRow | TokenKind::UpperIdDotLBracket => {
+            TokenKind::LBracket
+            | TokenKind::LBracketRow
+            | TokenKind::UpperIdDotLBracket
+            | TokenKind::HashLBracket => {
                 scan_non_indented(tokens, module, new_tokens, NonIndentedDelimKind::Bracket);
                 last_loc = new_tokens.last().unwrap().2;
             }
@@ -242,7 +245,10 @@ pub fn scan_non_indented<I>(
                 scan_non_indented(tokens, module, new_tokens, NonIndentedDelimKind::Paren);
             }
 
-            TokenKind::LBracket | TokenKind::LBracketRow | TokenKind::UpperIdDotLBracket => {
+            TokenKind::LBracket
+            | TokenKind::LBracketRow
+            | TokenKind::UpperIdDotLBracket
+            | TokenKind::HashLBracket => {
                 scan_non_indented(tokens, module, new_tokens, NonIndentedDelimKind::Bracket);
             }
 

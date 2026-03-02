@@ -99,6 +99,9 @@ TopDecl.format(self, tokens: Array[Token]) Doc:
 TypeDecl.format(self, tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
+    if self.attr is Option.Some(attr):
+        doc += attr.format(tokens) + Doc.hardLine()
+
     if self.value_ is Option.Some(value_):
         doc += formatToken(value_, tokens) + Doc.blank(1)
 
@@ -1570,6 +1573,12 @@ RecordPat.format(self, tokens: Array[Token]) Doc:
 
     let rparen = self.lastToken(tokens)
     Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rparen, tokens))
+
+
+Attribute.format(self, tokens: Array[Token]) Doc:
+    formatToken(self.open, tokens)
+        + self.expr.format(tokens)
+        + formatToken(self.close, tokens)
 
 
 # --------------------------------------------------------------------------------------------------

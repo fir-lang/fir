@@ -69,15 +69,16 @@ pub enum TokenKind {
 
     // Delimiters
     LParen,
-    LParenRow,
+    LParenRow, // "row(", starts a record row type
     RParen,
     LBracket,
-    LBracketRow,
+    LBracketRow, // "row[", starts a variant row type
     RBracket,
     LBrace,
     RBrace,
     SingleQuote,
-    BackslashLParen,
+    BackslashLParen, // "\(", starts a lambda
+    HashLBracket,    // "#[", starts an attribute
 
     // Punctuation
     Colon,

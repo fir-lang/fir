@@ -929,6 +929,19 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let attr = attr(state)
+                    attr,
+            )
+            let attr = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let val = state.nextCursor()
             let optionalCursor0 = state._cursor
             let symResult = try(
@@ -1016,6 +1029,7 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
+                    attr,
                     value_ = valToken.map(\(a): TokenIdx(idx = val)),
                     prim_ = Option.None,
                     name = newId(name),
@@ -1033,6 +1047,19 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
         Result.Ok(val): return val
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let attr = attr(state)
+                    attr,
+            )
+            let attr = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let val = state.nextCursor()
             let optionalCursor0 = state._cursor
             let symResult = try(
@@ -1109,6 +1136,7 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
                     Option.Some(fs): fs.fields
                     Option.None: ConFields.Empty
                 TypeDecl(
+                    attr,
                     value_ = valToken.map(\(a): TokenIdx(idx = val)),
                     prim_ = Option.None,
                     name = newId(name),
@@ -1173,6 +1201,7 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
+                    attr = Option.None,
                     value_ = Option.None,
                     prim_ = Option.Some(TokenIdx(idx = prim_)),
                     name = newId(name),
@@ -5211,6 +5240,42 @@ funSig(state: ParserState[Token, ()]) (id: Id, sig: FunSig) / U32:
                             returnTy = ret.ret,
                             lparen = TokenIdx(idx = lparen),
                         ),
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+attr(state: ParserState[Token, ()]) Attribute / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let open = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.HashLBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let expr = expr(state)
+            let close = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Newline, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                Attribute(
+                    expr,
+                    open = TokenIdx(idx = open),
+                    close = TokenIdx(idx = close),
                 )
             val,
     )

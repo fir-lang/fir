@@ -94,7 +94,8 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
 
             TokenKind.LBracket
                 | TokenKind.LBracketRow
-                | TokenKind.UpperIdDotLBracket:
+                | TokenKind.UpperIdDotLBracket
+                | TokenKind.HashLBracket:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Bracket)
 
             TokenKind.BeginInterpolation:
@@ -224,7 +225,8 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
 
             TokenKind.LBracket
                 | TokenKind.LBracketRow
-                | TokenKind.UpperIdDotLBracket:
+                | TokenKind.UpperIdDotLBracket
+                | TokenKind.HashLBracket:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Bracket)
 
             TokenKind.BeginInterpolation:

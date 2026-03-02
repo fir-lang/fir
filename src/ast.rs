@@ -139,6 +139,9 @@ pub enum TopDecl {
 /// A type declaration: `type Vec[t](...)`, `value type Bool: ...`.
 #[derive(Debug, Clone)]
 pub struct TypeDecl {
+    /// Attributes of the type: e.g. `#[derive(ToDoc, Eq)]`.
+    pub attr: Option<Attribute>,
+
     /// Whether this is a value type.
     pub value: bool,
 
@@ -861,6 +864,15 @@ pub struct ImplDecl {
 
     /// Method implementations.
     pub items: Vec<L<FunDecl>>,
+}
+
+/// An attribute: `#[derive(Foo, Bar)]`, `#[F(x = 1, y = "hi")]`.
+///
+/// This just uses expression syntax as expression syntax should be rich enough to cover most
+/// attributes. We may revise this as needed.
+#[derive(Debug, Clone)]
+pub struct Attribute {
+    pub expr: L<Expr>,
 }
 
 impl Type {

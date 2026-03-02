@@ -1,6 +1,7 @@
 import [
     Compiler/Assert,
     Compiler/Ast,
+    Compiler/DeriveUtils,
     Compiler/Grammar,
     Compiler/Lexer,
     Compiler/Scanner,
@@ -56,7 +57,7 @@ genModule(module: Vec[TopDecl], tokens: Array[Token]) Doc:
 
     for item: TopDecl in module.iter():
         if item is TopDecl.Type(decl):
-            if checkPragma(typeDeclFirstToken(decl, tokens), tokens):
+            if checkPragma("ToDoc", decl, tokens):
                 doc += genItem(decl, tokens) + Doc.hardLine()
 
     doc
@@ -261,20 +262,6 @@ genProductBody(ty: Id, fields: ConFields, tokens: Array[Token]) Doc:
         )
 
 
-checkPragma(token: TokenIdx, tokens: Array[Token]) Bool:
-    if token.idx == 0:
-        return Bool.False
-
-    let prevIdx = token.idx - 1
-    let prev = tokens.get(prevIdx)
-    while prev.kind is TokenKind.Indent | TokenKind.Dedent | TokenKind.Newline
-            and prevIdx != 0:
-        prevIdx -= 1
-        prev = tokens.get(prevIdx)
-
-    prev.text == "#[derive(ToDoc)]"
-
-
 typeDeclFirstToken(decl: TypeDecl, tokens: Array[Token]) TokenIdx:
     match decl.prim_:
         Option.Some(t): t
@@ -296,7 +283,7 @@ type S1[t]:
 
     gen(
         "\
-#[derive(ToDoc)]
+#[derive(extraStuffHere, ToDoc)]
 type S2[t]:
     S2A
     S2B(x: t)
@@ -308,7 +295,7 @@ type S2[t]:
     print("")
 
     gen("\
-#[derive(ToDoc)]
+#[derive(ToDoc, extraStuffHere)]
 type NamedType")
 
     print("")

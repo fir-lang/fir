@@ -46,6 +46,9 @@ type TopDecl:
 ## A type declaration: `type Vec[t](...)`, `value type Bool: ...`.
 #[derive(ToDoc)]
 type TypeDecl(
+    ## Attributes of the type: e.g. `#[derive(ToDoc, Eq)]`.
+    attr: Option[Attribute],
+
     ## The `value` token in value type declarations: `value type Bool: ...`.
     ##
     ## A type can't be both `value` and `prim`, the parser only allows one of them.
@@ -72,7 +75,7 @@ type TypeDecl(
 
 impl Tokens[TypeDecl]:
     firstToken(self: TypeDecl, tokens: Array[Token]) TokenIdx:
-        self.prim_.unwrapOr(self.name.token)
+        self.value_.or_(self.prim_).unwrapOr(self.name.token)
 
     lastToken(self: TypeDecl, tokens: Array[Token]) TokenIdx:
         panic("TOOD")
@@ -1406,6 +1409,22 @@ impl Tokens[ParenExpr]:
         self._rparen
 
 
+## An attribute: `#[derive(Foo, Bar)]`, `#[F(x = 1, y = "hi")]`.
+##
+## This just uses expression syntax as expression syntax should be rich enough
+## to cover most attributes. We may revise this as needed.
+#[derive(ToDoc)]
+type Attribute(
+    expr: Expr,
+
+    # "#["
+    open: TokenIdx,
+
+    # "]"
+    close: TokenIdx,
+)
+
+
 # --------------------------------------------------------------------------------------------------
 
 
@@ -1499,6 +1518,15 @@ impl ToDoc[TopDecl]:
 impl ToDoc[TypeDecl]:
     toDoc(self: TypeDecl) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("attr =") + Doc.nested(4, Doc.break_(1) + self.attr.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("value_ =")
+                + Doc.nested(4, Doc.break_(1) + self.value_.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("prim_ =")
                 + Doc.nested(4, Doc.break_(1) + self.prim_.toDoc()),
@@ -2935,3 +2963,13 @@ impl ToDoc[ParenExpr]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("ParenExpr") + Doc.char('(') + args)
+
+
+impl ToDoc[Attribute]:
+    toDoc(self: Attribute) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("Attribute") + Doc.char('(') + args)
