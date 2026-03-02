@@ -2,8 +2,7 @@
 
 # This script needs to run in Fir git repo root.
 
-set -e
-
+set -o pipefail
 shopt -s globstar
 
 SCRIPT_DIR="$(dirname "$0")"
@@ -26,10 +25,15 @@ source "${SCRIPT_DIR}/common.sh"
 
 for f in "${files[@]}"; do
     echo $f
-    compiler_output=$(./target/LexerDumpInterpreterTokens "$f")
-    interpreter_output=$(./target/release/fir --tokenize "$f")
-    diff -u <(echo "$interpreter_output") <(echo "$compiler_output")
-    if [ $? -ne 0 ]; then
+    if ! compiler_output=$(./target/LexerDumpInterpreterTokens "$f"); then
+        exit_code=1
+        continue
+    fi
+    if ! interpreter_output=$(./target/release/fir --tokenize "$f"); then
+        exit_code=1
+        continue
+    fi
+    if ! diff -u <(echo "$interpreter_output") <(echo "$compiler_output"); then
         exit_code=1
     fi
 done

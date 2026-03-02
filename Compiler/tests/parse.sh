@@ -2,8 +2,7 @@
 
 # This script needs to run in Fir git repo root.
 
-set -e
-
+set -o pipefail
 shopt -s globstar
 
 SCRIPT_DIR="$(dirname "$0")"
