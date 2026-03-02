@@ -58,6 +58,12 @@ Option.unwrap(self: Option[t]) t:
         Option.Some(val): val
 
 
+Option.or_(self: Option[t], other: Option[t]) Option[t]:
+    match self:
+        Option.Some(t): Option.Some(t)
+        Option.None: other
+
+
 Option.unwrapOr(self: Option[t], default: t) t:
     match self:
         Option.None: default
