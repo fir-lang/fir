@@ -606,12 +606,7 @@ Expr.format(self, tokens: Array[Token]) Doc:
             Expr.Do(e): e.format(tokens)
             Expr.Seq(e): e.format(tokens)
             Expr.Paren(e): e.format(tokens)
-
-            Expr.Variant(e):
-                let tilde = prevNonTrivia(e.firstToken(tokens), tokens).unwrap()
-                assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
-                formatToken(tilde, tokens) + e.format(tokens)
-
+            Expr.Variant(e): e.format(tokens)
             Expr.MethodSel(e):
                 # These expressions are intoruduced by the type checker, which we don't run when
                 # formatting.
@@ -1122,6 +1117,10 @@ ParenExpr.format(self, tokens: Array[Token]) Doc:
         + formatToken(self.lastToken(tokens), tokens)
 
 
+VariantExpr.format(self, tokens: Array[Token]) Doc:
+    formatToken(self.firstToken(tokens), tokens) + self.expr.format(tokens)
+
+
 # --------------------------------------------------------------------------------------------------
 # Statements
 
@@ -1481,10 +1480,7 @@ Pat.format(self, tokens: Array[Token]) Doc:
 
             Doc.grouped(doc0 + docRest.nest(4))
 
-        Pat.Variant(p):
-            let tilde = prevNonTrivia(p.firstToken(tokens), tokens).unwrap()
-            assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
-            formatToken(tilde, tokens) + p.format(tokens)
+        Pat.Variant(p): p.format(tokens)
 
 
 VarPat.format(self, tokens: Array[Token]) Doc:
@@ -1573,6 +1569,12 @@ RecordPat.format(self, tokens: Array[Token]) Doc:
 
     let rparen = self.lastToken(tokens)
     Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rparen, tokens))
+
+
+VariantPat.format(self, tokens: Array[Token]) Doc:
+    let tilde = prevNonTrivia(self.pat.firstToken(tokens), tokens).unwrap()
+    assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
+    formatToken(tilde, tokens) + self.pat.format(tokens)
 
 
 Attribute.format(self, tokens: Array[Token]) Doc:

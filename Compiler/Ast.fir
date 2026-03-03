@@ -664,8 +664,6 @@ type Pat:
     ## Matches a constructor.
     Con(ConPat)
 
-    Record(RecordPat)
-
     ## Underscore, aka. wildcard.
     Ignore(TokenIdx)
 
@@ -678,8 +676,10 @@ type Pat:
     ## Or pattern: `<pat1> | <pat2> | ...`. At least two patterns.
     Or(Vec[Pat])
 
+    Record(RecordPat)
+
     ## Variant pattern: `~"hi"`, `~Option.Some(_)`.
-    Variant(Pat)
+    Variant(VariantPat)
 
 
 impl Tokens[Pat]:
@@ -768,6 +768,24 @@ impl Tokens[RecordPat]:
         self._lastToken
 
 
+#[derive(ToDoc)]
+type VariantPat(
+    pat: Pat,
+    inferredTy: Option[Ty],
+    inferredPatTy: Option[Ty],
+)
+
+
+impl Tokens[VariantPat]:
+    firstToken(self: VariantPat, tokens: Array[Token]) TokenIdx:
+        let tilde = prevNonTrivia(self.pat.firstToken(tokens), tokens).unwrap()
+        assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
+        tilde
+
+    lastToken(self: VariantPat, tokens: Array[Token]) TokenIdx:
+        self.pat.lastToken(tokens)
+
+
 ## A sum or product constructor, in patterns and expressions.
 #[derive(ToDoc)]
 type Con(
@@ -852,9 +870,6 @@ type Expr:
     ## Some of the unary operators are desugared to method calls by the type checker.
     UnOp(UnOpExpr)
 
-    ## A record: `(1, 2)`, `(x = 123, msg = "hi")`.
-    Record(RecordExpr)
-
     Return(ReturnExpr)
 
     Match(MatchExpr)
@@ -867,14 +882,17 @@ type Expr:
 
     Do(DoExpr)
 
-    # A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
+    ## A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
     Seq(SeqExpr)
 
-    # A parenthesized expression.
+    ## A parenthesized expression.
     Paren(ParenExpr)
 
-    # A variant: `~"hi"`, `Option.Some(123)`.
-    Variant(Expr)
+    ## A record: `(1, 2)`, `(x = 123, msg = "hi")`.
+    Record(RecordExpr)
+
+    ## A variant: `~"hi"`, `Option.Some(123)`.
+    Variant(VariantExpr)
 
 
 impl Tokens[Expr]:
@@ -1235,6 +1253,23 @@ impl Tokens[RecordExpr]:
 
     lastToken(self: RecordExpr, tokens: Array[Token]) TokenIdx:
         self._lastToken
+
+
+#[derive(ToDoc)]
+type VariantExpr(
+    expr: Expr,
+    inferredTy: Option[Ty],
+)
+
+
+impl Tokens[VariantExpr]:
+    firstToken(self: VariantExpr, tokens: Array[Token]) TokenIdx:
+        let tilde = prevNonTrivia(self.expr.firstToken(tokens), tokens).unwrap()
+        assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
+        tilde
+
+    lastToken(self: VariantExpr, tokens: Array[Token]) TokenIdx:
+        self.expr.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -2201,11 +2236,6 @@ impl ToDoc[Pat]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("Pat.Con") + Doc.char('(') + args)
-            Pat.Record(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Pat.Record") + Doc.char('(') + args)
             Pat.Ignore(i0):
                 let args = Doc.break_(0)
                 args += i0.toDoc()
@@ -2230,6 +2260,11 @@ impl ToDoc[Pat]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("Pat.Or") + Doc.char('(') + args)
+            Pat.Record(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Pat.Record") + Doc.char('(') + args)
             Pat.Variant(i0):
                 let args = Doc.break_(0)
                 args += i0.toDoc()
@@ -2305,6 +2340,26 @@ impl ToDoc[RecordPat]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("RecordPat") + Doc.char('(') + args)
+
+
+impl ToDoc[VariantPat]:
+    toDoc(self: VariantPat) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("pat =") + Doc.nested(4, Doc.break_(1) + self.pat.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("inferredTy =")
+                + Doc.nested(4, Doc.break_(1) + self.inferredTy.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("inferredPatTy =")
+                + Doc.nested(4, Doc.break_(1) + self.inferredPatTy.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("VariantPat") + Doc.char('(') + args)
 
 
 impl ToDoc[Con]:
@@ -2399,11 +2454,6 @@ impl ToDoc[Expr]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("Expr.UnOp") + Doc.char('(') + args)
-            Expr.Record(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Expr.Record") + Doc.char('(') + args)
             Expr.Return(i0):
                 let args = Doc.break_(0)
                 args += i0.toDoc()
@@ -2444,6 +2494,11 @@ impl ToDoc[Expr]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("Expr.Paren") + Doc.char('(') + args)
+            Expr.Record(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Expr.Record") + Doc.char('(') + args)
             Expr.Variant(i0):
                 let args = Doc.break_(0)
                 args += i0.toDoc()
@@ -2757,6 +2812,21 @@ impl ToDoc[RecordExpr]:
         Doc.grouped(Doc.str("RecordExpr") + Doc.char('(') + args)
 
 
+impl ToDoc[VariantExpr]:
+    toDoc(self: VariantExpr) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("inferredTy =")
+                + Doc.nested(4, Doc.break_(1) + self.inferredTy.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("VariantExpr") + Doc.char('(') + args)
+
+
 impl ToDoc[ReturnExpr]:
     toDoc(self: ReturnExpr) Doc:
         let args = Doc.break_(0)
@@ -2970,6 +3040,15 @@ impl ToDoc[Attribute]:
         let args = Doc.break_(0)
         args += Doc.grouped(
             Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("open =") + Doc.nested(4, Doc.break_(1) + self.open.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("close =")
+                + Doc.nested(4, Doc.break_(1) + self.close.toDoc()),
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("Attribute") + Doc.char('(') + args)
