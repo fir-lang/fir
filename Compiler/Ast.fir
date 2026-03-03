@@ -4,11 +4,13 @@ import [
 ]
 
 
+#[derive(ToDoc)]
 value type NodeIdx(
     idx: U32,
 )
 
 
+#[derive(ToDoc)]
 type NodeIdxGen(
     _next: NodeIdx,
 )
@@ -791,6 +793,8 @@ impl Tokens[RecordPat]:
 ## A sum or product constructor, in patterns and expressions.
 #[derive(ToDoc)]
 type Con(
+    idx: NodeIdx,
+
     ## Type of the constructor.
     ty: TyId,
 
@@ -951,6 +955,8 @@ impl Tokens[Expr]:
 
 #[derive(ToDoc)]
 type VarExpr(
+    idx: NodeIdx,
+
     id: VarId,
 
     # Type arguments explicitly passed to the variable.
@@ -993,6 +999,8 @@ impl Tokens[TyArgs]:
 
 #[derive(ToDoc)]
 type FieldSelExpr(
+    idx: NodeIdx,
+
     object: Expr,
 
     field: Id,
@@ -1023,6 +1031,8 @@ impl Tokens[FieldSelExpr]:
 ## trait methods (e.g. `Iterator.next`).
 #[derive(ToDoc)]
 type MethodSelExpr(
+    idx: NodeIdx,
+
     ## The reciever, `<expr>` in `<expr>.method`.
     object: Expr,
 
@@ -1079,6 +1089,8 @@ impl Tokens[MethodSelExpr]:
 ## - Method: `Vec.push`.
 #[derive(ToDoc)]
 type AssocFnSelExpr(
+    idx: NodeIdx,
+
     # The type of the associated function: `Vec` in the examples above.
     ty: TyId,
 
@@ -1107,6 +1119,7 @@ impl Tokens[AssocFnSelExpr]:
 
 #[derive(ToDoc)]
 type CallExpr(
+    idx: NodeIdx,
     fun: Expr,
     args: Vec[Named[Expr]],
     _lastToken: TokenIdx,
@@ -1123,6 +1136,8 @@ impl Tokens[CallExpr]:
 
 #[derive(ToDoc)]
 type IntExpr(
+    idx: NodeIdx,
+
     ## The digits of the integer, without any prefix ("0x" or "0b") and suffix ("u32" etc.).
     ##
     ## The digits will be parsed during type checking. If the integer doesn't have a suffix, parsing
@@ -1154,6 +1169,7 @@ impl Tokens[IntExpr]:
 
 #[derive(ToDoc)]
 type StrExpr(
+    idx: NodeIdx,
     parts: Vec[StrPart],
     first: TokenIdx,
     last: TokenIdx,
@@ -1176,6 +1192,7 @@ type StrPart:
 
 #[derive(ToDoc)]
 type CharExpr(
+    idx: NodeIdx,
     char: Char,
     token: TokenIdx,
 )
@@ -1191,6 +1208,7 @@ impl Tokens[CharExpr]:
 
 #[derive(ToDoc)]
 type BinOpExpr(
+    idx: NodeIdx,
     left: Expr,
     right: Expr,
     op: BinOp,
@@ -1227,6 +1245,7 @@ type BinOp:
 
 #[derive(ToDoc)]
 type UnOpExpr(
+    idx: NodeIdx,
     op: UnOp,
     expr: Expr,
     _firstToken: TokenIdx,
@@ -1243,6 +1262,7 @@ impl Tokens[UnOpExpr]:
 
 #[derive(ToDoc)]
 type RecordExpr(
+    idx: NodeIdx,
     fields: Vec[Named[Expr]],
     _firstToken: TokenIdx,
     _lastToken: TokenIdx,
@@ -1259,6 +1279,7 @@ impl Tokens[RecordExpr]:
 
 #[derive(ToDoc)]
 type ReturnExpr(
+    idx: NodeIdx,
     expr: Option[Expr],
     _firstToken: TokenIdx,
 )
@@ -1276,6 +1297,7 @@ impl Tokens[ReturnExpr]:
 
 #[derive(ToDoc)]
 type MatchExpr(
+    idx: NodeIdx,
     scrutinee: Expr,
     alts: Vec[Alt],
     _firstToken: TokenIdx,
@@ -1308,6 +1330,8 @@ impl Tokens[Alt]:
 
 #[derive(ToDoc)]
 type IfExpr(
+    idx: NodeIdx,
+
     # At least one element
     branches: Vec[IfBranch],
     elseBranch: Option[Vec[Stmt]],
@@ -1335,9 +1359,9 @@ impl Tokens[IfExpr]:
 
 #[derive(ToDoc)]
 type FnExpr(
+    idx: NodeIdx,
     sig: FunSig,
     body: Vec[Stmt],
-    idx: U32,
     _firstToken: TokenIdx,
 )
 
@@ -1353,6 +1377,7 @@ impl Tokens[FnExpr]:
 # <expr> is <pat>
 #[derive(ToDoc)]
 type IsExpr(
+    idx: NodeIdx,
     expr: Expr,
     pat: Pat,
 )
@@ -1368,6 +1393,7 @@ impl Tokens[IsExpr]:
 
 #[derive(ToDoc)]
 type DoExpr(
+    idx: NodeIdx,
     body: Vec[Stmt],
     _firstToken: TokenIdx,
 )
@@ -1389,6 +1415,7 @@ type UnOp:
 
 #[derive(ToDoc)]
 type SeqExpr(
+    idx: NodeIdx,
     ty: Option[Type],
     elems: Vec[SeqElem],
     _lbracket: TokenIdx,
@@ -1415,6 +1442,7 @@ impl Tokens[SeqExpr]:
 
 #[derive(ToDoc)]
 type ParenExpr(
+    idx: NodeIdx,
     expr: Expr,
     _lparen: TokenIdx,
     _rparen: TokenIdx,
@@ -1492,6 +1520,27 @@ impl Eq[BinOp]:
 
 # --------------------------------------------------------------------------------------------------
 # Implementations below are generated with `Compiler/DeriveToDoc`, do not edit.
+
+
+impl ToDoc[NodeIdx]:
+    toDoc(self: NodeIdx) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("NodeIdx") + Doc.char('(') + args)
+
+
+impl ToDoc[NodeIdxGen]:
+    toDoc(self: NodeIdxGen) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("_next =")
+                + Doc.nested(4, Doc.break_(1) + self._next.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("NodeIdxGen") + Doc.char('(') + args)
 
 
 impl ToDoc[Id]:
@@ -2331,6 +2380,10 @@ impl ToDoc[Con]:
     toDoc(self: Con) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + self.ty.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
@@ -2475,6 +2528,10 @@ impl ToDoc[VarExpr]:
     toDoc(self: VarExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("id =") + Doc.nested(4, Doc.break_(1) + self.id.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
@@ -2515,6 +2572,10 @@ impl ToDoc[FieldSelExpr]:
     toDoc(self: FieldSelExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("object =")
                 + Doc.nested(4, Doc.break_(1) + self.object.toDoc()),
         )
@@ -2535,6 +2596,10 @@ impl ToDoc[FieldSelExpr]:
 impl ToDoc[MethodSelExpr]:
     toDoc(self: MethodSelExpr) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("object =")
                 + Doc.nested(4, Doc.break_(1) + self.object.toDoc()),
@@ -2572,6 +2637,10 @@ impl ToDoc[AssocFnSelExpr]:
     toDoc(self: AssocFnSelExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + self.ty.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
@@ -2602,6 +2671,10 @@ impl ToDoc[CallExpr]:
     toDoc(self: CallExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("fun =") + Doc.nested(4, Doc.break_(1) + self.fun.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
@@ -2620,6 +2693,10 @@ impl ToDoc[CallExpr]:
 impl ToDoc[IntExpr]:
     toDoc(self: IntExpr) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("text =") + Doc.nested(4, Doc.break_(1) + self.text.toDoc()),
         )
@@ -2650,6 +2727,10 @@ impl ToDoc[IntExpr]:
 impl ToDoc[StrExpr]:
     toDoc(self: StrExpr) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("parts =")
                 + Doc.nested(4, Doc.break_(1) + self.parts.toDoc()),
@@ -2686,6 +2767,10 @@ impl ToDoc[CharExpr]:
     toDoc(self: CharExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("char =") + Doc.nested(4, Doc.break_(1) + self.char.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
@@ -2700,6 +2785,10 @@ impl ToDoc[CharExpr]:
 impl ToDoc[BinOpExpr]:
     toDoc(self: BinOpExpr) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("left =") + Doc.nested(4, Doc.break_(1) + self.left.toDoc()),
         )
@@ -2741,6 +2830,10 @@ impl ToDoc[UnOpExpr]:
     toDoc(self: UnOpExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("op =") + Doc.nested(4, Doc.break_(1) + self.op.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
@@ -2759,6 +2852,10 @@ impl ToDoc[UnOpExpr]:
 impl ToDoc[RecordExpr]:
     toDoc(self: RecordExpr) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("fields =")
                 + Doc.nested(4, Doc.break_(1) + self.fields.toDoc()),
@@ -2781,6 +2878,10 @@ impl ToDoc[ReturnExpr]:
     toDoc(self: ReturnExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
@@ -2795,6 +2896,10 @@ impl ToDoc[ReturnExpr]:
 impl ToDoc[MatchExpr]:
     toDoc(self: MatchExpr) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("scrutinee =")
                 + Doc.nested(4, Doc.break_(1) + self.scrutinee.toDoc()),
@@ -2835,6 +2940,10 @@ impl ToDoc[IfExpr]:
     toDoc(self: IfExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("branches =")
                 + Doc.nested(4, Doc.break_(1) + self.branches.toDoc()),
         )
@@ -2871,15 +2980,15 @@ impl ToDoc[FnExpr]:
     toDoc(self: FnExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("sig =") + Doc.nested(4, Doc.break_(1) + self.sig.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("body =") + Doc.nested(4, Doc.break_(1) + self.body.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
@@ -2894,6 +3003,10 @@ impl ToDoc[IsExpr]:
     toDoc(self: IsExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
@@ -2907,6 +3020,10 @@ impl ToDoc[IsExpr]:
 impl ToDoc[DoExpr]:
     toDoc(self: DoExpr) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("body =") + Doc.nested(4, Doc.break_(1) + self.body.toDoc()),
         )
@@ -2929,6 +3046,10 @@ impl ToDoc[UnOp]:
 impl ToDoc[SeqExpr]:
     toDoc(self: SeqExpr) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + self.ty.toDoc()),
         )
@@ -2969,6 +3090,10 @@ impl ToDoc[ParenExpr]:
     toDoc(self: ParenExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
@@ -2990,6 +3115,15 @@ impl ToDoc[Attribute]:
         let args = Doc.break_(0)
         args += Doc.grouped(
             Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("open =") + Doc.nested(4, Doc.break_(1) + self.open.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("close =")
+                + Doc.nested(4, Doc.break_(1) + self.close.toDoc()),
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("Attribute") + Doc.char('(') + args)

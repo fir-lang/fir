@@ -1493,7 +1493,7 @@ inlineExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let val = do:
-                associate(expr, cont)
+                associate(expr, cont, state.state())
             val,
     )
     match altResult:
@@ -1548,6 +1548,7 @@ blockExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
             let val = do:
                 Expr.Match(
                     MatchExpr(
+                        idx = state.state().next(),
                         scrutinee = scrut,
                         alts,
                         _firstToken = TokenIdx(idx = cur),
@@ -1703,6 +1704,7 @@ blockExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
             let val = do:
                 Expr.If(
                     IfExpr(
+                        idx = state.state().next(),
                         _firstToken = TokenIdx(idx = cur),
                         branches =
                             Vec.fromIter(
@@ -1766,7 +1768,13 @@ blockExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                Expr.Do(DoExpr(body, _firstToken = TokenIdx(idx = cur)))
+                Expr.Do(
+                    DoExpr(
+                        idx = state.state().next(),
+                        body,
+                        _firstToken = TokenIdx(idx = cur),
+                    ),
+                )
             val,
     )
     match altResult:
@@ -1847,6 +1855,7 @@ blockExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                 let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
                 Expr.Fn_(
                     FnExpr(
+                        idx = state.state().next(),
                         sig =
                             FunSig(
                                 typeParams = Vec.empty(),
@@ -1858,7 +1867,6 @@ blockExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                                 lparen = TokenIdx(idx = cur),
                             ),
                         body,
-                        idx = 0,
                         _firstToken = TokenIdx(idx = cur),
                     ),
                 )
@@ -1937,6 +1945,7 @@ prefixExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                         ExprSuffix.Field(field, tyArgs):
                             ret = Expr.FieldSel(
                                 FieldSelExpr(
+                                    idx = state.state().next(),
                                     object = ret,
                                     field,
                                     userTyArgs = tyArgs,
@@ -1944,7 +1953,12 @@ prefixExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                             )
                         ExprSuffix.Args(args, _lastToken):
                             ret = Expr.Call(
-                                CallExpr(fun = ret, args, _lastToken),
+                                CallExpr(
+                                    idx = state.state().next(),
+                                    fun = ret,
+                                    args,
+                                    _lastToken,
+                                ),
                             )
                 if pfx is Option.Some(pfx):
                     match pfx:
@@ -1952,6 +1966,7 @@ prefixExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                         ExprPrefix.Minus(token):
                             ret = Expr.UnOp(
                                 UnOpExpr(
+                                    idx = state.state().next(),
                                     op = UnOp.Neg,
                                     expr = ret,
                                     _firstToken = token,
@@ -1960,6 +1975,7 @@ prefixExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                         ExprPrefix.Not(token):
                             ret = Expr.UnOp(
                                 UnOpExpr(
+                                    idx = state.state().next(),
                                     op = UnOp.Not,
                                     expr = ret,
                                     _firstToken = token,
@@ -2194,6 +2210,7 @@ simpleExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
             let val = do:
                 Expr.Var(
                     VarExpr(
+                        idx = state.state().next(),
                         id = newVarId(var_, state._tokens),
                         userTyArgs = tyArgs,
                         tyArgs = Vec.empty(),
@@ -2285,6 +2302,7 @@ simpleExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                     Option.None:
                         Expr.Record(
                             RecordExpr(
+                                idx = state.state().next(),
                                 fields = Vec.empty(),
                                 _firstToken = TokenIdx(idx = first),
                                 _lastToken = TokenIdx(idx = last),
@@ -2296,6 +2314,7 @@ simpleExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                                 and fields.e0.name is Option.None:
                             Expr.Paren(
                                 ParenExpr(
+                                    idx = state.state().next(),
                                     expr = fields.e0.node,
                                     _lparen = TokenIdx(idx = first),
                                     _rparen = TokenIdx(idx = last),
@@ -2304,6 +2323,7 @@ simpleExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                         else:
                             Expr.Record(
                                 RecordExpr(
+                                    idx = state.state().next(),
                                     fields =
                                         Vec.fromIter(
                                             once(fields.e0).chain(
@@ -2341,7 +2361,13 @@ simpleExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                     ()
                     Option.Some(ok)
             let val = do:
-                Expr.Return(ReturnExpr(expr, _firstToken = TokenIdx(idx = cur)))
+                Expr.Return(
+                    ReturnExpr(
+                        idx = state.state().next(),
+                        expr,
+                        _firstToken = TokenIdx(idx = cur),
+                    ),
+                )
             val,
     )
     match altResult:
@@ -2396,6 +2422,7 @@ simpleExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                 let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
                 Expr.Fn_(
                     FnExpr(
+                        idx = state.state().next(),
                         sig =
                             FunSig(
                                 typeParams = Vec.empty(),
@@ -2407,7 +2434,6 @@ simpleExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                                 lparen = TokenIdx(idx = cur),
                             ),
                         body = Vec.[Stmt.Expr(body)],
-                        idx = 0,
                         _firstToken = TokenIdx(idx = cur),
                     ),
                 )
@@ -2434,6 +2460,7 @@ simpleExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                     intStr.push(char)
                 Expr.Int(
                     IntExpr(
+                        idx = state.state().next(),
                         text = intStr.toStr(),
                         suffix = Option.None,
                         radix = 10,
@@ -2497,6 +2524,7 @@ simpleExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
             let val = do:
                 Expr.Str(
                     StrExpr(
+                        idx = state.state().next(),
                         parts = strParts(interpolations),
                         first = TokenIdx(idx = first),
                         last = TokenIdx(idx = last),
@@ -2519,6 +2547,7 @@ simpleExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
             let val = do:
                 Expr.Char(
                     CharExpr(
+                        idx = state.state().next(),
                         char = parseCharLit(char.text),
                         token = TokenIdx(idx = cur),
                     ),
@@ -2557,6 +2586,7 @@ sequence(state: ParserState[Token, NodeIdxGen]) Expr / U32:
             let val = do:
                 Expr.Seq(
                     SeqExpr(
+                        idx = state.state().next(),
                         ty,
                         elems = elems.elems,
                         _lbracket = elems.lbracket,
@@ -2745,6 +2775,7 @@ con(state: ParserState[Token, NodeIdxGen]) Con / U32:
                     Option.Some(ok)
             let val = do:
                 Con(
+                    idx = state.state().next(),
                     ty = newTyId(ty, state._tokens),
                     con = con.map(\(con: U32): newId(con)),
                     userTyArgs,
