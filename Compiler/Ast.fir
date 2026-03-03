@@ -4,6 +4,26 @@ import [
 ]
 
 
+value type NodeIdx(
+    idx: U32,
+)
+
+
+type NodeIdxGen(
+    _next: NodeIdx,
+)
+
+
+NodeIdxGen.new() NodeIdxGen:
+    NodeIdxGen(_next = NodeIdx(idx = 0))
+
+
+NodeIdxGen.next(self) NodeIdx:
+    let next = self._next
+    self._next = NodeIdx(idx = next.idx + 1)
+    next
+
+
 trait Tokens[t]:
     firstToken(self: t, tokens: Array[Token]) TokenIdx
 
