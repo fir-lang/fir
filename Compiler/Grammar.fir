@@ -1962,7 +1962,10 @@ prefixExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                             )
                 if pfx is Option.Some(pfx):
                     match pfx:
-                        ExprPrefix.Tilde(token): ret = Expr.Variant(ret)
+                        ExprPrefix.Tilde(token):
+                            ret = Expr.Variant(
+                                VariantExpr(expr = ret, inferredTy = Option.None),
+                            )
                         ExprPrefix.Minus(token):
                             ret = Expr.UnOp(
                                 UnOpExpr(
@@ -3987,7 +3990,13 @@ simplePat(state: ParserState[Token, NodeIdxGen]) Pat / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let pat = simplePat(state)
             let val = do:
-                Pat.Variant(pat)
+                Pat.Variant(
+                    VariantPat(
+                        pat,
+                        inferredTy = Option.None,
+                        inferredPatTy = Option.None,
+                    ),
+                )
             val,
     )
     match altResult:

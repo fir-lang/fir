@@ -133,7 +133,7 @@ trait Visitor[v]:
     visitParenExpr(self: v, e: ParenExpr):
         defaultVisitParen(self, e)
 
-    visitVariantExpr(self: v, e: Expr):
+    visitVariantExpr(self: v, e: VariantExpr):
         defaultVisitVariant(self, e)
 
     # ----------------------------------------------------------------
@@ -193,7 +193,7 @@ trait Visitor[v]:
     visitOrPat(self: v, ps: Vec[Pat]):
         defaultVisitOrPat(self, ps)
 
-    visitVariantPat(self: v, p: Pat):
+    visitVariantPat(self: v, p: VariantPat):
         defaultVisitVariantPat(self, p)
 
     # ----------------------------------------------------------------
@@ -342,7 +342,7 @@ defaultVisitPat[Visitor[v]](v: v, pat: Pat):
         Pat.Str(s, t): v.visitStrPat(s, t)
         Pat.Char(c, t): v.visitCharPat(c, t)
         Pat.Or(ps): v.visitOrPat(ps)
-        Pat.Variant(ps): v.visitVariantPat(ps)
+        Pat.Variant(p): v.visitVariantPat(p)
 
 
 defaultVisitType[Visitor[v]](v: v, ty: Type):
@@ -453,8 +453,8 @@ defaultVisitParen[Visitor[v]](v: v, e: ParenExpr):
     v.visitExpr(e.expr)
 
 
-defaultVisitVariant[Visitor[v]](v: v, e: Expr):
-    v.visitExpr(e)
+defaultVisitVariant[Visitor[v]](v: v, e: VariantExpr):
+    v.visitExpr(e.expr)
 
 
 defaultVisitCon[Visitor[v]](v: v, c: Con):
@@ -523,8 +523,8 @@ defaultVisitOrPat[Visitor[v]](v: v, ps: Vec[Pat]):
         v.visitPat(p)
 
 
-defaultVisitVariantPat[Visitor[v]](v: v, p: Pat):
-    v.visitPat(p)
+defaultVisitVariantPat[Visitor[v]](v: v, p: VariantPat):
+    v.visitPat(p.pat)
 
 
 defaultVisitNamedType[Visitor[v]](v: v, t: NamedType):

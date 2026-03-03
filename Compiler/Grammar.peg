@@ -463,7 +463,7 @@ prefixExpr Expr:
         if pfx is Option.Some(pfx):
             match pfx:
                 ExprPrefix.Tilde(token):
-                    ret = Expr.Variant(ret)
+                    ret = Expr.Variant(VariantExpr(expr = ret, inferredTy = Option.None))
 
                 ExprPrefix.Minus(token):
                     ret = Expr.UnOp(UnOpExpr(
@@ -833,7 +833,7 @@ pat Pat:
 simplePat Pat:
     # Variant
     "~" pat=simplePat:
-        Pat.Variant(pat)
+        Pat.Variant(VariantPat(pat, inferredTy = Option.None, inferredPatTy = Option.None))
 
     # Variables
     var_=^ "LowerId":
