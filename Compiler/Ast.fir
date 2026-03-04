@@ -1047,20 +1047,13 @@ type MethodSelExpr(
     idx: NodeIdx,
 
     ## The reciever, `<expr>` in `<expr>.method`.
-    object: Expr,
-
-    ## Type of `object` (receiver), filled in by the type checker.
     ##
-    ## This type will always be a type constructor, potentially with arguments, as types without
-    ## type constructors (records etc.) don't have methods.
+    ## The type of this expression will always be a type constructor, potentially with arguments,
+    ## as types without type constructors (records etc.) don't have methods.
     ##
     ## The type constructor will be the type with the associated function with `method` as the name
     ## and a `self` parameter that matches this type.
-    # TODO: We could have separate fields for the ty con and args.
-    # TODO: We could also add types to every expression if it's going to help with monomorphisation.
-    #       For efficiency though, we should only annotate inferred types and then type check from
-    #       the top-level expression every time we need to compute type of an expr.
-    objectTy: Option[Ty],
+    object: Expr,
 
     ## The type or trait id that defines the method.
     ##
@@ -1073,16 +1066,6 @@ type MethodSelExpr(
     ##
     ## E.g. `push`, `next`.
     method: AssocVarId,
-
-    ## Type arguments of `method_ty_id`.
-    ##
-    ## If the method is for a trait, the first arguments here will be for the
-    ## trait type parameters. E.g. in `Iterator.next`, the first two argumetns
-    ## will be the `iter` and `item` parameters of `trait Iterator[iter, item]`.
-    ##
-    ## (If the method is not a trait method, then we don't care about the type
-    ## parameter order.. I think?)
-    tyArgs: Vec[Ty],
 
     _lastToken: TokenIdx,
 )
@@ -1113,10 +1096,6 @@ type AssocFnSelExpr(
 
     ## Type arguments explicitly passed to the variable.
     userTyArgs: Option[TyArgs],
-
-    ## Inferred type arguments of the type and associated function. Filled in by
-    ## the type checker.
-    tyArgs: Vec[Ty],
 
     _lastToken: TokenIdx,
 )
@@ -2168,6 +2147,10 @@ impl ToDoc[ForStmt]:
     toDoc(self: ForStmt) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("label =")
                 + Doc.nested(4, Doc.break_(1) + self.label.toDoc()),
         )
@@ -2184,7 +2167,6 @@ impl ToDoc[ForStmt]:
         args += Doc.grouped(
             Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
         )
-        args += Doc.char(',') + Doc.break_(1)
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("body =") + Doc.nested(4, Doc.break_(1) + self.body.toDoc()),
@@ -2332,6 +2314,10 @@ impl ToDoc[VarPat]:
     toDoc(self: VarPat) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("var_ =") + Doc.nested(4, Doc.break_(1) + self.var_.toDoc()),
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
@@ -2367,6 +2353,10 @@ impl ToDoc[RecordPat]:
     toDoc(self: RecordPat) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("fields =")
                 + Doc.nested(4, Doc.break_(1) + self.fields.toDoc()),
         )
@@ -2392,6 +2382,10 @@ impl ToDoc[RecordPat]:
 impl ToDoc[VariantPat]:
     toDoc(self: VariantPat) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("pat =") + Doc.nested(4, Doc.break_(1) + self.pat.toDoc()),
         )
@@ -2629,11 +2623,6 @@ impl ToDoc[MethodSelExpr]:
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
-            Doc.str("objectTy =")
-                + Doc.nested(4, Doc.break_(1) + self.objectTy.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
             Doc.str("methodTyId =")
                 + Doc.nested(4, Doc.break_(1) + self.methodTyId.toDoc()),
         )
@@ -2641,11 +2630,6 @@ impl ToDoc[MethodSelExpr]:
         args += Doc.grouped(
             Doc.str("method =")
                 + Doc.nested(4, Doc.break_(1) + self.method.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("tyArgs =")
-                + Doc.nested(4, Doc.break_(1) + self.tyArgs.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
@@ -2675,11 +2659,6 @@ impl ToDoc[AssocFnSelExpr]:
         args += Doc.grouped(
             Doc.str("userTyArgs =")
                 + Doc.nested(4, Doc.break_(1) + self.userTyArgs.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("tyArgs =")
-                + Doc.nested(4, Doc.break_(1) + self.tyArgs.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
@@ -2901,9 +2880,12 @@ impl ToDoc[VariantExpr]:
     toDoc(self: VariantExpr) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
-            Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
+        )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("VariantExpr") + Doc.char('(') + args)
 
