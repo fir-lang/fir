@@ -485,10 +485,6 @@ pub struct ForStmt {
 
     pub expr: L<Expr>,
 
-    /// Filled in by the type checker: type of `expr`, the iterator type.
-    /// I.e. `iter` in `Iterator[iter, item, exn]`.
-    pub expr_ty: Option<Ty>,
-
     pub body: Vec<L<Stmt>>,
 }
 
@@ -510,7 +506,7 @@ pub enum Expr {
     /// A field selection: `<expr>.x` where `x` is a field.
     ///
     /// Parser generates this node for all expression of form `<expr>.<id>`, type checker converts
-    /// method selection expressions to `MethodSelect`.
+    /// method selection expressions to `MethodSel`.
     FieldSel(FieldSelExpr),
 
     /// A method selection: `<expr>.x` where `x` is a method.
@@ -612,7 +608,7 @@ pub struct FieldSelExpr {
     /// there will be always one element.
     ///
     /// Since fields can't have `forall` quantifiers, this will only be valid when the field is a
-    /// method, in which case the type checker will convert this node into `MethodSelectExpr`.
+    /// method, in which case the type checker will convert this node into `MethodSelExpr`.
     pub user_ty_args: Vec<L<Type>>,
 
     pub inferred_ty: Option<Ty>,
@@ -627,20 +623,13 @@ pub struct FieldSelExpr {
 #[derive(Debug, Clone)]
 pub struct MethodSelExpr {
     /// The reciever, `<expr>` in `<expr>.method`.
-    pub object: Box<L<Expr>>,
-
-    /// Type of `object` (receiver), filled in by the type checker.
     ///
-    /// This type will always be a type constructor, potentially with arguments, as types without type
-    /// constructors (records etc.) don't have methods.
+    /// The type of this expression will always be a type constructor, potentially with arguments,
+    /// as types without type constructors (records etc.) don't have methods.
     ///
     /// The type constructor will be the type with the associated function with `method` as the name
     /// and a `self` parameter that matches this type.
-    // TODO: We could have separate fields for the ty con and args.
-    // TODO: We could also add types to every expression if it's going to help with monomorphisation.
-    //       For efficiency though, we should only annotate inferred types and then type check from the
-    //       top-level expression every time we need to compute type of an expr.
-    pub object_ty: Option<Ty>,
+    pub object: Box<L<Expr>>,
 
     /// The type or trait id that defines the method.
     ///
@@ -1042,7 +1031,6 @@ impl Stmt {
                 item_ast_ty,
                 item_tc_ty: _,
                 expr,
-                expr_ty: _,
                 body,
             }) => {
                 if let Some(ast_ty) = item_ast_ty {
@@ -1123,7 +1111,6 @@ impl Expr {
 
             Expr::MethodSel(MethodSelExpr {
                 object,
-                object_ty: _,
                 method_ty_id: _,
                 method: _,
                 ty_args,
@@ -1251,6 +1238,49 @@ impl Expr {
                 assert!(inferred_ty.is_none());
                 expr.node.subst_ty_ids(substs);
             }
+        }
+    }
+
+    pub fn inferred_ty(&self) -> Option<Ty> {
+        match self {
+            Expr::Var(VarExpr { inferred_ty, .. })
+            | Expr::ConSel(Con { inferred_ty, .. })
+            | Expr::FieldSel(FieldSelExpr { inferred_ty, .. })
+            | Expr::MethodSel(MethodSelExpr { inferred_ty, .. })
+            | Expr::AssocFnSel(AssocFnSelExpr { inferred_ty, .. })
+            | Expr::Call(CallExpr { inferred_ty, .. })
+            | Expr::Return(ReturnExpr { inferred_ty, .. })
+            | Expr::Match(MatchExpr { inferred_ty, .. })
+            | Expr::If(IfExpr { inferred_ty, .. })
+            | Expr::Fn(FnExpr { inferred_ty, .. })
+            | Expr::Do(DoExpr { inferred_ty, .. })
+            | Expr::Record(RecordExpr { inferred_ty, .. })
+            | Expr::Variant(VariantExpr { inferred_ty, .. }) => inferred_ty.clone(),
+
+            Expr::Int(IntExpr { kind, .. }) => {
+                let name = match kind.as_ref()? {
+                    IntKind::I8(_) => "I8",
+                    IntKind::U8(_) => "U8",
+                    IntKind::I32(_) => "I32",
+                    IntKind::U32(_) => "U32",
+                    IntKind::I64(_) => "I64",
+                    IntKind::U64(_) => "U64",
+                };
+                Some(Ty::Con(SmolStr::new_static(name), Kind::Star))
+            }
+
+            Expr::Str(_) => Some(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
+
+            Expr::Char(_) => Some(Ty::Con(SmolStr::new_static("Char"), Kind::Star)),
+
+            Expr::Is(_)
+            | Expr::BinOp(BinOpExpr {
+                op: BinOp::And | BinOp::Or,
+                ..
+            }) => Some(Ty::Con(SmolStr::new_static("Bool"), Kind::Star)),
+
+            // Rest of the expressions will be desugared by the type checker.
+            Expr::BinOp(_) | Expr::UnOp(_) | Expr::Seq { .. } => None,
         }
     }
 }

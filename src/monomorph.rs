@@ -483,7 +483,6 @@ fn mono_expr(
 
         ast::Expr::MethodSel(ast::MethodSelExpr {
             object,       // receiver
-            object_ty,    // receiver type
             method_ty_id, // trait of type that the method belongs to
             method,       // method or associated function name
             ty_args,      // function type arguments
@@ -500,8 +499,12 @@ fn mono_expr(
 
             let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals);
 
-            let mono_object_ty =
-                mono_tc_ty(object_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+            let mono_object_ty = mono_tc_ty(
+                object.node.inferred_ty().as_ref().unwrap(),
+                ty_map,
+                poly_pgm,
+                mono_pgm,
+            );
 
             /*
             <receiver>.<method>

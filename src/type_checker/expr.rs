@@ -597,7 +597,6 @@ pub(super) fn check_expr(
             // call to avoid closure allocation.
             if let ast::Expr::MethodSel(ast::MethodSelExpr {
                 object,
-                object_ty,
                 method_ty_id,
                 method,
                 ty_args,
@@ -621,7 +620,9 @@ pub(super) fn check_expr(
                         ret,
                         exceptions,
                     } => {
-                        let mut full_args = vec![object_ty.clone().unwrap()];
+                        // `object` is already type checked, so it's desugared and its
+                        // `inferred_type` field is updated. This `unwrap` can't fail.
+                        let mut full_args = vec![object.node.inferred_ty().unwrap()];
                         full_args.extend(method_args.iter().cloned());
                         Ty::Fun {
                             args: FunArgs::Positional(full_args),
@@ -2002,7 +2003,6 @@ fn check_field_sel(
         ty.clone(),
         ast::Expr::MethodSel(ast::MethodSelExpr {
             object: Box::new(object.clone()),
-            object_ty: Some(object_ty.clone()),
             method_ty_id,
             method: field.clone(),
             ty_args: method_ty_args,

@@ -523,7 +523,6 @@ Stmt: Stmt = {
             item_ast_ty,
             item_tc_ty: None,
             expr,
-            expr_ty: None,
             body,
         })
     },

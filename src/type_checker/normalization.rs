@@ -107,14 +107,12 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
 
         ast::Expr::MethodSel(ast::MethodSelExpr {
             object,
-            object_ty,
             method_ty_id: _,
             method: _,
             ty_args,
             inferred_ty,
         }) => {
             *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
-            *object_ty = Some(object_ty.as_ref().unwrap().deep_normalize(cons));
             ty_args
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(cons));
