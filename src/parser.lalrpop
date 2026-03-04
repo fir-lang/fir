@@ -199,7 +199,7 @@ TypeDeclRhs: TypeDeclRhs = {
     ":" NEWLINE INDENT <cons:ConDecls> DEDENT =>
         TypeDeclRhs::Sum(cons),
 
-    <l:@L> "(" <fields:Sep<Field, ",">> ")" NEWLINE => {
+    <l:@L> "(" <fields:Sep<Field, ",">> <extension:RowExtension> ")" NEWLINE => {
         let fields = process_fields(fields, module, &l);
         TypeDeclRhs::Product(fields)
     }
@@ -211,7 +211,9 @@ TypeParams: Vec<Id> = {
 }
 
 ConDecls: Vec<ConDecl> = {
-    ConDecl+
+    <decls:ConDecl+> <extension:(".." <LowerId> NEWLINE)?> => {
+        decls
+    }
 }
 
 ConDecl: ConDecl = {
@@ -227,7 +229,7 @@ ConDecl: ConDecl = {
             name: name.smol_str(),
             fields,
         }
-    }
+    },
 }
 
 Field: (Option<Id>, L<Type>) = {
