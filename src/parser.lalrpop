@@ -196,11 +196,11 @@ TypeDeclRhs: TypeDeclRhs = {
     NEWLINE =>
         TypeDeclRhs::Product(ConFields::Empty),
 
-    ":" NEWLINE INDENT <cons:ConDecls> DEDENT =>
-        TypeDeclRhs::Sum { cons, extension: None }, // TODO
+    ":" NEWLINE INDENT <decls:ConDecls> DEDENT =>
+        TypeDeclRhs::Sum { cons: decls.0, extension: decls.1 },
 
     <l:@L> "(" <fields:Sep<Field, ",">> <extension:RowExtension> ")" NEWLINE => {
-        let fields = process_fields(fields, module, &l);
+        let fields = process_fields(fields, extension, module, &l);
         TypeDeclRhs::Product(fields)
     }
 }
@@ -210,9 +210,9 @@ TypeParams: Vec<Id> = {
         params.into_iter().map(|id| id.smol_str()).collect(),
 }
 
-ConDecls: Vec<ConDecl> = {
+ConDecls: (Vec<ConDecl>, Option<Id>) = {
     <decls:ConDecl+> <extension:(".." <LowerId> NEWLINE)?> => {
-        decls
+        (decls, extension.map(|id| id.smol_str()))
     }
 }
 
@@ -223,8 +223,8 @@ ConDecl: ConDecl = {
             fields: ConFields::Empty,
         },
 
-    <l:@L> <name:UpperId> "(" <fields:Sep<Field, ",">> ")" NEWLINE => {
-        let fields = process_fields(fields, module, &l);
+    <l:@L> <name:UpperId> "(" <fields:Sep<Field, ",">> <extension:RowExtension> ")" NEWLINE => {
+        let fields = process_fields(fields, extension, module, &l);
         ConDecl {
             name: name.smol_str(),
             fields,

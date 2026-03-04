@@ -120,6 +120,7 @@ pub(crate) fn path_parts(path: &SmolStr) -> Vec<SmolStr> {
 
 pub(crate) fn process_fields(
     fields: Vec<(Option<Id>, L<ast::Type>)>,
+    extension: Option<Id>,
     module: &std::rc::Rc<str>,
     loc: &lexgen_util::Loc,
 ) -> ast::ConFields {
@@ -149,12 +150,12 @@ pub(crate) fn process_fields(
     if found_named {
         ast::ConFields::Named {
             fields: fields.into_iter().map(|(n, t)| (n.unwrap(), t)).collect(),
-            extension: None, // TODO
+            extension,
         }
     } else {
         ast::ConFields::Unnamed {
             fields: fields.into_iter().map(|(_, t)| t).collect(),
-            extension: None, // TODO
+            extension,
         }
     }
 }
