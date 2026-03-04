@@ -407,7 +407,6 @@ impl Stmt {
                 item_ast_ty,
                 item_tc_ty: _,
                 expr,
-                expr_ty: _,
                 body,
             }) => {
                 if let Some(label) = label {
@@ -482,7 +481,6 @@ impl Expr {
 
             Expr::MethodSel(MethodSelExpr {
                 object,
-                object_ty: _,
                 method_ty_id,
                 method,
                 ty_args,

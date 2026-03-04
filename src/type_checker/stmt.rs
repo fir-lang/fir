@@ -298,11 +298,8 @@ fn check_stmt(
             item_ast_ty,
             item_tc_ty,
             expr,
-            expr_ty,
             body,
         }) => {
-            assert!(expr_ty.is_none());
-
             /*
             for <pat>: <item_ty> in <expr>:
                 <body>
@@ -325,7 +322,6 @@ fn check_stmt(
 
             let iter_ty =
                 check_expr(tc_state, &mut expr.node, &expr.loc, None, level, loop_stack).0;
-            *expr_ty = Some(iter_ty.clone());
 
             // The type `item` for the predicate `Iterator[iter, item, exn]`. This will the the
             // pattern type (when available) or a fresh type variable.
