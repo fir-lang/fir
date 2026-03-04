@@ -137,13 +137,13 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
 pub(super) fn convert_fields(tys: &TyMap, fields: &ast::ConFields) -> Option<FunArgs> {
     match fields {
         ast::ConFields::Empty => None,
-        ast::ConFields::Named(named_fields) => Some(FunArgs::Named(
-            named_fields
+        ast::ConFields::Named { fields, extension } => Some(FunArgs::Named(
+            fields
                 .iter()
                 .map(|(name, ty)| (name.clone(), convert_ast_ty(tys, &ty.node, &ty.loc)))
                 .collect(),
         )),
-        ast::ConFields::Unnamed(fields) => Some(FunArgs::Positional(
+        ast::ConFields::Unnamed { fields, extension } => Some(FunArgs::Positional(
             fields
                 .iter()
                 .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))

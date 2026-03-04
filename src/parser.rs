@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.0"
-// sha3: bff1a4287e2132f9da442a2e5ecd685b11a37b057eb027ba422b5932d65e342d
+// sha3: 977c8d806e186e01e7f330e8d0788b21eaa1aad4579471e5c0454ad3c55371fe
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -47455,7 +47455,10 @@ fn __action12<'a>(
     (_, cons, _): (Loc, Vec<ConDecl>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> TypeDeclRhs {
-    TypeDeclRhs::Sum(cons)
+    TypeDeclRhs::Sum {
+        cons,
+        extension: None,
+    }
 }
 
 #[allow(unused_variables)]

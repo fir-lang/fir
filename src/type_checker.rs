@@ -323,7 +323,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             ast::TopDecl::Type(ty_decl) => {
                 let details = match &ty_decl.node.rhs {
                     Some(rhs) => match rhs {
-                        ast::TypeDeclRhs::Sum(_) => TyConDetails::Type(TypeDetails {
+                        ast::TypeDeclRhs::Sum { .. } => TyConDetails::Type(TypeDetails {
                             cons: Default::default(),
                             sum: true,
                             value: ty_decl.node.value,
@@ -985,7 +985,7 @@ fn collect_schemes(
                 };
 
                 match rhs {
-                    ast::TypeDeclRhs::Sum(cons) => {
+                    ast::TypeDeclRhs::Sum { cons, extension } => {
                         for con in cons {
                             let fields = &con.fields;
                             let ty = match convert_fields(tys, fields) {

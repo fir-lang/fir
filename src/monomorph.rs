@@ -1906,7 +1906,7 @@ fn mono_ty_decl(
         .collect();
 
     let rhs: Option<mono::TypeDeclRhs> = ty_decl.rhs.as_ref().map(|rhs| match rhs {
-        ast::TypeDeclRhs::Sum(cons) => mono::TypeDeclRhs::Sum(
+        ast::TypeDeclRhs::Sum { cons, extension } => mono::TypeDeclRhs::Sum(
             cons.iter()
                 .map(|con| mono_con(con, &ty_map, poly_pgm, mono_pgm))
                 .collect(),
@@ -1950,7 +1950,7 @@ fn mono_fields(
     match fields {
         ast::ConFields::Empty => mono::ConFields::Empty,
 
-        ast::ConFields::Named(fields) => mono::ConFields::Named(
+        ast::ConFields::Named { fields, extension } => mono::ConFields::Named(
             fields
                 .iter()
                 .map(|(name, ty)| {
@@ -1962,7 +1962,7 @@ fn mono_fields(
                 .collect(),
         ),
 
-        ast::ConFields::Unnamed(fields) => mono::ConFields::Unnamed(
+        ast::ConFields::Unnamed { fields, extension } => mono::ConFields::Unnamed(
             fields
                 .iter()
                 .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm))
