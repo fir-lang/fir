@@ -419,9 +419,9 @@ fn check_stmt(
                                                         tc_state.exceptions.clone(),
                                                     ],
                                                     inferred_ty: Some(Ty::Fun {
-                                                        args: FunArgs::Positional(vec![
-                                                            iter_ty.clone(),
-                                                        ]),
+                                                        args: FunArgs::Positional {
+                                                            args: vec![iter_ty.clone()],
+                                                        },
                                                         ret: Box::new(Ty::App(
                                                             SmolStr::new_static("Option"),
                                                             vec![item_ty.clone()],
@@ -541,7 +541,7 @@ fn select_field_for_assignment(
 
             match con_ty {
                 Ty::Fun {
-                    args: FunArgs::Named(fields),
+                    args: FunArgs::Named { args: fields },
                     ret: _,
                     exceptions: _,
                 } => fields.get(field).cloned(),

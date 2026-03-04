@@ -1791,8 +1791,8 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
 
         Expr::Call(CallExpr { fun, args, fun_ty }) => {
             let arg_tys: Vec<&mono::Type> = match &fun_ty.args {
-                mono::FunArgs::Positional(args) => args.iter().collect(),
-                mono::FunArgs::Named(args) => args.values().collect(),
+                mono::FunArgs::Positional { args } => args.iter().collect(),
+                mono::FunArgs::Named { args } => args.values().collect(),
             };
 
             assert_eq!(args.len(), arg_tys.len());
@@ -2850,12 +2850,12 @@ fn type_deps(
 
         mono::Type::Fn(mono::FnType { args, ret, exn }) => {
             match args {
-                mono::FunArgs::Positional(args) => {
+                mono::FunArgs::Positional { args } => {
                     for arg in args {
                         type_deps(named_tys, record_tys, variant_tys, types, arg, deps);
                     }
                 }
-                mono::FunArgs::Named(args) => {
+                mono::FunArgs::Named { args } => {
                     for arg in args.values() {
                         type_deps(named_tys, record_tys, variant_tys, types, arg, deps);
                     }

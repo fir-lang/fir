@@ -90,30 +90,30 @@ pub enum RecordOrVariant {
 
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum FunArgs {
-    Positional(Vec<Ty>),
-    Named(OrdMap<Id, Ty>),
+    Positional { args: Vec<Ty> },
+    Named { args: OrdMap<Id, Ty> },
 }
 
 impl FunArgs {
     pub fn empty() -> FunArgs {
-        FunArgs::Positional(vec![])
+        FunArgs::Positional { args: vec![] }
     }
 
     pub fn is_named(&self) -> bool {
-        matches!(self, FunArgs::Named(_))
+        matches!(self, FunArgs::Named { args: _ })
     }
 
     pub fn as_named(&self) -> &OrdMap<Id, Ty> {
         match self {
-            FunArgs::Positional(_) => panic!(),
-            FunArgs::Named(named) => named,
+            FunArgs::Positional { args: _ } => panic!(),
+            FunArgs::Named { args: named } => named,
         }
     }
 
     pub fn len(&self) -> usize {
         match self {
-            FunArgs::Positional(args) => args.len(),
-            FunArgs::Named(args) => args.len(),
+            FunArgs::Positional { args } => args.len(),
+            FunArgs::Named { args } => args.len(),
         }
     }
 }
@@ -585,7 +585,7 @@ fn ty_eq_modulo_alpha(
             }
 
             match (args1, args2) {
-                (FunArgs::Positional(args1), FunArgs::Positional(args2)) => {
+                (FunArgs::Positional { args: args1 }, FunArgs::Positional { args: args2 }) => {
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
                         if !ty_eq_modulo_alpha(cons, arg1, arg2, ty1_qvars, ty2_qvars, loc) {
                             return false;
@@ -593,7 +593,7 @@ fn ty_eq_modulo_alpha(
                     }
                 }
 
-                (FunArgs::Named(args1), FunArgs::Named(args2)) => {
+                (FunArgs::Named { args: args1 }, FunArgs::Named { args: args2 }) => {
                     let names1: HashSet<&Id> = args1.keys().collect();
                     let names2: HashSet<&Id> = args2.keys().collect();
 
@@ -610,8 +610,8 @@ fn ty_eq_modulo_alpha(
                     }
                 }
 
-                (FunArgs::Named(_), FunArgs::Positional(_))
-                | (FunArgs::Positional(_), FunArgs::Named(_)) => return false,
+                (FunArgs::Named { args: _ }, FunArgs::Positional { args: _ })
+                | (FunArgs::Positional { args: _ }, FunArgs::Named { args: _ }) => return false,
             }
 
             match (exceptions1, exceptions2) {
@@ -739,14 +739,15 @@ impl Ty {
                 exceptions,
             } => Ty::Fun {
                 args: match args {
-                    FunArgs::Positional(args) => FunArgs::Positional(
-                        args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
-                    ),
-                    FunArgs::Named(args) => FunArgs::Named(
-                        args.iter()
+                    FunArgs::Positional { args } => FunArgs::Positional {
+                        args: args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
+                    },
+                    FunArgs::Named { args } => FunArgs::Named {
+                        args: args
+                            .iter()
                             .map(|(name, arg_ty)| (name.clone(), arg_ty.subst(var, ty)))
                             .collect(),
-                    ),
+                    },
                 },
                 ret: Box::new(ret.subst(var, ty)),
                 exceptions: exceptions.as_ref().map(|exn| Box::new(exn.subst(var, ty))),
@@ -794,14 +795,15 @@ impl Ty {
                 exceptions,
             } => Ty::Fun {
                 args: match args {
-                    FunArgs::Positional(args) => {
-                        FunArgs::Positional(args.iter().map(|arg| arg.subst_qvars(vars)).collect())
-                    }
-                    FunArgs::Named(args) => FunArgs::Named(
-                        args.iter()
+                    FunArgs::Positional { args } => FunArgs::Positional {
+                        args: args.iter().map(|arg| arg.subst_qvars(vars)).collect(),
+                    },
+                    FunArgs::Named { args } => FunArgs::Named {
+                        args: args
+                            .iter()
                             .map(|(name, ty)| (name.clone(), ty.subst_qvars(vars)))
                             .collect(),
-                    ),
+                    },
                 },
                 ret: Box::new(ret.subst_qvars(vars)),
                 exceptions: exceptions
@@ -868,14 +870,15 @@ impl Ty {
                 exceptions,
             } => Ty::Fun {
                 args: match args {
-                    FunArgs::Positional(args) => FunArgs::Positional(
-                        args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
-                    ),
-                    FunArgs::Named(args) => FunArgs::Named(
-                        args.iter()
+                    FunArgs::Positional { args } => FunArgs::Positional {
+                        args: args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
+                    },
+                    FunArgs::Named { args } => FunArgs::Named {
+                        args: args
+                            .iter()
                             .map(|(name, arg)| (name.clone(), arg.deep_normalize(cons)))
                             .collect(),
-                    ),
+                    },
                 },
                 ret: Box::new(ret.deep_normalize(cons)),
                 exceptions: exceptions
@@ -1113,7 +1116,7 @@ impl fmt::Display for Ty {
             } => {
                 write!(f, "Fn(")?;
                 match args {
-                    FunArgs::Positional(args) => {
+                    FunArgs::Positional { args } => {
                         for (i, arg) in args.iter().enumerate() {
                             if i > 0 {
                                 write!(f, ", ")?;
@@ -1121,7 +1124,7 @@ impl fmt::Display for Ty {
                             write!(f, "{arg}")?;
                         }
                     }
-                    FunArgs::Named(args) => {
+                    FunArgs::Named { args } => {
                         for (i, (name, ty)) in args.iter().enumerate() {
                             if i > 0 {
                                 write!(f, ", ")?;

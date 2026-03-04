@@ -101,7 +101,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, main: &str) {
     unification::unify(
         &main_scheme.ty,
         &Ty::Fun {
-            args: FunArgs::Positional(vec![]),
+            args: FunArgs::Positional { args: vec![] },
             ret: Box::new(Ty::unit()),
             exceptions: Some(Box::new(Ty::empty_variant())),
         },
@@ -421,7 +421,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     };
 
                     let fun_ty = Ty::Fun {
-                        args: FunArgs::Positional(arg_tys),
+                        args: FunArgs::Positional { args: arg_tys },
                         ret: Box::new(ret_ty),
                         exceptions: Some(Box::new(exceptions)),
                     };
@@ -626,8 +626,8 @@ fn visit_ty_con(
         };
 
         let mut tys: Vec<&Ty> = match &con_args {
-            FunArgs::Positional(args) => args.iter().collect(),
-            FunArgs::Named(args) => args.values().collect(),
+            FunArgs::Positional { args } => args.iter().collect(),
+            FunArgs::Named { args } => args.values().collect(),
         };
 
         while let Some(ty) = tys.pop() {
@@ -791,7 +791,7 @@ fn collect_schemes(
                     };
 
                     let fun_ty = Ty::Fun {
-                        args: FunArgs::Positional(arg_tys),
+                        args: FunArgs::Positional { args: arg_tys },
                         ret: Box::new(ret_ty),
                         exceptions: Some(Box::new(exceptions)),
                     };
@@ -887,7 +887,7 @@ fn collect_schemes(
                 };
 
                 let fun_ty = Ty::Fun {
-                    args: FunArgs::Positional(arg_tys),
+                    args: FunArgs::Positional { args: arg_tys },
                     ret: Box::new(ret_ty),
                     exceptions: Some(Box::new(exceptions)),
                 };
@@ -1109,7 +1109,7 @@ fn collect_schemes(
                     };
 
                     let fun_ty = Ty::Fun {
-                        args: FunArgs::Positional(arg_tys),
+                        args: FunArgs::Positional { args: arg_tys },
                         ret: Box::new(ret_ty),
                         exceptions: Some(Box::new(exceptions)),
                     };

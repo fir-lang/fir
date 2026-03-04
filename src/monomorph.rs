@@ -528,8 +528,8 @@ fn mono_expr(
             let mono::FnType { args, ret, exn } = mono_fun.sig.ty();
 
             let mono_fun_args = match args {
-                mono::FunArgs::Positional(args) => args,
-                mono::FunArgs::Named(_) => {
+                mono::FunArgs::Positional { args } => args,
+                mono::FunArgs::Named { args: _ } => {
                     // Methods can't have named arguments.
                     panic!()
                 }
@@ -860,8 +860,8 @@ fn mono_expr(
                     exceptions,
                 } => (
                     match args {
-                        FunArgs::Positional(args) => args,
-                        FunArgs::Named(_) => panic!(),
+                        FunArgs::Positional { args } => args,
+                        FunArgs::Named { args: _ } => panic!(),
                     },
                     ret,
                     exceptions,
@@ -1628,13 +1628,15 @@ fn mono_tc_ty(
             exceptions,
         } => mono::Type::Fn(mono::FnType {
             args: match args {
-                FunArgs::Positional(args) => mono::FunArgs::Positional(
-                    args.iter()
+                FunArgs::Positional { args } => mono::FunArgs::Positional {
+                    args: args
+                        .iter()
                         .map(|arg| mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm))
                         .collect(),
-                ),
-                FunArgs::Named(args) => mono::FunArgs::Named(
-                    args.iter()
+                },
+                FunArgs::Named { args } => mono::FunArgs::Named {
+                    args: args
+                        .iter()
                         .map(|(arg_name, arg)| {
                             (
                                 arg_name.clone(),
@@ -1642,7 +1644,7 @@ fn mono_tc_ty(
                             )
                         })
                         .collect(),
-                ),
+                },
             },
             ret: Box::new(mono_tc_ty(&ret, ty_map, poly_pgm, mono_pgm)),
             exn: Box::new(
@@ -1847,11 +1849,12 @@ fn mono_ast_ty(
             ret,
             exceptions,
         }) => mono::Type::Fn(mono::FnType {
-            args: mono::FunArgs::Positional(
-                args.iter()
+            args: mono::FunArgs::Positional {
+                args: args
+                    .iter()
                     .map(|arg| mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm))
                     .collect(),
-            ),
+            },
             ret: Box::new(
                 ret.as_ref()
                     .map(|ret| mono_ast_ty(&ret.node, ty_map, poly_pgm, mono_pgm))

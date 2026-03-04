@@ -144,8 +144,8 @@ pub struct FnType {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FunArgs {
-    Positional(Vec<Type>),
-    Named(OrdMap<Id, Type>),
+    Positional { args: Vec<Type> },
+    Named { args: OrdMap<Id, Type> },
 }
 
 #[derive(Debug, Clone)]
@@ -158,12 +158,13 @@ pub struct FunSig {
 impl FunSig {
     pub(crate) fn ty(&self) -> FnType {
         FnType {
-            args: FunArgs::Positional(
-                self.params
+            args: FunArgs::Positional {
+                args: self
+                    .params
                     .iter()
                     .map(|(_param_name, param_ty)| param_ty.node.clone())
                     .collect(),
-            ),
+            },
             ret: Box::new(
                 self.return_ty
                     .as_ref()

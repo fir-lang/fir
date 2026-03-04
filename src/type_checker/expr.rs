@@ -490,7 +490,7 @@ pub(super) fn check_expr(
                     );
 
                     match param_tys {
-                        FunArgs::Positional(param_tys) => {
+                        FunArgs::Positional { args: param_tys } => {
                             for arg in args.iter() {
                                 if arg.name.is_some() {
                                     panic!(
@@ -514,7 +514,7 @@ pub(super) fn check_expr(
                             }
                         }
 
-                        FunArgs::Named(param_tys) => {
+                        FunArgs::Named { args: param_tys } => {
                             for arg in args.iter_mut() {
                                 if arg.name.is_none() {
                                     match &arg.expr.node {
@@ -616,7 +616,7 @@ pub(super) fn check_expr(
 
                 let assoc_fn_ty = match &fun_ty {
                     Ty::Fun {
-                        args: FunArgs::Positional(method_args),
+                        args: FunArgs::Positional { args: method_args },
                         ret,
                         exceptions,
                     } => {
@@ -625,7 +625,7 @@ pub(super) fn check_expr(
                         let mut full_args = vec![object.node.inferred_ty().unwrap()];
                         full_args.extend(method_args.iter().cloned());
                         Ty::Fun {
-                            args: FunArgs::Positional(full_args),
+                            args: FunArgs::Positional { args: full_args },
                             ret: ret.clone(),
                             exceptions: exceptions.clone(),
                         }
@@ -875,7 +875,7 @@ pub(super) fn check_expr(
                                     user_ty_args: vec![],
                                     ty_args: vec![tc_state.exceptions.clone()],
                                     inferred_ty: Some(Ty::Fun {
-                                        args: FunArgs::Positional(vec![]),
+                                        args: FunArgs::Positional { args: vec![] },
                                         ret: Box::new(str_buf_ty.clone()),
                                         exceptions: Some(Box::new(tc_state.exceptions.clone())),
                                     }),
@@ -901,10 +901,12 @@ pub(super) fn check_expr(
                                 user_ty_args: vec![],
                                 ty_args: vec![exn.clone()],
                                 inferred_ty: Some(Ty::Fun {
-                                    args: FunArgs::Positional(vec![
-                                        str_buf_ty.clone(),
-                                        Ty::Con(SmolStr::new_static("Str"), Kind::Star),
-                                    ]),
+                                    args: FunArgs::Positional {
+                                        args: vec![
+                                            str_buf_ty.clone(),
+                                            Ty::Con(SmolStr::new_static("Str"), Kind::Star),
+                                        ],
+                                    },
                                     ret: Box::new(Ty::unit()),
                                     exceptions: Some(Box::new(exn)),
                                 }),
@@ -971,7 +973,9 @@ pub(super) fn check_expr(
                                     user_ty_args: vec![],
                                     ty_args: vec![part_ty.clone(), tc_state.exceptions.clone()],
                                     inferred_ty: Some(Ty::Fun {
-                                        args: FunArgs::Positional(vec![part_ty]),
+                                        args: FunArgs::Positional {
+                                            args: vec![part_ty],
+                                        },
                                         ret: Box::new(Ty::Con(
                                             SmolStr::new_static("Str"),
                                             Kind::Star,
@@ -1007,7 +1011,9 @@ pub(super) fn check_expr(
                             user_ty_args: vec![],
                             ty_args: vec![str_buf_ty.clone(), tc_state.exceptions.clone()],
                             inferred_ty: Some(Ty::Fun {
-                                args: FunArgs::Positional(vec![str_buf_ty.clone()]),
+                                args: FunArgs::Positional {
+                                    args: vec![str_buf_ty.clone()],
+                                },
                                 ret: Box::new(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
                                 exceptions: Some(Box::new(tc_state.exceptions.clone())),
                             }),
@@ -1171,10 +1177,9 @@ pub(super) fn check_expr(
                             user_ty_args: vec![],
                             ty_args: vec![tc_state.exceptions.clone()],
                             inferred_ty: Some(Ty::Fun {
-                                args: FunArgs::Positional(vec![Ty::Con(
-                                    SmolStr::new("Bool"),
-                                    Kind::Star,
-                                )]),
+                                args: FunArgs::Positional {
+                                    args: vec![Ty::Con(SmolStr::new("Bool"), Kind::Star)],
+                                },
                                 ret: Box::new(Ty::Con(SmolStr::new("Bool"), Kind::Star)),
                                 exceptions: Some(Box::new(tc_state.exceptions.clone())),
                             }),
@@ -1353,10 +1358,10 @@ pub(super) fn check_expr(
                     expected_args
                         .as_ref()
                         .and_then(|expected_args| match expected_args {
-                            FunArgs::Positional(expected_args) => {
-                                expected_args.get(param_idx).cloned()
-                            }
-                            FunArgs::Named(_) => None,
+                            FunArgs::Positional {
+                                args: expected_args,
+                            } => expected_args.get(param_idx).cloned(),
+                            FunArgs::Named { args: _ } => None,
                         })
                         .unwrap_or_else(|| {
                             panic!(
@@ -1394,7 +1399,7 @@ pub(super) fn check_expr(
             tc_state.env.exit();
 
             let ty = Ty::Fun {
-                args: FunArgs::Positional(param_tys),
+                args: FunArgs::Positional { args: param_tys },
                 ret: Box::new(ret_ty),
                 exceptions: Some(Box::new(exceptions)),
             };
@@ -1977,7 +1982,7 @@ fn check_field_sel(
     };
 
     match &mut args {
-        FunArgs::Positional(args) => {
+        FunArgs::Positional { args } => {
             // Type arguments of the receiver already substituted for type parameters in
             // `select_method`. Drop 'self' argument.
             let self_arg = args.remove(0);
@@ -1990,7 +1995,7 @@ fn check_field_sel(
                 loc,
             );
         }
-        FunArgs::Named(_) => panic!(),
+        FunArgs::Named { args: _ } => panic!(),
     }
 
     let ty = Ty::Fun {
@@ -2038,7 +2043,7 @@ fn select_field(
 
             match con_ty {
                 Ty::Fun {
-                    args: FunArgs::Named(fields),
+                    args: FunArgs::Named { args: fields },
                     ret: _,
                     exceptions: _,
                 } => fields.get(field).cloned(),
@@ -2066,7 +2071,7 @@ fn select_method(
         let (ty, _) = candidate.instantiate(level, tc_state.var_gen, &mut Default::default(), loc);
         let candidate_self_ty = match &ty {
             Ty::Fun {
-                args: FunArgs::Positional(args),
+                args: FunArgs::Positional { args },
                 ret: _,
                 exceptions: _,
             } => &args[0],

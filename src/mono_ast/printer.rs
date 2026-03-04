@@ -177,7 +177,7 @@ impl Type {
             Type::Fn(FnType { args, ret, exn }) => {
                 buf.push_str("Fn(");
                 match args {
-                    FunArgs::Positional(args) => {
+                    FunArgs::Positional { args } => {
                         for (i, arg) in args.iter().enumerate() {
                             if i != 0 {
                                 buf.push_str(", ");
@@ -185,7 +185,7 @@ impl Type {
                             arg.print(buf);
                         }
                     }
-                    FunArgs::Named(args) => {
+                    FunArgs::Named { args } => {
                         for (i, (name, ty)) in args.iter().enumerate() {
                             if i != 0 {
                                 buf.push_str(", ");

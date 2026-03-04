@@ -1807,7 +1807,7 @@ fn lower_expr(
             };
 
             let expr: Expr = match arg_tys {
-                mono::FunArgs::Positional(arg_tys) => {
+                mono::FunArgs::Positional { args: arg_tys } => {
                     let args = args
                         .iter()
                         .map(|mono::CallArg { name: _, expr }| {
@@ -1826,7 +1826,9 @@ fn lower_expr(
                             fun,
                             args,
                             fun_ty: mono::FnType {
-                                args: mono::FunArgs::Positional(arg_tys.clone()),
+                                args: mono::FunArgs::Positional {
+                                    args: arg_tys.clone(),
+                                },
                                 ret: ret.clone(),
                                 exn: exn.clone(),
                             },
@@ -1834,7 +1836,7 @@ fn lower_expr(
                     }
                 }
 
-                mono::FunArgs::Named(named_args) => {
+                mono::FunArgs::Named { args: named_args } => {
                     // Evaluate args in program order, pass in the order expected by the function.
                     let mut arg_locals: HashMap<Id, LocalIdx> = Default::default();
 
@@ -1883,7 +1885,9 @@ fn lower_expr(
                             fun,
                             args,
                             fun_ty: mono::FnType {
-                                args: mono::FunArgs::Named(named_args.clone()),
+                                args: mono::FunArgs::Named {
+                                    args: named_args.clone(),
+                                },
                                 ret: ret.clone(),
                                 exn: exn.clone(),
                             },

@@ -156,10 +156,10 @@ fn visit_ty(
 
         mono::Type::Fn(mono::FnType { args, ret, exn }) => {
             match args {
-                mono::FunArgs::Positional(args) => {
+                mono::FunArgs::Positional { args } => {
                     args.iter().for_each(|ty| visit_ty(ty, records, variants));
                 }
-                mono::FunArgs::Named(args) => {
+                mono::FunArgs::Named { args } => {
                     args.values().for_each(|ty| visit_ty(ty, records, variants));
                 }
             }

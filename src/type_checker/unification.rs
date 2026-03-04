@@ -77,13 +77,13 @@ pub(super) fn unify(
             }
 
             match (args1, args2) {
-                (FunArgs::Positional(args1), FunArgs::Positional(args2)) => {
+                (FunArgs::Positional { args: args1 }, FunArgs::Positional { args: args2 }) => {
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
                         unify(arg1, arg2, cons, var_gen, level, loc);
                     }
                 }
 
-                (FunArgs::Named(args1), FunArgs::Named(args2)) => {
+                (FunArgs::Named { args: args1 }, FunArgs::Named { args: args2 }) => {
                     let arg_names_1: HashSet<&Id> = args1.keys().collect();
                     let arg_names_2: HashSet<&Id> = args2.keys().collect();
                     if arg_names_1 != arg_names_2 {
@@ -105,8 +105,8 @@ pub(super) fn unify(
                     }
                 }
 
-                (FunArgs::Named(_), FunArgs::Positional(_))
-                | (FunArgs::Positional(_), FunArgs::Named(_)) => {
+                (FunArgs::Named { args: _ }, FunArgs::Positional { args: _ })
+                | (FunArgs::Positional { args: _ }, FunArgs::Named { args: _ }) => {
                     panic!(
                         "{}: Unable to unify functions with positional and named arguments",
                         loc_display(loc)
@@ -364,7 +364,7 @@ pub(super) fn try_unify_one_way(
             }
 
             match (args1, args2) {
-                (FunArgs::Positional(args1), FunArgs::Positional(args2)) => {
+                (FunArgs::Positional { args: args1 }, FunArgs::Positional { args: args2 }) => {
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
                         if !try_unify_one_way(arg1, arg2, cons, var_gen, level, loc) {
                             return false;
@@ -372,7 +372,7 @@ pub(super) fn try_unify_one_way(
                     }
                 }
 
-                (FunArgs::Named(args1), FunArgs::Named(args2)) => {
+                (FunArgs::Named { args: args1 }, FunArgs::Named { args: args2 }) => {
                     let arg_names_1: HashSet<&Id> = args1.keys().collect();
                     let arg_names_2: HashSet<&Id> = args2.keys().collect();
                     if arg_names_1 != arg_names_2 {
@@ -393,8 +393,8 @@ pub(super) fn try_unify_one_way(
                     }
                 }
 
-                (FunArgs::Named(_), FunArgs::Positional(_))
-                | (FunArgs::Positional(_), FunArgs::Named(_)) => return false,
+                (FunArgs::Named { args: _ }, FunArgs::Positional { args: _ })
+                | (FunArgs::Positional { args: _ }, FunArgs::Named { args: _ }) => return false,
             }
 
             match (exceptions1, exceptions2) {
@@ -606,10 +606,12 @@ fn prune_level(ty: &Ty, max_level: u32) {
             exceptions,
         } => {
             match args {
-                FunArgs::Positional(args) => {
+                FunArgs::Positional { args } => {
                     args.iter().for_each(|arg| prune_level(arg, max_level))
                 }
-                FunArgs::Named(args) => args.values().for_each(|arg| prune_level(arg, max_level)),
+                FunArgs::Named { args } => {
+                    args.values().for_each(|arg| prune_level(arg, max_level))
+                }
             }
             prune_level(ret, max_level);
             if let Some(exn) = exceptions {
