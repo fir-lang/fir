@@ -1964,7 +1964,10 @@ prefixExpr(state: ParserState[Token, NodeIdxGen]) Expr / U32:
                     match pfx:
                         ExprPrefix.Tilde(token):
                             ret = Expr.Variant(
-                                VariantExpr(expr = ret, inferredTy = Option.None),
+                                VariantExpr(
+                                    idx = state.state().next(),
+                                    expr = ret,
+                                ),
                             )
                         ExprPrefix.Minus(token):
                             ret = Expr.UnOp(
@@ -3604,12 +3607,11 @@ stmt(state: ParserState[Token, NodeIdxGen]) Stmt / U32:
             let val = do:
                 Stmt.For(
                     ForStmt(
+                        idx = state.state().next(),
                         label,
                         pat,
                         astTy = ty,
-                        tcTy = Option.None,
                         expr,
-                        exprTy = Option.None,
                         body,
                         _firstToken = TokenIdx(idx = cur),
                     ),
@@ -3990,13 +3992,7 @@ simplePat(state: ParserState[Token, NodeIdxGen]) Pat / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let pat = simplePat(state)
             let val = do:
-                Pat.Variant(
-                    VariantPat(
-                        pat,
-                        inferredTy = Option.None,
-                        inferredPatTy = Option.None,
-                    ),
-                )
+                Pat.Variant(VariantPat(idx = state.state().next(), pat))
             val,
     )
     match altResult:
@@ -4011,7 +4007,7 @@ simplePat(state: ParserState[Token, NodeIdxGen]) Pat / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                Pat.Var(VarPat(var_ = newId(var_), ty = Option.None))
+                Pat.Var(VarPat(idx = state.state().next(), var_ = newId(var_)))
             val,
     )
     match altResult:
@@ -4116,11 +4112,11 @@ simplePat(state: ParserState[Token, NodeIdxGen]) Pat / U32:
             let val = do:
                 Pat.Record(
                     RecordPat(
+                        idx = state.state().next(),
                         fields =
                             pats.map(\(ps): ps.fields).unwrapOr(Vec.empty()),
                         ignoreRest =
                             pats.map(\(ps): ps.ignoreRest).unwrapOr(Bool.False),
-                        inferredTy = Option.None,
                         _firstToken = TokenIdx(idx = first),
                         _lastToken = TokenIdx(idx = last),
                     ),

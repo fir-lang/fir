@@ -575,19 +575,16 @@ type AssignOp:
 
 #[derive(ToDoc)]
 type ForStmt(
+    idx: NodeIdx,
+
     label: Option[Id],
+
     pat: Pat,
 
     ## Type annotation on the loop variable, the `item` type in `Iterator[iter, item]`.
     astTy: Option[Type],
 
-    ## `ast_ty`, converted to type checking types by the type checker.
-    tcTy: Option[Ty],
-
     expr: Expr,
-
-    ## Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, item]`.
-    exprTy: Option[Ty],
 
     body: Vec[Stmt],
 
@@ -740,10 +737,9 @@ impl Tokens[Pat]:
 
 #[derive(ToDoc)]
 type VarPat(
-    var_: Id,
+    idx: NodeIdx,
 
-    ## Inferred type of the binder. Filled in by the type checker.
-    ty: Option[Ty],
+    var_: Id,
 )
 
 
@@ -774,9 +770,9 @@ impl Tokens[ConPat]:
 
 #[derive(ToDoc)]
 type RecordPat(
+    idx: NodeIdx,
     fields: Vec[Named[Pat]],
     ignoreRest: Bool,
-    inferredTy: Option[Ty],
     _firstToken: TokenIdx,
     _lastToken: TokenIdx,
 )
@@ -792,9 +788,8 @@ impl Tokens[RecordPat]:
 
 #[derive(ToDoc)]
 type VariantPat(
+    idx: NodeIdx,
     pat: Pat,
-    inferredTy: Option[Ty],
-    inferredPatTy: Option[Ty],
 )
 
 
@@ -1297,8 +1292,8 @@ impl Tokens[RecordExpr]:
 
 #[derive(ToDoc)]
 type VariantExpr(
+    idx: NodeIdx,
     expr: Expr,
-    inferredTy: Option[Ty],
 )
 
 
@@ -2187,17 +2182,9 @@ impl ToDoc[ForStmt]:
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
-            Doc.str("tcTy =") + Doc.nested(4, Doc.break_(1) + self.tcTy.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
             Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("exprTy =")
-                + Doc.nested(4, Doc.break_(1) + self.exprTy.toDoc()),
-        )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("body =") + Doc.nested(4, Doc.break_(1) + self.body.toDoc()),
@@ -2347,10 +2334,6 @@ impl ToDoc[VarPat]:
         args += Doc.grouped(
             Doc.str("var_ =") + Doc.nested(4, Doc.break_(1) + self.var_.toDoc()),
         )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + self.ty.toDoc()),
-        )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("VarPat") + Doc.char('(') + args)
 
@@ -2394,11 +2377,6 @@ impl ToDoc[RecordPat]:
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
-            Doc.str("inferredTy =")
-                + Doc.nested(4, Doc.break_(1) + self.inferredTy.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
             Doc.str("_firstToken =")
                 + Doc.nested(4, Doc.break_(1) + self._firstToken.toDoc()),
         )
@@ -2416,16 +2394,6 @@ impl ToDoc[VariantPat]:
         let args = Doc.break_(0)
         args += Doc.grouped(
             Doc.str("pat =") + Doc.nested(4, Doc.break_(1) + self.pat.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("inferredTy =")
-                + Doc.nested(4, Doc.break_(1) + self.inferredTy.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("inferredPatTy =")
-                + Doc.nested(4, Doc.break_(1) + self.inferredPatTy.toDoc()),
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("VariantPat") + Doc.char('(') + args)
@@ -2936,10 +2904,6 @@ impl ToDoc[VariantExpr]:
             Doc.str("expr =") + Doc.nested(4, Doc.break_(1) + self.expr.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("inferredTy =")
-                + Doc.nested(4, Doc.break_(1) + self.inferredTy.toDoc()),
-        )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("VariantExpr") + Doc.char('(') + args)
 
