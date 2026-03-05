@@ -3,6 +3,10 @@ use crate::type_checker::unification::unify;
 use crate::type_checker::*;
 use crate::utils::loc_display;
 
+/// Apply a constructor type to arguments.
+///
+/// The constructor type should be a function type if it takes arguments. Otherwise `args` should be
+/// empty.
 pub(crate) fn apply_con_ty(
     con_ty: &Ty,
     args: &Vec<ast::Named<Ty>>,
@@ -117,8 +121,6 @@ pub(crate) fn apply_con_ty(
             if args.is_empty() {
                 return con_ty.clone();
             }
-            // We don't have higher-kinded types, so this case means we've applied arguments to a
-            // `*` type.
             panic!(
                 "{}: Type {} doesn't take arugments, but applied {} arguments",
                 loc_display(loc),
