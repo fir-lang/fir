@@ -1770,37 +1770,9 @@ fn mono_ast_ty(
             is_row,
         } => {
             assert!(!*is_row);
-
-            let mut names: HashSet<&Id> = Default::default();
-            for (field_name, _field_ty) in fields {
-                let new = names.insert(field_name);
-                if !new {
-                    panic!("Record has duplicate fields: {fields:?}");
-                }
+            mono::Type::Record {
+                fields: collect_record_labels(fields, extension, ty_map, poly_pgm, mono_pgm),
             }
-
-            let mut fields: OrdMap<Id, mono::Type> = fields
-                .iter()
-                .map(|(field_name, field_ty)| {
-                    (
-                        field_name.clone(),
-                        mono_ast_ty(field_ty, ty_map, poly_pgm, mono_pgm),
-                    )
-                })
-                .collect();
-
-            if let Some(extension) = extension {
-                match ty_map.get(extension) {
-                    Some(mono::Type::Record {
-                        fields: extra_fields,
-                    }) => {
-                        fields.extend(extra_fields.iter().map(|(k, v)| (k.clone(), v.clone())));
-                    }
-                    other => panic!("Record extension is not a record: {other:?}"),
-                }
-            }
-
-            mono::Type::Record { fields }
         }
 
         ast::Type::Variant {
@@ -1809,45 +1781,9 @@ fn mono_ast_ty(
             is_row,
         } => {
             assert!(!*is_row);
-
-            let mut labels: HashSet<&Id> = Default::default();
-            for ast::NamedType { name, .. } in alts {
-                let new = labels.insert(name);
-                if !new {
-                    panic!("Variant has duplicate labels: {alts:?}");
-                }
+            mono::Type::Variant {
+                alts: collect_variant_labels(alts, extension, ty_map, poly_pgm, mono_pgm),
             }
-
-            let mut alts: OrdMap<Id, mono::NamedType> = alts
-                .iter()
-                .map(|ast::NamedType { name, args }| {
-                    (
-                        name.clone(),
-                        mono::NamedType {
-                            name: name.clone(),
-                            args: args
-                                .iter()
-                                .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm))
-                                .collect(),
-                        },
-                    )
-                })
-                .collect();
-
-            if let Some(extension) = extension {
-                match ty_map.get(extension) {
-                    Some(mono::Type::Variant { alts: extra_alts }) => {
-                        alts.extend(extra_alts.iter().map(|(k, v)| (k.clone(), v.clone())));
-                    }
-                    Some(other) => panic!("Variant extension is not a variant: {other:?}"),
-                    None => panic!(
-                        "Variant extension is not in ty map: {extension}\n\
-                        Ty map = {ty_map:#?}"
-                    ),
-                }
-            }
-
-            mono::Type::Variant { alts }
         }
 
         ast::Type::Fn(ast::FnType {
@@ -2006,4 +1942,109 @@ fn get_variant_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::NamedType>
             )
         }
     }
+}
+
+fn collect_record_labels(
+    ast_fields: &[(Id, ast::Type)],
+    extension: &Option<Id>,
+    ty_map: &HashMap<Id, mono::Type>,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
+) -> OrdMap<Id, mono::Type> {
+    let mut fields: OrdMap<Id, mono::Type> = Default::default();
+
+    for (field_name, field_ty) in ast_fields.iter() {
+        let old = fields.insert(
+            field_name.clone(),
+            mono_ast_ty(field_ty, ty_map, poly_pgm, mono_pgm),
+        );
+        if old.is_some() {
+            panic!("BUG: Duplicate label in record");
+        }
+    }
+
+    if let Some(extension) = extension {
+        match ty_map.get(extension) {
+            Some(mono::Type::Record {
+                fields: extra_fields,
+            }) => {
+                for (extra_field_name, extra_field_ty) in extra_fields.iter() {
+                    let old = fields.insert(extra_field_name.clone(), extra_field_ty.clone());
+                    if old.is_some() {
+                        panic!("BUG: Duplicate label in record");
+                    }
+                }
+            }
+            Some(other) => panic!("BUG: Record extension is not a record: {other:?}"),
+            None => panic!(
+                "BUG: Record extension is not in ty map: {extension}\n\
+                Ty map = {ty_map:#?}"
+            ),
+        }
+    }
+
+    fields
+}
+
+fn collect_variant_labels(
+    ast_alts: &[ast::NamedType],
+    extension: &Option<Id>,
+    ty_map: &HashMap<Id, mono::Type>,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
+) -> OrdMap<Id, mono::NamedType> {
+    let mut alts: OrdMap<Id, mono::NamedType> = Default::default();
+
+    // Note: technically duplicate labels in variants are never a problem and we should be able to
+    // relax the error checking below.
+    //
+    // Currently we use a `Map<ConId, Ty>` for the variant types, which prevents having e.g.
+    // `Option[U32]` and `Option[U64]` in the same variant type, as they would have the same type
+    // constructor id. (`Option`)
+    //
+    // I can't remember/think of a reason why we have this restriction. We can always add more
+    // labels to a variant, it never becomes invalid/unsound/etc. so we should eventually remove
+    // this restriction. (maybe in the self-hosted compiler)
+    //
+    // The checks below are different in `collect_record_labels` above. Because we don't allow
+    // record extensions we never add fields to a record. E.g. you can't write a function with a
+    // type like `Fn(arg: (..r)) (x: U32, ..r)`, but you can write `Fn(arg: [..r]) [A, ..r]`.
+
+    for ast::NamedType { name, args } in ast_alts.iter() {
+        let alt_ty = mono::NamedType {
+            name: name.clone(),
+            args: args
+                .iter()
+                .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm))
+                .collect(),
+        };
+        let old = alts.insert(name.clone(), alt_ty.clone());
+        if let Some(old) = old
+            && old != alt_ty
+        {
+            panic!("Type error: duplicate label in variant");
+        }
+    }
+
+    if let Some(extension) = extension {
+        match ty_map.get(extension) {
+            Some(mono::Type::Variant { alts: extra_alts }) => {
+                for (extra_alt_label, extra_alt_ty) in extra_alts.iter() {
+                    let old = alts.insert(extra_alt_label.clone(), extra_alt_ty.clone());
+                    if let Some(old) = old.as_ref()
+                        && old != extra_alt_ty
+                    {
+                        panic!("Type error: duplicate label in variant");
+                    }
+                }
+            }
+            Some(other) => panic!("BUG: Variant extension is not a variant: {other:?}"),
+            None => panic!(
+                "BUG: Variant extension is not in ty map: {extension}\n\
+                Ty map = {ty_map:#?}"
+            ),
+        }
+    }
+
+    alts
 }
