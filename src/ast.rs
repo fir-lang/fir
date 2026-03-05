@@ -187,7 +187,6 @@ pub enum ConFields {
     },
     Unnamed {
         fields: Vec<L<Type>>,
-        extension: Option<Id>,
     },
 }
 

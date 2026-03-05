@@ -136,9 +136,17 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
 }
 
 fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
+    // Collect type params used as row extensions in the type body.
+    let mut row_kinds: OrderMap<Id, Kind> = Default::default();
+    if let Some(rhs) = &ty.rhs {
+        collect_type_decl_extension_kinds(rhs, &mut row_kinds);
+    }
+
     let mut kinds: Vec<Kind> = Vec::with_capacity(ty.type_params.len());
     for ty_param in &ty.type_params {
-        let kind = if ty_param.as_str().starts_with("recRow") {
+        let kind = if let Some(kind) = row_kinds.get(ty_param) {
+            kind.clone()
+        } else if ty_param.as_str().starts_with("recRow") {
             Kind::Row(RecordOrVariant::Record)
         } else if ty_param.as_str().starts_with("varRow") {
             Kind::Row(RecordOrVariant::Variant)
@@ -149,6 +157,31 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     }
 
     ty.type_param_kinds = kinds;
+}
+
+/// Collect type parameters used as extensions in a type declaration body.
+fn collect_type_decl_extension_kinds(rhs: &ast::TypeDeclRhs, kinds: &mut OrderMap<Id, Kind>) {
+    match rhs {
+        ast::TypeDeclRhs::Sum { cons, extension } => {
+            if let Some(ext) = extension {
+                kinds.insert(ext.clone(), Kind::Row(RecordOrVariant::Variant));
+            }
+            for con in cons {
+                collect_con_fields_extension_kinds(&con.fields, kinds);
+            }
+        }
+        ast::TypeDeclRhs::Product(fields) => {
+            collect_con_fields_extension_kinds(fields, kinds);
+        }
+    }
+}
+
+fn collect_con_fields_extension_kinds(fields: &ast::ConFields, kinds: &mut OrderMap<Id, Kind>) {
+    if let ast::ConFields::Named { extension, .. } = fields {
+        if let Some(ext) = extension {
+            kinds.insert(ext.clone(), Kind::Row(RecordOrVariant::Record));
+        }
+    }
 }
 
 const REC_ROW_TRAIT_ID: Id = Id::new_static("RecRow");

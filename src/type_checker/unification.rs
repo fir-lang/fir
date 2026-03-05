@@ -83,7 +83,16 @@ pub(super) fn unify(
                     }
                 }
 
-                (FunArgs::Named { args: args1 }, FunArgs::Named { args: args2 }) => {
+                (
+                    FunArgs::Named {
+                        args: args1,
+                        extension: ext1,
+                    },
+                    FunArgs::Named {
+                        args: args2,
+                        extension: ext2,
+                    },
+                ) => {
                     let arg_names_1: HashSet<&Id> = args1.keys().collect();
                     let arg_names_2: HashSet<&Id> = args2.keys().collect();
                     if arg_names_1 != arg_names_2 {
@@ -103,10 +112,11 @@ pub(super) fn unify(
                             loc,
                         );
                     }
+                    unify_fun_extensions(ext1, ext2, cons, var_gen, level, loc);
                 }
 
-                (FunArgs::Named { args: _ }, FunArgs::Positional { args: _ })
-                | (FunArgs::Positional { args: _ }, FunArgs::Named { args: _ }) => {
+                (FunArgs::Named { .. }, FunArgs::Positional { .. })
+                | (FunArgs::Positional { .. }, FunArgs::Named { .. }) => {
                     panic!(
                         "{}: Unable to unify functions with positional and named arguments",
                         loc_display(loc)
@@ -316,6 +326,26 @@ pub(super) fn unify(
     }
 }
 
+fn unify_fun_extensions(
+    ext1: &Option<Box<Ty>>,
+    ext2: &Option<Box<Ty>>,
+    cons: &ScopeMap<Id, TyCon>,
+    var_gen: &mut UVarGen,
+    level: u32,
+    loc: &ast::Loc,
+) {
+    match (ext1, ext2) {
+        (None, None) => {}
+        (Some(e1), Some(e2)) => unify(e1, e2, cons, var_gen, level, loc),
+        (None, Some(_)) | (Some(_), None) => {
+            panic!(
+                "{}: Unable to unify function types with mismatched argument extensions",
+                loc_display(loc),
+            )
+        }
+    }
+}
+
 /// Try to unify `ty1` with the `ty2`, without updating `ty2`.
 ///
 /// This does not panic on errors. Returns whether unification was successful.
@@ -372,7 +402,16 @@ pub(super) fn try_unify_one_way(
                     }
                 }
 
-                (FunArgs::Named { args: args1 }, FunArgs::Named { args: args2 }) => {
+                (
+                    FunArgs::Named {
+                        args: args1,
+                        extension: ext1,
+                    },
+                    FunArgs::Named {
+                        args: args2,
+                        extension: ext2,
+                    },
+                ) => {
                     let arg_names_1: HashSet<&Id> = args1.keys().collect();
                     let arg_names_2: HashSet<&Id> = args2.keys().collect();
                     if arg_names_1 != arg_names_2 {
@@ -391,10 +430,19 @@ pub(super) fn try_unify_one_way(
                             return false;
                         }
                     }
+                    match (ext1, ext2) {
+                        (None, None) => {}
+                        (Some(e1), Some(e2)) => {
+                            if !try_unify_one_way(e1, e2, cons, var_gen, level, loc) {
+                                return false;
+                            }
+                        }
+                        _ => return false,
+                    }
                 }
 
-                (FunArgs::Named { args: _ }, FunArgs::Positional { args: _ })
-                | (FunArgs::Positional { args: _ }, FunArgs::Named { args: _ }) => return false,
+                (FunArgs::Named { .. }, FunArgs::Positional { .. })
+                | (FunArgs::Positional { .. }, FunArgs::Named { .. }) => return false,
             }
 
             match (exceptions1, exceptions2) {
@@ -607,10 +655,13 @@ fn prune_level(ty: &Ty, max_level: u32) {
         } => {
             match args {
                 FunArgs::Positional { args } => {
-                    args.iter().for_each(|arg| prune_level(arg, max_level))
+                    args.iter().for_each(|arg| prune_level(arg, max_level));
                 }
-                FunArgs::Named { args } => {
-                    args.values().for_each(|arg| prune_level(arg, max_level))
+                FunArgs::Named { args, extension } => {
+                    args.values().for_each(|arg| prune_level(arg, max_level));
+                    if let Some(ext) = extension {
+                        prune_level(ext, max_level);
+                    }
                 }
             }
             prune_level(ret, max_level);

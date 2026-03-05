@@ -471,7 +471,16 @@ pub(super) fn check_expr(
                     ret: ret_ty,
                     exceptions,
                 } => {
-                    if param_tys.len() != args.len() {
+                    if param_tys.has_extension() {
+                        if args.len() < param_tys.len() {
+                            panic!(
+                                "{}: Function with minimum arity {} is passed {} args",
+                                loc_display(loc),
+                                param_tys.len(),
+                                args.len()
+                            );
+                        }
+                    } else if param_tys.len() != args.len() {
                         panic!(
                             "{}: Function with arity {} is passed {} args",
                             loc_display(loc),
@@ -514,7 +523,10 @@ pub(super) fn check_expr(
                             }
                         }
 
-                        FunArgs::Named { args: param_tys } => {
+                        FunArgs::Named {
+                            args: param_tys,
+                            extension,
+                        } => {
                             for arg in args.iter_mut() {
                                 if arg.name.is_none() {
                                     match &arg.expr.node {
@@ -540,7 +552,19 @@ pub(super) fn check_expr(
                             let arg_names: HashSet<&Id> =
                                 args.iter().map(|arg| arg.name.as_ref().unwrap()).collect();
 
-                            if param_names != arg_names {
+                            if extension.is_some() {
+                                // With extension: all param names must be present in args,
+                                // extra args go into the extension.
+                                let missing: HashSet<&&Id> =
+                                    param_names.difference(&arg_names).collect();
+                                if !missing.is_empty() {
+                                    panic!(
+                                        "{}: Missing required arguments: {:?}",
+                                        loc_display(loc),
+                                        missing
+                                    );
+                                }
+                            } else if param_names != arg_names {
                                 panic!(
                                     "{}: Function expects arguments with names {:?}, but passed {:?}",
                                     loc_display(loc),
@@ -549,20 +573,52 @@ pub(super) fn check_expr(
                                 );
                             }
 
+                            // Type-check known args.
+                            let mut extra_fields: OrdMap<Id, Ty> = OrdMap::new();
                             for arg in args.iter_mut() {
                                 let arg_name: &Id = arg.name.as_ref().unwrap();
-                                let param_ty: &Ty = param_tys.get(arg_name).unwrap();
-                                let (arg_ty, _) = check_expr(
-                                    tc_state,
-                                    &mut arg.expr.node,
-                                    &arg.expr.loc,
-                                    Some(param_ty),
-                                    level,
-                                    loop_stack,
-                                );
+                                if let Some(param_ty) = param_tys.get(arg_name) {
+                                    let (arg_ty, _) = check_expr(
+                                        tc_state,
+                                        &mut arg.expr.node,
+                                        &arg.expr.loc,
+                                        Some(param_ty),
+                                        level,
+                                        loop_stack,
+                                    );
+                                    unify(
+                                        &arg_ty,
+                                        param_ty,
+                                        tc_state.tys.tys.cons(),
+                                        tc_state.var_gen,
+                                        level,
+                                        loc,
+                                    );
+                                } else {
+                                    // Extra arg — goes into the extension.
+                                    let (arg_ty, _) = check_expr(
+                                        tc_state,
+                                        &mut arg.expr.node,
+                                        &arg.expr.loc,
+                                        None,
+                                        level,
+                                        loop_stack,
+                                    );
+                                    extra_fields.insert(arg_name.clone(), arg_ty);
+                                }
+                            }
+
+                            // Unify extra fields with the extension type.
+                            if let Some(ext_ty) = extension {
+                                let extra_row = Ty::Anonymous {
+                                    labels: extra_fields,
+                                    extension: None,
+                                    kind: RecordOrVariant::Record,
+                                    is_row: true,
+                                };
                                 unify(
-                                    &arg_ty,
-                                    param_ty,
+                                    ext_ty,
+                                    &extra_row,
                                     tc_state.tys.tys.cons(),
                                     tc_state.var_gen,
                                     level,
@@ -1361,7 +1417,7 @@ pub(super) fn check_expr(
                             FunArgs::Positional {
                                 args: expected_args,
                             } => expected_args.get(param_idx).cloned(),
-                            FunArgs::Named { args: _ } => None,
+                            FunArgs::Named { .. } => None,
                         })
                         .unwrap_or_else(|| {
                             panic!(
@@ -1995,7 +2051,7 @@ fn check_field_sel(
                 loc,
             );
         }
-        FunArgs::Named { args: _ } => panic!(),
+        FunArgs::Named { .. } => panic!(),
     }
 
     let ty = Ty::Fun {
@@ -2043,10 +2099,31 @@ fn select_field(
 
             match con_ty {
                 Ty::Fun {
-                    args: FunArgs::Named { args: fields },
+                    args:
+                        FunArgs::Named {
+                            args: fields,
+                            extension,
+                        },
                     ret: _,
                     exceptions: _,
-                } => fields.get(field).cloned(),
+                } => {
+                    if let Some(ty) = fields.get(field) {
+                        Some(ty.clone())
+                    } else if let Some(ext) = extension {
+                        // Look for the field in the resolved extension row.
+                        let ext = ext.normalize(tc_state.tys.tys.cons());
+                        match &ext {
+                            Ty::Anonymous {
+                                labels,
+                                kind: RecordOrVariant::Record,
+                                ..
+                            } => labels.get(field).cloned(),
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    }
+                }
                 _ => None,
             }
         }

@@ -462,7 +462,7 @@ impl PatMatrix {
                 named_args = false;
                 args.clone()
             }
-            FunArgs::Named { args } => {
+            FunArgs::Named { args, .. } => {
                 named_args = true;
                 let mut args_vec: Vec<(&Id, &Ty)> = args.iter().collect();
                 args_vec.sort_by_key(|(id, _)| *id);

@@ -861,7 +861,7 @@ fn mono_expr(
                 } => (
                     match args {
                         FunArgs::Positional { args } => args,
-                        FunArgs::Named { args: _ } => panic!(),
+                        FunArgs::Named { args: _, .. } => panic!(),
                     },
                     ret,
                     exceptions,
@@ -1634,8 +1634,8 @@ fn mono_tc_ty(
                         .map(|arg| mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm))
                         .collect(),
                 },
-                FunArgs::Named { args } => mono::FunArgs::Named {
-                    args: args
+                FunArgs::Named { args, extension } => {
+                    let mut all_args: OrdMap<Id, mono::Type> = args
                         .iter()
                         .map(|(arg_name, arg)| {
                             (
@@ -1643,8 +1643,48 @@ fn mono_tc_ty(
                                 mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm),
                             )
                         })
-                        .collect(),
-                },
+                        .collect();
+
+                    if let Some(ext_ty) = extension {
+                        match ext_ty.as_ref() {
+                            Ty::Con(con, _kind) => {
+                                let ext = ty_map.get(con).unwrap();
+                                match ext {
+                                    mono::Type::Record { fields } => {
+                                        all_args.extend(
+                                            fields.iter().map(|(k, v)| (k.clone(), v.clone())),
+                                        );
+                                    }
+                                    _ => panic!("BUG: FunArgs extension is not a record: {ext:?}"),
+                                }
+                            }
+
+                            Ty::Anonymous {
+                                labels,
+                                extension: inner_ext,
+                                kind: RecordOrVariant::Record,
+                                ..
+                            } => {
+                                assert!(inner_ext.is_none());
+                                for (name, ty) in labels {
+                                    all_args.insert(
+                                        name.clone(),
+                                        mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm),
+                                    );
+                                }
+                            }
+
+                            Ty::UVar(var) => {
+                                // Unlinked UVar means the extension was unused/unconstrained.
+                                assert!(var.link().is_none());
+                            }
+
+                            other => todo!("BUG: Unexpected FunArgs extension type: {:?}", other),
+                        }
+                    }
+
+                    mono::FunArgs::Named { args: all_args }
+                }
             },
             ret: Box::new(mono_tc_ty(&ret, ty_map, poly_pgm, mono_pgm)),
             exn: Box::new(
@@ -1845,11 +1885,36 @@ fn mono_ty_decl(
         .collect();
 
     let rhs: Option<mono::TypeDeclRhs> = ty_decl.rhs.as_ref().map(|rhs| match rhs {
-        ast::TypeDeclRhs::Sum { cons, extension } => mono::TypeDeclRhs::Sum(
-            cons.iter()
+        ast::TypeDeclRhs::Sum { cons, extension } => {
+            let mut mono_cons: Vec<mono::ConDecl> = cons
+                .iter()
                 .map(|con| mono_con(con, &ty_map, poly_pgm, mono_pgm))
-                .collect(),
-        ),
+                .collect();
+
+            if let Some(ext_id) = extension {
+                match ty_map.get(ext_id) {
+                    Some(mono::Type::Variant { alts }) => {
+                        for (alt_name, alt_ty) in alts {
+                            mono_cons.push(mono::ConDecl {
+                                name: alt_name.clone(),
+                                fields: if alt_ty.args.is_empty() {
+                                    mono::ConFields::Empty
+                                } else {
+                                    mono::ConFields::Unnamed(alt_ty.args.clone())
+                                },
+                            });
+                        }
+                    }
+                    Some(other) => panic!("BUG: Sum type extension is not a variant: {other:?}"),
+                    None => panic!(
+                        "BUG: Sum type extension is not in ty map: {ext_id}\n\
+                        Ty map = {ty_map:#?}"
+                    ),
+                }
+            }
+
+            mono::TypeDeclRhs::Sum(mono_cons)
+        }
 
         ast::TypeDeclRhs::Product(fields) => {
             mono::TypeDeclRhs::Product(mono_fields(fields, &ty_map, poly_pgm, mono_pgm))
@@ -1889,8 +1954,8 @@ fn mono_fields(
     match fields {
         ast::ConFields::Empty => mono::ConFields::Empty,
 
-        ast::ConFields::Named { fields, extension } => mono::ConFields::Named(
-            fields
+        ast::ConFields::Named { fields, extension } => {
+            let mut all_fields: OrdMap<Id, mono::Type> = fields
                 .iter()
                 .map(|(name, ty)| {
                     (
@@ -1898,10 +1963,34 @@ fn mono_fields(
                         mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm),
                     )
                 })
-                .collect(),
-        ),
+                .collect();
 
-        ast::ConFields::Unnamed { fields, extension } => mono::ConFields::Unnamed(
+            if let Some(ext_id) = extension {
+                match ty_map.get(ext_id) {
+                    Some(mono::Type::Record {
+                        fields: extra_fields,
+                    }) => {
+                        for (extra_name, extra_ty) in extra_fields.iter() {
+                            let old = all_fields.insert(extra_name.clone(), extra_ty.clone());
+                            if old.is_some() {
+                                panic!("BUG: Duplicate field in constructor fields");
+                            }
+                        }
+                    }
+                    Some(other) => {
+                        panic!("BUG: ConFields extension is not a record: {other:?}")
+                    }
+                    None => panic!(
+                        "BUG: ConFields extension is not in ty map: {ext_id}\n\
+                        Ty map = {ty_map:#?}"
+                    ),
+                }
+            }
+
+            mono::ConFields::Named(all_fields)
+        }
+
+        ast::ConFields::Unnamed { fields } => mono::ConFields::Unnamed(
             fields
                 .iter()
                 .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm))

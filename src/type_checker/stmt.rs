@@ -541,7 +541,7 @@ fn select_field_for_assignment(
 
             match con_ty {
                 Ty::Fun {
-                    args: FunArgs::Named { args: fields },
+                    args: FunArgs::Named { args: fields, .. },
                     ret: _,
                     exceptions: _,
                 } => fields.get(field).cloned(),

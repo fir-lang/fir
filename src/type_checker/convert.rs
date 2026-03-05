@@ -135,7 +135,11 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
     Ty::App(ty_con.id.clone(), converted_args, Kind::Star)
 }
 
-pub(super) fn convert_fields(tys: &TyMap, fields: &ast::ConFields) -> Option<FunArgs> {
+pub(super) fn convert_fields(
+    tys: &TyMap,
+    fields: &ast::ConFields,
+    loc: &ast::Loc,
+) -> Option<FunArgs> {
     match fields {
         ast::ConFields::Empty => None,
         ast::ConFields::Named { fields, extension } => Some(FunArgs::Named {
@@ -143,8 +147,17 @@ pub(super) fn convert_fields(tys: &TyMap, fields: &ast::ConFields) -> Option<Fun
                 .iter()
                 .map(|(name, ty)| (name.clone(), convert_ast_ty(tys, &ty.node, &ty.loc)))
                 .collect(),
+            extension: extension.as_ref().map(|ext_id| {
+                Box::new(
+                    tys.get_var(ext_id)
+                        .unwrap_or_else(|| {
+                            panic!("{}: Unbound type variable {}", loc_display(loc), ext_id)
+                        })
+                        .clone(),
+                )
+            }),
         }),
-        ast::ConFields::Unnamed { fields, extension } => Some(FunArgs::Positional {
+        ast::ConFields::Unnamed { fields } => Some(FunArgs::Positional {
             args: fields
                 .iter()
                 .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))

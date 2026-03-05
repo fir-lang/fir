@@ -91,8 +91,13 @@ pub enum RecordOrVariant {
 
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum FunArgs {
-    Positional { args: Vec<Ty> },
-    Named { args: OrdMap<Id, Ty> },
+    Positional {
+        args: Vec<Ty>,
+    },
+    Named {
+        args: OrdMap<Id, Ty>,
+        extension: Option<Box<Ty>>,
+    },
 }
 
 impl FunArgs {
@@ -101,20 +106,31 @@ impl FunArgs {
     }
 
     pub fn is_named(&self) -> bool {
-        matches!(self, FunArgs::Named { args: _ })
+        matches!(self, FunArgs::Named { .. })
     }
 
     pub fn as_named(&self) -> &OrdMap<Id, Ty> {
         match self {
-            FunArgs::Positional { args: _ } => panic!(),
-            FunArgs::Named { args: named } => named,
+            FunArgs::Positional { .. } => panic!(),
+            FunArgs::Named { args, .. } => args,
         }
+    }
+
+    pub fn extension(&self) -> Option<&Ty> {
+        match self {
+            FunArgs::Positional { .. } => None,
+            FunArgs::Named { extension, .. } => extension.as_deref(),
+        }
+    }
+
+    pub fn has_extension(&self) -> bool {
+        self.extension().is_some()
     }
 
     pub fn len(&self) -> usize {
         match self {
             FunArgs::Positional { args } => args.len(),
-            FunArgs::Named { args } => args.len(),
+            FunArgs::Named { args, .. } => args.len(),
         }
     }
 }
@@ -594,7 +610,16 @@ fn ty_eq_modulo_alpha(
                     }
                 }
 
-                (FunArgs::Named { args: args1 }, FunArgs::Named { args: args2 }) => {
+                (
+                    FunArgs::Named {
+                        args: args1,
+                        extension: ext1,
+                    },
+                    FunArgs::Named {
+                        args: args2,
+                        extension: ext2,
+                    },
+                ) => {
                     let names1: HashSet<&Id> = args1.keys().collect();
                     let names2: HashSet<&Id> = args2.keys().collect();
 
@@ -609,10 +634,19 @@ fn ty_eq_modulo_alpha(
                             return false;
                         }
                     }
+                    match (ext1, ext2) {
+                        (None, None) => {}
+                        (Some(e1), Some(e2)) => {
+                            if !ty_eq_modulo_alpha(cons, e1, e2, ty1_qvars, ty2_qvars, loc) {
+                                return false;
+                            }
+                        }
+                        _ => return false,
+                    }
                 }
 
-                (FunArgs::Named { args: _ }, FunArgs::Positional { args: _ })
-                | (FunArgs::Positional { args: _ }, FunArgs::Named { args: _ }) => return false,
+                (FunArgs::Named { .. }, FunArgs::Positional { .. })
+                | (FunArgs::Positional { .. }, FunArgs::Named { .. }) => return false,
             }
 
             match (exceptions1, exceptions2) {
@@ -743,11 +777,12 @@ impl Ty {
                     FunArgs::Positional { args } => FunArgs::Positional {
                         args: args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
                     },
-                    FunArgs::Named { args } => FunArgs::Named {
+                    FunArgs::Named { args, extension } => FunArgs::Named {
                         args: args
                             .iter()
                             .map(|(name, arg_ty)| (name.clone(), arg_ty.subst(var, ty)))
                             .collect(),
+                        extension: extension.as_ref().map(|ext| Box::new(ext.subst(var, ty))),
                     },
                 },
                 ret: Box::new(ret.subst(var, ty)),
@@ -799,11 +834,14 @@ impl Ty {
                     FunArgs::Positional { args } => FunArgs::Positional {
                         args: args.iter().map(|arg| arg.subst_qvars(vars)).collect(),
                     },
-                    FunArgs::Named { args } => FunArgs::Named {
+                    FunArgs::Named { args, extension } => FunArgs::Named {
                         args: args
                             .iter()
                             .map(|(name, ty)| (name.clone(), ty.subst_qvars(vars)))
                             .collect(),
+                        extension: extension
+                            .as_ref()
+                            .map(|ext| Box::new(ext.subst_qvars(vars))),
                     },
                 },
                 ret: Box::new(ret.subst_qvars(vars)),
@@ -874,11 +912,14 @@ impl Ty {
                     FunArgs::Positional { args } => FunArgs::Positional {
                         args: args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
                     },
-                    FunArgs::Named { args } => FunArgs::Named {
+                    FunArgs::Named { args, extension } => FunArgs::Named {
                         args: args
                             .iter()
                             .map(|(name, arg)| (name.clone(), arg.deep_normalize(cons)))
                             .collect(),
+                        extension: extension
+                            .as_ref()
+                            .map(|ext| Box::new(ext.deep_normalize(cons))),
                     },
                 },
                 ret: Box::new(ret.deep_normalize(cons)),
@@ -1125,12 +1166,18 @@ impl fmt::Display for Ty {
                             write!(f, "{arg}")?;
                         }
                     }
-                    FunArgs::Named { args } => {
+                    FunArgs::Named { args, extension } => {
                         for (i, (name, ty)) in args.iter().enumerate() {
                             if i > 0 {
                                 write!(f, ", ")?;
                             }
                             write!(f, "{name}: {ty}")?;
+                        }
+                        if let Some(ext) = extension {
+                            if !args.is_empty() {
+                                write!(f, ", ")?;
+                            }
+                            write!(f, "..{ext}")?;
                         }
                     }
                 }

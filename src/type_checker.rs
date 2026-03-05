@@ -627,7 +627,7 @@ fn visit_ty_con(
 
         let mut tys: Vec<&Ty> = match &con_args {
             FunArgs::Positional { args } => args.iter().collect(),
-            FunArgs::Named { args } => args.values().collect(),
+            FunArgs::Named { args, .. } => args.values().collect(),
         };
 
         while let Some(ty) = tys.pop() {
@@ -985,10 +985,10 @@ fn collect_schemes(
                 };
 
                 match rhs {
-                    ast::TypeDeclRhs::Sum { cons, extension } => {
+                    ast::TypeDeclRhs::Sum { cons, extension: _ } => {
                         for con in cons {
                             let fields = &con.fields;
-                            let ty = match convert_fields(tys, fields) {
+                            let ty = match convert_fields(tys, fields, &ty_decl.loc) {
                                 None => ret.clone(),
                                 Some(args) => Ty::Fun {
                                     args,
@@ -1027,7 +1027,7 @@ fn collect_schemes(
                     }
 
                     ast::TypeDeclRhs::Product(fields) => {
-                        let ty = match convert_fields(tys, fields) {
+                        let ty = match convert_fields(tys, fields, &ty_decl.loc) {
                             None => ret,
                             Some(args) => Ty::Fun {
                                 args,

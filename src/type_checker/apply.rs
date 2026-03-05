@@ -26,7 +26,9 @@ pub(crate) fn apply_con_ty(
             assert!(con_ty_exceptions.is_none());
 
             match con_ty_args {
-                FunArgs::Positional { args: con_ty_args } => {
+                FunArgs::Positional {
+                    args: con_ty_args, ..
+                } => {
                     if (!ignore_extra && con_ty_args.len() != args.len())
                         || args.len() > con_ty_args.len()
                     {
@@ -49,7 +51,9 @@ pub(crate) fn apply_con_ty(
                     }
                 }
 
-                FunArgs::Named { args: con_ty_args } => {
+                FunArgs::Named {
+                    args: con_ty_args, ..
+                } => {
                     let mut arg_names: HashSet<&Id> = Default::default();
 
                     for arg in args {

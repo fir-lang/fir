@@ -153,9 +153,16 @@ pub(crate) fn process_fields(
             extension,
         }
     } else {
+        if extension.is_some() {
+            panic!(
+                "{}:{}:{}: Unnamed fields cannot have row extensions",
+                module,
+                loc.line + 1,
+                loc.col + 1,
+            );
+        }
         ast::ConFields::Unnamed {
             fields: fields.into_iter().map(|(_, t)| t).collect(),
-            extension,
         }
     }
 }
