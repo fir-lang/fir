@@ -89,23 +89,10 @@ pub enum RecordOrVariant {
     Variant,
 }
 
-/// Argument types in function types, positional or named.
-///
-/// Similar to the extension types in `Ty`, extensions will be:
-/// - `QVar`s in type schemes.
-/// - `Con`s (rigid type variables) when type checking a function body and the type parameter is a
-///   `QVar` in the function's type scheme.
-/// - `UVar` in instantiations.
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum FunArgs {
-    Positional {
-        args: Vec<Ty>,
-        extension: Option<Box<Ty>>,
-    },
-    Named {
-        args: OrdMap<Id, Ty>,
-        extension: Option<Box<Ty>>,
-    },
+    Positional { args: Vec<Ty> },
+    Named { args: OrdMap<Id, Ty> },
 }
 
 impl FunArgs {

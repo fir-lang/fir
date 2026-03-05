@@ -860,14 +860,8 @@ fn mono_expr(
                     exceptions,
                 } => (
                     match args {
-                        FunArgs::Positional { args, extension } => {
-                            assert_eq!(*extension, None);
-                            args
-                        }
-                        FunArgs::Named {
-                            args: _,
-                            extension: _,
-                        } => panic!(),
+                        FunArgs::Positional { args } => args,
+                        FunArgs::Named { args: _ } => panic!(),
                     },
                     ret,
                     exceptions,
