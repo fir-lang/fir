@@ -860,8 +860,14 @@ fn mono_expr(
                     exceptions,
                 } => (
                     match args {
-                        FunArgs::Positional { args } => args,
-                        FunArgs::Named { args: _ } => panic!(),
+                        FunArgs::Positional { args, extension } => {
+                            assert_eq!(*extension, None);
+                            args
+                        }
+                        FunArgs::Named {
+                            args: _,
+                            extension: _,
+                        } => panic!(),
                     },
                     ret,
                     exceptions,
@@ -1660,7 +1666,7 @@ fn mono_tc_ty(
             kind,
             is_row: _,
         } => match kind {
-            crate::type_checker::RecordOrVariant::Record => {
+            RecordOrVariant::Record => {
                 let mut all_fields: OrdMap<Id, mono::Type> = Default::default();
 
                 for (field, field_ty) in labels {
@@ -1692,7 +1698,7 @@ fn mono_tc_ty(
                 mono::Type::Record { fields: all_fields }
             }
 
-            crate::type_checker::RecordOrVariant::Variant => {
+            RecordOrVariant::Variant => {
                 let mut all_alts: OrdMap<Id, mono::NamedType> = Default::default();
 
                 for (id, ty) in labels.iter() {
