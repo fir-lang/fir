@@ -1003,27 +1003,27 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::ToStrI8 => {
-            gen_tostr_fn(idx, "I8", "PRId8", p);
+            gen_int_tostr_fn(idx, "I8", "PRId8", p);
         }
 
         BuiltinFunDecl::ToStrU8 => {
-            gen_tostr_fn(idx, "U8", "PRIu8", p);
+            gen_int_tostr_fn(idx, "U8", "PRIu8", p);
         }
 
         BuiltinFunDecl::ToStrI32 => {
-            gen_tostr_fn(idx, "I32", "PRId32", p);
+            gen_int_tostr_fn(idx, "I32", "PRId32", p);
         }
 
         BuiltinFunDecl::ToStrU32 => {
-            gen_tostr_fn(idx, "U32", "PRIu32", p);
+            gen_int_tostr_fn(idx, "U32", "PRIu32", p);
         }
 
         BuiltinFunDecl::ToStrU64 => {
-            gen_tostr_fn(idx, "U64", "PRIu64", p);
+            gen_int_tostr_fn(idx, "U64", "PRIu64", p);
         }
 
         BuiltinFunDecl::ToStrI64 => {
-            gen_tostr_fn(idx, "I64", "PRId64", p);
+            gen_int_tostr_fn(idx, "I64", "PRId64", p);
         }
 
         BuiltinFunDecl::U8AsI8 => wln!(p, "static I8 _fun_{idx}(U8 a) {{ return (I8)a; }}"),
@@ -1050,11 +1050,11 @@ fn builtin_fun_to_c(
             "static U32 _fun_{idx}(U32 a, U32 b) {{ return a << b; }}"
         ),
 
-        BuiltinFunDecl::I8Cmp => gen_cmp_fn(idx, "I8", pgm, p),
-        BuiltinFunDecl::U8Cmp => gen_cmp_fn(idx, "U8", pgm, p),
-        BuiltinFunDecl::I32Cmp => gen_cmp_fn(idx, "I32", pgm, p),
-        BuiltinFunDecl::U32Cmp => gen_cmp_fn(idx, "U32", pgm, p),
-        BuiltinFunDecl::U64Cmp => gen_cmp_fn(idx, "U64", pgm, p),
+        BuiltinFunDecl::I8Cmp => gen_int_cmp_fn(idx, "I8", pgm, p),
+        BuiltinFunDecl::U8Cmp => gen_int_cmp_fn(idx, "U8", pgm, p),
+        BuiltinFunDecl::I32Cmp => gen_int_cmp_fn(idx, "I32", pgm, p),
+        BuiltinFunDecl::U32Cmp => gen_int_cmp_fn(idx, "U32", pgm, p),
+        BuiltinFunDecl::U64Cmp => gen_int_cmp_fn(idx, "U64", pgm, p),
 
         BuiltinFunDecl::I8Add => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a + b; }}"),
 
@@ -1406,34 +1406,45 @@ fn builtin_fun_to_c(
     }
 }
 
-fn gen_tostr_fn(idx: usize, arg_ty: &str, fmt: &str, p: &mut Printer) {
-    w!(p, "static Str _fun_{}({arg_ty} a) {{", idx);
-    p.indent();
-    p.nl();
-    wln!(p, "char buf[32];");
-    w!(p, "int len = snprintf(buf, sizeof(buf), \"%\" {fmt} , a);",);
-    p.nl();
-    w!(p, "return alloc_str(buf, len);");
-    p.dedent();
-    p.nl();
-    wln!(p, "}}");
+/// Generate a `ToStr.toStr` method for an integer type. E.g.
+/// ```ignore
+/// impl ToStr[U64]:
+///     prim toStr(self: U64) Str
+/// ```
+fn gen_int_tostr_fn(idx: usize, arg_ty: &str, fmt: &str, p: &mut Printer) {
+    writedoc!(
+        p,
+        "
+        static Str _fun_{idx}({arg_ty} a) {{
+            char buf[32];
+            int len = snprintf(buf, sizeof(buf), \"%\" {fmt} , a);
+            return alloc_str(buf, len);
+        }}
+
+        ",
+    );
 }
 
-fn gen_cmp_fn(idx: usize, arg_ty: &str, pgm: &LoweredPgm, p: &mut Printer) {
+/// Generate an `Ord.cmp` method for an integer type. E.g.
+/// ```ignore
+/// impl Ord[U64]:
+///     prim cmp(self: U64, other: U64) Ordering
+/// ```
+fn gen_int_cmp_fn(idx: usize, arg_ty: &str, pgm: &LoweredPgm, p: &mut Printer) {
     let less = heap_obj_singleton_name(pgm, pgm.ordering_less_con_idx);
     let greater = heap_obj_singleton_name(pgm, pgm.ordering_greater_con_idx);
     let equal = heap_obj_singleton_name(pgm, pgm.ordering_equal_con_idx);
-    w!(p, "static Ordering _fun_{idx}({arg_ty} a, {arg_ty} b) {{");
-    p.indent();
-    p.nl();
-    w!(p, "if (a < b) return {less};");
-    p.nl();
-    w!(p, "if (a > b) return {greater};");
-    p.nl();
-    w!(p, "return {equal};");
-    p.dedent();
-    p.nl();
-    wln!(p, "}}");
+    writedoc!(
+        p,
+        "
+        static Ordering _fun_{idx}({arg_ty} a, {arg_ty} b) {{
+            if (a < b) return {less};
+            if (a > b) return {greater};
+            return {equal};
+        }}
+
+        "
+    );
 }
 
 fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer) {
