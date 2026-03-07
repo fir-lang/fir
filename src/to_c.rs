@@ -153,11 +153,9 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             return memcmp(data_ptr, str2, len1) == 0;
         }}
 
-        // Allocate string from bytes
-        static Str alloc_str(const char* bytes, size_t len) {{
-            uint8_t* data = malloc(len);
-            memcpy(data, bytes, len);
-            Array_U8 arr = {{ .data_ptr = data, .len = len }};
+        // Allocate string from bytes, taking ownership of the bytes.
+        static Str alloc_str(char* bytes, size_t len) {{
+            Array_U8 arr = {{ .data_ptr = (U8*)bytes, .len = len }};
             return (Str){{ ._0 = arr }};
         }}
 
@@ -1380,9 +1378,7 @@ fn builtin_fun_to_c(
                     char* contents = (char*)malloc(size);
                     if (fread(contents, 1, size, f) != (size_t)size) {{ fprintf(stderr, \"Failed to read file\\n\"); exit(1); }}
                     fclose(f);
-                    Str result = alloc_str(contents, size);
-                    free(contents);
-                    return result;
+                    return alloc_str(contents, size);
                 }}
                 ",
             );
@@ -1412,12 +1408,14 @@ fn builtin_fun_to_c(
 ///     prim toStr(self: U64) Str
 /// ```
 fn gen_int_tostr_fn(idx: usize, arg_ty: &str, fmt: &str, p: &mut Printer) {
+    // TODO: Buffer size below is too large, we could use a max. size based on the size of the
+    // integer being printed.
     writedoc!(
         p,
         "
         static Str _fun_{idx}({arg_ty} a) {{
-            char buf[32];
-            int len = snprintf(buf, sizeof(buf), \"%\" {fmt} , a);
+            char* buf = malloc(32);
+            int len = snprintf(buf, 32, \"%\" {fmt} , a);
             return alloc_str(buf, len);
         }}
 
