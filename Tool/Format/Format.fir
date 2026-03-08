@@ -594,7 +594,6 @@ Expr.format(self, tokens: Array[Token]) Doc:
             Expr.Int(e): e.format(tokens)
             Expr.Str(e): e.format(tokens)
             Expr.Char(e): e.format(tokens)
-            Expr.Self(e): formatToken(e, tokens)
             Expr.BinOp(e): e.format(tokens)
             Expr.UnOp(e): e.format(tokens)
             Expr.Record(e): e.format(tokens)

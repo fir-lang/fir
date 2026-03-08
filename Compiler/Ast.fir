@@ -877,8 +877,6 @@ type Expr:
     ## A character literal.
     Char(CharExpr)
 
-    Self(TokenIdx)
-
     ## A binary operator: `x + y`, `i >> 2`.
     ##
     ## Some of the binary operators are desugared to method calls by the type checker.
@@ -926,7 +924,6 @@ impl Tokens[Expr]:
             Expr.Int(e): e.firstToken(tokens)
             Expr.Str(e): e.firstToken(tokens)
             Expr.Char(e): e.firstToken(tokens)
-            Expr.Self(t): t
             Expr.BinOp(e): e.firstToken(tokens)
             Expr.UnOp(e): e.firstToken(tokens)
             Expr.Record(e): e.firstToken(tokens)
@@ -951,7 +948,6 @@ impl Tokens[Expr]:
             Expr.Int(e): e.lastToken(tokens)
             Expr.Str(e): e.lastToken(tokens)
             Expr.Char(e): e.lastToken(tokens)
-            Expr.Self(t): t
             Expr.BinOp(e): e.lastToken(tokens)
             Expr.UnOp(e): e.lastToken(tokens)
             Expr.Record(e): e.lastToken(tokens)
@@ -2499,11 +2495,6 @@ impl ToDoc[Expr]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("Expr.Char") + Doc.char('(') + args)
-            Expr.Self(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Expr.Self") + Doc.char('(') + args)
             Expr.BinOp(i0):
                 let args = Doc.break_(0)
                 args += i0.toDoc()

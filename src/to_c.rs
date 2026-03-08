@@ -153,11 +153,9 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
             return memcmp(data_ptr, str2, len1) == 0;
         }}
 
-        // Allocate string from bytes
-        static Str alloc_str(const char* bytes, size_t len) {{
-            uint8_t* data = malloc(len);
-            memcpy(data, bytes, len);
-            Array_U8 arr = {{ .data_ptr = data, .len = len }};
+        // Allocate string from bytes, taking ownership of the bytes.
+        static Str alloc_str(char* bytes, size_t len) {{
+            Array_U8 arr = {{ .data_ptr = (U8*)bytes, .len = len }};
             return (Str){{ ._0 = arr }};
         }}
 
@@ -1003,27 +1001,27 @@ fn builtin_fun_to_c(
         }
 
         BuiltinFunDecl::ToStrI8 => {
-            gen_tostr_fn(idx, "I8", "PRId8", p);
+            gen_int_tostr_fn(idx, "I8", "PRId8", p);
         }
 
         BuiltinFunDecl::ToStrU8 => {
-            gen_tostr_fn(idx, "U8", "PRIu8", p);
+            gen_int_tostr_fn(idx, "U8", "PRIu8", p);
         }
 
         BuiltinFunDecl::ToStrI32 => {
-            gen_tostr_fn(idx, "I32", "PRId32", p);
+            gen_int_tostr_fn(idx, "I32", "PRId32", p);
         }
 
         BuiltinFunDecl::ToStrU32 => {
-            gen_tostr_fn(idx, "U32", "PRIu32", p);
+            gen_int_tostr_fn(idx, "U32", "PRIu32", p);
         }
 
         BuiltinFunDecl::ToStrU64 => {
-            gen_tostr_fn(idx, "U64", "PRIu64", p);
+            gen_int_tostr_fn(idx, "U64", "PRIu64", p);
         }
 
         BuiltinFunDecl::ToStrI64 => {
-            gen_tostr_fn(idx, "I64", "PRId64", p);
+            gen_int_tostr_fn(idx, "I64", "PRId64", p);
         }
 
         BuiltinFunDecl::U8AsI8 => wln!(p, "static I8 _fun_{idx}(U8 a) {{ return (I8)a; }}"),
@@ -1050,11 +1048,11 @@ fn builtin_fun_to_c(
             "static U32 _fun_{idx}(U32 a, U32 b) {{ return a << b; }}"
         ),
 
-        BuiltinFunDecl::I8Cmp => gen_cmp_fn(idx, "I8", pgm, p),
-        BuiltinFunDecl::U8Cmp => gen_cmp_fn(idx, "U8", pgm, p),
-        BuiltinFunDecl::I32Cmp => gen_cmp_fn(idx, "I32", pgm, p),
-        BuiltinFunDecl::U32Cmp => gen_cmp_fn(idx, "U32", pgm, p),
-        BuiltinFunDecl::U64Cmp => gen_cmp_fn(idx, "U64", pgm, p),
+        BuiltinFunDecl::I8Cmp => gen_int_cmp_fn(idx, "I8", pgm, p),
+        BuiltinFunDecl::U8Cmp => gen_int_cmp_fn(idx, "U8", pgm, p),
+        BuiltinFunDecl::I32Cmp => gen_int_cmp_fn(idx, "I32", pgm, p),
+        BuiltinFunDecl::U32Cmp => gen_int_cmp_fn(idx, "U32", pgm, p),
+        BuiltinFunDecl::U64Cmp => gen_int_cmp_fn(idx, "U64", pgm, p),
 
         BuiltinFunDecl::I8Add => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a + b; }}"),
 
@@ -1163,23 +1161,22 @@ fn builtin_fun_to_c(
         BuiltinFunDecl::I32Neg => wln!(p, "static I32 _fun_{idx}(I32 a) {{ return -a; }}"),
 
         BuiltinFunDecl::ThrowUnchecked => {
-            let exn_ty = c_ty(&params[0], pgm);
-            w!(
+            // prim throwUnchecked(exn: exn) a / exn?
+            let exn_ty = c_ty(&ty_args[0], pgm); // exn
+            let ret_ty = c_ty(&ty_args[1], pgm); // a
+            assert_eq!(&ty_args[1], ret);
+            writedoc!(
                 p,
-                "static {} _fun_{}({} exn) {{",
-                c_ty(ret, pgm),
-                idx,
-                exn_ty
+                "
+                static {ret_ty} _fun_{idx}({exn_ty} exn) {{
+                    {exn_ty}* boxed = malloc(sizeof({exn_ty}));
+                    *boxed = exn;
+                    throw_exn(boxed);
+                    __builtin_unreachable();
+                }}
+
+                ",
             );
-            p.indent();
-            p.nl();
-            wln!(p, "{exn_ty}* boxed = malloc(sizeof({exn_ty}));");
-            wln!(p, "*boxed = exn;");
-            wln!(p, "throw_exn(boxed);");
-            w!(p, "__builtin_unreachable();");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
         }
 
         BuiltinFunDecl::Try { ok_con, err_con } => {
@@ -1380,9 +1377,7 @@ fn builtin_fun_to_c(
                     char* contents = (char*)malloc(size);
                     if (fread(contents, 1, size, f) != (size_t)size) {{ fprintf(stderr, \"Failed to read file\\n\"); exit(1); }}
                     fclose(f);
-                    Str result = alloc_str(contents, size);
-                    free(contents);
-                    return result;
+                    return alloc_str(contents, size);
                 }}
                 ",
             );
@@ -1406,34 +1401,47 @@ fn builtin_fun_to_c(
     }
 }
 
-fn gen_tostr_fn(idx: usize, arg_ty: &str, fmt: &str, p: &mut Printer) {
-    w!(p, "static Str _fun_{}({arg_ty} a) {{", idx);
-    p.indent();
-    p.nl();
-    wln!(p, "char buf[32];");
-    w!(p, "int len = snprintf(buf, sizeof(buf), \"%\" {fmt} , a);",);
-    p.nl();
-    w!(p, "return alloc_str(buf, len);");
-    p.dedent();
-    p.nl();
-    wln!(p, "}}");
+/// Generate a `ToStr.toStr` method for an integer type. E.g.
+/// ```ignore
+/// impl ToStr[U64]:
+///     prim toStr(self: U64) Str
+/// ```
+fn gen_int_tostr_fn(idx: usize, arg_ty: &str, fmt: &str, p: &mut Printer) {
+    // TODO: Buffer size below is too large, we could use a max. size based on the size of the
+    // integer being printed.
+    writedoc!(
+        p,
+        "
+        static Str _fun_{idx}({arg_ty} a) {{
+            char* buf = malloc(32);
+            int len = snprintf(buf, 32, \"%\" {fmt} , a);
+            return alloc_str(buf, len);
+        }}
+
+        ",
+    );
 }
 
-fn gen_cmp_fn(idx: usize, arg_ty: &str, pgm: &LoweredPgm, p: &mut Printer) {
+/// Generate an `Ord.cmp` method for an integer type. E.g.
+/// ```ignore
+/// impl Ord[U64]:
+///     prim cmp(self: U64, other: U64) Ordering
+/// ```
+fn gen_int_cmp_fn(idx: usize, arg_ty: &str, pgm: &LoweredPgm, p: &mut Printer) {
     let less = heap_obj_singleton_name(pgm, pgm.ordering_less_con_idx);
     let greater = heap_obj_singleton_name(pgm, pgm.ordering_greater_con_idx);
     let equal = heap_obj_singleton_name(pgm, pgm.ordering_equal_con_idx);
-    w!(p, "static Ordering _fun_{idx}({arg_ty} a, {arg_ty} b) {{");
-    p.indent();
-    p.nl();
-    w!(p, "if (a < b) return {less};");
-    p.nl();
-    w!(p, "if (a > b) return {greater};");
-    p.nl();
-    w!(p, "return {equal};");
-    p.dedent();
-    p.nl();
-    wln!(p, "}}");
+    writedoc!(
+        p,
+        "
+        static Ordering _fun_{idx}({arg_ty} a, {arg_ty} b) {{
+            if (a < b) return {less};
+            if (a > b) return {greater};
+            return {equal};
+        }}
+
+        "
+    );
 }
 
 fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer) {
