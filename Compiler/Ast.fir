@@ -533,6 +533,7 @@ impl Tokens[Stmt]:
 ## A let statement: `let x: T = expr`.
 #[derive(ToDoc)]
 type LetStmt(
+    idx: NodeIdx,
     lhs: Pat,
     ty: Option[Type],
     rhs: Expr,
@@ -550,6 +551,7 @@ impl Tokens[LetStmt]:
 
 #[derive(ToDoc)]
 type AssignStmt(
+    idx: NodeIdx,
     lhs: Expr,
     rhs: Expr,
     op: AssignOp,
@@ -602,6 +604,7 @@ impl Tokens[ForStmt]:
 
 #[derive(ToDoc)]
 type WhileStmt(
+    idx: NodeIdx,
     label: Option[Id],
     cond: Expr,
     body: Vec[Stmt],
@@ -619,6 +622,7 @@ impl Tokens[WhileStmt]:
 
 #[derive(ToDoc)]
 type LoopStmt(
+    idx: NodeIdx,
     body: Vec[Stmt],
     _firstToken: TokenIdx,
 )
@@ -634,6 +638,8 @@ impl Tokens[LoopStmt]:
 
 #[derive(ToDoc)]
 type BreakStmt(
+    idx: NodeIdx,
+
     label: Option[Id],
 
     ## How many levels of loops to break. Parser initializes this as 0, type checker updates
@@ -656,6 +662,8 @@ impl Tokens[BreakStmt]:
 
 #[derive(ToDoc)]
 type ContinueStmt(
+    idx: NodeIdx,
+
     label: Option[Id],
 
     ## Same as `BreakStmt.level`.
@@ -673,6 +681,18 @@ impl Tokens[ContinueStmt]:
         match self.label:
             Option.Some(id): id.lastToken(tokens)
             Option.None: self._firstToken
+
+
+Stmt.nodeIdx(self) NodeIdx:
+    match self:
+        Stmt.Let(s): s.idx
+        Stmt.Assign(s): s.idx
+        Stmt.Expr(s): s.nodeIdx()
+        Stmt.For(s): s.idx
+        Stmt.While(s): s.idx
+        Stmt.Loop(s): s.idx
+        Stmt.Break(s): s.idx
+        Stmt.Continue(s): s.idx
 
 
 #[derive(ToDoc)]
@@ -2117,6 +2137,10 @@ impl ToDoc[LetStmt]:
     toDoc(self: LetStmt) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("lhs =") + Doc.nested(4, Doc.break_(1) + self.lhs.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
@@ -2139,6 +2163,10 @@ impl ToDoc[LetStmt]:
 impl ToDoc[AssignStmt]:
     toDoc(self: AssignStmt) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("lhs =") + Doc.nested(4, Doc.break_(1) + self.lhs.toDoc()),
         )
@@ -2205,6 +2233,10 @@ impl ToDoc[WhileStmt]:
     toDoc(self: WhileStmt) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("label =")
                 + Doc.nested(4, Doc.break_(1) + self.label.toDoc()),
         )
@@ -2229,6 +2261,10 @@ impl ToDoc[LoopStmt]:
     toDoc(self: LoopStmt) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
             Doc.str("body =") + Doc.nested(4, Doc.break_(1) + self.body.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
@@ -2243,6 +2279,10 @@ impl ToDoc[LoopStmt]:
 impl ToDoc[BreakStmt]:
     toDoc(self: BreakStmt) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("label =")
                 + Doc.nested(4, Doc.break_(1) + self.label.toDoc()),
@@ -2264,6 +2304,10 @@ impl ToDoc[BreakStmt]:
 impl ToDoc[ContinueStmt]:
     toDoc(self: ContinueStmt) Doc:
         let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("idx =") + Doc.nested(4, Doc.break_(1) + self.idx.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("label =")
                 + Doc.nested(4, Doc.break_(1) + self.label.toDoc()),

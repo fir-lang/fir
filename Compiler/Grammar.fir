@@ -3424,6 +3424,7 @@ stmt(state: ParserState[Token, NodeIdxGen]) Stmt / U32:
             let val = do:
                 Stmt.Break(
                     BreakStmt(
+                        idx = state.state().next(),
                         label = label.map(\(l: Token): newId(labelLoc)),
                         level = 0,
                         _firstToken = TokenIdx(idx = cur),
@@ -3469,6 +3470,7 @@ stmt(state: ParserState[Token, NodeIdxGen]) Stmt / U32:
             let val = do:
                 Stmt.Continue(
                     ContinueStmt(
+                        idx = state.state().next(),
                         label = label.map(\(l: Token): newId(labelLoc)),
                         level = 0,
                         _firstToken = TokenIdx(idx = cur),
@@ -3515,6 +3517,7 @@ stmt(state: ParserState[Token, NodeIdxGen]) Stmt / U32:
             let val = do:
                 Stmt.Let(
                     LetStmt(
+                        idx = state.state().next(),
                         lhs = pat,
                         ty,
                         rhs,
@@ -3678,6 +3681,7 @@ stmt(state: ParserState[Token, NodeIdxGen]) Stmt / U32:
             let val = do:
                 Stmt.While(
                     WhileStmt(
+                        idx = state.state().next(),
                         label,
                         cond,
                         body,
@@ -3743,7 +3747,13 @@ stmt(state: ParserState[Token, NodeIdxGen]) Stmt / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                Stmt.Loop(LoopStmt(body, _firstToken = TokenIdx(idx = cur)))
+                Stmt.Loop(
+                    LoopStmt(
+                        idx = state.state().next(),
+                        body,
+                        _firstToken = TokenIdx(idx = cur),
+                    ),
+                )
             val,
     )
     match altResult:
@@ -3757,7 +3767,9 @@ stmt(state: ParserState[Token, NodeIdxGen]) Stmt / U32:
                 match rhs:
                     Option.None: Stmt.Expr(lhs)
                     Option.Some((op, rhs)):
-                        Stmt.Assign(AssignStmt(lhs, rhs, op))
+                        Stmt.Assign(
+                            AssignStmt(idx = state.state().next(), lhs, rhs, op),
+                        )
             val,
     )
     match altResult:

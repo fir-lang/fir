@@ -747,6 +747,7 @@ fnArgs Vec[FunArg]:
 stmt Stmt:
     cur=^ "break" labelLoc=^ label="label"? "NEWLINE":
         Stmt.Break(BreakStmt(
+            idx = state.state().next(),
             label = label.map(\(l: Token): newId(labelLoc)),
             level = 0,
             _firstToken = TokenIdx(idx = cur),
@@ -754,13 +755,20 @@ stmt Stmt:
 
     cur=^ "continue" labelLoc=^ label="label"? "NEWLINE":
         Stmt.Continue(ContinueStmt(
+            idx = state.state().next(),
             label = label.map(\(l: Token): newId(labelLoc)),
             level = 0,
             _firstToken = TokenIdx(idx = cur),
         ))
 
     cur=^ "let" pat=pat ty=(_":" type_)? "=" rhs=letRhs:
-        Stmt.Let(LetStmt(lhs = pat, ty, rhs, _firstToken = TokenIdx(idx = cur)))
+        Stmt.Let(LetStmt(
+            idx = state.state().next(),
+            lhs = pat,
+            ty,
+            rhs,
+            _firstToken = TokenIdx(idx = cur)
+        ))
 
     cur=^ label=loopLabel? "for" pat=pat ty=(_":" type_)? "in" expr=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
         Stmt.For(ForStmt(
@@ -774,10 +782,20 @@ stmt Stmt:
         ))
 
     cur=^ label=loopLabel? "while" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
-        Stmt.While(WhileStmt(label, cond, body, _firstToken = TokenIdx(idx = cur)))
+        Stmt.While(WhileStmt(
+            idx = state.state().next(),
+            label,
+            cond,
+            body,
+            _firstToken = TokenIdx(idx = cur)
+        ))
 
     cur=^ label=loopLabel? "loop" ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
-        Stmt.Loop(LoopStmt(body, _firstToken = TokenIdx(idx = cur)))
+        Stmt.Loop(LoopStmt(
+            idx = state.state().next(),
+            body,
+            _firstToken = TokenIdx(idx = cur)
+        ))
 
     lhs=inlineExpr rhs=stmtExprCont:
         match rhs:
@@ -785,7 +803,12 @@ stmt Stmt:
                 Stmt.Expr(lhs)
 
             Option.Some((op, rhs)):
-                Stmt.Assign(AssignStmt(lhs, rhs, op))
+                Stmt.Assign(AssignStmt(
+                    idx = state.state().next(),
+                    lhs,
+                    rhs,
+                    op
+                ))
 
     expr=blockExpr:
         Stmt.Expr(expr)
