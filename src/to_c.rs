@@ -1165,6 +1165,11 @@ fn builtin_fun_to_c(
             let exn_ty = c_ty(&ty_args[0], pgm); // exn
             let ret_ty = c_ty(&ty_args[1], pgm); // a
             assert_eq!(&ty_args[1], ret);
+            let ret_val = if is_value_type(&ty_args[1], pgm) {
+                "{}"
+            } else {
+                "NULL"
+            };
             writedoc!(
                 p,
                 "
@@ -1172,7 +1177,7 @@ fn builtin_fun_to_c(
                     {exn_ty}* boxed = malloc(sizeof({exn_ty}));
                     *boxed = exn;
                     throw_exn(boxed);
-                    __builtin_unreachable();
+                    return ({ret_ty}){ret_val};
                 }}
 
                 ",
