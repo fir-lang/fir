@@ -1161,23 +1161,22 @@ fn builtin_fun_to_c(
         BuiltinFunDecl::I32Neg => wln!(p, "static I32 _fun_{idx}(I32 a) {{ return -a; }}"),
 
         BuiltinFunDecl::ThrowUnchecked => {
-            let exn_ty = c_ty(&params[0], pgm);
-            w!(
+            // prim throwUnchecked(exn: exn) a / exn?
+            let exn_ty = c_ty(&ty_args[0], pgm); // exn
+            let ret_ty = c_ty(&ty_args[1], pgm); // a
+            assert_eq!(&ty_args[1], ret);
+            writedoc!(
                 p,
-                "static {} _fun_{}({} exn) {{",
-                c_ty(ret, pgm),
-                idx,
-                exn_ty
+                "
+                static {ret_ty} _fun_{idx}({exn_ty} exn) {{
+                    {exn_ty}* boxed = malloc(sizeof({exn_ty}));
+                    *boxed = exn;
+                    throw_exn(boxed);
+                    __builtin_unreachable();
+                }}
+
+                ",
             );
-            p.indent();
-            p.nl();
-            wln!(p, "{exn_ty}* boxed = malloc(sizeof({exn_ty}));");
-            wln!(p, "*boxed = exn;");
-            wln!(p, "throw_exn(boxed);");
-            w!(p, "__builtin_unreachable();");
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
         }
 
         BuiltinFunDecl::Try { ok_con, err_con } => {
