@@ -1161,28 +1161,27 @@ fn builtin_fun_to_c(
         BuiltinFunDecl::I32Neg => wln!(p, "static I32 _fun_{idx}(I32 a) {{ return -a; }}"),
 
         BuiltinFunDecl::ThrowUnchecked => {
-            let exn_ty = c_ty(&ty_args[0], pgm);
-            let ret_ty = c_ty(&ty_args[1], pgm);
-            w!(
-                p,
-                "static {} _fun_{}({} exn) {{",
-                c_ty(ret, pgm),
-                idx,
-                exn_ty
-            );
-            p.indent();
-            p.nl();
-            wln!(p, "{exn_ty}* boxed = malloc(sizeof({exn_ty}));");
-            wln!(p, "*boxed = exn;");
-            wln!(p, "throw_exn(boxed);");
-            if is_value_type(&ty_args[1], pgm) {
-                w!(p, "return ({ret_ty}){{}};");
+            // prim throwUnchecked(exn: exn) a / exn?
+            let exn_ty = c_ty(&ty_args[0], pgm); // exn
+            let ret_ty = c_ty(&ty_args[1], pgm); // a
+            assert_eq!(&ty_args[1], ret);
+            let ret_val = if is_value_type(&ty_args[1], pgm) {
+                "{}"
             } else {
-                w!(p, "return ({ret_ty})NULL;");
-            }
-            p.dedent();
-            p.nl();
-            wln!(p, "}}");
+                "NULL"
+            };
+            writedoc!(
+                p,
+                "
+                static {ret_ty} _fun_{idx}({exn_ty} exn) {{
+                    {exn_ty}* boxed = malloc(sizeof({exn_ty}));
+                    *boxed = exn;
+                    throw_exn(boxed);
+                    return ({ret_ty}){ret_val};
+                }}
+
+                ",
+            );
         }
 
         BuiltinFunDecl::Try { ok_con, err_con } => {
