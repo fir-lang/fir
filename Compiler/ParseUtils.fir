@@ -116,15 +116,15 @@ processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:
 # ------------------------------------------------------------------------------
 
 
-associate(left: Expr, nodes: Vec[InlineExprCont]) Expr:
+associate(left: Expr, nodes: Vec[InlineExprCont], idxGen: NodeIdxGen) Expr:
     if nodes.isEmpty():
         return left
 
     # Split the sequence into `and` or `or` -connected parts. Mixing `and` and `or` in a sequence is
     # a parse error (needs parens). Otherwise left associate.
     #
-    # `makeLeftAssoc` will stop after handling an `is`. If there are unhandled continuations after
-    # `makeLeftAssoc`, that means we have something like `expr1 is Pat + expr2`, which is also a
+    # `_makeLeftAssoc` will stop after handling an `is`. If there are unhandled continuations after
+    # `_makeLeftAssoc`, that means we have something like `expr1 is Pat + expr2`, which is also a
     # parse error.
     #
     # In other words, `foo is Pattern` can only be followed by an `and` or `or`. Anything else is a
@@ -167,15 +167,18 @@ associate(left: Expr, nodes: Vec[InlineExprCont]) Expr:
             match partConts.remove(0):
                 InlineExprCont.Is(pat):
                     assert(partConts.isEmpty())
-                    Expr.Is(IsExpr(expr = partLeft, pat = pat))
+                    Expr.Is(
+                        IsExpr(idx = idxGen.next(), expr = partLeft, pat = pat),
+                    )
                 InlineExprCont.BinOp(op, rhs):
-                    let leftAssoc = makeLeftAssoc(
+                    let leftAssoc = _makeLeftAssoc(
                         partLeft,
                         op,
                         rhs,
                         0,
                         partConts,
                         Option.None,
+                        idxGen,
                     )
                     if leftAssoc.newIdx != partConts.len():
                         panic("Parse error")
@@ -184,23 +187,34 @@ associate(left: Expr, nodes: Vec[InlineExprCont]) Expr:
         ret = match ret:
             Option.None: Option.Some(expr)
             Option.Some(ret_):
-                Option.Some(Expr.BinOp(BinOpExpr(left = ret_, right = expr, op)))
+                Option.Some(
+                    Expr.BinOp(
+                        BinOpExpr(
+                            idx = idxGen.next(),
+                            left = ret_,
+                            right = expr,
+                            op,
+                        ),
+                    ),
+                )
 
     ret.unwrap()
 
 
-makeLeftAssoc(
+_makeLeftAssoc(
     left: Expr,
     op: BinOp,
     right: Expr,
     nextNodeIdx: U32,
     nodes: Vec[InlineExprCont],
     prec: Option[BinOp],
+    idxGen: NodeIdxGen,
 ) (expr: Expr, newIdx: U32):
     loop:
         if nextNodeIdx == nodes.len():
             return (
-                expr = Expr.BinOp(BinOpExpr(left, right, op)),
+                expr =
+                    Expr.BinOp(BinOpExpr(idx = idxGen.next(), left, right, op)),
                 newIdx = nextNodeIdx,
             )
 
@@ -212,7 +226,16 @@ makeLeftAssoc(
                     expr =
                         Expr.Is(
                             IsExpr(
-                                expr = Expr.BinOp(BinOpExpr(left, right, op)),
+                                idx = idxGen.next(),
+                                expr =
+                                    Expr.BinOp(
+                                        BinOpExpr(
+                                            idx = idxGen.next(),
+                                            left,
+                                            right,
+                                            op,
+                                        ),
+                                    ),
                                 pat,
                             ),
                         ),
@@ -227,7 +250,12 @@ makeLeftAssoc(
         match assoc(op, nextOp):
             Assoc.Left:
                 left = Expr.BinOp(
-                    BinOpExpr(left = left, right = right, op = op,),
+                    BinOpExpr(
+                        idx = idxGen.next(),
+                        left = left,
+                        right = right,
+                        op = op,
+                    ),
                 )
                 if prec is Option.Some(prec)
                         and assoc(prec, nextOp) is Assoc.Left | Assoc.Fail:
@@ -237,13 +265,14 @@ makeLeftAssoc(
                 nextNodeIdx += 1
 
             Assoc.Right:
-                let scanResult = makeLeftAssoc(
+                let scanResult = _makeLeftAssoc(
                     right,
                     nextOp,
                     nextExpr,
                     nextNodeIdx + 1,
                     nodes,
                     Option.Some(nextOp),
+                    idxGen,
                 )
                 right = scanResult.expr
                 nextNodeIdx = scanResult.newIdx
