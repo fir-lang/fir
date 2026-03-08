@@ -1482,6 +1482,31 @@ type Attribute(
 )
 
 
+Expr.nodeIdx(self) NodeIdx:
+    match self:
+        Expr.Var(e): e.idx
+        Expr.ConSel(e): e.idx
+        Expr.FieldSel(e): e.idx
+        Expr.MethodSel(e): e.idx
+        Expr.AssocFnSel(e): e.idx
+        Expr.Call(e): e.idx
+        Expr.Int(e): e.idx
+        Expr.Str(e): e.idx
+        Expr.Char(e): e.idx
+        Expr.BinOp(e): e.idx
+        Expr.UnOp(e): e.idx
+        Expr.Return(e): e.idx
+        Expr.Match(e): e.idx
+        Expr.If(e): e.idx
+        Expr.Fn_(e): e.idx
+        Expr.Is(e): e.idx
+        Expr.Do(e): e.idx
+        Expr.Seq(e): e.idx
+        Expr.Paren(e): e.idx
+        Expr.Record(e): e.idx
+        Expr.Variant(e): e.idx
+
+
 # --------------------------------------------------------------------------------------------------
 
 
