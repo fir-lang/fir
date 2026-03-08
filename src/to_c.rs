@@ -1161,7 +1161,8 @@ fn builtin_fun_to_c(
         BuiltinFunDecl::I32Neg => wln!(p, "static I32 _fun_{idx}(I32 a) {{ return -a; }}"),
 
         BuiltinFunDecl::ThrowUnchecked => {
-            let exn_ty = c_ty(&params[0], pgm);
+            let exn_ty = c_ty(&ty_args[0], pgm);
+            let ret_ty = c_ty(&ty_args[1], pgm);
             w!(
                 p,
                 "static {} _fun_{}({} exn) {{",
@@ -1174,7 +1175,11 @@ fn builtin_fun_to_c(
             wln!(p, "{exn_ty}* boxed = malloc(sizeof({exn_ty}));");
             wln!(p, "*boxed = exn;");
             wln!(p, "throw_exn(boxed);");
-            w!(p, "__builtin_unreachable();");
+            if is_value_type(&ty_args[1], pgm) {
+                w!(p, "return ({ret_ty}){{}};");
+            } else {
+                w!(p, "return ({ret_ty})NULL;");
+            }
             p.dedent();
             p.nl();
             wln!(p, "}}");

@@ -189,20 +189,11 @@ mod native {
             let out_file_path = &out_file_path[..out_file_path.len() - 2];
             file.disable_cleanup(true);
             file.write_all(c.as_bytes()).unwrap();
-            let mut gcc_cmd = std::process::Command::new("gcc");
+            let mut gcc_cmd = std::process::Command::new("/home/omer/other/xcc/xcc");
             gcc_cmd
                 .arg(file.path().as_os_str())
                 .arg("-o")
-                .arg(out_file_path)
-                .arg("-Wall")
-                .arg("-Wextra")
-                .arg("-Wno-unused-variable")
-                .arg("-Wno-unused-function")
-                .arg("-Wno-unused-but-set-variable")
-                .arg("-Wno-unused-value")
-                .arg("-Wno-unused-parameter")
-                .arg("-Wno-unused-label")
-                .arg("-Wno-infinite-recursion");
+                .arg(out_file_path);
             // dbg!(&gcc_cmd);
             let output = gcc_cmd.output().unwrap();
             let stdout = String::from_utf8_lossy(&output.stdout);
