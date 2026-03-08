@@ -306,7 +306,6 @@ defaultVisitExpr[Visitor[v]](v: v, expr: Expr):
         Expr.Int(e): v.visitIntExpr(e)
         Expr.Str(e): v.visitStrExpr(e)
         Expr.Char(e): v.visitCharExpr(e)
-        Expr.Self(e): v.visitSelfExpr(e)
         Expr.BinOp(e): v.visitBinOpExpr(e)
         Expr.UnOp(e): v.visitUnOpExpr(e)
         Expr.Record(e): v.visitRecordExpr(e)
