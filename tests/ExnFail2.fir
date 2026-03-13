@@ -12,5 +12,4 @@ f2() a / [A]:
 
 # args: --typecheck
 # expected exit status: 101
-# expected stderr:
-# tests/ExnFail2.fir:11:5: Unable to unify variant with constructors {"B"} with variant with constructors {"A"}
+# expected stderr: tests/ExnFail2.fir:11:5: Unable to unify [B, .._2] with [A]

@@ -225,11 +225,6 @@ pub(super) fn unify(
                 unify(ty1, ty2, cons, var_gen, level, loc);
             }
 
-            let (kind_str, label_str) = match kind1 {
-                RecordOrVariant::Record => ("record", "field"),
-                RecordOrVariant::Variant => ("variant", "constructor"),
-            };
-
             if !extras1.is_empty() {
                 match &extension2 {
                     Some(Ty::UVar(var)) => {
@@ -239,16 +234,7 @@ pub(super) fn unify(
                         )));
                     }
                     _ => {
-                        panic!(
-                            "{}: Unable to unify {} with {}s {:?} with {} with {}s {:?}",
-                            loc_display(loc),
-                            kind_str,
-                            label_str,
-                            keys1,
-                            kind_str,
-                            label_str,
-                            keys2
-                        );
+                        panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
                     }
                 }
             }
@@ -262,16 +248,7 @@ pub(super) fn unify(
                         )));
                     }
                     _ => {
-                        panic!(
-                            "{}: Unable to unify {} with {}s {:?} with {} with {}s {:?}",
-                            loc_display(loc),
-                            kind_str,
-                            label_str,
-                            keys1,
-                            kind_str,
-                            label_str,
-                            keys2
-                        );
+                        panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
                     }
                 }
             }
