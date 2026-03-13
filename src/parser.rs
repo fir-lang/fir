@@ -1,4 +1,4 @@
-// auto-generated: "lalrpop 0.23.0"
+// auto-generated: "lalrpop 0.23.1"
 // sha3: a0213cbefe1378f08f728bb8d6392c965f78ac697b3f3191a793eda555e76f8d
 #![allow(clippy::all)]
 use crate::ast::*;
