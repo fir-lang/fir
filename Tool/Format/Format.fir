@@ -32,7 +32,7 @@ formatModuleStr(moduleName: Str, moduleContents: Str) Str:
     # print(tokens)
     # sanityCheckTokens(tokens)
 
-    let parserState = ParserState.new(tokens, ())
+    let parserState = ParserState.new(tokens, NodeIdxGen.new())
 
     let tree = match try(\(): module(parserState)):
         Result.Err(cursor):
