@@ -80,6 +80,11 @@ pub enum Ty {
         /// has kind `*`.
         is_row: bool,
     },
+
+    AssocTySelect {
+        ty: Box<Ty>,
+        assoc_ty: Id,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
@@ -694,6 +699,10 @@ impl Ty {
                     Kind::Star
                 }
             }
+
+            Ty::AssocTySelect { .. } => {
+                Kind::Star // TODO
+            }
         }
     }
 
@@ -751,6 +760,11 @@ impl Ty {
                 ret: Box::new(ret.subst(var, ty)),
                 exceptions: exceptions.as_ref().map(|exn| Box::new(exn.subst(var, ty))),
             },
+
+            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+                ty: Box::new(ty.subst(var, ty)),
+                assoc_ty: assoc_ty.clone(),
+            },
         }
     }
 
@@ -807,6 +821,11 @@ impl Ty {
                 exceptions: exceptions
                     .as_ref()
                     .map(|exn| Box::new(exn.subst_qvars(vars))),
+            },
+
+            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+                ty: Box::new(ty.subst_qvars(vars)),
+                assoc_ty: assoc_ty.clone(),
             },
         }
     }
@@ -884,6 +903,11 @@ impl Ty {
             },
 
             Ty::QVar(_, _) => self.clone(),
+
+            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+                ty: Box::new(ty.deep_normalize(cons)),
+                assoc_ty: assoc_ty.clone(),
+            },
         }
     }
 
@@ -894,7 +918,11 @@ impl Ty {
 
             Ty::App(con, args, _) => Some((con.clone(), args.clone())),
 
-            Ty::UVar(_) | Ty::Anonymous { .. } | Ty::QVar(_, _) | Ty::Fun { .. } => None,
+            Ty::UVar(_)
+            | Ty::Anonymous { .. }
+            | Ty::QVar(_, _)
+            | Ty::Fun { .. }
+            | Ty::AssocTySelect { .. } => None,
         }
     }
 
@@ -1136,6 +1164,10 @@ impl fmt::Display for Ty {
                     write!(f, " / {exn}")?;
                 }
                 Ok(())
+            }
+
+            Ty::AssocTySelect { ty, assoc_ty } => {
+                write!(f, "{}.{}", ty, assoc_ty)
             }
         }
     }

@@ -117,12 +117,17 @@ pub(crate) fn apply_con_ty(
             (**con_ty_ret).clone()
         }
 
-        Ty::UVar(_) | Ty::Con(_, _) | Ty::App(_, _, _) | Ty::Anonymous { .. } | Ty::QVar(_, _) => {
+        Ty::UVar(_)
+        | Ty::Con(_, _)
+        | Ty::App(_, _, _)
+        | Ty::Anonymous { .. }
+        | Ty::QVar(_, _)
+        | Ty::AssocTySelect { .. } => {
             if args.is_empty() {
                 return con_ty.clone();
             }
             panic!(
-                "{}: Type {} doesn't take arugments, but applied {} arguments",
+                "{}: Type {} doesn't take arguments, but applied {} arguments",
                 loc_display(loc),
                 con_ty,
                 args.len(),

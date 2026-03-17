@@ -675,7 +675,7 @@ fn visit_ty_con(
 
                 Ty::QVar(_, _) | Ty::Fun { .. } => {}
 
-                Ty::UVar(_) => panic!(),
+                Ty::UVar(_) | Ty::AssocTySelect { .. } => panic!(),
             }
         }
     }
