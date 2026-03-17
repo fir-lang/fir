@@ -284,21 +284,23 @@ type ImplDecl(
 
 #[derive(ToDoc)]
 type Type:
-    ## A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[T]`.
+    ## A type constructor, potentially applied some number of arguments. E.g.
+    ## `I32`, `Vec[a]`.
     Named(NamedType)
 
     ## A type variable.
     ##
-    ## We don't have higher-kinded types for now, so type variables cannot be applied.
+    ## We don't have higher-kinded types for now, so type variables cannot be
+    ## applied.
     Var(Id)
 
-    ## An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..R)`.
+    ## An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..r)`.
     Record(RecordType)
 
-    ## An anonymous variant type, e.g. `[Error(msg: Str), Ok, ..R]`.
+    ## An anonymous variant type, e.g. `[Str, Option[U32], ..r]`.
     Variant(VariantType)
 
-    ## A function type: `Fn(I32): Bool`.
+    ## A function type: `Fn(I32) Bool / exn`.
     Fn_(FnType)
 
 
