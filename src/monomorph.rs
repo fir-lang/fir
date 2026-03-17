@@ -1800,6 +1800,8 @@ fn mono_ast_ty(
                     .unwrap_or_else(mono::Type::empty),
             ),
         }),
+
+        ast::Type::AssocTySelect { ty, assoc_ty } => todo!("AssocTySelect monomorph"),
     }
 }
 

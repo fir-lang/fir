@@ -228,6 +228,10 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
                 collect_tvs(&exn.node, &exn.loc, tvs);
             }
         }
+
+        ast::Type::AssocTySelect { ty, assoc_ty: _ } => {
+            collect_tvs(&ty.node, &ty.loc, tvs);
+        }
     }
 }
 

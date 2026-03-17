@@ -208,6 +208,9 @@ pub enum Type {
 
     /// A function type: `Fn(I32) Bool / exn`.
     Fn(FnType),
+
+    /// An associated type selection: `Iterator[iter, exn].Item`.
+    AssocTySelect { ty: L<Box<Type>>, assoc_ty: Id },
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
@@ -997,6 +1000,11 @@ impl Type {
                     .as_ref()
                     .map(|exn| exn.map_as_ref(|exn| Box::new(exn.subst_ids(substs)))),
             }),
+
+            Type::AssocTySelect { ty, assoc_ty } => Type::AssocTySelect {
+                ty: ty.map_as_ref(|ty| Box::new(ty.subst_ids(substs))),
+                assoc_ty: assoc_ty.clone(),
+            },
         }
     }
 

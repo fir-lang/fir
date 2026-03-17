@@ -287,6 +287,12 @@ impl Type {
                     exn.node.print(buf);
                 }
             }
+
+            Type::AssocTySelect { ty, assoc_ty } => {
+                ty.node.print(buf);
+                buf.push('.');
+                buf.push_str(assoc_ty.as_str());
+            }
         }
     }
 }

@@ -102,6 +102,10 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 exceptions: Some(exceptions),
             }
         }
+
+        ast::Type::AssocTySelect { ty, assoc_ty } => {
+            todo!("AssocTySelect to Ty")
+        }
     }
 }
 
