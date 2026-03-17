@@ -722,10 +722,10 @@ fn collect_schemes(
                     .zip(trait_decl.node.type_param_kinds.iter().cloned())
                     .collect();
 
-                let trait_pred = ast::L {
+                let trait_pred: ast::L<ast::Pred> = ast::L {
                     loc: trait_decl.loc.clone(),
-                    node: ast::Type::Named(ast::NamedType {
-                        name: trait_decl.node.name.node.clone(),
+                    node: ast::Pred::App(ast::TypeApp {
+                        trait_: trait_decl.node.name.node.clone(),
                         args: trait_decl
                             .node
                             .type_params
@@ -743,7 +743,7 @@ fn collect_schemes(
                     let mut fun_type_params = trait_quantified_vars.clone();
                     fun_type_params.extend(fun.node.sig.context.type_params.clone());
 
-                    let mut fun_preds = vec![trait_pred.clone()];
+                    let mut fun_preds: Vec<ast::L<ast::Pred>> = vec![trait_pred.clone()];
                     fun_preds.extend(fun.node.sig.context.preds.clone());
 
                     let context = ast::Context {

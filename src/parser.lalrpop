@@ -1115,7 +1115,25 @@ ImplDecl: L<ImplDecl> = {
 Context: Context = {
     => Context { type_params: vec![], preds: vec![] },
 
-    "[" <tys:Sep<LType, ",">> "]" => Context { type_params: vec![], preds: tys },
+    "[" <preds:Sep<LPred, ",">> "]" => Context { type_params: vec![], preds },
+}
+
+LPred: L<Pred> = {
+    <l:@L> <pred:Pred> <r:@R> =>
+        L::new(module, l, r, pred),
+}
+
+Pred: Pred = {
+    <ty:TypeApp> =>
+        Pred::App(ty),
+
+    <ty:TypeApp> "." <assoc_ty:UpperId> "=" <eq:LType> =>
+        Pred::AssocTyEq { ty, assoc_ty: assoc_ty.smol_str(), eq },
+}
+
+TypeApp: TypeApp = {
+    <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
+        TypeApp { trait_: name.smol_str(), args },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -186,23 +186,24 @@ pub(super) fn convert_and_bind_context(
 
     // Convert preds.
     for ty in &context_ast.preds {
-        let pred = match convert_ast_ty(tys, &ty.node, &ty.loc) {
-            Ty::App(con, args, _kind) => {
-                // TODO: Check that `con` is a trait, arity and kinds match.
-                Pred {
-                    trait_: con,
-                    params: args,
-                    loc: ty.loc.clone(),
-                }
-            }
-            _ => panic!(
-                "{}: Strange predicate syntax: {:?}",
-                loc_display(&ty.loc),
-                ty
-            ),
-        };
+        let pred = convert_pred(tys, &ty.node, &ty.loc);
         preds_converted.push(pred);
     }
 
     preds_converted
+}
+
+fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
+    match pred_ast {
+        ast::Pred::App(ast::TypeApp { trait_, args }) => Pred {
+            trait_: trait_.clone(),
+            params: args
+                .iter()
+                .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+                .collect(),
+            loc: loc.clone(),
+        },
+
+        ast::Pred::AssocTyEq { ty, assoc_ty, eq } => todo!(),
+    }
 }

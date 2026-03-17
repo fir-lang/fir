@@ -825,7 +825,26 @@ pub struct Context {
     pub type_params: Vec<(Id, Kind)>,
 
     /// Predicates: `Iterator[iter, item]` and `Debug[item]` in the example.
-    pub preds: Vec<L<Type>>,
+    pub preds: Vec<L<Pred>>,
+}
+
+/// A predicate in a context. E.g. in context `[Iterator[coll, item], Debug[item]]`, we have two
+/// predicates: `ToStr[t]` (`Pred::App`), `Iterator[iter, exn].Item = U32` (`Pred::AssocTyEq`).
+#[derive(Debug, Clone)]
+pub enum Pred {
+    App(TypeApp),
+    AssocTyEq {
+        ty: TypeApp,
+        assoc_ty: Id,
+        eq: L<Type>,
+    },
+}
+
+/// A type application, used in predicates. E.g. `Iterator[coll, item]`.
+#[derive(Debug, Clone)]
+pub struct TypeApp {
+    pub trait_: Id,
+    pub args: Vec<L<Type>>,
 }
 
 /// An `impl` block, implementing a trait for a type.

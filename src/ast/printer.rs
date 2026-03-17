@@ -313,6 +313,37 @@ impl NamedType {
     }
 }
 
+impl Pred {
+    pub fn print(&self, buf: &mut String) {
+        match self {
+            Pred::App(type_app) => type_app.print(buf),
+            Pred::AssocTyEq { ty, assoc_ty, eq } => {
+                ty.print(buf);
+                buf.push('.');
+                buf.push_str(assoc_ty);
+                buf.push_str(" = ");
+                eq.node.print(buf);
+            }
+        }
+    }
+}
+
+impl TypeApp {
+    pub fn print(&self, buf: &mut String) {
+        buf.push_str(&self.trait_);
+        if !self.args.is_empty() {
+            buf.push('[');
+            for (i, arg) in self.args.iter().enumerate() {
+                if i != 0 {
+                    buf.push_str(", ");
+                }
+                arg.node.print(buf);
+            }
+            buf.push(']');
+        }
+    }
+}
+
 impl FunSig {
     pub fn print(&self, parent_ty: &Option<L<Id>>, name: &Id, buf: &mut String) {
         if let Some(parent_ty) = parent_ty {
