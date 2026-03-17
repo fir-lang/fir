@@ -170,7 +170,15 @@ impl TraitDecl {
 
 impl TraitDeclItem {
     pub fn print(&self, buf: &mut String, indent: u32) {
-        todo!()
+        match self {
+            TraitDeclItem::Type(ty) => {
+                buf.push_str("type ");
+                buf.push_str(ty.node.as_str());
+            }
+            TraitDeclItem::Fun(fun) => {
+                fun.node.print(buf, indent + 4);
+            }
+        }
     }
 }
 
@@ -201,7 +209,17 @@ impl ImplDecl {
 
 impl ImplDeclItem {
     pub fn print(&self, buf: &mut String, indent: u32) {
-        todo!()
+        match self {
+            ImplDeclItem::Type { assoc_ty, rhs } => {
+                buf.push_str("type ");
+                buf.push_str(assoc_ty.node.as_str());
+                buf.push_str(" = ");
+                rhs.node.print(buf);
+            }
+            ImplDeclItem::Fun(fun) => {
+                fun.node.print(buf, indent);
+            }
+        }
     }
 }
 
