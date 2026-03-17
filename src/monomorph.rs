@@ -141,7 +141,10 @@ fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
                             .node
                             .items
                             .iter()
-                            .map(|item| item.node.clone())
+                            .filter_map(|item| match item {
+                                ast::ImplDeclItem::Type { .. } => None,
+                                ast::ImplDeclItem::Fun(fun) => Some(fun.node.clone()),
+                            })
                             .collect(),
                     });
             }

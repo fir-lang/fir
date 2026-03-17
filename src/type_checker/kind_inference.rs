@@ -84,11 +84,20 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
 
     let impl_context_vars: OrderSet<Id> = impl_context_var_kinds.keys().cloned().collect();
 
-    for fun in &mut decl.items {
-        add_missing_type_params_fun(&mut fun.node.sig, &mut impl_context_var_kinds, &fun.loc);
+    for item in &mut decl.items {
+        match item {
+            ast::ImplDeclItem::Type { .. } => todo!(),
+            ast::ImplDeclItem::Fun(fun) => {
+                add_missing_type_params_fun(
+                    &mut fun.node.sig,
+                    &mut impl_context_var_kinds,
+                    &fun.loc,
+                );
 
-        // Drop function variables added to the map.
-        impl_context_var_kinds.retain(|id, _| impl_context_vars.contains(id));
+                // Drop function variables added to the map.
+                impl_context_var_kinds.retain(|id, _| impl_context_vars.contains(id));
+            }
+        }
     }
 
     decl.context.type_params = impl_context_vars

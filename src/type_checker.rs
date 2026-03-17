@@ -151,10 +151,15 @@ fn add_exception_types(module: &mut ast::Module, main: &str) {
             }
 
             ast::TopDecl::Impl(ast::L { node, .. }) => {
-                for fun in &mut node.items {
-                    if fun.node.sig.exceptions.is_none() {
-                        fun.node.sig.exceptions =
-                            Some(exn_type(fun.loc.module.clone(), fun.loc.line_start));
+                for item in &mut node.items {
+                    match item {
+                        ast::ImplDeclItem::Type { .. } => todo!(),
+                        ast::ImplDeclItem::Fun(fun) => {
+                            if fun.node.sig.exceptions.is_none() {
+                                fun.node.sig.exceptions =
+                                    Some(exn_type(fun.loc.module.clone(), fun.loc.line_start));
+                            }
+                        }
                     }
                 }
             }
@@ -530,11 +535,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 continue;
             }
 
-            if impl_decl
-                .items
-                .iter()
-                .any(|item| &item.node.name.node == trait_method_id)
-            {
+            if impl_decl.items.iter().any(|item| match item {
+                ast::ImplDeclItem::Type { assoc_ty, rhs } => false,
+                ast::ImplDeclItem::Fun(fun) => &fun.node.name.node == trait_method_id,
+            }) {
                 continue;
             }
 
@@ -579,7 +583,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
             impl_fun_decl.loc = decl.loc.clone();
 
-            impl_decl.items.push(impl_fun_decl);
+            impl_decl.items.push(ast::ImplDeclItem::Fun(impl_fun_decl));
         }
 
         tys.exit_scope();
@@ -1086,7 +1090,12 @@ fn collect_schemes(
                 let _impl_assumps =
                     convert_and_bind_context(tys, &impl_decl.node.context, TyVarConversion::ToQVar);
 
-                for fun in &impl_decl.node.items {
+                for item in &impl_decl.node.items {
+                    let fun = match item {
+                        ast::ImplDeclItem::Type { .. } => continue,
+                        ast::ImplDeclItem::Fun(fun) => fun,
+                    };
+
                     let sig = &fun.node.sig;
 
                     let fun_assumps =
@@ -1349,7 +1358,12 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
         .clone();
 
     // Check method bodies.
-    for fun in &mut impl_.node.items {
+    for item in &mut impl_.node.items {
+        let fun = match item {
+            ast::ImplDeclItem::Type { .. } => continue,
+            ast::ImplDeclItem::Fun(fun) => fun,
+        };
+
         tys.tys.enter_scope();
 
         // Bind function type parameters.
@@ -1433,7 +1447,11 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     // Check that all methods without default implementations are implemented.
     let trait_method_ids: HashSet<&Id> = trait_details.methods.keys().collect();
     let mut implemented_method_ids: HashSet<&Id> = Default::default();
-    for fun in &impl_.node.items {
+    for item in &impl_.node.items {
+        let fun = match item {
+            ast::ImplDeclItem::Type { .. } => todo!(),
+            ast::ImplDeclItem::Fun(fun) => fun,
+        };
         let fun_id = &fun.node.name.node;
         match (
             trait_method_ids.contains(fun_id),

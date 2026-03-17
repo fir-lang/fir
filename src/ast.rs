@@ -881,7 +881,13 @@ pub struct ImplDecl {
     pub tys: Vec<L<Type>>,
 
     /// Method implementations.
-    pub items: Vec<L<FunDecl>>,
+    pub items: Vec<ImplDeclItem>,
+}
+
+#[derive(Debug, Clone)]
+pub enum ImplDeclItem {
+    Type { assoc_ty: L<Id>, rhs: L<Type> },
+    Fun(L<FunDecl>),
 }
 
 /// An attribute: `#[derive(Foo, Bar)]`, `#[F(x = 1, y = "hi")]`.

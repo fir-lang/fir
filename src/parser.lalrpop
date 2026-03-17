@@ -1086,7 +1086,7 @@ TraitDecl: L<TraitDecl> = {
 }
 
 TraitDeclItem: TraitDeclItem = {
-    "type" <id:LUpperId> => {
+    "type" <id:LUpperId> NEWLINE => {
         TraitDeclItem::Type(id)
     },
 
@@ -1103,7 +1103,7 @@ TraitDeclItem: TraitDeclItem = {
 
 ImplDecl: L<ImplDecl> = {
     <l:@L> "impl" <context:Context> <trait_:LUpperIdLBracket> <tys:Sep<LType, ",">> "]" ":"
-            NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> => {
+            NEWLINE INDENT <items:ImplDeclItem+> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,
             trait_,
@@ -1121,6 +1121,22 @@ ImplDecl: L<ImplDecl> = {
         })
     },
 }
+
+ImplDeclItem: ImplDeclItem = {
+    "type" <assoc_ty:LUpperId> "=" <rhs:LType> NEWLINE => {
+        ImplDeclItem::Type { assoc_ty, rhs }
+    },
+
+    <fun:FunDecl> => {
+        ImplDeclItem::Fun(fun)
+    },
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Contexts
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Context: Context = {
     => Context { type_params: vec![], preds: vec![] },
