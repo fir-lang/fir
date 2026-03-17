@@ -812,8 +812,15 @@ pub struct TraitDecl {
     /// Kinds of `type_params`. Filled in by kind inference.
     pub type_param_kinds: Vec<Kind>,
 
-    /// Methods of the trait.
-    pub items: Vec<L<FunDecl>>,
+    /// Method and associated types of the trait.
+    pub items: Vec<TraitDeclItem>,
+}
+
+#[derive(Debug, Clone)]
+pub enum TraitDeclItem {
+    /// `type Foo` in a `trait` declaration. Declares an associated type.
+    Type(L<Id>),
+    Fun(L<FunDecl>),
 }
 
 /// Type parameter and predicates of an `impl` or function.

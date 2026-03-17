@@ -115,11 +115,20 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
         trait_context_vars.insert(param.node.clone());
     }
 
-    for fun in &mut decl.items {
-        add_missing_type_params_fun(&mut fun.node.sig, &mut trait_context_var_kinds, &fun.loc);
+    for item in &mut decl.items {
+        match item {
+            ast::TraitDeclItem::Type(_) => todo!(),
+            ast::TraitDeclItem::Fun(fun) => {
+                add_missing_type_params_fun(
+                    &mut fun.node.sig,
+                    &mut trait_context_var_kinds,
+                    &fun.loc,
+                );
 
-        // Drop function variables added to the map.
-        trait_context_var_kinds.retain(|id, _| trait_context_vars.contains(id));
+                // Drop function variables added to the map.
+                trait_context_var_kinds.retain(|id, _| trait_context_vars.contains(id));
+            }
+        }
     }
 
     decl.type_param_kinds = decl

@@ -137,10 +137,15 @@ fn add_exception_types(module: &mut ast::Module, main: &str) {
             }
 
             ast::TopDecl::Trait(ast::L { node, .. }) => {
-                for fun in &mut node.items {
-                    if fun.node.sig.exceptions.is_none() {
-                        fun.node.sig.exceptions =
-                            Some(exn_type(fun.loc.module.clone(), fun.loc.line_start));
+                for item in &mut node.items {
+                    match item {
+                        ast::TraitDeclItem::Type(_) => {}
+                        ast::TraitDeclItem::Fun(fun) => {
+                            if fun.node.sig.exceptions.is_none() {
+                                fun.node.sig.exceptions =
+                                    Some(exn_type(fun.loc.module.clone(), fun.loc.line_start));
+                            }
+                        }
                     }
                 }
             }
@@ -376,7 +381,12 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     Default::default(),
                 );
 
-                for fun in &trait_decl.node.items {
+                for item in &trait_decl.node.items {
+                    let fun = match item {
+                        ast::TraitDeclItem::Type(_) => continue,
+                        ast::TraitDeclItem::Fun(fun) => fun,
+                    };
+
                     // New scope for function context.
                     tys.enter_scope();
 
@@ -735,7 +745,12 @@ fn collect_schemes(
                     }),
                 };
 
-                for fun in &trait_decl.node.items {
+                for item in &trait_decl.node.items {
+                    let fun = match item {
+                        ast::TraitDeclItem::Type(_) => continue,
+                        ast::TraitDeclItem::Fun(fun) => fun,
+                    };
+
                     // Add trait type parameters and predicate to the function context before
                     // converting.
                     // Note: This needs to be a `Vec` instead of `Map`. See the comments around

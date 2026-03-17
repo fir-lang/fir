@@ -1067,7 +1067,7 @@ ImportPath: Vec<Id> = {
 
 TraitDecl: L<TraitDecl> = {
     <l:@L> "trait" <name:LUpperIdLBracket> <type_params:Sep<LLowerId, ",">> "]" ":"
-            NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> =>
+            NEWLINE INDENT <items:TraitDeclItem+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
             type_params,
@@ -1083,6 +1083,16 @@ TraitDecl: L<TraitDecl> = {
             items: vec![],
         }),
 
+}
+
+TraitDeclItem: TraitDeclItem = {
+    "type" <id:LUpperId> => {
+        TraitDeclItem::Type(id)
+    },
+
+    <fun:FunDecl> => {
+        TraitDeclItem::Fun(fun)
+    },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

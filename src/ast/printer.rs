@@ -163,8 +163,14 @@ impl TraitDecl {
                 buf.push('\n');
             }
             buf.push_str(&INDENTS[..indent as usize + 4]);
-            item.node.print(buf, indent + 4);
+            item.print(buf, indent + 4);
         }
+    }
+}
+
+impl TraitDeclItem {
+    pub fn print(&self, buf: &mut String, indent: u32) {
+        todo!()
     }
 }
 
