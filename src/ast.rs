@@ -870,7 +870,7 @@ impl Type {
         self.subst_ids(&[(var.clone(), ty.clone())].into_iter().collect())
     }
 
-    pub fn subst_ids(&self, substs: &HashMap<Id, Type>) -> Type {
+    fn subst_ids(&self, substs: &HashMap<Id, Type>) -> Type {
         match self {
             Type::Named(NamedType { name, args }) => Type::Named(NamedType {
                 name: match substs.get(name) {
