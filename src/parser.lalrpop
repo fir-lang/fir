@@ -270,6 +270,13 @@ Type: Type = {
 
     "row[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
+
+    <ty:LType> "." <assoc_ty:UpperId> => {
+        Type::AssocTySelect {
+            ty: ty.map(Box::new),
+            assoc_ty: assoc_ty.smol_str(),
+        }
+    },
 }
 
 TypeNoFn: Type = {
