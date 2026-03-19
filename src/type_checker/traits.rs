@@ -168,14 +168,15 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
 }
 
 impl TraitImpl {
-    /// Try to match the trait arguments. If successful, return new goals.
+    /// Try to match the trait arguments. If successful, return new goals and associated types of
+    /// the matching implementation.
     pub fn try_match(
         &self,
         args: &[Ty],
         var_gen: &mut UVarGen,
         tys: &TyMap,
         loc: &ast::Loc,
-    ) -> Option<Vec<Pred>> {
+    ) -> Option<(Vec<Pred>, HashMap<Id, Ty>)> {
         if args.len() != self.trait_args.len() {
             panic!(
                 "{}: BUG: Number of arguments applied to the trait don't match the arity",
@@ -200,7 +201,13 @@ impl TraitImpl {
             }
         }
 
-        Some(
+        let assoc_tys: HashMap<Id, Ty> = self
+            .assoc_tys
+            .iter()
+            .map(|(assoc_ty, rhs)| (assoc_ty.clone(), rhs.subst_qvars(&var_map)))
+            .collect();
+
+        Some((
             self.preds
                 .iter()
                 .map(
@@ -219,6 +226,7 @@ impl TraitImpl {
                     },
                 )
                 .collect(),
-        )
+            assoc_tys,
+        ))
     }
 }

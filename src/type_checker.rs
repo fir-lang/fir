@@ -1545,6 +1545,7 @@ fn resolve_preds(
                 .for_each(|ty| *ty = ty.deep_normalize(tys.tys.cons()));
 
             if pred.trait_ == "RecRow" {
+                assert!(pred.assoc_ty.is_none());
                 match &pred.params[0] {
                     Ty::Anonymous { kind, is_row, .. } => {
                         if *is_row && *kind == RecordOrVariant::Record {
@@ -1561,6 +1562,7 @@ fn resolve_preds(
             }
 
             if pred.trait_ == "VarRow" {
+                assert!(pred.assoc_ty.is_none());
                 match &pred.params[0] {
                     Ty::Anonymous { kind, is_row, .. } => {
                         if *is_row && *kind == RecordOrVariant::Variant {
@@ -1578,7 +1580,10 @@ fn resolve_preds(
 
             for assump in assumps {
                 // We can't use set lookup as locs will be different.
-                if assump.trait_ == pred.trait_ && assump.params == pred.params {
+                if assump.trait_ == pred.trait_
+                    && assump.params == pred.params
+                    && assump.assoc_ty == pred.assoc_ty
+                {
                     // No need to flip `progress` as we haven't done any unification.
                     continue 'goals;
                 }
@@ -1599,8 +1604,37 @@ fn resolve_preds(
             };
 
             for impl_ in trait_impls {
-                if let Some(subgoals) = impl_.try_match(&pred.params, var_gen, &tys.tys, &pred.loc)
+                if let Some((subgoals, assoc_tys)) =
+                    impl_.try_match(&pred.params, var_gen, &tys.tys, &pred.loc)
                 {
+                    if let Some((goal_assoc_ty, goal_assoc_ty_rhs)) = &pred.assoc_ty {
+                        let matching_assoc_ty_rhs = assoc_tys.get(goal_assoc_ty).unwrap();
+                        // Associated types don't influence implementation search, if we found an
+                        // implementation its associated types should unify with the expected types
+                        // or the search fails.
+                        // Note: one way unification here otherwise I think associated type matching
+                        // can influence trait resolving? We can keep this one-way until we find a
+                        // case where two-way does the right thing.
+                        if !unification::try_unify_one_way(
+                            matching_assoc_ty_rhs,
+                            goal_assoc_ty_rhs,
+                            tys.tys.cons(),
+                            var_gen,
+                            0,
+                            &pred.loc,
+                        ) {
+                            panic!(
+                                "{}: Unable to resolve pred {}",
+                                loc_display(&pred.loc.clone()),
+                                Pred {
+                                    trait_: pred.trait_,
+                                    params: pred.params,
+                                    assoc_ty: pred.assoc_ty,
+                                    loc: pred.loc
+                                },
+                            )
+                        }
+                    }
                     next_goals.extend(subgoals);
                     progress = true;
                     continue 'goals;
