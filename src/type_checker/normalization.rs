@@ -240,10 +240,16 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
         ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) => {}
 
         ast::Pat::Con(ast::ConPat {
-            con: ast::Con { ty_args, .. },
+            con:
+                ast::Con {
+                    ty_args,
+                    inferred_ty,
+                    ..
+                },
             fields,
             ignore_rest: _,
         }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
             for field in fields {
                 normalize_pat(&mut field.node.node, cons);
             }
