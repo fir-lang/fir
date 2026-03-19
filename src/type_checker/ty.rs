@@ -323,14 +323,22 @@ impl Scheme {
         }
 
         // Generate predicates.
-        for pred in &self.preds {
+        for Pred {
+            trait_,
+            params,
+            assoc_ty,
+            loc: _,
+        } in &self.preds
+        {
             let pred = Pred {
-                trait_: pred.trait_.clone(),
-                params: pred
-                    .params
+                trait_: trait_.clone(),
+                params: params
                     .iter()
                     .map(|param| param.subst_qvars(&var_map))
                     .collect(),
+                assoc_ty: assoc_ty
+                    .as_ref()
+                    .map(|(id, ty)| (id.clone(), ty.subst_qvars(&var_map))),
                 loc: loc.clone(),
             };
             preds.push(pred);
@@ -356,11 +364,22 @@ impl Scheme {
             preds: self
                 .preds
                 .iter()
-                .map(|pred| Pred {
-                    trait_: pred.trait_.clone(),
-                    params: pred.params.iter().map(|ty| ty.subst(var, ty)).collect(),
-                    loc: pred.loc.clone(),
-                })
+                .map(
+                    |Pred {
+                         trait_,
+                         params,
+                         assoc_ty,
+                         loc,
+                     }| Pred {
+                        trait_: trait_.clone(),
+                        // TODO: is this a bug? ty[var -> ty]
+                        params: params.iter().map(|ty| ty.subst(var, ty)).collect(),
+                        assoc_ty: assoc_ty
+                            .as_ref()
+                            .map(|(id, ty)| (id.clone(), ty.subst(var, ty))),
+                        loc: loc.clone(),
+                    },
+                )
                 .collect(),
             ty: self.ty.subst(var, ty),
             loc: self.loc.clone(),
@@ -456,15 +475,21 @@ impl Scheme {
             preds: self
                 .preds
                 .iter()
-                .map(|pred| Pred {
-                    trait_: pred.trait_.clone(),
-                    params: pred
-                        .params
-                        .iter()
-                        .map(|ty| ty.subst_qvars(&subst_map))
-                        .collect(),
-                    loc: pred.loc.clone(),
-                })
+                .map(
+                    |Pred {
+                         trait_,
+                         params,
+                         assoc_ty,
+                         loc,
+                     }| Pred {
+                        trait_: trait_.clone(),
+                        params: params.iter().map(|ty| ty.subst_qvars(&subst_map)).collect(),
+                        assoc_ty: assoc_ty
+                            .as_ref()
+                            .map(|(id, ty)| (id.clone(), ty.subst_qvars(&subst_map))),
+                        loc: loc.clone(),
+                    },
+                )
                 .collect(),
             ty: self.ty.subst_qvars(&subst_map),
             loc: self.loc.clone(),

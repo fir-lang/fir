@@ -93,7 +93,7 @@ pub struct TraitImpl {
     /// Note: these types should be instantiated together with `trait_args` so that the same `QVar`
     /// in arguments and preds will be the same instantiated type variable, and as we match args
     /// the preds will be updated.
-    pub preds: Vec<(Id, Vec<Ty>)>,
+    pub preds: Vec<Pred>,
 
     /// Associated type equalities of the implementation.
     ///
@@ -143,17 +143,7 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
                 .iter()
                 .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
                 .collect(),
-            preds: preds
-                .into_iter()
-                .map(
-                    |Pred {
-                         trait_,
-                         params,
-                         assoc_ty,
-                         loc: _,
-                     }| (trait_, params),
-                )
-                .collect(),
+            preds,
             // TODO: Check that an assoc type is not defined multiple times.
             assoc_tys: impl_
                 .node
@@ -213,11 +203,21 @@ impl TraitImpl {
         Some(
             self.preds
                 .iter()
-                .map(|(trait_, args)| Pred {
-                    trait_: trait_.clone(),
-                    params: args.iter().map(|arg| arg.subst_qvars(&var_map)).collect(),
-                    loc: loc.clone(),
-                })
+                .map(
+                    |Pred {
+                         trait_,
+                         params,
+                         assoc_ty,
+                         loc: _,
+                     }| Pred {
+                        trait_: trait_.clone(),
+                        params: params.iter().map(|arg| arg.subst_qvars(&var_map)).collect(),
+                        assoc_ty: assoc_ty
+                            .as_ref()
+                            .map(|(id, ty)| (id.clone(), ty.subst_qvars(&var_map))),
+                        loc: loc.clone(),
+                    },
+                )
                 .collect(),
         )
     }

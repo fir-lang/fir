@@ -1565,6 +1565,7 @@ fn resolve_preds(
                     Pred {
                         trait_: pred.trait_,
                         params: pred.params,
+                        assoc_ty: pred.assoc_ty,
                         loc: pred.loc
                     },
                 ),
