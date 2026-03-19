@@ -680,6 +680,19 @@ fn ty_eq_modulo_alpha(
             ty_eq_modulo_alpha(cons, ret1, ret2, ty1_qvars, ty2_qvars, loc)
         }
 
+        (
+            Ty::AssocTySelect {
+                ty: ty1,
+                assoc_ty: assoc_ty1,
+            },
+            Ty::AssocTySelect {
+                ty: ty2,
+                assoc_ty: assoc_ty2,
+            },
+        ) => {
+            assoc_ty1 == assoc_ty2 && ty_eq_modulo_alpha(cons, ty1, ty2, ty1_qvars, ty2_qvars, loc)
+        }
+
         _ => false,
     }
 }
@@ -800,8 +813,11 @@ impl Ty {
                 exceptions: exceptions.as_ref().map(|exn| Box::new(exn.subst(var, ty))),
             },
 
-            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
-                ty: Box::new(ty.subst(var, ty)),
+            Ty::AssocTySelect {
+                ty: inner_ty,
+                assoc_ty,
+            } => Ty::AssocTySelect {
+                ty: Box::new(inner_ty.subst(var, ty)),
                 assoc_ty: assoc_ty.clone(),
             },
         }
