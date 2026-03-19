@@ -122,7 +122,7 @@ pub(crate) fn apply_con_ty(
                 return con_ty.clone();
             }
             panic!(
-                "{}: Type {} doesn't take arugments, but applied {} arguments",
+                "{}: Type {} doesn't take arguments, but applied {} arguments",
                 loc_display(loc),
                 con_ty,
                 args.len(),

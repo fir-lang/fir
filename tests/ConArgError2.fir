@@ -13,4 +13,4 @@ main():
 # args: --typecheck --no-prelude
 # expected exit status: 101
 # expected stderr:
-# tests/ConArgError2.fir:10:9: Type Option[_1] doesn't take arugments, but applied 1 arguments
+# tests/ConArgError2.fir:10:9: Type Option[_1] doesn't take arguments, but applied 1 arguments
