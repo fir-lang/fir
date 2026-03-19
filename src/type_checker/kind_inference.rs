@@ -86,7 +86,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
 
     for item in &mut decl.items {
         match item {
-            ast::ImplDeclItem::Type { .. } => todo!(),
+            ast::ImplDeclItem::Type { .. } => {}
             ast::ImplDeclItem::Fun(fun) => {
                 add_missing_type_params_fun(
                     &mut fun.node.sig,
@@ -126,7 +126,7 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
 
     for item in &mut decl.items {
         match item {
-            ast::TraitDeclItem::Type(_) => todo!(),
+            ast::TraitDeclItem::Type(_) => {}
             ast::TraitDeclItem::Fun(fun) => {
                 add_missing_type_params_fun(
                     &mut fun.node.sig,
