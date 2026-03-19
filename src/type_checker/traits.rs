@@ -67,28 +67,48 @@ use crate::utils::loc_display;
 /// Maps trait ids to implementations.
 pub type TraitEnv = HashMap<Id, Vec<TraitImpl>>;
 
+/// Example:
+/// ```
+/// impl[Iterator[iter, exn], Iterator[iter, exn].Item = a] Iterator[Map[iter, a, b, exn], exn]:
+///     type Item = b
+///     next(self: Map[iter, a, b, exn]) Option[b] / exn
+/// ```
 #[derive(Debug)]
 pub struct TraitImpl {
-    // Example: `impl[Iterator[iter, a]] Iterator[Map[iter, a, b], b]: ...`
-
-    // Free variables in the `impl`.
-    //
-    // In the example: `iter`, `a`, `b`.
+    /// Free variables of the `impl`.
+    ///
+    /// In the example: `iter`, `exn`, `a`, `b`.
     pub qvars: Vec<(Id, Kind)>,
 
-    // Arguments of the trait.
-    //
-    // In the example: `[Map[iter, a, b], b]`, where `iter`, `a` and `b` are `QVar`s in `qvars`.
+    /// Arguments of the trait.
+    ///
+    /// In the example: `[Map[iter, a, b, exn], exn]`, where `iter`, `a`, `b`, `exn` are `QVar`s in
+    /// `qvars`.
     pub trait_args: Vec<Ty>,
 
-    // Predicates of the implementation.
-    //
-    // In the example: `[(Iterator, [iter, a])]`, where `iter` and `a` are `QVar`s in `qvars`.
-    //
-    // Note: these types should be instantiated together with `trait_args` so that the same `QVar`
-    // in arguments and preds will be the same instantiated type variable, and as we match args
-    // the preds will be updated.
+    /// Predicates of the implementation.
+    ///
+    /// In the example: `[(Iterator, [iter, exn])]`, where `iter` and `exn` are `QVar`s in `qvars`.
+    ///
+    /// Note: these types should be instantiated together with `trait_args` so that the same `QVar`
+    /// in arguments and preds will be the same instantiated type variable, and as we match args
+    /// the preds will be updated.
     pub preds: Vec<(Id, Vec<Ty>)>,
+
+    // Associated type equalities of the implementation.
+    //
+    // In the example: `Iterator[iter, exn].Item = a`, where `iter`, `exn`, and `a` are `QVar`s in
+    // `qvars`.
+    //
+    // Similar to `preds`, these types should be instantiated together with `trait_args`.
+    // pub eqs:
+
+    // Do we need associated types of the implementation? E.g. `type Item = b` in the examples.
+    //
+    // We'll always refer to those types with fully qualified syntax: `Iterator[...].Item` with the
+    // same args as the current impl if we want to refer to the types in the current impl. So I'm
+    // not sure if we need to keep track of types in the current impl here.
+    // pub assoc_tys: HashMap<Id, Ty>,
 }
 
 pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {

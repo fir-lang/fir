@@ -1659,7 +1659,7 @@ fn mono_tc_ty(
             kind,
             is_row: _,
         } => match kind {
-            crate::type_checker::RecordOrVariant::Record => {
+            RecordOrVariant::Record => {
                 let mut all_fields: OrdMap<Id, mono::Type> = Default::default();
 
                 for (field, field_ty) in labels {
@@ -1691,7 +1691,7 @@ fn mono_tc_ty(
                 mono::Type::Record { fields: all_fields }
             }
 
-            crate::type_checker::RecordOrVariant::Variant => {
+            RecordOrVariant::Variant => {
                 let mut all_alts: OrdMap<Id, mono::NamedType> = Default::default();
 
                 for (id, ty) in labels.iter() {
@@ -1732,6 +1732,12 @@ fn mono_tc_ty(
                 mono::Type::Variant { alts: all_alts }
             }
         },
+
+        Ty::AssocTySelect { ty, assoc_ty } => {
+            let mono_ty = mono_tc_ty(&ty, ty_map, poly_pgm, mono_pgm);
+            // TODO: `MonoPgm` should have a map from mono types to associated types.
+            todo!()
+        }
     }
 }
 
@@ -1802,7 +1808,13 @@ fn mono_ast_ty(
             ),
         }),
 
-        ast::Type::AssocTySelect { ty, assoc_ty } => todo!("AssocTySelect monomorph"),
+        ast::Type::AssocTySelect { ty: _, assoc_ty: _ } => {
+            // This can happen when converting function signatures (parameters, return and exn
+            // types). We probably want to give type-checking types to all AST types during type
+            // checking and always deal with type-checking types here, to avoid duplicating
+            // complicated associated type selection logic (or trying to make it reusable).
+            todo!("ast::Type::AssocTySelect monomorph")
+        }
     }
 }
 
