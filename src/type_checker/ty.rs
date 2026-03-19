@@ -214,9 +214,6 @@ impl TyConDetails {
 pub(super) struct TraitDetails {
     /// Methods of the trait, with optional default implementations.
     pub(super) methods: HashMap<Id, TraitMethod>,
-
-    /// Associated types of the trait.
-    pub(super) assoc_tys: HashSet<Id>,
 }
 
 #[derive(Debug, Clone)]
@@ -246,22 +243,22 @@ pub(super) struct TypeDetails {
 
 /// A predicate, e.g. `Iterator[iter, exn]`, `Iterator[iter, exn].Item = U32`.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub(super) struct Pred {
+pub struct Pred {
     /// Trait of the predicate.
     ///
     /// `Iterator` in the example.
-    pub(super) trait_: Id,
+    pub trait_: Id,
 
     /// The type parameters. `[iter, exn]` in the example.
-    pub(super) params: Vec<Ty>,
+    pub params: Vec<Ty>,
 
     /// If the predicate is an associated type equality, the right-hand side of the equality.
     ///
     /// E.g. in `Iterator[iter, exn].Item = U32`, this is `(Item, U32)`.
-    pub(super) assoc_ty: Option<(Id, Ty)>,
+    pub assoc_ty: Option<(Id, Ty)>,
 
     /// Location of the expression that created this predicate.
-    pub(super) loc: ast::Loc,
+    pub loc: ast::Loc,
 }
 
 impl Scheme {

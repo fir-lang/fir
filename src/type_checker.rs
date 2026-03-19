@@ -317,7 +317,6 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .collect(),
                         details: TyConDetails::Trait(TraitDetails {
                             methods: Default::default(),
-                            assoc_tys: Default::default(),
                         }),
                     },
                 );
@@ -480,7 +479,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 }
 
                 let ty_con = tys.get_con_mut(&trait_decl.node.name.node).unwrap();
-                ty_con.details = TyConDetails::Trait(TraitDetails { methods, assoc_tys });
+                ty_con.details = TyConDetails::Trait(TraitDetails { methods });
 
                 tys.exit_scope();
                 assert_eq!(tys.len_scopes(), 1);
@@ -538,10 +537,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap(); // checked above
         let trait_type_params = &trait_ty_con.ty_params;
         let trait_methods = match &mut trait_ty_con.details {
-            TyConDetails::Trait(TraitDetails {
-                methods,
-                assoc_tys: _,
-            }) => methods,
+            TyConDetails::Trait(TraitDetails { methods }) => methods,
             TyConDetails::Type { .. } => {
                 panic!() // checked above
             }
