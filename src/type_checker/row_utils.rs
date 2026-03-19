@@ -1,5 +1,6 @@
 use crate::ast::Id;
 use crate::collections::*;
+use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::ty::*;
 
 pub(crate) fn collect_rows(
@@ -8,10 +9,11 @@ pub(crate) fn collect_rows(
     ty_kind: RecordOrVariant,
     labels: &OrdMap<Id, Ty>,
     mut extension: Option<Box<Ty>>,
+    trait_env: &TraitEnv,
 ) -> (OrdMap<Id, Ty>, Option<Ty>) {
     let mut all_labels: OrdMap<Id, Ty> = labels
         .iter()
-        .map(|(id, ty)| (id.clone(), ty.deep_normalize(cons)))
+        .map(|(id, ty)| (id.clone(), ty.deep_normalize(cons, trait_env)))
         .collect();
 
     while let Some(ext) = extension {

@@ -4,6 +4,7 @@ use crate::interpolation::StrPart;
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::stmt::check_stmts;
+use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{try_unify_one_way, unify, unify_expected_ty};
 use crate::type_checker::{TcFunState, loc_display};
@@ -57,6 +58,7 @@ pub(super) fn check_expr(
                         ty.clone(),
                         expected_ty,
                         tc_state.tys.tys.cons(),
+                        tc_state.trait_env,
                         tc_state.var_gen,
                         level,
                         loc,
@@ -115,6 +117,7 @@ pub(super) fn check_expr(
                     ty,
                     expected_ty,
                     tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
                     tc_state.var_gen,
                     level,
                     loc,
@@ -160,6 +163,7 @@ pub(super) fn check_expr(
                             RecordOrVariant::Record,
                             labels,
                             extension.clone(),
+                            tc_state.trait_env,
                         );
                         let ty = match labels.get(field) {
                             Some(field_ty) => field_ty.clone(),
@@ -194,6 +198,7 @@ pub(super) fn check_expr(
                     ty,
                     expected_ty,
                     tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
                     tc_state.var_gen,
                     level,
                     loc,
@@ -311,6 +316,7 @@ pub(super) fn check_expr(
                     con_ty,
                     expected_ty,
                     tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
                     tc_state.var_gen,
                     level,
                     loc,
@@ -381,6 +387,7 @@ pub(super) fn check_expr(
                     ty_ty_arg,
                     method_ty_arg,
                     tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
                     tc_state.var_gen,
                     level,
                     loc,
@@ -398,6 +405,7 @@ pub(super) fn check_expr(
                         ty_ty_arg,
                         &Ty::UVar(method_ty_arg.clone()),
                         tc_state.tys.tys.cons(),
+                        tc_state.trait_env,
                         tc_state.var_gen,
                         level,
                         loc,
@@ -445,6 +453,7 @@ pub(super) fn check_expr(
                 method_ty,
                 expected_ty,
                 tc_state.tys.tys.cons(),
+                tc_state.trait_env,
                 tc_state.var_gen,
                 level,
                 loc,
@@ -484,6 +493,7 @@ pub(super) fn check_expr(
                         (**ret_ty).clone(),
                         expected_ty,
                         tc_state.tys.tys.cons(),
+                        tc_state.trait_env,
                         tc_state.var_gen,
                         level,
                         loc,
@@ -564,6 +574,7 @@ pub(super) fn check_expr(
                                     &arg_ty,
                                     param_ty,
                                     tc_state.tys.tys.cons(),
+                                    tc_state.trait_env,
                                     tc_state.var_gen,
                                     level,
                                     loc,
@@ -577,6 +588,7 @@ pub(super) fn check_expr(
                             exn,
                             &tc_state.exceptions,
                             tc_state.tys.tys.cons(),
+                            tc_state.trait_env,
                             tc_state.var_gen,
                             level,
                             loc,
@@ -673,6 +685,7 @@ pub(super) fn check_expr(
                         &Ty::UVar(var.clone()),
                         &Ty::Con(SmolStr::new_static("I32"), Kind::Star),
                         tc_state.tys.tys.cons(),
+                        tc_state.trait_env,
                         tc_state.var_gen,
                         level,
                         loc,
@@ -819,6 +832,7 @@ pub(super) fn check_expr(
                 Ty::str(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
+                tc_state.trait_env,
                 tc_state.var_gen,
                 level,
                 loc,
@@ -1044,6 +1058,7 @@ pub(super) fn check_expr(
                 Ty::char(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
+                tc_state.trait_env,
                 tc_state.var_gen,
                 level,
                 loc,
@@ -1243,6 +1258,7 @@ pub(super) fn check_expr(
                     &rhs_tys[0],
                     &rhs_tys[1],
                     tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
                     tc_state.var_gen,
                     level,
                     loc,
@@ -1254,6 +1270,7 @@ pub(super) fn check_expr(
                 rhs_tys.pop().unwrap(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
+                tc_state.trait_env,
                 tc_state.var_gen,
                 level,
                 loc,
@@ -1274,6 +1291,7 @@ pub(super) fn check_expr(
                             ty,
                             expected_ty,
                             tc_state.tys.tys.cons(),
+                            tc_state.trait_env,
                             tc_state.var_gen,
                             level,
                             loc,
@@ -1286,6 +1304,7 @@ pub(super) fn check_expr(
                             &ty_pair[0],
                             &ty_pair[1],
                             tc_state.tys.tys.cons(),
+                            tc_state.trait_env,
                             tc_state.var_gen,
                             level,
                             loc,
@@ -1405,6 +1424,7 @@ pub(super) fn check_expr(
                 ty,
                 expected_ty,
                 tc_state.tys.tys.cons(),
+                tc_state.trait_env,
                 tc_state.var_gen,
                 level,
                 loc,
@@ -1423,6 +1443,7 @@ pub(super) fn check_expr(
                 &pat_ty,
                 &expr_ty,
                 tc_state.tys.tys.cons(),
+                tc_state.trait_env,
                 tc_state.var_gen,
                 level,
                 &pat.loc,
@@ -1620,6 +1641,7 @@ pub(super) fn check_expr(
                         Ty::unit(),
                         expected_ty,
                         tc_state.tys.tys.cons(),
+                        tc_state.trait_env,
                         tc_state.var_gen,
                         level,
                         loc,
@@ -1684,6 +1706,7 @@ pub(super) fn check_expr(
                     ty,
                     expected_ty,
                     tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
                     tc_state.var_gen,
                     level,
                     loc,
@@ -1703,6 +1726,7 @@ pub(super) fn check_expr(
                     variant_ty,
                     expected_ty,
                     tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
                     tc_state.var_gen,
                     level,
                     loc,
@@ -1758,6 +1782,7 @@ pub(super) fn check_match_expr(
             &pat_ty,
             &scrut_ty,
             tc_state.tys.tys.cons(),
+            tc_state.trait_env,
             tc_state.var_gen,
             level,
             &pat.loc,
@@ -1793,6 +1818,7 @@ pub(super) fn check_match_expr(
             &mut pat.node,
             &refined_binders,
             tc_state.tys.tys.cons(),
+            tc_state.trait_env,
             &pat.loc,
         );
 
@@ -1853,6 +1879,7 @@ pub(super) fn check_if_expr(
             &cond_ty,
             &Ty::bool(),
             tc_state.tys.tys.cons(),
+            tc_state.trait_env,
             tc_state.var_gen,
             level,
             &cond.loc,
@@ -1987,6 +2014,7 @@ fn check_field_sel(
                 &self_arg,
                 object_ty,
                 tc_state.tys.tys.cons(),
+                tc_state.trait_env,
                 tc_state.var_gen,
                 level,
                 loc,
@@ -2237,13 +2265,17 @@ fn add_coercions(
     pat: &mut ast::Pat,
     refined_binders: &HashMap<Id, Ty>,
     cons: &ScopeMap<Id, TyCon>,
+    trait_env: &TraitEnv,
     _loc: &ast::Loc,
 ) {
     match pat {
         ast::Pat::Var(ast::VarPat { var, ty, refined }) => {
             assert_eq!(refined, &mut None);
-            let refined_ty = refined_binders.get(var).unwrap().deep_normalize(cons);
-            let ty = ty.as_ref().unwrap().deep_normalize(cons);
+            let refined_ty = refined_binders
+                .get(var)
+                .unwrap()
+                .deep_normalize(cons, trait_env);
+            let ty = ty.as_ref().unwrap().deep_normalize(cons, trait_env);
             if refined_ty != ty {
                 *refined = Some(refined_ty);
             }
@@ -2260,15 +2292,21 @@ fn add_coercions(
             inferred_ty: _,
         }) => {
             for field in fields {
-                add_coercions(&mut field.node.node, refined_binders, cons, &field.node.loc);
+                add_coercions(
+                    &mut field.node.node,
+                    refined_binders,
+                    cons,
+                    trait_env,
+                    &field.node.loc,
+                );
             }
         }
 
         ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) => {}
 
         ast::Pat::Or(p1, p2) => {
-            add_coercions(&mut p1.node, refined_binders, cons, &p1.loc);
-            add_coercions(&mut p2.node, refined_binders, cons, &p2.loc);
+            add_coercions(&mut p1.node, refined_binders, cons, trait_env, &p1.loc);
+            add_coercions(&mut p2.node, refined_binders, cons, trait_env, &p2.loc);
         }
 
         ast::Pat::Variant(ast::VariantPat {
@@ -2276,7 +2314,7 @@ fn add_coercions(
             inferred_ty: _,
             inferred_pat_ty: _,
         }) => {
-            add_coercions(&mut pat.node, refined_binders, cons, &pat.loc);
+            add_coercions(&mut pat.node, refined_binders, cons, trait_env, &pat.loc);
         }
     }
 }

@@ -2,23 +2,29 @@ use crate::ast::{self, Id};
 use crate::collections::ScopeMap;
 use crate::interpolation::StrPart;
 use crate::type_checker::TyCon;
+use crate::type_checker::traits::TraitEnv;
 use crate::utils::loc_display;
 
-pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, loc: &ast::Loc, cons: &ScopeMap<Id, TyCon>) {
+pub(super) fn normalize_stmt(
+    stmt: &mut ast::Stmt,
+    loc: &ast::Loc,
+    cons: &ScopeMap<Id, TyCon>,
+    trait_env: &TraitEnv,
+) {
     match stmt {
         ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
 
         ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
-            normalize_pat(&mut lhs.node, cons);
-            normalize_expr(&mut rhs.node, &rhs.loc, cons);
+            normalize_pat(&mut lhs.node, cons, trait_env);
+            normalize_expr(&mut rhs.node, &rhs.loc, cons, trait_env);
         }
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op: _ }) => {
-            normalize_expr(&mut lhs.node, loc, cons);
-            normalize_expr(&mut rhs.node, &rhs.loc, cons);
+            normalize_expr(&mut lhs.node, loc, cons, trait_env);
+            normalize_expr(&mut rhs.node, &rhs.loc, cons, trait_env);
         }
 
-        ast::Stmt::Expr(expr) => normalize_expr(expr, loc, cons),
+        ast::Stmt::Expr(expr) => normalize_expr(expr, loc, cons, trait_env),
 
         ast::Stmt::For(ast::ForStmt { .. }) => {
             panic!("{}: Non-desugared for statement", loc_display(loc));
@@ -29,15 +35,20 @@ pub(super) fn normalize_stmt(stmt: &mut ast::Stmt, loc: &ast::Loc, cons: &ScopeM
             cond,
             body,
         }) => {
-            normalize_expr(&mut cond.node, &cond.loc, cons);
+            normalize_expr(&mut cond.node, &cond.loc, cons, trait_env);
             for stmt in body {
-                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons, trait_env);
             }
         }
     }
 }
 
-fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCon>) {
+fn normalize_expr(
+    expr: &mut ast::Expr,
+    loc: &ast::Loc,
+    cons: &ScopeMap<Id, TyCon>,
+    trait_env: &TraitEnv,
+) {
     match expr {
         ast::Expr::Var(ast::VarExpr {
             ty_args,
@@ -48,11 +59,11 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
                 inferred_ty
                     .as_ref()
                     .unwrap_or_else(|| panic!("{}", loc_display(loc)))
-                    .deep_normalize(cons),
+                    .deep_normalize(cons, trait_env),
             );
             ty_args
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(cons))
+                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env))
         }
 
         ast::Expr::ConSel(ast::Con {
@@ -64,11 +75,11 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
                 inferred_ty
                     .as_ref()
                     .unwrap_or_else(|| panic!("{}", loc_display(loc)))
-                    .deep_normalize(cons),
+                    .deep_normalize(cons, trait_env),
             );
             ty_args
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(cons));
+                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env));
         }
 
         ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
@@ -76,17 +87,22 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
             inferred_ty,
             ..
         }) => {
-            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
             ty_args
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(cons))
+                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env))
         }
 
         ast::Expr::Int(_) | ast::Expr::Char(_) => {}
 
         ast::Expr::Str(parts) => parts.iter_mut().for_each(|part| match part {
             StrPart::Str(_) => {}
-            StrPart::Expr(expr) => normalize_expr(&mut expr.node, &expr.loc, cons),
+            StrPart::Expr(expr) => normalize_expr(&mut expr.node, &expr.loc, cons, trait_env),
         }),
 
         ast::Expr::FieldSel(ast::FieldSelExpr {
@@ -100,9 +116,9 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
                 inferred_ty
                     .as_ref()
                     .unwrap_or_else(|| panic!("{}", loc_display(loc)))
-                    .deep_normalize(cons),
+                    .deep_normalize(cons, trait_env),
             );
-            normalize_expr(&mut object.node, &object.loc, cons)
+            normalize_expr(&mut object.node, &object.loc, cons, trait_env)
         }
 
         ast::Expr::MethodSel(ast::MethodSelExpr {
@@ -112,11 +128,16 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
             ty_args,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
             ty_args
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(cons));
-            normalize_expr(&mut object.node, &object.loc, cons)
+                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env));
+            normalize_expr(&mut object.node, &object.loc, cons, trait_env)
         }
 
         ast::Expr::Call(ast::CallExpr {
@@ -124,25 +145,35 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
             args,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
-            normalize_expr(&mut fun.node, &fun.loc, cons);
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
+            normalize_expr(&mut fun.node, &fun.loc, cons, trait_env);
             for arg in args {
-                normalize_expr(&mut arg.expr.node, &arg.expr.loc, cons);
+                normalize_expr(&mut arg.expr.node, &arg.expr.loc, cons, trait_env);
             }
         }
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op: _ }) => {
-            normalize_expr(&mut left.node, &left.loc, cons);
-            normalize_expr(&mut right.node, &right.loc, cons);
+            normalize_expr(&mut left.node, &left.loc, cons, trait_env);
+            normalize_expr(&mut right.node, &right.loc, cons, trait_env);
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op: _, expr }) => {
-            normalize_expr(&mut expr.node, &expr.loc, cons);
+            normalize_expr(&mut expr.node, &expr.loc, cons, trait_env);
         }
 
         ast::Expr::Return(ast::ReturnExpr { expr, inferred_ty }) => {
-            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
-            normalize_expr(&mut expr.node, &expr.loc, cons);
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
+            normalize_expr(&mut expr.node, &expr.loc, cons, trait_env);
         }
 
         ast::Expr::Match(ast::MatchExpr {
@@ -150,15 +181,20 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
             alts,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
-            normalize_expr(&mut scrutinee.node, &scrutinee.loc, cons);
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
+            normalize_expr(&mut scrutinee.node, &scrutinee.loc, cons, trait_env);
             for ast::Alt { pat, guard, rhs } in alts {
-                normalize_pat(&mut pat.node, cons);
+                normalize_pat(&mut pat.node, cons, trait_env);
                 if let Some(expr) = guard {
-                    normalize_expr(&mut expr.node, &expr.loc, cons);
+                    normalize_expr(&mut expr.node, &expr.loc, cons, trait_env);
                 }
                 for stmt in rhs {
-                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons, trait_env);
                 }
             }
         }
@@ -168,16 +204,21 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
             else_branch,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
             for (cond, body) in branches {
-                normalize_expr(&mut cond.node, &cond.loc, cons);
+                normalize_expr(&mut cond.node, &cond.loc, cons, trait_env);
                 for stmt in body {
-                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons, trait_env);
                 }
             }
             if let Some(else_branch) = else_branch {
                 for stmt in else_branch {
-                    normalize_stmt(&mut stmt.node, &stmt.loc, cons);
+                    normalize_stmt(&mut stmt.node, &stmt.loc, cons, trait_env);
                 }
             }
         }
@@ -187,21 +228,31 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
             body,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
             for stmt in body {
-                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons, trait_env);
             }
         }
 
         ast::Expr::Is(ast::IsExpr { expr, pat }) => {
-            normalize_expr(&mut expr.node, &expr.loc, cons);
-            normalize_pat(&mut pat.node, cons);
+            normalize_expr(&mut expr.node, &expr.loc, cons, trait_env);
+            normalize_pat(&mut pat.node, cons, trait_env);
         }
 
         ast::Expr::Do(ast::DoExpr { stmts, inferred_ty }) => {
-            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(cons));
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_ref()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
             for stmt in stmts {
-                normalize_stmt(&mut stmt.node, &stmt.loc, cons);
+                normalize_stmt(&mut stmt.node, &stmt.loc, cons, trait_env);
             }
         }
 
@@ -211,29 +262,39 @@ fn normalize_expr(expr: &mut ast::Expr, loc: &ast::Loc, cons: &ScopeMap<Id, TyCo
             fields,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_mut()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
             for (_field_name, field_expr) in fields {
-                normalize_expr(&mut field_expr.node, &field_expr.loc, cons);
+                normalize_expr(&mut field_expr.node, &field_expr.loc, cons, trait_env);
             }
         }
 
         ast::Expr::Variant(ast::VariantExpr { expr, inferred_ty }) => {
-            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
-            normalize_expr(&mut expr.node, &expr.loc, cons);
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_mut()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
+            normalize_expr(&mut expr.node, &expr.loc, cons, trait_env);
         }
     }
 }
 
-fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
+fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>, trait_env: &TraitEnv) {
     match pat {
         ast::Pat::Var(ast::VarPat {
             var: _,
             ty,
             refined,
         }) => {
-            *ty = Some(ty.as_ref().unwrap().deep_normalize(cons));
+            *ty = Some(ty.as_ref().unwrap().deep_normalize(cons, trait_env));
             if let Some(ty) = refined {
-                *ty = ty.deep_normalize(cons);
+                *ty = ty.deep_normalize(cons, trait_env);
             }
         }
 
@@ -245,16 +306,16 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             ignore_rest: _,
         }) => {
             for field in fields {
-                normalize_pat(&mut field.node.node, cons);
+                normalize_pat(&mut field.node.node, cons, trait_env);
             }
             for ty_arg in ty_args {
-                *ty_arg = ty_arg.deep_normalize(cons);
+                *ty_arg = ty_arg.deep_normalize(cons, trait_env);
             }
         }
 
         ast::Pat::Or(pat1, pat2) => {
-            normalize_pat(&mut pat1.node, cons);
-            normalize_pat(&mut pat2.node, cons);
+            normalize_pat(&mut pat1.node, cons, trait_env);
+            normalize_pat(&mut pat2.node, cons, trait_env);
         }
 
         ast::Pat::Record(ast::RecordPat {
@@ -262,10 +323,15 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             ignore_rest: _,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
-            fields
-                .iter_mut()
-                .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons));
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_mut()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
+            fields.iter_mut().for_each(|ast::Named { name: _, node }| {
+                normalize_pat(&mut node.node, cons, trait_env)
+            });
         }
 
         ast::Pat::Variant(ast::VariantPat {
@@ -273,9 +339,19 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             inferred_ty,
             inferred_pat_ty,
         }) => {
-            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
-            *inferred_pat_ty = Some(inferred_pat_ty.as_mut().unwrap().deep_normalize(cons));
-            normalize_pat(&mut pat.node, cons);
+            *inferred_ty = Some(
+                inferred_ty
+                    .as_mut()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
+            *inferred_pat_ty = Some(
+                inferred_pat_ty
+                    .as_mut()
+                    .unwrap()
+                    .deep_normalize(cons, trait_env),
+            );
+            normalize_pat(&mut pat.node, cons, trait_env);
         }
     }
 }

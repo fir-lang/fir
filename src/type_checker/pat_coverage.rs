@@ -144,7 +144,7 @@ impl PatMatrix {
         // print!("{}", indent(&self.to_string(), trace.len() * 4));
 
         let next_ty = match self.field_tys.first() {
-            Some(next_ty) => next_ty.deep_normalize(tc_state.tys.tys.cons()),
+            Some(next_ty) => next_ty.deep_normalize(tc_state.tys.tys.cons(), tc_state.trait_env),
             None => {
                 for row in self.rows.iter() {
                     info.mark_useful(row.arm_index, &row.bound_vars);
@@ -221,6 +221,7 @@ impl PatMatrix {
                     RecordOrVariant::Variant,
                     labels,
                     extension.clone(),
+                    tc_state.trait_env,
                 );
 
                 let mut exhaustive = true;
@@ -284,6 +285,7 @@ impl PatMatrix {
                     RecordOrVariant::Record,
                     labels,
                     extension.clone(),
+                    tc_state.trait_env,
                 );
 
                 let mut labels_vec: Vec<(SmolStr, Ty)> = labels.into_iter().collect();

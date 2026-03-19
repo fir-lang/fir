@@ -68,7 +68,7 @@ use crate::utils::loc_display;
 pub type TraitEnv = HashMap<Id, Vec<TraitImpl>>;
 
 /// Example:
-/// ```
+/// ```text
 /// impl[Iterator[iter, exn], Iterator[iter, exn].Item = a] Iterator[Map[iter, a, b, exn], exn]:
 ///     type Item = b
 ///     next(self: Map[iter, a, b, exn]) Option[b] / exn

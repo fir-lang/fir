@@ -88,7 +88,7 @@ pub(crate) fn check_module(module: &mut ast::Module, main: &str) -> PgmTypes {
     tys
 }
 
-pub(crate) fn check_main_type(tys: &PgmTypes, main: &str) {
+pub(crate) fn check_main_type(tys: &PgmTypes, trait_env: &TraitEnv, main: &str) {
     let main_scheme = tys
         .top_schemes
         .get(main)
@@ -106,6 +106,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, main: &str) {
             exceptions: Some(Box::new(Ty::empty_variant())),
         },
         tys.tys.cons(),
+        trait_env,
         &mut UVarGen::default(),
         0,
         &main_scheme.loc,
@@ -1307,7 +1308,6 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
         None => Ty::unit(),
     };
-
     let mut preds: Vec<Pred> = Default::default();
 
     let exceptions = match &fun.node.sig.exceptions {
@@ -1335,7 +1335,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
-            normalize_stmt(&mut stmt.node, &stmt.loc, tys.tys.cons());
+            normalize_stmt(&mut stmt.node, &stmt.loc, tys.tys.cons(), trait_env);
         }
     }
 
@@ -1453,7 +1453,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
             resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
 
             for stmt in body.iter_mut() {
-                normalize_stmt(&mut stmt.node, &stmt.loc, tys.tys.cons());
+                normalize_stmt(&mut stmt.node, &stmt.loc, tys.tys.cons(), trait_env);
             }
         }
 
@@ -1542,7 +1542,7 @@ fn resolve_preds(
         'goals: while let Some(mut pred) = goals.pop() {
             pred.params
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(tys.tys.cons()));
+                .for_each(|ty| *ty = ty.deep_normalize(tys.tys.cons(), trait_env));
 
             if pred.trait_ == "RecRow" {
                 assert!(pred.assoc_ty.is_none());

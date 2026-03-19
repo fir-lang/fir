@@ -1,4 +1,5 @@
 use crate::ast::{self, Id};
+use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::unification::unify;
 use crate::type_checker::*;
 use crate::utils::loc_display;
@@ -11,6 +12,7 @@ pub(crate) fn apply_con_ty(
     con_ty: &Ty,
     args: &Vec<ast::Named<Ty>>,
     cons: &ScopeMap<Id, TyCon>,
+    trait_env: &TraitEnv,
     var_gen: &mut UVarGen,
     level: u32,
     loc: &ast::Loc,
@@ -45,7 +47,7 @@ pub(crate) fn apply_con_ty(
                                 name
                             );
                         }
-                        unify(ty1, &ty2.node, cons, var_gen, level, loc);
+                        unify(ty1, &ty2.node, cons, trait_env, var_gen, level, loc);
                     }
                 }
 
@@ -109,7 +111,7 @@ pub(crate) fn apply_con_ty(
                             }
                         };
                         let ty1 = con_ty_args.get(name).unwrap();
-                        unify(ty1, node, cons, var_gen, level, loc);
+                        unify(ty1, node, cons, trait_env, var_gen, level, loc);
                     }
                 }
             }

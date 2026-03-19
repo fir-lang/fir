@@ -2,6 +2,7 @@
 
 use crate::ast::{self, Id};
 use crate::collections::*;
+use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::{loc_display, rename_domain_var};
 
 use std::cell::{Cell, RefCell};
@@ -554,6 +555,7 @@ fn ty_eq_modulo_alpha(
                 *kind1,
                 labels1,
                 extension1.clone(),
+                &Default::default(),
             );
 
             let (labels2, extension2) = crate::type_checker::row_utils::collect_rows(
@@ -562,6 +564,7 @@ fn ty_eq_modulo_alpha(
                 *kind2,
                 labels2,
                 extension2.clone(),
+                &Default::default(),
             );
 
             if labels1.keys().collect::<HashSet<_>>() != labels2.keys().collect() {
@@ -895,13 +898,12 @@ impl Ty {
         }
     }
 
-    /// Same as `normalize` but normalizes type arguments as well.
-    pub(super) fn deep_normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
+    pub(super) fn deep_normalize(&self, cons: &ScopeMap<Id, TyCon>, trait_env: &TraitEnv) -> Ty {
         match self {
             Ty::UVar(var_ref) => {
                 let mut var_ref_link = var_ref.normalize(cons);
                 if var_ref_link != Ty::UVar(var_ref.clone()) {
-                    var_ref_link = var_ref_link.deep_normalize(cons);
+                    var_ref_link = var_ref_link.deep_normalize(cons, trait_env);
                     var_ref.set_link(var_ref_link.clone());
                 }
                 var_ref_link
@@ -911,7 +913,9 @@ impl Ty {
 
             Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
-                args.iter().map(|ty| ty.deep_normalize(cons)).collect(),
+                args.iter()
+                    .map(|ty| ty.deep_normalize(cons, trait_env))
+                    .collect(),
                 kind.clone(),
             ),
 
@@ -927,6 +931,7 @@ impl Ty {
                     *kind,
                     labels,
                     extension.clone(),
+                    trait_env,
                 );
                 Ty::Anonymous {
                     labels,
@@ -943,26 +948,79 @@ impl Ty {
             } => Ty::Fun {
                 args: match args {
                     FunArgs::Positional(args) => FunArgs::Positional(
-                        args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
+                        args.iter()
+                            .map(|arg| arg.deep_normalize(cons, trait_env))
+                            .collect(),
                     ),
                     FunArgs::Named(args) => FunArgs::Named(
                         args.iter()
-                            .map(|(name, arg)| (name.clone(), arg.deep_normalize(cons)))
+                            .map(|(name, arg)| (name.clone(), arg.deep_normalize(cons, trait_env)))
                             .collect(),
                     ),
                 },
-                ret: Box::new(ret.deep_normalize(cons)),
+                ret: Box::new(ret.deep_normalize(cons, trait_env)),
                 exceptions: exceptions
                     .as_ref()
-                    .map(|exn| Box::new(exn.deep_normalize(cons))),
+                    .map(|exn| Box::new(exn.deep_normalize(cons, trait_env))),
             },
 
             Ty::QVar(_, _) => self.clone(),
 
-            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
-                ty: Box::new(ty.deep_normalize(cons)),
-                assoc_ty: assoc_ty.clone(),
-            },
+            Ty::AssocTySelect {
+                ty: inner_ty,
+                assoc_ty,
+            } => {
+                let inner_ty = inner_ty.deep_normalize(cons, trait_env);
+
+                let (trait_name, trait_args): (&Id, &[Ty]) = match &inner_ty {
+                    Ty::App(con, args, _) => (con, args.as_slice()),
+                    Ty::Con(con, _) => (con, &[]),
+                    _ => {
+                        return Ty::AssocTySelect {
+                            ty: Box::new(inner_ty),
+                            assoc_ty: assoc_ty.clone(),
+                        };
+                    }
+                };
+
+                if let Some(impls) = trait_env.get(trait_name) {
+                    for impl_ in impls {
+                        assert_eq!(impl_.trait_args.len(), trait_args.len());
+                        let mut var_gen = UVarGen::default();
+
+                        let var_map: HashMap<Id, Ty> = impl_
+                            .qvars
+                            .iter()
+                            .map(|(qvar, kind)| {
+                                let instantiated_var =
+                                    var_gen.new_var(0, kind.clone(), ast::Loc::dummy());
+                                (qvar.clone(), Ty::UVar(instantiated_var))
+                            })
+                            .collect();
+
+                        for (impl_arg, ty_arg) in impl_.trait_args.iter().zip(trait_args.iter()) {
+                            let instantiated_impl_arg = impl_arg.subst_qvars(&var_map);
+                            if crate::type_checker::unification::try_unify_one_way(
+                                &instantiated_impl_arg,
+                                ty_arg,
+                                cons,
+                                &mut var_gen,
+                                0,
+                                &ast::Loc::dummy(),
+                            ) {
+                                let rhs = impl_.assoc_tys.get(assoc_ty).unwrap();
+                                let resolved = rhs.subst_qvars(&var_map);
+                                return resolved.deep_normalize(cons, trait_env);
+                            }
+                        }
+                    }
+                }
+
+                Ty::AssocTySelect {
+                    ty: Box::new(inner_ty),
+                    assoc_ty: assoc_ty.clone(),
+                }
+            }
         }
     }
 
