@@ -95,20 +95,14 @@ pub struct TraitImpl {
     /// the preds will be updated.
     pub preds: Vec<(Id, Vec<Ty>)>,
 
-    // Associated type equalities of the implementation.
-    //
-    // In the example: `Iterator[iter, exn].Item = a`, where `iter`, `exn`, and `a` are `QVar`s in
-    // `qvars`.
-    //
-    // Similar to `preds`, these types should be instantiated together with `trait_args`.
-    // pub eqs:
-
-    // Do we need associated types of the implementation? E.g. `type Item = b` in the examples.
-    //
-    // We'll always refer to those types with fully qualified syntax: `Iterator[...].Item` with the
-    // same args as the current impl if we want to refer to the types in the current impl. So I'm
-    // not sure if we need to keep track of types in the current impl here.
-    // pub assoc_tys: HashMap<Id, Ty>,
+    /// Associated type equalities of the implementation.
+    ///
+    /// In the example: `Iterator[iter, exn].Item = a`, where `iter`, `exn`, and `a` are `QVar`s in
+    /// `qvars`.
+    ///
+    /// Similar to `preds`, these types should be instantiated together with `trait_args`.
+    /// pub eqs:
+    pub assoc_tys: HashMap<Id, Ty>,
 }
 
 pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
@@ -158,6 +152,19 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
                          loc: _,
                      }| (trait_, params),
                 )
+                .collect(),
+            // TODO: Check that an assoc type is not defined multiple times.
+            assoc_tys: impl_
+                .node
+                .items
+                .iter()
+                .filter_map(|item| match item {
+                    ast::ImplDeclItem::Type { assoc_ty, rhs } => Some((
+                        assoc_ty.node.clone(),
+                        convert_ast_ty(tys, &rhs.node, &rhs.loc),
+                    )),
+                    ast::ImplDeclItem::Fun(_) => None,
+                })
                 .collect(),
         };
 
