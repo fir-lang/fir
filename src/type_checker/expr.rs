@@ -1320,7 +1320,8 @@ pub(super) fn check_expr(
                     | Ty::UVar(_)
                     | Ty::App(_, _, _)
                     | Ty::QVar(_, _)
-                    | Ty::Anonymous { .. } => (None, None, None),
+                    | Ty::Anonymous { .. }
+                    | Ty::AssocTySelect { .. } => (None, None, None),
                 },
                 None => (None, None, None),
             };
@@ -2208,7 +2209,9 @@ fn refine_binders(binders: &HashMap<Id, HashSet<Ty>>, loc: &ast::Loc) -> HashMap
                         extension = new_extension.clone();
                     }
 
-                    Ty::Fun { .. } | Ty::Anonymous { .. } => panic!("{}: {}", loc_display(loc), ty),
+                    Ty::Fun { .. } | Ty::Anonymous { .. } | Ty::AssocTySelect { .. } => {
+                        panic!("{}: {}", loc_display(loc), ty)
+                    }
                 }
             }
 

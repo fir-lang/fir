@@ -409,12 +409,14 @@ impl PatMatrix {
                 })
             } // Ty::Anonymous(kind: Record)
 
-            Ty::UVar(_) | Ty::QVar(_, _) | Ty::Fun { .. } => match self.skip_wildcards(&next_ty) {
-                Some(skipped) => with_trace(trace, "wildcard".to_string(), |trace| {
-                    skipped.check_coverage(tc_state, loc, info, trace)
-                }),
-                None => false,
-            },
+            Ty::UVar(_) | Ty::QVar(_, _) | Ty::Fun { .. } | Ty::AssocTySelect { .. } => {
+                match self.skip_wildcards(&next_ty) {
+                    Some(skipped) => with_trace(trace, "wildcard".to_string(), |trace| {
+                        skipped.check_coverage(tc_state, loc, info, trace)
+                    }),
+                    None => false,
+                }
+            }
         }
     }
 
