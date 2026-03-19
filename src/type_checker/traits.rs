@@ -88,7 +88,7 @@ pub struct TraitImpl {
     // Note: these types should be instantiated together with `trait_args` so that the same `QVar`
     // in arguments and preds will be the same instantiated type variable, and as we match args
     // the preds will be updated.
-    pub preds: Vec<(Id, Vec<Ty>)>,
+    pub preds: Vec<Pred>,
 }
 
 pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
@@ -129,16 +129,7 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
                 .iter()
                 .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
                 .collect(),
-            preds: preds
-                .into_iter()
-                .map(
-                    |Pred {
-                         trait_,
-                         params,
-                         loc: _,
-                     }| (trait_, params),
-                )
-                .collect(),
+            preds,
         };
 
         tys.exit_scope();
@@ -185,11 +176,17 @@ impl TraitImpl {
         Some(
             self.preds
                 .iter()
-                .map(|(trait_, args)| Pred {
-                    trait_: trait_.clone(),
-                    params: args.iter().map(|arg| arg.subst_qvars(&var_map)).collect(),
-                    loc: loc.clone(),
-                })
+                .map(
+                    |Pred {
+                         trait_,
+                         params,
+                         loc: _,
+                     }| Pred {
+                        trait_: trait_.clone(),
+                        params: params.iter().map(|arg| arg.subst_qvars(&var_map)).collect(),
+                        loc: loc.clone(),
+                    },
+                )
                 .collect(),
         )
     }
