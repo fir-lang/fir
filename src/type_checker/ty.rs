@@ -344,7 +344,11 @@ impl Scheme {
                 .iter()
                 .map(|pred| Pred {
                     trait_: pred.trait_.clone(),
-                    params: pred.params.iter().map(|ty| ty.subst(var, ty)).collect(),
+                    params: pred
+                        .params
+                        .iter()
+                        .map(|pred_ty| pred_ty.subst(var, ty))
+                        .collect(),
                     loc: pred.loc.clone(),
                 })
                 .collect(),
