@@ -51,6 +51,9 @@ struct PolyTraitImpl {
     tys: Vec<ast::Type>,
 
     methods: Vec<ast::FunDecl>,
+
+    /// Associated type definitions, e.g. `type Item = t`.
+    assoc_tys: Vec<(Id, ast::Type)>,
     // We don't care about predicates, those are for type checking.
     // If a trait use type checks, then we know there will be a match in trait env during monomorph.
 }
@@ -144,6 +147,17 @@ fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
                             .filter_map(|item| match item {
                                 ast::ImplDeclItem::Type { .. } => None,
                                 ast::ImplDeclItem::Fun(fun) => Some(fun.node.clone()),
+                            })
+                            .collect(),
+                        assoc_tys: impl_decl
+                            .node
+                            .items
+                            .iter()
+                            .filter_map(|item| match item {
+                                ast::ImplDeclItem::Type { assoc_ty, rhs } => {
+                                    Some((assoc_ty.node.clone(), rhs.node.clone()))
+                                }
+                                ast::ImplDeclItem::Fun(_) => None,
                             })
                             .collect(),
                     });
@@ -1568,6 +1582,38 @@ fn match_named_ty(
     true
 }
 
+/// Resolve an associated type selection.
+///
+/// Given a trait name, concrete type args, and an associated type name, find the matching impl and
+/// return the monomorphized associated type.
+fn resolve_assoc_ty(
+    trait_name: &Id,
+    trait_args: &[mono::Type],
+    assoc_ty: &Id,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
+) -> mono::Type {
+    let poly_trait = poly_pgm
+        .traits
+        .get(trait_name)
+        .unwrap_or_else(|| panic!("Unknown trait {} in associated type selection", trait_name));
+
+    for impl_ in &poly_trait.impls {
+        if let Some(substs) = match_trait_impl(trait_args, impl_) {
+            for (name, rhs_ty) in &impl_.assoc_tys {
+                if name == assoc_ty {
+                    return mono_ast_ty(rhs_ty, &substs, poly_pgm, mono_pgm);
+                }
+            }
+        }
+    }
+
+    panic!(
+        "No matching impl for {}.{} with args {:?}",
+        trait_name, assoc_ty, trait_args
+    )
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Types
 
@@ -1734,9 +1780,12 @@ fn mono_tc_ty(
         },
 
         Ty::AssocTySelect { ty, assoc_ty } => {
-            let mono_ty = mono_tc_ty(&ty, ty_map, poly_pgm, mono_pgm);
-            // TODO: `MonoPgm` should have a map from mono types to associated types.
-            todo!()
+            let mono_inner = mono_tc_ty(&ty, ty_map, poly_pgm, mono_pgm);
+            let (trait_name, trait_args) = match &mono_inner {
+                mono::Type::Named(named) => (&named.name, named.args.as_slice()),
+                _ => panic!("Expected named type in AssocTySelect, got {:?}", mono_inner),
+            };
+            resolve_assoc_ty(trait_name, trait_args, &assoc_ty, poly_pgm, mono_pgm)
         }
     }
 }
@@ -1808,12 +1857,26 @@ fn mono_ast_ty(
             ),
         }),
 
-        ast::Type::AssocTySelect { ty: _, assoc_ty: _ } => {
-            // This can happen when converting function signatures (parameters, return and exn
-            // types). We probably want to give type-checking types to all AST types during type
-            // checking and always deal with type-checking types here, to avoid duplicating
-            // complicated associated type selection logic (or trying to make it reusable).
-            todo!("ast::Type::AssocTySelect monomorph")
+        ast::Type::AssocTySelect { ty, assoc_ty } => {
+            // The inner type is a trait application like `Foo[U32]`. We can't monomorphize it
+            // as a regular type (traits aren't in poly_pgm.ty). Extract the trait name and
+            // monomorphize just the type args.
+            let (trait_name, trait_args) = match &*ty.node {
+                ast::Type::Named(ast::NamedType { name, args }) => {
+                    let mono_args: Vec<mono::Type> = args
+                        .iter()
+                        .map(|arg| mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm))
+                        .collect();
+                    (name, mono_args)
+                }
+                ast::Type::Var(var) => {
+                    // The trait application is a type variable — look it up in ty_map.
+                    // This shouldn't normally happen for AssocTySelect.
+                    panic!("Unexpected type variable {} in AssocTySelect", var);
+                }
+                _ => panic!("Expected named type in AssocTySelect, got {:?}", ty.node),
+            };
+            resolve_assoc_ty(trait_name, &trait_args, assoc_ty, poly_pgm, mono_pgm)
         }
     }
 }
