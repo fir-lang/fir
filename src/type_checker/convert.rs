@@ -201,9 +201,22 @@ fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
                 .iter()
                 .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
                 .collect(),
+            assoc_ty: None,
             loc: loc.clone(),
         },
 
-        ast::Pred::AssocTyEq { ty, assoc_ty, eq } => todo!(),
+        ast::Pred::AssocTyEq {
+            ty: ast::TypeApp { trait_, args },
+            assoc_ty,
+            eq,
+        } => Pred {
+            trait_: trait_.clone(),
+            params: args
+                .iter()
+                .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+                .collect(),
+            assoc_ty: Some((assoc_ty.clone(), convert_ast_ty(tys, &eq.node, &eq.loc))),
+            loc: loc.clone(),
+        },
     }
 }

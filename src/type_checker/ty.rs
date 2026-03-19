@@ -240,7 +240,7 @@ pub(super) struct TypeDetails {
     pub(super) sum: bool,
 }
 
-/// A predicate, e.g. `Iterator[coll, item]`.
+/// A predicate, e.g. `Iterator[iter, exn]`, `Iterator[iter, exn].Item = U32`.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) struct Pred {
     /// Trait of the predicate.
@@ -248,8 +248,13 @@ pub(super) struct Pred {
     /// `Iterator` in the example.
     pub(super) trait_: Id,
 
-    /// The type parameters. `[coll, item]` in the example.
+    /// The type parameters. `[iter, exn]` in the example.
     pub(super) params: Vec<Ty>,
+
+    /// If the predicate is an associated type equality, the right-hand side of the equality.
+    ///
+    /// E.g. in `Iterator[iter, exn].Item = U32`, this is `(Item, U32)`.
+    pub(super) assoc_ty: Option<(Id, Ty)>,
 
     /// Location of the expression that created this predicate.
     pub(super) loc: ast::Loc,
@@ -290,6 +295,10 @@ impl Scheme {
                     .iter()
                     .map(|param| param.subst_qvars(&var_map))
                     .collect(),
+                assoc_ty: pred
+                    .assoc_ty
+                    .as_ref()
+                    .map(|(id, ty)| (id.clone(), ty.subst_qvars(&var_map))),
                 loc: loc.clone(),
             };
             preds.push(pred);

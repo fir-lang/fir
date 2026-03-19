@@ -149,6 +149,7 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
                     |Pred {
                          trait_,
                          params,
+                         assoc_ty,
                          loc: _,
                      }| (trait_, params),
                 )

@@ -950,6 +950,7 @@ pub(super) fn check_expr(
                         tc_state.preds.push(Pred {
                             trait_: Ty::to_str_id(),
                             params: vec![Ty::UVar(expr_var.clone())],
+                            assoc_ty: None,
                             loc: expr.loc.clone(),
                         });
                         let (part_ty, _) = check_expr(

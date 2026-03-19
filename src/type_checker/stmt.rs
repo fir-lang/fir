@@ -346,6 +346,7 @@ fn check_stmt(
                     item_ty.clone(),
                     tc_state.exceptions.clone(),
                 ],
+                assoc_ty: None,
                 loc: stmt.loc.clone(),
             });
 
