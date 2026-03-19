@@ -168,22 +168,22 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> MonoPgm {
 
     // Copy types used by the interpreter built-ins.
     for ty in [
-        make_ast_ty("Bool", vec![]),
-        make_ast_ty("Char", vec![]),
-        make_ast_ty("Str", vec![]),
-        make_ast_ty("Ordering", vec![]),
-        make_ast_ty("I8", vec![]),
-        make_ast_ty("U8", vec![]),
-        make_ast_ty("I32", vec![]),
-        make_ast_ty("U32", vec![]),
-        make_ast_ty("Array", vec!["I8"]),
-        make_ast_ty("Array", vec!["U8"]),
-        make_ast_ty("Array", vec!["I32"]),
-        make_ast_ty("Array", vec!["U32"]),
-        make_ast_ty("Array", vec!["I64"]),
-        make_ast_ty("Array", vec!["U64"]),
+        make_tc_ty("Bool", vec![]),
+        make_tc_ty("Char", vec![]),
+        make_tc_ty("Str", vec![]),
+        make_tc_ty("Ordering", vec![]),
+        make_tc_ty("I8", vec![]),
+        make_tc_ty("U8", vec![]),
+        make_tc_ty("I32", vec![]),
+        make_tc_ty("U32", vec![]),
+        make_tc_ty("Array", vec!["I8"]),
+        make_tc_ty("Array", vec!["U8"]),
+        make_tc_ty("Array", vec!["I32"]),
+        make_tc_ty("Array", vec!["U32"]),
+        make_tc_ty("Array", vec!["I64"]),
+        make_tc_ty("Array", vec!["U64"]),
     ] {
-        mono_ast_ty(&ty, &Default::default(), &poly_pgm, &mut mono_pgm);
+        mono_tc_ty(&ty, &Default::default(), &poly_pgm, &mut mono_pgm);
     }
 
     let main = poly_pgm
@@ -196,20 +196,18 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> MonoPgm {
     mono_pgm
 }
 
-fn make_ast_ty(con: &'static str, args: Vec<&'static str>) -> ast::Type {
-    ast::Type::Named(ast::NamedType {
-        name: SmolStr::new_static(con),
-        args: args
-            .into_iter()
-            .map(|arg| ast::L {
-                loc: ast::Loc::dummy(),
-                node: (ast::Type::Named(ast::NamedType {
-                    name: SmolStr::new_static(arg),
-                    args: vec![],
-                })),
-            })
-            .collect(),
-    })
+fn make_tc_ty(con: &'static str, args: Vec<&'static str>) -> Ty {
+    if args.is_empty() {
+        Ty::Con(Id::new_static(con), Kind::Star)
+    } else {
+        Ty::App(
+            Id::new_static(con),
+            args.iter()
+                .map(|ty_arg| Ty::Con(Id::new_static(ty_arg), Kind::Star))
+                .collect(),
+            Kind::Star,
+        )
+    }
 }
 
 fn mono_top_fn(
