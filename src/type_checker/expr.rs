@@ -164,7 +164,7 @@ pub(super) fn check_expr(
                             labels,
                             extension.clone(),
                             tc_state.trait_env,
-                            &tc_state.var_gen,
+                            tc_state.var_gen,
                         );
                         let ty = match labels.get(field) {
                             Some(field_ty) => field_ty.clone(),
@@ -1820,7 +1820,7 @@ pub(super) fn check_match_expr(
             &refined_binders,
             tc_state.tys.tys.cons(),
             tc_state.trait_env,
-            &tc_state.var_gen,
+            tc_state.var_gen,
             &pat.loc,
         );
 

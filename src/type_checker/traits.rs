@@ -170,7 +170,7 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
 impl TraitImpl {
     /// Try to match the trait arguments. If successful, return new goals and associated types of
     /// the matching implementation.
-    pub fn try_match(
+    pub(super) fn try_match(
         &self,
         args: &[Ty],
         var_gen: &UVarGen,

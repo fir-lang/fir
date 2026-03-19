@@ -553,7 +553,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             }
 
             if impl_decl.items.iter().any(|item| match item {
-                ast::ImplDeclItem::Type { assoc_ty, rhs } => false,
+                ast::ImplDeclItem::Type {
+                    assoc_ty: _,
+                    rhs: _,
+                } => false,
                 ast::ImplDeclItem::Fun(fun) => &fun.node.name.node == trait_method_id,
             }) {
                 continue;
@@ -1242,7 +1245,7 @@ fn collect_schemes(
 
 /// Type check a top-level function.
 fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: &TraitEnv) {
-    let mut var_gen = UVarGen::default();
+    let var_gen = UVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
     assert_eq!(tys.tys.len_scopes(), 1);
@@ -1331,7 +1334,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
     }
 
-    resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
+    resolve_preds(trait_env, &assumps, tys, preds, &var_gen, 0);
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
@@ -1340,7 +1343,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
                 &stmt.loc,
                 tys.tys.cons(),
                 trait_env,
-                &mut var_gen,
+                &var_gen,
             );
         }
     }
@@ -1404,7 +1407,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
             let mut preds: Vec<Pred> = Default::default();
             let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
-            let mut var_gen = UVarGen::default();
+            let var_gen = UVarGen::default();
 
             match &fun.node.sig.self_ {
                 ast::SelfParam::No => {}
@@ -1456,7 +1459,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
 
-            resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
+            resolve_preds(trait_env, &assumps, tys, preds, &var_gen, 0);
 
             for stmt in body.iter_mut() {
                 normalize_stmt(
@@ -1464,7 +1467,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                     &stmt.loc,
                     tys.tys.cons(),
                     trait_env,
-                    &mut var_gen,
+                    &var_gen,
                 );
             }
         }
