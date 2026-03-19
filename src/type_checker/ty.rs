@@ -1261,7 +1261,11 @@ impl fmt::Display for Pred {
             }
             write!(f, "{ty}")?;
         }
-        write!(f, "]")
+        write!(f, "]")?;
+        if let Some((assoc_ty, rhs)) = &self.assoc_ty {
+            write!(f, ".{assoc_ty} = {rhs}")?;
+        }
+        Ok(())
     }
 }
 
