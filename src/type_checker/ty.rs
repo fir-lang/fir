@@ -372,8 +372,10 @@ impl Scheme {
                          loc,
                      }| Pred {
                         trait_: trait_.clone(),
-                        // TODO: is this a bug? ty[var -> ty]
-                        params: params.iter().map(|ty| ty.subst(var, ty)).collect(),
+                        params: params
+                            .iter()
+                            .map(|pred_ty| pred_ty.subst(var, ty))
+                            .collect(),
                         assoc_ty: assoc_ty
                             .as_ref()
                             .map(|(id, ty)| (id.clone(), ty.subst(var, ty))),
