@@ -107,7 +107,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, trait_env: &TraitEnv, main: &str) 
         },
         tys.tys.cons(),
         trait_env,
-        &mut UVarGen::default(),
+        &UVarGen::default(),
         0,
         &main_scheme.loc,
     );
@@ -198,7 +198,7 @@ struct TcFunState<'a> {
     tys: &'a mut PgmTypes,
 
     /// Unification variable generator.
-    var_gen: &'a mut UVarGen,
+    var_gen: &'a UVarGen,
 
     /// Exception type of the current function.
     ///
@@ -1319,7 +1319,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         return_ty: ret_ty.clone(),
         trait_env,
         env: &mut env,
-        var_gen: &mut var_gen,
+        var_gen: &var_gen,
         tys,
         preds: &mut preds,
         exceptions,
@@ -1335,7 +1335,13 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
-            normalize_stmt(&mut stmt.node, &stmt.loc, tys.tys.cons(), trait_env);
+            normalize_stmt(
+                &mut stmt.node,
+                &stmt.loc,
+                tys.tys.cons(),
+                trait_env,
+                &mut var_gen,
+            );
         }
     }
 
@@ -1440,7 +1446,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 return_ty: ret_ty.clone(),
                 trait_env,
                 env: &mut env,
-                var_gen: &mut var_gen,
+                var_gen: &var_gen,
                 tys,
                 preds: &mut preds,
                 exceptions,
@@ -1453,7 +1459,13 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
             resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
 
             for stmt in body.iter_mut() {
-                normalize_stmt(&mut stmt.node, &stmt.loc, tys.tys.cons(), trait_env);
+                normalize_stmt(
+                    &mut stmt.node,
+                    &stmt.loc,
+                    tys.tys.cons(),
+                    trait_env,
+                    &mut var_gen,
+                );
             }
         }
 
@@ -1524,7 +1536,7 @@ fn resolve_preds(
     assumps: &Vec<Pred>,
     tys: &PgmTypes,
     preds: Vec<Pred>,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     _level: u32,
 ) {
     let mut goals: Vec<Pred> = preds.into_iter().collect();
@@ -1542,7 +1554,7 @@ fn resolve_preds(
         'goals: while let Some(mut pred) = goals.pop() {
             pred.params
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(tys.tys.cons(), trait_env));
+                .for_each(|ty| *ty = ty.deep_normalize(tys.tys.cons(), trait_env, var_gen));
 
             if pred.trait_ == "RecRow" {
                 assert!(pred.assoc_ty.is_none());

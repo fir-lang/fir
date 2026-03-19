@@ -170,7 +170,7 @@ pub enum Kind {
 
 #[derive(Debug, Default)]
 pub(super) struct UVarGen {
-    next_id: u32,
+    next_id: Cell<u32>,
 }
 
 /// A type constructor.
@@ -270,7 +270,7 @@ impl Scheme {
     pub(super) fn instantiate(
         &self,
         level: u32,
-        var_gen: &mut UVarGen,
+        var_gen: &UVarGen,
         preds: &mut Vec<Pred>,
         loc: &ast::Loc,
     ) -> (Ty, Vec<UVarRef>) {
@@ -556,6 +556,7 @@ fn ty_eq_modulo_alpha(
                 labels1,
                 extension1.clone(),
                 &Default::default(),
+                &UVarGen::default(),
             );
 
             let (labels2, extension2) = crate::type_checker::row_utils::collect_rows(
@@ -565,6 +566,7 @@ fn ty_eq_modulo_alpha(
                 labels2,
                 extension2.clone(),
                 &Default::default(),
+                &UVarGen::default(),
             );
 
             if labels1.keys().collect::<HashSet<_>>() != labels2.keys().collect() {
@@ -898,12 +900,17 @@ impl Ty {
         }
     }
 
-    pub(super) fn deep_normalize(&self, cons: &ScopeMap<Id, TyCon>, trait_env: &TraitEnv) -> Ty {
+    pub(super) fn deep_normalize(
+        &self,
+        cons: &ScopeMap<Id, TyCon>,
+        trait_env: &TraitEnv,
+        var_gen: &UVarGen,
+    ) -> Ty {
         match self {
             Ty::UVar(var_ref) => {
                 let mut var_ref_link = var_ref.normalize(cons);
                 if var_ref_link != Ty::UVar(var_ref.clone()) {
-                    var_ref_link = var_ref_link.deep_normalize(cons, trait_env);
+                    var_ref_link = var_ref_link.deep_normalize(cons, trait_env, var_gen);
                     var_ref.set_link(var_ref_link.clone());
                 }
                 var_ref_link
@@ -914,7 +921,7 @@ impl Ty {
             Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
                 args.iter()
-                    .map(|ty| ty.deep_normalize(cons, trait_env))
+                    .map(|ty| ty.deep_normalize(cons, trait_env, var_gen))
                     .collect(),
                 kind.clone(),
             ),
@@ -932,6 +939,7 @@ impl Ty {
                     labels,
                     extension.clone(),
                     trait_env,
+                    var_gen,
                 );
                 Ty::Anonymous {
                     labels,
@@ -949,19 +957,21 @@ impl Ty {
                 args: match args {
                     FunArgs::Positional(args) => FunArgs::Positional(
                         args.iter()
-                            .map(|arg| arg.deep_normalize(cons, trait_env))
+                            .map(|arg| arg.deep_normalize(cons, trait_env, var_gen))
                             .collect(),
                     ),
                     FunArgs::Named(args) => FunArgs::Named(
                         args.iter()
-                            .map(|(name, arg)| (name.clone(), arg.deep_normalize(cons, trait_env)))
+                            .map(|(name, arg)| {
+                                (name.clone(), arg.deep_normalize(cons, trait_env, var_gen))
+                            })
                             .collect(),
                     ),
                 },
-                ret: Box::new(ret.deep_normalize(cons, trait_env)),
+                ret: Box::new(ret.deep_normalize(cons, trait_env, var_gen)),
                 exceptions: exceptions
                     .as_ref()
-                    .map(|exn| Box::new(exn.deep_normalize(cons, trait_env))),
+                    .map(|exn| Box::new(exn.deep_normalize(cons, trait_env, var_gen))),
             },
 
             Ty::QVar(_, _) => self.clone(),
@@ -970,7 +980,7 @@ impl Ty {
                 ty: inner_ty,
                 assoc_ty,
             } => {
-                let inner_ty = inner_ty.deep_normalize(cons, trait_env);
+                let inner_ty = inner_ty.deep_normalize(cons, trait_env, var_gen);
 
                 let (trait_name, trait_args): (&Id, &[Ty]) = match &inner_ty {
                     Ty::App(con, args, _) => (con, args.as_slice()),
@@ -986,7 +996,6 @@ impl Ty {
                 if let Some(impls) = trait_env.get(trait_name) {
                     for impl_ in impls {
                         assert_eq!(impl_.trait_args.len(), trait_args.len());
-                        let mut var_gen = UVarGen::default();
 
                         let var_map: HashMap<Id, Ty> = impl_
                             .qvars
@@ -1004,13 +1013,13 @@ impl Ty {
                                 &instantiated_impl_arg,
                                 ty_arg,
                                 cons,
-                                &mut var_gen,
+                                var_gen,
                                 0,
                                 &ast::Loc::dummy(),
                             ) {
                                 let rhs = impl_.assoc_tys.get(assoc_ty).unwrap();
                                 let resolved = rhs.subst_qvars(&var_map);
-                                return resolved.deep_normalize(cons, trait_env);
+                                return resolved.deep_normalize(cons, trait_env, var_gen);
                             }
                         }
                     }
@@ -1110,9 +1119,9 @@ impl UVarRef {
 }
 
 impl UVarGen {
-    pub(super) fn new_var(&mut self, level: u32, kind: Kind, loc: ast::Loc) -> UVarRef {
-        let id = self.next_id;
-        self.next_id += 1;
+    pub(super) fn new_var(&self, level: u32, kind: Kind, loc: ast::Loc) -> UVarRef {
+        let id = self.next_id.get();
+        self.next_id.update(|c| c + 1);
         UVarRef(Rc::new(UVar {
             id,
             level: Cell::new(level),

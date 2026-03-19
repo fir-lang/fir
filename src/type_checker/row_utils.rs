@@ -10,10 +10,11 @@ pub(crate) fn collect_rows(
     labels: &OrdMap<Id, Ty>,
     mut extension: Option<Box<Ty>>,
     trait_env: &TraitEnv,
+    var_gen: &UVarGen,
 ) -> (OrdMap<Id, Ty>, Option<Ty>) {
     let mut all_labels: OrdMap<Id, Ty> = labels
         .iter()
-        .map(|(id, ty)| (id.clone(), ty.deep_normalize(cons, trait_env)))
+        .map(|(id, ty)| (id.clone(), ty.deep_normalize(cons, trait_env, var_gen)))
         .collect();
 
     while let Some(ext) = extension {

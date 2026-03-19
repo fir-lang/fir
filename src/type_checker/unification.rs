@@ -10,16 +10,16 @@ pub(super) fn unify(
     ty2: &Ty,
     cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) {
-    let ty1 = ty1.deep_normalize(cons, trait_env);
+    let ty1 = ty1.deep_normalize(cons, trait_env, var_gen);
     if ty1.is_void() {
         return;
     }
 
-    let ty2 = ty2.deep_normalize(cons, trait_env);
+    let ty2 = ty2.deep_normalize(cons, trait_env, var_gen);
     if ty2.is_void() {
         return;
     }
@@ -224,6 +224,7 @@ pub(super) fn unify(
                 labels1,
                 extension1.clone(),
                 &Default::default(),
+                var_gen,
             );
             let (labels2, mut extension2) = collect_rows(
                 cons,
@@ -232,6 +233,7 @@ pub(super) fn unify(
                 labels2,
                 extension2.clone(),
                 &Default::default(),
+                var_gen,
             );
 
             let keys1: HashSet<&Id> = labels1.keys().collect();
@@ -339,7 +341,7 @@ pub(super) fn try_unify_one_way(
     ty1: &Ty,
     ty2: &Ty,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> bool {
@@ -482,6 +484,7 @@ pub(super) fn try_unify_one_way(
                 labels1,
                 extension1.clone(),
                 &Default::default(),
+                var_gen,
             );
             let (labels2, extension2) = collect_rows(
                 cons,
@@ -490,6 +493,7 @@ pub(super) fn try_unify_one_way(
                 labels2,
                 extension2.clone(),
                 &Default::default(),
+                var_gen,
             );
 
             let keys1: HashSet<&Id> = labels1.keys().collect();
@@ -556,7 +560,7 @@ fn link_extension(
     extra_labels: &HashSet<&&Id>,
     label_values: &OrdMap<Id, Ty>,
     var: &UVarRef,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> UVarRef {
@@ -588,7 +592,7 @@ pub(super) fn unify_expected_ty(
     expected_ty: Option<&Ty>,
     cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> Ty {

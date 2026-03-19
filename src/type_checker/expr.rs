@@ -164,6 +164,7 @@ pub(super) fn check_expr(
                             labels,
                             extension.clone(),
                             tc_state.trait_env,
+                            &tc_state.var_gen,
                         );
                         let ty = match labels.get(field) {
                             Some(field_ty) => field_ty.clone(),
@@ -1819,6 +1820,7 @@ pub(super) fn check_match_expr(
             &refined_binders,
             tc_state.tys.tys.cons(),
             tc_state.trait_env,
+            &tc_state.var_gen,
             &pat.loc,
         );
 
@@ -2266,6 +2268,7 @@ fn add_coercions(
     refined_binders: &HashMap<Id, Ty>,
     cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
+    var_gen: &UVarGen,
     _loc: &ast::Loc,
 ) {
     match pat {
@@ -2274,8 +2277,11 @@ fn add_coercions(
             let refined_ty = refined_binders
                 .get(var)
                 .unwrap()
-                .deep_normalize(cons, trait_env);
-            let ty = ty.as_ref().unwrap().deep_normalize(cons, trait_env);
+                .deep_normalize(cons, trait_env, var_gen);
+            let ty = ty
+                .as_ref()
+                .unwrap()
+                .deep_normalize(cons, trait_env, var_gen);
             if refined_ty != ty {
                 *refined = Some(refined_ty);
             }
@@ -2297,6 +2303,7 @@ fn add_coercions(
                     refined_binders,
                     cons,
                     trait_env,
+                    var_gen,
                     &field.node.loc,
                 );
             }
@@ -2305,8 +2312,22 @@ fn add_coercions(
         ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) => {}
 
         ast::Pat::Or(p1, p2) => {
-            add_coercions(&mut p1.node, refined_binders, cons, trait_env, &p1.loc);
-            add_coercions(&mut p2.node, refined_binders, cons, trait_env, &p2.loc);
+            add_coercions(
+                &mut p1.node,
+                refined_binders,
+                cons,
+                trait_env,
+                var_gen,
+                &p1.loc,
+            );
+            add_coercions(
+                &mut p2.node,
+                refined_binders,
+                cons,
+                trait_env,
+                var_gen,
+                &p2.loc,
+            );
         }
 
         ast::Pat::Variant(ast::VariantPat {
@@ -2314,7 +2335,14 @@ fn add_coercions(
             inferred_ty: _,
             inferred_pat_ty: _,
         }) => {
-            add_coercions(&mut pat.node, refined_binders, cons, trait_env, &pat.loc);
+            add_coercions(
+                &mut pat.node,
+                refined_binders,
+                cons,
+                trait_env,
+                var_gen,
+                &pat.loc,
+            );
         }
     }
 }

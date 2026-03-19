@@ -12,7 +12,7 @@ use smol_str::SmolStr;
 pub(crate) fn check_coverage(
     arms: &[ast::Alt],
     scrut_ty: &Ty,
-    tc_state: &TcFunState,
+    tc_state: &mut TcFunState,
     loc: &ast::Loc,
 ) -> (bool, CoverageInfo) {
     let mut info = CoverageInfo::from_match_arms(arms);
@@ -144,7 +144,11 @@ impl PatMatrix {
         // print!("{}", indent(&self.to_string(), trace.len() * 4));
 
         let next_ty = match self.field_tys.first() {
-            Some(next_ty) => next_ty.deep_normalize(tc_state.tys.tys.cons(), tc_state.trait_env),
+            Some(next_ty) => next_ty.deep_normalize(
+                tc_state.tys.tys.cons(),
+                tc_state.trait_env,
+                &tc_state.var_gen,
+            ),
             None => {
                 for row in self.rows.iter() {
                     info.mark_useful(row.arm_index, &row.bound_vars);
@@ -222,6 +226,7 @@ impl PatMatrix {
                     labels,
                     extension.clone(),
                     tc_state.trait_env,
+                    &tc_state.var_gen,
                 );
 
                 let mut exhaustive = true;
@@ -286,6 +291,7 @@ impl PatMatrix {
                     labels,
                     extension.clone(),
                     tc_state.trait_env,
+                    &tc_state.var_gen,
                 );
 
                 let mut labels_vec: Vec<(SmolStr, Ty)> = labels.into_iter().collect();
