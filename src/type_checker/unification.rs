@@ -317,6 +317,27 @@ pub(super) fn unify(
             }
         }
 
+        (
+            Ty::AssocTySelect {
+                ty: ty1_inner,
+                assoc_ty: assoc1,
+            },
+            Ty::AssocTySelect {
+                ty: ty2_inner,
+                assoc_ty: assoc2,
+            },
+        ) => {
+            if assoc1 != assoc2 {
+                panic!(
+                    "{}: Unable to unify types {} and {}",
+                    loc_display(loc),
+                    ty1,
+                    ty2,
+                );
+            }
+            unify(ty1_inner, ty2_inner, cons, trait_env, var_gen, level, loc);
+        }
+
         (ty1, ty2) => panic!(
             "{}: Unable to unify types
              {} and
