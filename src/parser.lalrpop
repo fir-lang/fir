@@ -243,6 +243,7 @@ LTypeNamed: L<Type> = {
     <l:@L> <ty:TypeNamed> <r:@R> => L::new(module, l, r, ty),
 }
 
+// NOTE: If you update this make sure it's in sync with `TypeNoFn`.
 Type: Type = {
     #[precedence(level = "0")]
     <ty:TypeNamed> => ty,
@@ -271,7 +272,7 @@ Type: Type = {
     "row[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
 
-    <ty:LType> "." <assoc_ty:UpperId> => {
+    <ty:LTypeNamed> "." <assoc_ty:UpperId> => {
         Type::AssocTySelect {
             ty: ty.map(Box::new),
             assoc_ty: assoc_ty.smol_str(),
@@ -279,6 +280,7 @@ Type: Type = {
     },
 }
 
+// NOTE: If you update this make sure it's in sync with `Type`.
 TypeNoFn: Type = {
     <ty:TypeNamed> => ty,
 
@@ -301,6 +303,13 @@ TypeNoFn: Type = {
 
     "row[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
+
+    <ty:LTypeNamed> "." <assoc_ty:UpperId> => {
+        Type::AssocTySelect {
+            ty: ty.map(Box::new),
+            assoc_ty: assoc_ty.smol_str(),
+        }
+    },
 }
 
 LTypeNoFn: L<Type> = {
