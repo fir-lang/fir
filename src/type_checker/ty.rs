@@ -1015,20 +1015,24 @@ impl Ty {
                             })
                             .collect();
 
-                        for (impl_arg, ty_arg) in impl_.trait_args.iter().zip(trait_args.iter()) {
-                            let instantiated_impl_arg = impl_arg.subst_qvars(&var_map);
-                            if crate::type_checker::unification::try_unify_one_way(
-                                &instantiated_impl_arg,
-                                ty_arg,
-                                cons,
-                                var_gen,
-                                0,
-                                &ast::Loc::dummy(),
-                            ) {
-                                let rhs = impl_.assoc_tys.get(assoc_ty).unwrap();
-                                let resolved = rhs.subst_qvars(&var_map);
-                                return resolved.deep_normalize(cons, trait_env, var_gen, assumps);
-                            }
+                        let all_match = impl_.trait_args.iter().zip(trait_args.iter()).all(
+                            |(impl_arg, ty_arg)| {
+                                let instantiated_impl_arg = impl_arg.subst_qvars(&var_map);
+                                crate::type_checker::unification::try_unify_one_way(
+                                    &instantiated_impl_arg,
+                                    ty_arg,
+                                    cons,
+                                    var_gen,
+                                    0,
+                                    &ast::Loc::dummy(),
+                                )
+                            },
+                        );
+
+                        if all_match {
+                            let rhs = impl_.assoc_tys.get(assoc_ty).unwrap();
+                            let resolved = rhs.subst_qvars(&var_map);
+                            return resolved.deep_normalize(cons, trait_env, var_gen, assumps);
                         }
                     }
                 }
