@@ -614,8 +614,22 @@ ImplDecl.format(self, tokens: Array[Token]) Doc:
 
 
 ImplDeclItem.format(self, tokens: Array[Token]) Doc:
-    # TODO
-    panic("")
+    match self:
+        ImplDeclItem.Type(assocTy, rhs):
+            let typeToken = prevNonTrivia(assocTy.token, tokens).unwrap()
+            assert(tokens.get(typeToken.idx).kind is TokenKind.Type)
+
+            let eqToken = nextNonTrivia(assocTy.token, tokens).unwrap()
+            assert(tokens.get(eqToken.idx).kind is TokenKind.Eq)
+
+            formatToken(typeToken, tokens)
+                + Doc.blank(1)
+                + formatToken(assocTy.token, tokens)
+                + Doc.blank(1)
+                + formatToken(eqToken, tokens)
+                + rhs.format(tokens)
+
+        ImplDeclItem.Fun(fun): fun.format(tokens)
 
 
 # --------------------------------------------------------------------------------------------------

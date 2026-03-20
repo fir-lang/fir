@@ -476,7 +476,8 @@ impl Tokens[TypeApp]:
         self.trait_.token
 
     lastToken(self: TypeApp, tokens: Array[Token]) TokenIdx:
-        panic("TODO")
+        nextNonTrivia(self.args.last().unwrap().lastToken(tokens), tokens)
+            .unwrap()
 
 
 #[derive(ToDoc)]

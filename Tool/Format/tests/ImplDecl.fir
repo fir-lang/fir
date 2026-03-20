@@ -1,4 +1,4 @@
-impl[Foo[bar], Baz] Iterator[VecIter[t], t, exn]:
+impl[Foo[bar], Baz[t]] Iterator[VecIter[t], t, exn]:
     foo()
 
     bar()
@@ -6,7 +6,7 @@ impl[Foo[bar], Baz] Iterator[VecIter[t], t, exn]:
     baz()
 
 # expected stdout:
-# impl[Foo[bar], Baz] Iterator[VecIter[t], t, exn]:
+# impl[Foo[bar], Baz[t]] Iterator[VecIter[t], t, exn]:
 #     foo()
 # 
 #     bar()
