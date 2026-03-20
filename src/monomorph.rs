@@ -1780,12 +1780,18 @@ fn mono_tc_ty(
         },
 
         Ty::AssocTySelect { ty, assoc_ty } => {
-            let mono_inner = mono_tc_ty(&ty, ty_map, poly_pgm, mono_pgm);
-            let (trait_name, trait_args) = match &mono_inner {
-                mono::Type::Named(named) => (&named.name, named.args.as_slice()),
-                _ => panic!("Expected named type in AssocTySelect, got {:?}", mono_inner),
+            // The `ty` is a trait application like `Trait[Arg]`, not a regular type. Extract the
+            // trait name and args directly, monomorphize only the args.
+            let (trait_name, args): (&Id, &[Ty]) = match ty.as_ref() {
+                Ty::App(name, args, _kind) => (name, args.as_slice()),
+                Ty::Con(name, _kind) => (name, &[]),
+                _ => panic!("Expected trait constructor in AssocTySelect, got {:?}", ty),
             };
-            resolve_assoc_ty(trait_name, trait_args, &assoc_ty, poly_pgm, mono_pgm)
+            let mono_args: Vec<mono::Type> = args
+                .iter()
+                .map(|arg| mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm))
+                .collect();
+            resolve_assoc_ty(trait_name, &mono_args, &assoc_ty, poly_pgm, mono_pgm)
         }
     }
 }
