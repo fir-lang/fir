@@ -12,7 +12,7 @@ use smol_str::SmolStr;
 pub(crate) fn check_coverage(
     arms: &[ast::Alt],
     scrut_ty: &Ty,
-    tc_state: &mut TcFunState,
+    tc_state: &TcFunState,
     loc: &ast::Loc,
 ) -> (bool, CoverageInfo) {
     let mut info = CoverageInfo::from_match_arms(arms);
