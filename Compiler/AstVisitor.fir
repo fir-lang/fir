@@ -220,6 +220,12 @@ trait Visitor[v]:
     visitTyArgs(self: v, t: TyArgs):
         defaultVisitTyArgs(self, t)
 
+    visitPred(self: v, p: Pred_):
+        defaultVisitPred(self, p)
+
+    visitTypeApp(self: v, t: TypeApp):
+        defaultVisitTypeApp(self, t)
+
     # ----------------------------------------------------------------
     # Ids
 
@@ -278,8 +284,8 @@ defaultVisitFunArg[Visitor[v]](v: v, arg: FunArg):
 
 
 defaultVisitContext[Visitor[v]](v: v, ctx: Context):
-    for pred in ctx.preds.iter():
-        v.visitType(pred)
+    for pred: Pred_ in ctx.preds.iter():
+        v.visitPred(pred)
 
 
 defaultVisitConFields[Visitor[v]](v: v, fields: ConFields):
@@ -351,6 +357,9 @@ defaultVisitType[Visitor[v]](v: v, ty: Type):
         Type.Record(t): v.visitRecordType(t)
         Type.Variant(t): v.visitVariantType(t)
         Type.Fn_(t): v.visitFnType(t)
+        Type.AssocTySelect(..):
+            # TODO: We need an AssocTySelectType type
+            panic("TODO")
 
 
 defaultVisitVarExpr[Visitor[v]](v: v, e: VarExpr):
@@ -556,3 +565,16 @@ defaultVisitFnType[Visitor[v]](v: v, t: FnType):
 defaultVisitTyArgs[Visitor[v]](v: v, t: TyArgs):
     for arg: Type in t.args.iter():
         v.visitType(arg)
+
+
+defaultVisitPred[Visitor[v]](v: v, p: Pred_):
+    match p:
+        Pred_.App(app): v.visitTypeApp(app)
+        Pred_.AssocTyEq(ty, assocTy = _, eq):
+            v.visitTypeApp(ty)
+            v.visitType(eq)
+
+
+defaultVisitTypeApp[Visitor[v]](v: v, t: TypeApp):
+    for t in t.args.iter():
+        v.visitType(t)

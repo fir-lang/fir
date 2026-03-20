@@ -333,6 +333,7 @@ impl Tokens[Type]:
             Type.Record(ty): ty.firstToken(tokens)
             Type.Variant(ty): ty.firstToken(tokens)
             Type.Fn_(ty): ty.firstToken(tokens)
+            Type.AssocTySelect(ty, ..): ty.firstToken(tokens)
 
     lastToken(self: Type, tokens: Array[Token]) TokenIdx:
         match self:
@@ -341,6 +342,7 @@ impl Tokens[Type]:
             Type.Record(ty): ty.lastToken(tokens)
             Type.Variant(ty): ty.lastToken(tokens)
             Type.Fn_(ty): ty.lastToken(tokens)
+            Type.AssocTySelect(assocTy, ..): assocTy.token
 
 
 #[derive(ToDoc)]
@@ -426,7 +428,7 @@ impl Tokens[FnType]:
 #[derive(ToDoc)]
 type Context(
     ## Predicates: `Iterator[iter, item]` and `Debug[item]` in the example.
-    preds: Vec[Type],
+    preds: Vec[Pred_],
 
     # Left bracket.
     _firstToken: TokenIdx,
@@ -434,6 +436,47 @@ type Context(
     # Right bracket.
     _lastToken: TokenIdx,
 )
+
+
+## A predicate in a context. E.g. in context `[Iterator[coll, item],
+## Debug[item]]`, we have two predicates: `ToStr[t]` (`Pred.App`),
+## `Iterator[iter, exn].Item = U32` (`Pred.AssocTyEq`).
+#[derive(ToDoc)]
+type Pred_:
+    App(TypeApp)
+    AssocTyEq(
+        ty: TypeApp,
+        assocTy: Id,
+        eq: Type,
+    )
+
+
+impl Tokens[Pred_]:
+    firstToken(self: Pred_, tokens: Array[Token]) TokenIdx:
+        match self:
+            Pred_.App(app): app.firstToken(tokens)
+            Pred_.AssocTyEq(ty, ..): ty.firstToken(tokens)
+
+    lastToken(self: Pred_, tokens: Array[Token]) TokenIdx:
+        match self:
+            Pred_.App(app): app.lastToken(tokens)
+            Pred_.AssocTyEq(eq, ..): eq.lastToken(tokens)
+
+
+## A type application, used in predicates. E.g. `Iterator[coll, item]`.
+#[derive(ToDoc)]
+type TypeApp(
+    trait_: Id,
+    args: Vec[Type],
+)
+
+
+impl Tokens[TypeApp]:
+    firstToken(self: TypeApp, tokens: Array[Token]) TokenIdx:
+        self.trait_.token
+
+    lastToken(self: TypeApp, tokens: Array[Token]) TokenIdx:
+        panic("TODO")
 
 
 #[derive(ToDoc)]
@@ -2029,6 +2072,47 @@ impl ToDoc[Context]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("Context") + Doc.char('(') + args)
+
+
+impl ToDoc[Pred_]:
+    toDoc(self: Pred_) Doc:
+        match self:
+            Pred_.App(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Pred_.App") + Doc.char('(') + args)
+            Pred_.AssocTyEq(ty, assocTy, eq):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + ty.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("assocTy =")
+                        + Doc.nested(4, Doc.break_(1) + assocTy.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("eq =") + Doc.nested(4, Doc.break_(1) + eq.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Pred_.AssocTyEq") + Doc.char('(') + args
+
+
+impl ToDoc[TypeApp]:
+    toDoc(self: TypeApp) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("trait_ =")
+                + Doc.nested(4, Doc.break_(1) + self.trait_.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("args =") + Doc.nested(4, Doc.break_(1) + self.args.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("TypeApp") + Doc.char('(') + args)
 
 
 impl ToDoc[TypeParam]:

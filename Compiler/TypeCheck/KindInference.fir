@@ -75,8 +75,15 @@ _addMissingTypeParamsFun(
     let boundVars: HashSet[Str] = HashSet.fromIter(tvs.keys())
 
     if sig.context is Option.Some(context):
-        for pred: Type in context.preds.iter():
-            _collectTvs(pred, tvs, tokens)
+        for pred: Pred_ in context.preds.iter():
+            match pred:
+                Pred_.App(TypeApp(trait_ = _, args)):
+                    for arg: Type in args.iter():
+                        _collectTvs(arg, tvs, tokens)
+                Pred_.AssocTyEq(ty = TypeApp(trait_ = _, args), assocTy = _, eq):
+                    for arg: Type in args.iter():
+                        _collectTvs(arg, tvs, tokens)
+                    _collectTvs(eq, tvs, tokens)
 
     match sig.self_:
         SelfParam.No | SelfParam.Implicit: ()
@@ -149,8 +156,15 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
         .empty()
 
     if impl_.context is Option.Some(context):
-        for pred: Type in context.preds.iter():
-            _collectTvs(pred, implContextVarKinds, tokens)
+        for pred: Pred_ in context.preds.iter():
+            match pred:
+                Pred_.App(TypeApp(trait_ = _, args)):
+                    for arg: Type in args.iter():
+                        _collectTvs(arg, implContextVarKinds, tokens)
+                Pred_.AssocTyEq(ty = TypeApp(trait_ = _, args), assocTy = _, eq):
+                    for arg: Type in args.iter():
+                        _collectTvs(arg, implContextVarKinds, tokens)
+                    _collectTvs(eq, implContextVarKinds, tokens)
 
     for ty: Type in impl_.tys.iter():
         _collectTvs(ty, implContextVarKinds, tokens)
@@ -249,6 +263,8 @@ _collectTvs(
 
             if exceptions is Option.Some(exn):
                 _collectTvs(exn, tvs, tokens)
+
+        Type.AssocTySelect(ty, assocTy = _): _collectTvs(ty, tvs, tokens)
 
 
 _collectNamedTyTvs(
