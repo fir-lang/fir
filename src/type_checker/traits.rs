@@ -145,7 +145,7 @@ impl TraitImpl {
     pub fn try_match(
         &self,
         args: &[Ty],
-        var_gen: &mut UVarGen,
+        var_gen: &UVarGen,
         tys: &TyMap,
         loc: &ast::Loc,
     ) -> Option<Vec<Pred>> {

@@ -8,7 +8,7 @@ pub(super) fn unify(
     ty1: &Ty,
     ty2: &Ty,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) {
@@ -300,7 +300,7 @@ pub(super) fn try_unify_one_way(
     ty1: &Ty,
     ty2: &Ty,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> bool {
@@ -505,7 +505,7 @@ fn link_extension(
     extra_labels: &HashSet<&&Id>,
     label_values: &OrdMap<Id, Ty>,
     var: &UVarRef,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> UVarRef {
@@ -536,7 +536,7 @@ pub(super) fn unify_expected_ty(
     ty: Ty,
     expected_ty: Option<&Ty>,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> Ty {

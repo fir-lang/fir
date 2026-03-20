@@ -106,7 +106,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, main: &str) {
             exceptions: Some(Box::new(Ty::empty_variant())),
         },
         tys.tys.cons(),
-        &mut UVarGen::default(),
+        &UVarGen::default(),
         0,
         &main_scheme.loc,
     );
@@ -187,7 +187,7 @@ struct TcFunState<'a> {
     tys: &'a mut PgmTypes,
 
     /// Unification variable generator.
-    var_gen: &'a mut UVarGen,
+    var_gen: &'a UVarGen,
 
     /// Exception type of the current function.
     ///
@@ -1201,7 +1201,7 @@ fn collect_schemes(
 
 /// Type check a top-level function.
 fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: &TraitEnv) {
-    let mut var_gen = UVarGen::default();
+    let var_gen = UVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
     assert_eq!(tys.tys.len_scopes(), 1);
@@ -1279,7 +1279,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         return_ty: ret_ty.clone(),
         trait_env,
         env: &mut env,
-        var_gen: &mut var_gen,
+        var_gen: &var_gen,
         tys,
         preds: &mut preds,
         exceptions,
@@ -1291,7 +1291,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
     }
 
-    resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
+    resolve_preds(trait_env, &assumps, tys, preds, &var_gen, 0);
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
@@ -1353,7 +1353,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
             let mut preds: Vec<Pred> = Default::default();
             let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
-            let mut var_gen = UVarGen::default();
+            let var_gen = UVarGen::default();
 
             match &fun.node.sig.self_ {
                 ast::SelfParam::No => {}
@@ -1395,7 +1395,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 return_ty: ret_ty.clone(),
                 trait_env,
                 env: &mut env,
-                var_gen: &mut var_gen,
+                var_gen: &var_gen,
                 tys,
                 preds: &mut preds,
                 exceptions,
@@ -1405,7 +1405,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
 
-            resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
+            resolve_preds(trait_env, &assumps, tys, preds, &var_gen, 0);
 
             for stmt in body.iter_mut() {
                 normalize_stmt(&mut stmt.node, &stmt.loc, tys.tys.cons());
@@ -1464,7 +1464,7 @@ fn resolve_preds(
     assumps: &Vec<Pred>,
     tys: &PgmTypes,
     preds: Vec<Pred>,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     _level: u32,
 ) {
     let mut goals: Vec<Pred> = preds.into_iter().collect();

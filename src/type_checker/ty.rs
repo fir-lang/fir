@@ -164,7 +164,7 @@ pub enum Kind {
 
 #[derive(Debug, Default)]
 pub(super) struct UVarGen {
-    next_id: u32,
+    next_id: Cell<u32>,
 }
 
 /// A type constructor.
@@ -256,7 +256,7 @@ impl Scheme {
     pub(super) fn instantiate(
         &self,
         level: u32,
-        var_gen: &mut UVarGen,
+        var_gen: &UVarGen,
         preds: &mut Vec<Pred>,
         loc: &ast::Loc,
     ) -> (Ty, Vec<UVarRef>) {
@@ -973,9 +973,9 @@ impl UVarRef {
 }
 
 impl UVarGen {
-    pub(super) fn new_var(&mut self, level: u32, kind: Kind, loc: ast::Loc) -> UVarRef {
-        let id = self.next_id;
-        self.next_id += 1;
+    pub(super) fn new_var(&self, level: u32, kind: Kind, loc: ast::Loc) -> UVarRef {
+        let id = self.next_id.get();
+        self.next_id.update(|c| c + 1);
         UVarRef(Rc::new(UVar {
             id,
             level: Cell::new(level),
