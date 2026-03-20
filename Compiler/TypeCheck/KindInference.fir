@@ -114,7 +114,11 @@ _addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
         traitContextVarKinds.insert(paramStr, Option.None)
         traitContextVars.insert(paramStr)
 
-    for fun: FunDecl in trait_.items.iter():
+    for item: TraitDeclItem in trait_.items.iter():
+        let fun = match item:
+            TraitDeclItem.Type(_): continue
+            TraitDeclItem.Fun(fun): fun
+
         # Update trait context variable kinds. This also adds function context
         # variables, which we remove below.
         _addMissingTypeParamsFun(fun.sig, traitContextVarKinds, tokens)

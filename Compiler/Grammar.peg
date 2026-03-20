@@ -991,10 +991,13 @@ traitDecl TraitDecl:
         )
 
 
-traitDeclRhs Vec[FunDecl]:
+traitDeclRhs Vec[TraitDeclItem]:
     "NEWLINE": Vec.empty()
-    ":" "NEWLINE" "INDENT" fs=funDecl+ "DEDENT": fs
+    ":" "NEWLINE" "INDENT" items=traitDeclItem+ "DEDENT": items
 
+
+traitDeclItem TraitDeclItem:
+    fun=funDecl: TraitDeclItem.Fun(fun)
 
 # --------------------------------------------------------------------------------------------------
 # Impl declarations

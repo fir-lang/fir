@@ -241,8 +241,15 @@ type TraitDecl(
     typeParamKinds: Vec[Kind],
 
     ## Methods of the trait.
-    items: Vec[FunDecl],
+    items: Vec[TraitDeclItem],
 )
+
+
+#[derive(ToDoc)]
+type TraitDeclItem:
+    ## `type Foo` in a `trait` declaration. Declares an associated type.
+    Type(Id)
+    Fun(FunDecl)
 
 
 ## An `impl` block, implementing a trait for a type.
@@ -1782,6 +1789,21 @@ impl ToDoc[TraitDecl]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("TraitDecl") + Doc.char('(') + args)
+
+
+impl ToDoc[TraitDeclItem]:
+    toDoc(self: TraitDeclItem) Doc:
+        match self:
+            TraitDeclItem.Type(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("TraitDeclItem.Type") + Doc.char('(') + args)
+            TraitDeclItem.Fun(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("TraitDeclItem.Fun") + Doc.char('(') + args)
 
 
 impl ToDoc[ImplDecl]:

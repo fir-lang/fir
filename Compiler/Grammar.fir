@@ -4858,7 +4858,7 @@ traitDecl(state: ParserState[Token, ()]) TraitDecl / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-traitDeclRhs(state: ParserState[Token, ()]) Vec[FunDecl] / U32:
+traitDeclRhs(state: ParserState[Token, ()]) Vec[TraitDeclItem] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -4891,16 +4891,16 @@ traitDeclRhs(state: ParserState[Token, ()]) Vec[FunDecl] / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let fs = Vec.empty()
-            fs.push(funDecl(state))
+            let items = Vec.empty()
+            items.push(traitDeclItem(state))
             let zeroOrMoreCursor0 = state._cursor
             loop:
-                let fsLen0 = fs.len()
-                let symResult = try(\(): fs.push(funDecl(state)))
+                let itemsLen0 = items.len()
+                let symResult = try(\(): items.push(traitDeclItem(state)))
                 match symResult:
                     Result.Err(err):
                         state._cursor = zeroOrMoreCursor0
-                        fs.truncate(fsLen0)
+                        items.truncate(itemsLen0)
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             if state.peek() is Option.Some(sym)
@@ -4909,7 +4909,22 @@ traitDeclRhs(state: ParserState[Token, ()]) Vec[FunDecl] / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                fs
+                items
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+traitDeclItem(state: ParserState[Token, ()]) TraitDeclItem / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let fun = funDecl(state)
+            let val = do:
+                TraitDeclItem.Fun(fun)
             val,
     )
     match altResult:

@@ -50,8 +50,12 @@ resolveNames(pgm: Program):
         for traitDecl: HashMapEntry[Str, TraitDecl] in
                 module._traitItems.iter():
             let traitDecl = traitDecl.val
-            for funDecl: FunDecl in traitDecl.items.iter():
-                visitor.visitFunDecl(funDecl)
+            for item: TraitDeclItem in traitDecl.items.iter():
+                match item:
+                    TraitDeclItem.Type(_):
+                        # TODO
+                        ()
+                    TraitDeclItem.Fun(funDecl): visitor.visitFunDecl(funDecl)
 
         for implDecl: ImplDecl in module._impls.iter():
             for funDecl: FunDecl in implDecl.items.iter():
