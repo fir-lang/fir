@@ -550,7 +550,9 @@ TraitDecl.format(self, tokens: Array[Token]) Doc:
                 + formatToken(colon, tokens)
                 + Doc.hardLine()
                 + join(
-                    self.items.iter().map(\(item: TraitDeclItem): item.format(tokens)),
+                    self.items.iter().map(
+                        \(item: TraitDeclItem): item.format(tokens),
+                    ),
                     Doc.hardLine() + Doc.hardLine(),
                 ),
         )
@@ -1352,6 +1354,11 @@ Type.format(self, tokens: Array[Token]) Doc:
         Type.Record(t): t.format(tokens)
         Type.Variant(t): t.format(tokens)
         Type.Fn_(t): t.format(tokens)
+        Type.AssocTySelect(ty, assocTy):
+            let doc = ty.format(tokens)
+            let dot = nextNonTrivia(self.lastToken(tokens), tokens).unwrap()
+            assert(tokens.get(dot.idx).kind is TokenKind.Dot)
+            doc + formatToken(dot, tokens) + formatToken(assocTy.token, tokens)
 
 
 NamedType.format(self, tokens: Array[Token]) Doc:
