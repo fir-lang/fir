@@ -673,7 +673,13 @@ pub(super) fn check_expr(
             // mutably above while also having a ref to `IntExpr`.
             let negate = text.starts_with('-');
 
-            let expected_ty = expected_ty.map(|ty| ty.normalize(tc_state.tys.tys.cons()));
+            let expected_ty = expected_ty.map(|ty| {
+                ty.deep_normalize(
+                    tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
+                    tc_state.var_gen,
+                )
+            });
 
             let con = match &expected_ty {
                 Some(Ty::Con(con, _kind)) => con.as_str(),
