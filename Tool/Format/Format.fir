@@ -347,8 +347,54 @@ _formatSigContext(context: Option[Context], tokens: Array[Token]) Doc:
 
     let doc = formatToken(lbracket, tokens)
 
+    let lastToken = lbracket
     let trailingComma = Bool.False
-    for ty: Type in context.preds.iter():
+    for pred: Pred_ in context.preds.iter():
+        if trailingComma:
+            doc += Doc.blank(1)
+            trailingComma = Bool.False
+
+        match pred:
+            Pred_.App(app):
+                doc += app.format(tokens)
+                lastToken = app.lastToken(tokens)
+            Pred_.AssocTyEq(ty, assocTy, eq):
+                doc += ty.format(tokens)
+
+                let dot = nextNonTrivia(ty.lastToken(tokens), tokens).unwrap()
+                assert(tokens.get(dot.idx).kind is TokenKind.Dot)
+                doc += formatToken(dot, tokens)
+                doc += formatToken(assocTy.token, tokens)
+
+                let eqToken = nextNonTrivia(assocTy.token, tokens).unwrap()
+                assert(tokens.get(eqToken.idx).kind is TokenKind.Eq)
+                doc += formatToken(eqToken, tokens)
+                doc += eq.format(tokens)
+                lastToken = eq.lastToken(tokens)
+
+        if nextNonTrivia(lastToken, tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
+            trailingComma = Bool.True
+            doc += formatToken(next, tokens)
+
+    doc + formatToken(rbracket, tokens)
+
+
+TypeApp.format(self, tokens: Array[Token]) Doc:
+    let TypeApp(trait_, args) = self
+    assert(not args.isEmpty())
+
+    let lbracket = nextNonTrivia(trait_.token, tokens).unwrap()
+    assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
+
+    let rbracket = nextNonTrivia(args.last().unwrap().lastToken(tokens), tokens)
+        .unwrap()
+    assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
+
+    let doc = formatToken(trait_.token, tokens) + formatToken(lbracket, tokens)
+
+    let trailingComma = Bool.False
+    for ty: Type in args.iter():
         if trailingComma:
             doc += Doc.blank(1)
             trailingComma = Bool.False
@@ -502,10 +548,16 @@ TraitDecl.format(self, tokens: Array[Token]) Doc:
                 + formatToken(colon, tokens)
                 + Doc.hardLine()
                 + join(
-                    self.items.iter().map(\(decl: FunDecl): decl.format(tokens)),
+                    self.items.iter().map(\(item: TraitDeclItem): item.format(tokens)),
                     Doc.hardLine() + Doc.hardLine(),
                 ),
         )
+
+
+TraitDeclItem.format(self, tokens: Array[Token]) Doc:
+    match self:
+        TraitDeclItem.Type(id): formatToken(id.token, tokens)
+        TraitDeclItem.Fun(fun): fun.format(tokens)
 
 
 ImplDecl.format(self, tokens: Array[Token]) Doc:
@@ -572,11 +624,16 @@ ImplDecl.format(self, tokens: Array[Token]) Doc:
     docRest += formatToken(colon, tokens) + Doc.hardLine()
 
     docRest += join(
-        self.items.iter().map(\(decl: FunDecl): decl.format(tokens)),
+        self.items.iter().map(\(item: ImplDeclItem): item.format(tokens)),
         Doc.hardLine() + Doc.hardLine(),
     )
 
     doc0 + docRest.nest(4)
+
+
+ImplDeclItem.format(self, tokens: Array[Token]) Doc:
+    # TODO
+    panic("")
 
 
 # --------------------------------------------------------------------------------------------------
