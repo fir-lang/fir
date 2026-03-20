@@ -1482,6 +1482,14 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     for item in &impl_.node.items {
         let fun = match item {
             ast::ImplDeclItem::Type { assoc_ty, rhs: _ } => {
+                if !trait_details.assoc_tys.contains(&assoc_ty.node) {
+                    panic!(
+                        "{}: Trait {} does not have associated type {}",
+                        loc_display(&assoc_ty.loc),
+                        &trait_ty_con_id.node,
+                        &assoc_ty.node
+                    );
+                }
                 let new = implemented_assoc_tys.insert(assoc_ty.node.clone());
                 if !new {
                     panic!(
