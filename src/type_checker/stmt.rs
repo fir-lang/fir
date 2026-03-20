@@ -113,6 +113,7 @@ fn check_stmt(
                 tc_state.var_gen,
                 level,
                 &lhs.loc,
+                tc_state.assumps,
             );
 
             unify_expected_ty(
@@ -123,6 +124,7 @@ fn check_stmt(
                 tc_state.var_gen,
                 level,
                 &stmt.loc,
+                tc_state.assumps,
             )
         }
 
@@ -274,6 +276,7 @@ fn check_stmt(
                 tc_state.var_gen,
                 level,
                 &stmt.loc,
+                tc_state.assumps,
             )
         }
 
@@ -364,6 +367,7 @@ fn check_stmt(
                 tc_state.var_gen,
                 level,
                 &pat.loc,
+                tc_state.assumps,
             );
 
             loop_stack.push(label.clone());
@@ -380,6 +384,7 @@ fn check_stmt(
                 tc_state.var_gen,
                 level,
                 &stmt.loc,
+                tc_state.assumps,
             );
 
             let expr_local = SmolStr::new(format!("temp{}", tc_state.local_gen));
@@ -516,6 +521,7 @@ fn check_stmt(
                 tc_state.var_gen,
                 level,
                 &stmt.loc,
+                tc_state.assumps,
             )
         }
     }

@@ -110,6 +110,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, trait_env: &TraitEnv, main: &str) 
         &UVarGen::default(),
         0,
         &main_scheme.loc,
+        &[],
     );
 }
 
@@ -1577,7 +1578,7 @@ fn resolve_preds(
         'goals: while let Some(mut pred) = goals.pop() {
             pred.params
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(tys.tys.cons(), trait_env, var_gen));
+                .for_each(|ty| *ty = ty.deep_normalize(tys.tys.cons(), trait_env, var_gen, &[]));
 
             if pred.trait_ == "RecRow" {
                 assert!(pred.assoc_ty.is_none());
@@ -1651,8 +1652,8 @@ fn resolve_preds(
                         // can influence trait resolving? We can keep this one-way until we find a
                         // case where two-way does the right thing.
                         if !unification::try_unify_one_way(
-                            matching_assoc_ty_rhs,
                             goal_assoc_ty_rhs,
+                            matching_assoc_ty_rhs,
                             tys.tys.cons(),
                             var_gen,
                             0,

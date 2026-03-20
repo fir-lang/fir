@@ -148,6 +148,7 @@ impl PatMatrix {
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
+                &[],
             ),
             None => {
                 for row in self.rows.iter() {
@@ -227,6 +228,7 @@ impl PatMatrix {
                     extension.clone(),
                     tc_state.trait_env,
                     tc_state.var_gen,
+                    &[],
                 );
 
                 let mut exhaustive = true;
@@ -292,6 +294,7 @@ impl PatMatrix {
                     extension.clone(),
                     tc_state.trait_env,
                     tc_state.var_gen,
+                    &[],
                 );
 
                 let mut labels_vec: Vec<(SmolStr, Ty)> = labels.into_iter().collect();

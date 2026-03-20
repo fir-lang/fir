@@ -62,6 +62,7 @@ pub(super) fn check_expr(
                         tc_state.var_gen,
                         level,
                         loc,
+                        tc_state.assumps,
                     ),
                     Default::default(),
                 );
@@ -121,6 +122,7 @@ pub(super) fn check_expr(
                     tc_state.var_gen,
                     level,
                     loc,
+                    tc_state.assumps,
                 ),
                 Default::default(),
             )
@@ -165,6 +167,7 @@ pub(super) fn check_expr(
                             extension.clone(),
                             tc_state.trait_env,
                             tc_state.var_gen,
+                            &[],
                         );
                         let ty = match labels.get(field) {
                             Some(field_ty) => field_ty.clone(),
@@ -203,6 +206,7 @@ pub(super) fn check_expr(
                     tc_state.var_gen,
                     level,
                     loc,
+                    tc_state.assumps,
                 ),
                 Default::default(),
             )
@@ -321,6 +325,7 @@ pub(super) fn check_expr(
                     tc_state.var_gen,
                     level,
                     loc,
+                    tc_state.assumps,
                 ),
                 Default::default(),
             )
@@ -392,6 +397,7 @@ pub(super) fn check_expr(
                     tc_state.var_gen,
                     level,
                     loc,
+                    tc_state.assumps,
                 );
             }
 
@@ -410,6 +416,7 @@ pub(super) fn check_expr(
                         tc_state.var_gen,
                         level,
                         loc,
+                        tc_state.assumps,
                     );
                 }
 
@@ -458,6 +465,7 @@ pub(super) fn check_expr(
                 tc_state.var_gen,
                 level,
                 loc,
+                tc_state.assumps,
             );
 
             (expr_ty, Default::default())
@@ -498,6 +506,7 @@ pub(super) fn check_expr(
                         tc_state.var_gen,
                         level,
                         loc,
+                        tc_state.assumps,
                     );
 
                     match param_tys {
@@ -579,6 +588,7 @@ pub(super) fn check_expr(
                                     tc_state.var_gen,
                                     level,
                                     loc,
+                                    tc_state.assumps,
                                 );
                             }
                         }
@@ -593,6 +603,7 @@ pub(super) fn check_expr(
                             tc_state.var_gen,
                             level,
                             loc,
+                            tc_state.assumps,
                         );
                     }
 
@@ -678,6 +689,7 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
                     tc_state.var_gen,
+                    &[],
                 )
             });
 
@@ -696,6 +708,7 @@ pub(super) fn check_expr(
                         tc_state.var_gen,
                         level,
                         loc,
+                        tc_state.assumps,
                     );
                     "I32"
                 }
@@ -843,6 +856,7 @@ pub(super) fn check_expr(
                 tc_state.var_gen,
                 level,
                 loc,
+                tc_state.assumps,
             );
 
             let ret = (ty, Default::default());
@@ -1069,6 +1083,7 @@ pub(super) fn check_expr(
                 tc_state.var_gen,
                 level,
                 loc,
+                tc_state.assumps,
             ),
             Default::default(),
         ),
@@ -1269,6 +1284,7 @@ pub(super) fn check_expr(
                     tc_state.var_gen,
                     level,
                     loc,
+                    tc_state.assumps,
                 );
             }
 
@@ -1281,6 +1297,7 @@ pub(super) fn check_expr(
                 tc_state.var_gen,
                 level,
                 loc,
+                tc_state.assumps,
             );
             match_expr.inferred_ty = Some(expr_ty.clone());
             (expr_ty, Default::default())
@@ -1302,6 +1319,7 @@ pub(super) fn check_expr(
                             tc_state.var_gen,
                             level,
                             loc,
+                            tc_state.assumps,
                         );
                     }
                 }
@@ -1315,6 +1333,7 @@ pub(super) fn check_expr(
                             tc_state.var_gen,
                             level,
                             loc,
+                            tc_state.assumps,
                         );
                     }
                 }
@@ -1435,6 +1454,7 @@ pub(super) fn check_expr(
                 tc_state.var_gen,
                 level,
                 loc,
+                tc_state.assumps,
             );
             *inferred_ty = Some(ty.clone());
             (ty, Default::default())
@@ -1454,6 +1474,7 @@ pub(super) fn check_expr(
                 tc_state.var_gen,
                 level,
                 &pat.loc,
+                tc_state.assumps,
             );
             (Ty::bool(), pat_binders)
         }
@@ -1652,6 +1673,7 @@ pub(super) fn check_expr(
                         tc_state.var_gen,
                         level,
                         loc,
+                        tc_state.assumps,
                     ),
                     Default::default(),
                 );
@@ -1717,6 +1739,7 @@ pub(super) fn check_expr(
                     tc_state.var_gen,
                     level,
                     loc,
+                    tc_state.assumps,
                 ),
                 Default::default(),
             )
@@ -1737,6 +1760,7 @@ pub(super) fn check_expr(
                     tc_state.var_gen,
                     level,
                     loc,
+                    tc_state.assumps,
                 ),
                 binders,
             )
@@ -1793,6 +1817,7 @@ pub(super) fn check_match_expr(
             tc_state.var_gen,
             level,
             &pat.loc,
+            tc_state.assumps,
         );
 
         alt_envs.push(tc_state.env.exit());
@@ -1891,6 +1916,7 @@ pub(super) fn check_if_expr(
             tc_state.var_gen,
             level,
             &cond.loc,
+            tc_state.assumps,
         );
         tc_state.env.enter();
         cond_binders.into_iter().for_each(|(k, v)| {
@@ -2026,6 +2052,7 @@ fn check_field_sel(
                 tc_state.var_gen,
                 level,
                 loc,
+                tc_state.assumps,
             );
         }
         FunArgs::Named(_) => panic!(),
@@ -2280,14 +2307,15 @@ fn add_coercions(
     match pat {
         ast::Pat::Var(ast::VarPat { var, ty, refined }) => {
             assert_eq!(refined, &mut None);
-            let refined_ty = refined_binders
-                .get(var)
-                .unwrap()
-                .deep_normalize(cons, trait_env, var_gen);
+            let refined_ty =
+                refined_binders
+                    .get(var)
+                    .unwrap()
+                    .deep_normalize(cons, trait_env, var_gen, &[]);
             let ty = ty
                 .as_ref()
                 .unwrap()
-                .deep_normalize(cons, trait_env, var_gen);
+                .deep_normalize(cons, trait_env, var_gen, &[]);
             if refined_ty != ty {
                 *refined = Some(refined_ty);
             }

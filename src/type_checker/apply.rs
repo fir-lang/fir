@@ -17,6 +17,7 @@ pub(crate) fn apply_con_ty(
     level: u32,
     loc: &ast::Loc,
     ignore_extra: bool,
+    local_assoc_tys: &[Pred],
 ) -> Ty {
     match con_ty {
         Ty::Fun {
@@ -47,7 +48,16 @@ pub(crate) fn apply_con_ty(
                                 name
                             );
                         }
-                        unify(ty1, &ty2.node, cons, trait_env, var_gen, level, loc);
+                        unify(
+                            ty1,
+                            &ty2.node,
+                            cons,
+                            trait_env,
+                            var_gen,
+                            level,
+                            loc,
+                            local_assoc_tys,
+                        );
                     }
                 }
 
@@ -111,7 +121,16 @@ pub(crate) fn apply_con_ty(
                             }
                         };
                         let ty1 = con_ty_args.get(name).unwrap();
-                        unify(ty1, node, cons, trait_env, var_gen, level, loc);
+                        unify(
+                            ty1,
+                            node,
+                            cons,
+                            trait_env,
+                            var_gen,
+                            level,
+                            loc,
+                            local_assoc_tys,
+                        );
                     }
                 }
             }

@@ -62,11 +62,11 @@ fn normalize_expr(
                 inferred_ty
                     .as_ref()
                     .unwrap_or_else(|| panic!("{}", loc_display(loc)))
-                    .deep_normalize(cons, trait_env, var_gen),
+                    .deep_normalize(cons, trait_env, var_gen, &[]),
             );
             ty_args
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen))
+                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]))
         }
 
         ast::Expr::ConSel(ast::Con {
@@ -78,11 +78,11 @@ fn normalize_expr(
                 inferred_ty
                     .as_ref()
                     .unwrap_or_else(|| panic!("{}", loc_display(loc)))
-                    .deep_normalize(cons, trait_env, var_gen),
+                    .deep_normalize(cons, trait_env, var_gen, &[]),
             );
             ty_args
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen));
+                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]));
         }
 
         ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
@@ -90,15 +90,15 @@ fn normalize_expr(
             inferred_ty,
             ..
         }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_ref()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             ty_args
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen))
+                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]))
         }
 
         ast::Expr::Int(_) | ast::Expr::Char(_) => {}
@@ -121,7 +121,7 @@ fn normalize_expr(
                 inferred_ty
                     .as_ref()
                     .unwrap_or_else(|| panic!("{}", loc_display(loc)))
-                    .deep_normalize(cons, trait_env, var_gen),
+                    .deep_normalize(cons, trait_env, var_gen, &[]),
             );
             normalize_expr(&mut object.node, &object.loc, cons, trait_env, var_gen)
         }
@@ -133,15 +133,15 @@ fn normalize_expr(
             ty_args,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_ref()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             ty_args
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen));
+                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]));
             normalize_expr(&mut object.node, &object.loc, cons, trait_env, var_gen)
         }
 
@@ -150,12 +150,12 @@ fn normalize_expr(
             args,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_ref()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             normalize_expr(&mut fun.node, &fun.loc, cons, trait_env, var_gen);
             for arg in args {
                 normalize_expr(&mut arg.expr.node, &arg.expr.loc, cons, trait_env, var_gen);
@@ -172,12 +172,12 @@ fn normalize_expr(
         }
 
         ast::Expr::Return(ast::ReturnExpr { expr, inferred_ty }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_ref()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             normalize_expr(&mut expr.node, &expr.loc, cons, trait_env, var_gen);
         }
 
@@ -186,12 +186,12 @@ fn normalize_expr(
             alts,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_ref()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             normalize_expr(
                 &mut scrutinee.node,
                 &scrutinee.loc,
@@ -215,12 +215,12 @@ fn normalize_expr(
             else_branch,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_ref()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             for (cond, body) in branches {
                 normalize_expr(&mut cond.node, &cond.loc, cons, trait_env, var_gen);
                 for stmt in body {
@@ -239,12 +239,12 @@ fn normalize_expr(
             body,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_ref()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             for stmt in body {
                 normalize_stmt(&mut stmt.node, &stmt.loc, cons, trait_env, var_gen);
             }
@@ -256,12 +256,12 @@ fn normalize_expr(
         }
 
         ast::Expr::Do(ast::DoExpr { stmts, inferred_ty }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_ref()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             for stmt in stmts {
                 normalize_stmt(&mut stmt.node, &stmt.loc, cons, trait_env, var_gen);
             }
@@ -273,12 +273,12 @@ fn normalize_expr(
             fields,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_mut()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             for (_field_name, field_expr) in fields {
                 normalize_expr(
                     &mut field_expr.node,
@@ -291,12 +291,12 @@ fn normalize_expr(
         }
 
         ast::Expr::Variant(ast::VariantExpr { expr, inferred_ty }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_mut()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             normalize_expr(&mut expr.node, &expr.loc, cons, trait_env, var_gen);
         }
     }
@@ -317,10 +317,10 @@ fn normalize_pat(
             *ty = Some(
                 ty.as_ref()
                     .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
+                    .deep_normalize(cons, trait_env, var_gen, &[]),
             );
             if let Some(ty) = refined {
-                *ty = ty.deep_normalize(cons, trait_env, var_gen);
+                *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]);
             }
         }
 
@@ -336,17 +336,17 @@ fn normalize_pat(
             fields,
             ignore_rest: _,
         }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_ref()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             for field in fields {
                 normalize_pat(&mut field.node.node, cons, trait_env, var_gen);
             }
             for ty_arg in ty_args {
-                *ty_arg = ty_arg.deep_normalize(cons, trait_env, var_gen);
+                *ty_arg = ty_arg.deep_normalize(cons, trait_env, var_gen, &[]);
             }
         }
 
@@ -360,12 +360,12 @@ fn normalize_pat(
             ignore_rest: _,
             inferred_ty,
         }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_mut()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             fields.iter_mut().for_each(|ast::Named { name: _, node }| {
                 normalize_pat(&mut node.node, cons, trait_env, var_gen)
             });
@@ -376,18 +376,18 @@ fn normalize_pat(
             inferred_ty,
             inferred_pat_ty,
         }) => {
-            *inferred_ty = Some(
-                inferred_ty
-                    .as_mut()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
-            *inferred_pat_ty = Some(
-                inferred_pat_ty
-                    .as_mut()
-                    .unwrap()
-                    .deep_normalize(cons, trait_env, var_gen),
-            );
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
+            *inferred_pat_ty = Some(inferred_pat_ty.as_mut().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
             normalize_pat(&mut pat.node, cons, trait_env, var_gen);
         }
     }

@@ -557,6 +557,7 @@ fn ty_eq_modulo_alpha(
                 extension1.clone(),
                 &Default::default(),
                 &UVarGen::default(),
+                &[],
             );
 
             let (labels2, extension2) = crate::type_checker::row_utils::collect_rows(
@@ -567,6 +568,7 @@ fn ty_eq_modulo_alpha(
                 extension2.clone(),
                 &Default::default(),
                 &UVarGen::default(),
+                &[],
             );
 
             if labels1.keys().collect::<HashSet<_>>() != labels2.keys().collect() {
@@ -905,12 +907,13 @@ impl Ty {
         cons: &ScopeMap<Id, TyCon>,
         trait_env: &TraitEnv,
         var_gen: &UVarGen,
+        assumps: &[Pred],
     ) -> Ty {
         match self {
             Ty::UVar(var_ref) => {
                 let mut var_ref_link = var_ref.normalize(cons);
                 if var_ref_link != Ty::UVar(var_ref.clone()) {
-                    var_ref_link = var_ref_link.deep_normalize(cons, trait_env, var_gen);
+                    var_ref_link = var_ref_link.deep_normalize(cons, trait_env, var_gen, assumps);
                     var_ref.set_link(var_ref_link.clone());
                 }
                 var_ref_link
@@ -921,7 +924,7 @@ impl Ty {
             Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
                 args.iter()
-                    .map(|ty| ty.deep_normalize(cons, trait_env, var_gen))
+                    .map(|ty| ty.deep_normalize(cons, trait_env, var_gen, assumps))
                     .collect(),
                 kind.clone(),
             ),
@@ -940,6 +943,7 @@ impl Ty {
                     extension.clone(),
                     trait_env,
                     var_gen,
+                    assumps,
                 );
                 Ty::Anonymous {
                     labels,
@@ -957,21 +961,24 @@ impl Ty {
                 args: match args {
                     FunArgs::Positional(args) => FunArgs::Positional(
                         args.iter()
-                            .map(|arg| arg.deep_normalize(cons, trait_env, var_gen))
+                            .map(|arg| arg.deep_normalize(cons, trait_env, var_gen, assumps))
                             .collect(),
                     ),
                     FunArgs::Named(args) => FunArgs::Named(
                         args.iter()
                             .map(|(name, arg)| {
-                                (name.clone(), arg.deep_normalize(cons, trait_env, var_gen))
+                                (
+                                    name.clone(),
+                                    arg.deep_normalize(cons, trait_env, var_gen, assumps),
+                                )
                             })
                             .collect(),
                     ),
                 },
-                ret: Box::new(ret.deep_normalize(cons, trait_env, var_gen)),
+                ret: Box::new(ret.deep_normalize(cons, trait_env, var_gen, assumps)),
                 exceptions: exceptions
                     .as_ref()
-                    .map(|exn| Box::new(exn.deep_normalize(cons, trait_env, var_gen))),
+                    .map(|exn| Box::new(exn.deep_normalize(cons, trait_env, var_gen, assumps))),
             },
 
             Ty::QVar(_, _) => self.clone(),
@@ -980,7 +987,7 @@ impl Ty {
                 ty: inner_ty,
                 assoc_ty,
             } => {
-                let inner_ty = inner_ty.deep_normalize(cons, trait_env, var_gen);
+                let inner_ty = inner_ty.deep_normalize(cons, trait_env, var_gen, assumps);
 
                 let (trait_name, trait_args): (&Id, &[Ty]) = match &inner_ty {
                     Ty::App(con, args, _) => (con, args.as_slice()),
@@ -993,6 +1000,7 @@ impl Ty {
                     }
                 };
 
+                // Try resolving via concrete impls in trait_env.
                 if let Some(impls) = trait_env.get(trait_name) {
                     for impl_ in impls {
                         assert_eq!(impl_.trait_args.len(), trait_args.len());
@@ -1019,8 +1027,33 @@ impl Ty {
                             ) {
                                 let rhs = impl_.assoc_tys.get(assoc_ty).unwrap();
                                 let resolved = rhs.subst_qvars(&var_map);
-                                return resolved.deep_normalize(cons, trait_env, var_gen);
+                                return resolved.deep_normalize(cons, trait_env, var_gen, assumps);
                             }
+                        }
+                    }
+                }
+
+                // Try resolving via local equality constraints (e.g. from function context
+                // `Container[c].Item = item`).
+                for assump in assumps {
+                    if let Some((assoc_name, assoc_rhs)) = &assump.assoc_ty
+                        && &assump.trait_ == trait_name
+                        && assoc_name == assoc_ty
+                    {
+                        assert_eq!(assump.params.len(), trait_args.len());
+                        let all_match = assump.params.iter().zip(trait_args.iter()).all(
+                            |(constraint_arg, ty_arg)| {
+                                // TODO: I'm not sure syntactic equality here is right, I think we
+                                // may want to one-way unify the normalized type with the
+                                // assumption.
+                                let c = constraint_arg
+                                    .deep_normalize(cons, trait_env, var_gen, assumps);
+                                let t = ty_arg.deep_normalize(cons, trait_env, var_gen, assumps);
+                                c == t
+                            },
+                        );
+                        if all_match {
+                            return assoc_rhs.deep_normalize(cons, trait_env, var_gen, assumps);
                         }
                     }
                 }
