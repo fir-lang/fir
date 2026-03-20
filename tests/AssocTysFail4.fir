@@ -19,4 +19,4 @@ main():
 
 # args: --typecheck --no-prelude
 # expected exit status: 101
-# expected stderr: tests/AssocTysFail4.fir:18:5: Unable to resolve pred Foo[U64].A = U64
+# expected stderr: tests/AssocTysFail4.fir:18:5: Unable to unify types U64 and U32

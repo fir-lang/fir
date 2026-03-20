@@ -1648,28 +1648,19 @@ fn resolve_preds(
                         // Associated types don't influence implementation search, if we found an
                         // implementation its associated types should unify with the expected types
                         // or the search fails.
-                        // Note: one way unification here otherwise I think associated type matching
-                        // can influence trait resolving? We can keep this one-way until we find a
-                        // case where two-way does the right thing.
-                        if !unification::try_unify_one_way(
+                        // Full unification is needed here because both sides may contain `UVar`s:
+                        // the goal RHS from inference, and the matching RHS from `try_match`
+                        // creating fresh `UVar`s for the impl's quantified variables.
+                        unification::unify(
                             goal_assoc_ty_rhs,
                             matching_assoc_ty_rhs,
                             tys.tys.cons(),
+                            trait_env,
                             var_gen,
                             0,
                             &pred.loc,
-                        ) {
-                            panic!(
-                                "{}: Unable to resolve pred {}",
-                                loc_display(&pred.loc.clone()),
-                                Pred {
-                                    trait_: pred.trait_,
-                                    params: pred.params,
-                                    assoc_ty: pred.assoc_ty,
-                                    loc: pred.loc
-                                },
-                            )
-                        }
+                            &[],
+                        );
                     }
                     next_goals.extend(subgoals);
                     progress = true;
