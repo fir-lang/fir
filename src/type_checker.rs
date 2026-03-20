@@ -317,6 +317,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .collect(),
                         details: TyConDetails::Trait(TraitDetails {
                             methods: Default::default(),
+                            assoc_tys: Default::default(),
                         }),
                     },
                 );
@@ -479,7 +480,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 }
 
                 let ty_con = tys.get_con_mut(&trait_decl.node.name.node).unwrap();
-                ty_con.details = TyConDetails::Trait(TraitDetails { methods });
+                ty_con.details = TyConDetails::Trait(TraitDetails { methods, assoc_tys });
 
                 tys.exit_scope();
                 assert_eq!(tys.len_scopes(), 1);
@@ -537,7 +538,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap(); // checked above
         let trait_type_params = &trait_ty_con.ty_params;
         let trait_methods = match &mut trait_ty_con.details {
-            TyConDetails::Trait(TraitDetails { methods }) => methods,
+            TyConDetails::Trait(TraitDetails {
+                methods,
+                assoc_tys: _,
+            }) => methods,
             TyConDetails::Type { .. } => {
                 panic!() // checked above
             }
@@ -1474,11 +1478,11 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     // Check that all methods without default implementations are implemented.
     let trait_method_ids: HashSet<&Id> = trait_details.methods.keys().collect();
     let mut implemented_method_ids: HashSet<&Id> = Default::default();
-    let mut implemented_assoc_tys: HashSet<&Id> = Default::default();
+    let mut implemented_assoc_tys: HashSet<Id> = Default::default();
     for item in &impl_.node.items {
         let fun = match item {
             ast::ImplDeclItem::Type { assoc_ty, rhs: _ } => {
-                let new = implemented_assoc_tys.insert(&assoc_ty.node);
+                let new = implemented_assoc_tys.insert(assoc_ty.node.clone());
                 if !new {
                     panic!(
                         "{}: Associated type {} implemented mutiple times",
@@ -1523,6 +1527,18 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
             "{}: Trait methods missing: {:?}",
             loc_display(&impl_.loc),
             missing_methods
+        );
+    }
+
+    let missing_assoc_tys: Vec<&Id> = trait_details
+        .assoc_tys
+        .difference(&implemented_assoc_tys)
+        .collect();
+    if !missing_assoc_tys.is_empty() {
+        panic!(
+            "{}: Associated types missing: {:?}",
+            loc_display(&impl_.loc),
+            missing_assoc_tys,
         );
     }
 

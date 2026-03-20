@@ -214,6 +214,9 @@ impl TyConDetails {
 pub(super) struct TraitDetails {
     /// Methods of the trait, with optional default implementations.
     pub(super) methods: HashMap<Id, TraitMethod>,
+
+    /// Associated types of the trait.
+    pub(super) assoc_tys: HashSet<Id>,
 }
 
 #[derive(Debug, Clone)]
