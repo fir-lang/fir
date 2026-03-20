@@ -168,7 +168,7 @@ mod native {
             return;
         }
 
-        type_checker::check_main_type(&tys, &opts.main);
+        type_checker::check_main_type(&tys, &Default::default(), &opts.main);
 
         let mut mono_pgm = monomorph::monomorphise(&module, &opts.main);
 

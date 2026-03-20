@@ -102,6 +102,11 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 exceptions: Some(exceptions),
             }
         }
+
+        ast::Type::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+            ty: Box::new(convert_ast_ty(tys, &ty.node, &ty.loc)),
+            assoc_ty: assoc_ty.clone(),
+        },
     }
 }
 
@@ -182,23 +187,37 @@ pub(super) fn convert_and_bind_context(
 
     // Convert preds.
     for ty in &context_ast.preds {
-        let pred = match convert_ast_ty(tys, &ty.node, &ty.loc) {
-            Ty::App(con, args, _kind) => {
-                // TODO: Check that `con` is a trait, arity and kinds match.
-                Pred {
-                    trait_: con,
-                    params: args,
-                    loc: ty.loc.clone(),
-                }
-            }
-            _ => panic!(
-                "{}: Strange predicate syntax: {:?}",
-                loc_display(&ty.loc),
-                ty
-            ),
-        };
+        let pred = convert_pred(tys, &ty.node, &ty.loc);
         preds_converted.push(pred);
     }
 
     preds_converted
+}
+
+fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
+    match pred_ast {
+        ast::Pred::App(ast::TypeApp { trait_, args }) => Pred {
+            trait_: trait_.clone(),
+            params: args
+                .iter()
+                .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+                .collect(),
+            assoc_ty: None,
+            loc: loc.clone(),
+        },
+
+        ast::Pred::AssocTyEq {
+            ty: ast::TypeApp { trait_, args },
+            assoc_ty,
+            eq,
+        } => Pred {
+            trait_: trait_.clone(),
+            params: args
+                .iter()
+                .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+                .collect(),
+            assoc_ty: Some((assoc_ty.clone(), convert_ast_ty(tys, &eq.node, &eq.loc))),
+            loc: loc.clone(),
+        },
+    }
 }

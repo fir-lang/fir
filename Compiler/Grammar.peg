@@ -107,10 +107,22 @@ topDecl TopDecl:
 
 
 type_ Type:
-    t=namedType: Type.Named(t)
+    t=namedType selection=(_"." ^ _"UpperId")?:
+        match selection:
+            Option.None:
+                Type.Named(t)
+            Option.Some(selection):
+                Type.AssocTySelect(AssocTySelectType(
+                    ty = Type.Named(t),
+                    assocTy = newId(selection)
+                ))
+
     id=^ "LowerId": Type.Var(newId(id))
+
     t=recordType: Type.Record(t)
+
     t=variantType: Type.Variant(t)
+
     t=fnType: Type.Fn_(t)
 
 
@@ -954,11 +966,31 @@ parentTy Id:
 
 
 context Context:
-    first=^ "[" t0=type_ ts=(_"," type_)* ","? last=^ "]":
+    first=^ "[" p0=pred ps=(_"," pred)* ","? last=^ "]":
         Context(
-            preds = Vec.fromIter(once(t0).chain(ts.iter())),
+            preds = Vec.fromIter(once(p0).chain(ps.iter())),
             _firstToken = TokenIdx(idx = first),
             _lastToken = TokenIdx(idx = last),
+        )
+
+
+pred Pred_:
+    app=typeApp selection=("." name=^ "UpperId" "=" ty=type_)?:
+        match selection:
+            Option.None: Pred_.App(app)
+            Option.Some(selection):
+                Pred_.AssocTyEq(
+                    ty = app,
+                    assocTy = newId(selection.name),
+                    eq = selection.ty,
+                )
+
+
+typeApp TypeApp:
+    name=^ "UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]":
+        TypeApp(
+            trait_ = newId(name),
+            args = Vec.fromIter(once(t0).chain(ts.iter())),
         )
 
 
@@ -991,9 +1023,14 @@ traitDecl TraitDecl:
         )
 
 
-traitDeclRhs Vec[FunDecl]:
+traitDeclRhs Vec[TraitDeclItem]:
     "NEWLINE": Vec.empty()
-    ":" "NEWLINE" "INDENT" fs=funDecl+ "DEDENT": fs
+    ":" "NEWLINE" "INDENT" items=traitDeclItem+ "DEDENT": items
+
+
+traitDeclItem TraitDeclItem:
+    "type" name=^ "UpperId" "NEWLINE": TraitDeclItem.Type(newId(name))
+    fun=funDecl: TraitDeclItem.Fun(fun)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -1012,9 +1049,18 @@ implDecl ImplDecl:
         )
 
 
-implDeclRhs Vec[FunDecl]:
+implDeclRhs Vec[ImplDeclItem]:
     "NEWLINE": Vec.empty()
-    ":" "NEWLINE" "INDENT" funs=funDecl+ "DEDENT": funs
+    ":" "NEWLINE" "INDENT" items=implDeclItem+ "DEDENT": items
+
+
+implDeclItem ImplDeclItem:
+    "type" name=^ "UpperId" "=" rhs=type_ "NEWLINE":
+        ImplDeclItem.Type(
+            assocTy = newId(name),
+            rhs,
+        )
+    fun=funDecl: ImplDeclItem.Fun(fun)
 
 
 # --------------------------------------------------------------------------------------------------

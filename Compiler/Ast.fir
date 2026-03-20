@@ -240,9 +240,16 @@ type TraitDecl(
     ## Kinds of `type_params`. Filled in by kind inference.
     typeParamKinds: Vec[Kind],
 
-    ## Methods of the trait.
-    items: Vec[FunDecl],
+    ## Method and associated types of the trait.
+    items: Vec[TraitDeclItem],
 )
+
+
+#[derive(ToDoc)]
+type TraitDeclItem:
+    ## `type Foo` in a `trait` declaration. Declares an associated type.
+    Type(Id)
+    Fun(FunDecl)
 
 
 ## An `impl` block, implementing a trait for a type.
@@ -274,12 +281,21 @@ type ImplDecl(
     ## In the example: `[Vec[a]]`.
     tys: Vec[Type],
 
-    ## Method implementations.
-    items: Vec[FunDecl],
+    ## Method and associated type implementations.
+    items: Vec[ImplDeclItem],
 
     # The `impl` token.
     _firstToken: TokenIdx,
 )
+
+
+#[derive(ToDoc)]
+type ImplDeclItem:
+    Type(
+        assocTy: Id,
+        rhs: Type,
+    )
+    Fun(FunDecl)
 
 
 #[derive(ToDoc)]
@@ -303,6 +319,9 @@ type Type:
     ## A function type: `Fn(I32) Bool / exn`.
     Fn_(FnType)
 
+    ## Associated type selection: `Iterator[iter, exn].Item`.
+    AssocTySelect(AssocTySelectType)
+
 
 impl Tokens[Type]:
     firstToken(self: Type, tokens: Array[Token]) TokenIdx:
@@ -312,6 +331,7 @@ impl Tokens[Type]:
             Type.Record(ty): ty.firstToken(tokens)
             Type.Variant(ty): ty.firstToken(tokens)
             Type.Fn_(ty): ty.firstToken(tokens)
+            Type.AssocTySelect(ty): ty.firstToken(tokens)
 
     lastToken(self: Type, tokens: Array[Token]) TokenIdx:
         match self:
@@ -320,6 +340,7 @@ impl Tokens[Type]:
             Type.Record(ty): ty.lastToken(tokens)
             Type.Variant(ty): ty.lastToken(tokens)
             Type.Fn_(ty): ty.lastToken(tokens)
+            Type.AssocTySelect(ty): ty.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -399,13 +420,28 @@ impl Tokens[FnType]:
         self._rparen
 
 
+#[derive(ToDoc)]
+type AssocTySelectType(
+    ty: Type,
+    assocTy: Id,
+)
+
+
+impl Tokens[AssocTySelectType]:
+    firstToken(self: AssocTySelectType, tokens: Array[Token]) TokenIdx:
+        self.ty.firstToken(tokens)
+
+    lastToken(self: AssocTySelectType, tokens: Array[Token]) TokenIdx:
+        self.assocTy.token
+
+
 ## Type parameter and predicates of an `impl` or function.
 ##
 ## E.g. `[Iterator[iter, item], Debug[item]]`.
 #[derive(ToDoc)]
 type Context(
     ## Predicates: `Iterator[iter, item]` and `Debug[item]` in the example.
-    preds: Vec[Type],
+    preds: Vec[Pred_],
 
     # Left bracket.
     _firstToken: TokenIdx,
@@ -413,6 +449,48 @@ type Context(
     # Right bracket.
     _lastToken: TokenIdx,
 )
+
+
+## A predicate in a context. E.g. in context `[Iterator[coll, item],
+## Debug[item]]`, we have two predicates: `ToStr[t]` (`Pred.App`),
+## `Iterator[iter, exn].Item = U32` (`Pred.AssocTyEq`).
+#[derive(ToDoc)]
+type Pred_:
+    App(TypeApp)
+    AssocTyEq(
+        ty: TypeApp,
+        assocTy: Id,
+        eq: Type,
+    )
+
+
+impl Tokens[Pred_]:
+    firstToken(self: Pred_, tokens: Array[Token]) TokenIdx:
+        match self:
+            Pred_.App(app): app.firstToken(tokens)
+            Pred_.AssocTyEq(ty, ..): ty.firstToken(tokens)
+
+    lastToken(self: Pred_, tokens: Array[Token]) TokenIdx:
+        match self:
+            Pred_.App(app): app.lastToken(tokens)
+            Pred_.AssocTyEq(eq, ..): eq.lastToken(tokens)
+
+
+## A type application, used in predicates. E.g. `Iterator[coll, item]`.
+#[derive(ToDoc)]
+type TypeApp(
+    trait_: Id,
+    args: Vec[Type],
+)
+
+
+impl Tokens[TypeApp]:
+    firstToken(self: TypeApp, tokens: Array[Token]) TokenIdx:
+        self.trait_.token
+
+    lastToken(self: TypeApp, tokens: Array[Token]) TokenIdx:
+        nextNonTrivia(self.args.last().unwrap().lastToken(tokens), tokens)
+            .unwrap()
 
 
 #[derive(ToDoc)]
@@ -1784,6 +1862,21 @@ impl ToDoc[TraitDecl]:
         Doc.grouped(Doc.str("TraitDecl") + Doc.char('(') + args)
 
 
+impl ToDoc[TraitDeclItem]:
+    toDoc(self: TraitDeclItem) Doc:
+        match self:
+            TraitDeclItem.Type(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("TraitDeclItem.Type") + Doc.char('(') + args)
+            TraitDeclItem.Fun(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("TraitDeclItem.Fun") + Doc.char('(') + args)
+
+
 impl ToDoc[ImplDecl]:
     toDoc(self: ImplDecl) Doc:
         let args = Doc.break_(0)
@@ -1819,6 +1912,29 @@ impl ToDoc[ImplDecl]:
         Doc.grouped(Doc.str("ImplDecl") + Doc.char('(') + args)
 
 
+impl ToDoc[ImplDeclItem]:
+    toDoc(self: ImplDeclItem) Doc:
+        match self:
+            ImplDeclItem.Type(assocTy, rhs):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("assocTy =")
+                        + Doc.nested(4, Doc.break_(1) + assocTy.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("rhs =")
+                        + Doc.nested(4, Doc.break_(1) + rhs.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("ImplDeclItem.Type") + Doc.char('(') + args
+            ImplDeclItem.Fun(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("ImplDeclItem.Fun") + Doc.char('(') + args)
+
+
 impl ToDoc[Type]:
     toDoc(self: Type) Doc:
         match self:
@@ -1847,6 +1963,11 @@ impl ToDoc[Type]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("Type.Fn_") + Doc.char('(') + args)
+            Type.AssocTySelect(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Type.AssocTySelect") + Doc.char('(') + args)
 
 
 impl ToDoc[RecordType]:
@@ -1939,6 +2060,21 @@ impl ToDoc[FnType]:
         Doc.grouped(Doc.str("FnType") + Doc.char('(') + args)
 
 
+impl ToDoc[AssocTySelectType]:
+    toDoc(self: AssocTySelectType) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + self.ty.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("assocTy =")
+                + Doc.nested(4, Doc.break_(1) + self.assocTy.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("AssocTySelectType") + Doc.char('(') + args)
+
+
 impl ToDoc[Context]:
     toDoc(self: Context) Doc:
         let args = Doc.break_(0)
@@ -1958,6 +2094,47 @@ impl ToDoc[Context]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("Context") + Doc.char('(') + args)
+
+
+impl ToDoc[Pred_]:
+    toDoc(self: Pred_) Doc:
+        match self:
+            Pred_.App(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Pred_.App") + Doc.char('(') + args)
+            Pred_.AssocTyEq(ty, assocTy, eq):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + ty.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("assocTy =")
+                        + Doc.nested(4, Doc.break_(1) + assocTy.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("eq =") + Doc.nested(4, Doc.break_(1) + eq.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Pred_.AssocTyEq") + Doc.char('(') + args
+
+
+impl ToDoc[TypeApp]:
+    toDoc(self: TypeApp) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("trait_ =")
+                + Doc.nested(4, Doc.break_(1) + self.trait_.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("args =") + Doc.nested(4, Doc.break_(1) + self.args.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("TypeApp") + Doc.char('(') + args)
 
 
 impl ToDoc[TypeParam]:

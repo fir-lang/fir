@@ -146,6 +146,8 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
 
             Ty.Fun(args, ret, exn = Option.Some(exceptions))
 
+        Type.AssocTySelect(..): panic("TODO")
+
 
 convertNamedTy(
     module: Module,
@@ -228,7 +230,7 @@ convertAndBindContext(
     module: Module,
     vars: ScopeMap[Str, Ty],
     typeParams: Vec[TypeParam],
-    preds: Vec[Type],
+    preds: Vec[Pred_],
     conversion: TyVarConversion,
 ) Vec[Pred] / TypeError:
     let predsConverted: Vec[Pred] = Vec.withCapacity(preds.len())
@@ -243,11 +245,15 @@ convertAndBindContext(
         vars.insert(tyParam.name.name, var_)
 
     # Convert preds.
-    for pred: Type in preds.iter():
+    for pred: Pred_ in preds.iter():
         let loc = module.loc(pred)
+
+    #|
+        TODO: This needs to update with the type eq preds
         let pred = match convertAstTy(module, vars, pred):
             Ty.App(conId, args): Pred(trait_ = conId, params = args, loc)
             other: panic("Strange predicate syntax")
         predsConverted.push(pred)
+        |#
 
     predsConverted

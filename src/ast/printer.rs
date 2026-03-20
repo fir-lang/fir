@@ -163,7 +163,21 @@ impl TraitDecl {
                 buf.push('\n');
             }
             buf.push_str(&INDENTS[..indent as usize + 4]);
-            item.node.print(buf, indent + 4);
+            item.print(buf, indent + 4);
+        }
+    }
+}
+
+impl TraitDeclItem {
+    pub fn print(&self, buf: &mut String, indent: u32) {
+        match self {
+            TraitDeclItem::Type(ty) => {
+                buf.push_str("type ");
+                buf.push_str(ty.node.as_str());
+            }
+            TraitDeclItem::Fun(fun) => {
+                fun.node.print(buf, indent + 4);
+            }
         }
     }
 }
@@ -188,7 +202,23 @@ impl ImplDecl {
                 buf.push('\n');
             }
             buf.push_str(&INDENTS[..indent as usize + 4]);
-            item.node.print(buf, indent + 4);
+            item.print(buf, indent + 4);
+        }
+    }
+}
+
+impl ImplDeclItem {
+    pub fn print(&self, buf: &mut String, indent: u32) {
+        match self {
+            ImplDeclItem::Type { assoc_ty, rhs } => {
+                buf.push_str("type ");
+                buf.push_str(assoc_ty.node.as_str());
+                buf.push_str(" = ");
+                rhs.node.print(buf);
+            }
+            ImplDeclItem::Fun(fun) => {
+                fun.node.print(buf, indent);
+            }
         }
     }
 }
@@ -287,6 +317,12 @@ impl Type {
                     exn.node.print(buf);
                 }
             }
+
+            Type::AssocTySelect { ty, assoc_ty } => {
+                ty.node.print(buf);
+                buf.push('.');
+                buf.push_str(assoc_ty.as_str());
+            }
         }
     }
 }
@@ -294,6 +330,37 @@ impl Type {
 impl NamedType {
     pub fn print(&self, buf: &mut String) {
         buf.push_str(&self.name);
+        if !self.args.is_empty() {
+            buf.push('[');
+            for (i, arg) in self.args.iter().enumerate() {
+                if i != 0 {
+                    buf.push_str(", ");
+                }
+                arg.node.print(buf);
+            }
+            buf.push(']');
+        }
+    }
+}
+
+impl Pred {
+    pub fn print(&self, buf: &mut String) {
+        match self {
+            Pred::App(type_app) => type_app.print(buf),
+            Pred::AssocTyEq { ty, assoc_ty, eq } => {
+                ty.print(buf);
+                buf.push('.');
+                buf.push_str(assoc_ty);
+                buf.push_str(" = ");
+                eq.node.print(buf);
+            }
+        }
+    }
+}
+
+impl TypeApp {
+    pub fn print(&self, buf: &mut String) {
+        buf.push_str(&self.trait_);
         if !self.args.is_empty() {
             buf.push('[');
             for (i, arg) in self.args.iter().enumerate() {
