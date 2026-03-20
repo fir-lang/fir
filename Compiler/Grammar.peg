@@ -112,10 +112,10 @@ type_ Type:
             Option.None:
                 Type.Named(t)
             Option.Some(selection):
-                Type.AssocTySelect(
+                Type.AssocTySelect(AssocTySelectType(
                     ty = Type.Named(t),
                     assocTy = newId(selection)
-                )
+                ))
 
     id=^ "LowerId": Type.Var(newId(id))
 

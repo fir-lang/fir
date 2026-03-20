@@ -1368,11 +1368,7 @@ Type.format(self, tokens: Array[Token]) Doc:
         Type.Record(t): t.format(tokens)
         Type.Variant(t): t.format(tokens)
         Type.Fn_(t): t.format(tokens)
-        Type.AssocTySelect(ty, assocTy):
-            let doc = ty.format(tokens)
-            let dot = nextNonTrivia(self.lastToken(tokens), tokens).unwrap()
-            assert(tokens.get(dot.idx).kind is TokenKind.Dot)
-            doc + formatToken(dot, tokens) + formatToken(assocTy.token, tokens)
+        Type.AssocTySelect(t): t.format(tokens)
 
 
 NamedType.format(self, tokens: Array[Token]) Doc:
@@ -1502,6 +1498,13 @@ FnType.format(self, tokens: Array[Token]) Doc:
             + exn.format(tokens)
 
     doc
+
+
+AssocTySelectType.format(self, tokens: Array[Token]) Doc:
+    let doc = self.ty.format(tokens)
+    let dot = nextNonTrivia(self.lastToken(tokens), tokens).unwrap()
+    assert(tokens.get(dot.idx).kind is TokenKind.Dot)
+    doc + formatToken(dot, tokens) + formatToken(self.assocTy.token, tokens)
 
 
 # --------------------------------------------------------------------------------------------------

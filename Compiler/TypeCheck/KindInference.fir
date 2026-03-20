@@ -264,7 +264,8 @@ _collectTvs(
             if exceptions is Option.Some(exn):
                 _collectTvs(exn, tvs, tokens)
 
-        Type.AssocTySelect(ty, assocTy = _): _collectTvs(ty, tvs, tokens)
+        Type.AssocTySelect(AssocTySelectType(ty, assocTy = _)):
+            _collectTvs(ty, tvs, tokens)
 
 
 _collectNamedTyTvs(

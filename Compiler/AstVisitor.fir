@@ -217,6 +217,9 @@ trait Visitor[v]:
     visitFnType(self: v, t: FnType):
         defaultVisitFnType(self, t)
 
+    visitAssocTySelectType(self: v, t: AssocTySelectType):
+        defaultVisitAssocTySelectType(self, t)
+
     visitTyArgs(self: v, t: TyArgs):
         defaultVisitTyArgs(self, t)
 
@@ -357,9 +360,7 @@ defaultVisitType[Visitor[v]](v: v, ty: Type):
         Type.Record(t): v.visitRecordType(t)
         Type.Variant(t): v.visitVariantType(t)
         Type.Fn_(t): v.visitFnType(t)
-        Type.AssocTySelect(..):
-            # TODO: We need an AssocTySelectType type
-            panic("TODO")
+        Type.AssocTySelect(t): v.visitAssocTySelectType(t)
 
 
 defaultVisitVarExpr[Visitor[v]](v: v, e: VarExpr):
@@ -560,6 +561,10 @@ defaultVisitFnType[Visitor[v]](v: v, t: FnType):
 
     if t.exceptions is Option.Some(exn):
         v.visitType(exn)
+
+
+defaultVisitAssocTySelectType[Visitor[v]](v: v, t: AssocTySelectType):
+    v.visitType(t.ty)
 
 
 defaultVisitTyArgs[Visitor[v]](v: v, t: TyArgs):

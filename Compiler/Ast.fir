@@ -319,10 +319,8 @@ type Type:
     ## A function type: `Fn(I32) Bool / exn`.
     Fn_(FnType)
 
-    AssocTySelect(
-        ty: Type,
-        assocTy: Id,
-    )
+    ## Associated type selection: `Iterator[iter, exn].Item`.
+    AssocTySelect(AssocTySelectType)
 
 
 impl Tokens[Type]:
@@ -333,7 +331,7 @@ impl Tokens[Type]:
             Type.Record(ty): ty.firstToken(tokens)
             Type.Variant(ty): ty.firstToken(tokens)
             Type.Fn_(ty): ty.firstToken(tokens)
-            Type.AssocTySelect(ty, ..): ty.firstToken(tokens)
+            Type.AssocTySelect(ty): ty.firstToken(tokens)
 
     lastToken(self: Type, tokens: Array[Token]) TokenIdx:
         match self:
@@ -342,7 +340,7 @@ impl Tokens[Type]:
             Type.Record(ty): ty.lastToken(tokens)
             Type.Variant(ty): ty.lastToken(tokens)
             Type.Fn_(ty): ty.lastToken(tokens)
-            Type.AssocTySelect(assocTy, ..): assocTy.token
+            Type.AssocTySelect(ty): ty.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -420,6 +418,21 @@ impl Tokens[FnType]:
             return ty.lastToken(tokens)
 
         self._rparen
+
+
+#[derive(ToDoc)]
+type AssocTySelectType(
+    ty: Type,
+    assocTy: Id,
+)
+
+
+impl Tokens[AssocTySelectType]:
+    firstToken(self: AssocTySelectType, tokens: Array[Token]) TokenIdx:
+        self.ty.firstToken(tokens)
+
+    lastToken(self: AssocTySelectType, tokens: Array[Token]) TokenIdx:
+        self.assocTy.token
 
 
 ## Type parameter and predicates of an `impl` or function.
@@ -1950,18 +1963,11 @@ impl ToDoc[Type]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("Type.Fn_") + Doc.char('(') + args)
-            Type.AssocTySelect(ty, assocTy):
+            Type.AssocTySelect(i0):
                 let args = Doc.break_(0)
-                args += Doc.grouped(
-                    Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + ty.toDoc()),
-                )
-                args += Doc.char(',') + Doc.break_(1)
-                args += Doc.grouped(
-                    Doc.str("assocTy =")
-                        + Doc.nested(4, Doc.break_(1) + assocTy.toDoc()),
-                )
+                args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.str("Type.AssocTySelect") + Doc.char('(') + args
+                Doc.grouped(Doc.str("Type.AssocTySelect") + Doc.char('(') + args)
 
 
 impl ToDoc[RecordType]:
@@ -2052,6 +2058,21 @@ impl ToDoc[FnType]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("FnType") + Doc.char('(') + args)
+
+
+impl ToDoc[AssocTySelectType]:
+    toDoc(self: AssocTySelectType) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + self.ty.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("assocTy =")
+                + Doc.nested(4, Doc.break_(1) + self.assocTy.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("AssocTySelectType") + Doc.char('(') + args)
 
 
 impl ToDoc[Context]:

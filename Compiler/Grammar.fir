@@ -125,8 +125,10 @@ type_(state: ParserState[Token, ()]) Type / U32:
                     Option.None: Type.Named(t)
                     Option.Some(selection):
                         Type.AssocTySelect(
-                            ty = Type.Named(t),
-                            assocTy = newId(selection),
+                            AssocTySelectType(
+                                ty = Type.Named(t),
+                                assocTy = newId(selection),
+                            ),
                         )
             val,
     )
