@@ -319,6 +319,11 @@ type Type:
     ## A function type: `Fn(I32) Bool / exn`.
     Fn_(FnType)
 
+    AssocTySelect(
+        ty: Type,
+        assocTy: Id,
+    )
+
 
 impl Tokens[Type]:
     firstToken(self: Type, tokens: Array[Token]) TokenIdx:
@@ -1901,6 +1906,18 @@ impl ToDoc[Type]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("Type.Fn_") + Doc.char('(') + args)
+            Type.AssocTySelect(ty, assocTy):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + ty.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("assocTy =")
+                        + Doc.nested(4, Doc.break_(1) + assocTy.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Type.AssocTySelect") + Doc.char('(') + args
 
 
 impl ToDoc[RecordType]:

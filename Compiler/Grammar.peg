@@ -107,10 +107,22 @@ topDecl TopDecl:
 
 
 type_ Type:
-    t=namedType: Type.Named(t)
+    t=namedType selection=(_"." ^ _"UpperId")?:
+        match selection:
+            Option.None:
+                Type.Named(t)
+            Option.Some(selection):
+                Type.AssocTySelect(
+                    ty = Type.Named(t),
+                    assocTy = newId(selection)
+                )
+
     id=^ "LowerId": Type.Var(newId(id))
+
     t=recordType: Type.Record(t)
+
     t=variantType: Type.Variant(t)
+
     t=fnType: Type.Fn_(t)
 
 

@@ -97,8 +97,37 @@ type_(state: ParserState[Token, ()]) Type / U32:
     let altResult = try(
         \():
             let t = namedType(state)
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Dot, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let selection = state.nextCursor()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.UpperId, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    selection,
+            )
+            let selection = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let val = do:
-                Type.Named(t)
+                match selection:
+                    Option.None: Type.Named(t)
+                    Option.Some(selection):
+                        Type.AssocTySelect(
+                            ty = Type.Named(t),
+                            assocTy = newId(selection),
+                        )
             val,
     )
     match altResult:
