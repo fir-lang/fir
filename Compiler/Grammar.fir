@@ -4732,6 +4732,16 @@ pred(state: ParserState[Token, ()]) Pred_ / U32:
                     else:
                         throw(state.updateErrorCursor(state._cursor))
                     let name = state.nextCursor()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.UpperId, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Eq, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
                     let ty = type_(state)
                     let selection = (name = name, ty = ty)
                     selection,

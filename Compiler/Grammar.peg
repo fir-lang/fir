@@ -975,7 +975,7 @@ context Context:
 
 
 pred Pred_:
-    app=typeApp selection=("." name=^ ty=type_)?:
+    app=typeApp selection=("." name=^ "UpperId" "=" ty=type_)?:
         match selection:
             Option.None: Pred_.App(app)
             Option.Some(selection):
