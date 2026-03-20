@@ -4922,6 +4922,26 @@ traitDeclItem(state: ParserState[Token, ()]) TraitDeclItem / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Type, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let name = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                TraitDeclItem.Type(newId(name))
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
             let fun = funDecl(state)
             let val = do:
                 TraitDeclItem.Fun(fun)

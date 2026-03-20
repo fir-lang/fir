@@ -997,7 +997,9 @@ traitDeclRhs Vec[TraitDeclItem]:
 
 
 traitDeclItem TraitDeclItem:
+    "type" name=^ "UpperId": TraitDeclItem.Type(newId(name))
     fun=funDecl: TraitDeclItem.Fun(fun)
+
 
 # --------------------------------------------------------------------------------------------------
 # Impl declarations
