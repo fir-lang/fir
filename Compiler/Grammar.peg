@@ -1017,9 +1017,18 @@ implDecl ImplDecl:
         )
 
 
-implDeclRhs Vec[FunDecl]:
+implDeclRhs Vec[ImplDeclItem]:
     "NEWLINE": Vec.empty()
-    ":" "NEWLINE" "INDENT" funs=funDecl+ "DEDENT": funs
+    ":" "NEWLINE" "INDENT" items=implDeclItem+ "DEDENT": items
+
+
+implDeclItem ImplDeclItem:
+    "type" name=^ "UpperId" "=" rhs=type_ "NEWLINE":
+        ImplDeclItem.Type(
+            assocTy = newId(name),
+            rhs,
+        )
+    fun=funDecl: ImplDeclItem.Fun(fun)
 
 
 # --------------------------------------------------------------------------------------------------

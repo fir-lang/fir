@@ -161,7 +161,11 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
     for var_: Str in implContextVarKinds.keys():
         implContextVars.insert(var_, ())
 
-    for fun: FunDecl in impl_.items.iter():
+    for item: ImplDeclItem in impl_.items.iter():
+        let fun = match item:
+            ImplDeclItem.Type(..): continue
+            ImplDeclItem.Fun(fun): fun
+
         # Same as the loop in in the trait decl case above.
         _addMissingTypeParamsFun(fun.sig, implContextVarKinds, tokens)
 

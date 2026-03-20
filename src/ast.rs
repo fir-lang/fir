@@ -879,7 +879,7 @@ pub struct ImplDecl {
     /// In the example: `[Vec[a]]`.
     pub tys: Vec<L<Type>>,
 
-    /// Method implementations.
+    /// Method and associated type implementations.
     pub items: Vec<ImplDeclItem>,
 }
 

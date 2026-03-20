@@ -58,8 +58,10 @@ resolveNames(pgm: Program):
                     TraitDeclItem.Fun(funDecl): visitor.visitFunDecl(funDecl)
 
         for implDecl: ImplDecl in module._impls.iter():
-            for funDecl: FunDecl in implDecl.items.iter():
-                visitor.visitFunDecl(funDecl)
+            for item: ImplDeclItem in implDecl.items.iter():
+                match item:
+                    ImplDeclItem.Type(..): ()
+                    ImplDeclItem.Fun(funDecl): visitor.visitFunDecl(funDecl)
 
 
 type _NameResolverVisitor(

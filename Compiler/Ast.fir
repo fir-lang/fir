@@ -240,7 +240,7 @@ type TraitDecl(
     ## Kinds of `type_params`. Filled in by kind inference.
     typeParamKinds: Vec[Kind],
 
-    ## Methods of the trait.
+    ## Method and associated types of the trait.
     items: Vec[TraitDeclItem],
 )
 
@@ -281,12 +281,21 @@ type ImplDecl(
     ## In the example: `[Vec[a]]`.
     tys: Vec[Type],
 
-    ## Method implementations.
-    items: Vec[FunDecl],
+    ## Method and associated type implementations.
+    items: Vec[ImplDeclItem],
 
     # The `impl` token.
     _firstToken: TokenIdx,
 )
+
+
+#[derive(ToDoc)]
+type ImplDeclItem:
+    Type(
+        assocTy: Id,
+        rhs: Type,
+    )
+    Fun(FunDecl)
 
 
 #[derive(ToDoc)]
@@ -1839,6 +1848,29 @@ impl ToDoc[ImplDecl]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("ImplDecl") + Doc.char('(') + args)
+
+
+impl ToDoc[ImplDeclItem]:
+    toDoc(self: ImplDeclItem) Doc:
+        match self:
+            ImplDeclItem.Type(assocTy, rhs):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("assocTy =")
+                        + Doc.nested(4, Doc.break_(1) + assocTy.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("rhs =")
+                        + Doc.nested(4, Doc.break_(1) + rhs.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("ImplDeclItem.Type") + Doc.char('(') + args
+            ImplDeclItem.Fun(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("ImplDeclItem.Fun") + Doc.char('(') + args)
 
 
 impl ToDoc[Type]:
