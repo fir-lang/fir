@@ -287,7 +287,7 @@ FunDecl.format(self, tokens: Array[Token]) Doc:
 
     doc += formatToken(self.name.token, tokens)
 
-    doc += _formatSigContext(self.sig.context, tokens)
+    doc += _formatOptContext(self.sig.context, tokens)
 
     let lparen = match self.sig.context:
         Option.Some(context):
@@ -334,11 +334,13 @@ FunDecl.format(self, tokens: Array[Token]) Doc:
     doc
 
 
-_formatSigContext(context: Option[Context], tokens: Array[Token]) Doc:
-    let context = match context:
-        Option.None: return Doc.empty()
-        Option.Some(context): context
+_formatOptContext(context: Option[Context], tokens: Array[Token]) Doc:
+    match context:
+        Option.None: Doc.empty()
+        Option.Some(context): _formatContext(context, tokens)
 
+
+_formatContext(context: Context, tokens: Array[Token]) Doc:
     let lbracket = context.firstToken(tokens)
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
@@ -512,29 +514,7 @@ ImplDecl.format(self, tokens: Array[Token]) Doc:
     let impl_ = self._firstToken
     let doc0 = formatToken(impl_, tokens)
 
-    let docRest = Doc.empty()
-
-    if self.context is Option.Some(context):
-        let lbracket = context.firstToken(tokens)
-        docRest += formatToken(lbracket, tokens)
-
-        let trailingComma = Bool.False
-        for pred: Type in context.preds.iter():
-            if trailingComma:
-                docRest += Doc.blank(1)
-                trailingComma = Bool.False
-
-            docRest += pred.format(tokens)
-
-            if nextNonTrivia(pred.lastToken(tokens), tokens)
-                    is Option.Some(next)
-                    and tokens.get(next.idx).kind is TokenKind.Comma:
-                trailingComma = Bool.True
-                docRest += formatToken(next, tokens)
-
-        let rbracket = context.lastToken(tokens)
-        docRest += formatToken(rbracket, tokens)
-
+    let docRest = _formatOptContext(self.context, tokens)
     docRest += Doc.blank(1) + formatToken(self.trait_.token, tokens)
 
     let lbracket = nextNonTrivia(self.trait_.token, tokens).unwrap()
