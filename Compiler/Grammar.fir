@@ -5070,6 +5070,11 @@ traitDeclItem(state: ParserState[Token, ()]) TraitDeclItem / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Newline, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TraitDeclItem.Type(newId(name))
             val,
