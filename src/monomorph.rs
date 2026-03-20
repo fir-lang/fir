@@ -1876,8 +1876,6 @@ fn mono_ast_ty(
                     (name, mono_args)
                 }
                 ast::Type::Var(var) => {
-                    // The trait application is a type variable — look it up in ty_map.
-                    // This shouldn't normally happen for AssocTySelect.
                     panic!("Unexpected type variable {} in AssocTySelect", var);
                 }
                 _ => panic!("Expected named type in AssocTySelect, got {:?}", ty.node),
