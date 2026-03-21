@@ -635,6 +635,22 @@ pub(super) fn try_unify_one_way(
             }
         }
 
+        (
+            Ty::AssocTySelect {
+                ty: ty1_inner,
+                assoc_ty: assoc1,
+            },
+            Ty::AssocTySelect {
+                ty: ty2_inner,
+                assoc_ty: assoc2,
+            },
+        ) => {
+            if assoc1 != assoc2 {
+                return false;
+            }
+            try_unify_one_way(ty1_inner, ty2_inner, cons, var_gen, level, loc)
+        }
+
         (_, _) => false,
     }
 }
