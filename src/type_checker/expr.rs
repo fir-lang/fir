@@ -2089,6 +2089,15 @@ fn check_field_sel(
         exceptions,
     };
 
+    // Normalize after unification so that `AssocTySelect` nodes that depend on the self type can be
+    // resolved.
+    let ty = ty.deep_normalize(
+        tc_state.tys.tys.cons(),
+        tc_state.trait_env,
+        tc_state.var_gen,
+        tc_state.assumps,
+    );
+
     (
         ty.clone(),
         ast::Expr::MethodSel(ast::MethodSelExpr {
