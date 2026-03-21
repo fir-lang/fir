@@ -14,6 +14,7 @@ pub(super) fn unify(
     level: u32,
     loc: &ast::Loc,
     assumps: &[Pred],
+    preds: &mut Vec<Pred>,
 ) {
     let ty1 = ty1.deep_normalize(cons, trait_env, var_gen, assumps);
     if ty1.is_void() {
@@ -54,7 +55,9 @@ pub(super) fn unify(
                 )
             }
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                unify(arg1, arg2, cons, trait_env, var_gen, level, loc, assumps);
+                unify(
+                    arg1, arg2, cons, trait_env, var_gen, level, loc, assumps, preds,
+                );
             }
         }
 
@@ -82,7 +85,9 @@ pub(super) fn unify(
             match (args1, args2) {
                 (FunArgs::Positional(args1), FunArgs::Positional(args2)) => {
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                        unify(arg1, arg2, cons, trait_env, var_gen, level, loc, assumps);
+                        unify(
+                            arg1, arg2, cons, trait_env, var_gen, level, loc, assumps, preds,
+                        );
                     }
                 }
 
@@ -106,6 +111,7 @@ pub(super) fn unify(
                             level,
                             loc,
                             assumps,
+                            preds,
                         );
                     }
                 }
@@ -136,11 +142,14 @@ pub(super) fn unify(
                         level,
                         loc,
                         assumps,
+                        preds,
                     );
                 }
             }
 
-            unify(ret1, ret2, cons, trait_env, var_gen, level, loc, assumps);
+            unify(
+                ret1, ret2, cons, trait_env, var_gen, level, loc, assumps, preds,
+            );
         }
 
         (Ty::QVar(var, _kind), _) | (_, Ty::QVar(var, _kind)) => {
@@ -252,7 +261,9 @@ pub(super) fn unify(
             for key in keys1.intersection(&keys2) {
                 let ty1 = labels1.get(*key).unwrap();
                 let ty2 = labels2.get(*key).unwrap();
-                unify(ty1, ty2, cons, trait_env, var_gen, level, loc, assumps);
+                unify(
+                    ty1, ty2, cons, trait_env, var_gen, level, loc, assumps, preds,
+                );
             }
 
             if !extras1.is_empty() {
@@ -304,6 +315,7 @@ pub(super) fn unify(
                         level,
                         loc,
                         assumps,
+                        preds,
                     );
                 }
                 (None, Some(ext2)) => {
@@ -316,10 +328,13 @@ pub(super) fn unify(
                         level,
                         loc,
                         assumps,
+                        preds,
                     );
                 }
                 (Some(ext1), Some(ext2)) => {
-                    unify(&ext1, &ext2, cons, trait_env, var_gen, level, loc, assumps);
+                    unify(
+                        &ext1, &ext2, cons, trait_env, var_gen, level, loc, assumps, preds,
+                    );
                 }
             }
         }
@@ -343,8 +358,39 @@ pub(super) fn unify(
                 );
             }
             unify(
-                ty1_inner, ty2_inner, cons, trait_env, var_gen, level, loc, assumps,
+                ty1_inner, ty2_inner, cons, trait_env, var_gen, level, loc, assumps, preds,
             );
+        }
+
+        (
+            Ty::AssocTySelect {
+                ty: inner_ty,
+                assoc_ty,
+            },
+            other,
+        )
+        | (
+            other,
+            Ty::AssocTySelect {
+                ty: inner_ty,
+                assoc_ty,
+            },
+        ) => {
+            let (trait_name, trait_args): (&Id, &[Ty]) = match inner_ty.as_ref() {
+                Ty::App(con, args, _) => (con, args.as_slice()),
+                Ty::Con(con, _) => (con, &[]),
+                _ => panic!(
+                    "{}: Cannot construct predicate from AssocTySelect with inner type: {}",
+                    loc_display(loc),
+                    inner_ty,
+                ),
+            };
+            preds.push(Pred {
+                trait_: trait_name.clone(),
+                params: trait_args.to_vec(),
+                assoc_ty: Some((assoc_ty.clone(), other.clone())),
+                loc: loc.clone(),
+            });
         }
 
         (ty1, ty2) => panic!(
@@ -644,6 +690,7 @@ pub(super) fn unify_expected_ty(
     level: u32,
     loc: &ast::Loc,
     local_assoc_tys: &[Pred],
+    preds: &mut Vec<Pred>,
 ) -> Ty {
     if let Some(expected_ty) = expected_ty {
         unify(
@@ -655,6 +702,7 @@ pub(super) fn unify_expected_ty(
             level,
             loc,
             local_assoc_tys,
+            preds,
         );
     }
     ty

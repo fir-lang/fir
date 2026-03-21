@@ -18,6 +18,7 @@ pub(crate) fn apply_con_ty(
     loc: &ast::Loc,
     ignore_extra: bool,
     local_assoc_tys: &[Pred],
+    preds: &mut Vec<Pred>,
 ) -> Ty {
     match con_ty {
         Ty::Fun {
@@ -57,6 +58,7 @@ pub(crate) fn apply_con_ty(
                             level,
                             loc,
                             local_assoc_tys,
+                            preds,
                         );
                     }
                 }
@@ -130,6 +132,7 @@ pub(crate) fn apply_con_ty(
                             level,
                             loc,
                             local_assoc_tys,
+                            preds,
                         );
                     }
                 }

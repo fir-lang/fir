@@ -111,6 +111,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, trait_env: &TraitEnv, main: &str) 
         0,
         &main_scheme.loc,
         &[],
+        &mut vec![],
     );
 }
 
@@ -1659,6 +1660,7 @@ fn resolve_preds(
                             0,
                             &pred.loc,
                             &[],
+                            &mut next_goals,
                         );
                     }
                     next_goals.extend(subgoals);

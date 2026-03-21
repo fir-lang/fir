@@ -63,6 +63,7 @@ pub(super) fn check_expr(
                         level,
                         loc,
                         tc_state.assumps,
+                        tc_state.preds,
                     ),
                     Default::default(),
                 );
@@ -123,6 +124,7 @@ pub(super) fn check_expr(
                     level,
                     loc,
                     tc_state.assumps,
+                    tc_state.preds,
                 ),
                 Default::default(),
             )
@@ -207,6 +209,7 @@ pub(super) fn check_expr(
                     level,
                     loc,
                     tc_state.assumps,
+                    tc_state.preds,
                 ),
                 Default::default(),
             )
@@ -326,6 +329,7 @@ pub(super) fn check_expr(
                     level,
                     loc,
                     tc_state.assumps,
+                    tc_state.preds,
                 ),
                 Default::default(),
             )
@@ -398,6 +402,7 @@ pub(super) fn check_expr(
                     level,
                     loc,
                     tc_state.assumps,
+                    tc_state.preds,
                 );
             }
 
@@ -417,6 +422,7 @@ pub(super) fn check_expr(
                         level,
                         loc,
                         tc_state.assumps,
+                        tc_state.preds,
                     );
                 }
 
@@ -466,6 +472,7 @@ pub(super) fn check_expr(
                 level,
                 loc,
                 tc_state.assumps,
+                tc_state.preds,
             );
 
             (expr_ty, Default::default())
@@ -507,6 +514,7 @@ pub(super) fn check_expr(
                         level,
                         loc,
                         tc_state.assumps,
+                        tc_state.preds,
                     );
 
                     match param_tys {
@@ -589,6 +597,7 @@ pub(super) fn check_expr(
                                     level,
                                     loc,
                                     tc_state.assumps,
+                                    tc_state.preds,
                                 );
                             }
                         }
@@ -604,6 +613,7 @@ pub(super) fn check_expr(
                             level,
                             loc,
                             tc_state.assumps,
+                            tc_state.preds,
                         );
                     }
 
@@ -709,6 +719,7 @@ pub(super) fn check_expr(
                         level,
                         loc,
                         tc_state.assumps,
+                        tc_state.preds,
                     );
                     "I32"
                 }
@@ -857,6 +868,7 @@ pub(super) fn check_expr(
                 level,
                 loc,
                 tc_state.assumps,
+                tc_state.preds,
             );
 
             let ret = (ty, Default::default());
@@ -1084,6 +1096,7 @@ pub(super) fn check_expr(
                 level,
                 loc,
                 tc_state.assumps,
+                tc_state.preds,
             ),
             Default::default(),
         ),
@@ -1285,6 +1298,7 @@ pub(super) fn check_expr(
                     level,
                     loc,
                     tc_state.assumps,
+                    tc_state.preds,
                 );
             }
 
@@ -1298,6 +1312,7 @@ pub(super) fn check_expr(
                 level,
                 loc,
                 tc_state.assumps,
+                tc_state.preds,
             );
             match_expr.inferred_ty = Some(expr_ty.clone());
             (expr_ty, Default::default())
@@ -1320,6 +1335,7 @@ pub(super) fn check_expr(
                             level,
                             loc,
                             tc_state.assumps,
+                            tc_state.preds,
                         );
                     }
                 }
@@ -1334,6 +1350,7 @@ pub(super) fn check_expr(
                             level,
                             loc,
                             tc_state.assumps,
+                            tc_state.preds,
                         );
                     }
                 }
@@ -1455,6 +1472,7 @@ pub(super) fn check_expr(
                 level,
                 loc,
                 tc_state.assumps,
+                tc_state.preds,
             );
             *inferred_ty = Some(ty.clone());
             (ty, Default::default())
@@ -1475,6 +1493,7 @@ pub(super) fn check_expr(
                 level,
                 &pat.loc,
                 tc_state.assumps,
+                tc_state.preds,
             );
             (Ty::bool(), pat_binders)
         }
@@ -1674,6 +1693,7 @@ pub(super) fn check_expr(
                         level,
                         loc,
                         tc_state.assumps,
+                        tc_state.preds,
                     ),
                     Default::default(),
                 );
@@ -1740,6 +1760,7 @@ pub(super) fn check_expr(
                     level,
                     loc,
                     tc_state.assumps,
+                    tc_state.preds,
                 ),
                 Default::default(),
             )
@@ -1761,6 +1782,7 @@ pub(super) fn check_expr(
                     level,
                     loc,
                     tc_state.assumps,
+                    tc_state.preds,
                 ),
                 binders,
             )
@@ -1818,6 +1840,7 @@ pub(super) fn check_match_expr(
             level,
             &pat.loc,
             tc_state.assumps,
+            tc_state.preds,
         );
 
         alt_envs.push(tc_state.env.exit());
@@ -1917,6 +1940,7 @@ pub(super) fn check_if_expr(
             level,
             &cond.loc,
             tc_state.assumps,
+            tc_state.preds,
         );
         tc_state.env.enter();
         cond_binders.into_iter().for_each(|(k, v)| {
@@ -2053,6 +2077,7 @@ fn check_field_sel(
                 level,
                 loc,
                 tc_state.assumps,
+                tc_state.preds,
             );
         }
         FunArgs::Named(_) => panic!(),

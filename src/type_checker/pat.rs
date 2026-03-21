@@ -135,6 +135,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 &pat.loc,
                 *ignore_rest,
                 tc_state.assumps,
+                tc_state.preds,
             );
             *inferred_ty = Some(ty.clone());
             ty
@@ -188,6 +189,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     level,
                     &pat.loc,
                     tc_state.assumps,
+                    tc_state.preds,
                 );
             }
 
@@ -205,6 +207,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 level,
                 &pat.loc,
                 tc_state.assumps,
+                tc_state.preds,
             );
 
             pat1_ty
