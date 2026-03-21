@@ -1641,7 +1641,7 @@ fn resolve_preds(
 
             for impl_ in trait_impls {
                 if let Some((subgoals, assoc_tys)) =
-                    impl_.try_match(&pred.params, var_gen, &tys.tys, &pred.loc)
+                    impl_.try_match(&pred.params, var_gen, tys.tys.cons(), &pred.loc)
                 {
                     if let Some((goal_assoc_ty, goal_assoc_ty_rhs)) = &pred.assoc_ty {
                         let matching_assoc_ty_rhs = assoc_tys.get(goal_assoc_ty).unwrap();

@@ -1003,35 +1003,10 @@ impl Ty {
                 // Try resolving via concrete impls in trait_env.
                 if let Some(impls) = trait_env.get(trait_name) {
                     for impl_ in impls {
-                        assert_eq!(impl_.trait_args.len(), trait_args.len());
-
-                        let var_map: HashMap<Id, Ty> = impl_
-                            .qvars
-                            .iter()
-                            .map(|(qvar, kind)| {
-                                let instantiated_var =
-                                    var_gen.new_var(0, kind.clone(), ast::Loc::dummy());
-                                (qvar.clone(), Ty::UVar(instantiated_var))
-                            })
-                            .collect();
-
-                        let all_match = impl_.trait_args.iter().zip(trait_args.iter()).all(
-                            |(impl_arg, ty_arg)| {
-                                let instantiated_impl_arg = impl_arg.subst_qvars(&var_map);
-                                crate::type_checker::unification::try_unify_one_way(
-                                    &instantiated_impl_arg,
-                                    ty_arg,
-                                    cons,
-                                    var_gen,
-                                    0,
-                                    &ast::Loc::dummy(),
-                                )
-                            },
-                        );
-
-                        if all_match {
-                            let rhs = impl_.assoc_tys.get(assoc_ty).unwrap();
-                            let resolved = rhs.subst_qvars(&var_map);
+                        if let Some((_subgoals, assoc_tys)) =
+                            impl_.try_match(trait_args, var_gen, cons, &ast::Loc::dummy())
+                        {
+                            let resolved = assoc_tys.get(assoc_ty).unwrap();
                             return resolved.deep_normalize(cons, trait_env, var_gen, assumps);
                         }
                     }

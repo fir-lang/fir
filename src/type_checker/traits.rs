@@ -174,7 +174,7 @@ impl TraitImpl {
         &self,
         args: &[Ty],
         var_gen: &UVarGen,
-        tys: &TyMap,
+        cons: &ScopeMap<Id, TyCon>,
         loc: &ast::Loc,
     ) -> Option<(Vec<Pred>, HashMap<Id, Ty>)> {
         if args.len() != self.trait_args.len() {
@@ -196,7 +196,7 @@ impl TraitImpl {
 
         for (impl_arg, ty_arg) in self.trait_args.iter().zip(args.iter()) {
             let instantiated_impl_arg = impl_arg.subst_qvars(&var_map);
-            if !try_unify_one_way(&instantiated_impl_arg, ty_arg, tys.cons(), var_gen, 0, loc) {
+            if !try_unify_one_way(&instantiated_impl_arg, ty_arg, cons, var_gen, 0, loc) {
                 return None;
             }
         }
