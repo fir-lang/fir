@@ -1429,7 +1429,7 @@ pub(super) fn check_expr(
             crate::type_checker::resolve_preds(
                 tc_state.trait_env,
                 tc_state.assumps,
-                tc_state.tys,
+                tc_state.tys.tys.cons(),
                 new_preds,
                 tc_state.var_gen,
                 0,

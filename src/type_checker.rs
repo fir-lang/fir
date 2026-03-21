@@ -1335,7 +1335,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
     }
 
-    resolve_preds(trait_env, &assumps, tys, preds, &var_gen, 0);
+    resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen, 0);
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
@@ -1460,7 +1460,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
 
-            resolve_preds(trait_env, &assumps, tys, preds, &var_gen, 0);
+            resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen, 0);
 
             for stmt in body.iter_mut() {
                 normalize_stmt(
@@ -1557,8 +1557,8 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
 fn resolve_preds(
     trait_env: &TraitEnv,
-    assumps: &Vec<Pred>,
-    tys: &PgmTypes,
+    assumps: &[Pred],
+    cons: &ScopeMap<Id, TyCon>,
     preds: Vec<Pred>,
     var_gen: &UVarGen,
     _level: u32,
@@ -1578,7 +1578,7 @@ fn resolve_preds(
         'goals: while let Some(mut pred) = goals.pop() {
             pred.params
                 .iter_mut()
-                .for_each(|ty| *ty = ty.deep_normalize(tys.tys.cons(), trait_env, var_gen, &[]));
+                .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]));
 
             if pred.trait_ == "RecRow" {
                 assert!(pred.assoc_ty.is_none());
@@ -1641,7 +1641,7 @@ fn resolve_preds(
 
             for impl_ in trait_impls {
                 if let Some((subgoals, assoc_tys)) =
-                    impl_.try_match(&pred.params, var_gen, tys.tys.cons(), &pred.loc)
+                    impl_.try_match(&pred.params, var_gen, cons, &pred.loc)
                 {
                     if let Some((goal_assoc_ty, goal_assoc_ty_rhs)) = &pred.assoc_ty {
                         let matching_assoc_ty_rhs = assoc_tys.get(goal_assoc_ty).unwrap();
@@ -1654,7 +1654,7 @@ fn resolve_preds(
                         unification::unify(
                             goal_assoc_ty_rhs,
                             matching_assoc_ty_rhs,
-                            tys.tys.cons(),
+                            cons,
                             trait_env,
                             var_gen,
                             0,
