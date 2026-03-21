@@ -1616,12 +1616,31 @@ fn resolve_preds(
 
             for assump in assumps {
                 // We can't use set lookup as locs will be different.
-                if assump.trait_ == pred.trait_
-                    && assump.params == pred.params
-                    && assump.assoc_ty == pred.assoc_ty
-                {
-                    // No need to flip `progress` as we haven't done any unification.
-                    continue 'goals;
+                if assump.trait_ == pred.trait_ && assump.params == pred.params {
+                    match (&assump.assoc_ty, &pred.assoc_ty) {
+                        (None, None) => {
+                            // No need to flip `progress` as we haven't done any unification.
+                            continue 'goals;
+                        }
+                        (Some((assump_name, assump_rhs)), Some((pred_name, pred_rhs)))
+                            if assump_name == pred_name =>
+                        {
+                            unification::unify(
+                                assump_rhs,
+                                pred_rhs,
+                                cons,
+                                trait_env,
+                                var_gen,
+                                0,
+                                &pred.loc,
+                                &[],
+                                &mut next_goals,
+                            );
+                            progress = true;
+                            continue 'goals;
+                        }
+                        _ => {}
+                    }
                 }
             }
 
