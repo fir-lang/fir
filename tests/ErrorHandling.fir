@@ -23,7 +23,7 @@ parseU32(s: Str) Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]:
 
     let result: U32 = 0
 
-    for c: Char in s.chars():
+    for c in s.chars():
         if c < '0' or c > '9':
             return Result.Err(~InvalidDigit)
 
@@ -87,7 +87,7 @@ parseU32FromFile(filePath: Str) Result[[InvalidDigit, Overflow, EmptyInput, IoEr
 parseWith(vec: Vec[Str], parseFn: Fn(Str) Result[errs, a] / exn) Result[errs, Vec[a]] / exn:
     let ret = Vec.withCapacity(vec.len())
 
-    for s: Str in vec.iter():
+    for s in vec.iter():
         match parseFn(s):
             Result.Err(err): return Result.Err(err)
             Result.Ok(val): ret.push(val)
@@ -124,7 +124,7 @@ parseU32Exn(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
 
     let result: U32 = 0
 
-    for c: Char in s.chars():
+    for c in s.chars():
         if c < '0' or c > '9':
             throw(~InvalidDigit)
 
