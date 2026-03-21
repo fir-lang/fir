@@ -1559,11 +1559,10 @@ fn resolve_preds(
     trait_env: &TraitEnv,
     assumps: &[Pred],
     cons: &ScopeMap<Id, TyCon>,
-    preds: Vec<Pred>,
+    mut goals: Vec<Pred>,
     var_gen: &UVarGen,
     _level: u32,
 ) {
-    let mut goals: Vec<Pred> = preds.into_iter().collect();
     let mut ambiguous_var_rows: Vec<UVarRef> = vec![];
     let mut ambiguous_rec_rows: Vec<UVarRef> = vec![];
 
