@@ -1047,13 +1047,17 @@ impl Ty {
                         assert_eq!(assump.params.len(), trait_args.len());
                         let all_match = assump.params.iter().zip(trait_args.iter()).all(
                             |(constraint_arg, ty_arg)| {
-                                // TODO: I'm not sure syntactic equality here is right, I think we
-                                // may want to one-way unify the normalized type with the
-                                // assumption.
                                 let c = constraint_arg
                                     .deep_normalize(cons, trait_env, var_gen, assumps);
                                 let t = ty_arg.deep_normalize(cons, trait_env, var_gen, assumps);
-                                c == t
+                                crate::type_checker::unification::try_unify_one_way(
+                                    &t,
+                                    &c,
+                                    cons,
+                                    var_gen,
+                                    0,
+                                    &ast::Loc::dummy(),
+                                )
                             },
                         );
                         if all_match {
