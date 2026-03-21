@@ -13,14 +13,14 @@ pub(super) fn unify(
     var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
-    local_assoc_tys: &[Pred],
+    assumps: &[Pred],
 ) {
-    let ty1 = ty1.deep_normalize(cons, trait_env, var_gen, local_assoc_tys);
+    let ty1 = ty1.deep_normalize(cons, trait_env, var_gen, assumps);
     if ty1.is_void() {
         return;
     }
 
-    let ty2 = ty2.deep_normalize(cons, trait_env, var_gen, local_assoc_tys);
+    let ty2 = ty2.deep_normalize(cons, trait_env, var_gen, assumps);
     if ty2.is_void() {
         return;
     }
@@ -54,16 +54,7 @@ pub(super) fn unify(
                 )
             }
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                unify(
-                    arg1,
-                    arg2,
-                    cons,
-                    trait_env,
-                    var_gen,
-                    level,
-                    loc,
-                    local_assoc_tys,
-                );
+                unify(arg1, arg2, cons, trait_env, var_gen, level, loc, assumps);
             }
         }
 
@@ -91,16 +82,7 @@ pub(super) fn unify(
             match (args1, args2) {
                 (FunArgs::Positional(args1), FunArgs::Positional(args2)) => {
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                        unify(
-                            arg1,
-                            arg2,
-                            cons,
-                            trait_env,
-                            var_gen,
-                            level,
-                            loc,
-                            local_assoc_tys,
-                        );
+                        unify(arg1, arg2, cons, trait_env, var_gen, level, loc, assumps);
                     }
                 }
 
@@ -123,7 +105,7 @@ pub(super) fn unify(
                             var_gen,
                             level,
                             loc,
-                            local_assoc_tys,
+                            assumps,
                         );
                     }
                 }
@@ -153,21 +135,12 @@ pub(super) fn unify(
                         var_gen,
                         level,
                         loc,
-                        local_assoc_tys,
+                        assumps,
                     );
                 }
             }
 
-            unify(
-                ret1,
-                ret2,
-                cons,
-                trait_env,
-                var_gen,
-                level,
-                loc,
-                local_assoc_tys,
-            );
+            unify(ret1, ret2, cons, trait_env, var_gen, level, loc, assumps);
         }
 
         (Ty::QVar(var, _kind), _) | (_, Ty::QVar(var, _kind)) => {
@@ -255,7 +228,7 @@ pub(super) fn unify(
                 extension1.clone(),
                 &Default::default(),
                 var_gen,
-                local_assoc_tys,
+                assumps,
             );
             let (labels2, mut extension2) = collect_rows(
                 cons,
@@ -265,7 +238,7 @@ pub(super) fn unify(
                 extension2.clone(),
                 &Default::default(),
                 var_gen,
-                local_assoc_tys,
+                assumps,
             );
 
             let keys1: HashSet<&Id> = labels1.keys().collect();
@@ -279,16 +252,7 @@ pub(super) fn unify(
             for key in keys1.intersection(&keys2) {
                 let ty1 = labels1.get(*key).unwrap();
                 let ty2 = labels2.get(*key).unwrap();
-                unify(
-                    ty1,
-                    ty2,
-                    cons,
-                    trait_env,
-                    var_gen,
-                    level,
-                    loc,
-                    local_assoc_tys,
-                );
+                unify(ty1, ty2, cons, trait_env, var_gen, level, loc, assumps);
             }
 
             if !extras1.is_empty() {
@@ -339,7 +303,7 @@ pub(super) fn unify(
                         var_gen,
                         level,
                         loc,
-                        local_assoc_tys,
+                        assumps,
                     );
                 }
                 (None, Some(ext2)) => {
@@ -351,20 +315,11 @@ pub(super) fn unify(
                         var_gen,
                         level,
                         loc,
-                        local_assoc_tys,
+                        assumps,
                     );
                 }
                 (Some(ext1), Some(ext2)) => {
-                    unify(
-                        &ext1,
-                        &ext2,
-                        cons,
-                        trait_env,
-                        var_gen,
-                        level,
-                        loc,
-                        local_assoc_tys,
-                    );
+                    unify(&ext1, &ext2, cons, trait_env, var_gen, level, loc, assumps);
                 }
             }
         }
@@ -388,14 +343,7 @@ pub(super) fn unify(
                 );
             }
             unify(
-                ty1_inner,
-                ty2_inner,
-                cons,
-                trait_env,
-                var_gen,
-                level,
-                loc,
-                local_assoc_tys,
+                ty1_inner, ty2_inner, cons, trait_env, var_gen, level, loc, assumps,
             );
         }
 
