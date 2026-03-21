@@ -844,10 +844,12 @@ fn collect_schemes(
                         loc: fun.loc.clone(),
                     };
 
-                    method_schemes
-                        .entry(fun.node.name.node.clone())
-                        .or_default()
-                        .push((trait_decl.node.name.node.clone(), scheme.clone()));
+                    if !matches!(fun.node.sig.self_, ast::SelfParam::No) {
+                        method_schemes
+                            .entry(fun.node.name.node.clone())
+                            .or_default()
+                            .push((trait_decl.node.name.node.clone(), scheme.clone()));
+                    }
 
                     associated_fn_schemes
                         .entry(trait_decl.node.name.node.clone())
