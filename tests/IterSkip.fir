@@ -3,8 +3,9 @@ type MyIter(
     end: U32,
 )
 
-impl Iterator[MyIter, U32, exn]:
-    next(self: MyIter) Option[U32] / exn:
+impl Iterator[MyIter, exn]:
+    type Item = U32
+    next(self: MyIter) Option[Iterator[MyIter, exn].Item] / exn:
         print("next")
         let next = self.start
         if next == self.end:

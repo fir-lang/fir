@@ -146,7 +146,8 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
 
             Ty.Fun(args, ret, exn = Option.Some(exceptions))
 
-        Type.AssocTySelect(..): panic("TODO")
+        Type.AssocTySelect(AssocTySelectType(ty, assocTy)):
+            Ty.AssocTySelect(ty = convertAstTy(module, vars, ty), assocTy)
 
 
 convertNamedTy(

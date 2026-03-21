@@ -14,7 +14,7 @@ TraitEnv.empty() TraitEnv:
     TraitEnv(_map = HashMap.empty(),)
 
 
-# Example: `impl[Iterator[iter, a]] Iterator[Map[iter, a, b], b]: ...`
+# Example: `impl[Iterator[iter, exn], Iterator[iter, exn].Item = a] Iterator[Map[iter, a, b, exn], exn]: ...`
 #[derive(ToDoc)]
 type TraitImpl(
     # Free variables of the `impl`.

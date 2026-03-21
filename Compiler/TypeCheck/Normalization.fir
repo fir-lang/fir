@@ -103,3 +103,7 @@ Ty.deepNormalize(self) Ty:
                 extension = extension.map(\(ty: Ty): ty.deepNormalize()),
                 isRow,
             )
+
+        Ty.AssocTySelect(..):
+            # TODO
+            self

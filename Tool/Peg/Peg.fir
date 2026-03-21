@@ -124,7 +124,7 @@ capitalize(s: Str) Str / exn:
     let buf = StrBuf.withCapacity(s.len())
     let chars = s.chars()
 
-    if chars.next[CharIter, Char, exn]() is Option.Some(char):
+    if chars.next[CharIter, exn]() is Option.Some(char):
         buf.push(char.toAsciiUppercase())
 
     while chars.next() is Option.Some(char):
@@ -1076,7 +1076,7 @@ tokensToCode(tokens: Vec[Token]) Str / exn:
         out.pushStr(token.text)
 
         # TODO: We could iterate the text once, increment column and push chars.
-        lastCol += token.text.chars().count[CharIter, Char, exn]()
+        lastCol += token.text.chars().count[CharIter, exn]()
 
     out.toStr()
 

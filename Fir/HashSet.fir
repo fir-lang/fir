@@ -19,7 +19,9 @@ HashSet.isEmpty(self: HashSet[k]) Bool:
     self._map.isEmpty()
 
 
-HashSet.fromIter[Iterator[iter, k, exn], Eq[k], Hash[k]](iter: iter) HashSet[k] / exn:
+HashSet.fromIter[Iterator[iter, exn], Iterator[iter, exn].Item = k, Eq[k], Hash[k]](
+    iter: iter,
+) HashSet[k] / exn:
     HashSet(_map = HashMap.fromIter(iter.map(\(k): (key = k, val = ()))))
 
 

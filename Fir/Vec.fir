@@ -12,10 +12,10 @@ Vec.empty() Vec[t]:
     Vec.withCapacity(0)
 
 
-Vec.fromIter[Iterator[iter, item, exn]](iter: iter) Vec[item] / exn:
-    let size = iter.size[iter, item, exn, exn]().unwrapOr(10)
+Vec.fromIter[Iterator[iter, exn], Iterator[iter, exn].Item = item](iter: iter) Vec[item] / exn:
+    let size = iter.size[iter, exn, exn]().unwrapOr(10)
     let vec = Vec.withCapacity(size)
-    for item: item in iter:
+    for item in iter:
         vec.push(item)
     vec
 
@@ -59,11 +59,14 @@ Vec.push(self: Vec[t], elem: t):
     self._len += 1
 
 
-Vec.extend[Iterator[iter, t, exn]](self: Vec[t], iter: iter) / exn:
-    if iter.size[iter, t, exn, exn]() is Option.Some(size):
+Vec.extend[Iterator[iter, exn], Iterator[iter, exn].Item = t](
+    self: Vec[t],
+    iter: iter,
+) / exn:
+    if iter.size[iter, exn, exn]() is Option.Some(size):
         self.reserve(size)
 
-    for item: t in iter:
+    for item in iter:
         self.push(item)
 
 
@@ -259,8 +262,10 @@ type VecIter[t](
 )
 
 
-impl Iterator[VecIter[t], t, exn]:
-    next(self: VecIter[t]) Option[t] / exn:
+impl Iterator[VecIter[t], exn]:
+    type Item = t
+
+    next(self: VecIter[t]) Option[Iterator[VecIter[t], exn].Item] / exn:
         if self._idx >= self._vec.len():
             return Option.None
 

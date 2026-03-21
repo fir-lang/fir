@@ -13,10 +13,10 @@ Deque.empty() Deque[t]:
     Deque.withCapacity(0)
 
 
-Deque.fromIter[Iterator[iter, item, exn]](iter: iter) Deque[item] / exn:
-    let size = iter.size[iter, item, exn, exn]().unwrapOr(10)
+Deque.fromIter[Iterator[iter, exn], Iterator[iter, exn].Item = item](iter: iter) Deque[item] / exn:
+    let size = iter.size[iter, exn, exn]().unwrapOr(10)
     let deque = Deque.withCapacity(size)
-    for item: item in iter:
+    for item in iter:
         deque.pushBack(item)
     deque
 
@@ -144,8 +144,10 @@ type DequeIter[t](
 )
 
 
-impl Iterator[DequeIter[t], t, exn]:
-    next(self: DequeIter[t]) Option[t] / exn:
+impl Iterator[DequeIter[t], exn]:
+    type Item = t
+
+    next(self: DequeIter[t]) Option[Iterator[DequeIter[t], exn].Item] / exn:
         if self._idx >= self._deque.len():
             return Option.None
 

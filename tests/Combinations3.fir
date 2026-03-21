@@ -19,8 +19,9 @@ combinations(elems: Vec[U32], n: U32) CombinationsIter:
     )
 
 
-impl Iterator[CombinationsIter, Vec[U32], exn]:
-    next(self: CombinationsIter) Option[Vec[U32]] / exn:
+impl Iterator[CombinationsIter, exn]:
+    type Item = Vec[U32]
+    next(self: CombinationsIter) Option[Iterator[CombinationsIter, exn].Item] / exn:
         while self.work.pop() is Option.Some(work):
             if work.combination.len() == self.pick:
                 return Option.Some(work.combination)

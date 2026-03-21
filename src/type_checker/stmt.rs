@@ -345,17 +345,47 @@ fn check_stmt(
                     )
                 });
 
+            // Try to eagerly resolve the item type via local assumptions. This is
+            // needed so the for-loop body can use fields/methods on the item type.
+            let assoc_ty_select = Ty::AssocTySelect {
+                ty: Box::new(Ty::App(
+                    SmolStr::new_static("Iterator"),
+                    vec![iter_ty.clone(), tc_state.exceptions.clone()],
+                    Kind::Star,
+                )),
+                assoc_ty: SmolStr::new_static("Item"),
+            };
+            let resolved_item_ty = assoc_ty_select.deep_normalize(
+                tc_state.tys.tys.cons(),
+                tc_state.trait_env,
+                tc_state.var_gen,
+                tc_state.assumps,
+            );
+            let item_ty = match &resolved_item_ty {
+                Ty::AssocTySelect { .. } => item_ty, // couldn't resolve, keep UVar
+                _ => {
+                    unify(
+                        &item_ty,
+                        &resolved_item_ty,
+                        tc_state.tys.tys.cons(),
+                        tc_state.trait_env,
+                        tc_state.var_gen,
+                        level,
+                        &expr.loc,
+                        tc_state.assumps,
+                        tc_state.preds,
+                    );
+                    resolved_item_ty
+                }
+            };
+
             *item_tc_ty = Some(item_ty.clone());
 
-            // Add predicate `Iterator[iter, item, exn]`.
+            // Add predicate `Iterator[iter, exn], Iterator[iter, exn].Item = item`.
             tc_state.preds.push(Pred {
                 trait_: SmolStr::new_static("Iterator"),
-                params: vec![
-                    iter_ty.clone(),
-                    item_ty.clone(),
-                    tc_state.exceptions.clone(),
-                ],
-                assoc_ty: None,
+                params: vec![iter_ty.clone(), tc_state.exceptions.clone()],
+                assoc_ty: Some((SmolStr::new_static("Item"), item_ty.clone())),
                 loc: stmt.loc.clone(),
             });
 
@@ -423,7 +453,7 @@ fn check_stmt(
                                         node: ast::Expr::Call(ast::CallExpr {
                                             fun: Box::new(ast::L {
                                                 loc: expr.loc.clone(),
-                                                // Iterator.next[iter, item, exn](self: iter) Option[item] / exn
+                                                // Iterator.next[iter, exn](self: iter) Option[Iterator[iter, exn].Item] / exn
                                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                                                     ty: SmolStr::new_static("Iterator"),
                                                     ty_user_ty_args: vec![],
@@ -431,7 +461,6 @@ fn check_stmt(
                                                     user_ty_args: vec![],
                                                     ty_args: vec![
                                                         iter_ty.clone(),
-                                                        item_ty.clone(),
                                                         tc_state.exceptions.clone(),
                                                     ],
                                                     inferred_ty: Some(Ty::Fun {

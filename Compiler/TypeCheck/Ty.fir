@@ -87,6 +87,11 @@ type Ty:
         isRow: Bool,
     )
 
+    AssocTySelect(
+        ty: Ty,
+        assocTy: Id,
+    )
+
 
 Ty.app(id: TyDefIdx, args: Vec[Ty]) Ty:
     if args.isEmpty():
@@ -219,6 +224,8 @@ Ty.kind(self) Kind:
                 Kind.Row(RecordOrVariant.Record)
             else:
                 Kind.Star
+
+        Ty.AssocTySelect(..): Kind.Star
 
 
 Ty.unit() Ty:
@@ -496,6 +503,9 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                 isRow,
             )
 
+        Ty.AssocTySelect(ty, assocTy):
+            Ty.AssocTySelect(ty = ty.substQVars(vars), assocTy)
+
 
 # ------------------------------------------------------------------------------
 # Generated ToDoc implementations
@@ -593,6 +603,18 @@ impl ToDoc[Ty]:
                 )
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.str("Ty.Record") + Doc.char('(') + args
+            Ty.AssocTySelect(ty, assocTy):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("ty =") + Doc.nested(4, Doc.break_(1) + ty.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("assocTy =")
+                        + Doc.nested(4, Doc.break_(1) + assocTy.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.str("Ty.AssocTySelect") + Doc.char('(') + args
 
 
 impl ToDoc[QVar]:

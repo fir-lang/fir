@@ -370,7 +370,9 @@ _formatContext(context: Context, tokens: Array[Token]) Doc:
 
                 let eqToken = nextNonTrivia(assocTy.token, tokens).unwrap()
                 assert(tokens.get(eqToken.idx).kind is TokenKind.Eq)
-                doc += formatToken(eqToken, tokens)
+                doc += Doc.blank(1)
+                    + formatToken(eqToken, tokens)
+                    + Doc.blank(1)
                 doc += eq.format(tokens)
                 lastToken = eq.lastToken(tokens)
 
@@ -560,7 +562,12 @@ TraitDecl.format(self, tokens: Array[Token]) Doc:
 
 TraitDeclItem.format(self, tokens: Array[Token]) Doc:
     match self:
-        TraitDeclItem.Type(id): formatToken(id.token, tokens)
+        TraitDeclItem.Type(id):
+            let typeToken = prevNonTrivia(id.token, tokens).unwrap()
+            assert(tokens.get(typeToken.idx).kind is TokenKind.Type)
+            formatToken(typeToken, tokens)
+                + Doc.blank(1)
+                + formatToken(id.token, tokens)
         TraitDeclItem.Fun(fun): fun.format(tokens)
 
 
@@ -627,6 +634,7 @@ ImplDeclItem.format(self, tokens: Array[Token]) Doc:
                 + formatToken(assocTy.token, tokens)
                 + Doc.blank(1)
                 + formatToken(eqToken, tokens)
+                + Doc.blank(1)
                 + rhs.format(tokens)
 
         ImplDeclItem.Fun(fun): fun.format(tokens)
@@ -1502,7 +1510,7 @@ FnType.format(self, tokens: Array[Token]) Doc:
 
 AssocTySelectType.format(self, tokens: Array[Token]) Doc:
     let doc = self.ty.format(tokens)
-    let dot = nextNonTrivia(self.lastToken(tokens), tokens).unwrap()
+    let dot = nextNonTrivia(self.ty.lastToken(tokens), tokens).unwrap()
     assert(tokens.get(dot.idx).kind is TokenKind.Dot)
     doc + formatToken(dot, tokens) + formatToken(self.assocTy.token, tokens)
 
@@ -1824,7 +1832,7 @@ tokenText(token: TokenIdx, tokens: Array[Token]) Str:
     tokens.get(token.idx).text
 
 
-join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
+join[Iterator[iter, exn], Iterator[iter, exn].Item = Doc](iter: iter, sep: Doc) Doc / exn:
     let doc = match iter.next():
         Option.None: return Doc.empty()
         Option.Some(doc): doc

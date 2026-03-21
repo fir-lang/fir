@@ -258,7 +258,8 @@ type TraitDeclItem:
 ## impl[ToStr[a]] ToStr[Vec[a]]:
 ##   toStr(self) Str: ...
 ##
-## impl Iterator[VecIter[a], a]:
+## impl Iterator[VecIter[a]]:
+##   type Item = a
 ##   next(self) Option[a]: ...
 ## ```
 #[derive(ToDoc)]
@@ -437,10 +438,10 @@ impl Tokens[AssocTySelectType]:
 
 ## Type parameter and predicates of an `impl` or function.
 ##
-## E.g. `[Iterator[iter, item], Debug[item]]`.
+## E.g. `[Iterator[iter, exn], Debug[item]]`.
 #[derive(ToDoc)]
 type Context(
-    ## Predicates: `Iterator[iter, item]` and `Debug[item]` in the example.
+    ## Predicates: `Iterator[iter, exn]` and `Debug[item]` in the example.
     preds: Vec[Pred_],
 
     # Left bracket.
@@ -451,9 +452,10 @@ type Context(
 )
 
 
-## A predicate in a context. E.g. in context `[Iterator[coll, item],
-## Debug[item]]`, we have two predicates: `ToStr[t]` (`Pred.App`),
-## `Iterator[iter, exn].Item = U32` (`Pred.AssocTyEq`).
+## A predicate in a context. E.g. in context `[Iterator[iter, exn],
+## Iterator[iter, exn].Item = item, Debug[item]]`, we have three predicates:
+## `Iterator[iter, exn]` (`Pred.App`), `Iterator[iter, exn].Item = item`
+## (`Pred.AssocTyEq`), `Debug[item]` (`Pred.App`).
 #[derive(ToDoc)]
 type Pred_:
     App(TypeApp)
@@ -476,7 +478,7 @@ impl Tokens[Pred_]:
             Pred_.AssocTyEq(eq, ..): eq.lastToken(tokens)
 
 
-## A type application, used in predicates. E.g. `Iterator[coll, item]`.
+## A type application, used in predicates. E.g. `Iterator[iter, exn]`.
 #[derive(ToDoc)]
 type TypeApp(
     trait_: Id,
@@ -508,7 +510,7 @@ impl Tokens[Context]:
         self._lastToken
 
 
-## A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
+## A named type, e.g. `I32`, `Vec[I32]`, `Iterator[iter, exn]`.
 #[derive(ToDoc)]
 type NamedType(
     ## Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
@@ -636,7 +638,7 @@ type ForStmt(
     label: Option[Id],
     pat: Pat,
 
-    ## Type annotation on the loop variable, the `item` type in `Iterator[iter, item]`.
+    ## Type annotation on the loop variable, the `Item` associated type in `Iterator[iter, exn]`.
     astTy: Option[Type],
 
     ## `ast_ty`, converted to type checking types by the type checker.
@@ -644,7 +646,7 @@ type ForStmt(
 
     expr: Expr,
 
-    ## Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, item]`.
+    ## Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, exn]`.
     exprTy: Option[Ty],
 
     body: Vec[Stmt],
@@ -1129,7 +1131,7 @@ type MethodSelExpr(
     ##
     ## If the method is for a trait, the first arguments here will be for the
     ## trait type parameters. E.g. in `Iterator.next`, the first two argumetns
-    ## will be the `iter` and `item` parameters of `trait Iterator[iter, item]`.
+    ## will be the `iter` and `exn` parameters of `trait Iterator[iter, exn]`.
     ##
     ## (If the method is not a trait method, then we don't care about the type
     ## parameter order.. I think?)
