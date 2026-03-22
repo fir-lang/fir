@@ -1341,7 +1341,7 @@ fn collect_schemes(
                         exceptions: Some(Box::new(exceptions)),
                     };
 
-                    let mut impl_fun_scheme = Scheme {
+                    let impl_fun_scheme = Scheme {
                         quantified_vars: fun.node.sig.context.type_params.clone(),
                         preds: fun_assumps.to_vec(),
                         ty: fun_ty,
@@ -1395,24 +1395,6 @@ fn collect_schemes(
                         kind_inference::collect_tvs(&ty_arg.node, &ty_arg.loc, &mut arg_fvs);
                         let ty_arg = convert_ast_ty(tys, &ty_arg.node, &ty_arg.loc);
                         trait_fun_scheme = trait_fun_scheme.subst(&ty_param_renamed, &ty_arg);
-                    }
-
-                    // Substitute associated types with their concrete types from the impl in both
-                    // trait and impl schemes, so they can be compared.
-                    for item in &impl_decl.node.items {
-                        if let ast::ImplDeclItem::Type { assoc_ty, rhs } = item {
-                            let rhs_ty = convert_ast_ty(tys, &rhs.node, &rhs.loc);
-                            trait_fun_scheme = trait_fun_scheme.subst_assoc_ty_select(
-                                &impl_decl.node.trait_.node,
-                                &assoc_ty.node,
-                                &rhs_ty,
-                            );
-                            impl_fun_scheme = impl_fun_scheme.subst_assoc_ty_select(
-                                &impl_decl.node.trait_.node,
-                                &assoc_ty.node,
-                                &rhs_ty,
-                            );
-                        }
                     }
 
                     if !trait_fun_scheme.eq_modulo_alpha(tys.cons(), &impl_fun_scheme, &fun.loc) {
