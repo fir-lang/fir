@@ -16,7 +16,7 @@ mod unification;
 
 pub use crate::utils::loc_display;
 use convert::*;
-use normalization::{expand_type_synonyms, normalize_stmt};
+use normalization::normalize_stmt;
 use stmt::check_stmts;
 use traits::*;
 use ty::*;
@@ -1944,4 +1944,197 @@ fn resolve_preds(
 fn rename_domain_var(var: &Id, uniq: u32) -> Id {
     // Add the comment character '#' to make sure it won't conflict with a user variable.
     SmolStr::new(format!("{var}#{uniq}"))
+}
+
+/// Expand type synonym references in all `ast::Type` nodes in the module. This must run after type
+/// checking and before monomorphization.
+fn expand_type_synonyms(module: &mut ast::Module) {
+    // Collect top-level synonyms.
+    let mut synonyms: OrderMap<Id, ast::Type> = Default::default();
+    for decl in module.iter() {
+        if let ast::TopDecl::Type(ty_decl) = &decl.node
+            && let Some(ast::TypeDeclRhs::Synonym(rhs)) = &ty_decl.node.rhs
+        {
+            synonyms.insert(ty_decl.node.name.clone(), rhs.node.clone());
+        }
+    }
+
+    for decl in module.iter_mut() {
+        match &mut decl.node {
+            ast::TopDecl::Type(ty_decl) => {
+                expand_synonyms_in_type_decl(&mut ty_decl.node, &synonyms);
+            }
+
+            ast::TopDecl::Fun(fun) => {
+                expand_synonyms_in_fun(&mut fun.node, &synonyms);
+            }
+
+            ast::TopDecl::Trait(trait_decl) => {
+                // Build scoped synonyms: trait associated types map to AssocTySelect.
+                let mut scoped = synonyms.clone();
+                for item in &trait_decl.node.items {
+                    if let ast::TraitDeclItem::Type(assoc_ty) = item {
+                        let trait_ty = ast::Type::Named(ast::NamedType {
+                            name: trait_decl.node.name.node.clone(),
+                            args: trait_decl
+                                .node
+                                .type_params
+                                .iter()
+                                .map(|p| p.map_as_ref(|p| ast::Type::Var(p.clone())))
+                                .collect(),
+                        });
+                        scoped.insert(
+                            assoc_ty.node.clone(),
+                            ast::Type::AssocTySelect {
+                                ty: assoc_ty.set_node(Box::new(trait_ty)),
+                                assoc_ty: assoc_ty.node.clone(),
+                            },
+                        );
+                    }
+                }
+
+                for item in &mut trait_decl.node.items {
+                    if let ast::TraitDeclItem::Fun(fun) = item {
+                        expand_synonyms_in_fun(&mut fun.node, &scoped);
+                    }
+                }
+            }
+
+            ast::TopDecl::Impl(impl_decl) => {
+                // Build scoped synonyms: impl associated type assignments.
+                let mut scoped = synonyms.clone();
+                for item in &impl_decl.node.items {
+                    if let ast::ImplDeclItem::Type { assoc_ty, rhs } = item {
+                        // First expand any synonyms in the RHS itself.
+                        let mut rhs_expanded = rhs.node.clone();
+                        expand_synonyms_in_ty(&mut rhs_expanded, &synonyms);
+                        scoped.insert(assoc_ty.node.clone(), rhs_expanded);
+                    }
+                }
+
+                for item in &mut impl_decl.node.items {
+                    match item {
+                        ast::ImplDeclItem::Type { assoc_ty: _, rhs } => {
+                            expand_synonyms_in_ty(&mut rhs.node, &synonyms);
+                        }
+                        ast::ImplDeclItem::Fun(fun) => {
+                            expand_synonyms_in_fun(&mut fun.node, &scoped);
+                        }
+                    }
+                }
+            }
+
+            ast::TopDecl::Import(_) => {}
+        }
+    }
+}
+
+fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, synonyms: &OrderMap<Id, ast::Type>) {
+    match &mut decl.rhs {
+        Some(ast::TypeDeclRhs::Sum(cons)) => {
+            for con in cons {
+                expand_synonyms_in_fields(&mut con.fields, synonyms);
+            }
+        }
+        Some(ast::TypeDeclRhs::Product(fields)) => {
+            expand_synonyms_in_fields(fields, synonyms);
+        }
+        Some(ast::TypeDeclRhs::Synonym(rhs)) => {
+            expand_synonyms_in_ty(&mut rhs.node, synonyms);
+        }
+        None => {}
+    }
+}
+
+fn expand_synonyms_in_fields(fields: &mut ast::ConFields, synonyms: &OrderMap<Id, ast::Type>) {
+    match fields {
+        ast::ConFields::Empty => {}
+        ast::ConFields::Named(fields) => {
+            for (_, ty) in fields {
+                expand_synonyms_in_ty(&mut ty.node, synonyms);
+            }
+        }
+        ast::ConFields::Unnamed(fields) => {
+            for ty in fields {
+                expand_synonyms_in_ty(&mut ty.node, synonyms);
+            }
+        }
+    }
+}
+
+fn expand_synonyms_in_fun(fun: &mut ast::FunDecl, synonyms: &OrderMap<Id, ast::Type>) {
+    expand_synonyms_in_sig(&mut fun.sig, synonyms);
+}
+
+fn expand_synonyms_in_sig(sig: &mut ast::FunSig, synonyms: &OrderMap<Id, ast::Type>) {
+    if let ast::SelfParam::Explicit(ty) = &mut sig.self_ {
+        expand_synonyms_in_ty(&mut ty.node, synonyms);
+    }
+    for (_, ty) in &mut sig.params {
+        if let Some(ty) = ty {
+            expand_synonyms_in_ty(&mut ty.node, synonyms);
+        }
+    }
+    if let Some(ty) = &mut sig.return_ty {
+        expand_synonyms_in_ty(&mut ty.node, synonyms);
+    }
+    if let Some(ty) = &mut sig.exceptions {
+        expand_synonyms_in_ty(&mut ty.node, synonyms);
+    }
+}
+
+fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &OrderMap<Id, ast::Type>) {
+    match ty {
+        ast::Type::Named(named) => {
+            if named.args.is_empty()
+                && let Some(expansion) = synonyms.get(&named.name)
+            {
+                *ty = expansion.clone();
+                // Recursively expand in case the expansion contains more synonyms.
+                expand_synonyms_in_ty(ty, synonyms);
+                return;
+            }
+            for arg in &mut named.args {
+                expand_synonyms_in_ty(&mut arg.node, synonyms);
+            }
+        }
+        ast::Type::Var(_) => {}
+        ast::Type::Record {
+            fields,
+            extension: _,
+            is_row: _,
+        } => {
+            for (_, field_ty) in fields {
+                expand_synonyms_in_ty(field_ty, synonyms);
+            }
+        }
+        ast::Type::Variant {
+            alts,
+            extension: _,
+            is_row: _,
+        } => {
+            for alt in alts {
+                for arg in &mut alt.args {
+                    expand_synonyms_in_ty(&mut arg.node, synonyms);
+                }
+            }
+        }
+        ast::Type::Fn(fn_ty) => {
+            for arg in &mut fn_ty.args {
+                expand_synonyms_in_ty(&mut arg.node, synonyms);
+            }
+            if let Some(ret) = &mut fn_ty.ret {
+                expand_synonyms_in_ty(&mut ret.node, synonyms);
+            }
+            if let Some(exn) = &mut fn_ty.exceptions {
+                expand_synonyms_in_ty(&mut exn.node, synonyms);
+            }
+        }
+        ast::Type::AssocTySelect {
+            ty: inner,
+            assoc_ty: _,
+        } => {
+            expand_synonyms_in_ty(&mut inner.node, synonyms);
+        }
+    }
 }
