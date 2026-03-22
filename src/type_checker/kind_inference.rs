@@ -169,8 +169,8 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     ty.type_param_kinds = kinds;
 }
 
-const REC_ROW_TRAIT_ID: Id = Id::new_static("RecRow");
-const VAR_ROW_TRAIT_ID: Id = Id::new_static("VarRow");
+pub(crate) const REC_ROW_TRAIT_ID: Id = Id::new_static("RecRow");
+pub(crate) const VAR_ROW_TRAIT_ID: Id = Id::new_static("VarRow");
 
 /// Collect type variables in `ty` in `tvs`.
 ///

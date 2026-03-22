@@ -1582,7 +1582,7 @@ fn resolve_preds(
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]));
 
-            if pred.trait_ == "RecRow" {
+            if pred.trait_ == kind_inference::REC_ROW_TRAIT_ID {
                 assert!(pred.assoc_ty.is_none());
                 match &pred.params[0] {
                     Ty::Anonymous { kind, is_row, .. } => {
@@ -1599,7 +1599,7 @@ fn resolve_preds(
                 }
             }
 
-            if pred.trait_ == "VarRow" {
+            if pred.trait_ == kind_inference::VAR_ROW_TRAIT_ID {
                 assert!(pred.assoc_ty.is_none());
                 match &pred.params[0] {
                     Ty::Anonymous { kind, is_row, .. } => {
