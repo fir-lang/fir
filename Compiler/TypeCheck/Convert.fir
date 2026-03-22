@@ -163,6 +163,20 @@ convertNamedTy(
     let tyDefIdx = namedTy.name.def()
     let tyDefName = tyDefIdx._name
 
+    let synTy: Option[Ty] = match vars.get(tyDefName):
+        Option.Some(ty): Option.Some(ty)
+        Option.None: module._tcEnv.unwrap()._synonyms.get(tyDefName)
+
+    if synTy is Option.Some(synTy):
+        if numTyArgs != 0:
+            throw(
+                TypeError(
+                    loc,
+                    msg = "Type synonym `tyName` does not take type arguments",
+                ),
+            )
+        return synTy
+
     let tyCon = module._tcEnv.unwrap()._cons.get(tyDefName).unwrap()
 
     if tyCon.info.arity() != numTyArgs:
