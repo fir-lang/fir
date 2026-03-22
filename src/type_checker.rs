@@ -85,10 +85,6 @@ pub(crate) fn check_module(module: &mut ast::Module, main: &str) -> PgmTypes {
         }
     }
 
-    // Expand type synonyms in AST type annotations so that later stages (monomorphization,
-    // lowering) don't need to know about them.
-    expand_type_synonyms(module);
-
     tys
 }
 
@@ -1948,7 +1944,7 @@ fn rename_domain_var(var: &Id, uniq: u32) -> Id {
 
 /// Expand type synonym references in all `ast::Type` nodes in the module. This must run after type
 /// checking and before monomorphization.
-fn expand_type_synonyms(module: &mut ast::Module) {
+pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
     // Collect top-level synonyms.
     let mut synonyms: HashMap<Id, ast::Type> = Default::default();
     for decl in module.iter() {

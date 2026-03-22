@@ -170,6 +170,7 @@ mod native {
 
         type_checker::check_main_type(&tys, &Default::default(), &opts.main);
 
+        type_checker::expand_type_synonyms(&mut module);
         let mut mono_pgm = monomorph::monomorphise(&module, &opts.main);
 
         if opts.print_mono_ast {
@@ -369,6 +370,7 @@ mod wasm {
 
         type_checker::check_module(&mut module, "main");
 
+        type_checker::expand_type_synonyms(&mut module);
         let mut mono_pgm = monomorph::monomorphise(&module, "main");
         let lowered_pgm = lowering::lower(&mut mono_pgm);
 
