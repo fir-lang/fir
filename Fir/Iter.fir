@@ -9,10 +9,7 @@ trait Iterator[iter, exn]:
     peekable(self: iter) Peekable[iter, Item, exn]:
         Peekable(iter = self, peeked = Option.None)
 
-    mapResult(
-        self: iter,
-        f: Fn(Result[exn, Option[Item]]) Option[b] / exn2,
-    ) MapResult[iter, Item, b, exn, exn2]:
+    mapResult(self: iter, f: Fn(Result[exn, Option[Item]]) Option[b] / exn2,) MapResult[iter, Item, b, exn, exn2]:
         MapResult(iter = self, f = f)
 
     try(self: iter) Try[iter, Item, exn]:
