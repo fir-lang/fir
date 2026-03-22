@@ -47,6 +47,8 @@ resolveNames(pgm: Program):
 
                     TypeDeclRhs.Product(fields): visitor.visitConFields(fields)
 
+                    TypeDeclRhs.Synonym(ty): visitor.visitType(ty)
+
         for traitDecl: HashMapEntry[Str, TraitDecl] in
                 module._traitItems.iter():
             let traitDecl = traitDecl.val

@@ -302,6 +302,10 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 let old = schemes.insert(tyNameStr, scheme)
                 assert(old is Option.None)
 
+            Option.Some(TypeDeclRhs.Synonym(ty)):
+                # TODO
+                ()
+
             Option.None: ()
 
         tyCon.info.details = TyConDetails.Type(
