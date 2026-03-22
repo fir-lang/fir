@@ -29,7 +29,7 @@ resolveNames(pgm: Program):
             _tokens = module._tokens,
             _termEnv = termEnv,
             _assocTermEnv = module._assocTermEnv,
-            _tyEnv = module._tyEnv,
+            _tyEnv = ScopeMap.fromMap(module._tyEnv),
         )
 
         for funDecl: HashMapEntry[Str, FunDecl] in module._funItems.iter():
@@ -47,21 +47,48 @@ resolveNames(pgm: Program):
 
                     TypeDeclRhs.Product(fields): visitor.visitConFields(fields)
 
+                    TypeDeclRhs.Synonym(ty): visitor.visitType(ty)
+
         for traitDecl: HashMapEntry[Str, TraitDecl] in
                 module._traitItems.iter():
             let traitDecl = traitDecl.val
+            visitor._tyEnv.enterScope()
             for item: TraitDeclItem in traitDecl.items.iter():
                 match item:
-                    TraitDeclItem.Type(_):
-                        # TODO
-                        ()
+                    TraitDeclItem.Type(assocTyId):
+                        let assocTyName = visitor._tokens.get(
+                            assocTyId.token.idx,
+                        ).text
+                        let tyDefIdx = TyDefIdx(
+                            _mod = module._idx,
+                            _name = assocTyName,
+                        )
+                        visitor._tyEnv.insert(assocTyName, tyDefIdx)
+                    TraitDeclItem.Fun(_): ()
+            for item: TraitDeclItem in traitDecl.items.iter():
+                match item:
+                    TraitDeclItem.Type(_): ()
                     TraitDeclItem.Fun(funDecl): visitor.visitFunDecl(funDecl)
+            visitor._tyEnv.exitScope()
 
         for implDecl: ImplDecl in module._impls.iter():
+            visitor._tyEnv.enterScope()
             for item: ImplDeclItem in implDecl.items.iter():
                 match item:
-                    ImplDeclItem.Type(..): ()
+                    ImplDeclItem.Type(assocTy = assocTy, ..):
+                        let assocTyName = visitor._tokens.get(assocTy.token.idx,)
+                            .text
+                        let tyDefIdx = TyDefIdx(
+                            _mod = module._idx,
+                            _name = assocTyName,
+                        )
+                        visitor._tyEnv.insert(assocTyName, tyDefIdx)
+                    ImplDeclItem.Fun(_): ()
+            for item: ImplDeclItem in implDecl.items.iter():
+                match item:
+                    ImplDeclItem.Type(rhs = rhs, ..): visitor.visitType(rhs)
                     ImplDeclItem.Fun(funDecl): visitor.visitFunDecl(funDecl)
+            visitor._tyEnv.exitScope()
 
 
 type _NameResolverVisitor(
@@ -69,7 +96,7 @@ type _NameResolverVisitor(
     _tokens: Array[Token],
     _termEnv: ScopeMap[Str, VarDefIdx],
     _assocTermEnv: HashMap[Str, HashMap[Str, AssocVarDefIdx]],
-    _tyEnv: HashMap[Str, TyDefIdx],
+    _tyEnv: ScopeMap[Str, TyDefIdx],
 )
 
 

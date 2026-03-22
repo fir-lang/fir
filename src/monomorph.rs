@@ -1933,6 +1933,10 @@ fn mono_ty_decl(
         ast::TypeDeclRhs::Product(fields) => {
             mono::TypeDeclRhs::Product(mono_fields(fields, &ty_map, poly_pgm, mono_pgm))
         }
+
+        ast::TypeDeclRhs::Synonym(_) => {
+            panic!("Type synonyms should be expanded before monomorphization")
+        }
     });
 
     mono_pgm.ty.get_mut(&ty_decl.name).unwrap().insert(

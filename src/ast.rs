@@ -166,6 +166,9 @@ pub enum TypeDeclRhs {
 
     /// A product type uses the type name as the constructor and only has fields.
     Product(ConFields),
+
+    /// A type synonym: `type Foo = U32`.
+    Synonym(L<Type>),
 }
 
 /// A sum type constructor.

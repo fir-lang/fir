@@ -182,6 +182,11 @@ TypeDeclRhs.format(self, tokens: Array[Token]) Doc:
 
         TypeDeclRhs.Product(fields): fields.format(tokens)
 
+        TypeDeclRhs.Synonym(ty):
+            let eq = prevNonTrivia(ty.firstToken(tokens), tokens).unwrap()
+            assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+            formatToken(eq, tokens) + Doc.blank(1) + ty.format(tokens)
+
 
 ConDecl.format(self, tokens: Array[Token]) Doc:
     formatToken(self.name.token, tokens) + self.fields.format(tokens)

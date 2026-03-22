@@ -94,6 +94,9 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
         let modTokens = mod._tokens
 
         for tyDecl: TypeDecl in mod._tyItems.values():
+            if tyDecl.rhs is Option.Some(TypeDeclRhs.Synonym(_)):
+                continue
+
             let tyDeclName = mod.idText(tyDecl.name)
             let old = modCons.insert(
                 tyDeclName,
@@ -220,6 +223,14 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
     let tcEnv = mod._tcEnv.unwrap()
 
     for tyDecl: TypeDecl in mod._tyItems.values():
+        # Handle synonyms: convert and register, then skip rest of TyCon processing.
+        if tyDecl.rhs is Option.Some(TypeDeclRhs.Synonym(synRhsTy)):
+            let tyDeclName = mod.idText(tyDecl.name)
+            let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
+            let synTy = convertAstTy(mod, varMap, synRhsTy)
+            tcEnv._synonyms.insert(tyDeclName, synTy)
+            continue
+
         let tyDeclName = mod.idText(tyDecl.name)
         let tyCon = tcEnv._cons.get(tyDeclName).unwrap()
         let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
@@ -302,6 +313,9 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 let old = schemes.insert(tyNameStr, scheme)
                 assert(old is Option.None)
 
+            Option.Some(TypeDeclRhs.Synonym(_)):
+                panic("Synonyms should be handled above")
+
             Option.None: ()
 
         tyCon.info.details = TyConDetails.Type(
@@ -341,13 +355,40 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
         assert(traitContext.isEmpty())
 
+        let traitTy: Ty = if traitDecl.typeParams.isEmpty():
+            Ty.Con(id = tyCon.idx)
+        else:
+            let tyArgs: Vec[Ty] = Vec.fromIter(
+                range(u32(0), traitDecl.typeParams.len()).map(
+                    \(i: U32) Ty:
+                        Ty.QVar(
+                            QVar(
+                                id =
+                                    LocalId(
+                                        name =
+                                            mod.idText(
+                                                traitDecl.typeParams.get(i),
+                                            ),
+                                    ),
+                                kind = traitDecl.typeParamKinds.get(i),
+                            ),
+                        ),
+                ),
+            )
+            Ty.App(conId = tyCon.idx, args = tyArgs)
+
+        for item: TraitDeclItem in traitDecl.items.iter():
+            if item is TraitDeclItem.Type(assocTyId):
+                varMap.insert(
+                    mod.idText(assocTyId),
+                    Ty.AssocTySelect(ty = traitTy, assocTy = assocTyId),
+                )
+
         let methods: HashMap[Str, TraitMethod] = HashMap.empty()
 
         for item: TraitDeclItem in traitDecl.items.iter():
             match item:
-                TraitDeclItem.Type(_):
-                    # TODO
-                    continue
+                TraitDeclItem.Type(_): continue
                 TraitDeclItem.Fun(method):
                     varMap.enterScope()
 
@@ -702,6 +743,9 @@ type ModuleTcEnv(
     ## Type constructors.
     _cons: HashMap[Str, TcItem[TyDefIdx, TyCon]],
 
+    ## Type synonyms: maps synonym name to its expanded type.
+    _synonyms: HashMap[Str, Ty],
+
     ## Top-level function schemes.
     _topSchemes: HashMap[Str, TcItem[TopVarDefIdx, Scheme]],
 
@@ -757,6 +801,7 @@ ModuleTcEnv.empty() ModuleTcEnv:
     ModuleTcEnv(
         _traitEnv = TraitEnv.empty(),
         _cons = HashMap.empty(),
+        _synonyms = HashMap.empty(),
         _topSchemes = HashMap.empty(),
         _assocFnSchemes = HashMap.empty(),
         _methodSchemes = HashMap.empty(),

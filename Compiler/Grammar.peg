@@ -321,6 +321,18 @@ typeDecl TypeDecl:
             rhs = Option.Some(TypeDeclRhs.Product(fs))
         )
 
+    # Type synonym
+    val=^ "type" name=^ "UpperId" "=" rhs=type_ "NEWLINE":
+        TypeDecl(
+            attr = Option.None,
+            value_ = Option.None,
+            prim_ = Option.None,
+            name = newId(name),
+            typeParams = Vec.empty(),
+            typeParamKinds = Vec.empty(),
+            rhs = Option.Some(TypeDeclRhs.Synonym(rhs)),
+        )
+
     prim_=^ "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
         TypeDecl(
             attr = Option.None,

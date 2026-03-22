@@ -90,6 +90,9 @@ type TypeDeclRhs:
     ## A product type uses the type name as the constructor and only has fields.
     Product(ConFields)
 
+    ## A type synonym: `type Foo = U32`
+    Synonym(Type)
+
 
 ## A sum type constructor.
 #[derive(ToDoc)]
@@ -1680,6 +1683,13 @@ impl ToDoc[TypeDeclRhs]:
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(
                     Doc.str("TypeDeclRhs.Product") + Doc.char('(') + args,
+                )
+            TypeDeclRhs.Synonym(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(
+                    Doc.str("TypeDeclRhs.Synonym") + Doc.char('(') + args,
                 )
 
 
