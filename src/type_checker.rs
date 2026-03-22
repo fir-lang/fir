@@ -16,7 +16,7 @@ mod unification;
 
 pub use crate::utils::loc_display;
 use convert::*;
-use normalization::normalize_stmt;
+use normalization::{expand_type_synonyms, normalize_stmt};
 use stmt::check_stmts;
 use traits::*;
 use ty::*;
@@ -69,7 +69,7 @@ pub(crate) fn check_module(module: &mut ast::Module, main: &str) -> PgmTypes {
     kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
     let trait_env = collect_trait_env(module, &mut tys.tys);
-    for decl in module {
+    for decl in module.iter_mut() {
         match &mut decl.node {
             ast::TopDecl::Import(_) => panic!(
                 "{}: Import declaration in check_module",
@@ -84,6 +84,10 @@ pub(crate) fn check_module(module: &mut ast::Module, main: &str) -> PgmTypes {
             ast::TopDecl::Fun(fun) => check_top_fun(fun, &mut tys, &trait_env),
         }
     }
+
+    // Expand type synonyms in AST type annotations so that later stages (monomorphization,
+    // lowering) don't need to know about them.
+    expand_type_synonyms(module);
 
     tys
 }
@@ -258,6 +262,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
     for decl in module.iter() {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
+                // Type synonyms are handled separately after this pass.
+                if matches!(ty_decl.node.rhs, Some(ast::TypeDeclRhs::Synonym(_))) {
+                    continue;
+                }
                 assert_eq!(
                     ty_decl.node.type_params.len(),
                     ty_decl.node.type_param_kinds.len(),
@@ -329,12 +337,40 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         }
     }
 
+    // Convert and register type synonyms. This must happen after all type constructors are
+    // registered (so synonym RHSs can reference them) and before fields/methods are processed (so
+    // field types can reference synonyms).
+    //
+    // Synonyms can reference each other in any order, so we first collect all synonym definitions,
+    // then resolve each one on demand with cycle detection.
+    {
+        let mut synonym_asts: HashMap<Id, &ast::L<ast::Type>> = Default::default();
+        for decl in module.iter() {
+            if let ast::TopDecl::Type(ty_decl) = &decl.node
+                && let Some(ast::TypeDeclRhs::Synonym(rhs_ty)) = &ty_decl.node.rhs
+            {
+                synonym_asts.insert(ty_decl.node.name.clone(), rhs_ty);
+            }
+        }
+
+        let mut resolving: HashSet<Id> = Default::default();
+        let names: Vec<Id> = synonym_asts.keys().cloned().collect();
+        for name in &names {
+            resolve_synonym(name, &synonym_asts, &mut resolving, &mut tys);
+        }
+    }
+
     // Add fields and methods.
     // This is where we start converting AST types to type checking types, so the ty con map should
     // be populated at this point.
     for decl in module.iter() {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
+                // Type synonyms already handled above.
+                if matches!(ty_decl.node.rhs, Some(ast::TypeDeclRhs::Synonym(_))) {
+                    continue;
+                }
+
                 let details = match &ty_decl.node.rhs {
                     Some(rhs) => match rhs {
                         ast::TypeDeclRhs::Sum(_) => TyConDetails::Type(TypeDetails {
@@ -348,6 +384,8 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             sum: false,
                             value: ty_decl.node.value,
                         }),
+
+                        ast::TypeDeclRhs::Synonym(_) => unreachable!(),
                     },
 
                     None => TyConDetails::Type(TypeDetails {
@@ -403,6 +441,30 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                     assoc_ty.node
                                 );
                             }
+                            // Add a type synonym so that `Item` resolves to
+                            // `TraitName[params...].Item` within the trait body.
+                            let trait_ty = {
+                                let trait_name = trait_decl.node.name.node.clone();
+                                let args: Vec<Ty> = trait_decl
+                                    .node
+                                    .type_params
+                                    .iter()
+                                    .zip(trait_decl.node.type_param_kinds.iter())
+                                    .map(|(p, k)| Ty::QVar(p.node.clone(), k.clone()))
+                                    .collect();
+                                if args.is_empty() {
+                                    Ty::Con(trait_name, Kind::Star)
+                                } else {
+                                    Ty::App(trait_name, args, Kind::Star)
+                                }
+                            };
+                            tys.insert_synonym(
+                                assoc_ty.node.clone(),
+                                Ty::AssocTySelect {
+                                    ty: Box::new(trait_ty),
+                                    assoc_ty: assoc_ty.node.clone(),
+                                },
+                            );
                         }
 
                         ast::TraitDeclItem::Fun(fun) => {
@@ -616,6 +678,85 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
     tys
 }
 
+/// Resolve a type synonym by converting its RHS. If the RHS references another synonym, resolve
+/// that one first (recursively). Detects cycles via the `resolving` set.
+fn resolve_synonym(
+    name: &Id,
+    synonym_asts: &HashMap<Id, &ast::L<ast::Type>>,
+    resolving: &mut HashSet<Id>,
+    tys: &mut TyMap,
+) {
+    // Already resolved in a previous call.
+    if tys.get_synonym(name).is_some() {
+        return;
+    }
+
+    if !resolving.insert(name.clone()) {
+        let cycle: Vec<&str> = resolving.iter().map(|id| id.as_str()).collect();
+        panic!("Type synonym cycle detected: {}", cycle.join(", "));
+    }
+
+    let rhs_ty = synonym_asts.get(name).unwrap();
+
+    // Resolve synonyms in the RHS.
+    resolve_synonym_deps(&rhs_ty.node, synonym_asts, resolving, tys);
+
+    let converted = convert_ast_ty(tys, &rhs_ty.node, &rhs_ty.loc);
+    tys.insert_synonym(name.clone(), converted);
+
+    resolving.remove(name);
+}
+
+/// Recursively resolve any synonym dependencies in an AST type.
+fn resolve_synonym_deps(
+    ty: &ast::Type,
+    synonym_asts: &HashMap<Id, &ast::L<ast::Type>>,
+    resolving: &mut HashSet<Id>,
+    tys: &mut TyMap,
+) {
+    match ty {
+        ast::Type::Named(ast::NamedType { name, args }) => {
+            if args.is_empty() && synonym_asts.contains_key(name) {
+                resolve_synonym(name, synonym_asts, resolving, tys);
+            }
+            for arg in args {
+                resolve_synonym_deps(&arg.node, synonym_asts, resolving, tys);
+            }
+        }
+        ast::Type::Var(_) => {}
+        ast::Type::Record { fields, .. } => {
+            for (_, field_ty) in fields {
+                resolve_synonym_deps(field_ty, synonym_asts, resolving, tys);
+            }
+        }
+        ast::Type::Variant { alts, .. } => {
+            for alt in alts {
+                for arg in &alt.args {
+                    resolve_synonym_deps(&arg.node, synonym_asts, resolving, tys);
+                }
+            }
+        }
+        ast::Type::Fn(ast::FnType {
+            args,
+            ret,
+            exceptions,
+        }) => {
+            for arg in args {
+                resolve_synonym_deps(&arg.node, synonym_asts, resolving, tys);
+            }
+            if let Some(ret) = ret {
+                resolve_synonym_deps(&ret.node, synonym_asts, resolving, tys);
+            }
+            if let Some(exn) = exceptions {
+                resolve_synonym_deps(&exn.node, synonym_asts, resolving, tys);
+            }
+        }
+        ast::Type::AssocTySelect { ty: inner, .. } => {
+            resolve_synonym_deps(&inner.node, synonym_asts, resolving, tys);
+        }
+    }
+}
+
 fn check_value_type_sizes(ty_cons: &HashMap<Id, TyCon>) {
     for ty_con in ty_cons.values() {
         let mut visited: HashSet<Id> = Default::default();
@@ -796,6 +937,35 @@ fn collect_schemes(
                     // function and reuse.
                     let fun_preds: Vec<Pred> =
                         convert_and_bind_context(tys, &context, TyVarConversion::ToQVar);
+
+                    // Add type synonyms for associated types so that e.g. `Item` resolves to
+                    // `TraitName[params...].Item` within method signatures.
+                    for trait_item in &trait_decl.node.items {
+                        if let ast::TraitDeclItem::Type(assoc_ty) = trait_item {
+                            let trait_ty = {
+                                let trait_name = trait_decl.node.name.node.clone();
+                                let args: Vec<Ty> = trait_decl
+                                    .node
+                                    .type_params
+                                    .iter()
+                                    .zip(trait_decl.node.type_param_kinds.iter())
+                                    .map(|(p, k)| Ty::QVar(p.node.clone(), k.clone()))
+                                    .collect();
+                                if args.is_empty() {
+                                    Ty::Con(trait_name, Kind::Star)
+                                } else {
+                                    Ty::App(trait_name, args, Kind::Star)
+                                }
+                            };
+                            tys.insert_synonym(
+                                assoc_ty.node.clone(),
+                                Ty::AssocTySelect {
+                                    ty: Box::new(trait_ty),
+                                    assoc_ty: assoc_ty.node.clone(),
+                                },
+                            );
+                        }
+                    }
 
                     let mut arg_tys: Vec<Ty> = fun
                         .node
@@ -984,11 +1154,11 @@ fn collect_schemes(
             ast::TopDecl::Type(ty_decl) => {
                 // Add constructors as functions.
                 let rhs = match &ty_decl.node.rhs {
-                    Some(rhs) => rhs,
-                    None => {
+                    Some(ast::TypeDeclRhs::Synonym(_)) | None => {
                         tys.exit_scope();
                         continue;
                     }
+                    Some(rhs) => rhs,
                 };
 
                 // Bind type parameters in the context for constructor schemes.
@@ -1105,6 +1275,11 @@ fn collect_schemes(
                             );
                         }
                     }
+
+                    ast::TypeDeclRhs::Synonym(_) => {
+                        // Synonyms are skipped above.
+                        unreachable!()
+                    }
                 }
             }
 
@@ -1113,6 +1288,14 @@ fn collect_schemes(
                 // match the trait method signatures.
                 let _impl_assumps =
                     convert_and_bind_context(tys, &impl_decl.node.context, TyVarConversion::ToQVar);
+
+                // Add type synonyms for associated types.
+                for item in &impl_decl.node.items {
+                    if let ast::ImplDeclItem::Type { assoc_ty, rhs } = item {
+                        let converted = convert_ast_ty(tys, &rhs.node, &rhs.loc);
+                        tys.insert_synonym(assoc_ty.node.clone(), converted);
+                    }
+                }
 
                 for item in &impl_decl.node.items {
                     let fun = match item {
@@ -1162,7 +1345,7 @@ fn collect_schemes(
                         exceptions: Some(Box::new(exceptions)),
                     };
 
-                    let impl_fun_scheme = Scheme {
+                    let mut impl_fun_scheme = Scheme {
                         quantified_vars: fun.node.sig.context.type_params.clone(),
                         preds: fun_assumps.to_vec(),
                         ty: fun_ty,
@@ -1216,6 +1399,24 @@ fn collect_schemes(
                         kind_inference::collect_tvs(&ty_arg.node, &ty_arg.loc, &mut arg_fvs);
                         let ty_arg = convert_ast_ty(tys, &ty_arg.node, &ty_arg.loc);
                         trait_fun_scheme = trait_fun_scheme.subst(&ty_param_renamed, &ty_arg);
+                    }
+
+                    // Substitute associated types with their concrete types from the impl in both
+                    // trait and impl schemes, so they can be compared.
+                    for item in &impl_decl.node.items {
+                        if let ast::ImplDeclItem::Type { assoc_ty, rhs } = item {
+                            let rhs_ty = convert_ast_ty(tys, &rhs.node, &rhs.loc);
+                            trait_fun_scheme = trait_fun_scheme.subst_assoc_ty_select(
+                                &impl_decl.node.trait_.node,
+                                &assoc_ty.node,
+                                &rhs_ty,
+                            );
+                            impl_fun_scheme = impl_fun_scheme.subst_assoc_ty_select(
+                                &impl_decl.node.trait_.node,
+                                &assoc_ty.node,
+                                &rhs_ty,
+                            );
+                        }
                     }
 
                     if !trait_fun_scheme.eq_modulo_alpha(tys.cons(), &impl_fun_scheme, &fun.loc) {
@@ -1385,6 +1586,15 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
             )
         })
         .clone();
+
+    // Add type synonyms for associated type assignments so that e.g. `Item` resolves to the
+    // concrete type within impl method bodies.
+    for item in &impl_.node.items {
+        if let ast::ImplDeclItem::Type { assoc_ty, rhs } = item {
+            let converted = convert_ast_ty(&tys.tys, &rhs.node, &rhs.loc);
+            tys.tys.insert_synonym(assoc_ty.node.clone(), converted);
+        }
+    }
 
     // Check method bodies.
     for item in &mut impl_.node.items {

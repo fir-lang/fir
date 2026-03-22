@@ -114,6 +114,11 @@ impl TypeDeclRhs {
                     buf.push(')');
                 }
             },
+
+            TypeDeclRhs::Synonym(ty) => {
+                buf.push_str(" = ");
+                ty.node.print(buf);
+            }
         }
     }
 }

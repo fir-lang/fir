@@ -392,6 +392,41 @@ impl Scheme {
         }
     }
 
+    /// Replace `TraitName[...].assoc_ty_name` with `replacement` in the scheme's type.
+    pub(super) fn subst_assoc_ty_select(
+        &self,
+        trait_name: &Id,
+        assoc_ty_name: &Id,
+        replacement: &Ty,
+    ) -> Scheme {
+        Scheme {
+            quantified_vars: self.quantified_vars.clone(),
+            preds: self
+                .preds
+                .iter()
+                .map(|pred| Pred {
+                    trait_: pred.trait_.clone(),
+                    params: pred
+                        .params
+                        .iter()
+                        .map(|t| t.subst_assoc_ty_select(trait_name, assoc_ty_name, replacement))
+                        .collect(),
+                    assoc_ty: pred.assoc_ty.as_ref().map(|(id, ty)| {
+                        (
+                            id.clone(),
+                            ty.subst_assoc_ty_select(trait_name, assoc_ty_name, replacement),
+                        )
+                    }),
+                    loc: pred.loc.clone(),
+                })
+                .collect(),
+            ty: self
+                .ty
+                .subst_assoc_ty_select(trait_name, assoc_ty_name, replacement),
+            loc: self.loc.clone(),
+        }
+    }
+
     /// Compare two schemes for equality modulo alpha renaming of quantified types.
     ///
     /// `extra_qvars` are quantified variables that can appear in both of the types in the same
@@ -826,6 +861,98 @@ impl Ty {
             } => Ty::AssocTySelect {
                 ty: Box::new(inner_ty.subst(var, ty)),
                 assoc_ty: assoc_ty.clone(),
+            },
+        }
+    }
+
+    /// Replace `TraitName[...].assoc_ty_name` with `replacement` in `self`.
+    fn subst_assoc_ty_select(&self, trait_name: &Id, assoc_ty_name: &Id, replacement: &Ty) -> Ty {
+        match self {
+            Ty::AssocTySelect {
+                ty: inner_ty,
+                assoc_ty,
+            } => {
+                // Check if this is the associated type select we're looking for.
+                let matches = assoc_ty == assoc_ty_name
+                    && match inner_ty.as_ref() {
+                        Ty::Con(con, _) => con == trait_name,
+                        Ty::App(con, _, _) => con == trait_name,
+                        _ => false,
+                    };
+                if matches {
+                    replacement.clone()
+                } else {
+                    Ty::AssocTySelect {
+                        ty: Box::new(inner_ty.subst_assoc_ty_select(
+                            trait_name,
+                            assoc_ty_name,
+                            replacement,
+                        )),
+                        assoc_ty: assoc_ty.clone(),
+                    }
+                }
+            }
+
+            Ty::Con(_, _) | Ty::UVar(_) | Ty::QVar(_, _) => self.clone(),
+
+            Ty::App(con, args, kind) => Ty::App(
+                con.clone(),
+                args.iter()
+                    .map(|a| a.subst_assoc_ty_select(trait_name, assoc_ty_name, replacement))
+                    .collect(),
+                kind.clone(),
+            ),
+
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => Ty::Anonymous {
+                labels: labels
+                    .iter()
+                    .map(|(f, t)| {
+                        (
+                            f.clone(),
+                            t.subst_assoc_ty_select(trait_name, assoc_ty_name, replacement),
+                        )
+                    })
+                    .collect(),
+                extension: extension.as_ref().map(|e| {
+                    Box::new(e.subst_assoc_ty_select(trait_name, assoc_ty_name, replacement))
+                }),
+                kind: *kind,
+                is_row: *is_row,
+            },
+
+            Ty::Fun {
+                args,
+                ret,
+                exceptions,
+            } => Ty::Fun {
+                args: match args {
+                    FunArgs::Positional(args) => FunArgs::Positional(
+                        args.iter()
+                            .map(|a| {
+                                a.subst_assoc_ty_select(trait_name, assoc_ty_name, replacement)
+                            })
+                            .collect(),
+                    ),
+                    FunArgs::Named(args) => FunArgs::Named(
+                        args.iter()
+                            .map(|(n, a)| {
+                                (
+                                    n.clone(),
+                                    a.subst_assoc_ty_select(trait_name, assoc_ty_name, replacement),
+                                )
+                            })
+                            .collect(),
+                    ),
+                },
+                ret: Box::new(ret.subst_assoc_ty_select(trait_name, assoc_ty_name, replacement)),
+                exceptions: exceptions.as_ref().map(|e| {
+                    Box::new(e.subst_assoc_ty_select(trait_name, assoc_ty_name, replacement))
+                }),
             },
         }
     }
