@@ -105,6 +105,8 @@ genItem(item: TypeDecl, tokens: Array[Token]) Doc:
         Option.Some(TypeDeclRhs.Sum(cons)): genSumBody(item.name, cons, tokens)
         Option.Some(TypeDeclRhs.Product(fields)):
             genProductBody(item.name, fields, tokens)
+        Option.Some(TypeDeclRhs.Synonym(_)):
+            panic("Type synonyms can't implement traits")
 
     head
         + Doc.nested(
