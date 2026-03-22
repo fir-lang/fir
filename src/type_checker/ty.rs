@@ -513,7 +513,6 @@ fn ty_eq_modulo_alpha(
 ) -> bool {
     let ty1_normalized = ty1.normalize(cons);
     let ty2_normalized = ty2.normalize(cons);
-
     match (&ty1_normalized, &ty2_normalized) {
         (Ty::Con(con1, _), Ty::Con(con2, _)) => con1 == con2,
 

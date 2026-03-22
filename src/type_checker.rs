@@ -69,7 +69,7 @@ pub(crate) fn check_module(module: &mut ast::Module, main: &str) -> PgmTypes {
     kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
     let trait_env = collect_trait_env(module, &mut tys.tys);
-    for decl in module.iter_mut() {
+    for decl in module {
         match &mut decl.node {
             ast::TopDecl::Import(_) => panic!(
                 "{}: Import declaration in check_module",
@@ -1924,8 +1924,12 @@ fn rename_domain_var(var: &Id, uniq: u32) -> Id {
     SmolStr::new(format!("{var}#{uniq}"))
 }
 
-/// Expand type synonym references in all `ast::Type` nodes in the module. This must run after type
-/// checking and before monomorphization.
+/// Expand type synonym references some of the `ast::Type` nodes in the module. This must run after
+/// type checking and before monomorphization.
+///
+/// This only expands type synonyms in the `ast::Type`s in the AST that the monomorphiser uses. E.g.
+/// it doesn't expand synonyms in `let` binding type annotations because monomorphiser doesn't use
+/// those.
 pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
     // Collect top-level synonyms.
     let mut synonyms: HashMap<Id, ast::Type> = Default::default();
