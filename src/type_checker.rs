@@ -1285,11 +1285,32 @@ fn collect_schemes(
                 let _impl_assumps =
                     convert_and_bind_context(tys, &impl_decl.node.context, TyVarConversion::ToQVar);
 
-                // Add type synonyms for associated types.
+                // Add type synonyms for associated types, mapping to
+                // `TraitName[args...].AssocTyName` so that both trait and impl sides produce the
+                // same `AssocTySelect` structure for `eq_modulo_alpha`.
+                let impl_trait_ty = {
+                    let trait_name = impl_decl.node.trait_.node.clone();
+                    let args: Vec<Ty> = impl_decl
+                        .node
+                        .tys
+                        .iter()
+                        .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
+                        .collect();
+                    if args.is_empty() {
+                        Ty::Con(trait_name, Kind::Star)
+                    } else {
+                        Ty::App(trait_name, args, Kind::Star)
+                    }
+                };
                 for item in &impl_decl.node.items {
-                    if let ast::ImplDeclItem::Type { assoc_ty, rhs } = item {
-                        let converted = convert_ast_ty(tys, &rhs.node, &rhs.loc);
-                        tys.insert_synonym(assoc_ty.node.clone(), converted);
+                    if let ast::ImplDeclItem::Type { assoc_ty, .. } = item {
+                        tys.insert_synonym(
+                            assoc_ty.node.clone(),
+                            Ty::AssocTySelect {
+                                ty: Box::new(impl_trait_ty.clone()),
+                                assoc_ty: assoc_ty.node.clone(),
+                            },
+                        );
                     }
                 }
 
