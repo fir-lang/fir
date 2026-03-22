@@ -1950,7 +1950,7 @@ fn rename_domain_var(var: &Id, uniq: u32) -> Id {
 /// checking and before monomorphization.
 fn expand_type_synonyms(module: &mut ast::Module) {
     // Collect top-level synonyms.
-    let mut synonyms: OrderMap<Id, ast::Type> = Default::default();
+    let mut synonyms: HashMap<Id, ast::Type> = Default::default();
     for decl in module.iter() {
         if let ast::TopDecl::Type(ty_decl) = &decl.node
             && let Some(ast::TypeDeclRhs::Synonym(rhs)) = &ty_decl.node.rhs
@@ -2029,7 +2029,7 @@ fn expand_type_synonyms(module: &mut ast::Module) {
     }
 }
 
-fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, synonyms: &OrderMap<Id, ast::Type>) {
+fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, synonyms: &HashMap<Id, ast::Type>) {
     match &mut decl.rhs {
         Some(ast::TypeDeclRhs::Sum(cons)) => {
             for con in cons {
@@ -2046,7 +2046,7 @@ fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, synonyms: &OrderMap<Id
     }
 }
 
-fn expand_synonyms_in_fields(fields: &mut ast::ConFields, synonyms: &OrderMap<Id, ast::Type>) {
+fn expand_synonyms_in_fields(fields: &mut ast::ConFields, synonyms: &HashMap<Id, ast::Type>) {
     match fields {
         ast::ConFields::Empty => {}
         ast::ConFields::Named(fields) => {
@@ -2062,11 +2062,11 @@ fn expand_synonyms_in_fields(fields: &mut ast::ConFields, synonyms: &OrderMap<Id
     }
 }
 
-fn expand_synonyms_in_fun(fun: &mut ast::FunDecl, synonyms: &OrderMap<Id, ast::Type>) {
+fn expand_synonyms_in_fun(fun: &mut ast::FunDecl, synonyms: &HashMap<Id, ast::Type>) {
     expand_synonyms_in_sig(&mut fun.sig, synonyms);
 }
 
-fn expand_synonyms_in_sig(sig: &mut ast::FunSig, synonyms: &OrderMap<Id, ast::Type>) {
+fn expand_synonyms_in_sig(sig: &mut ast::FunSig, synonyms: &HashMap<Id, ast::Type>) {
     if let ast::SelfParam::Explicit(ty) = &mut sig.self_ {
         expand_synonyms_in_ty(&mut ty.node, synonyms);
     }
@@ -2083,7 +2083,7 @@ fn expand_synonyms_in_sig(sig: &mut ast::FunSig, synonyms: &OrderMap<Id, ast::Ty
     }
 }
 
-fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &OrderMap<Id, ast::Type>) {
+fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, ast::Type>) {
     match ty {
         ast::Type::Named(named) => {
             if named.args.is_empty()
