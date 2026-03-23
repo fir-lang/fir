@@ -12,5 +12,4 @@ main():
 
 # args: --typecheck
 # expected exit status: 101
-# expected stderr:
-# tests/ClosuresFail2.fir:11:15: Unable to unify variant with constructors {"Foo"} with variant with constructors {"Err"}
+# expected stderr: tests/ClosuresFail2.fir:11:15: Unable to unify [Foo, .._3] with [Err]

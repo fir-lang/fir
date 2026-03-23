@@ -11,28 +11,28 @@ type InvalidDigit
 
 sum(nums: Vec[U32]) U32:
     let result: U32 = 0
-    for i: U32 in nums.iter():
+    for i in nums.iter():
         result += i
     result
 
 
 parseSum(nums: Vec[Str]) U32:
     let result: U32 = 0
-    for i: U32 in nums.iter().map(parseU32):
+    for i in nums.iter().map(parseU32):
         result += i
     result
 
 
 parseSumPropagateErrors(nums: Vec[Str]) U32 / [Overflow, EmptyInput, InvalidDigit, ..errs]:
     let result: U32 = 0
-    for i: U32 in nums.iter().map(parseU32Exn):
+    for i in nums.iter().map(parseU32Exn):
         result += i
     result
 
 
 parseSumHandleInvalidDigits(nums: Vec[Str]) U32 / [Overflow, EmptyInput, ..errs]:
     let result: U32 = 0
-    for i: U32 in nums.iter().map(parseU32Exn).mapResult(handleInvalidDigit):
+    for i in nums.iter().map(parseU32Exn).mapResult(handleInvalidDigit):
         result += i
     result
 
@@ -99,7 +99,7 @@ parseU32(s: Str) U32:
 
     let result: U32 = 0
 
-    for c: Char in s.chars():
+    for c in s.chars():
         if c < '0' or c > '9':
             panic("Invalid digit")
 
@@ -117,7 +117,7 @@ parseU32Exn(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
 
     let result: U32 = 0
 
-    for c: Char in s.chars():
+    for c in s.chars():
         if c < '0' or c > '9':
             throw(~InvalidDigit)
 

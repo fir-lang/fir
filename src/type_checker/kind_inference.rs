@@ -38,7 +38,7 @@ fn add_missing_type_params_fun(
     let bound_vars: HashSet<Id> = tvs.keys().cloned().collect();
 
     for pred in &sig.context.preds {
-        collect_tvs(&pred.node, &pred.loc, tvs);
+        collect_pred_tvs(&pred.node, tvs);
     }
     match &sig.self_ {
         ast::SelfParam::No | ast::SelfParam::Implicit => {}
@@ -75,7 +75,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
     let mut impl_context_var_kinds: OrderMap<Id, Option<Kind>> = Default::default();
 
     for pred in &decl.context.preds {
-        collect_tvs(&pred.node, &pred.loc, &mut impl_context_var_kinds);
+        collect_pred_tvs(&pred.node, &mut impl_context_var_kinds);
     }
 
     for ty in &decl.tys {
@@ -84,11 +84,20 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
 
     let impl_context_vars: OrderSet<Id> = impl_context_var_kinds.keys().cloned().collect();
 
-    for fun in &mut decl.items {
-        add_missing_type_params_fun(&mut fun.node.sig, &mut impl_context_var_kinds, &fun.loc);
+    for item in &mut decl.items {
+        match item {
+            ast::ImplDeclItem::Type { .. } => {}
+            ast::ImplDeclItem::Fun(fun) => {
+                add_missing_type_params_fun(
+                    &mut fun.node.sig,
+                    &mut impl_context_var_kinds,
+                    &fun.loc,
+                );
 
-        // Drop function variables added to the map.
-        impl_context_var_kinds.retain(|id, _| impl_context_vars.contains(id));
+                // Drop function variables added to the map.
+                impl_context_var_kinds.retain(|id, _| impl_context_vars.contains(id));
+            }
+        }
     }
 
     decl.context.type_params = impl_context_vars
@@ -115,11 +124,20 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
         trait_context_vars.insert(param.node.clone());
     }
 
-    for fun in &mut decl.items {
-        add_missing_type_params_fun(&mut fun.node.sig, &mut trait_context_var_kinds, &fun.loc);
+    for item in &mut decl.items {
+        match item {
+            ast::TraitDeclItem::Type(_) => {}
+            ast::TraitDeclItem::Fun(fun) => {
+                add_missing_type_params_fun(
+                    &mut fun.node.sig,
+                    &mut trait_context_var_kinds,
+                    &fun.loc,
+                );
 
-        // Drop function variables added to the map.
-        trait_context_var_kinds.retain(|id, _| trait_context_vars.contains(id));
+                // Drop function variables added to the map.
+                trait_context_var_kinds.retain(|id, _| trait_context_vars.contains(id));
+            }
+        }
     }
 
     decl.type_param_kinds = decl
@@ -173,6 +191,7 @@ fn collect_type_decl_extension_kinds(rhs: &ast::TypeDeclRhs, kinds: &mut OrderMa
         ast::TypeDeclRhs::Product(fields) => {
             collect_con_fields_extension_kinds(fields, kinds);
         }
+        ast::TypeDeclRhs::Synonym(_) => {}
     }
 }
 
@@ -184,8 +203,8 @@ fn collect_con_fields_extension_kinds(fields: &ast::ConFields, kinds: &mut Order
     }
 }
 
-const REC_ROW_TRAIT_ID: Id = Id::new_static("RecRow");
-const VAR_ROW_TRAIT_ID: Id = Id::new_static("VarRow");
+pub(crate) const REC_ROW_TRAIT_ID: Id = Id::new_static("RecRow");
+pub(crate) const VAR_ROW_TRAIT_ID: Id = Id::new_static("VarRow");
 
 /// Collect type variables in `ty` in `tvs`.
 ///
@@ -261,6 +280,10 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
                 collect_tvs(&exn.node, &exn.loc, tvs);
             }
         }
+
+        ast::Type::AssocTySelect { ty, assoc_ty: _ } => {
+            collect_tvs(&ty.node, &ty.loc, tvs);
+        }
     }
 }
 
@@ -300,6 +323,26 @@ fn collect_named_ty_tvs(
     }
 
     for arg in args {
+        collect_tvs(&arg.node, &arg.loc, tvs);
+    }
+}
+
+fn collect_pred_tvs(pred: &ast::Pred, tvs: &mut OrderMap<Id, Option<Kind>>) {
+    match pred {
+        ast::Pred::App(type_app) => collect_type_app_tvs(type_app, tvs),
+        ast::Pred::AssocTyEq {
+            ty,
+            assoc_ty: _,
+            eq,
+        } => {
+            collect_type_app_tvs(ty, tvs);
+            collect_tvs(&eq.node, &eq.loc, tvs);
+        }
+    }
+}
+
+fn collect_type_app_tvs(type_app: &ast::TypeApp, tvs: &mut OrderMap<Id, Option<Kind>>) {
+    for arg in type_app.args.iter() {
         collect_tvs(&arg.node, &arg.loc, tvs);
     }
 }

@@ -67,28 +67,42 @@ use crate::utils::loc_display;
 /// Maps trait ids to implementations.
 pub type TraitEnv = HashMap<Id, Vec<TraitImpl>>;
 
+/// Example:
+/// ```text
+/// impl[Iterator[iter, exn], Iterator[iter, exn].Item = a] Iterator[Map[iter, a, b, exn], exn]:
+///     type Item = b
+///     next(self: Map[iter, a, b, exn]) Option[b] / exn
+/// ```
 #[derive(Debug)]
 pub struct TraitImpl {
-    // Example: `impl[Iterator[iter, a]] Iterator[Map[iter, a, b], b]: ...`
-
-    // Free variables in the `impl`.
-    //
-    // In the example: `iter`, `a`, `b`.
+    /// Free variables of the `impl`.
+    ///
+    /// In the example: `iter`, `exn`, `a`, `b`.
     pub qvars: Vec<(Id, Kind)>,
 
-    // Arguments of the trait.
-    //
-    // In the example: `[Map[iter, a, b], b]`, where `iter`, `a` and `b` are `QVar`s in `qvars`.
+    /// Arguments of the trait.
+    ///
+    /// In the example: `[Map[iter, a, b, exn], exn]`, where `iter`, `a`, `b`, `exn` are `QVar`s in
+    /// `qvars`.
     pub trait_args: Vec<Ty>,
 
-    // Predicates of the implementation.
-    //
-    // In the example: `[(Iterator, [iter, a])]`, where `iter` and `a` are `QVar`s in `qvars`.
-    //
-    // Note: these types should be instantiated together with `trait_args` so that the same `QVar`
-    // in arguments and preds will be the same instantiated type variable, and as we match args
-    // the preds will be updated.
-    pub preds: Vec<(Id, Vec<Ty>)>,
+    /// Predicates of the implementation.
+    ///
+    /// In the example: `[(Iterator, [iter, exn])]`, where `iter` and `exn` are `QVar`s in `qvars`.
+    ///
+    /// Note: these types should be instantiated together with `trait_args` so that the same `QVar`
+    /// in arguments and preds will be the same instantiated type variable, and as we match args
+    /// the preds will be updated.
+    pub preds: Vec<Pred>,
+
+    /// Associated type equalities of the implementation.
+    ///
+    /// In the example: `Iterator[iter, exn].Item = a`, where `iter`, `exn`, and `a` are `QVar`s in
+    /// `qvars`.
+    ///
+    /// Similar to `preds`, these types should be instantiated together with `trait_args`.
+    /// pub eqs:
+    pub assoc_tys: HashMap<Id, Ty>,
 }
 
 pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
@@ -129,15 +143,19 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
                 .iter()
                 .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
                 .collect(),
-            preds: preds
-                .into_iter()
-                .map(
-                    |Pred {
-                         trait_,
-                         params,
-                         loc: _,
-                     }| (trait_, params),
-                )
+            preds,
+            // TODO: Check that an assoc type is not defined multiple times.
+            assoc_tys: impl_
+                .node
+                .items
+                .iter()
+                .filter_map(|item| match item {
+                    ast::ImplDeclItem::Type { assoc_ty, rhs } => Some((
+                        assoc_ty.node.clone(),
+                        convert_ast_ty(tys, &rhs.node, &rhs.loc),
+                    )),
+                    ast::ImplDeclItem::Fun(_) => None,
+                })
                 .collect(),
         };
 
@@ -150,14 +168,15 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
 }
 
 impl TraitImpl {
-    /// Try to match the trait arguments. If successful, return new goals.
-    pub fn try_match(
+    /// Try to match the trait arguments. If successful, return new goals and associated types of
+    /// the matching implementation.
+    pub(super) fn try_match(
         &self,
         args: &[Ty],
-        var_gen: &mut UVarGen,
-        tys: &TyMap,
+        var_gen: &UVarGen,
+        cons: &ScopeMap<Id, TyCon>,
         loc: &ast::Loc,
-    ) -> Option<Vec<Pred>> {
+    ) -> Option<(Vec<Pred>, HashMap<Id, Ty>)> {
         if args.len() != self.trait_args.len() {
             panic!(
                 "{}: BUG: Number of arguments applied to the trait don't match the arity",
@@ -177,20 +196,37 @@ impl TraitImpl {
 
         for (impl_arg, ty_arg) in self.trait_args.iter().zip(args.iter()) {
             let instantiated_impl_arg = impl_arg.subst_qvars(&var_map);
-            if !try_unify_one_way(&instantiated_impl_arg, ty_arg, tys.cons(), var_gen, 0, loc) {
+            if !try_unify_one_way(&instantiated_impl_arg, ty_arg, cons, var_gen, 0, loc) {
                 return None;
             }
         }
 
-        Some(
+        let assoc_tys: HashMap<Id, Ty> = self
+            .assoc_tys
+            .iter()
+            .map(|(assoc_ty, rhs)| (assoc_ty.clone(), rhs.subst_qvars(&var_map)))
+            .collect();
+
+        Some((
             self.preds
                 .iter()
-                .map(|(trait_, args)| Pred {
-                    trait_: trait_.clone(),
-                    params: args.iter().map(|arg| arg.subst_qvars(&var_map)).collect(),
-                    loc: loc.clone(),
-                })
+                .map(
+                    |Pred {
+                         trait_,
+                         params,
+                         assoc_ty,
+                         loc: _,
+                     }| Pred {
+                        trait_: trait_.clone(),
+                        params: params.iter().map(|arg| arg.subst_qvars(&var_map)).collect(),
+                        assoc_ty: assoc_ty
+                            .as_ref()
+                            .map(|(id, ty)| (id.clone(), ty.subst_qvars(&var_map))),
+                        loc: loc.clone(),
+                    },
+                )
                 .collect(),
-        )
+            assoc_tys,
+        ))
     }
 }

@@ -97,8 +97,39 @@ type_(state: ParserState[Token, ()]) Type / U32:
     let altResult = try(
         \():
             let t = namedType(state)
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Dot, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let selection = state.nextCursor()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.UpperId, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    selection,
+            )
+            let selection = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let val = do:
-                Type.Named(t)
+                match selection:
+                    Option.None: Type.Named(t)
+                    Option.Some(selection):
+                        Type.AssocTySelect(
+                            AssocTySelectType(
+                                ty = Type.Named(t),
+                                assocTy = newId(selection),
+                            ),
+                        )
             val,
     )
     match altResult:
@@ -1146,6 +1177,46 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
                             Option.None: Vec.empty(),
                     typeParamKinds = Vec.empty(),
                     rhs = Option.Some(TypeDeclRhs.Product(fs)),
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let val = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Type, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let name = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Eq, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let rhs = type_(state)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Newline, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                TypeDecl(
+                    attr = Option.None,
+                    value_ = Option.None,
+                    prim_ = Option.None,
+                    name = newId(name),
+                    typeParams = Vec.empty(),
+                    typeParamKinds = Vec.empty(),
+                    rhs = Option.Some(TypeDeclRhs.Synonym(rhs)),
                 )
             val,
     )
@@ -4636,6 +4707,126 @@ context(state: ParserState[Token, ()]) Context / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
+            let p0 = pred(state)
+            let zeroOrMoreCursor0 = state._cursor
+            let ps = Vec.empty()
+            loop:
+                let psLen0 = ps.len()
+                let symResult = try(
+                    \():
+                        if state.peek() is Option.Some(sym)
+                                and sym is Token(kind = TokenKind.Comma, ..):
+                            state._cursor += 1
+                        else:
+                            throw(state.updateErrorCursor(state._cursor))
+                        ps.push(pred(state)),
+                )
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        ps.truncate(psLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Comma, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    (),
+            )
+            match symResult:
+                Result.Err(err): state._cursor = optionalCursor0
+                Result.Ok(ok): ()
+            let last = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                Context(
+                    preds = Vec.fromIter(once(p0).chain(ps.iter())),
+                    _firstToken = TokenIdx(idx = first),
+                    _lastToken = TokenIdx(idx = last),
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+pred(state: ParserState[Token, ()]) Pred_ / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let app = typeApp(state)
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Dot, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let name = state.nextCursor()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.UpperId, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Eq, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let ty = type_(state)
+                    let selection = (name = name, ty = ty)
+                    selection,
+            )
+            let selection = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
+            let val = do:
+                match selection:
+                    Option.None: Pred_.App(app)
+                    Option.Some(selection):
+                        Pred_.AssocTyEq(
+                            ty = app,
+                            assocTy = newId(selection.name),
+                            eq = selection.ty,
+                        )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+typeApp(state: ParserState[Token, ()]) TypeApp / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let name = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             let t0 = type_(state)
             let zeroOrMoreCursor0 = state._cursor
             let ts = Vec.empty()
@@ -4669,17 +4860,15 @@ context(state: ParserState[Token, ()]) Context / U32:
             match symResult:
                 Result.Err(err): state._cursor = optionalCursor0
                 Result.Ok(ok): ()
-            let last = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.RBracket, ..):
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                Context(
-                    preds = Vec.fromIter(once(t0).chain(ts.iter())),
-                    _firstToken = TokenIdx(idx = first),
-                    _lastToken = TokenIdx(idx = last),
+                TypeApp(
+                    trait_ = newId(name),
+                    args = Vec.fromIter(once(t0).chain(ts.iter())),
                 )
             val,
     )
@@ -4858,7 +5047,7 @@ traitDecl(state: ParserState[Token, ()]) TraitDecl / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-traitDeclRhs(state: ParserState[Token, ()]) Vec[FunDecl] / U32:
+traitDeclRhs(state: ParserState[Token, ()]) Vec[TraitDeclItem] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -4891,16 +5080,16 @@ traitDeclRhs(state: ParserState[Token, ()]) Vec[FunDecl] / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let fs = Vec.empty()
-            fs.push(funDecl(state))
+            let items = Vec.empty()
+            items.push(traitDeclItem(state))
             let zeroOrMoreCursor0 = state._cursor
             loop:
-                let fsLen0 = fs.len()
-                let symResult = try(\(): fs.push(funDecl(state)))
+                let itemsLen0 = items.len()
+                let symResult = try(\(): items.push(traitDeclItem(state)))
                 match symResult:
                     Result.Err(err):
                         state._cursor = zeroOrMoreCursor0
-                        fs.truncate(fsLen0)
+                        items.truncate(itemsLen0)
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             if state.peek() is Option.Some(sym)
@@ -4909,7 +5098,47 @@ traitDeclRhs(state: ParserState[Token, ()]) Vec[FunDecl] / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                fs
+                items
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+traitDeclItem(state: ParserState[Token, ()]) TraitDeclItem / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Type, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let name = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Newline, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                TraitDeclItem.Type(newId(name))
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let fun = funDecl(state)
+            let val = do:
+                TraitDeclItem.Fun(fun)
             val,
     )
     match altResult:
@@ -5008,7 +5237,7 @@ implDecl(state: ParserState[Token, ()]) ImplDecl / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-implDeclRhs(state: ParserState[Token, ()]) Vec[FunDecl] / U32:
+implDeclRhs(state: ParserState[Token, ()]) Vec[ImplDeclItem] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -5041,16 +5270,16 @@ implDeclRhs(state: ParserState[Token, ()]) Vec[FunDecl] / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let funs = Vec.empty()
-            funs.push(funDecl(state))
+            let items = Vec.empty()
+            items.push(implDeclItem(state))
             let zeroOrMoreCursor0 = state._cursor
             loop:
-                let funsLen0 = funs.len()
-                let symResult = try(\(): funs.push(funDecl(state)))
+                let itemsLen0 = items.len()
+                let symResult = try(\(): items.push(implDeclItem(state)))
                 match symResult:
                     Result.Err(err):
                         state._cursor = zeroOrMoreCursor0
-                        funs.truncate(funsLen0)
+                        items.truncate(itemsLen0)
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             if state.peek() is Option.Some(sym)
@@ -5059,7 +5288,53 @@ implDeclRhs(state: ParserState[Token, ()]) Vec[FunDecl] / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                funs
+                items
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+implDeclItem(state: ParserState[Token, ()]) ImplDeclItem / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Type, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let name = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Eq, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let rhs = type_(state)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Newline, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                ImplDeclItem.Type(assocTy = newId(name), rhs,)
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let fun = funDecl(state)
+            let val = do:
+                ImplDeclItem.Fun(fun)
             val,
     )
     match altResult:

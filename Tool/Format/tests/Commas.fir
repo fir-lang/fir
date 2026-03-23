@@ -44,19 +44,19 @@ f():
 
 
 # Contexts
-f[T1, T2](): ()
+f[T1[a], T2[b]](): ()
 
-f[T1, T2,](): ()
+f[T1[a], T2[b],](): ()
 
 # Param lists
 f(x: U32, y: U32): ()
 f(x: U32, y: U32,): ()
 
 # Impl contexts
-impl[T1, T2] T[A]:
+impl[T1[a], T2[b]] T[A]:
     f(): ()
 
-impl[T1, T2,] T[A]:
+impl[T1[a], T2[b],] T[A]:
     f(): ()
 
 # Impl args
@@ -121,11 +121,11 @@ trait Foo[a, b,]:
 # 
 # 
 # # Contexts
-# f[T1, T2]():
+# f[T1[a], T2[b]]():
 #     ()
 # 
 # 
-# f[T1, T2,]():
+# f[T1[a], T2[b],]():
 #     ()
 # 
 # 
@@ -139,12 +139,12 @@ trait Foo[a, b,]:
 # 
 # 
 # # Impl contexts
-# impl[T1, T2] T[A]:
+# impl[T1[a], T2[b]] T[A]:
 #     f():
 #         ()
 # 
 # 
-# impl[T1, T2,] T[A]:
+# impl[T1[a], T2[b],] T[A]:
 #     f():
 #         ()
 # 

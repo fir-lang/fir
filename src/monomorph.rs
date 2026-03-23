@@ -51,6 +51,9 @@ struct PolyTraitImpl {
     tys: Vec<ast::Type>,
 
     methods: Vec<ast::FunDecl>,
+
+    /// Associated type definitions, e.g. `type Item = t`.
+    assoc_tys: Vec<(Id, ast::Type)>,
     // We don't care about predicates, those are for type checking.
     // If a trait use type checks, then we know there will be a match in trait env during monomorph.
 }
@@ -141,7 +144,21 @@ fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
                             .node
                             .items
                             .iter()
-                            .map(|item| item.node.clone())
+                            .filter_map(|item| match item {
+                                ast::ImplDeclItem::Type { .. } => None,
+                                ast::ImplDeclItem::Fun(fun) => Some(fun.node.clone()),
+                            })
+                            .collect(),
+                        assoc_tys: impl_decl
+                            .node
+                            .items
+                            .iter()
+                            .filter_map(|item| match item {
+                                ast::ImplDeclItem::Type { assoc_ty, rhs } => {
+                                    Some((assoc_ty.node.clone(), rhs.node.clone()))
+                                }
+                                ast::ImplDeclItem::Fun(_) => None,
+                            })
                             .collect(),
                     });
             }
@@ -165,22 +182,22 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> MonoPgm {
 
     // Copy types used by the interpreter built-ins.
     for ty in [
-        make_ast_ty("Bool", vec![]),
-        make_ast_ty("Char", vec![]),
-        make_ast_ty("Str", vec![]),
-        make_ast_ty("Ordering", vec![]),
-        make_ast_ty("I8", vec![]),
-        make_ast_ty("U8", vec![]),
-        make_ast_ty("I32", vec![]),
-        make_ast_ty("U32", vec![]),
-        make_ast_ty("Array", vec!["I8"]),
-        make_ast_ty("Array", vec!["U8"]),
-        make_ast_ty("Array", vec!["I32"]),
-        make_ast_ty("Array", vec!["U32"]),
-        make_ast_ty("Array", vec!["I64"]),
-        make_ast_ty("Array", vec!["U64"]),
+        make_tc_ty("Bool", vec![]),
+        make_tc_ty("Char", vec![]),
+        make_tc_ty("Str", vec![]),
+        make_tc_ty("Ordering", vec![]),
+        make_tc_ty("I8", vec![]),
+        make_tc_ty("U8", vec![]),
+        make_tc_ty("I32", vec![]),
+        make_tc_ty("U32", vec![]),
+        make_tc_ty("Array", vec!["I8"]),
+        make_tc_ty("Array", vec!["U8"]),
+        make_tc_ty("Array", vec!["I32"]),
+        make_tc_ty("Array", vec!["U32"]),
+        make_tc_ty("Array", vec!["I64"]),
+        make_tc_ty("Array", vec!["U64"]),
     ] {
-        mono_ast_ty(&ty, &Default::default(), &poly_pgm, &mut mono_pgm);
+        mono_tc_ty(&ty, &Default::default(), &poly_pgm, &mut mono_pgm);
     }
 
     let main = poly_pgm
@@ -193,20 +210,18 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> MonoPgm {
     mono_pgm
 }
 
-fn make_ast_ty(con: &'static str, args: Vec<&'static str>) -> ast::Type {
-    ast::Type::Named(ast::NamedType {
-        name: SmolStr::new_static(con),
-        args: args
-            .into_iter()
-            .map(|arg| ast::L {
-                loc: ast::Loc::dummy(),
-                node: (ast::Type::Named(ast::NamedType {
-                    name: SmolStr::new_static(arg),
-                    args: vec![],
-                })),
-            })
-            .collect(),
-    })
+fn make_tc_ty(con: &'static str, args: Vec<&'static str>) -> Ty {
+    if args.is_empty() {
+        Ty::Con(Id::new_static(con), Kind::Star)
+    } else {
+        Ty::App(
+            Id::new_static(con),
+            args.iter()
+                .map(|ty_arg| Ty::Con(Id::new_static(ty_arg), Kind::Star))
+                .collect(),
+            Kind::Star,
+        )
+    }
 }
 
 fn mono_top_fn(
@@ -1567,6 +1582,38 @@ fn match_named_ty(
     true
 }
 
+/// Resolve an associated type selection.
+///
+/// Given a trait name, concrete type args, and an associated type name, find the matching impl and
+/// return the monomorphized associated type.
+fn resolve_assoc_ty(
+    trait_name: &Id,
+    trait_args: &[mono::Type],
+    assoc_ty: &Id,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
+) -> mono::Type {
+    let poly_trait = poly_pgm
+        .traits
+        .get(trait_name)
+        .unwrap_or_else(|| panic!("Unknown trait {} in associated type selection", trait_name));
+
+    for impl_ in &poly_trait.impls {
+        if let Some(substs) = match_trait_impl(trait_args, impl_) {
+            for (name, rhs_ty) in &impl_.assoc_tys {
+                if name == assoc_ty {
+                    return mono_ast_ty(rhs_ty, &substs, poly_pgm, mono_pgm);
+                }
+            }
+        }
+    }
+
+    panic!(
+        "No matching impl for {}.{} with args {:?}",
+        trait_name, assoc_ty, trait_args
+    )
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Types
 
@@ -1773,6 +1820,21 @@ fn mono_tc_ty(
                 mono::Type::Variant { alts: all_alts }
             }
         },
+
+        Ty::AssocTySelect { ty, assoc_ty } => {
+            // The `ty` is a trait application like `Trait[Arg]`, not a regular type. Extract the
+            // trait name and args directly, monomorphize only the args.
+            let (trait_name, args): (&Id, &[Ty]) = match ty.as_ref() {
+                Ty::App(name, args, _kind) => (name, args.as_slice()),
+                Ty::Con(name, _kind) => (name, &[]),
+                _ => panic!("Expected trait constructor in AssocTySelect, got {:?}", ty),
+            };
+            let mono_args: Vec<mono::Type> = args
+                .iter()
+                .map(|arg| mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm))
+                .collect();
+            resolve_assoc_ty(trait_name, &mono_args, &assoc_ty, poly_pgm, mono_pgm)
+        }
     }
 }
 
@@ -1843,6 +1905,26 @@ fn mono_ast_ty(
                     .unwrap_or_else(mono::Type::empty),
             ),
         }),
+
+        ast::Type::AssocTySelect { ty, assoc_ty } => {
+            // The inner type is a trait application like `Foo[U32]`. We can't monomorphize it
+            // as a regular type (traits aren't in poly_pgm.ty). Extract the trait name and
+            // monomorphize just the type args.
+            let (trait_name, trait_args) = match &*ty.node {
+                ast::Type::Named(ast::NamedType { name, args }) => {
+                    let mono_args: Vec<mono::Type> = args
+                        .iter()
+                        .map(|arg| mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm))
+                        .collect();
+                    (name, mono_args)
+                }
+                ast::Type::Var(var) => {
+                    panic!("Unexpected type variable {} in AssocTySelect", var);
+                }
+                _ => panic!("Expected named type in AssocTySelect, got {:?}", ty.node),
+            };
+            resolve_assoc_ty(trait_name, &trait_args, assoc_ty, poly_pgm, mono_pgm)
+        }
     }
 }
 
@@ -1918,6 +2000,10 @@ fn mono_ty_decl(
 
         ast::TypeDeclRhs::Product(fields) => {
             mono::TypeDeclRhs::Product(mono_fields(fields, &ty_map, poly_pgm, mono_pgm))
+        }
+
+        ast::TypeDeclRhs::Synonym(_) => {
+            panic!("Type synonyms should be expanded before monomorphization")
         }
     });
 

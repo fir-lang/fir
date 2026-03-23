@@ -181,8 +181,10 @@ CharIter.asStr(self) Str:
     Str(_bytes = self._bytes.slice(self._idx, self._bytes.len()))
 
 
-impl Iterator[CharIter, Char, exn]:
-    next(self: CharIter) Option[Char] / exn:
+impl Iterator[CharIter, exn]:
+    type Item = Char
+
+    next(self: CharIter) Option[Iterator[CharIter, exn].Item] / exn:
         if self._idx == self._bytes.len():
             return Option.None
 
@@ -198,8 +200,10 @@ type CharIndices(
 )
 
 
-impl Iterator[CharIndices, (char: Char, idx: U32), exn]:
-    next(self: CharIndices) Option[(char: Char, idx: U32)] / exn:
+impl Iterator[CharIndices, exn]:
+    type Item = (char: Char, idx: U32)
+
+    next(self: CharIndices) Option[Iterator[CharIndices, exn].Item] / exn:
         if self._idx == self._str.len():
             return Option.None
 
@@ -246,8 +250,10 @@ type SplitWhitespace(
 )
 
 
-impl Iterator[SplitWhitespace, Str, exn]:
-    next(self: SplitWhitespace) Option[Str] / exn:
+impl Iterator[SplitWhitespace, exn]:
+    type Item = Str
+
+    next(self: SplitWhitespace) Option[Iterator[SplitWhitespace, exn].Item] / exn:
         let wordStart = self._idx
         let wordEnd = wordStart
         let charIdxIter = self._str.substr(wordStart, self._str.len())
@@ -290,8 +296,10 @@ type SplitChar(
 )
 
 
-impl Iterator[SplitChar, Str, exn]:
-    next(self: SplitChar) Option[Str] / exn:
+impl Iterator[SplitChar, exn]:
+    type Item = Str
+
+    next(self: SplitChar) Option[Iterator[SplitChar, exn].Item] / exn:
         #|
         Note: when the input is "a" and char is ' ' we yield ["a"]. When the
         input is "a ", we need to yield ["a", ""].
@@ -330,8 +338,10 @@ type Lines(
 )
 
 
-impl Iterator[Lines, Str, exn]:
-    next(self: Lines) Option[Str] / exn:
+impl Iterator[Lines, exn]:
+    type Item = Str
+
+    next(self: Lines) Option[Iterator[Lines, exn].Item] / exn:
         let lineStart = self._idx
         let charIdxIter = self._str.substr(lineStart, self._str.len())
             .charIndices()

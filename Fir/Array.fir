@@ -31,7 +31,10 @@ Array.getOpt(self: Array[t], idx: U32) Option[t]:
 ##
 ## The iterator should yield at least `size` amount of times, to be able to
 ## initialize the array elements.
-Array.fromIter[Iterator[iter, item, exn]](iter: iter, size: U32) Array[item] / exn:
+Array.fromIter[Iterator[iter, exn], Iterator[iter, exn].Item = item](
+    iter: iter,
+    size: U32,
+) Array[item] / exn:
     let array = Array.new(size)
 
     for i: U32 in range(u32(0), size):
@@ -104,8 +107,10 @@ type ArrayIter[t](
 )
 
 
-impl Iterator[ArrayIter[t], t, exn]:
-    next(self: ArrayIter[t]) Option[t] / exn:
+impl Iterator[ArrayIter[t], exn]:
+    type Item = t
+
+    next(self: ArrayIter[t]) Option[Iterator[ArrayIter[t], exn].Item] / exn:
         if self._idx >= self._array.len():
             return Option.None
 

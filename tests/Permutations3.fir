@@ -10,8 +10,9 @@ type PermutationWork(
 )
 
 
-impl Iterator[PermutationsIter, Vec[U32], exn]:
-    next(self: PermutationsIter) Option[Vec[U32]] / exn:
+impl Iterator[PermutationsIter, exn]:
+    type Item = Vec[U32]
+    next(self: PermutationsIter) Option[Iterator[PermutationsIter, exn].Item] / exn:
         while self.work.pop() is Option.Some(work):
             if work.remainingElems.isEmpty():
                 return Option.Some(work.current)

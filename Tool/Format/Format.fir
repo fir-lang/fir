@@ -182,6 +182,11 @@ TypeDeclRhs.format(self, tokens: Array[Token]) Doc:
 
         TypeDeclRhs.Product(fields): fields.format(tokens)
 
+        TypeDeclRhs.Synonym(ty):
+            let eq = prevNonTrivia(ty.firstToken(tokens), tokens).unwrap()
+            assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+            formatToken(eq, tokens) + Doc.blank(1) + ty.format(tokens)
+
 
 ConDecl.format(self, tokens: Array[Token]) Doc:
     formatToken(self.name.token, tokens) + self.fields.format(tokens)
@@ -287,7 +292,7 @@ FunDecl.format(self, tokens: Array[Token]) Doc:
 
     doc += formatToken(self.name.token, tokens)
 
-    doc += _formatSigContext(self.sig.context, tokens)
+    doc += _formatOptContext(self.sig.context, tokens)
 
     let lparen = match self.sig.context:
         Option.Some(context):
@@ -334,11 +339,13 @@ FunDecl.format(self, tokens: Array[Token]) Doc:
     doc
 
 
-_formatSigContext(context: Option[Context], tokens: Array[Token]) Doc:
-    let context = match context:
-        Option.None: return Doc.empty()
-        Option.Some(context): context
+_formatOptContext(context: Option[Context], tokens: Array[Token]) Doc:
+    match context:
+        Option.None: Doc.empty()
+        Option.Some(context): _formatContext(context, tokens)
 
+
+_formatContext(context: Context, tokens: Array[Token]) Doc:
     let lbracket = context.firstToken(tokens)
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
@@ -347,8 +354,56 @@ _formatSigContext(context: Option[Context], tokens: Array[Token]) Doc:
 
     let doc = formatToken(lbracket, tokens)
 
+    let lastToken = lbracket
     let trailingComma = Bool.False
-    for ty: Type in context.preds.iter():
+    for pred: Pred_ in context.preds.iter():
+        if trailingComma:
+            doc += Doc.blank(1)
+            trailingComma = Bool.False
+
+        match pred:
+            Pred_.App(app):
+                doc += app.format(tokens)
+                lastToken = app.lastToken(tokens)
+            Pred_.AssocTyEq(ty, assocTy, eq):
+                doc += ty.format(tokens)
+
+                let dot = nextNonTrivia(ty.lastToken(tokens), tokens).unwrap()
+                assert(tokens.get(dot.idx).kind is TokenKind.Dot)
+                doc += formatToken(dot, tokens)
+                doc += formatToken(assocTy.token, tokens)
+
+                let eqToken = nextNonTrivia(assocTy.token, tokens).unwrap()
+                assert(tokens.get(eqToken.idx).kind is TokenKind.Eq)
+                doc += Doc.blank(1)
+                    + formatToken(eqToken, tokens)
+                    + Doc.blank(1)
+                doc += eq.format(tokens)
+                lastToken = eq.lastToken(tokens)
+
+        if nextNonTrivia(lastToken, tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
+            trailingComma = Bool.True
+            doc += formatToken(next, tokens)
+
+    doc + formatToken(rbracket, tokens)
+
+
+TypeApp.format(self, tokens: Array[Token]) Doc:
+    let TypeApp(trait_, args) = self
+    assert(not args.isEmpty())
+
+    let lbracket = nextNonTrivia(trait_.token, tokens).unwrap()
+    assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
+
+    let rbracket = nextNonTrivia(args.last().unwrap().lastToken(tokens), tokens)
+        .unwrap()
+    assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
+
+    let doc = formatToken(trait_.token, tokens) + formatToken(lbracket, tokens)
+
+    let trailingComma = Bool.False
+    for ty: Type in args.iter():
         if trailingComma:
             doc += Doc.blank(1)
             trailingComma = Bool.False
@@ -502,39 +557,30 @@ TraitDecl.format(self, tokens: Array[Token]) Doc:
                 + formatToken(colon, tokens)
                 + Doc.hardLine()
                 + join(
-                    self.items.iter().map(\(decl: FunDecl): decl.format(tokens)),
+                    self.items.iter().map(
+                        \(item: TraitDeclItem): item.format(tokens),
+                    ),
                     Doc.hardLine() + Doc.hardLine(),
                 ),
         )
+
+
+TraitDeclItem.format(self, tokens: Array[Token]) Doc:
+    match self:
+        TraitDeclItem.Type(id):
+            let typeToken = prevNonTrivia(id.token, tokens).unwrap()
+            assert(tokens.get(typeToken.idx).kind is TokenKind.Type)
+            formatToken(typeToken, tokens)
+                + Doc.blank(1)
+                + formatToken(id.token, tokens)
+        TraitDeclItem.Fun(fun): fun.format(tokens)
 
 
 ImplDecl.format(self, tokens: Array[Token]) Doc:
     let impl_ = self._firstToken
     let doc0 = formatToken(impl_, tokens)
 
-    let docRest = Doc.empty()
-
-    if self.context is Option.Some(context):
-        let lbracket = context.firstToken(tokens)
-        docRest += formatToken(lbracket, tokens)
-
-        let trailingComma = Bool.False
-        for pred: Type in context.preds.iter():
-            if trailingComma:
-                docRest += Doc.blank(1)
-                trailingComma = Bool.False
-
-            docRest += pred.format(tokens)
-
-            if nextNonTrivia(pred.lastToken(tokens), tokens)
-                    is Option.Some(next)
-                    and tokens.get(next.idx).kind is TokenKind.Comma:
-                trailingComma = Bool.True
-                docRest += formatToken(next, tokens)
-
-        let rbracket = context.lastToken(tokens)
-        docRest += formatToken(rbracket, tokens)
-
+    let docRest = _formatOptContext(self.context, tokens)
     docRest += Doc.blank(1) + formatToken(self.trait_.token, tokens)
 
     let lbracket = nextNonTrivia(self.trait_.token, tokens).unwrap()
@@ -572,11 +618,31 @@ ImplDecl.format(self, tokens: Array[Token]) Doc:
     docRest += formatToken(colon, tokens) + Doc.hardLine()
 
     docRest += join(
-        self.items.iter().map(\(decl: FunDecl): decl.format(tokens)),
+        self.items.iter().map(\(item: ImplDeclItem): item.format(tokens)),
         Doc.hardLine() + Doc.hardLine(),
     )
 
     doc0 + docRest.nest(4)
+
+
+ImplDeclItem.format(self, tokens: Array[Token]) Doc:
+    match self:
+        ImplDeclItem.Type(assocTy, rhs):
+            let typeToken = prevNonTrivia(assocTy.token, tokens).unwrap()
+            assert(tokens.get(typeToken.idx).kind is TokenKind.Type)
+
+            let eqToken = nextNonTrivia(assocTy.token, tokens).unwrap()
+            assert(tokens.get(eqToken.idx).kind is TokenKind.Eq)
+
+            formatToken(typeToken, tokens)
+                + Doc.blank(1)
+                + formatToken(assocTy.token, tokens)
+                + Doc.blank(1)
+                + formatToken(eqToken, tokens)
+                + Doc.blank(1)
+                + rhs.format(tokens)
+
+        ImplDeclItem.Fun(fun): fun.format(tokens)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -594,7 +660,6 @@ Expr.format(self, tokens: Array[Token]) Doc:
             Expr.Int(e): e.format(tokens)
             Expr.Str(e): e.format(tokens)
             Expr.Char(e): e.format(tokens)
-            Expr.Self(e): formatToken(e, tokens)
             Expr.BinOp(e): e.format(tokens)
             Expr.UnOp(e): e.format(tokens)
             Expr.Record(e): e.format(tokens)
@@ -1316,6 +1381,7 @@ Type.format(self, tokens: Array[Token]) Doc:
         Type.Record(t): t.format(tokens)
         Type.Variant(t): t.format(tokens)
         Type.Fn_(t): t.format(tokens)
+        Type.AssocTySelect(t): t.format(tokens)
 
 
 NamedType.format(self, tokens: Array[Token]) Doc:
@@ -1445,6 +1511,13 @@ FnType.format(self, tokens: Array[Token]) Doc:
             + exn.format(tokens)
 
     doc
+
+
+AssocTySelectType.format(self, tokens: Array[Token]) Doc:
+    let doc = self.ty.format(tokens)
+    let dot = nextNonTrivia(self.ty.lastToken(tokens), tokens).unwrap()
+    assert(tokens.get(dot.idx).kind is TokenKind.Dot)
+    doc + formatToken(dot, tokens) + formatToken(self.assocTy.token, tokens)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -1764,7 +1837,7 @@ tokenText(token: TokenIdx, tokens: Array[Token]) Str:
     tokens.get(token.idx).text
 
 
-join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
+join[Iterator[iter, exn], Iterator[iter, exn].Item = Doc](iter: iter, sep: Doc) Doc / exn:
     let doc = match iter.next():
         Option.None: return Doc.empty()
         Option.Some(doc): doc

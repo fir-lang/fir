@@ -144,7 +144,12 @@ impl PatMatrix {
         // print!("{}", indent(&self.to_string(), trace.len() * 4));
 
         let next_ty = match self.field_tys.first() {
-            Some(next_ty) => next_ty.deep_normalize(tc_state.tys.tys.cons()),
+            Some(next_ty) => next_ty.deep_normalize(
+                tc_state.tys.tys.cons(),
+                tc_state.trait_env,
+                tc_state.var_gen,
+                &[],
+            ),
             None => {
                 for row in self.rows.iter() {
                     info.mark_useful(row.arm_index, &row.bound_vars);
@@ -221,6 +226,9 @@ impl PatMatrix {
                     RecordOrVariant::Variant,
                     labels,
                     extension.clone(),
+                    tc_state.trait_env,
+                    tc_state.var_gen,
+                    &[],
                 );
 
                 let mut exhaustive = true;
@@ -284,6 +292,9 @@ impl PatMatrix {
                     RecordOrVariant::Record,
                     labels,
                     extension.clone(),
+                    tc_state.trait_env,
+                    tc_state.var_gen,
+                    &[],
                 );
 
                 let mut labels_vec: Vec<(SmolStr, Ty)> = labels.into_iter().collect();
@@ -409,12 +420,14 @@ impl PatMatrix {
                 })
             } // Ty::Anonymous(kind: Record)
 
-            Ty::UVar(_) | Ty::QVar(_, _) | Ty::Fun { .. } => match self.skip_wildcards(&next_ty) {
-                Some(skipped) => with_trace(trace, "wildcard".to_string(), |trace| {
-                    skipped.check_coverage(tc_state, loc, info, trace)
-                }),
-                None => false,
-            },
+            Ty::UVar(_) | Ty::QVar(_, _) | Ty::Fun { .. } | Ty::AssocTySelect { .. } => {
+                match self.skip_wildcards(&next_ty) {
+                    Some(skipped) => with_trace(trace, "wildcard".to_string(), |trace| {
+                        skipped.check_coverage(tc_state, loc, info, trace)
+                    }),
+                    None => false,
+                }
+            }
         }
     }
 

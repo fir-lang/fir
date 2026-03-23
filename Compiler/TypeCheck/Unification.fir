@@ -773,6 +773,8 @@ Ty.pruneLevel(self, maxLevel: U32):
             if extension is Option.Some(extension):
                 extension.pruneLevel(maxLevel)
 
+        Ty.AssocTySelect(ty, ..): ty.pruneLevel(maxLevel)
+
 
 UVar.pruneLevel(self, maxLevel: U32):
     self.level = min(self.level, maxLevel)

@@ -2,6 +2,7 @@
 
 use crate::ast::{self, Id};
 use crate::collections::*;
+use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::{loc_display, rename_domain_var};
 
 use std::cell::{Cell, RefCell};
@@ -80,6 +81,11 @@ pub enum Ty {
         /// Whether this is a row type. A row type has its own kind `row`. When not a row, the type
         /// has kind `*`.
         is_row: bool,
+    },
+
+    AssocTySelect {
+        ty: Box<Ty>,
+        assoc_ty: Id,
     },
 }
 
@@ -181,7 +187,7 @@ pub enum Kind {
 
 #[derive(Debug, Default)]
 pub(super) struct UVarGen {
-    next_id: u32,
+    next_id: Cell<u32>,
 }
 
 /// A type constructor.
@@ -225,6 +231,9 @@ impl TyConDetails {
 pub(super) struct TraitDetails {
     /// Methods of the trait, with optional default implementations.
     pub(super) methods: HashMap<Id, TraitMethod>,
+
+    /// Associated types of the trait.
+    pub(super) assoc_tys: HashSet<Id>,
 }
 
 #[derive(Debug, Clone)]
@@ -252,19 +261,24 @@ pub(super) struct TypeDetails {
     pub(super) sum: bool,
 }
 
-/// A predicate, e.g. `Iterator[coll, item]`.
+/// A predicate, e.g. `Iterator[iter, exn]`, `Iterator[iter, exn].Item = U32`.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub(super) struct Pred {
+pub struct Pred {
     /// Trait of the predicate.
     ///
     /// `Iterator` in the example.
-    pub(super) trait_: Id,
+    pub trait_: Id,
 
-    /// The type parameters. `[coll, item]` in the example.
-    pub(super) params: Vec<Ty>,
+    /// The type parameters. `[iter, exn]` in the example.
+    pub params: Vec<Ty>,
+
+    /// If the predicate is an associated type equality, the right-hand side of the equality.
+    ///
+    /// E.g. in `Iterator[iter, exn].Item = U32`, this is `(Item, U32)`.
+    pub assoc_ty: Option<(Id, Ty)>,
 
     /// Location of the expression that created this predicate.
-    pub(super) loc: ast::Loc,
+    pub loc: ast::Loc,
 }
 
 impl Scheme {
@@ -273,7 +287,7 @@ impl Scheme {
     pub(super) fn instantiate(
         &self,
         level: u32,
-        var_gen: &mut UVarGen,
+        var_gen: &UVarGen,
         preds: &mut Vec<Pred>,
         loc: &ast::Loc,
     ) -> (Ty, Vec<UVarRef>) {
@@ -302,6 +316,10 @@ impl Scheme {
                     .iter()
                     .map(|param| param.subst_qvars(&var_map))
                     .collect(),
+                assoc_ty: pred
+                    .assoc_ty
+                    .as_ref()
+                    .map(|(id, ty)| (id.clone(), ty.subst_qvars(&var_map))),
                 loc: loc.clone(),
             };
             preds.push(pred);
@@ -326,14 +344,22 @@ impl Scheme {
         }
 
         // Generate predicates.
-        for pred in &self.preds {
+        for Pred {
+            trait_,
+            params,
+            assoc_ty,
+            loc: _,
+        } in &self.preds
+        {
             let pred = Pred {
-                trait_: pred.trait_.clone(),
-                params: pred
-                    .params
+                trait_: trait_.clone(),
+                params: params
                     .iter()
                     .map(|param| param.subst_qvars(&var_map))
                     .collect(),
+                assoc_ty: assoc_ty
+                    .as_ref()
+                    .map(|(id, ty)| (id.clone(), ty.subst_qvars(&var_map))),
                 loc: loc.clone(),
             };
             preds.push(pred);
@@ -359,11 +385,24 @@ impl Scheme {
             preds: self
                 .preds
                 .iter()
-                .map(|pred| Pred {
-                    trait_: pred.trait_.clone(),
-                    params: pred.params.iter().map(|ty| ty.subst(var, ty)).collect(),
-                    loc: pred.loc.clone(),
-                })
+                .map(
+                    |Pred {
+                         trait_,
+                         params,
+                         assoc_ty,
+                         loc,
+                     }| Pred {
+                        trait_: trait_.clone(),
+                        params: params
+                            .iter()
+                            .map(|pred_ty| pred_ty.subst(var, ty))
+                            .collect(),
+                        assoc_ty: assoc_ty
+                            .as_ref()
+                            .map(|(id, ty)| (id.clone(), ty.subst(var, ty))),
+                        loc: loc.clone(),
+                    },
+                )
                 .collect(),
             ty: self.ty.subst(var, ty),
             loc: self.loc.clone(),
@@ -459,15 +498,21 @@ impl Scheme {
             preds: self
                 .preds
                 .iter()
-                .map(|pred| Pred {
-                    trait_: pred.trait_.clone(),
-                    params: pred
-                        .params
-                        .iter()
-                        .map(|ty| ty.subst_qvars(&subst_map))
-                        .collect(),
-                    loc: pred.loc.clone(),
-                })
+                .map(
+                    |Pred {
+                         trait_,
+                         params,
+                         assoc_ty,
+                         loc,
+                     }| Pred {
+                        trait_: trait_.clone(),
+                        params: params.iter().map(|ty| ty.subst_qvars(&subst_map)).collect(),
+                        assoc_ty: assoc_ty
+                            .as_ref()
+                            .map(|(id, ty)| (id.clone(), ty.subst_qvars(&subst_map))),
+                        loc: loc.clone(),
+                    },
+                )
                 .collect(),
             ty: self.ty.subst_qvars(&subst_map),
             loc: self.loc.clone(),
@@ -527,6 +572,9 @@ fn ty_eq_modulo_alpha(
                 *kind1,
                 labels1,
                 extension1.clone(),
+                &Default::default(),
+                &UVarGen::default(),
+                &[],
             );
 
             let (labels2, extension2) = crate::type_checker::row_utils::collect_rows(
@@ -535,6 +583,9 @@ fn ty_eq_modulo_alpha(
                 *kind2,
                 labels2,
                 extension2.clone(),
+                &Default::default(),
+                &UVarGen::default(),
+                &[],
             );
 
             if labels1.keys().collect::<HashSet<_>>() != labels2.keys().collect() {
@@ -671,6 +722,19 @@ fn ty_eq_modulo_alpha(
             ty_eq_modulo_alpha(cons, ret1, ret2, ty1_qvars, ty2_qvars, loc)
         }
 
+        (
+            Ty::AssocTySelect {
+                ty: ty1,
+                assoc_ty: assoc_ty1,
+            },
+            Ty::AssocTySelect {
+                ty: ty2,
+                assoc_ty: assoc_ty2,
+            },
+        ) => {
+            assoc_ty1 == assoc_ty2 && ty_eq_modulo_alpha(cons, ty1, ty2, ty1_qvars, ty2_qvars, loc)
+        }
+
         _ => false,
     }
 }
@@ -728,6 +792,10 @@ impl Ty {
                 } else {
                     Kind::Star
                 }
+            }
+
+            Ty::AssocTySelect { .. } => {
+                Kind::Star // TODO
             }
         }
     }
@@ -787,6 +855,14 @@ impl Ty {
                 },
                 ret: Box::new(ret.subst(var, ty)),
                 exceptions: exceptions.as_ref().map(|exn| Box::new(exn.subst(var, ty))),
+            },
+
+            Ty::AssocTySelect {
+                ty: inner_ty,
+                assoc_ty,
+            } => Ty::AssocTySelect {
+                ty: Box::new(inner_ty.subst(var, ty)),
+                assoc_ty: assoc_ty.clone(),
             },
         }
     }
@@ -849,6 +925,11 @@ impl Ty {
                     .as_ref()
                     .map(|exn| Box::new(exn.subst_qvars(vars))),
             },
+
+            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+                ty: Box::new(ty.subst_qvars(vars)),
+                assoc_ty: assoc_ty.clone(),
+            },
         }
     }
 
@@ -862,13 +943,18 @@ impl Ty {
         }
     }
 
-    /// Same as `normalize` but normalizes type arguments as well.
-    pub(super) fn deep_normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
+    pub(super) fn deep_normalize(
+        &self,
+        cons: &ScopeMap<Id, TyCon>,
+        trait_env: &TraitEnv,
+        var_gen: &UVarGen,
+        assumps: &[Pred],
+    ) -> Ty {
         match self {
             Ty::UVar(var_ref) => {
                 let mut var_ref_link = var_ref.normalize(cons);
                 if var_ref_link != Ty::UVar(var_ref.clone()) {
-                    var_ref_link = var_ref_link.deep_normalize(cons);
+                    var_ref_link = var_ref_link.deep_normalize(cons, trait_env, var_gen, assumps);
                     var_ref.set_link(var_ref_link.clone());
                 }
                 var_ref_link
@@ -878,7 +964,9 @@ impl Ty {
 
             Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
-                args.iter().map(|ty| ty.deep_normalize(cons)).collect(),
+                args.iter()
+                    .map(|ty| ty.deep_normalize(cons, trait_env, var_gen, assumps))
+                    .collect(),
                 kind.clone(),
             ),
 
@@ -894,6 +982,9 @@ impl Ty {
                     *kind,
                     labels,
                     extension.clone(),
+                    trait_env,
+                    var_gen,
+                    assumps,
                 );
                 Ty::Anonymous {
                     labels,
@@ -910,25 +1001,97 @@ impl Ty {
             } => Ty::Fun {
                 args: match args {
                     FunArgs::Positional { args } => FunArgs::Positional {
-                        args: args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
+                        args: args
+                            .iter()
+                            .map(|arg| arg.deep_normalize(cons, trait_env, var_gen, assumps))
+                            .collect(),
                     },
                     FunArgs::Named { args, extension } => FunArgs::Named {
                         args: args
                             .iter()
-                            .map(|(name, arg)| (name.clone(), arg.deep_normalize(cons)))
+                            .map(|(name, arg)| {
+                                (
+                                    name.clone(),
+                                    arg.deep_normalize(cons, trait_env, var_gen, assumps),
+                                )
+                            })
                             .collect(),
-                        extension: extension
-                            .as_ref()
-                            .map(|ext| Box::new(ext.deep_normalize(cons))),
+                        extension: extension.as_ref().map(|ext| {
+                            Box::new(ext.deep_normalize(cons, trait_env, var_gen, assumps))
+                        }),
                     },
                 },
-                ret: Box::new(ret.deep_normalize(cons)),
+                ret: Box::new(ret.deep_normalize(cons, trait_env, var_gen, assumps)),
                 exceptions: exceptions
                     .as_ref()
-                    .map(|exn| Box::new(exn.deep_normalize(cons))),
+                    .map(|exn| Box::new(exn.deep_normalize(cons, trait_env, var_gen, assumps))),
             },
 
             Ty::QVar(_, _) => self.clone(),
+
+            Ty::AssocTySelect {
+                ty: inner_ty,
+                assoc_ty,
+            } => {
+                let inner_ty = inner_ty.deep_normalize(cons, trait_env, var_gen, assumps);
+
+                let (trait_name, trait_args): (&Id, &[Ty]) = match &inner_ty {
+                    Ty::App(con, args, _) => (con, args.as_slice()),
+                    Ty::Con(con, _) => (con, &[]),
+                    _ => {
+                        return Ty::AssocTySelect {
+                            ty: Box::new(inner_ty),
+                            assoc_ty: assoc_ty.clone(),
+                        };
+                    }
+                };
+
+                // Try resolving via concrete impls in trait_env.
+                if let Some(impls) = trait_env.get(trait_name) {
+                    for impl_ in impls {
+                        if let Some((_subgoals, assoc_tys)) =
+                            impl_.try_match(trait_args, var_gen, cons, &ast::Loc::dummy())
+                        {
+                            let resolved = assoc_tys.get(assoc_ty).unwrap();
+                            return resolved.deep_normalize(cons, trait_env, var_gen, assumps);
+                        }
+                    }
+                }
+
+                // Try resolving via local equality constraints (e.g. from function context
+                // `Container[c].Item = item`).
+                for assump in assumps {
+                    if let Some((assoc_name, assoc_rhs)) = &assump.assoc_ty
+                        && &assump.trait_ == trait_name
+                        && assoc_name == assoc_ty
+                    {
+                        assert_eq!(assump.params.len(), trait_args.len());
+                        let all_match = assump.params.iter().zip(trait_args.iter()).all(
+                            |(constraint_arg, ty_arg)| {
+                                let c = constraint_arg
+                                    .deep_normalize(cons, trait_env, var_gen, assumps);
+                                let t = ty_arg.deep_normalize(cons, trait_env, var_gen, assumps);
+                                crate::type_checker::unification::try_unify_one_way(
+                                    &t,
+                                    &c,
+                                    cons,
+                                    var_gen,
+                                    0,
+                                    &ast::Loc::dummy(),
+                                )
+                            },
+                        );
+                        if all_match {
+                            return assoc_rhs.deep_normalize(cons, trait_env, var_gen, assumps);
+                        }
+                    }
+                }
+
+                Ty::AssocTySelect {
+                    ty: Box::new(inner_ty),
+                    assoc_ty: assoc_ty.clone(),
+                }
+            }
         }
     }
 
@@ -939,7 +1102,11 @@ impl Ty {
 
             Ty::App(con, args, _) => Some((con.clone(), args.clone())),
 
-            Ty::UVar(_) | Ty::Anonymous { .. } | Ty::QVar(_, _) | Ty::Fun { .. } => None,
+            Ty::UVar(_)
+            | Ty::Anonymous { .. }
+            | Ty::QVar(_, _)
+            | Ty::Fun { .. }
+            | Ty::AssocTySelect { .. } => None,
         }
     }
 
@@ -1014,9 +1181,9 @@ impl UVarRef {
 }
 
 impl UVarGen {
-    pub(super) fn new_var(&mut self, level: u32, kind: Kind, loc: ast::Loc) -> UVarRef {
-        let id = self.next_id;
-        self.next_id += 1;
+    pub(super) fn new_var(&self, level: u32, kind: Kind, loc: ast::Loc) -> UVarRef {
+        let id = self.next_id.get();
+        self.next_id.update(|c| c + 1);
         UVarRef(Rc::new(UVar {
             id,
             level: Cell::new(level),
@@ -1188,6 +1355,10 @@ impl fmt::Display for Ty {
                 }
                 Ok(())
             }
+
+            Ty::AssocTySelect { ty, assoc_ty } => {
+                write!(f, "{}.{}", ty, assoc_ty)
+            }
         }
     }
 }
@@ -1241,7 +1412,11 @@ impl fmt::Display for Pred {
             }
             write!(f, "{ty}")?;
         }
-        write!(f, "]")
+        write!(f, "]")?;
+        if let Some((assoc_ty, rhs)) = &self.assoc_ty {
+            write!(f, ".{assoc_ty} = {rhs}")?;
+        }
+        Ok(())
     }
 }
 

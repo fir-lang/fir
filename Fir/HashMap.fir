@@ -46,11 +46,11 @@ HashMap._capacityBeforeGrowth(cap: U32) U32:
     (u32(cap) * u32(8000)) / u32(10000)
 
 
-HashMap.fromIter[Iterator[iter, (key: k, val: v), exn], Eq[k], Hash[k]](
+HashMap.fromIter[Iterator[iter, exn], Iterator[iter, exn].Item = (key: k, val: v), Eq[k], Hash[k]](
     iter: iter,
 ) HashMap[k, v] / exn:
     let map = HashMap.withCapacity(10)
-    for item: (key: k, val: v) in iter:
+    for item in iter:
         map.insert(item.key, item.val)
     map
 
@@ -78,11 +78,11 @@ HashMap._grow[Eq[k], Hash[k]](self: HashMap[k, v]):
         - self._numElements
 
 
-HashMap.fromEntries[Iterator[iter, HashMapEntry[k, v], exn], Eq[k], Hash[k]](
+HashMap.fromEntries[Iterator[iter, exn], Iterator[iter, exn].Item = HashMapEntry[k, v], Eq[k], Hash[k]](
     iter: iter,
 ) HashMap[k, v] / exn:
     let map = HashMap.withCapacity(10)
-    for item: HashMapEntry[k, v] in iter:
+    for item in iter:
         map.insert(item.key, item.val)
     map
 
@@ -270,8 +270,10 @@ HashMapIter.new(map: HashMap[k, v]) HashMapIter[k, v]:
     )
 
 
-impl Iterator[HashMapIter[k, v], HashMapEntry[k, v], exn]:
-    next(self: HashMapIter[k, v]) Option[HashMapEntry[k, v]] / exn:
+impl Iterator[HashMapIter[k, v], exn]:
+    type Item = HashMapEntry[k, v]
+
+    next(self: HashMapIter[k, v]) Option[Iterator[HashMapIter[k, v], exn].Item] / exn:
         match self._nextElem:
             Option.Some(next):
                 let ret = HashMapEntry(key = next.key, val = next.val)

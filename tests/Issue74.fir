@@ -1,6 +1,6 @@
 main():
     let iter = range(Bool.True, Bool.False)
-    iter.next[RangeIterator[Bool], Bool, []]()
+    iter.next[RangeIterator[Bool], []]()
     ()
 
 # expected exit status: 101

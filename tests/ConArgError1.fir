@@ -8,4 +8,4 @@ main():
 # args: --typecheck --no-prelude
 # expected exit status: 101
 # expected stderr:
-# tests/ConArgError1.fir:6:9: Type T doesn't take arugments, but applied 1 arguments
+# tests/ConArgError1.fir:6:9: Type T doesn't take arguments, but applied 1 arguments

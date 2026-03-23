@@ -94,6 +94,9 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
         let modTokens = mod._tokens
 
         for tyDecl: TypeDecl in mod._tyItems.values():
+            if tyDecl.rhs is Option.Some(TypeDeclRhs.Synonym(_)):
+                continue
+
             let tyDeclName = mod.idText(tyDecl.name)
             let old = modCons.insert(
                 tyDeclName,
@@ -220,6 +223,14 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
     let tcEnv = mod._tcEnv.unwrap()
 
     for tyDecl: TypeDecl in mod._tyItems.values():
+        # Handle synonyms: convert and register, then skip rest of TyCon processing.
+        if tyDecl.rhs is Option.Some(TypeDeclRhs.Synonym(synRhsTy)):
+            let tyDeclName = mod.idText(tyDecl.name)
+            let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
+            let synTy = convertAstTy(mod, varMap, synRhsTy)
+            tcEnv._synonyms.insert(tyDeclName, synTy)
+            continue
+
         let tyDeclName = mod.idText(tyDecl.name)
         let tyCon = tcEnv._cons.get(tyDeclName).unwrap()
         let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
@@ -302,6 +313,9 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                 let old = schemes.insert(tyNameStr, scheme)
                 assert(old is Option.None)
 
+            Option.Some(TypeDeclRhs.Synonym(_)):
+                panic("Synonyms should be handled above")
+
             Option.None: ()
 
         tyCon.info.details = TyConDetails.Type(
@@ -341,104 +355,143 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
         assert(traitContext.isEmpty())
 
-        let methods: HashMap[Str, TraitMethod] = HashMap.empty()
-
-        for method: FunDecl in traitDecl.items.iter():
-            varMap.enterScope()
-
-            # Note: this doesn't bind the implicit exception type (when the
-            # signature doesn't have an exception type specified). That's OK
-            # because the implicit type cannot be referred to in the function
-            # body.
-            let funPreds: Vec[Pred] = convertAndBindContext(
-                mod,
-                varMap,
-                method.sig.typeParams,
-                match method.sig.context:
-                    Option.None: Vec.empty()
-                    Option.Some(context): context.preds,
-                TyVarConversion.ToQVar,
-            )
-
-            let numQVars = traitDecl.typeParams.len()
-                + method.sig.typeParams.len()
-
-            # Not specifying the exception type is the same as having a fresh
-            # type variable for the exception type.
-            if method.sig.exceptions is Option.None:
-                numQVars += 1
-
-            let schemeQVars: Vec[QVar] = Vec.withCapacity(numQVars)
-
-            for traitTyArgIdx: U32 in range(u32(0), traitDecl.typeParams.len()):
-                schemeQVars.push(
-                    QVar(
-                        id =
-                            LocalId(
-                                name =
-                                    mod.idText(
-                                        traitDecl.typeParams.get(traitTyArgIdx),
+        let traitTy: Ty = if traitDecl.typeParams.isEmpty():
+            Ty.Con(id = tyCon.idx)
+        else:
+            let tyArgs: Vec[Ty] = Vec.fromIter(
+                range(u32(0), traitDecl.typeParams.len()).map(
+                    \(i: U32) Ty:
+                        Ty.QVar(
+                            QVar(
+                                id =
+                                    LocalId(
+                                        name =
+                                            mod.idText(
+                                                traitDecl.typeParams.get(i),
+                                            ),
                                     ),
+                                kind = traitDecl.typeParamKinds.get(i),
                             ),
-                        kind = traitDecl.typeParamKinds.get(traitTyArgIdx),
-                    ),
-                )
-
-            for tyParam: TypeParam in method.sig.typeParams.iter():
-                schemeQVars.push(QVar(id = tyParam.name, kind = tyParam.kind))
-
-            if method.sig.exceptions is Option.None:
-                # The name we invent for the exception type does not matter as
-                # it can't be used in the function body. It's also OK to not
-                # bind it in `convertAndBindContext` above for the same reason.
-                schemeQVars.push(
-                    QVar(id = LocalId(name = "?exn"), kind = Kind.Star),
-                )
-
-            let argTys: Vec[Ty] = Vec.fromIter(
-                method.sig.params.iter().map(
-                    \(param: FunArg) Ty:
-                        let ty = param.ty.unwrap()
-                        convertAstTy(mod, varMap, ty),
+                        ),
                 ),
             )
+            Ty.App(conId = tyCon.idx, args = tyArgs)
 
-            match method.sig.self_:
-                SelfParam.No: ()
-                SelfParam.Implicit:
-                    panic("Trait methods can't have implicit self type")
-                SelfParam.Explicit(ty):
-                    argTys.insert(0, convertAstTy(mod, varMap, ty))
+        for item: TraitDeclItem in traitDecl.items.iter():
+            if item is TraitDeclItem.Type(assocTyId):
+                varMap.insert(
+                    mod.idText(assocTyId),
+                    Ty.AssocTySelect(ty = traitTy, assocTy = assocTyId),
+                )
 
-            let retTy: Ty = match method.sig.returnTy:
-                Option.None: Ty.unit()
-                Option.Some(retTy): convertAstTy(mod, varMap, retTy)
+        let methods: HashMap[Str, TraitMethod] = HashMap.empty()
 
-            let exnTy: Ty = match method.sig.exceptions:
-                Option.None: Ty.QVar(schemeQVars.last().unwrap())
-                Option.Some(retTy): convertAstTy(mod, varMap, retTy)
+        for item: TraitDeclItem in traitDecl.items.iter():
+            match item:
+                TraitDeclItem.Type(_): continue
+                TraitDeclItem.Fun(method):
+                    varMap.enterScope()
 
-            varMap.exitScope()
-            assert(varMap.lenScopes() == 1)
+                    # Note: this doesn't bind the implicit exception type (when
+                    # the signature doesn't have an exception type specified).
+                    # That's OK because the implicit type cannot be referred to
+                    # in the function body.
+                    let funPreds: Vec[Pred] = convertAndBindContext(
+                        mod,
+                        varMap,
+                        method.sig.typeParams,
+                        match method.sig.context:
+                            Option.None: Vec.empty()
+                            Option.Some(context): context.preds,
+                        TyVarConversion.ToQVar,
+                    )
 
-            let funTy = Ty.Fun(
-                args = FunArgs.Positional(argTys),
-                ret = retTy,
-                exn = Option.Some(exnTy),
-            )
+                    let numQVars = traitDecl.typeParams.len()
+                        + method.sig.typeParams.len()
 
-            let scheme = Scheme(
-                qvars = schemeQVars,
-                preds = funPreds,
-                ty = funTy,
-                loc = mod.loc(method),
-            )
+                    # Not specifying the exception type is the same as having a
+                    # fresh type variable for the exception type.
+                    if method.sig.exceptions is Option.None:
+                        numQVars += 1
 
-            let old = methods.insert(
-                mod.idText(method.name),
-                TraitMethod(scheme, funDecl = method),
-            )
-            assert(old is Option.None)
+                    let schemeQVars: Vec[QVar] = Vec.withCapacity(numQVars)
+
+                    for traitTyArgIdx: U32 in
+                            range(u32(0), traitDecl.typeParams.len()):
+                        schemeQVars.push(
+                            QVar(
+                                id =
+                                    LocalId(
+                                        name =
+                                            mod.idText(
+                                                traitDecl.typeParams.get(
+                                                    traitTyArgIdx,
+                                                ),
+                                            ),
+                                    ),
+                                kind =
+                                    traitDecl.typeParamKinds.get(traitTyArgIdx),
+                            ),
+                        )
+
+                    for tyParam: TypeParam in method.sig.typeParams.iter():
+                        schemeQVars.push(
+                            QVar(id = tyParam.name, kind = tyParam.kind),
+                        )
+
+                    if method.sig.exceptions is Option.None:
+                        # The name we invent for the exception type does not
+                        # matter as it can't be used in the function body. It's
+                        # also OK to not bind it in `convertAndBindContext`
+                        # above for the same reason.
+                        schemeQVars.push(
+                            QVar(id = LocalId(name = "?exn"), kind = Kind.Star),
+                        )
+
+                    let argTys: Vec[Ty] = Vec.fromIter(
+                        method.sig.params.iter().map(
+                            \(param: FunArg) Ty:
+                                let ty = param.ty.unwrap()
+                                convertAstTy(mod, varMap, ty),
+                        ),
+                    )
+
+                    match method.sig.self_:
+                        SelfParam.No: ()
+                        SelfParam.Implicit:
+                            panic("Trait methods can't have implicit self type")
+                        SelfParam.Explicit(ty):
+                            argTys.insert(0, convertAstTy(mod, varMap, ty))
+
+                    let retTy: Ty = match method.sig.returnTy:
+                        Option.None: Ty.unit()
+                        Option.Some(retTy): convertAstTy(mod, varMap, retTy)
+
+                    let exnTy: Ty = match method.sig.exceptions:
+                        Option.None: Ty.QVar(schemeQVars.last().unwrap())
+                        Option.Some(retTy): convertAstTy(mod, varMap, retTy)
+
+                    varMap.exitScope()
+                    assert(varMap.lenScopes() == 1)
+
+                    let funTy = Ty.Fun(
+                        args = FunArgs.Positional(argTys),
+                        ret = retTy,
+                        exn = Option.Some(exnTy),
+                    )
+
+                    let scheme = Scheme(
+                        qvars = schemeQVars,
+                        preds = funPreds,
+                        ty = funTy,
+                        loc = mod.loc(method),
+                    )
+
+                    let old = methods.insert(
+                        mod.idText(method.name),
+                        TraitMethod(scheme, funDecl = method),
+                    )
+                    assert(old is Option.None)
 
         tyCon.info.details = TyConDetails.Trait(TraitDetails(methods))
 
@@ -690,6 +743,9 @@ type ModuleTcEnv(
     ## Type constructors.
     _cons: HashMap[Str, TcItem[TyDefIdx, TyCon]],
 
+    ## Type synonyms: maps synonym name to its expanded type.
+    _synonyms: HashMap[Str, Ty],
+
     ## Top-level function schemes.
     _topSchemes: HashMap[Str, TcItem[TopVarDefIdx, Scheme]],
 
@@ -745,6 +801,7 @@ ModuleTcEnv.empty() ModuleTcEnv:
     ModuleTcEnv(
         _traitEnv = TraitEnv.empty(),
         _cons = HashMap.empty(),
+        _synonyms = HashMap.empty(),
         _topSchemes = HashMap.empty(),
         _assocFnSchemes = HashMap.empty(),
         _methodSchemes = HashMap.empty(),

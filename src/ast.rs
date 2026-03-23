@@ -169,6 +169,9 @@ pub enum TypeDeclRhs {
 
     /// A product type uses the type name as the constructor and only has fields.
     Product(ConFields),
+
+    /// A type synonym: `type Foo = U32`.
+    Synonym(L<Type>),
 }
 
 /// A sum type constructor.
@@ -192,7 +195,7 @@ pub enum ConFields {
 
 #[derive(Debug, Clone)]
 pub enum Type {
-    /// A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[T]`.
+    /// A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[a]`.
     Named(NamedType),
 
     /// A type variable.
@@ -200,22 +203,25 @@ pub enum Type {
     /// We don't have higher-kinded types for now, so type variables cannot be applied.
     Var(Id),
 
-    /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..R)`.
+    /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..r)`.
     Record {
         fields: Vec<(Id, Type)>,
         extension: Option<Id>,
         is_row: bool,
     },
 
-    /// An anonymous variant type, e.g. `[Error(msg: Str), Ok, ..R]`.
+    /// An anonymous variant type, e.g. `[Str, Option[U32], ..r]`.
     Variant {
         alts: Vec<NamedType>,
         extension: Option<Id>,
         is_row: bool,
     },
 
-    /// A function type: `Fn(I32): Bool`.
+    /// A function type: `Fn(I32) Bool / exn`.
     Fn(FnType),
+
+    /// An associated type selection: `Iterator[iter, exn].Item`.
+    AssocTySelect { ty: L<Box<Type>>, assoc_ty: Id },
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
@@ -306,7 +312,6 @@ pub enum SelfParam {
 }
 
 #[derive(Debug, Clone)]
-
 pub struct FunDecl {
     /// Only in associated functions: the parent type. E.g. `Vec` in `Vec.push(...) = ...`.
     pub parent_ty: Option<L<Id>>,
@@ -817,8 +822,15 @@ pub struct TraitDecl {
     /// Kinds of `type_params`. Filled in by kind inference.
     pub type_param_kinds: Vec<Kind>,
 
-    /// Methods of the trait.
-    pub items: Vec<L<FunDecl>>,
+    /// Method and associated types of the trait.
+    pub items: Vec<TraitDeclItem>,
+}
+
+#[derive(Debug, Clone)]
+pub enum TraitDeclItem {
+    /// `type Foo` in a `trait` declaration. Declares an associated type.
+    Type(L<Id>),
+    Fun(L<FunDecl>),
 }
 
 /// Type parameter and predicates of an `impl` or function.
@@ -830,7 +842,26 @@ pub struct Context {
     pub type_params: Vec<(Id, Kind)>,
 
     /// Predicates: `Iterator[iter, item]` and `Debug[item]` in the example.
-    pub preds: Vec<L<Type>>,
+    pub preds: Vec<L<Pred>>,
+}
+
+/// A predicate in a context. E.g. in context `[Iterator[coll, item], Debug[item]]`, we have two
+/// predicates: `ToStr[t]` (`Pred::App`), `Iterator[iter, exn].Item = U32` (`Pred::AssocTyEq`).
+#[derive(Debug, Clone)]
+pub enum Pred {
+    App(TypeApp),
+    AssocTyEq {
+        ty: TypeApp,
+        assoc_ty: Id,
+        eq: L<Type>,
+    },
+}
+
+/// A type application, used in predicates. E.g. `Iterator[coll, item]`.
+#[derive(Debug, Clone)]
+pub struct TypeApp {
+    pub trait_: Id,
+    pub args: Vec<L<Type>>,
 }
 
 /// An `impl` block, implementing a trait for a type.
@@ -859,8 +890,14 @@ pub struct ImplDecl {
     /// In the example: `[Vec[a]]`.
     pub tys: Vec<L<Type>>,
 
-    /// Method implementations.
-    pub items: Vec<L<FunDecl>>,
+    /// Method and associated type implementations.
+    pub items: Vec<ImplDeclItem>,
+}
+
+#[derive(Debug, Clone)]
+pub enum ImplDeclItem {
+    Type { assoc_ty: L<Id>, rhs: L<Type> },
+    Fun(L<FunDecl>),
 }
 
 /// An attribute: `#[derive(Foo, Bar)]`, `#[F(x = 1, y = "hi")]`.
@@ -878,7 +915,7 @@ impl Type {
         self.subst_ids(&[(var.clone(), ty.clone())].into_iter().collect())
     }
 
-    pub fn subst_ids(&self, substs: &HashMap<Id, Type>) -> Type {
+    fn subst_ids(&self, substs: &HashMap<Id, Type>) -> Type {
         match self {
             Type::Named(NamedType { name, args }) => Type::Named(NamedType {
                 name: match substs.get(name) {
@@ -1005,6 +1042,11 @@ impl Type {
                     .as_ref()
                     .map(|exn| exn.map_as_ref(|exn| Box::new(exn.subst_ids(substs)))),
             }),
+
+            Type::AssocTySelect { ty, assoc_ty } => Type::AssocTySelect {
+                ty: ty.map_as_ref(|ty| Box::new(ty.subst_ids(substs))),
+                assoc_ty: assoc_ty.clone(),
+            },
         }
     }
 

@@ -146,6 +146,9 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
 
             Ty.Fun(args, ret, exn = Option.Some(exceptions))
 
+        Type.AssocTySelect(AssocTySelectType(ty, assocTy)):
+            Ty.AssocTySelect(ty = convertAstTy(module, vars, ty), assocTy)
+
 
 convertNamedTy(
     module: Module,
@@ -159,6 +162,20 @@ convertNamedTy(
 
     let tyDefIdx = namedTy.name.def()
     let tyDefName = tyDefIdx._name
+
+    let synTy: Option[Ty] = match vars.get(tyDefName):
+        Option.Some(ty): Option.Some(ty)
+        Option.None: module._tcEnv.unwrap()._synonyms.get(tyDefName)
+
+    if synTy is Option.Some(synTy):
+        if numTyArgs != 0:
+            throw(
+                TypeError(
+                    loc,
+                    msg = "Type synonym `tyName` does not take type arguments",
+                ),
+            )
+        return synTy
 
     let tyCon = module._tcEnv.unwrap()._cons.get(tyDefName).unwrap()
 
@@ -228,7 +245,7 @@ convertAndBindContext(
     module: Module,
     vars: ScopeMap[Str, Ty],
     typeParams: Vec[TypeParam],
-    preds: Vec[Type],
+    preds: Vec[Pred_],
     conversion: TyVarConversion,
 ) Vec[Pred] / TypeError:
     let predsConverted: Vec[Pred] = Vec.withCapacity(preds.len())
@@ -243,11 +260,15 @@ convertAndBindContext(
         vars.insert(tyParam.name.name, var_)
 
     # Convert preds.
-    for pred: Type in preds.iter():
+    for pred: Pred_ in preds.iter():
         let loc = module.loc(pred)
+
+    #|
+        TODO: This needs to update with the type eq preds
         let pred = match convertAstTy(module, vars, pred):
             Ty.App(conId, args): Pred(trait_ = conId, params = args, loc)
             other: panic("Strange predicate syntax")
         predsConverted.push(pred)
+        |#
 
     predsConverted

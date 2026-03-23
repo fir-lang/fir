@@ -171,6 +171,16 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(rhs),
         }),
 
+    <l:@L> "type" <type_name:UpperId> "=" <tl:@L> <ty:Type> <tr:@R> NEWLINE <r:@R> =>
+        L::new(module, l, r, TypeDecl {
+            attr: None,
+            value: false,
+            name: type_name.smol_str(),
+            type_params: vec![],
+            type_param_kinds: vec![],
+            rhs: Some(TypeDeclRhs::Synonym(L::new(module, tl, tr, ty))),
+        }),
+
     <l:@L> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
             attr: None,
@@ -245,6 +255,7 @@ LTypeNamed: L<Type> = {
     <l:@L> <ty:TypeNamed> <r:@R> => L::new(module, l, r, ty),
 }
 
+// NOTE: If you update this make sure it's in sync with `TypeNoFn`.
 Type: Type = {
     #[precedence(level = "0")]
     <ty:TypeNamed> => ty,
@@ -272,8 +283,16 @@ Type: Type = {
 
     "row[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
+
+    <ty:LTypeNamed> "." <assoc_ty:UpperId> => {
+        Type::AssocTySelect {
+            ty: ty.map(Box::new),
+            assoc_ty: assoc_ty.smol_str(),
+        }
+    },
 }
 
+// NOTE: If you update this make sure it's in sync with `Type`.
 TypeNoFn: Type = {
     <ty:TypeNamed> => ty,
 
@@ -296,6 +315,13 @@ TypeNoFn: Type = {
 
     "row[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
+
+    <ty:LTypeNamed> "." <assoc_ty:UpperId> => {
+        Type::AssocTySelect {
+            ty: ty.map(Box::new),
+            assoc_ty: assoc_ty.smol_str(),
+        }
+    },
 }
 
 LTypeNoFn: L<Type> = {
@@ -1069,7 +1095,7 @@ ImportPath: Vec<Id> = {
 
 TraitDecl: L<TraitDecl> = {
     <l:@L> "trait" <name:LUpperIdLBracket> <type_params:Sep<LLowerId, ",">> "]" ":"
-            NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> =>
+            NEWLINE INDENT <items:TraitDeclItem+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
             type_params,
@@ -1087,6 +1113,16 @@ TraitDecl: L<TraitDecl> = {
 
 }
 
+TraitDeclItem: TraitDeclItem = {
+    "type" <id:LUpperId> NEWLINE => {
+        TraitDeclItem::Type(id)
+    },
+
+    <fun:FunDecl> => {
+        TraitDeclItem::Fun(fun)
+    },
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Impl declarations
@@ -1095,7 +1131,7 @@ TraitDecl: L<TraitDecl> = {
 
 ImplDecl: L<ImplDecl> = {
     <l:@L> "impl" <context:Context> <trait_:LUpperIdLBracket> <tys:Sep<LType, ",">> "]" ":"
-            NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> => {
+            NEWLINE INDENT <items:ImplDeclItem+> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,
             trait_,
@@ -1114,10 +1150,44 @@ ImplDecl: L<ImplDecl> = {
     },
 }
 
+ImplDeclItem: ImplDeclItem = {
+    "type" <assoc_ty:LUpperId> "=" <rhs:LType> NEWLINE => {
+        ImplDeclItem::Type { assoc_ty, rhs }
+    },
+
+    <fun:FunDecl> => {
+        ImplDeclItem::Fun(fun)
+    },
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Contexts
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 Context: Context = {
     => Context { type_params: vec![], preds: vec![] },
 
-    "[" <tys:Sep<LType, ",">> "]" => Context { type_params: vec![], preds: tys },
+    "[" <preds:Sep<LPred, ",">> "]" => Context { type_params: vec![], preds },
+}
+
+LPred: L<Pred> = {
+    <l:@L> <pred:Pred> <r:@R> =>
+        L::new(module, l, r, pred),
+}
+
+Pred: Pred = {
+    <ty:TypeApp> =>
+        Pred::App(ty),
+
+    <ty:TypeApp> "." <assoc_ty:UpperId> "=" <eq:LType> =>
+        Pred::AssocTyEq { ty, assoc_ty: assoc_ty.smol_str(), eq },
+}
+
+TypeApp: TypeApp = {
+    <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
+        TypeApp { trait_: name.smol_str(), args },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

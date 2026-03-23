@@ -7,5 +7,4 @@ main():
 
 # args: --typecheck
 # expected exit status: 101
-# expected stderr:
-# tests/RowsFail1.fir:6:10: Unable to unify record with fields {"x"} with record with fields {"x", "y"}
+# expected stderr: tests/RowsFail1.fir:6:10: Unable to unify (x: I32) with (x: I32, y: I32, .._0)

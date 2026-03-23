@@ -75,8 +75,15 @@ _addMissingTypeParamsFun(
     let boundVars: HashSet[Str] = HashSet.fromIter(tvs.keys())
 
     if sig.context is Option.Some(context):
-        for pred: Type in context.preds.iter():
-            _collectTvs(pred, tvs, tokens)
+        for pred: Pred_ in context.preds.iter():
+            match pred:
+                Pred_.App(TypeApp(trait_ = _, args)):
+                    for arg: Type in args.iter():
+                        _collectTvs(arg, tvs, tokens)
+                Pred_.AssocTyEq(ty = TypeApp(trait_ = _, args), assocTy = _, eq):
+                    for arg: Type in args.iter():
+                        _collectTvs(arg, tvs, tokens)
+                    _collectTvs(eq, tvs, tokens)
 
     match sig.self_:
         SelfParam.No | SelfParam.Implicit: ()
@@ -114,7 +121,11 @@ _addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
         traitContextVarKinds.insert(paramStr, Option.None)
         traitContextVars.insert(paramStr)
 
-    for fun: FunDecl in trait_.items.iter():
+    for item: TraitDeclItem in trait_.items.iter():
+        let fun = match item:
+            TraitDeclItem.Type(_): continue
+            TraitDeclItem.Fun(fun): fun
+
         # Update trait context variable kinds. This also adds function context
         # variables, which we remove below.
         _addMissingTypeParamsFun(fun.sig, traitContextVarKinds, tokens)
@@ -145,8 +156,15 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
         .empty()
 
     if impl_.context is Option.Some(context):
-        for pred: Type in context.preds.iter():
-            _collectTvs(pred, implContextVarKinds, tokens)
+        for pred: Pred_ in context.preds.iter():
+            match pred:
+                Pred_.App(TypeApp(trait_ = _, args)):
+                    for arg: Type in args.iter():
+                        _collectTvs(arg, implContextVarKinds, tokens)
+                Pred_.AssocTyEq(ty = TypeApp(trait_ = _, args), assocTy = _, eq):
+                    for arg: Type in args.iter():
+                        _collectTvs(arg, implContextVarKinds, tokens)
+                    _collectTvs(eq, implContextVarKinds, tokens)
 
     for ty: Type in impl_.tys.iter():
         _collectTvs(ty, implContextVarKinds, tokens)
@@ -157,7 +175,11 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
     for var_: Str in implContextVarKinds.keys():
         implContextVars.insert(var_, ())
 
-    for fun: FunDecl in impl_.items.iter():
+    for item: ImplDeclItem in impl_.items.iter():
+        let fun = match item:
+            ImplDeclItem.Type(..): continue
+            ImplDeclItem.Fun(fun): fun
+
         # Same as the loop in in the trait decl case above.
         _addMissingTypeParamsFun(fun.sig, implContextVarKinds, tokens)
 
@@ -241,6 +263,9 @@ _collectTvs(
 
             if exceptions is Option.Some(exn):
                 _collectTvs(exn, tvs, tokens)
+
+        Type.AssocTySelect(AssocTySelectType(ty, assocTy = _)):
+            _collectTvs(ty, tvs, tokens)
 
 
 _collectNamedTyTvs(

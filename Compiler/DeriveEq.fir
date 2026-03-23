@@ -62,6 +62,8 @@ genTree(typeDecl: TypeDecl, tokens: Array[Token]) Doc:
         Option.Some(TypeDeclRhs.Product(fields)):
             genProduct(typeName, fields, tokens)
 
+        Option.Some(TypeDeclRhs.Synonym(_)): Doc.empty()
+
     let preds = Doc.empty()
     if typeDecl.typeParams.len() != 0:
         preds = _brackets(

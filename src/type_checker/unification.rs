@@ -2,22 +2,26 @@ use crate::ast::{self, Id};
 use crate::collections::*;
 use crate::type_checker::loc_display;
 use crate::type_checker::row_utils::*;
+use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::ty::*;
 
 pub(super) fn unify(
     ty1: &Ty,
     ty2: &Ty,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut UVarGen,
+    trait_env: &TraitEnv,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
+    assumps: &[Pred],
+    preds: &mut Vec<Pred>,
 ) {
-    let ty1 = ty1.normalize(cons);
+    let ty1 = ty1.deep_normalize(cons, trait_env, var_gen, assumps);
     if ty1.is_void() {
         return;
     }
 
-    let ty2 = ty2.normalize(cons);
+    let ty2 = ty2.deep_normalize(cons, trait_env, var_gen, assumps);
     if ty2.is_void() {
         return;
     }
@@ -51,7 +55,9 @@ pub(super) fn unify(
                 )
             }
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                unify(arg1, arg2, cons, var_gen, level, loc);
+                unify(
+                    arg1, arg2, cons, trait_env, var_gen, level, loc, assumps, preds,
+                );
             }
         }
 
@@ -79,7 +85,9 @@ pub(super) fn unify(
             match (args1, args2) {
                 (FunArgs::Positional { args: args1 }, FunArgs::Positional { args: args2 }) => {
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                        unify(arg1, arg2, cons, var_gen, level, loc);
+                        unify(
+                            arg1, arg2, cons, trait_env, var_gen, level, loc, assumps, preds,
+                        );
                     }
                 }
 
@@ -107,12 +115,17 @@ pub(super) fn unify(
                             args1.get(arg_name).unwrap(),
                             args2.get(arg_name).unwrap(),
                             cons,
+                            trait_env,
                             var_gen,
                             level,
                             loc,
+                            assumps,
+                            preds,
                         );
                     }
-                    unify_fun_extensions(ext1, ext2, cons, var_gen, level, loc);
+                    unify_fun_extensions(
+                        ext1, ext2, cons, trait_env, var_gen, level, loc, assumps, preds,
+                    );
                 }
 
                 (FunArgs::Named { .. }, FunArgs::Positional { .. })
@@ -132,11 +145,23 @@ pub(super) fn unify(
                 }
 
                 (Some(exceptions1), Some(exceptions2)) => {
-                    unify(exceptions1, exceptions2, cons, var_gen, level, loc);
+                    unify(
+                        exceptions1,
+                        exceptions2,
+                        cons,
+                        trait_env,
+                        var_gen,
+                        level,
+                        loc,
+                        assumps,
+                        preds,
+                    );
                 }
             }
 
-            unify(ret1, ret2, cons, var_gen, level, loc);
+            unify(
+                ret1, ret2, cons, trait_env, var_gen, level, loc, assumps, preds,
+            );
         }
 
         (Ty::QVar(var, _kind), _) | (_, Ty::QVar(var, _kind)) => {
@@ -216,10 +241,26 @@ pub(super) fn unify(
                 );
             }
 
-            let (labels1, mut extension1) =
-                collect_rows(cons, &ty1, *kind1, labels1, extension1.clone());
-            let (labels2, mut extension2) =
-                collect_rows(cons, &ty2, *kind2, labels2, extension2.clone());
+            let (labels1, mut extension1) = collect_rows(
+                cons,
+                &ty1,
+                *kind1,
+                labels1,
+                extension1.clone(),
+                &Default::default(),
+                var_gen,
+                assumps,
+            );
+            let (labels2, mut extension2) = collect_rows(
+                cons,
+                &ty2,
+                *kind2,
+                labels2,
+                extension2.clone(),
+                &Default::default(),
+                var_gen,
+                assumps,
+            );
 
             let keys1: HashSet<&Id> = labels1.keys().collect();
             let keys2: HashSet<&Id> = labels2.keys().collect();
@@ -232,13 +273,10 @@ pub(super) fn unify(
             for key in keys1.intersection(&keys2) {
                 let ty1 = labels1.get(*key).unwrap();
                 let ty2 = labels2.get(*key).unwrap();
-                unify(ty1, ty2, cons, var_gen, level, loc);
+                unify(
+                    ty1, ty2, cons, trait_env, var_gen, level, loc, assumps, preds,
+                );
             }
-
-            let (kind_str, label_str) = match kind1 {
-                RecordOrVariant::Record => ("record", "field"),
-                RecordOrVariant::Variant => ("variant", "constructor"),
-            };
 
             if !extras1.is_empty() {
                 match &extension2 {
@@ -249,16 +287,7 @@ pub(super) fn unify(
                         )));
                     }
                     _ => {
-                        panic!(
-                            "{}: Unable to unify {} with {}s {:?} with {} with {}s {:?}",
-                            loc_display(loc),
-                            kind_str,
-                            label_str,
-                            keys1,
-                            kind_str,
-                            label_str,
-                            keys2
-                        );
+                        panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
                     }
                 }
             }
@@ -272,16 +301,7 @@ pub(super) fn unify(
                         )));
                     }
                     _ => {
-                        panic!(
-                            "{}: Unable to unify {} with {}s {:?} with {} with {}s {:?}",
-                            loc_display(loc),
-                            kind_str,
-                            label_str,
-                            keys1,
-                            kind_str,
-                            label_str,
-                            keys2
-                        );
+                        panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
                     }
                 }
             }
@@ -298,15 +318,91 @@ pub(super) fn unify(
             match (extension1, extension2) {
                 (None, None) => {}
                 (Some(ext1), None) => {
-                    unify(&ext1, &unit_row(*kind1), cons, var_gen, level, loc);
+                    unify(
+                        &ext1,
+                        &unit_row(*kind1),
+                        cons,
+                        trait_env,
+                        var_gen,
+                        level,
+                        loc,
+                        assumps,
+                        preds,
+                    );
                 }
                 (None, Some(ext2)) => {
-                    unify(&unit_row(*kind2), &ext2, cons, var_gen, level, loc);
+                    unify(
+                        &unit_row(*kind2),
+                        &ext2,
+                        cons,
+                        trait_env,
+                        var_gen,
+                        level,
+                        loc,
+                        assumps,
+                        preds,
+                    );
                 }
                 (Some(ext1), Some(ext2)) => {
-                    unify(&ext1, &ext2, cons, var_gen, level, loc);
+                    unify(
+                        &ext1, &ext2, cons, trait_env, var_gen, level, loc, assumps, preds,
+                    );
                 }
             }
+        }
+
+        (
+            Ty::AssocTySelect {
+                ty: ty1_inner,
+                assoc_ty: assoc1,
+            },
+            Ty::AssocTySelect {
+                ty: ty2_inner,
+                assoc_ty: assoc2,
+            },
+        ) => {
+            if assoc1 != assoc2 {
+                panic!(
+                    "{}: Unable to unify types {} and {}",
+                    loc_display(loc),
+                    ty1,
+                    ty2,
+                );
+            }
+            unify(
+                ty1_inner, ty2_inner, cons, trait_env, var_gen, level, loc, assumps, preds,
+            );
+        }
+
+        (
+            Ty::AssocTySelect {
+                ty: inner_ty,
+                assoc_ty,
+            },
+            other,
+        )
+        | (
+            other,
+            Ty::AssocTySelect {
+                ty: inner_ty,
+                assoc_ty,
+            },
+        ) => {
+            let (trait_name, trait_args): (&Id, &[Ty]) = match inner_ty.as_ref() {
+                Ty::App(con, args, _) => (con, args.as_slice()),
+                Ty::Con(con, _) => (con, &[]),
+                _ => panic!(
+                    "{}: Cannot construct predicate from AssocTySelect with inner type: {}",
+                    loc_display(loc),
+                    inner_ty,
+                ),
+            };
+            preds.push(Pred {
+                trait_: trait_name.clone(),
+                params: trait_args.to_vec(),
+                assoc_ty: Some((assoc_ty.clone(), other.clone())),
+                loc: loc.clone(),
+            });
         }
 
         (ty1, ty2) => panic!(
@@ -330,13 +426,16 @@ fn unify_fun_extensions(
     ext1: &Option<Box<Ty>>,
     ext2: &Option<Box<Ty>>,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut UVarGen,
+    trait_env: &TraitEnv,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
+    assumps: &[Pred],
+    preds: &mut Vec<Pred>,
 ) {
     match (ext1, ext2) {
         (None, None) => {}
-        (Some(e1), Some(e2)) => unify(e1, e2, cons, var_gen, level, loc),
+        (Some(e1), Some(e2)) => unify(e1, e2, cons, trait_env, var_gen, level, loc, assumps, preds),
         (None, Some(_)) | (Some(_), None) => {
             panic!(
                 "{}: Unable to unify function types with mismatched argument extensions",
@@ -353,7 +452,7 @@ pub(super) fn try_unify_one_way(
     ty1: &Ty,
     ty2: &Ty,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> bool {
@@ -507,10 +606,26 @@ pub(super) fn try_unify_one_way(
             // rows with rows and stars with stars.
             assert_eq!(is_row_1, is_row_2);
 
-            let (labels1, mut extension1) =
-                collect_rows(cons, &ty1, *kind1, labels1, extension1.clone());
-            let (labels2, extension2) =
-                collect_rows(cons, &ty2, *kind2, labels2, extension2.clone());
+            let (labels1, mut extension1) = collect_rows(
+                cons,
+                &ty1,
+                *kind1,
+                labels1,
+                extension1.clone(),
+                &Default::default(),
+                var_gen,
+                &[],
+            );
+            let (labels2, extension2) = collect_rows(
+                cons,
+                &ty2,
+                *kind2,
+                labels2,
+                extension2.clone(),
+                &Default::default(),
+                var_gen,
+                &[],
+            );
 
             let keys1: HashSet<&Id> = labels1.keys().collect();
             let keys2: HashSet<&Id> = labels2.keys().collect();
@@ -567,6 +682,22 @@ pub(super) fn try_unify_one_way(
             }
         }
 
+        (
+            Ty::AssocTySelect {
+                ty: ty1_inner,
+                assoc_ty: assoc1,
+            },
+            Ty::AssocTySelect {
+                ty: ty2_inner,
+                assoc_ty: assoc2,
+            },
+        ) => {
+            if assoc1 != assoc2 {
+                return false;
+            }
+            try_unify_one_way(ty1_inner, ty2_inner, cons, var_gen, level, loc)
+        }
+
         (_, _) => false,
     }
 }
@@ -576,7 +707,7 @@ fn link_extension(
     extra_labels: &HashSet<&&Id>,
     label_values: &OrdMap<Id, Ty>,
     var: &UVarRef,
-    var_gen: &mut UVarGen,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> UVarRef {
@@ -607,12 +738,25 @@ pub(super) fn unify_expected_ty(
     ty: Ty,
     expected_ty: Option<&Ty>,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut UVarGen,
+    trait_env: &TraitEnv,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
+    local_assoc_tys: &[Pred],
+    preds: &mut Vec<Pred>,
 ) -> Ty {
     if let Some(expected_ty) = expected_ty {
-        unify(&ty, expected_ty, cons, var_gen, level, loc);
+        unify(
+            &ty,
+            expected_ty,
+            cons,
+            trait_env,
+            var_gen,
+            level,
+            loc,
+            local_assoc_tys,
+            preds,
+        );
     }
     ty
 }
@@ -668,6 +812,10 @@ fn prune_level(ty: &Ty, max_level: u32) {
             if let Some(exn) = exceptions {
                 prune_level(exn, max_level);
             }
+        }
+
+        Ty::AssocTySelect { ty, assoc_ty: _ } => {
+            prune_level(ty, max_level);
         }
     }
 }

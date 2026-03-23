@@ -1,37 +1,39 @@
-trait Iterator[iter, item, exn]:
-    next(self: iter) Option[item] / exn
+trait Iterator[iter, exn]:
+    type Item
 
-    map(self: iter, f: Fn(item) b / exn) Map[iter, item, b, exn]:
+    next(self: iter) Option[Item] / exn
+
+    map(self: iter, f: Fn(Item) b / exn) Map[iter, Item, b, exn]:
         Map(iter = self, f = f)
 
-    peekable(self: iter) Peekable[iter, item, exn]:
+    peekable(self: iter) Peekable[iter, Item, exn]:
         Peekable(iter = self, peeked = Option.None)
 
-    mapResult(self: iter, f: Fn(Result[exn, Option[item]]) Option[b] / exn2) MapResult[iter, item, b, exn, exn2]:
+    mapResult(self: iter, f: Fn(Result[exn, Option[Item]]) Option[b] / exn2,) MapResult[iter, Item, b, exn, exn2]:
         MapResult(iter = self, f = f)
 
-    try(self: iter) Try[iter, item, exn]:
+    try(self: iter) Try[iter, Item, exn]:
         Try(iter = self)
 
-    skip(self: iter, amount: U32) Skip[iter, item, exn] / exn:
+    skip(self: iter, amount: U32) Skip[iter, Item, exn] / exn:
         Skip(iter = self, amount)
 
-    any(self: iter, f: Fn(item) Bool / exn) Bool / exn:
-        for item: item in self:
+    any(self: iter, f: Fn(Item) Bool / exn) Bool / exn:
+        for item in self:
             if f(item):
                 return Bool.True
         Bool.False
 
-    all(self: iter, f: Fn(item) Bool / exn) Bool / exn:
-        for item: item in self:
+    all(self: iter, f: Fn(Item) Bool / exn) Bool / exn:
+        for item in self:
             if not f(item):
                 return Bool.False
         Bool.True
 
-    chain(self: iter, other: other) Chain[iter, other, item, exn]:
+    chain(self: iter, other: other) Chain[iter, other, Item, exn]:
         Chain(iter1 = Option.Some(self), iter2 = Option.Some(other))
 
-    filter(self: iter, f: Fn(item) Bool / exn) Filter[iter, item, exn]:
+    filter(self: iter, f: Fn(Item) Bool / exn) Filter[iter, Item, exn]:
         Filter(iter = self, f = f)
 
     ## Count number of elements the iterator yields.
@@ -43,7 +45,7 @@ trait Iterator[iter, item, exn]:
     ## the iterator.
     count(self: iter) U32 / exn:
         let n = u32(0)
-        for _: item in self:
+        for _ in self:
             n += 1
         n
 
@@ -57,20 +59,20 @@ trait Iterator[iter, item, exn]:
     ## If an iterator returns a `Option.Some(n)`, it should always yield `n` elements. It's a bug if
     ## the iterator yields less or more.
     ##
-    ## Order of type arguments: iter, item, exn (from `Iterator`), the function's exn.
+    ## Order of type arguments: iter, exn (from `Iterator`), the function's exn.
     size(self: iter) Option[U32]:
         Option.None
 
-    enumerate(self: iter) Enumerate[iter, item, exn]:
+    enumerate(self: iter) Enumerate[iter, Item, exn]:
         Enumerate(iter = self, idx = 0)
 
-    find(self: iter, pred: Fn(item) Bool / exn) Option[item] / exn:
-        for item: item in self:
+    find(self: iter, pred: Fn(Item) Bool / exn) Option[Item] / exn:
+        for item in self:
             if pred(item):
                 return Option.Some(item)
         Option.None
 
-    take(self: iter, n: U32) Take[iter, item, exn]:
+    take(self: iter, n: U32) Take[iter, Item, exn]:
         Take(iter = self, n)
 
 
@@ -104,8 +106,10 @@ type RangeIterator[t](
 )
 
 
-impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t, exn]:
-    next(self: RangeIterator[t]) Option[t] / exn:
+impl[Step[t], Ord[t]] Iterator[RangeIterator[t], exn]:
+    type Item = t
+
+    next(self: RangeIterator[t]) Option[Item] / exn:
         if self.current >= self.end:
             Option.None
         else:
@@ -131,8 +135,10 @@ type InclusiveRangeIterator[t](
 )
 
 
-impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, exn]:
-    next(self: InclusiveRangeIterator[t]) Option[t] / exn:
+impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], exn]:
+    type Item = t
+
+    next(self: InclusiveRangeIterator[t]) Option[Item] / exn:
         if self.current > self.end:
             Option.None
         else:
@@ -158,14 +164,16 @@ type Map[iter, a, b, exn](
 )
 
 
-impl[Iterator[iter, a, exn]] Iterator[Map[iter, a, b, exn], b, exn]:
-    next(self: Map[iter, a, b, exn]) Option[b] / exn:
+impl[Iterator[iter, exn], Iterator[iter, exn].Item = a] Iterator[Map[iter, a, b, exn], exn]:
+    type Item = b
+
+    next(self: Map[iter, a, b, exn]) Option[Item] / exn:
         match self.iter.next():
             Option.None: Option.None
             Option.Some(a): Option.Some(self.f(a))
 
     size(self: Map[iter, a, b, exn]) Option[U32] / exn2:
-        self.iter.size[iter, a, exn, exn2]()
+        self.iter.size[iter, exn, exn2]()
 
 
 # --------------------------------------------------------------------------------------------------
@@ -177,8 +185,10 @@ type Peekable[iter, item, exn](
 )
 
 
-impl[Iterator[iter, item, exn]] Iterator[Peekable[iter, item, exn], item, exn]:
-    next(self: Peekable[iter, item, exn]) Option[item] / exn:
+impl[Iterator[iter, exn], Iterator[iter, exn].Item = item] Iterator[Peekable[iter, item, exn], exn]:
+    type Item = item
+
+    next(self: Peekable[iter, item, exn]) Option[Item] / exn:
         match self.peeked:
             Option.Some(peeked):
                 self.peeked = Option.None
@@ -186,10 +196,12 @@ impl[Iterator[iter, item, exn]] Iterator[Peekable[iter, item, exn], item, exn]:
             Option.None: self.iter.next()
 
     size(self: Peekable[iter, item, exn]) Option[U32] / exn2:
-        self.iter.size[iter, item, exn, exn2]()
+        self.iter.size[iter, exn, exn2]()
 
 
-Peekable.peek[Iterator[iter, item, exn]](self: Peekable[iter, item, exn]) Option[item] / exn:
+Peekable.peek[Iterator[iter, exn], Iterator[iter, exn].Item = item](
+    self: Peekable[iter, item, exn],
+) Option[item] / exn:
     match self.peeked:
         Option.Some(peeked): Option.Some(peeked)
         Option.None:
@@ -211,12 +223,14 @@ type MapResult[iter, item, b, exnOld, exnNew](
 )
 
 
-impl[Iterator[iter, item, exnOld]] Iterator[MapResult[iter, item, b1, exnOld, exnNew], b1, exnNew]:
-    next(self: MapResult[iter, item, b1, exnOld, exnNew]) Option[b1] / exnNew:
+impl[Iterator[iter, exnOld], Iterator[iter, exnOld].Item = item] Iterator[MapResult[iter, item, b1, exnOld, exnNew], exnNew]:
+    type Item = b1
+
+    next(self: MapResult[iter, item, b1, exnOld, exnNew]) Option[Item] / exnNew:
         self.f(try(self.iter.next))
 
     size(self: MapResult[iter, item, b1, exnOld, exnNew]) Option[U32] / exn3:
-        self.iter.size[iter, item, exnOld, exn3]()
+        self.iter.size[iter, exnOld, exn3]()
 
 
 # --------------------------------------------------------------------------------------------------
@@ -227,15 +241,17 @@ type Try[iter, item, exn](
 )
 
 
-impl[Iterator[iter, item, exn]] Iterator[Try[iter, item, exn], Result[exn, item], exn2]:
-    next(self: Try[iter, item, exn]) Option[Result[exn, item]] / exn2:
+impl[Iterator[iter, exn], Iterator[iter, exn].Item = item] Iterator[Try[iter, item, exn], exn2]:
+    type Item = Result[exn, item]
+
+    next(self: Try[iter, item, exn]) Option[Item] / exn2:
         match try(self.iter.next):
             Result.Err(err): Option.Some(Result.Err(err))
             Result.Ok(Option.Some(item)): Option.Some(Result.Ok(item))
             Result.Ok(Option.None): Option.None
 
     size(self: Try[iter, item, exn]) Option[U32] / exn3:
-        self.iter.size[iter, item, exn, exn3]()
+        self.iter.size[iter, exn, exn3]()
 
 
 impl[Clone[iter]] Clone[Try[iter, item, exn]]:
@@ -252,15 +268,17 @@ type Skip[iter, item, exn](
 )
 
 
-impl[Iterator[iter, item, exn]] Iterator[Skip[iter, item, exn], item, exn]:
-    next(self: Skip[iter, item, exn]) Option[item] / exn:
+impl[Iterator[iter, exn], Iterator[iter, exn].Item = item] Iterator[Skip[iter, item, exn], exn]:
+    type Item = item
+
+    next(self: Skip[iter, item, exn]) Option[Item] / exn:
         while self.amount != 0:
-            let _: Option[item] = self.iter.next()
+            let _ = self.iter.next()
             self.amount -= 1
         self.iter.next()
 
     size(self: Skip[iter, item, exn]) Option[U32] / exn2:
-        if self.iter.size[iter, item, exn, exn2]() is Option.Some(size):
+        if self.iter.size[iter, exn, exn2]() is Option.Some(size):
             return Option.Some(size - self.amount)
         Option.None
 
@@ -282,8 +300,10 @@ once(val: t) Once[t]:
     Once(val = Option.Some(val))
 
 
-impl Iterator[Once[t], t, exn]:
-    next(self: Once[t]) Option[t] / exn:
+impl Iterator[Once[t], exn]:
+    type Item = t
+
+    next(self: Once[t]) Option[Item] / exn:
         let val = self.val
         self.val = Option.None
         val
@@ -299,6 +319,7 @@ impl[Clone[t]] Clone[Once[t]]:
 
 # --------------------------------------------------------------------------------------------------
 
+
 type OnceWith[t, exn](
     f: Option[Fn() t / exn],
 )
@@ -308,8 +329,10 @@ onceWith(f: Fn() t / exn) OnceWith[t, exn]:
     OnceWith(f = Option.Some(f))
 
 
-impl Iterator[OnceWith[t, exn], t, exn]:
-    next(self: OnceWith[t, exn]) Option[t] / exn:
+impl Iterator[OnceWith[t, exn], exn]:
+    type Item = t
+
+    next(self: OnceWith[t, exn]) Option[Item] / exn:
         match self.f:
             Option.None: Option.None
             Option.Some(f):
@@ -323,23 +346,25 @@ impl Iterator[OnceWith[t, exn], t, exn]:
 # --------------------------------------------------------------------------------------------------
 
 
-type Empty
+type Empty[item]
 
 
-empty() Empty:
+empty() Empty[item]:
     Empty
 
 
-impl Iterator[Empty, item, exn]:
-    next(self: Empty) Option[item] / exn:
+impl Iterator[Empty[item], exn]:
+    type Item = item
+
+    next(self: Empty[item]) Option[Item] / exn:
         Option.None
 
-    size(self: Empty) Option[U32]:
+    size(self: Empty[item]) Option[U32]:
         Option.Some(0)
 
 
-impl Clone[Empty]:
-    clone(self: Empty) Empty:
+impl Clone[Empty[item]]:
+    clone(self: Empty[item]) Empty[item]:
         Empty
 
 
@@ -352,8 +377,10 @@ type Chain[iter1, iter2, item, exn](
 )
 
 
-impl[Iterator[iter1, item, exn], Iterator[iter2, item, exn]] Iterator[Chain[iter1, iter2, item, exn], item, exn]:
-    next(self: Chain[iter1, iter2, item, exn]) Option[item] / exn:
+impl[Iterator[iter1, exn], Iterator[iter2, exn], Iterator[iter1, exn].Item = item, Iterator[iter2, exn].Item = item] Iterator[Chain[iter1, iter2, item, exn], exn]:
+    type Item = item
+
+    next(self: Chain[iter1, iter2, item, exn]) Option[Item] / exn:
         if self.iter1 is Option.Some(iter1):
             match iter1.next():
                 Option.Some(val): return Option.Some(val)
@@ -370,12 +397,12 @@ impl[Iterator[iter1, item, exn], Iterator[iter2, item, exn]] Iterator[Chain[iter
         let hint: U32 = 0
 
         if self.iter1 is Option.Some(iter):
-            match iter.size[iter1, item, exn, exn2]():
+            match iter.size[iter1, exn, exn2]():
                 Option.None: return Option.None
                 Option.Some(hint_): hint += hint_
 
         if self.iter2 is Option.Some(iter):
-            match iter.size[iter2, item, exn, exn2]():
+            match iter.size[iter2, exn, exn2]():
                 Option.None: return Option.None
                 Option.Some(hint_): hint += hint_
 
@@ -396,8 +423,10 @@ type Filter[iter, item, exn](
 )
 
 
-impl[Iterator[iter, item, exn]] Iterator[Filter[iter, item, exn], item, exn]:
-    next(self: Filter[iter, item, exn]) Option[item] / exn:
+impl[Iterator[iter, exn], Iterator[iter, exn].Item = item] Iterator[Filter[iter, item, exn], exn]:
+    type Item = item
+
+    next(self: Filter[iter, item, exn]) Option[Item] / exn:
         while self.iter.next() is Option.Some(item):
             if self.f(item):
                 return Option.Some(item)
@@ -415,8 +444,10 @@ type Enumerate[iter, item, exn](
 
 
 # TODO: Maybe update item type to `(U32, item)` once we have records with positional fields.
-impl[Iterator[iter, item, exn]] Iterator[Enumerate[iter, item, exn], (idx: U32, item: item), exn]:
-    next(self: Enumerate[iter, item, exn]) Option[(idx: U32, item: item)] / exn:
+impl[Iterator[iter, exn], Iterator[iter, exn].Item = item] Iterator[Enumerate[iter, item, exn], exn]:
+    type Item = (idx: U32, item: item)
+
+    next(self: Enumerate[iter, item, exn]) Option[Item] / exn:
         match self.iter.next():
             Option.None: Option.None
             Option.Some(item):
@@ -425,7 +456,7 @@ impl[Iterator[iter, item, exn]] Iterator[Enumerate[iter, item, exn], (idx: U32, 
                 Option.Some((idx = idx, item = item))
 
     size(self: Enumerate[iter, item, exn]) Option[U32] / exn2:
-        self.iter.size[iter, item, exn, exn2]()
+        self.iter.size[iter, exn, exn2]()
 
 
 impl[Clone[iter]] Clone[Enumerate[iter, item, exn]]:
@@ -445,8 +476,10 @@ repeatWith(f: Fn() item / exn) RepeatWith[item, exn]:
     RepeatWith(f)
 
 
-impl Iterator[RepeatWith[item, exn], item, exn]:
-    next(self: RepeatWith[item, exn]) Option[item] / exn:
+impl Iterator[RepeatWith[item, exn], exn]:
+    type Item = item
+
+    next(self: RepeatWith[item, exn]) Option[Item] / exn:
         Option.Some(self.f())
 
 
@@ -459,8 +492,10 @@ type Take[iter, item, exn](
 )
 
 
-impl[Iterator[iter, item, exn]] Iterator[Take[iter, item, exn], item, exn]:
-    next(self: Take[iter, item, exn]) Option[item] / exn:
+impl[Iterator[iter, exn], Iterator[iter, exn].Item = item] Iterator[Take[iter, item, exn], exn]:
+    type Item = item
+
+    next(self: Take[iter, item, exn]) Option[Item] / exn:
         if self.n == 0:
             Option.None
         else:
@@ -468,7 +503,7 @@ impl[Iterator[iter, item, exn]] Iterator[Take[iter, item, exn], item, exn]:
             self.iter.next()
 
     size(self: Take[iter, item, exn]) Option[U32] / exn2:
-        self.iter.size[iter, item, exn, exn2]().map(
+        self.iter.size[iter, exn, exn2]().map(
             \(size: U32):
                 if size >= self.n:
                     self.n

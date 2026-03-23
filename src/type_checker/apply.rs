@@ -1,4 +1,5 @@
 use crate::ast::{self, Id};
+use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::unification::unify;
 use crate::type_checker::*;
 use crate::utils::loc_display;
@@ -11,10 +12,13 @@ pub(crate) fn apply_con_ty(
     con_ty: &Ty,
     args: &Vec<ast::Named<Ty>>,
     cons: &ScopeMap<Id, TyCon>,
-    var_gen: &mut UVarGen,
+    trait_env: &TraitEnv,
+    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
     ignore_extra: bool,
+    local_assoc_tys: &[Pred],
+    preds: &mut Vec<Pred>,
 ) -> Ty {
     match con_ty {
         Ty::Fun {
@@ -47,7 +51,17 @@ pub(crate) fn apply_con_ty(
                                 name
                             );
                         }
-                        unify(ty1, &ty2.node, cons, var_gen, level, loc);
+                        unify(
+                            ty1,
+                            &ty2.node,
+                            cons,
+                            trait_env,
+                            var_gen,
+                            level,
+                            loc,
+                            local_assoc_tys,
+                            preds,
+                        );
                     }
                 }
 
@@ -113,7 +127,17 @@ pub(crate) fn apply_con_ty(
                             }
                         };
                         let ty1 = con_ty_args.get(name).unwrap();
-                        unify(ty1, node, cons, var_gen, level, loc);
+                        unify(
+                            ty1,
+                            node,
+                            cons,
+                            trait_env,
+                            var_gen,
+                            level,
+                            loc,
+                            local_assoc_tys,
+                            preds,
+                        );
                     }
                 }
             }
@@ -121,12 +145,17 @@ pub(crate) fn apply_con_ty(
             (**con_ty_ret).clone()
         }
 
-        Ty::UVar(_) | Ty::Con(_, _) | Ty::App(_, _, _) | Ty::Anonymous { .. } | Ty::QVar(_, _) => {
+        Ty::UVar(_)
+        | Ty::Con(_, _)
+        | Ty::App(_, _, _)
+        | Ty::Anonymous { .. }
+        | Ty::QVar(_, _)
+        | Ty::AssocTySelect { .. } => {
             if args.is_empty() {
                 return con_ty.clone();
             }
             panic!(
-                "{}: Type {} doesn't take arugments, but applied {} arguments",
+                "{}: Type {} doesn't take arguments, but applied {} arguments",
                 loc_display(loc),
                 con_ty,
                 args.len(),
