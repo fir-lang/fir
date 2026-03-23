@@ -564,6 +564,7 @@ pub(super) fn check_expr(
                                             ty_args: _,
                                             inferred_ty: _,
                                         }) => {
+                                            // Convert `a` ==> `a = a`.
                                             arg.name = Some(id.clone());
                                         }
                                         _ => {
@@ -581,8 +582,8 @@ pub(super) fn check_expr(
                                 args.iter().map(|arg| arg.name.as_ref().unwrap()).collect();
 
                             if extension.is_some() {
-                                // With extension: all param names must be present in args,
-                                // extra args go into the extension.
+                                // With extension: all param names must be present in args, extra
+                                // args go into the extension.
                                 let missing: HashSet<&&Id> =
                                     param_names.difference(&arg_names).collect();
                                 if !missing.is_empty() {
@@ -601,22 +602,57 @@ pub(super) fn check_expr(
                                 );
                             }
 
-                            // Type-check known args.
                             let mut extra_fields: OrdMap<Id, Ty> = OrdMap::new();
                             for arg in args.iter_mut() {
                                 let arg_name: &Id = arg.name.as_ref().unwrap();
-                                if let Some(param_ty) = param_tys.get(arg_name) {
-                                    let (arg_ty, _) = check_expr(
-                                        tc_state,
-                                        &mut arg.expr.node,
-                                        &arg.expr.loc,
-                                        Some(param_ty),
-                                        level,
-                                        loop_stack,
-                                    );
+                                match param_tys.get(arg_name) {
+                                    Some(param_ty) => {
+                                        let (arg_ty, _) = check_expr(
+                                            tc_state,
+                                            &mut arg.expr.node,
+                                            &arg.expr.loc,
+                                            Some(param_ty),
+                                            level,
+                                            loop_stack,
+                                        );
+                                        unify(
+                                            &arg_ty,
+                                            param_ty,
+                                            tc_state.tys.tys.cons(),
+                                            tc_state.trait_env,
+                                            tc_state.var_gen,
+                                            level,
+                                            loc,
+                                            tc_state.assumps,
+                                            tc_state.preds,
+                                        );
+                                    }
+                                    None => {
+                                        let (arg_ty, _) = check_expr(
+                                            tc_state,
+                                            &mut arg.expr.node,
+                                            &arg.expr.loc,
+                                            None,
+                                            level,
+                                            loop_stack,
+                                        );
+                                        extra_fields.insert(arg_name.clone(), arg_ty);
+                                    }
+                                }
+                            }
+
+                            // Unify extra fields with the extension type.
+                            match extension {
+                                Some(ext_ty) => {
+                                    let extra_row = Ty::Anonymous {
+                                        labels: extra_fields,
+                                        extension: None,
+                                        kind: RecordOrVariant::Record,
+                                        is_row: true,
+                                    };
                                     unify(
-                                        &arg_ty,
-                                        param_ty,
+                                        ext_ty,
+                                        &extra_row,
                                         tc_state.tys.tys.cons(),
                                         tc_state.trait_env,
                                         tc_state.var_gen,
@@ -625,39 +661,12 @@ pub(super) fn check_expr(
                                         tc_state.assumps,
                                         tc_state.preds,
                                     );
-                                } else {
-                                    // Extra arg, goes into the extension.
-                                    let (arg_ty, _) = check_expr(
-                                        tc_state,
-                                        &mut arg.expr.node,
-                                        &arg.expr.loc,
-                                        None,
-                                        level,
-                                        loop_stack,
-                                    );
-                                    extra_fields.insert(arg_name.clone(), arg_ty);
                                 }
-                            }
-
-                            // Unify extra fields with the extension type.
-                            if let Some(ext_ty) = extension {
-                                let extra_row = Ty::Anonymous {
-                                    labels: extra_fields,
-                                    extension: None,
-                                    kind: RecordOrVariant::Record,
-                                    is_row: true,
-                                };
-                                unify(
-                                    ext_ty,
-                                    &extra_row,
-                                    tc_state.tys.tys.cons(),
-                                    tc_state.trait_env,
-                                    tc_state.var_gen,
-                                    level,
-                                    loc,
-                                    tc_state.assumps,
-                                    tc_state.preds,
-                                );
+                                None => {
+                                    // When extension is not available, param names are compared
+                                    // with arg names above, so this branch shouldn't be taken.
+                                    assert!(extra_fields.is_empty());
+                                }
                             }
                         }
                     }
@@ -2236,35 +2245,26 @@ fn select_field(
         }) if !sum => {
             assert_eq!(cons.len(), 1);
             let con_scheme = cons.values().next().unwrap();
-            let con_ty = con_scheme.instantiate_with_tys(ty_args, tc_state.preds, loc);
+
+            let con_ty = con_scheme
+                .instantiate_with_tys(ty_args, tc_state.preds, loc)
+                .deep_normalize(
+                    tc_state.tys.tys.cons(),
+                    &tc_state.trait_env,
+                    tc_state.var_gen,
+                    &tc_state.assumps,
+                );
 
             match con_ty {
                 Ty::Fun {
                     args:
                         FunArgs::Named {
                             args: fields,
-                            extension,
+                            extension: _,
                         },
                     ret: _,
                     exceptions: _,
-                } => {
-                    if let Some(ty) = fields.get(field) {
-                        Some(ty.clone())
-                    } else if let Some(ext) = extension {
-                        // Look for the field in the resolved extension row.
-                        let ext = ext.normalize(tc_state.tys.tys.cons());
-                        match &ext {
-                            Ty::Anonymous {
-                                labels,
-                                kind: RecordOrVariant::Record,
-                                ..
-                            } => labels.get(field).cloned(),
-                            _ => None,
-                        }
-                    } else {
-                        None
-                    }
-                }
+                } => fields.get(field).cloned(),
                 _ => None,
             }
         }
