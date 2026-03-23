@@ -84,7 +84,13 @@ newTyId(cursor: U32, tokens: Array[Token]) TyId:
 
 processFields(fields: Vec[(name: Option[Id], ty: Type)], extension: Option[Id]) ConFields:
     if fields.isEmpty():
-        return ConFields.Empty
+        match extension:
+            Option.Some(extension):
+                return ConFields.Named(
+                    fields = Vec.empty(),
+                    extension = Option.Some(extension),
+                )
+            Option.None: return ConFields.Empty
 
     let foundNamed = Bool.False
     let foundUnnamed = Bool.False

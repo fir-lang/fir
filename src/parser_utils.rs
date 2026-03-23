@@ -125,7 +125,13 @@ pub(crate) fn process_fields(
     loc: &lexgen_util::Loc,
 ) -> ast::ConFields {
     if fields.is_empty() {
-        return ast::ConFields::Empty;
+        return match extension {
+            Some(extension) => ast::ConFields::Named {
+                fields: vec![],
+                extension: Some(extension),
+            },
+            None => ast::ConFields::Empty,
+        };
     }
 
     let mut found_named = false;
