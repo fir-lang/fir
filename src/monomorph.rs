@@ -1982,7 +1982,9 @@ fn mono_ty_decl(
                                 fields: if alt_ty.args.is_empty() {
                                     mono::ConFields::Empty
                                 } else {
-                                    mono::ConFields::Unnamed { fields: alt_ty.args.clone() }
+                                    mono::ConFields::Unnamed {
+                                        fields: alt_ty.args.clone(),
+                                    }
                                 },
                             });
                         }
