@@ -1006,20 +1006,22 @@ impl Ty {
                             .map(|arg| arg.deep_normalize(cons, trait_env, var_gen, assumps))
                             .collect(),
                     },
-                    FunArgs::Named { args, extension } => FunArgs::Named {
-                        args: args
-                            .iter()
-                            .map(|(name, arg)| {
-                                (
-                                    name.clone(),
-                                    arg.deep_normalize(cons, trait_env, var_gen, assumps),
-                                )
-                            })
-                            .collect(),
-                        extension: extension.as_ref().map(|ext| {
-                            Box::new(ext.deep_normalize(cons, trait_env, var_gen, assumps))
-                        }),
-                    },
+                    FunArgs::Named { args, extension } => {
+                        let (all_args, extension) = crate::type_checker::row_utils::collect_rows(
+                            cons,
+                            self,
+                            RecordOrVariant::Record,
+                            args,
+                            extension.clone(),
+                            trait_env,
+                            var_gen,
+                            assumps,
+                        );
+                        FunArgs::Named {
+                            args: all_args,
+                            extension: extension.map(Box::new),
+                        }
+                    }
                 },
                 ret: Box::new(ret.deep_normalize(cons, trait_env, var_gen, assumps)),
                 exceptions: exceptions

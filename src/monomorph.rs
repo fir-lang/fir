@@ -1692,42 +1692,8 @@ fn mono_tc_ty(
                         })
                         .collect();
 
-                    if let Some(ext_ty) = extension {
-                        match ext_ty.as_ref() {
-                            Ty::Con(con, _kind) => {
-                                let ext = ty_map.get(con).unwrap();
-                                match ext {
-                                    mono::Type::Record { fields } => {
-                                        all_args.extend(
-                                            fields.iter().map(|(k, v)| (k.clone(), v.clone())),
-                                        );
-                                    }
-                                    _ => panic!("BUG: FunArgs extension is not a record: {ext:?}"),
-                                }
-                            }
-
-                            Ty::Anonymous {
-                                labels,
-                                extension: inner_ext,
-                                kind: RecordOrVariant::Record,
-                                ..
-                            } => {
-                                assert!(inner_ext.is_none());
-                                for (name, ty) in labels {
-                                    all_args.insert(
-                                        name.clone(),
-                                        mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm),
-                                    );
-                                }
-                            }
-
-                            Ty::UVar(var) => {
-                                // Unlinked UVar means the extension was unused/unconstrained.
-                                assert!(var.link().is_none());
-                            }
-
-                            other => todo!("BUG: Unexpected FunArgs extension type: {:?}", other),
-                        }
+                    if let Some(ty) = extension {
+                        collect_record_rows(&ty, ty_map, &mut all_args);
                     }
 
                     mono::FunArgs::Named { args: all_args }
@@ -1756,24 +1722,7 @@ fn mono_tc_ty(
                 }
 
                 if let Some(ty) = extension {
-                    match &*ty {
-                        Ty::Con(con, _kind) => {
-                            let ext = ty_map.get(con).unwrap();
-                            match ext {
-                                mono::Type::Record { fields } => {
-                                    all_fields
-                                        .extend(fields.iter().map(|(k, v)| (k.clone(), v.clone())));
-                                }
-                                _ => panic!(),
-                            }
-                        }
-
-                        Ty::UVar(var) => {
-                            assert!(var.link().is_none());
-                        }
-
-                        other => todo!("Weird row extension {:?}", other),
-                    }
+                    collect_record_rows(&ty, ty_map, &mut all_fields);
                 }
 
                 mono::Type::Record { fields: all_fields }
@@ -2218,4 +2167,28 @@ fn collect_variant_labels(
     }
 
     alts
+}
+
+fn collect_record_rows(
+    ext_ty: &Ty,
+    ty_map: &HashMap<Id, mono::Type>,
+    rows: &mut OrdMap<Id, mono::Type>,
+) {
+    match ext_ty {
+        Ty::Con(con, _kind) => {
+            let ext = ty_map.get(con).unwrap();
+            match ext {
+                mono::Type::Record { fields } => {
+                    rows.extend(fields.iter().map(|(k, v)| (k.clone(), v.clone())));
+                }
+                _ => panic!(),
+            }
+        }
+
+        Ty::UVar(var) => {
+            assert!(var.link().is_none());
+        }
+
+        other => todo!("Weird row extension {:?}", other),
+    }
 }
