@@ -295,7 +295,7 @@ defaultVisitConFields[Visitor[v]](v: v, fields: ConFields):
     match fields:
         ConFields.Empty: ()
 
-        ConFields.Named(fields):
+        ConFields.Named(fields, ..):
             for field: NamedField in fields.iter():
                 v.visitType(field.ty)
 

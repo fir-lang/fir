@@ -82,7 +82,7 @@ newTyId(cursor: U32, tokens: Array[Token]) TyId:
     )
 
 
-processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:
+processFields(fields: Vec[(name: Option[Id], ty: Type)], extension: Option[Id]) ConFields:
     if fields.isEmpty():
         return ConFields.Empty
 
@@ -105,8 +105,10 @@ processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:
                     NamedField(name = f.name.unwrap(), ty = f.ty),
             ),
         )
-        ConFields.Named(fs)
+        ConFields.Named(fields = fs, extension)
     else:
+        if extension is Option.Some(_):
+            panic("Unnamed fields cannot have row extensions")
         let fs: Vec[Type] = Vec.fromIter(
             fields.iter().map(\(f: (name: Option[Id], ty: Type)): f.ty,),
         )

@@ -158,27 +158,34 @@ TypeDecl.format(self, tokens: Array[Token]) Doc:
 
 TypeDeclRhs.format(self, tokens: Array[Token]) Doc:
     match self:
-        TypeDeclRhs.Sum(decls):
-            let colon = prevNonTrivia(decls.get(0).name.token, tokens).unwrap()
+        TypeDeclRhs.Sum(cons, extension):
+            let colon = prevNonTrivia(cons.get(0).name.token, tokens).unwrap()
             assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-            let cons = Doc.empty()
+            let doc = Doc.empty()
             let conIdx: U32 = 0
-            for con: ConDecl in decls.iter():
+            for con: ConDecl in cons.iter():
                 if conIdx != 0:
-                    cons += Doc.hardLine()
+                    doc += Doc.hardLine()
 
                     let lastConLastLine = tokens.get(
-                        decls.get(conIdx - 1)._lastToken.idx,
+                        cons.get(conIdx - 1)._lastToken.idx,
                     ).rightLoc().line
                     if tokens.get(con.name.token.idx).line - lastConLastLine > 1:
-                        cons += Doc.hardLine()
+                        doc += Doc.hardLine()
 
-                cons += con.format(tokens)
+                doc += con.format(tokens)
 
                 conIdx += 1
 
-            Doc.nested(4, formatToken(colon, tokens) + Doc.hardLine() + cons)
+            if extension is Option.Some(ext):
+                doc += Doc.hardLine()
+                let dotdot = prevNonTrivia(ext.token, tokens).unwrap()
+                assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+                doc += formatToken(dotdot, tokens)
+                    + formatToken(ext.token, tokens)
+
+            Doc.nested(4, formatToken(colon, tokens) + Doc.hardLine() + doc)
 
         TypeDeclRhs.Product(fields): fields.format(tokens)
 
@@ -196,7 +203,7 @@ ConFields.format(self, tokens: Array[Token]) Doc:
     match self:
         ConFields.Empty: Doc.empty()
 
-        ConFields.Named(fields):
+        ConFields.Named(fields, extension):
             let lparen = prevNonTrivia(fields.get(0).name.token, tokens).unwrap()
             assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
@@ -236,6 +243,16 @@ ConFields.format(self, tokens: Array[Token]) Doc:
                     lastToken = next
 
                 fieldIdx += 1
+
+            if extension is Option.Some(ext):
+                if trailingComma:
+                    doc += Doc.hardLine()
+                    trailingComma = Bool.False
+                let dotdot = prevNonTrivia(ext.token, tokens).unwrap()
+                assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+                doc += formatToken(dotdot, tokens)
+                    + formatToken(ext.token, tokens)
+                lastToken = ext.token
 
             if fields.len() != 0 and not trailingComma:
                 doc += Doc.whenNotFlat(Doc.char(','))
