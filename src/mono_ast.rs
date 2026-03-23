@@ -28,7 +28,7 @@ pub struct TypeDecl {
 
 #[derive(Debug, Clone)]
 pub enum TypeDeclRhs {
-    Sum(Vec<ConDecl>),
+    Sum { cons: Vec<ConDecl> },
     Product(ConFields),
 }
 
@@ -41,8 +41,8 @@ pub struct ConDecl {
 #[derive(Debug, Clone)]
 pub enum ConFields {
     Empty,
-    Named(OrdMap<Id, Type>),
-    Unnamed(Vec<Type>),
+    Named { fields: OrdMap<Id, Type> },
+    Unnamed { fields: Vec<Type> },
 }
 
 // Note: `Type` is used in maps and sets and it *cannot* have `Loc`s in it to avoid duplicating

@@ -1982,7 +1982,7 @@ fn mono_ty_decl(
                                 fields: if alt_ty.args.is_empty() {
                                     mono::ConFields::Empty
                                 } else {
-                                    mono::ConFields::Unnamed(alt_ty.args.clone())
+                                    mono::ConFields::Unnamed { fields: alt_ty.args.clone() }
                                 },
                             });
                         }
@@ -1995,7 +1995,7 @@ fn mono_ty_decl(
                 }
             }
 
-            mono::TypeDeclRhs::Sum(mono_cons)
+            mono::TypeDeclRhs::Sum { cons: mono_cons }
         }
 
         ast::TypeDeclRhs::Product(fields) => {
@@ -2073,15 +2073,15 @@ fn mono_fields(
                 }
             }
 
-            mono::ConFields::Named(all_fields)
+            mono::ConFields::Named { fields: all_fields }
         }
 
-        ast::ConFields::Unnamed { fields } => mono::ConFields::Unnamed(
-            fields
+        ast::ConFields::Unnamed { fields } => mono::ConFields::Unnamed {
+            fields: fields
                 .iter()
                 .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm))
                 .collect(),
-        ),
+        },
     }
 }
 

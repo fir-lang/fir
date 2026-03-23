@@ -689,7 +689,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     for (con_id, con_ty_map) in &mono_pgm.ty {
         for (con_ty_args, con_decl) in con_ty_map {
             match &con_decl.rhs {
-                Some(mono::TypeDeclRhs::Sum(cons)) => {
+                Some(mono::TypeDeclRhs::Sum { cons }) => {
                     for con in cons {
                         sum_con_nums
                             .entry(con_id.clone())
@@ -837,7 +837,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             let rhs: NamedTypeRhs = match &con_decl.rhs {
                 Some(rhs) => {
                     match rhs {
-                        mono::TypeDeclRhs::Sum(cons) => {
+                        mono::TypeDeclRhs::Sum { cons } => {
                             sum = true;
                             // For sum types, we generate an index representing the type itself (rather
                             // than its consturctors). This index is used in dependency anlaysis, and to
@@ -1530,8 +1530,8 @@ fn lower_source_con(
         ty_args: con_ty_args.to_vec(),
         fields: match fields {
             mono::ConFields::Empty => vec![],
-            mono::ConFields::Named(fields) => fields.values().cloned().collect(),
-            mono::ConFields::Unnamed(fields) => fields.to_vec(),
+            mono::ConFields::Named { fields } => fields.values().cloned().collect(),
+            mono::ConFields::Unnamed { fields } => fields.to_vec(),
         },
         sum,
         value,
@@ -1654,7 +1654,7 @@ fn lower_expr(
             let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty_id).unwrap().get(ty_args).unwrap();
 
             let con_fields = match &ty_decl.rhs {
-                Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
+                Some(mono::TypeDeclRhs::Sum { cons }) => 'l: {
                     for con_ in cons {
                         if con_.name == *con.as_ref().unwrap() {
                             break 'l &con_.fields;
@@ -1708,7 +1708,7 @@ fn lower_expr(
                                 loc_display(loc)
                             );
                         }
-                        Some(mono::TypeDeclRhs::Sum(_)) => {
+                        Some(mono::TypeDeclRhs::Sum { cons: _ }) => {
                             panic!("BUG: {}: FieldSel object is a sum type", loc_display(loc));
                         }
                         Some(mono::TypeDeclRhs::Product(fields)) => match fields {
@@ -1718,7 +1718,9 @@ fn lower_expr(
                                     loc_display(loc)
                                 );
                             }
-                            mono::ConFields::Named(named_fields) => {
+                            mono::ConFields::Named {
+                                fields: named_fields,
+                            } => {
                                 let mut field_idx: u32 = 0;
                                 for (field_idx_, ty_field_name) in named_fields.keys().enumerate() {
                                     if ty_field_name == field {
@@ -1728,7 +1730,7 @@ fn lower_expr(
                                 }
                                 field_idx
                             }
-                            mono::ConFields::Unnamed(_) => {
+                            mono::ConFields::Unnamed { fields: _ } => {
                                 panic!(
                                     "BUG: {}: FieldSel object doesn't have named fields",
                                     loc_display(loc)
@@ -2301,7 +2303,7 @@ fn lower_pat(
             let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty).unwrap().get(ty_args).unwrap();
 
             let con_fields: &mono::ConFields = match &ty_decl.rhs {
-                Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
+                Some(mono::TypeDeclRhs::Sum { cons }) => 'l: {
                     for con_ in cons {
                         if con_.name == *con.as_ref().unwrap() {
                             break 'l &con_.fields;
@@ -2330,7 +2332,7 @@ fn lower_pat(
                     vec![]
                 }
 
-                mono::ConFields::Named(con_fields) => {
+                mono::ConFields::Named { fields: con_fields } => {
                     let mut field_pats: Vec<L<Pat>> = Vec::with_capacity(con_fields.len());
 
                     for field_name in con_fields.keys() {
@@ -2353,7 +2355,7 @@ fn lower_pat(
                     field_pats
                 }
 
-                mono::ConFields::Unnamed(con_fields) => {
+                mono::ConFields::Unnamed { fields: con_fields } => {
                     let mut field_pats: Vec<L<Pat>> = fields
                         .iter()
                         .map(|field_pat| {
