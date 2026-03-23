@@ -16,8 +16,10 @@ main():
     print(foo.y)
     print(foo.z)
 
-
 # expected stdout:
 # 123
 # 456
 # hi
+# 124
+# 912
+# bye
