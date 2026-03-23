@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: 0d8d9e12692e714e63b3186ad30ec5197f8511d79e894b2a484fc3486bc35bd7
+// sha3: d7694159a2e4911702c175a5850a42c387622d39adea4d0067d082e76330b640
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
