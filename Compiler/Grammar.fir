@@ -1041,8 +1041,9 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let zeroOrMoreCursor0 = state._cursor
             let rhs = Vec.empty()
+            rhs.push(conDecl(state))
+            let zeroOrMoreCursor0 = state._cursor
             loop:
                 let rhsLen0 = rhs.len()
                 let symResult = try(\(): rhs.push(conDecl(state)))
