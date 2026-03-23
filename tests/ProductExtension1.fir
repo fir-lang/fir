@@ -9,6 +9,13 @@ main():
     print(foo.x)
     print(foo.y)
     print(foo.z)
+    foo.x += 1
+    foo.y *= 2
+    foo.z = "bye"
+    print(foo.x)
+    print(foo.y)
+    print(foo.z)
+
 
 # expected stdout:
 # 123

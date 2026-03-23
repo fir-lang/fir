@@ -585,7 +585,14 @@ fn select_field_for_assignment(
 
             assert_eq!(cons.len(), 1);
             let con_scheme = cons.values().next().unwrap();
-            let con_ty = con_scheme.instantiate_with_tys(ty_args, tc_state.preds, loc);
+            let con_ty = con_scheme
+                .instantiate_with_tys(ty_args, tc_state.preds, loc)
+                .deep_normalize(
+                    tc_state.tys.tys.cons(),
+                    &tc_state.trait_env,
+                    tc_state.var_gen,
+                    &tc_state.assumps,
+                );
 
             match con_ty {
                 Ty::Fun {
