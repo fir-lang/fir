@@ -196,10 +196,10 @@ fn collect_type_decl_extension_kinds(rhs: &ast::TypeDeclRhs, kinds: &mut OrderMa
 }
 
 fn collect_con_fields_extension_kinds(fields: &ast::ConFields, kinds: &mut OrderMap<Id, Kind>) {
-    if let ast::ConFields::Named { extension, .. } = fields {
-        if let Some(ext) = extension {
-            kinds.insert(ext.clone(), Kind::Row(RecordOrVariant::Record));
-        }
+    if let ast::ConFields::Named { extension, .. } = fields
+        && let Some(ext) = extension
+    {
+        kinds.insert(ext.clone(), Kind::Row(RecordOrVariant::Record));
     }
 }
 
