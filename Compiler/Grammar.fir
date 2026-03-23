@@ -1041,9 +1041,8 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let rhs = Vec.empty()
-            rhs.push(conDecl(state))
             let zeroOrMoreCursor0 = state._cursor
+            let rhs = Vec.empty()
             loop:
                 let rhsLen0 = rhs.len()
                 let symResult = try(\(): rhs.push(conDecl(state)))
@@ -1533,6 +1532,40 @@ conFields(state: ParserState[Token, ()]) (fields: ConFields, lastToken: TokenIdx
                 )
                 (
                     fields = processFields(vec, ext.map(\(id: U32): newId(id))),
+                    lastToken = TokenIdx(idx = last),
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.DotDot, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let ext = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LowerId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let last = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                (
+                    fields = processFields(Vec.empty(), Option.Some(newId(ext))),
                     lastToken = TokenIdx(idx = last),
                 )
             val,

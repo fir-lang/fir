@@ -291,7 +291,9 @@ returnTy (ret: Option[Type], exn: Option[Type]):
 
 typeDecl TypeDecl:
     # Sum type: at least one constructors
-    attr=attr? val=^ valToken="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ ext=(_".." ^ _"LowerId" _"NEWLINE")? "DEDENT":
+    attr=attr? val=^ valToken="value"? "type"
+            name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT"
+            rhs=conDecl* ext=(_".." ^ _"LowerId" _"NEWLINE")? "DEDENT":
         TypeDecl(
             attr,
             value_ = valToken.map(\(a): TokenIdx(idx = val)),
@@ -381,6 +383,9 @@ conFields (fields: ConFields, lastToken: TokenIdx):
         let vec: Vec[(name: Option[Id], ty: Type)] =
             Vec.fromIter(once(f0).chain(fs.iter()))
         (fields = processFields(vec, ext.map(\(id: U32): newId(id))), lastToken = TokenIdx(idx = last))
+
+    "(" ".." ext=^ "LowerId" last=^ ")":
+        (fields = processFields(Vec.empty(), Option.Some(newId(ext))), lastToken = TokenIdx(idx = last))
 
 
 # A constructor field with optional name: `Type` or `foo: Type`.

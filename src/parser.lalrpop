@@ -223,7 +223,11 @@ TypeParams: Vec<Id> = {
 ConDecls: (Vec<ConDecl>, Option<Id>) = {
     <decls:ConDecl+> <extension:(".." <LowerId> NEWLINE)?> => {
         (decls, extension.map(|id| id.smol_str()))
-    }
+    },
+
+    ".." <extension:LowerId> NEWLINE => {
+        (vec![], Some(extension.smol_str()))
+    },
 }
 
 ConDecl: ConDecl = {
