@@ -207,7 +207,7 @@ TypeDeclRhs: TypeDeclRhs = {
         TypeDeclRhs::Product(ConFields::Empty),
 
     ":" NEWLINE INDENT <cons:ConDecls> DEDENT =>
-        TypeDeclRhs::Sum(cons),
+        TypeDeclRhs::Sum { cons: cons },
 
     <l:@L> "(" <fields:Sep<Field, ",">> ")" NEWLINE => {
         let fields = process_fields(fields, module, &l);

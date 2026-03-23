@@ -49624,7 +49624,7 @@ fn __action13<'a>(
     (_, cons, _): (Loc, Vec<ConDecl>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> TypeDeclRhs {
-    TypeDeclRhs::Sum(cons)
+    TypeDeclRhs::Sum { cons: cons }
 }
 
 #[allow(unused_variables)]

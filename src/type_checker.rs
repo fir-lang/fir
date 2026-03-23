@@ -101,7 +101,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, trait_env: &TraitEnv, main: &str) 
     unification::unify(
         &main_scheme.ty,
         &Ty::Fun {
-            args: FunArgs::Positional(vec![]),
+            args: FunArgs::Positional { args: vec![] },
             ret: Box::new(Ty::unit()),
             exceptions: Some(Box::new(Ty::empty_variant())),
         },
@@ -369,7 +369,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
                 let details = match &ty_decl.node.rhs {
                     Some(rhs) => match rhs {
-                        ast::TypeDeclRhs::Sum(_) => TyConDetails::Type(TypeDetails {
+                        ast::TypeDeclRhs::Sum { cons: _ } => TyConDetails::Type(TypeDetails {
                             cons: Default::default(),
                             sum: true,
                             value: ty_decl.node.value,
@@ -508,7 +508,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             };
 
                             let fun_ty = Ty::Fun {
-                                args: FunArgs::Positional(arg_tys),
+                                args: FunArgs::Positional { args: arg_tys },
                                 ret: Box::new(ret_ty),
                                 exceptions: Some(Box::new(exceptions)),
                             };
@@ -799,8 +799,8 @@ fn visit_ty_con(
         };
 
         let mut tys: Vec<&Ty> = match &con_args {
-            FunArgs::Positional(args) => args.iter().collect(),
-            FunArgs::Named(args) => args.values().collect(),
+            FunArgs::Positional { args } => args.iter().collect(),
+            FunArgs::Named { args } => args.values().collect(),
         };
 
         while let Some(ty) = tys.pop() {
@@ -998,7 +998,7 @@ fn collect_schemes(
                     };
 
                     let fun_ty = Ty::Fun {
-                        args: FunArgs::Positional(arg_tys),
+                        args: FunArgs::Positional { args: arg_tys },
                         ret: Box::new(ret_ty),
                         exceptions: Some(Box::new(exceptions)),
                     };
@@ -1096,7 +1096,7 @@ fn collect_schemes(
                 };
 
                 let fun_ty = Ty::Fun {
-                    args: FunArgs::Positional(arg_tys),
+                    args: FunArgs::Positional { args: arg_tys },
                     ret: Box::new(ret_ty),
                     exceptions: Some(Box::new(exceptions)),
                 };
@@ -1194,7 +1194,7 @@ fn collect_schemes(
                 };
 
                 match rhs {
-                    ast::TypeDeclRhs::Sum(cons) => {
+                    ast::TypeDeclRhs::Sum { cons } => {
                         for con in cons {
                             let fields = &con.fields;
                             let ty = match convert_fields(tys, fields) {
@@ -1357,7 +1357,7 @@ fn collect_schemes(
                     };
 
                     let fun_ty = Ty::Fun {
-                        args: FunArgs::Positional(arg_tys),
+                        args: FunArgs::Positional { args: arg_tys },
                         ret: Box::new(ret_ty),
                         exceptions: Some(Box::new(exceptions)),
                     };
@@ -2034,7 +2034,7 @@ pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
 
 fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, synonyms: &HashMap<Id, ast::Type>) {
     match &mut decl.rhs {
-        Some(ast::TypeDeclRhs::Sum(cons)) => {
+        Some(ast::TypeDeclRhs::Sum { cons }) => {
             for con in cons {
                 expand_synonyms_in_fields(&mut con.fields, synonyms);
             }
@@ -2052,12 +2052,12 @@ fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, synonyms: &HashMap<Id,
 fn expand_synonyms_in_fields(fields: &mut ast::ConFields, synonyms: &HashMap<Id, ast::Type>) {
     match fields {
         ast::ConFields::Empty => {}
-        ast::ConFields::Named(fields) => {
+        ast::ConFields::Named { fields } => {
             for (_, ty) in fields {
                 expand_synonyms_in_ty(&mut ty.node, synonyms);
             }
         }
-        ast::ConFields::Unnamed(fields) => {
+        ast::ConFields::Unnamed { fields } => {
             for ty in fields {
                 expand_synonyms_in_ty(&mut ty.node, synonyms);
             }

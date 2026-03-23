@@ -162,7 +162,7 @@ pub struct TypeDecl {
 #[derive(Debug, Clone)]
 pub enum TypeDeclRhs {
     /// A sum type, with more than one constructor.
-    Sum(Vec<ConDecl>),
+    Sum { cons: Vec<ConDecl> },
 
     /// A product type uses the type name as the constructor and only has fields.
     Product(ConFields),
@@ -181,8 +181,8 @@ pub struct ConDecl {
 #[derive(Debug, Clone)]
 pub enum ConFields {
     Empty,
-    Named(Vec<(Id, L<Type>)>),
-    Unnamed(Vec<L<Type>>),
+    Named { fields: Vec<(Id, L<Type>)> },
+    Unnamed { fields: Vec<L<Type>> },
 }
 
 #[derive(Debug, Clone)]

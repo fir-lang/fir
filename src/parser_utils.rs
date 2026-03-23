@@ -147,8 +147,12 @@ pub(crate) fn process_fields(
     }
 
     if found_named {
-        ast::ConFields::Named(fields.into_iter().map(|(n, t)| (n.unwrap(), t)).collect())
+        ast::ConFields::Named {
+            fields: fields.into_iter().map(|(n, t)| (n.unwrap(), t)).collect(),
+        }
     } else {
-        ast::ConFields::Unnamed(fields.into_iter().map(|(_, t)| t).collect())
+        ast::ConFields::Unnamed {
+            fields: fields.into_iter().map(|(_, t)| t).collect(),
+        }
     }
 }

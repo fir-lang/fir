@@ -79,11 +79,12 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             ret,
             exceptions,
         }) => {
-            let args = FunArgs::Positional(
-                args.iter()
+            let args = FunArgs::Positional {
+                args: args
+                    .iter()
                     .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
                     .collect(),
-            );
+            };
 
             let ret = Box::new(match ret {
                 Some(ret) => convert_ast_ty(tys, &ret.node, &ret.loc),
@@ -153,18 +154,20 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
 pub(super) fn convert_fields(tys: &TyMap, fields: &ast::ConFields) -> Option<FunArgs> {
     match fields {
         ast::ConFields::Empty => None,
-        ast::ConFields::Named(named_fields) => Some(FunArgs::Named(
-            named_fields
+        ast::ConFields::Named {
+            fields: named_fields,
+        } => Some(FunArgs::Named {
+            args: named_fields
                 .iter()
                 .map(|(name, ty)| (name.clone(), convert_ast_ty(tys, &ty.node, &ty.loc)))
                 .collect(),
-        )),
-        ast::ConFields::Unnamed(fields) => Some(FunArgs::Positional(
-            fields
+        }),
+        ast::ConFields::Unnamed { fields } => Some(FunArgs::Positional {
+            args: fields
                 .iter()
                 .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
                 .collect(),
-        )),
+        }),
     }
 }
 
