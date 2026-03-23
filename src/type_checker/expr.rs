@@ -1207,7 +1207,20 @@ pub(super) fn check_expr(
                     }
 
                     left_binders.extend(right_binders);
-                    return (bool_ty, left_binders);
+                    return (
+                        unify_expected_ty(
+                            bool_ty,
+                            expected_ty,
+                            tc_state.tys.tys.cons(),
+                            tc_state.trait_env,
+                            tc_state.var_gen,
+                            level,
+                            loc,
+                            tc_state.assumps,
+                            tc_state.preds,
+                        ),
+                        left_binders,
+                    );
                 }
 
                 ast::BinOp::Or => {
@@ -1228,7 +1241,20 @@ pub(super) fn check_expr(
                         level,
                         loop_stack,
                     );
-                    return (bool_ty, Default::default());
+                    return (
+                        unify_expected_ty(
+                            bool_ty,
+                            expected_ty,
+                            tc_state.tys.tys.cons(),
+                            tc_state.trait_env,
+                            tc_state.var_gen,
+                            level,
+                            loc,
+                            tc_state.assumps,
+                            tc_state.preds,
+                        ),
+                        Default::default(),
+                    );
                 }
 
                 ast::BinOp::Add => "__add",
@@ -1301,7 +1327,20 @@ pub(super) fn check_expr(
                     }],
                     inferred_ty: Some(Ty::bool()),
                 });
-                (ty, Default::default())
+                (
+                    unify_expected_ty(
+                        ty,
+                        expected_ty,
+                        tc_state.tys.tys.cons(),
+                        tc_state.trait_env,
+                        tc_state.var_gen,
+                        level,
+                        loc,
+                        tc_state.assumps,
+                        tc_state.preds,
+                    ),
+                    Default::default(),
+                )
             }
 
             ast::UnOp::Neg => {
