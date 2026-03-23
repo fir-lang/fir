@@ -109,7 +109,6 @@ pub(super) fn unify(
                             loc_display(loc)
                         );
                     }
-
                     for arg_name in arg_names_1 {
                         unify(
                             args1.get(arg_name).unwrap(),
@@ -123,9 +122,18 @@ pub(super) fn unify(
                             preds,
                         );
                     }
-                    unify_fun_extensions(
-                        ext1, ext2, cons, trait_env, var_gen, level, loc, assumps, preds,
-                    );
+                    match (ext1, ext2) {
+                        (None, None) => {}
+                        (Some(e1), Some(e2)) => {
+                            unify(e1, e2, cons, trait_env, var_gen, level, loc, assumps, preds)
+                        }
+                        (None, Some(_)) | (Some(_), None) => {
+                            panic!(
+                                "{}: Unable to unify function types with mismatched argument extensions",
+                                loc_display(loc),
+                            )
+                        }
+                    }
                 }
 
                 (FunArgs::Named { .. }, FunArgs::Positional { .. })
@@ -422,29 +430,6 @@ pub(super) fn unify(
     }
 }
 
-fn unify_fun_extensions(
-    ext1: &Option<Box<Ty>>,
-    ext2: &Option<Box<Ty>>,
-    cons: &ScopeMap<Id, TyCon>,
-    trait_env: &TraitEnv,
-    var_gen: &UVarGen,
-    level: u32,
-    loc: &ast::Loc,
-    assumps: &[Pred],
-    preds: &mut Vec<Pred>,
-) {
-    match (ext1, ext2) {
-        (None, None) => {}
-        (Some(e1), Some(e2)) => unify(e1, e2, cons, trait_env, var_gen, level, loc, assumps, preds),
-        (None, Some(_)) | (Some(_), None) => {
-            panic!(
-                "{}: Unable to unify function types with mismatched argument extensions",
-                loc_display(loc),
-            )
-        }
-    }
-}
-
 /// Try to unify `ty1` with the `ty2`, without updating `ty2`.
 ///
 /// This does not panic on errors. Returns whether unification was successful.
@@ -531,12 +516,29 @@ pub(super) fn try_unify_one_way(
                     }
                     match (ext1, ext2) {
                         (None, None) => {}
+                        (Some(e1), None) => {
+                            if !try_unify_one_way(
+                                e1,
+                                &Ty::Anonymous {
+                                    labels: Default::default(),
+                                    extension: None,
+                                    kind: RecordOrVariant::Record,
+                                    is_row: true,
+                                },
+                                cons,
+                                var_gen,
+                                level,
+                                loc,
+                            ) {
+                                return false;
+                            }
+                        }
                         (Some(e1), Some(e2)) => {
                             if !try_unify_one_way(e1, e2, cons, var_gen, level, loc) {
                                 return false;
                             }
                         }
-                        _ => return false,
+                        (None, Some(_)) => return false,
                     }
                 }
 
