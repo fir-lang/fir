@@ -17,10 +17,16 @@ pub fn get_fir_args(mode: Mode) -> FirArgs {
     let mut cmd = clap::Command::new("fir")
         .version(version_info_str(rustc_tools_util::get_version_info!()))
         .arg(
+            clap::Arg::new(PARSE)
+                .long(PARSE)
+                .num_args(0)
+                .help("Stop after parsing"),
+        )
+        .arg(
             clap::Arg::new(TYPECHECK)
                 .long(TYPECHECK)
                 .num_args(0)
-                .help("Don't run the program, only type check."),
+                .help("Stop after type checking"),
         )
         .arg(
             clap::Arg::new(NO_PRELUDE)
@@ -106,6 +112,7 @@ pub fn get_fir_args(mode: Mode) -> FirArgs {
     let matches = cmd.get_matches();
 
     let mut opts = CompilerOpts {
+        parse: matches.get_flag(PARSE),
         typecheck: matches.get_flag(TYPECHECK),
         no_prelude: matches.get_flag(NO_PRELUDE),
         backtrace: matches.get_flag(BACKTRACE),
@@ -139,6 +146,7 @@ pub fn get_fir_args(mode: Mode) -> FirArgs {
     }
 }
 
+const PARSE: &str = "parse";
 const TYPECHECK: &str = "typecheck";
 const NO_PRELUDE: &str = "no-prelude";
 const BACKTRACE: &str = "backtrace";
