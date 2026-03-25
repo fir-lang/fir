@@ -806,8 +806,6 @@ fn visit_ty_con(
         while let Some(ty) = tys.pop() {
             match ty {
                 Ty::Con(con, _kind) => {
-                    // No ty con can happen because we don't have `RVar`s and represent them as
-                    // `Con`s.
                     if let Some(ty_con) = ty_cons.get(con)
                         && visit_ty_con(ty_con, &[], ty_cons, visited)
                     {
@@ -832,9 +830,11 @@ fn visit_ty_con(
                     }
                 }
 
-                Ty::QVar(_, _) | Ty::Fun { .. } => {}
+                Ty::Fun { .. } => {}
 
-                Ty::UVar(_) | Ty::AssocTySelect { .. } => panic!(),
+                Ty::RVar(_, _) | Ty::QVar(_, _) | Ty::UVar(_) | Ty::AssocTySelect { .. } => {
+                    panic!()
+                }
             }
         }
     }
@@ -1462,11 +1462,8 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
     tys.tys.enter_scope();
 
     // The predicates that we assume to hold in the function body.
-    let assumps = convert_and_bind_context(
-        &mut tys.tys,
-        &fun.node.sig.context,
-        TyVarConversion::ToOpaque,
-    );
+    let assumps =
+        convert_and_bind_context(&mut tys.tys, &fun.node.sig.context, TyVarConversion::ToRVar);
 
     // TODO: This code is the same as collect_scheme's, maybe get arg and return types from the
     // scheme?
@@ -1569,7 +1566,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     tys.tys.enter_scope();
 
     let impl_assumps =
-        convert_and_bind_context(&mut tys.tys, &impl_.node.context, TyVarConversion::ToOpaque);
+        convert_and_bind_context(&mut tys.tys, &impl_.node.context, TyVarConversion::ToRVar);
 
     let trait_ty_con_id = &impl_.node.trait_;
 
@@ -1611,11 +1608,8 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
         tys.tys.enter_scope();
 
         // Bind function type parameters.
-        let fun_assumps = convert_and_bind_context(
-            &mut tys.tys,
-            &fun.node.sig.context,
-            TyVarConversion::ToOpaque,
-        );
+        let fun_assumps =
+            convert_and_bind_context(&mut tys.tys, &fun.node.sig.context, TyVarConversion::ToRVar);
 
         // Check the body.
         if let Some(body) = &mut fun.node.body {

@@ -184,7 +184,7 @@ pub(super) fn convert_fields(
 
 #[derive(Debug, Clone, Copy)]
 pub(super) enum TyVarConversion {
-    ToOpaque,
+    ToRVar,
     ToQVar,
 }
 
@@ -200,9 +200,8 @@ pub(super) fn convert_and_bind_context(
     // Bind type parameters.
     for (id, kind) in &context_ast.type_params {
         match conversion {
-            TyVarConversion::ToOpaque => {
-                tys.insert_con(id.clone(), TyCon::opaque(id.clone()));
-                tys.insert_var(id.clone(), Ty::Con(id.clone(), kind.clone()));
+            TyVarConversion::ToRVar => {
+                tys.insert_var(id.clone(), Ty::RVar(id.clone(), kind.clone()));
             }
             TyVarConversion::ToQVar => {
                 tys.insert_var(id.clone(), Ty::QVar(id.clone(), kind.clone()));

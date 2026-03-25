@@ -1636,10 +1636,6 @@ fn mono_tc_ty(
         },
 
         Ty::Con(con, _kind) => {
-            if let Some(ty) = ty_map.get(&con) {
-                return ty.clone();
-            }
-
             let ty_decl = poly_pgm
                 .ty
                 .get(&con)
@@ -1650,6 +1646,11 @@ fn mono_tc_ty(
                 args: vec![],
             })
         }
+
+        Ty::RVar(var, _kind) => ty_map
+            .get(&var)
+            .unwrap_or_else(|| panic!("Unmapped rigid type variable {var}"))
+            .clone(),
 
         Ty::App(con, args, _kind) => {
             let ty_decl = poly_pgm.ty.get(&con).unwrap();
@@ -1664,10 +1665,9 @@ fn mono_tc_ty(
             })
         }
 
-        // TODO: This should be a panic. After type checking, type parameters of the function will
-        // be rigid type variables, which are represented as `Ty::Con`, and those will be mapped to
-        // mono types in the `Ty::Con` case above.
-        Ty::QVar(var, _kind) => ty_map.get(&var).unwrap().clone(),
+        Ty::QVar(var, _kind) => {
+            panic!("QVar {var} should not appear after type checking")
+        }
 
         Ty::Fun {
             args,
@@ -1747,8 +1747,8 @@ fn mono_tc_ty(
 
                 if let Some(ty) = extension {
                     match &*ty {
-                        Ty::Con(con, _kind) => {
-                            let ext = ty_map.get(con).unwrap();
+                        Ty::RVar(var, _kind) => {
+                            let ext = ty_map.get(var).unwrap();
                             match ext {
                                 mono::Type::Variant { alts } => {
                                     all_alts
@@ -2175,8 +2175,8 @@ fn collect_record_rows(
     rows: &mut OrdMap<Id, mono::Type>,
 ) {
     match ext_ty {
-        Ty::Con(con, _kind) => {
-            let ext = ty_map.get(con).unwrap();
+        Ty::RVar(var, _kind) => {
+            let ext = ty_map.get(var).unwrap();
             match ext {
                 mono::Type::Record { fields } => {
                     rows.extend(fields.iter().map(|(k, v)| (k.clone(), v.clone())));

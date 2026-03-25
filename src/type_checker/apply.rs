@@ -184,6 +184,7 @@ pub(crate) fn apply_con_ty(
 
         Ty::UVar(_)
         | Ty::Con(_, _)
+        | Ty::RVar(_, _)
         | Ty::App(_, _, _)
         | Ty::Anonymous { .. }
         | Ty::QVar(_, _)

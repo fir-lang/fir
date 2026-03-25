@@ -13,6 +13,6 @@ main():
 #              r and
 #              row()
 #              (
-#                 Con("r", Row(Record))
+#                 RVar("r", Row(Record))
 #                 Anonymous { labels: {}, extension: None, record_or_variant: Record, is_row: true }
 #              )

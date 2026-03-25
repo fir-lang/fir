@@ -37,9 +37,6 @@ pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
     Con(Id, Kind),
 
-    /// A unification variable, created by a type scheme when instantiated.
-    UVar(UVarRef),
-
     /// A type application, e.g. `Vec[U32]`, `Result[E, T]`.
     ///
     /// Because type variables have kind `*`, the constructor can only be a type constructor.
@@ -47,10 +44,17 @@ pub enum Ty {
     /// Invariant: the vector is not empty.
     App(Id, Vec<Ty>, Kind),
 
+    /// A unification variable, created from a type scheme's quantified variables when instantiated.
+    UVar(UVarRef),
+
     /// Only in type schemes: a quantified type variable.
     ///
     /// Instantiation converts these into unification variables (`Ty::Var`).
     QVar(Id, Kind),
+
+    /// A rigid type variable. Created from a type scheme's quantified variables when type checking
+    /// the scheme's function's body.
+    RVar(Id, Kind),
 
     /// A function type, e.g. `Fn(U32) Str`, `Fn(x: U32, y: U32) T / Err`.
     Fun {
@@ -72,7 +76,7 @@ pub enum Ty {
         /// Row extension. When available, this will be one of:
         ///
         /// - `Ty::UVar`: a unification variable.
-        /// - `Ty::Con`: a rigid type variable.
+        /// - `Ty::RVar`: a rigid type variable.
         /// - `Ty::QVar`: a quantified type variable, in type schemes.
         extension: Option<Box<Ty>>,
 
@@ -531,7 +535,9 @@ fn ty_eq_modulo_alpha(
     let ty1_normalized = ty1.normalize(cons);
     let ty2_normalized = ty2.normalize(cons);
     match (&ty1_normalized, &ty2_normalized) {
-        (Ty::Con(con1, _), Ty::Con(con2, _)) => con1 == con2,
+        (Ty::Con(con1, _), Ty::Con(con2, _)) | (Ty::RVar(con1, _), Ty::RVar(con2, _)) => {
+            con1 == con2
+        }
 
         (Ty::UVar(_), _) | (_, Ty::UVar(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
 
@@ -776,7 +782,7 @@ impl Ty {
 
     pub fn kind(&self) -> Kind {
         match self {
-            Ty::Con(_, kind) => kind.clone(),
+            Ty::Con(_, kind) | Ty::RVar(_, kind) => kind.clone(),
 
             Ty::UVar(var) => var.kind(),
 
@@ -808,6 +814,8 @@ impl Ty {
     pub(super) fn subst(&self, var: &Id, ty: &Ty) -> Ty {
         match self {
             Ty::Con(id, kind) => Ty::Con(id.clone(), kind.clone()),
+
+            Ty::RVar(id, kind) => Ty::RVar(id.clone(), kind.clone()),
 
             Ty::UVar(var) => Ty::UVar(var.clone()),
 
@@ -874,6 +882,8 @@ impl Ty {
     pub(super) fn subst_qvars(&self, vars: &HashMap<Id, Ty>) -> Ty {
         match self {
             Ty::Con(con, kind) => Ty::Con(con.clone(), kind.clone()),
+
+            Ty::RVar(id, kind) => Ty::RVar(id.clone(), kind.clone()),
 
             Ty::UVar(var) => Ty::UVar(var.clone()),
 
@@ -964,7 +974,7 @@ impl Ty {
                 var_ref_link
             }
 
-            Ty::Con(_, _) => self.clone(),
+            Ty::Con(_, _) | Ty::RVar(_, _) => self.clone(),
 
             Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
@@ -1111,6 +1121,7 @@ impl Ty {
             Ty::UVar(_)
             | Ty::Anonymous { .. }
             | Ty::QVar(_, _)
+            | Ty::RVar(_, _)
             | Ty::Fun { .. }
             | Ty::AssocTySelect { .. } => None,
         }
@@ -1201,18 +1212,6 @@ impl UVarGen {
 }
 
 impl TyCon {
-    pub(super) fn opaque(id: Id) -> TyCon {
-        TyCon {
-            id,
-            ty_params: vec![],
-            details: TyConDetails::Type(TypeDetails {
-                cons: Default::default(),
-                sum: true,
-                value: false,
-            }),
-        }
-    }
-
     pub(super) fn arity(&self) -> u32 {
         self.ty_params.len() as u32
     }
@@ -1255,7 +1254,7 @@ use std::fmt;
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.normalize(&Default::default()) {
-            Ty::Con(id, _) => write!(f, "{id}"),
+            Ty::Con(id, _) | Ty::RVar(id, _) => write!(f, "{id}"),
 
             Ty::UVar(var_ref) => write!(f, "_{}", var_ref.id()),
 
