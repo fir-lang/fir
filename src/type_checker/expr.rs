@@ -1419,6 +1419,7 @@ pub(super) fn check_expr(
                     } => (Some(args), Some(ret), Some(exceptions)),
 
                     Ty::Con(_, _)
+                    | Ty::RVar(_, _)
                     | Ty::UVar(_)
                     | Ty::App(_, _, _)
                     | Ty::QVar(_, _)
@@ -2261,13 +2262,7 @@ fn select_method(
 
 pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &ast::Loc) -> Ty {
     let con = match ty.normalize(tc_state.tys.tys.cons()) {
-        // Hack below: check first letter of the identifier to rigit type variables from type
-        // constructors.
-        //
-        // Compiler doesn't have this issue as it has a `QVar` constructor.
-        Ty::Con(con, _) if con.chars().next().unwrap().is_uppercase() => con,
-
-        Ty::App(con, _, _) => con,
+        Ty::Con(con, _) | Ty::App(con, _, _) => con,
 
         ty => panic!(
             "{}: Type in variant is not a constructor: {}",
@@ -2320,7 +2315,7 @@ fn refine_binders(binders: &HashMap<Id, HashSet<Ty>>, loc: &ast::Loc) -> HashMap
 
             for ty in tys.iter() {
                 match ty {
-                    Ty::Con(con, _) | Ty::App(con, _, _) => {
+                    Ty::Con(con, _) | Ty::RVar(con, _) | Ty::App(con, _, _) => {
                         let old = labels.insert(con.clone(), ty.clone());
                         assert_eq!(old, None);
                     }

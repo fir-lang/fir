@@ -38,7 +38,8 @@ pub(super) fn unify(
     }
 
     match (&ty1, &ty2) {
-        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2)) => {
+        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2))
+        | (Ty::RVar(con1, _kind1), Ty::RVar(con2, _kind2)) => {
             if con1 != con2 {
                 panic!(
                     "{}: Unable to unify types {} and {}",
@@ -416,7 +417,8 @@ pub(super) fn try_unify_one_way(
         return false;
     }
     match (&ty1, &ty2) {
-        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2)) => con1 == con2,
+        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2))
+        | (Ty::RVar(con1, _kind1), Ty::RVar(con2, _kind2)) => con1 == con2,
 
         (Ty::App(con1, args1, _kind1), Ty::App(con2, args2, _kind2)) => {
             if con1 != con2 {
@@ -709,7 +711,7 @@ fn link_var(var: &UVarRef, ty: &Ty) {
 
 fn prune_level(ty: &Ty, max_level: u32) {
     match ty {
-        Ty::Con(_, _) => {}
+        Ty::Con(_, _) | Ty::RVar(_, _) => {}
 
         Ty::UVar(var) => {
             // Assertion disabled for now, see #22.
