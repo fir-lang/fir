@@ -350,7 +350,7 @@ pub(super) fn unify(
         }
 
         // Unify an empty anonymous row with a rigid type variable of row kind.
-        // E.g. `row(.._1)` with `RVar("r")` just links `_1 → RVar("r")`.
+        // E.g. `row(.._1) ~ RVar("r")` just links `_1 -> RVar("r")`.
         (
             Ty::Anonymous {
                 labels,
