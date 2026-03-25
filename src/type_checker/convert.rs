@@ -39,7 +39,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                     Some(ty) => Box::new(ty.clone()),
                     None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
                 }),
-                kind: RecordOrVariant::Record,
+                record_or_variant: RecordOrVariant::Record,
                 is_row: *is_row,
             }
         }
@@ -69,7 +69,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                     Some(ty) => Box::new(ty.clone()),
                     None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
                 }),
-                kind: RecordOrVariant::Variant,
+                record_or_variant: RecordOrVariant::Variant,
                 is_row: *is_row,
             }
         }

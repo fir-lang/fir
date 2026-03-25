@@ -160,7 +160,7 @@ pub(crate) fn apply_con_ty(
                             let extra_row = Ty::Anonymous {
                                 labels: extra_fields,
                                 extension: row_extension,
-                                kind: RecordOrVariant::Record,
+                                record_or_variant: RecordOrVariant::Record,
                                 is_row: true,
                             };
                             unify(

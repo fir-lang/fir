@@ -8,4 +8,4 @@ main():
 # args: --typecheck
 # expected exit status: 101
 # expected stderr:
-# tests/UnificationRowKindFail2.fir:6:29: Unable to unify var with kind row(record) with type with kind *
+# tests/UnificationRowKindFail2.fir:6:29: Unable to unify types _0 and (a: U32) (kind mismatch, row(record) ~ *)

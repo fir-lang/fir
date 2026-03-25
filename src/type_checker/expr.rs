@@ -155,7 +155,7 @@ pub(super) fn check_expr(
                     Ty::Anonymous {
                         labels,
                         extension,
-                        kind: RecordOrVariant::Record,
+                        record_or_variant: RecordOrVariant::Record,
                         ..
                     } => {
                         if !user_ty_args.is_empty() {
@@ -647,7 +647,7 @@ pub(super) fn check_expr(
                                     let extra_row = Ty::Anonymous {
                                         labels: extra_fields,
                                         extension: None,
-                                        kind: RecordOrVariant::Record,
+                                        record_or_variant: RecordOrVariant::Record,
                                         is_row: true,
                                     };
                                     unify(
@@ -1830,7 +1830,7 @@ pub(super) fn check_expr(
                     Ty::Anonymous {
                         labels: expected_fields,
                         extension: _,
-                        kind: RecordOrVariant::Record,
+                        record_or_variant: RecordOrVariant::Record,
                         is_row: _,
                     } => Some(expected_fields),
                     _ => None,
@@ -1856,7 +1856,7 @@ pub(super) fn check_expr(
             let ty = Ty::Anonymous {
                 labels: record_fields,
                 extension: None,
-                kind: RecordOrVariant::Record,
+                record_or_variant: RecordOrVariant::Record,
                 is_row: false,
             };
 
@@ -2383,7 +2383,7 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
     Ty::Anonymous {
         labels: [(con, ty)].into_iter().collect(),
         extension: Some(Box::new(Ty::UVar(row_ext))),
-        kind: RecordOrVariant::Variant,
+        record_or_variant: RecordOrVariant::Variant,
         is_row: false,
     }
 }
@@ -2418,7 +2418,7 @@ fn refine_binders(binders: &HashMap<Id, HashSet<Ty>>, loc: &ast::Loc) -> HashMap
                     Ty::Anonymous {
                         labels,
                         extension: new_extension,
-                        kind: RecordOrVariant::Variant,
+                        record_or_variant: RecordOrVariant::Variant,
                         is_row,
                     } => {
                         // This part is quite hacky and possibly wrong: because we only refine
@@ -2440,7 +2440,7 @@ fn refine_binders(binders: &HashMap<Id, HashSet<Ty>>, loc: &ast::Loc) -> HashMap
             let new_ty = Ty::Anonymous {
                 labels,
                 extension,
-                kind: RecordOrVariant::Variant,
+                record_or_variant: RecordOrVariant::Variant,
                 is_row: false,
             };
 

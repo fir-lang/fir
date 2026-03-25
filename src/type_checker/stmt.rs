@@ -239,7 +239,7 @@ fn check_stmt(
                         Ty::Anonymous {
                             labels: _,
                             extension: _,
-                            kind: RecordOrVariant::Record,
+                            record_or_variant: RecordOrVariant::Record,
                             is_row,
                         } => {
                             assert!(!(*is_row));
