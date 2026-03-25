@@ -5,19 +5,19 @@ use crate::type_checker::unification::unify;
 use crate::type_checker::*;
 use crate::utils::loc_display;
 
-/// Apply a constructor type to arguments.
+/// Apply a constructor type to arguments to get a pattern type.
 ///
 /// The constructor type should be a function type if it takes arguments. Otherwise `args` should be
 /// empty.
 pub(crate) fn apply_con_ty(
     con_ty: &Ty,
     args: &Vec<ast::Named<Ty>>,
+    ignore_rest: bool,
     cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
-    ignore_rest: bool,
     local_assoc_tys: &[Pred],
     preds: &mut Vec<Pred>,
 ) -> Ty {
@@ -141,7 +141,7 @@ pub(crate) fn apply_con_ty(
                         }
                     }
 
-                    // Unify extra fields with the extension type.
+                    // Unify extra fields with the constructor's function type's extension type.
                     match extension {
                         None => {
                             // This case should be handled above.
