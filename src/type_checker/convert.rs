@@ -221,8 +221,8 @@ pub(super) fn convert_and_bind_context(
 
 fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
     match pred_ast {
-        ast::Pred::App(ast::TypeApp { trait_, args }) => Pred {
-            trait_: trait_.clone(),
+        ast::Pred::App(ast::NamedType { name, args }) => Pred {
+            trait_: name.clone(),
             params: args
                 .iter()
                 .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
@@ -232,11 +232,11 @@ fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
         },
 
         ast::Pred::AssocTyEq {
-            ty: ast::TypeApp { trait_, args },
+            ty: ast::NamedType { name, args },
             assoc_ty,
             eq,
         } => Pred {
-            trait_: trait_.clone(),
+            trait_: name.clone(),
             params: args
                 .iter()
                 .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))

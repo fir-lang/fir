@@ -38,7 +38,7 @@ fn add_missing_type_params_fun(
     let bound_vars: HashSet<Id> = tvs.keys().cloned().collect();
 
     for pred in &sig.context.preds {
-        collect_pred_tvs(&pred.node, tvs);
+        collect_pred_tvs(&pred.node, &pred.loc, tvs);
     }
     match &sig.self_ {
         ast::SelfParam::No | ast::SelfParam::Implicit => {}
@@ -75,7 +75,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
     let mut impl_context_var_kinds: OrderMap<Id, Option<Kind>> = Default::default();
 
     for pred in &decl.context.preds {
-        collect_pred_tvs(&pred.node, &mut impl_context_var_kinds);
+        collect_pred_tvs(&pred.node, &pred.loc, &mut impl_context_var_kinds);
     }
 
     for ty in &decl.tys {
@@ -327,22 +327,16 @@ fn collect_named_ty_tvs(
     }
 }
 
-fn collect_pred_tvs(pred: &ast::Pred, tvs: &mut OrderMap<Id, Option<Kind>>) {
+fn collect_pred_tvs(pred: &ast::Pred, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option<Kind>>) {
     match pred {
-        ast::Pred::App(type_app) => collect_type_app_tvs(type_app, tvs),
+        ast::Pred::App(ty) => collect_named_ty_tvs(ty, loc, tvs),
         ast::Pred::AssocTyEq {
             ty,
             assoc_ty: _,
             eq,
         } => {
-            collect_type_app_tvs(ty, tvs);
+            collect_named_ty_tvs(ty, loc, tvs);
             collect_tvs(&eq.node, &eq.loc, tvs);
         }
-    }
-}
-
-fn collect_type_app_tvs(type_app: &ast::TypeApp, tvs: &mut OrderMap<Id, Option<Kind>>) {
-    for arg in type_app.args.iter() {
-        collect_tvs(&arg.node, &arg.loc, tvs);
     }
 }
