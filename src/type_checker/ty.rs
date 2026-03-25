@@ -77,6 +77,7 @@ pub enum Ty {
         ///
         /// - `Ty::UVar`: a unification variable.
         /// - `Ty::RVar`: a rigid type variable.
+        /// - `Ty::QVar`: a quantified type variable, in type schemes.
         extension: Option<Box<Ty>>,
 
         record_or_variant: RecordOrVariant,
