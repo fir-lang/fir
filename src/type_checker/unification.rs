@@ -349,6 +349,31 @@ pub(super) fn unify(
             }
         }
 
+        // Unify an empty anonymous row with a rigid type variable of row kind.
+        // E.g. `row(.._1)` with `RVar("r")` just links `_1 → RVar("r")`.
+        (
+            Ty::Anonymous {
+                labels,
+                extension: Some(ext),
+                is_row: true,
+                ..
+            },
+            rvar @ Ty::RVar(_, _),
+        )
+        | (
+            rvar @ Ty::RVar(_, _),
+            Ty::Anonymous {
+                labels,
+                extension: Some(ext),
+                is_row: true,
+                ..
+            },
+        ) if labels.is_empty() => {
+            unify(
+                ext, rvar, cons, trait_env, var_gen, level, loc, assumps, preds,
+            );
+        }
+
         (
             Ty::AssocTySelect {
                 ty: ty1_inner,
