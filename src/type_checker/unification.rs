@@ -26,6 +26,17 @@ pub(super) fn unify(
         return;
     }
 
+    if ty1.kind() != ty2.kind() {
+        panic!(
+            "{}: Unable to unify types {} and {} (kind mismatch, {} ~ {})",
+            loc_display(loc),
+            ty1,
+            ty2,
+            ty1.kind(),
+            ty2.kind(),
+        )
+    }
+
     match (&ty1, &ty2) {
         (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2)) => {
             if con1 != con2 {
@@ -177,58 +188,24 @@ pub(super) fn unify(
             }
         }
 
-        (Ty::UVar(var), ty2) => {
-            if var.kind() != ty2.kind() {
-                panic!(
-                    "{}: Unable to unify var with kind {} with type with kind {}",
-                    loc_display(loc),
-                    var.kind(),
-                    ty2.kind(),
-                );
-            }
-            link_var(var, ty2)
-        }
+        (Ty::UVar(var), ty2) => link_var(var, ty2),
 
-        (ty1, Ty::UVar(var)) => {
-            if var.kind() != ty1.kind() {
-                panic!(
-                    "{}: Unable to unify var with kind {} with type with kind {}",
-                    loc_display(loc),
-                    var.kind(),
-                    ty1.kind(),
-                );
-            }
-            link_var(var, ty1)
-        }
+        (ty1, Ty::UVar(var)) => link_var(var, ty1),
 
         (
             Ty::Anonymous {
                 labels: labels1,
                 extension: extension1,
                 record_or_variant: record_or_variant_1,
-                is_row: is_row_1,
+                is_row: _,
             },
             Ty::Anonymous {
                 labels: labels2,
                 extension: extension2,
                 record_or_variant: record_or_variant_2,
-                is_row: is_row_2,
+                is_row: _,
             },
         ) => {
-            // Kind mismatches can happen when try to unify a record with a variant (e.g. pass a
-            // record when a variant is expected), and fail. Similary we can pass `row[]` when `[]`
-            // is expected (or the other way around).
-            if record_or_variant_1 != record_or_variant_2 || is_row_1 != is_row_2 {
-                panic!(
-                    "{}: Unable to unify {} {} with {} {}",
-                    loc_display(loc),
-                    record_or_variant_1,
-                    ty1,
-                    record_or_variant_2,
-                    ty2,
-                );
-            }
-
             let (labels1, mut extension1) = collect_rows(
                 cons,
                 &ty1,
@@ -435,6 +412,9 @@ pub(super) fn try_unify_one_way(
 ) -> bool {
     let ty1 = ty1.normalize(cons);
     let ty2 = ty2.normalize(cons);
+    if ty1.kind() != ty2.kind() {
+        return false;
+    }
     match (&ty1, &ty2) {
         (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2)) => con1 == con2,
 
@@ -546,25 +526,15 @@ pub(super) fn try_unify_one_way(
                 labels: labels1,
                 extension: extension1,
                 record_or_variant: record_or_variant_1,
-                is_row: is_row_1,
+                is_row: _,
             },
             Ty::Anonymous {
                 labels: labels2,
                 extension: extension2,
                 record_or_variant: record_or_variant_2,
-                is_row: is_row_2,
+                is_row: _,
             },
         ) => {
-            // Kind mismatches can happen when try to unify a record with a variant (e.g. pass a
-            // record when a variant is expected), and fail.
-            if record_or_variant_1 != record_or_variant_2 {
-                return false;
-            }
-
-            // If we checked the kinds in type applications properly, we should only try to unify
-            // rows with rows and stars with stars.
-            assert_eq!(is_row_1, is_row_2);
-
             let (labels1, mut extension1) = collect_rows(
                 cons,
                 &ty1,
