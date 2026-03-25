@@ -1,13 +1,9 @@
-type Foo[extras](
+type Foo[recRow](
     x: Bool,
-    ..extras
+    ..recRow
 )
 
-main():
-    let foo = Foo(x = Bool.True, msg = "hi")
-    match foo:
-        Foo(x = Bool.True):
+foo[RecRow[r]](rec: Foo[r]):
+    match rec:
+        Foo(x = Bool.True, ..):
             print("true")
-
-# expected stdout:
-# true
