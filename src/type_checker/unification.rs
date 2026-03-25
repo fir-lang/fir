@@ -205,26 +205,26 @@ pub(super) fn unify(
             Ty::Anonymous {
                 labels: labels1,
                 extension: extension1,
-                kind: kind1,
+                record_or_variant: record_or_variant_1,
                 is_row: is_row_1,
             },
             Ty::Anonymous {
                 labels: labels2,
                 extension: extension2,
-                kind: kind2,
+                record_or_variant: record_or_variant_2,
                 is_row: is_row_2,
             },
         ) => {
             // Kind mismatches can happen when try to unify a record with a variant (e.g. pass a
             // record when a variant is expected), and fail. Similary we can pass `row[]` when `[]`
             // is expected (or the other way around).
-            if kind1 != kind2 || is_row_1 != is_row_2 {
+            if record_or_variant_1 != record_or_variant_2 || is_row_1 != is_row_2 {
                 panic!(
                     "{}: Unable to unify {} {} with {} {}",
                     loc_display(loc),
-                    kind1,
+                    record_or_variant_1,
                     ty1,
-                    kind2,
+                    record_or_variant_2,
                     ty2,
                 );
             }
@@ -232,7 +232,7 @@ pub(super) fn unify(
             let (labels1, mut extension1) = collect_rows(
                 cons,
                 &ty1,
-                *kind1,
+                *record_or_variant_1,
                 labels1,
                 extension1.clone(),
                 &Default::default(),
@@ -242,7 +242,7 @@ pub(super) fn unify(
             let (labels2, mut extension2) = collect_rows(
                 cons,
                 &ty2,
-                *kind2,
+                *record_or_variant_2,
                 labels2,
                 extension2.clone(),
                 &Default::default(),
@@ -271,7 +271,13 @@ pub(super) fn unify(
                     Some(Ty::UVar(var)) => {
                         // TODO: Not sure about level
                         extension2 = Some(Ty::UVar(link_extension(
-                            *kind2, &extras1, &labels1, var, var_gen, level, loc,
+                            *record_or_variant_2,
+                            &extras1,
+                            &labels1,
+                            var,
+                            var_gen,
+                            level,
+                            loc,
                         )));
                     }
                     _ => {
@@ -285,7 +291,13 @@ pub(super) fn unify(
                     Some(Ty::UVar(var)) => {
                         // TODO: Not sure about level
                         extension1 = Some(Ty::UVar(link_extension(
-                            *kind1, &extras2, &labels2, var, var_gen, level, loc,
+                            *record_or_variant_1,
+                            &extras2,
+                            &labels2,
+                            var,
+                            var_gen,
+                            level,
+                            loc,
                         )));
                     }
                     _ => {
@@ -294,11 +306,11 @@ pub(super) fn unify(
                 }
             }
 
-            fn unit_row(kind: RecordOrVariant) -> Ty {
+            fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
                 Ty::Anonymous {
                     labels: Default::default(),
                     extension: None,
-                    kind,
+                    record_or_variant,
                     is_row: true,
                 }
             }
@@ -308,7 +320,7 @@ pub(super) fn unify(
                 (Some(ext1), None) => {
                     unify(
                         &ext1,
-                        &unit_row(*kind1),
+                        &unit_row(*record_or_variant_1),
                         cons,
                         trait_env,
                         var_gen,
@@ -320,7 +332,7 @@ pub(super) fn unify(
                 }
                 (None, Some(ext2)) => {
                     unify(
-                        &unit_row(*kind2),
+                        &unit_row(*record_or_variant_2),
                         &ext2,
                         cons,
                         trait_env,
@@ -533,19 +545,19 @@ pub(super) fn try_unify_one_way(
             Ty::Anonymous {
                 labels: labels1,
                 extension: extension1,
-                kind: kind1,
+                record_or_variant: record_or_variant_1,
                 is_row: is_row_1,
             },
             Ty::Anonymous {
                 labels: labels2,
                 extension: extension2,
-                kind: kind2,
+                record_or_variant: record_or_variant_2,
                 is_row: is_row_2,
             },
         ) => {
             // Kind mismatches can happen when try to unify a record with a variant (e.g. pass a
             // record when a variant is expected), and fail.
-            if kind1 != kind2 {
+            if record_or_variant_1 != record_or_variant_2 {
                 return false;
             }
 
@@ -556,7 +568,7 @@ pub(super) fn try_unify_one_way(
             let (labels1, mut extension1) = collect_rows(
                 cons,
                 &ty1,
-                *kind1,
+                *record_or_variant_1,
                 labels1,
                 extension1.clone(),
                 &Default::default(),
@@ -566,7 +578,7 @@ pub(super) fn try_unify_one_way(
             let (labels2, extension2) = collect_rows(
                 cons,
                 &ty2,
-                *kind2,
+                *record_or_variant_2,
                 labels2,
                 extension2.clone(),
                 &Default::default(),
@@ -599,7 +611,13 @@ pub(super) fn try_unify_one_way(
                     Some(Ty::UVar(var)) => {
                         // TODO: Not sure about level
                         extension1 = Some(Ty::UVar(link_extension(
-                            *kind1, &extras2, &labels2, var, var_gen, level, loc,
+                            *record_or_variant_1,
+                            &extras2,
+                            &labels2,
+                            var,
+                            var_gen,
+                            level,
+                            loc,
                         )));
                     }
                     _ => {
@@ -608,20 +626,25 @@ pub(super) fn try_unify_one_way(
                 }
             }
 
-            fn unit_row(kind: RecordOrVariant) -> Ty {
+            fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
                 Ty::Anonymous {
                     labels: Default::default(),
                     extension: None,
-                    kind,
+                    record_or_variant,
                     is_row: true,
                 }
             }
 
             match (extension1, extension2) {
                 (None, None) => true,
-                (Some(ext1), None) => {
-                    try_unify_one_way(&ext1, &unit_row(*kind1), cons, var_gen, level, loc)
-                }
+                (Some(ext1), None) => try_unify_one_way(
+                    &ext1,
+                    &unit_row(*record_or_variant_1),
+                    cons,
+                    var_gen,
+                    level,
+                    loc,
+                ),
                 (None, Some(_)) => false,
                 (Some(ext1), Some(ext2)) => {
                     try_unify_one_way(&ext1, &ext2, cons, var_gen, level, loc)
@@ -650,7 +673,7 @@ pub(super) fn try_unify_one_way(
 }
 
 fn link_extension(
-    kind: RecordOrVariant,
+    record_or_variant: RecordOrVariant,
     extra_labels: &HashSet<&&Id>,
     label_values: &OrdMap<Id, Ty>,
     var: &UVarRef,
@@ -668,11 +691,11 @@ fn link_extension(
         })
         .collect();
     // TODO: Not sure about the level.
-    let new_extension_var = var_gen.new_var(level, Kind::Row(kind), loc.clone());
+    let new_extension_var = var_gen.new_var(level, Kind::Row(record_or_variant), loc.clone());
     let new_extension_ty = Ty::Anonymous {
         labels: extension_labels,
         extension: Some(Box::new(Ty::UVar(new_extension_var.clone()))),
-        kind,
+        record_or_variant,
         is_row: true,
     };
     var.set_link(new_extension_ty);

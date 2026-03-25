@@ -258,7 +258,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     })
                     .collect(),
                 extension,
-                kind: RecordOrVariant::Record,
+                record_or_variant: RecordOrVariant::Record,
                 is_row: false,
             };
             *inferred_ty = Some(ty.clone());

@@ -14,5 +14,5 @@ main():
 #              row()
 #              (
 #                 Con("r", Row(Record))
-#                 Anonymous { labels: {}, extension: None, kind: Record, is_row: true }
+#                 Anonymous { labels: {}, extension: None, record_or_variant: Record, is_row: true }
 #              )

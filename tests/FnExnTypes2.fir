@@ -12,5 +12,5 @@ main():
 #              []
 #              (
 #                 Con("Str", Star)
-#                 Anonymous { labels: {}, extension: None, kind: Variant, is_row: false }
+#                 Anonymous { labels: {}, extension: None, record_or_variant: Variant, is_row: false }
 #              )

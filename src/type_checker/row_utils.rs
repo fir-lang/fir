@@ -28,10 +28,10 @@ pub(super) fn collect_rows(
             Ty::Anonymous {
                 labels,
                 extension: next_ext,
-                kind,
+                record_or_variant,
                 is_row,
             } => {
-                assert_eq!(kind, ty_kind);
+                assert_eq!(record_or_variant, ty_kind);
                 assert!(is_row);
                 for (label_id, label_ty) in labels {
                     if all_labels.insert(label_id, label_ty).is_some() {
@@ -52,14 +52,14 @@ pub(super) fn collect_rows(
                     Ty::Anonymous {
                         labels,
                         extension: next_ext,
-                        kind,
+                        record_or_variant,
                         is_row,
                     } => {
                         assert!(
                             is_row,
                             "Extension variable in anonymous type is not a row: {ty:#?}"
                         );
-                        assert_eq!(kind, ty_kind);
+                        assert_eq!(record_or_variant, ty_kind);
                         for (label_id, label_ty) in labels {
                             if all_labels.insert(label_id, label_ty).is_some() {
                                 panic!("BUG: Duplicate field in anonymous type {ty}");

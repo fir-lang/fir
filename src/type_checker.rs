@@ -824,7 +824,7 @@ fn visit_ty_con(
                 Ty::Anonymous {
                     labels,
                     extension: _,
-                    kind: _,
+                    record_or_variant: _,
                     is_row: _,
                 } => {
                     for label_ty in labels.values() {
@@ -1794,8 +1794,12 @@ fn resolve_preds(
             if pred.trait_ == kind_inference::REC_ROW_TRAIT_ID {
                 assert!(pred.assoc_ty.is_none());
                 match &pred.params[0] {
-                    Ty::Anonymous { kind, is_row, .. } => {
-                        if *is_row && *kind == RecordOrVariant::Record {
+                    Ty::Anonymous {
+                        record_or_variant,
+                        is_row,
+                        ..
+                    } => {
+                        if *is_row && *record_or_variant == RecordOrVariant::Record {
                             continue;
                         }
                     }
@@ -1811,8 +1815,12 @@ fn resolve_preds(
             if pred.trait_ == kind_inference::VAR_ROW_TRAIT_ID {
                 assert!(pred.assoc_ty.is_none());
                 match &pred.params[0] {
-                    Ty::Anonymous { kind, is_row, .. } => {
-                        if *is_row && *kind == RecordOrVariant::Variant {
+                    Ty::Anonymous {
+                        record_or_variant,
+                        is_row,
+                        ..
+                    } => {
+                        if *is_row && *record_or_variant == RecordOrVariant::Variant {
                             continue;
                         }
                     }
@@ -1922,7 +1930,7 @@ fn resolve_preds(
             rec_row.set_link(Ty::Anonymous {
                 labels: Default::default(),
                 extension: None,
-                kind: RecordOrVariant::Record,
+                record_or_variant: RecordOrVariant::Record,
                 is_row: true,
             });
         }
@@ -1933,7 +1941,7 @@ fn resolve_preds(
             var_row.set_link(Ty::Anonymous {
                 labels: Default::default(),
                 extension: None,
-                kind: RecordOrVariant::Variant,
+                record_or_variant: RecordOrVariant::Variant,
                 is_row: true,
             });
         }

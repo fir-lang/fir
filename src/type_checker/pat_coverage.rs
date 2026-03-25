@@ -215,7 +215,7 @@ impl PatMatrix {
             Ty::Anonymous {
                 labels,
                 extension,
-                kind: RecordOrVariant::Variant,
+                record_or_variant: RecordOrVariant::Variant,
                 is_row,
             } => {
                 assert!(!is_row);
@@ -254,7 +254,7 @@ impl PatMatrix {
                     match self.skip_wildcards(&Ty::Anonymous {
                         labels: Default::default(),
                         extension: Some(Box::new(extension.clone())),
-                        kind: RecordOrVariant::Variant,
+                        record_or_variant: RecordOrVariant::Variant,
                         is_row: false,
                     }) {
                         Some(skipped) => {
@@ -274,7 +274,7 @@ impl PatMatrix {
             Ty::Anonymous {
                 labels,
                 extension,
-                kind: RecordOrVariant::Record,
+                record_or_variant: RecordOrVariant::Record,
                 is_row,
             } => {
                 // Note: the code below is basically `focus_record`. We should probably move it to

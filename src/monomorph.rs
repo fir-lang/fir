@@ -1702,9 +1702,9 @@ fn mono_tc_ty(
         Ty::Anonymous {
             labels,
             extension,
-            kind,
+            record_or_variant,
             is_row: _,
-        } => match kind {
+        } => match record_or_variant {
             RecordOrVariant::Record => {
                 let mut all_fields: OrdMap<Id, mono::Type> = Default::default();
 
