@@ -9,4 +9,4 @@ type T4[r]:
     A
     ..r
 
-# args: --typecheck
+# args: --parse

@@ -30,11 +30,21 @@ use smol_str::SmolStr;
 
 #[derive(Debug, Clone)]
 pub struct CompilerOpts {
+    /// Stop after parsing.
+    pub parse: bool,
+
+    /// Stop after type checking.
     pub typecheck: bool,
+
     pub no_prelude: bool,
     pub backtrace: bool,
+
+    /// Print tokens and stop.
     pub tokenize: bool,
+
+    /// Print scanned tokens and stop.
     pub scan: bool,
+
     pub print_parsed_ast: bool,
     pub print_checked_ast: bool,
     pub print_mono_ast: bool,
@@ -156,6 +166,10 @@ mod native {
 
         if opts.print_parsed_ast {
             ast::printer::print_module(&module);
+        }
+
+        if opts.parse {
+            return;
         }
 
         let tys = type_checker::check_module(&mut module, &opts.main);

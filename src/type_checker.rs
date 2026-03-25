@@ -1194,7 +1194,13 @@ fn collect_schemes(
                 };
 
                 match rhs {
-                    ast::TypeDeclRhs::Sum { cons, extension: _ } => {
+                    ast::TypeDeclRhs::Sum { cons, extension } => {
+                        if extension.is_some() {
+                            panic!(
+                                "{}: Extensible sums not fully supported yet",
+                                loc_display(&ty_decl.loc)
+                            );
+                        }
                         for con in cons {
                             let fields = &con.fields;
                             let ty = match convert_fields(tys, fields, &ty_decl.loc) {
