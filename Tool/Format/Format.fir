@@ -389,35 +389,6 @@ _formatContext(context: Context, tokens: Array[Token]) Doc:
     doc + formatToken(rbracket, tokens)
 
 
-TypeApp.format(self, tokens: Array[Token]) Doc:
-    let TypeApp(trait_, args) = self
-    assert(not args.isEmpty())
-
-    let lbracket = nextNonTrivia(trait_.token, tokens).unwrap()
-    assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
-
-    let rbracket = nextNonTrivia(args.last().unwrap().lastToken(tokens), tokens)
-        .unwrap()
-    assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
-
-    let doc = formatToken(trait_.token, tokens) + formatToken(lbracket, tokens)
-
-    let trailingComma = Bool.False
-    for ty: Type in args.iter():
-        if trailingComma:
-            doc += Doc.blank(1)
-            trailingComma = Bool.False
-
-        doc += ty.format(tokens)
-
-        if nextNonTrivia(ty.lastToken(tokens), tokens) is Option.Some(next)
-                and tokens.get(next.idx).kind is TokenKind.Comma:
-            trailingComma = Bool.True
-            doc += formatToken(next, tokens)
-
-    doc + formatToken(rbracket, tokens)
-
-
 _formatSigArgList(lparen: TokenIdx, params: Vec[FunArg], tokens: Array[Token]) (doc: Doc, rparen: TokenIdx):
     let argList = formatToken(lparen, tokens) + Doc.break_(0)
 

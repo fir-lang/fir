@@ -1176,16 +1176,11 @@ LPred: L<Pred> = {
 }
 
 Pred: Pred = {
-    <ty:TypeApp> =>
+    <ty:NamedType> =>
         Pred::App(ty),
 
-    <ty:TypeApp> "." <assoc_ty:UpperId> "=" <eq:LType> =>
+    <ty:NamedType> "." <assoc_ty:UpperId> "=" <eq:LType> =>
         Pred::AssocTyEq { ty, assoc_ty: assoc_ty.smol_str(), eq },
-}
-
-TypeApp: TypeApp = {
-    <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
-        TypeApp { trait_: name.smol_str(), args },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

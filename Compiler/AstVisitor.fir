@@ -226,9 +226,6 @@ trait Visitor[v]:
     visitPred(self: v, p: Pred_):
         defaultVisitPred(self, p)
 
-    visitTypeApp(self: v, t: TypeApp):
-        defaultVisitTypeApp(self, t)
-
     # ----------------------------------------------------------------
     # Ids
 
@@ -574,12 +571,7 @@ defaultVisitTyArgs[Visitor[v]](v: v, t: TyArgs):
 
 defaultVisitPred[Visitor[v]](v: v, p: Pred_):
     match p:
-        Pred_.App(app): v.visitTypeApp(app)
+        Pred_.App(app): v.visitNamedType(app)
         Pred_.AssocTyEq(ty, assocTy = _, eq):
-            v.visitTypeApp(ty)
+            v.visitNamedType(ty)
             v.visitType(eq)
-
-
-defaultVisitTypeApp[Visitor[v]](v: v, t: TypeApp):
-    for t in t.args.iter():
-        v.visitType(t)

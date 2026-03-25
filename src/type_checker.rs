@@ -897,8 +897,8 @@ fn collect_schemes(
 
                 let trait_pred: ast::L<ast::Pred> = ast::L {
                     loc: trait_decl.loc.clone(),
-                    node: ast::Pred::App(ast::TypeApp {
-                        trait_: trait_decl.node.name.node.clone(),
+                    node: ast::Pred::App(ast::NamedType {
+                        name: trait_decl.node.name.node.clone(),
                         args: trait_decl
                             .node
                             .type_params

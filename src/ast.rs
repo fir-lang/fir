@@ -841,19 +841,12 @@ pub struct Context {
 /// predicates: `ToStr[t]` (`Pred::App`), `Iterator[iter, exn].Item = U32` (`Pred::AssocTyEq`).
 #[derive(Debug, Clone)]
 pub enum Pred {
-    App(TypeApp),
+    App(NamedType),
     AssocTyEq {
-        ty: TypeApp,
+        ty: NamedType,
         assoc_ty: Id,
         eq: L<Type>,
     },
-}
-
-/// A type application, used in predicates. E.g. `Iterator[coll, item]`.
-#[derive(Debug, Clone)]
-pub struct TypeApp {
-    pub trait_: Id,
-    pub args: Vec<L<Type>>,
 }
 
 /// An `impl` block, implementing a trait for a type.

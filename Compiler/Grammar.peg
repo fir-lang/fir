@@ -987,7 +987,7 @@ context Context:
 
 
 pred Pred_:
-    app=typeApp selection=("." name=^ "UpperId" "=" ty=type_)?:
+    app=namedType selection=("." name=^ "UpperId" "=" ty=type_)?:
         match selection:
             Option.None: Pred_.App(app)
             Option.Some(selection):
@@ -996,14 +996,6 @@ pred Pred_:
                     assocTy = newId(selection.name),
                     eq = selection.ty,
                 )
-
-
-typeApp TypeApp:
-    name=^ "UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]":
-        TypeApp(
-            trait_ = newId(name),
-            args = Vec.fromIter(once(t0).chain(ts.iter())),
-        )
 
 
 paramList Vec[FunArg]:

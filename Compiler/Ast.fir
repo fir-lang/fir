@@ -455,15 +455,23 @@ type Context(
 )
 
 
-## A predicate in a context. E.g. in context `[Iterator[iter, exn],
-## Iterator[iter, exn].Item = item, Debug[item]]`, we have three predicates:
-## `Iterator[iter, exn]` (`Pred.App`), `Iterator[iter, exn].Item = item`
-## (`Pred.AssocTyEq`), `Debug[item]` (`Pred.App`).
+## A predicate in a context. E.g. in context
+##
+##     [Iterator[iter, exn],
+##      Iterator[iter, exn].Item = item,
+##      Debug[item]]
+##
+## We have three predicates:
+##
+## - `Iterator[iter, exn]`              (`Pred.App`)
+## - `Iterator[iter, exn].Item = item`  (`Pred.AssocTyEq`)
+## - `Debug[item]`                      (`Pred.App`)
+##
 #[derive(ToDoc)]
 type Pred_:
-    App(TypeApp)
+    App(NamedType)
     AssocTyEq(
-        ty: TypeApp,
+        ty: NamedType,
         assocTy: Id,
         eq: Type,
     )
@@ -479,23 +487,6 @@ impl Tokens[Pred_]:
         match self:
             Pred_.App(app): app.lastToken(tokens)
             Pred_.AssocTyEq(eq, ..): eq.lastToken(tokens)
-
-
-## A type application, used in predicates. E.g. `Iterator[iter, exn]`.
-#[derive(ToDoc)]
-type TypeApp(
-    trait_: Id,
-    args: Vec[Type],
-)
-
-
-impl Tokens[TypeApp]:
-    firstToken(self: TypeApp, tokens: Array[Token]) TokenIdx:
-        self.trait_.token
-
-    lastToken(self: TypeApp, tokens: Array[Token]) TokenIdx:
-        nextNonTrivia(self.args.last().unwrap().lastToken(tokens), tokens)
-            .unwrap()
 
 
 #[derive(ToDoc)]
@@ -2132,21 +2123,6 @@ impl ToDoc[Pred_]:
                 )
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.str("Pred_.AssocTyEq") + Doc.char('(') + args
-
-
-impl ToDoc[TypeApp]:
-    toDoc(self: TypeApp) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("trait_ =")
-                + Doc.nested(4, Doc.break_(1) + self.trait_.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("args =") + Doc.nested(4, Doc.break_(1) + self.args.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TypeApp") + Doc.char('(') + args)
 
 
 impl ToDoc[TypeParam]:

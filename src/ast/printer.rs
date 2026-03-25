@@ -363,22 +363,6 @@ impl Pred {
     }
 }
 
-impl TypeApp {
-    pub fn print(&self, buf: &mut String) {
-        buf.push_str(&self.trait_);
-        if !self.args.is_empty() {
-            buf.push('[');
-            for (i, arg) in self.args.iter().enumerate() {
-                if i != 0 {
-                    buf.push_str(", ");
-                }
-                arg.node.print(buf);
-            }
-            buf.push(']');
-        }
-    }
-}
-
 impl FunSig {
     pub fn print(&self, parent_ty: &Option<L<Id>>, name: &Id, buf: &mut String) {
         if let Some(parent_ty) = parent_ty {
