@@ -106,46 +106,29 @@ pub(super) fn unify(
                 (
                     FunArgs::Named {
                         args: args1,
-                        extension: ext1,
+                        extension: extension1,
                     },
                     FunArgs::Named {
                         args: args2,
-                        extension: ext2,
+                        extension: extension2,
                     },
                 ) => {
-                    let arg_names_1: HashSet<&Id> = args1.keys().collect();
-                    let arg_names_2: HashSet<&Id> = args2.keys().collect();
-                    if arg_names_1 != arg_names_2 {
-                        panic!(
-                            "{}: Unable to unify functions with different named arguments",
-                            loc_display(loc)
-                        );
-                    }
-                    for arg_name in arg_names_1 {
-                        unify(
-                            args1.get(arg_name).unwrap(),
-                            args2.get(arg_name).unwrap(),
-                            cons,
-                            trait_env,
-                            var_gen,
-                            level,
-                            loc,
-                            assumps,
-                            preds,
-                        );
-                    }
-                    match (ext1, ext2) {
-                        (None, None) => {}
-                        (Some(e1), Some(e2)) => {
-                            unify(e1, e2, cons, trait_env, var_gen, level, loc, assumps, preds)
-                        }
-                        (None, Some(_)) | (Some(_), None) => {
-                            panic!(
-                                "{}: Unable to unify function types with mismatched argument extensions",
-                                loc_display(loc),
-                            )
-                        }
-                    }
+                    unify_labels(
+                        &ty1,
+                        args1,
+                        extension1,
+                        &ty2,
+                        args2,
+                        extension2,
+                        RecordOrVariant::Record,
+                        cons,
+                        trait_env,
+                        var_gen,
+                        level,
+                        loc,
+                        assumps,
+                        preds,
+                    );
                 }
 
                 (FunArgs::Named { .. }, FunArgs::Positional { .. })
@@ -223,130 +206,26 @@ pub(super) fn unify(
             Ty::Anonymous {
                 labels: labels2,
                 extension: extension2,
-                record_or_variant: record_or_variant_2,
+                record_or_variant: _, // kind checked above
                 is_row: _,
             },
         ) => {
-            let (labels1, mut extension1) = collect_rows(
-                cons,
+            unify_labels(
                 &ty1,
-                *record_or_variant_1,
                 labels1,
-                extension1.clone(),
-                &Default::default(),
-                var_gen,
-                assumps,
-            );
-            let (labels2, mut extension2) = collect_rows(
-                cons,
+                extension1,
                 &ty2,
-                *record_or_variant_2,
                 labels2,
-                extension2.clone(),
-                &Default::default(),
+                extension2,
+                *record_or_variant_1,
+                cons,
+                trait_env,
                 var_gen,
+                level,
+                loc,
                 assumps,
+                preds,
             );
-
-            let keys1: HashSet<&Id> = labels1.keys().collect();
-            let keys2: HashSet<&Id> = labels2.keys().collect();
-
-            // Extra labels in one type will be added to the extension of the other.
-            let extras1: HashSet<&&Id> = keys1.difference(&keys2).collect();
-            let extras2: HashSet<&&Id> = keys2.difference(&keys1).collect();
-
-            // Unify common labels.
-            for key in keys1.intersection(&keys2) {
-                let ty1 = labels1.get(*key).unwrap();
-                let ty2 = labels2.get(*key).unwrap();
-                unify(
-                    ty1, ty2, cons, trait_env, var_gen, level, loc, assumps, preds,
-                );
-            }
-
-            if !extras1.is_empty() {
-                match &extension2 {
-                    Some(Ty::UVar(var)) => {
-                        // TODO: Not sure about level
-                        extension2 = Some(Ty::UVar(link_extension(
-                            *record_or_variant_2,
-                            &extras1,
-                            &labels1,
-                            var,
-                            var_gen,
-                            level,
-                            loc,
-                        )));
-                    }
-                    _ => {
-                        panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
-                    }
-                }
-            }
-
-            if !extras2.is_empty() {
-                match &extension1 {
-                    Some(Ty::UVar(var)) => {
-                        // TODO: Not sure about level
-                        extension1 = Some(Ty::UVar(link_extension(
-                            *record_or_variant_1,
-                            &extras2,
-                            &labels2,
-                            var,
-                            var_gen,
-                            level,
-                            loc,
-                        )));
-                    }
-                    _ => {
-                        panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
-                    }
-                }
-            }
-
-            fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
-                Ty::Anonymous {
-                    labels: Default::default(),
-                    extension: None,
-                    record_or_variant,
-                    is_row: true,
-                }
-            }
-
-            match (extension1, extension2) {
-                (None, None) => {}
-                (Some(ext1), None) => {
-                    unify(
-                        &ext1,
-                        &unit_row(*record_or_variant_1),
-                        cons,
-                        trait_env,
-                        var_gen,
-                        level,
-                        loc,
-                        assumps,
-                        preds,
-                    );
-                }
-                (None, Some(ext2)) => {
-                    unify(
-                        &unit_row(*record_or_variant_2),
-                        &ext2,
-                        cons,
-                        trait_env,
-                        var_gen,
-                        level,
-                        loc,
-                        assumps,
-                        preds,
-                    );
-                }
-                (Some(ext1), Some(ext2)) => {
-                    unify(
-                        &ext1, &ext2, cons, trait_env, var_gen, level, loc, assumps, preds,
-                    );
-                }
-            }
         }
 
         // Unify an empty anonymous row with a rigid type variable of row kind.
@@ -442,6 +321,144 @@ pub(super) fn unify(
             ty1,
             ty2,
         ),
+    }
+}
+
+fn unify_labels(
+    ty1: &Ty,
+    labels1: &OrdMap<Id, Ty>,
+    extension1: &Option<Box<Ty>>,
+    ty2: &Ty,
+    labels2: &OrdMap<Id, Ty>,
+    extension2: &Option<Box<Ty>>,
+    record_or_variant: RecordOrVariant,
+    cons: &ScopeMap<Id, TyCon>,
+    trait_env: &TraitEnv,
+    var_gen: &UVarGen,
+    level: u32,
+    loc: &ast::Loc,
+    assumps: &[Pred],
+    preds: &mut Vec<Pred>,
+) {
+    let (labels1, mut extension1) = collect_rows(
+        cons,
+        ty1,
+        record_or_variant,
+        labels1,
+        extension1.clone(),
+        &Default::default(),
+        var_gen,
+        assumps,
+    );
+    let (labels2, mut extension2) = collect_rows(
+        cons,
+        ty2,
+        record_or_variant,
+        labels2,
+        extension2.clone(),
+        &Default::default(),
+        var_gen,
+        assumps,
+    );
+
+    let keys1: HashSet<&Id> = labels1.keys().collect();
+    let keys2: HashSet<&Id> = labels2.keys().collect();
+
+    // Extra labels in one type will be added to the extension of the other.
+    let extras1: HashSet<&&Id> = keys1.difference(&keys2).collect();
+    let extras2: HashSet<&&Id> = keys2.difference(&keys1).collect();
+
+    // Unify common labels.
+    for key in keys1.intersection(&keys2) {
+        let ty1 = labels1.get(*key).unwrap();
+        let ty2 = labels2.get(*key).unwrap();
+        unify(
+            ty1, ty2, cons, trait_env, var_gen, level, loc, assumps, preds,
+        );
+    }
+
+    if !extras1.is_empty() {
+        match &extension2 {
+            Some(Ty::UVar(var)) => {
+                // TODO: Not sure about level
+                extension2 = Some(Ty::UVar(link_extension(
+                    record_or_variant,
+                    &extras1,
+                    &labels1,
+                    var,
+                    var_gen,
+                    level,
+                    loc,
+                )));
+            }
+            _ => {
+                panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
+            }
+        }
+    }
+
+    if !extras2.is_empty() {
+        match &extension1 {
+            Some(Ty::UVar(var)) => {
+                // TODO: Not sure about level
+                extension1 = Some(Ty::UVar(link_extension(
+                    record_or_variant,
+                    &extras2,
+                    &labels2,
+                    var,
+                    var_gen,
+                    level,
+                    loc,
+                )));
+            }
+            _ => {
+                panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
+            }
+        }
+    }
+
+    fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
+        Ty::Anonymous {
+            labels: Default::default(),
+            extension: None,
+            record_or_variant,
+            is_row: true,
+        }
+    }
+
+    match (extension1, extension2) {
+        (None, None) => {}
+        (Some(ext1), None) => {
+            unify(
+                &ext1,
+                &unit_row(record_or_variant),
+                cons,
+                trait_env,
+                var_gen,
+                level,
+                loc,
+                assumps,
+                preds,
+            );
+        }
+        (None, Some(ext2)) => {
+            unify(
+                &unit_row(record_or_variant),
+                &ext2,
+                cons,
+                trait_env,
+                var_gen,
+                level,
+                loc,
+                assumps,
+                preds,
+            );
+        }
+        (Some(ext1), Some(ext2)) => {
+            unify(
+                &ext1, &ext2, cons, trait_env, var_gen, level, loc, assumps, preds,
+            );
+        }
     }
 }
 
