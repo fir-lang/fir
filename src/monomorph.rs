@@ -1493,7 +1493,7 @@ fn match_(
             }
 
             if !fields2_map.is_empty() {
-                let ext_var = match extension.as_deref() {
+                let ext_var = match extension.as_ref().map(|e| &e.node) {
                     Some(ast::Type::Var(id)) => id,
                     _ => panic!("BUG: Non-variable record extension in match_"),
                 };
@@ -1543,7 +1543,7 @@ fn match_(
                 }
             }
 
-            let ext_var = match extension.as_deref() {
+            let ext_var = match extension.as_ref().map(|e| &e.node) {
                 Some(ast::Type::Var(id)) => id,
                 None => return labels2_map.is_empty(),
                 _ => panic!("BUG: Non-variable variant extension in match_"),
@@ -1926,7 +1926,7 @@ fn mono_ty_decl(
                 .collect();
 
             if let Some(ext) = extension {
-                let ext_mono = resolve_extension_variant(ext, &ty_map, poly_pgm, mono_pgm);
+                let ext_mono = resolve_extension_variant(&ext.node, &ty_map, poly_pgm, mono_pgm);
                 for (alt_name, alt_ty) in ext_mono {
                     mono_cons.push(mono::ConDecl {
                         name: alt_name,
@@ -1996,7 +1996,7 @@ fn mono_fields(
                 .collect();
 
             if let Some(ext) = extension {
-                let extra_fields = resolve_extension_record(ext, ty_map, poly_pgm, mono_pgm);
+                let extra_fields = resolve_extension_record(&ext.node, ty_map, poly_pgm, mono_pgm);
                 for (extra_name, extra_ty) in extra_fields {
                     let old = all_fields.insert(extra_name, extra_ty);
                     if old.is_some() {
@@ -2047,7 +2047,7 @@ fn get_variant_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::NamedType>
 
 fn collect_record_labels(
     ast_fields: &[(Id, ast::Type)],
-    extension: &Option<Box<ast::Type>>,
+    extension: &Option<Box<ast::L<ast::Type>>>,
     ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
@@ -2065,7 +2065,7 @@ fn collect_record_labels(
     }
 
     if let Some(ext) = extension {
-        let extra_fields = resolve_extension_record(ext, ty_map, poly_pgm, mono_pgm);
+        let extra_fields = resolve_extension_record(&ext.node, ty_map, poly_pgm, mono_pgm);
         for (extra_field_name, extra_field_ty) in extra_fields {
             let old = fields.insert(extra_field_name, extra_field_ty);
             if old.is_some() {
@@ -2079,7 +2079,7 @@ fn collect_record_labels(
 
 fn collect_variant_labels(
     ast_alts: &[ast::NamedType],
-    extension: &Option<Box<ast::Type>>,
+    extension: &Option<Box<ast::L<ast::Type>>>,
     ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
@@ -2118,7 +2118,7 @@ fn collect_variant_labels(
     }
 
     if let Some(ext) = extension {
-        let extra_alts = resolve_extension_variant(ext, ty_map, poly_pgm, mono_pgm);
+        let extra_alts = resolve_extension_variant(&ext.node, ty_map, poly_pgm, mono_pgm);
         for (extra_alt_label, extra_alt_ty) in extra_alts {
             let old = alts.insert(extra_alt_label, extra_alt_ty.clone());
             if let Some(old) = old.as_ref()

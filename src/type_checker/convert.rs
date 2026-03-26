@@ -37,7 +37,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 labels: ty_fields,
                 extension: extension
                     .as_ref()
-                    .map(|ext_ty| Box::new(convert_ast_ty(tys, ext_ty, loc))),
+                    .map(|ext_ty| Box::new(convert_ast_ty(tys, &ext_ty.node, &ext_ty.loc))),
                 record_or_variant: RecordOrVariant::Record,
                 is_row: *is_row,
             }
@@ -66,7 +66,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 labels: ty_alts,
                 extension: extension
                     .as_ref()
-                    .map(|ext_ty| Box::new(convert_ast_ty(tys, ext_ty, loc))),
+                    .map(|ext_ty| Box::new(convert_ast_ty(tys, &ext_ty.node, &ext_ty.loc))),
                 record_or_variant: RecordOrVariant::Variant,
                 is_row: *is_row,
             }
@@ -163,7 +163,7 @@ pub(super) fn convert_fields(
                 .collect(),
             extension: extension
                 .as_ref()
-                .map(|ext_ty| Box::new(convert_ast_ty(tys, ext_ty, loc))),
+                .map(|ext_ty| Box::new(convert_ast_ty(tys, &ext_ty.node, &ext_ty.loc))),
         }),
         ast::ConFields::Unnamed { fields } => Some(FunArgs::Positional {
             args: fields

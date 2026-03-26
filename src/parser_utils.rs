@@ -120,7 +120,7 @@ pub(crate) fn path_parts(path: &SmolStr) -> Vec<SmolStr> {
 
 pub(crate) fn process_fields(
     fields: Vec<(Option<Id>, L<ast::Type>)>,
-    extension: Option<Box<ast::Type>>,
+    extension: Option<Box<ast::L<ast::Type>>>,
     module: &std::rc::Rc<str>,
     loc: &lexgen_util::Loc,
 ) -> ast::ConFields {

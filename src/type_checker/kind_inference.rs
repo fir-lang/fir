@@ -182,7 +182,7 @@ fn collect_type_decl_extension_kinds(rhs: &ast::TypeDeclRhs, kinds: &mut OrderMa
     match rhs {
         ast::TypeDeclRhs::Sum { cons, extension } => {
             if let Some(ext) = extension
-                && let ast::Type::Var(id) = ext.as_ref()
+                && let ast::Type::Var(id) = &ext.node
             {
                 kinds.insert(id.clone(), Kind::Row(RecordOrVariant::Variant));
             }
@@ -200,7 +200,7 @@ fn collect_type_decl_extension_kinds(rhs: &ast::TypeDeclRhs, kinds: &mut OrderMa
 fn collect_con_fields_extension_kinds(fields: &ast::ConFields, kinds: &mut OrderMap<Id, Kind>) {
     if let ast::ConFields::Named { extension, .. } = fields
         && let Some(ext) = extension
-        && let ast::Type::Var(id) = ext.as_ref()
+        && let ast::Type::Var(id) = &ext.node
     {
         kinds.insert(id.clone(), Kind::Row(RecordOrVariant::Record));
     }
@@ -233,7 +233,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
                 collect_tvs(field_ty, loc, tvs);
             }
             if let Some(ext) = extension {
-                match ext.as_ref() {
+                match &ext.node {
                     ast::Type::Var(var) => {
                         let old = tvs.insert(var.clone(), Some(Kind::Row(RecordOrVariant::Record)));
                         if let Some(Some(old)) = old
@@ -246,7 +246,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
                             );
                         }
                     }
-                    other => collect_tvs(other, loc, tvs),
+                    other => collect_tvs(other, &ext.loc, tvs),
                 }
             }
         }
@@ -260,7 +260,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
                 collect_named_ty_tvs(alt, loc, tvs);
             }
             if let Some(ext) = extension {
-                match ext.as_ref() {
+                match &ext.node {
                     ast::Type::Var(var) => {
                         let old =
                             tvs.insert(var.clone(), Some(Kind::Row(RecordOrVariant::Variant)));
@@ -274,7 +274,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
                             );
                         }
                     }
-                    other => collect_tvs(other, loc, tvs),
+                    other => collect_tvs(other, &ext.loc, tvs),
                 }
             }
         }

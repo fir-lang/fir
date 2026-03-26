@@ -65,7 +65,7 @@ impl TypeDeclRhs {
                     buf.push('\n');
                     buf.push_str(&INDENTS[..indent as usize]);
                     buf.push_str("..");
-                    ext.print(buf);
+                    ext.node.print(buf);
                 }
             }
 
@@ -97,7 +97,7 @@ fn print_con_fields(fields: &ConFields, buf: &mut String, indent: u32) {
             if let Some(ext) = extension {
                 buf.push_str(&INDENTS[..indent as usize + 4]);
                 buf.push_str("..");
-                ext.print(buf);
+                ext.node.print(buf);
                 buf.push('\n');
             }
             buf.push_str(&INDENTS[..indent as usize]);
@@ -254,7 +254,7 @@ impl Type {
                         buf.push_str(", ");
                     }
                     buf.push_str("..");
-                    extension.print(buf);
+                    extension.node.print(buf);
                 }
                 buf.push(')');
             }
@@ -292,7 +292,7 @@ impl Type {
                         buf.push_str(", ");
                     }
                     buf.push_str("..");
-                    ext.print(buf);
+                    ext.node.print(buf);
                 }
                 buf.push(']');
             }

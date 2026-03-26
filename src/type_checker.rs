@@ -2047,7 +2047,7 @@ fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, synonyms: &HashMap<Id,
                 expand_synonyms_in_fields(&mut con.fields, synonyms);
             }
             if let Some(ext) = extension {
-                expand_synonyms_in_ty(ext, synonyms);
+                expand_synonyms_in_ty(&mut ext.node, synonyms);
             }
         }
         Some(ast::TypeDeclRhs::Product(fields)) => {
@@ -2068,7 +2068,7 @@ fn expand_synonyms_in_fields(fields: &mut ast::ConFields, synonyms: &HashMap<Id,
                 expand_synonyms_in_ty(&mut ty.node, synonyms);
             }
             if let Some(ext) = extension {
-                expand_synonyms_in_ty(ext, synonyms);
+                expand_synonyms_in_ty(&mut ext.node, synonyms);
             }
         }
         ast::ConFields::Unnamed { fields } => {
@@ -2125,7 +2125,7 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, ast::Type>) 
                 expand_synonyms_in_ty(field_ty, synonyms);
             }
             if let Some(ext) = extension {
-                expand_synonyms_in_ty(ext, synonyms);
+                expand_synonyms_in_ty(&mut ext.node, synonyms);
             }
         }
         ast::Type::Variant {
@@ -2139,7 +2139,7 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, ast::Type>) 
                 }
             }
             if let Some(ext) = extension {
-                expand_synonyms_in_ty(ext, synonyms);
+                expand_synonyms_in_ty(&mut ext.node, synonyms);
             }
         }
         ast::Type::Fn(fn_ty) => {

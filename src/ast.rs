@@ -164,7 +164,7 @@ pub enum TypeDeclRhs {
     /// A sum type, with more than one constructor.
     Sum {
         cons: Vec<ConDecl>,
-        extension: Option<Box<Type>>,
+        extension: Option<Box<L<Type>>>,
     },
 
     /// A product type uses the type name as the constructor and only has fields.
@@ -186,7 +186,7 @@ pub enum ConFields {
     Empty,
     Named {
         fields: Vec<(Id, L<Type>)>,
-        extension: Option<Box<Type>>,
+        extension: Option<Box<L<Type>>>,
     },
     Unnamed {
         fields: Vec<L<Type>>,
@@ -206,14 +206,14 @@ pub enum Type {
     /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..r)`.
     Record {
         fields: Vec<(Id, Type)>,
-        extension: Option<Box<Type>>,
+        extension: Option<Box<L<Type>>>,
         is_row: bool,
     },
 
     /// An anonymous variant type, e.g. `[Str, Option[U32], ..r]`.
     Variant {
         alts: Vec<NamedType>,
-        extension: Option<Box<Type>>,
+        extension: Option<Box<L<Type>>>,
         is_row: bool,
     },
 
@@ -944,7 +944,7 @@ impl Type {
 
                 let extension = extension
                     .as_ref()
-                    .map(|ext| Box::new(ext.subst_ids(substs)));
+                    .map(|ext| Box::new(ext.map_as_ref(|ty| ty.subst_ids(substs))));
 
                 Type::Record {
                     fields,
@@ -974,7 +974,7 @@ impl Type {
 
                 let extension = extension
                     .as_ref()
-                    .map(|ext| Box::new(ext.subst_ids(substs)));
+                    .map(|ext| Box::new(ext.map_as_ref(|ty| ty.subst_ids(substs))));
 
                 Type::Variant {
                     alts,
