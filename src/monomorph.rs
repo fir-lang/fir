@@ -2191,6 +2191,7 @@ fn collect_record_rows(
     ty_map: &HashMap<Id, mono::Type>,
     rows: &mut OrdMap<Id, mono::Type>,
 ) {
+    assert!(matches!(ext_ty.kind(), Kind::Row(_)));
     match ext_ty {
         Ty::RVar(var, _kind) => {
             let ext = ty_map.get(var).unwrap();

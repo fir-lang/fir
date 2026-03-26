@@ -19,11 +19,11 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             extension,
             is_row,
         } => {
-            let mut ty_fields: OrdMap<Id, Ty> = OrdMap::new();
+            let mut labels: OrdMap<Id, Ty> = OrdMap::new();
 
             for (field_name, field_ty) in fields {
                 let ty = convert_ast_ty(tys, field_ty, loc);
-                let old = ty_fields.insert(field_name.clone(), ty);
+                let old = labels.insert(field_name.clone(), ty);
                 if old.is_some() {
                     panic!(
                         "{}: Field {} defined multiple times in record",
@@ -33,11 +33,25 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 }
             }
 
+            let extension = match extension {
+                Some(ext) => {
+                    let ext_converted = convert_ast_ty(tys, &ext.node, &ext.loc);
+                    if ext_converted.kind() != Kind::Row(RecordOrVariant::Record) {
+                        panic!(
+                            "{}: Record extension type {} has kind {}",
+                            loc_display(&ext.loc),
+                            &ext.node,
+                            ext_converted.kind()
+                        );
+                    }
+                    Some(Box::new(ext_converted))
+                }
+                None => None,
+            };
+
             Ty::Anonymous {
-                labels: ty_fields,
-                extension: extension
-                    .as_ref()
-                    .map(|ext_ty| Box::new(convert_ast_ty(tys, &ext_ty.node, &ext_ty.loc))),
+                labels,
+                extension,
                 record_or_variant: RecordOrVariant::Record,
                 is_row: *is_row,
             }
@@ -48,11 +62,11 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             extension,
             is_row,
         } => {
-            let mut ty_alts: OrdMap<Id, Ty> = OrdMap::new();
+            let mut labels: OrdMap<Id, Ty> = OrdMap::new();
 
             for alt in alts {
                 let ty = convert_named_ty(tys, alt, loc);
-                let old = ty_alts.insert(alt.name.clone(), ty);
+                let old = labels.insert(alt.name.clone(), ty);
                 if old.is_some() {
                     panic!(
                         "{}: Type {} used multiple times in variant type",
@@ -62,11 +76,25 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 }
             }
 
+            let extension = match extension {
+                Some(ext) => {
+                    let ext_converted = convert_ast_ty(tys, &ext.node, &ext.loc);
+                    if ext_converted.kind() != Kind::Row(RecordOrVariant::Variant) {
+                        panic!(
+                            "{}: Variant extension type {} has kind {}",
+                            loc_display(&ext.loc),
+                            &ext.node,
+                            ext_converted.kind()
+                        );
+                    }
+                    Some(Box::new(ext_converted))
+                }
+                None => None,
+            };
+
             Ty::Anonymous {
-                labels: ty_alts,
-                extension: extension
-                    .as_ref()
-                    .map(|ext_ty| Box::new(convert_ast_ty(tys, &ext_ty.node, &ext_ty.loc))),
+                labels,
+                extension,
                 record_or_variant: RecordOrVariant::Variant,
                 is_row: *is_row,
             }
