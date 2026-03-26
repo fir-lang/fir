@@ -73,11 +73,7 @@ pub enum Ty {
     Anonymous {
         labels: OrdMap<Id, Ty>,
 
-        /// Row extension. When available, this will be one of:
-        ///
-        /// - `Ty::UVar`: a unification variable.
-        /// - `Ty::RVar`: a rigid type variable.
-        /// - `Ty::QVar`: a quantified type variable, in type schemes.
+        /// Row extension.
         extension: Option<Box<Ty>>,
 
         record_or_variant: RecordOrVariant,
