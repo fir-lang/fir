@@ -525,56 +525,27 @@ pub(super) fn try_unify_one_way(
                 (
                     FunArgs::Named {
                         args: args1,
-                        extension: ext1,
+                        extension: extension1,
                     },
                     FunArgs::Named {
                         args: args2,
-                        extension: ext2,
+                        extension: extension2,
                     },
                 ) => {
-                    let arg_names_1: HashSet<&Id> = args1.keys().collect();
-                    let arg_names_2: HashSet<&Id> = args2.keys().collect();
-                    if arg_names_1 != arg_names_2 {
+                    if !try_unify_labels_one_way(
+                        &ty1,
+                        args1,
+                        extension1,
+                        &ty2,
+                        args2,
+                        extension2,
+                        RecordOrVariant::Record,
+                        cons,
+                        var_gen,
+                        level,
+                        loc,
+                    ) {
                         return false;
-                    }
-
-                    for arg_name in arg_names_1 {
-                        if !try_unify_one_way(
-                            args1.get(arg_name).unwrap(),
-                            args2.get(arg_name).unwrap(),
-                            cons,
-                            var_gen,
-                            level,
-                            loc,
-                        ) {
-                            return false;
-                        }
-                    }
-                    match (ext1, ext2) {
-                        (None, None) => {}
-                        (Some(e1), None) => {
-                            if !try_unify_one_way(
-                                e1,
-                                &Ty::Anonymous {
-                                    labels: Default::default(),
-                                    extension: None,
-                                    record_or_variant: RecordOrVariant::Record,
-                                    is_row: true,
-                                },
-                                cons,
-                                var_gen,
-                                level,
-                                loc,
-                            ) {
-                                return false;
-                            }
-                        }
-                        (Some(e1), Some(e2)) => {
-                            if !try_unify_one_way(e1, e2, cons, var_gen, level, loc) {
-                                return false;
-                            }
-                        }
-                        (None, Some(_)) => return false,
                     }
                 }
 
@@ -630,96 +601,22 @@ pub(super) fn try_unify_one_way(
             Ty::Anonymous {
                 labels: labels2,
                 extension: extension2,
-                record_or_variant: record_or_variant_2,
+                record_or_variant: _, // kind checked above
                 is_row: _,
             },
-        ) => {
-            let (labels1, mut extension1) = collect_rows(
-                cons,
-                &ty1,
-                *record_or_variant_1,
-                labels1,
-                extension1.clone(),
-                &Default::default(),
-                var_gen,
-                &[],
-            );
-            let (labels2, extension2) = collect_rows(
-                cons,
-                &ty2,
-                *record_or_variant_2,
-                labels2,
-                extension2.clone(),
-                &Default::default(),
-                var_gen,
-                &[],
-            );
-
-            let keys1: HashSet<&Id> = labels1.keys().collect();
-            let keys2: HashSet<&Id> = labels2.keys().collect();
-
-            // Extra labels in one type will be added to the extension of the other.
-            let extras1: HashSet<&&Id> = keys1.difference(&keys2).collect();
-            let extras2: HashSet<&&Id> = keys2.difference(&keys1).collect();
-
-            // Unify common labels.
-            for key in keys1.intersection(&keys2) {
-                let ty1 = labels1.get(*key).unwrap();
-                let ty2 = labels2.get(*key).unwrap();
-                if !try_unify_one_way(ty1, ty2, cons, var_gen, level, loc) {
-                    return false;
-                }
-            }
-
-            if !extras1.is_empty() {
-                return false;
-            }
-
-            if !extras2.is_empty() {
-                match &extension1 {
-                    Some(Ty::UVar(var)) => {
-                        // TODO: Not sure about level
-                        extension1 = Some(Ty::UVar(link_extension(
-                            *record_or_variant_1,
-                            &extras2,
-                            &labels2,
-                            var,
-                            var_gen,
-                            level,
-                            loc,
-                        )));
-                    }
-                    _ => {
-                        return false;
-                    }
-                }
-            }
-
-            fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
-                Ty::Anonymous {
-                    labels: Default::default(),
-                    extension: None,
-                    record_or_variant,
-                    is_row: true,
-                }
-            }
-
-            match (extension1, extension2) {
-                (None, None) => true,
-                (Some(ext1), None) => try_unify_one_way(
-                    &ext1,
-                    &unit_row(*record_or_variant_1),
-                    cons,
-                    var_gen,
-                    level,
-                    loc,
-                ),
-                (None, Some(_)) => false,
-                (Some(ext1), Some(ext2)) => {
-                    try_unify_one_way(&ext1, &ext2, cons, var_gen, level, loc)
-                }
-            }
-        }
+        ) => try_unify_labels_one_way(
+            &ty1,
+            labels1,
+            extension1,
+            &ty2,
+            labels2,
+            extension2,
+            *record_or_variant_1,
+            cons,
+            var_gen,
+            level,
+            loc,
+        ),
 
         (
             Ty::AssocTySelect {
@@ -738,6 +635,104 @@ pub(super) fn try_unify_one_way(
         }
 
         (_, _) => false,
+    }
+}
+
+fn try_unify_labels_one_way(
+    ty1: &Ty,
+    labels1: &OrdMap<Id, Ty>,
+    extension1: &Option<Box<Ty>>,
+    ty2: &Ty,
+    labels2: &OrdMap<Id, Ty>,
+    extension2: &Option<Box<Ty>>,
+    record_or_variant: RecordOrVariant,
+    cons: &ScopeMap<Id, TyCon>,
+    var_gen: &UVarGen,
+    level: u32,
+    loc: &ast::Loc,
+) -> bool {
+    let (labels1, mut extension1) = collect_rows(
+        cons,
+        &ty1,
+        record_or_variant,
+        labels1,
+        extension1.clone(),
+        &Default::default(),
+        var_gen,
+        &[],
+    );
+    let (labels2, extension2) = collect_rows(
+        cons,
+        &ty2,
+        record_or_variant,
+        labels2,
+        extension2.clone(),
+        &Default::default(),
+        var_gen,
+        &[],
+    );
+
+    let keys1: HashSet<&Id> = labels1.keys().collect();
+    let keys2: HashSet<&Id> = labels2.keys().collect();
+
+    // Extra labels in one type will be added to the extension of the other.
+    let extras1: HashSet<&&Id> = keys1.difference(&keys2).collect();
+    let extras2: HashSet<&&Id> = keys2.difference(&keys1).collect();
+
+    // Unify common labels.
+    for key in keys1.intersection(&keys2) {
+        let ty1 = labels1.get(*key).unwrap();
+        let ty2 = labels2.get(*key).unwrap();
+        if !try_unify_one_way(ty1, ty2, cons, var_gen, level, loc) {
+            return false;
+        }
+    }
+
+    if !extras1.is_empty() {
+        return false;
+    }
+
+    if !extras2.is_empty() {
+        match &extension1 {
+            Some(Ty::UVar(var)) => {
+                // TODO: Not sure about level
+                extension1 = Some(Ty::UVar(link_extension(
+                    record_or_variant,
+                    &extras2,
+                    &labels2,
+                    var,
+                    var_gen,
+                    level,
+                    loc,
+                )));
+            }
+            _ => {
+                return false;
+            }
+        }
+    }
+
+    fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
+        Ty::Anonymous {
+            labels: Default::default(),
+            extension: None,
+            record_or_variant,
+            is_row: true,
+        }
+    }
+
+    match (extension1, extension2) {
+        (None, None) => true,
+        (Some(ext1), None) => try_unify_one_way(
+            &ext1,
+            &unit_row(record_or_variant),
+            cons,
+            var_gen,
+            level,
+            loc,
+        ),
+        (None, Some(_)) => false,
+        (Some(ext1), Some(ext2)) => try_unify_one_way(&ext1, &ext2, cons, var_gen, level, loc),
     }
 }
 
