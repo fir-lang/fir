@@ -149,11 +149,7 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
     Ty::App(ty_con.id.clone(), converted_args, Kind::Star)
 }
 
-pub(super) fn convert_fields(
-    tys: &TyMap,
-    fields: &ast::ConFields,
-    loc: &ast::Loc,
-) -> Option<FunArgs> {
+pub(super) fn convert_fields(tys: &TyMap, fields: &ast::ConFields) -> Option<FunArgs> {
     match fields {
         ast::ConFields::Empty => None,
         ast::ConFields::Named { fields, extension } => Some(FunArgs::Named {
