@@ -28,7 +28,7 @@ pub struct TypeDecl {
 
 #[derive(Debug, Clone)]
 pub enum TypeDeclRhs {
-    Sum { cons: Vec<ConDecl> },
+    Sum(Vec<ConDecl>),
     Product(ConFields),
 }
 
@@ -41,8 +41,8 @@ pub struct ConDecl {
 #[derive(Debug, Clone)]
 pub enum ConFields {
     Empty,
-    Named { fields: OrdMap<Id, Type> },
-    Unnamed { fields: Vec<Type> },
+    Named(OrdMap<Id, Type>),
+    Unnamed(Vec<Type>),
 }
 
 // Note: `Type` is used in maps and sets and it *cannot* have `Loc`s in it to avoid duplicating
@@ -144,8 +144,8 @@ pub struct FnType {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FunArgs {
-    Positional { args: Vec<Type> },
-    Named { args: OrdMap<Id, Type> },
+    Positional(Vec<Type>),
+    Named(OrdMap<Id, Type>),
 }
 
 #[derive(Debug, Clone)]
@@ -158,13 +158,12 @@ pub struct FunSig {
 impl FunSig {
     pub(crate) fn ty(&self) -> FnType {
         FnType {
-            args: FunArgs::Positional {
-                args: self
-                    .params
+            args: FunArgs::Positional(
+                self.params
                     .iter()
                     .map(|(_param_name, param_ty)| param_ty.node.clone())
                     .collect(),
-            },
+            ),
             ret: Box::new(
                 self.return_ty
                     .as_ref()

@@ -522,7 +522,7 @@ fn source_decl_to_c(
 ) {
     let con_indices = &ty.con_indices;
     match rhs {
-        mono::TypeDeclRhs::Sum { cons } => {
+        mono::TypeDeclRhs::Sum(cons) => {
             assert_eq!(cons.len(), con_indices.len());
             for (con, &con_idx) in cons.iter().zip(con_indices.iter()) {
                 let con_name: Id = format!("{}_{}", ty.name, con.name).into();
@@ -562,8 +562,8 @@ fn gen_source_con_struct(
     }
     let field_tys: Vec<&mono::Type> = match fields {
         mono::ConFields::Empty => vec![],
-        mono::ConFields::Named { fields } => fields.values().collect(),
-        mono::ConFields::Unnamed { fields } => fields.iter().collect(),
+        mono::ConFields::Named(fields) => fields.values().collect(),
+        mono::ConFields::Unnamed(fields) => fields.iter().collect(),
     };
     for (i, field_ty) in field_tys.iter().enumerate() {
         p.nl();
@@ -1799,8 +1799,8 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
 
         Expr::Call(CallExpr { fun, args, fun_ty }) => {
             let arg_tys: Vec<&mono::Type> = match &fun_ty.args {
-                mono::FunArgs::Positional { args } => args.iter().collect(),
-                mono::FunArgs::Named { args } => args.values().collect(),
+                mono::FunArgs::Positional(args) => args.iter().collect(),
+                mono::FunArgs::Named(args) => args.values().collect(),
             };
 
             assert_eq!(args.len(), arg_tys.len());
@@ -2757,11 +2757,11 @@ fn type_decl_deps_(
     match &types[type_idx.as_usize()] {
         TypeDecl::Named(NamedTypeDecl { rhs, ty_args, .. }) => match rhs {
             NamedTypeRhs::Source(rhs) => match rhs {
-                mono::TypeDeclRhs::Sum { cons } => {
+                mono::TypeDeclRhs::Sum(cons) => {
                     for con in cons {
                         match &con.fields {
                             mono::ConFields::Empty => {}
-                            mono::ConFields::Named { fields } => {
+                            mono::ConFields::Named(fields) => {
                                 for field in fields.values() {
                                     type_deps(
                                         named_tys,
@@ -2773,7 +2773,7 @@ fn type_decl_deps_(
                                     );
                                 }
                             }
-                            mono::ConFields::Unnamed { fields } => {
+                            mono::ConFields::Unnamed(fields) => {
                                 for field in fields.iter() {
                                     type_deps(
                                         named_tys,
@@ -2790,12 +2790,12 @@ fn type_decl_deps_(
                 }
                 mono::TypeDeclRhs::Product(fields) => match fields {
                     mono::ConFields::Empty => {}
-                    mono::ConFields::Named { fields } => {
+                    mono::ConFields::Named(fields) => {
                         for field in fields.values() {
                             type_deps(named_tys, record_tys, variant_tys, types, field, deps);
                         }
                     }
-                    mono::ConFields::Unnamed { fields } => {
+                    mono::ConFields::Unnamed(fields) => {
                         for field in fields.iter() {
                             type_deps(named_tys, record_tys, variant_tys, types, field, deps);
                         }
@@ -2858,12 +2858,12 @@ fn type_deps(
 
         mono::Type::Fn(mono::FnType { args, ret, exn }) => {
             match args {
-                mono::FunArgs::Positional { args } => {
+                mono::FunArgs::Positional(args) => {
                     for arg in args {
                         type_deps(named_tys, record_tys, variant_tys, types, arg, deps);
                     }
                 }
-                mono::FunArgs::Named { args } => {
+                mono::FunArgs::Named(args) => {
                     for arg in args.values() {
                         type_deps(named_tys, record_tys, variant_tys, types, arg, deps);
                     }

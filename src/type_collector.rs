@@ -64,7 +64,7 @@ fn visit_ty_decl(
     match &ty_decl.rhs {
         None => {}
 
-        Some(mono::TypeDeclRhs::Sum { cons }) => {
+        Some(mono::TypeDeclRhs::Sum(cons)) => {
             for con in cons {
                 visit_fields(&con.fields, records, variants);
             }
@@ -121,13 +121,11 @@ fn visit_fields(
     match fields {
         mono::ConFields::Empty => {}
 
-        mono::ConFields::Named {
-            fields: named_fields,
-        } => named_fields
+        mono::ConFields::Named(named_fields) => named_fields
             .iter()
             .for_each(|(_name, ty)| visit_ty(ty, records, variants)),
 
-        mono::ConFields::Unnamed { fields } => {
+        mono::ConFields::Unnamed(fields) => {
             fields.iter().for_each(|ty| visit_ty(ty, records, variants))
         }
     }
@@ -158,10 +156,10 @@ fn visit_ty(
 
         mono::Type::Fn(mono::FnType { args, ret, exn }) => {
             match args {
-                mono::FunArgs::Positional { args } => {
+                mono::FunArgs::Positional(args) => {
                     args.iter().for_each(|ty| visit_ty(ty, records, variants));
                 }
-                mono::FunArgs::Named { args } => {
+                mono::FunArgs::Named(args) => {
                     args.values().for_each(|ty| visit_ty(ty, records, variants));
                 }
             }

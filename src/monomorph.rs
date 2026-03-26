@@ -543,8 +543,8 @@ fn mono_expr(
             let mono::FnType { args, ret, exn } = mono_fun.sig.ty();
 
             let mono_fun_args = match args {
-                mono::FunArgs::Positional { args } => args,
-                mono::FunArgs::Named { args: _ } => {
+                mono::FunArgs::Positional(args) => args,
+                mono::FunArgs::Named(_) => {
                     // Methods can't have named arguments.
                     panic!()
                 }
@@ -1675,12 +1675,11 @@ fn mono_tc_ty(
             exceptions,
         } => mono::Type::Fn(mono::FnType {
             args: match args {
-                FunArgs::Positional { args } => mono::FunArgs::Positional {
-                    args: args
-                        .iter()
+                FunArgs::Positional { args } => mono::FunArgs::Positional(
+                    args.iter()
                         .map(|arg| mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm))
                         .collect(),
-                },
+                ),
                 FunArgs::Named { args, extension } => {
                     let mut all_args: OrdMap<Id, mono::Type> = args
                         .iter()
@@ -1696,7 +1695,7 @@ fn mono_tc_ty(
                         collect_record_rows(&ty, ty_map, &mut all_args);
                     }
 
-                    mono::FunArgs::Named { args: all_args }
+                    mono::FunArgs::Named(all_args)
                 }
             },
             ret: Box::new(mono_tc_ty(&ret, ty_map, poly_pgm, mono_pgm)),
@@ -1836,12 +1835,11 @@ fn mono_ast_ty(
             ret,
             exceptions,
         }) => mono::Type::Fn(mono::FnType {
-            args: mono::FunArgs::Positional {
-                args: args
-                    .iter()
+            args: mono::FunArgs::Positional(
+                args.iter()
                     .map(|arg| mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm))
                     .collect(),
-            },
+            ),
             ret: Box::new(
                 ret.as_ref()
                     .map(|ret| mono_ast_ty(&ret.node, ty_map, poly_pgm, mono_pgm))
@@ -1931,9 +1929,7 @@ fn mono_ty_decl(
                                 fields: if alt_ty.args.is_empty() {
                                     mono::ConFields::Empty
                                 } else {
-                                    mono::ConFields::Unnamed {
-                                        fields: alt_ty.args.clone(),
-                                    }
+                                    mono::ConFields::Unnamed(alt_ty.args.clone())
                                 },
                             });
                         }
@@ -1946,7 +1942,7 @@ fn mono_ty_decl(
                 }
             }
 
-            mono::TypeDeclRhs::Sum { cons: mono_cons }
+            mono::TypeDeclRhs::Sum(mono_cons)
         }
 
         ast::TypeDeclRhs::Product(fields) => {
@@ -2024,15 +2020,15 @@ fn mono_fields(
                 }
             }
 
-            mono::ConFields::Named { fields: all_fields }
+            mono::ConFields::Named(all_fields)
         }
 
-        ast::ConFields::Unnamed { fields } => mono::ConFields::Unnamed {
-            fields: fields
+        ast::ConFields::Unnamed { fields } => mono::ConFields::Unnamed(
+            fields
                 .iter()
                 .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm))
                 .collect(),
-        },
+        ),
     }
 }
 
