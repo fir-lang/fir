@@ -2148,8 +2148,13 @@ fn resolve_extension_record(
             ),
         },
         ast::Type::Record {
-            fields, extension, ..
-        } => collect_record_labels(fields, extension, ty_map, poly_pgm, mono_pgm),
+            fields,
+            extension,
+            is_row,
+        } => {
+            assert!(*is_row);
+            collect_record_labels(fields, extension, ty_map, poly_pgm, mono_pgm)
+        }
         other => panic!("BUG: Record extension is not a var or record: {other:?}"),
     }
 }
@@ -2170,8 +2175,13 @@ fn resolve_extension_variant(
             ),
         },
         ast::Type::Variant {
-            alts, extension, ..
-        } => collect_variant_labels(alts, extension, ty_map, poly_pgm, mono_pgm),
+            alts,
+            extension,
+            is_row,
+        } => {
+            assert!(*is_row);
+            collect_variant_labels(alts, extension, ty_map, poly_pgm, mono_pgm)
+        }
         other => panic!("BUG: Variant extension is not a var or variant: {other:?}"),
     }
 }

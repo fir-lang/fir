@@ -2103,9 +2103,8 @@ fn expand_synonyms_in_sig(sig: &mut ast::FunSig, synonyms: &HashMap<Id, ast::Typ
 fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, ast::Type>) {
     match ty {
         ast::Type::Named(named) => {
-            if named.args.is_empty()
-                && let Some(expansion) = synonyms.get(&named.name)
-            {
+            if let Some(expansion) = synonyms.get(&named.name) {
+                assert!(named.args.is_empty());
                 *ty = expansion.clone();
                 // Recursively expand in case the expansion contains more synonyms.
                 expand_synonyms_in_ty(ty, synonyms);
@@ -2115,7 +2114,9 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, ast::Type>) 
                 expand_synonyms_in_ty(&mut arg.node, synonyms);
             }
         }
+
         ast::Type::Var(_) => {}
+
         ast::Type::Record {
             fields,
             extension,
@@ -2128,6 +2129,7 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, ast::Type>) 
                 expand_synonyms_in_ty(&mut ext.node, synonyms);
             }
         }
+
         ast::Type::Variant {
             alts,
             extension,
@@ -2142,6 +2144,7 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, ast::Type>) 
                 expand_synonyms_in_ty(&mut ext.node, synonyms);
             }
         }
+
         ast::Type::Fn(fn_ty) => {
             for arg in &mut fn_ty.args {
                 expand_synonyms_in_ty(&mut arg.node, synonyms);
@@ -2153,6 +2156,7 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, ast::Type>) 
                 expand_synonyms_in_ty(&mut exn.node, synonyms);
             }
         }
+
         ast::Type::AssocTySelect {
             ty: inner,
             assoc_ty: _,
