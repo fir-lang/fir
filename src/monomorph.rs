@@ -1777,12 +1777,12 @@ fn mono_tc_ty(
         Ty::AssocTySelect { ty, assoc_ty } => {
             // The `ty` is a trait application like `Trait[Arg]`, not a regular type. Extract the
             // trait name and args directly, monomorphize only the args.
-            let (trait_name, args): (&Id, &[Ty]) = match ty.as_ref() {
+            let (trait_name, trait_args): (&Id, &[Ty]) = match ty.as_ref() {
                 Ty::App(name, args, _kind) => (name, args.as_slice()),
                 Ty::Con(name, _kind) => (name, &[]),
                 _ => panic!("Expected trait constructor in AssocTySelect, got {:?}", ty),
             };
-            let mono_args: Vec<mono::Type> = args
+            let mono_args: Vec<mono::Type> = trait_args
                 .iter()
                 .map(|arg| mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm))
                 .collect();
@@ -1859,23 +1859,20 @@ fn mono_ast_ty(
         }),
 
         ast::Type::AssocTySelect { ty, assoc_ty } => {
-            // The inner type is a trait application like `Foo[U32]`. We can't monomorphize it
-            // as a regular type (traits aren't in poly_pgm.ty). Extract the trait name and
-            // monomorphize just the type args.
-            let (trait_name, trait_args) = match &*ty.node {
+            // Same as `Ty::AssocTySelect`.
+            match &*ty.node {
                 ast::Type::Named(ast::NamedType { name, args }) => {
                     let mono_args: Vec<mono::Type> = args
                         .iter()
                         .map(|arg| mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm))
                         .collect();
-                    (name, mono_args)
+                    resolve_assoc_ty(name, &mono_args, assoc_ty, poly_pgm, mono_pgm)
                 }
                 ast::Type::Var(var) => {
                     panic!("Unexpected type variable {} in AssocTySelect", var);
                 }
                 _ => panic!("Expected named type in AssocTySelect, got {:?}", ty.node),
-            };
-            resolve_assoc_ty(trait_name, &trait_args, assoc_ty, poly_pgm, mono_pgm)
+            }
         }
     }
 }
