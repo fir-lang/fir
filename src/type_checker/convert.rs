@@ -35,10 +35,9 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
 
             Ty::Anonymous {
                 labels: ty_fields,
-                extension: extension.as_ref().map(|var| match tys.get_var(var) {
-                    Some(ty) => Box::new(ty.clone()),
-                    None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
-                }),
+                extension: extension
+                    .as_ref()
+                    .map(|ext_ty| Box::new(convert_ast_ty(tys, ext_ty, loc))),
                 record_or_variant: RecordOrVariant::Record,
                 is_row: *is_row,
             }
@@ -65,10 +64,9 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
 
             Ty::Anonymous {
                 labels: ty_alts,
-                extension: extension.as_ref().map(|var| match tys.get_var(var) {
-                    Some(ty) => Box::new(ty.clone()),
-                    None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
-                }),
+                extension: extension
+                    .as_ref()
+                    .map(|ext_ty| Box::new(convert_ast_ty(tys, ext_ty, loc))),
                 record_or_variant: RecordOrVariant::Variant,
                 is_row: *is_row,
             }
@@ -163,15 +161,9 @@ pub(super) fn convert_fields(
                 .iter()
                 .map(|(name, ty)| (name.clone(), convert_ast_ty(tys, &ty.node, &ty.loc)))
                 .collect(),
-            extension: extension.as_ref().map(|ext_id| {
-                Box::new(
-                    tys.get_var(ext_id)
-                        .unwrap_or_else(|| {
-                            panic!("{}: Unbound type variable {}", loc_display(loc), ext_id)
-                        })
-                        .clone(),
-                )
-            }),
+            extension: extension
+                .as_ref()
+                .map(|ext_ty| Box::new(convert_ast_ty(tys, ext_ty, loc))),
         }),
         ast::ConFields::Unnamed { fields } => Some(FunArgs::Positional {
             args: fields

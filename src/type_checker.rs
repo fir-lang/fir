@@ -2042,9 +2042,12 @@ pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
 
 fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, synonyms: &HashMap<Id, ast::Type>) {
     match &mut decl.rhs {
-        Some(ast::TypeDeclRhs::Sum { cons, extension: _ }) => {
+        Some(ast::TypeDeclRhs::Sum { cons, extension }) => {
             for con in cons {
                 expand_synonyms_in_fields(&mut con.fields, synonyms);
+            }
+            if let Some(ext) = extension {
+                expand_synonyms_in_ty(ext, synonyms);
             }
         }
         Some(ast::TypeDeclRhs::Product(fields)) => {
@@ -2060,12 +2063,12 @@ fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, synonyms: &HashMap<Id,
 fn expand_synonyms_in_fields(fields: &mut ast::ConFields, synonyms: &HashMap<Id, ast::Type>) {
     match fields {
         ast::ConFields::Empty => {}
-        ast::ConFields::Named {
-            fields,
-            extension: _,
-        } => {
+        ast::ConFields::Named { fields, extension } => {
             for (_, ty) in fields {
                 expand_synonyms_in_ty(&mut ty.node, synonyms);
+            }
+            if let Some(ext) = extension {
+                expand_synonyms_in_ty(ext, synonyms);
             }
         }
         ast::ConFields::Unnamed { fields } => {
@@ -2115,22 +2118,28 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, ast::Type>) 
         ast::Type::Var(_) => {}
         ast::Type::Record {
             fields,
-            extension: _,
+            extension,
             is_row: _,
         } => {
             for (_, field_ty) in fields {
                 expand_synonyms_in_ty(field_ty, synonyms);
             }
+            if let Some(ext) = extension {
+                expand_synonyms_in_ty(ext, synonyms);
+            }
         }
         ast::Type::Variant {
             alts,
-            extension: _,
+            extension,
             is_row: _,
         } => {
             for alt in alts {
                 for arg in &mut alt.args {
                     expand_synonyms_in_ty(&mut arg.node, synonyms);
                 }
+            }
+            if let Some(ext) = extension {
+                expand_synonyms_in_ty(ext, synonyms);
             }
         }
         ast::Type::Fn(fn_ty) => {

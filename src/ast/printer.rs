@@ -64,7 +64,8 @@ impl TypeDeclRhs {
                 if let Some(ext) = extension {
                     buf.push('\n');
                     buf.push_str(&INDENTS[..indent as usize]);
-                    write!(buf, "..{ext}").unwrap();
+                    buf.push_str("..");
+                    ext.print(buf);
                 }
             }
 
@@ -95,7 +96,9 @@ fn print_con_fields(fields: &ConFields, buf: &mut String, indent: u32) {
             }
             if let Some(ext) = extension {
                 buf.push_str(&INDENTS[..indent as usize + 4]);
-                writeln!(buf, "..{ext},").unwrap();
+                buf.push_str("..");
+                ext.print(buf);
+                buf.push('\n');
             }
             buf.push_str(&INDENTS[..indent as usize]);
             buf.push(')');
@@ -247,8 +250,11 @@ impl Type {
                     field_ty.print(buf);
                 }
                 if let Some(extension) = extension {
-                    buf.push('|');
-                    buf.push_str(extension);
+                    if !fields.is_empty() {
+                        buf.push_str(", ");
+                    }
+                    buf.push_str("..");
+                    extension.print(buf);
                 }
                 buf.push(')');
             }
@@ -286,7 +292,7 @@ impl Type {
                         buf.push_str(", ");
                     }
                     buf.push_str("..");
-                    buf.push_str(ext);
+                    ext.print(buf);
                 }
                 buf.push(']');
             }
