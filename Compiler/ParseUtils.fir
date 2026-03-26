@@ -82,7 +82,10 @@ newTyId(cursor: U32, tokens: Array[Token]) TyId:
     )
 
 
-processFields(fields: Vec[(name: Option[Id], ty: Type)], extension: Option[Id]) ConFields:
+processFields(
+    fields: Vec[(name: Option[Id], ty: Type)],
+    extension: Option[Type],
+) ConFields:
     if fields.isEmpty():
         match extension:
             Option.Some(extension):

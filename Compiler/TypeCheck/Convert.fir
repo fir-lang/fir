@@ -48,17 +48,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                     )
 
             let extension = extension.map(
-                \(extId):
-                    let extIdText = module.idText(extId)
-                    vars.get(extIdText).unwrapOrElse(
-                        \():
-                            throw(
-                                TypeError(
-                                    loc,
-                                    msg = "Unbound type variable `extIdText`",
-                                ),
-                            ),
-                    ),
+                \(extTy): convertAstTy(module, vars, extTy),
             )
 
             Ty.Record(labels, extension, isRow)
@@ -104,17 +94,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                         )
 
             let extension = extension.map(
-                \(extId):
-                    let extIdText = module.idText(extId)
-                    vars.get(extIdText).unwrapOrElse(
-                        \():
-                            throw(
-                                TypeError(
-                                    loc,
-                                    msg = "Unbound type variable `extIdText`",
-                                ),
-                            ),
-                    ),
+                \(extTy): convertAstTy(module, vars, extTy),
             )
 
             Ty.Variant(cons, extension, isRow,)

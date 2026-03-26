@@ -87,7 +87,7 @@ type TypeDeclRhs:
     ## A sum type, with more than one constructor.
     Sum(
         cons: Vec[ConDecl],
-        extension: Option[Id],
+        extension: Option[Type],
     )
 
     ## A product type uses the type name as the constructor and only has fields.
@@ -119,7 +119,7 @@ type ConFields:
     Empty
     Named(
         fields: Vec[NamedField],
-        extension: Option[Id],
+        extension: Option[Type],
     )
     Unnamed(Vec[Type])
 
@@ -356,7 +356,7 @@ impl Tokens[Type]:
 #[derive(ToDoc)]
 type RecordType(
     fields: Vec[Named[Type]],
-    extension: Option[Id],
+    extension: Option[Type],
     isRow: Bool,
 
     # Left paren.
@@ -378,7 +378,7 @@ impl Tokens[RecordType]:
 #[derive(ToDoc)]
 type VariantType(
     alts: Vec[NamedType],
-    extension: Option[Id],
+    extension: Option[Type],
     isRow: Bool,
 
     # Left bracket.

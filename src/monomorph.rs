@@ -1493,8 +1493,12 @@ fn match_(
             }
 
             if !fields2_map.is_empty() {
+                let ext_var = match extension.as_ref().map(|e| &e.node) {
+                    Some(ast::Type::Var(id)) => id,
+                    _ => panic!("BUG: Non-variable record extension in match_"),
+                };
                 substs.insert(
-                    extension.as_ref().unwrap().clone(),
+                    ext_var.clone(),
                     mono::Type::Record {
                         fields: fields2_map
                             .iter()
@@ -1539,9 +1543,10 @@ fn match_(
                 }
             }
 
-            let ext_var = match extension {
-                Some(ext_var) => ext_var,
+            let ext_var = match extension.as_ref().map(|e| &e.node) {
+                Some(ast::Type::Var(id)) => id,
                 None => return labels2_map.is_empty(),
+                _ => panic!("BUG: Non-variable variant extension in match_"),
             };
 
             substs.insert(ext_var.clone(), mono::Type::Variant { alts: labels2_map });
@@ -1920,25 +1925,17 @@ fn mono_ty_decl(
                 .map(|con| mono_con(con, &ty_map, poly_pgm, mono_pgm))
                 .collect();
 
-            if let Some(ext_id) = extension {
-                match ty_map.get(ext_id) {
-                    Some(mono::Type::Variant { alts }) => {
-                        for (alt_name, alt_ty) in alts {
-                            mono_cons.push(mono::ConDecl {
-                                name: alt_name.clone(),
-                                fields: if alt_ty.args.is_empty() {
-                                    mono::ConFields::Empty
-                                } else {
-                                    mono::ConFields::Unnamed(alt_ty.args.clone())
-                                },
-                            });
-                        }
-                    }
-                    Some(other) => panic!("BUG: Sum type extension is not a variant: {other:?}"),
-                    None => panic!(
-                        "BUG: Sum type extension is not in ty map: {ext_id}\n\
-                        Ty map = {ty_map:#?}"
-                    ),
+            if let Some(ext) = extension {
+                let ext_mono = resolve_extension_variant(&ext.node, &ty_map, poly_pgm, mono_pgm);
+                for (alt_name, alt_ty) in ext_mono {
+                    mono_cons.push(mono::ConDecl {
+                        name: alt_name,
+                        fields: if alt_ty.args.is_empty() {
+                            mono::ConFields::Empty
+                        } else {
+                            mono::ConFields::Unnamed(alt_ty.args)
+                        },
+                    });
                 }
             }
 
@@ -1998,25 +1995,13 @@ fn mono_fields(
                 })
                 .collect();
 
-            if let Some(ext_id) = extension {
-                match ty_map.get(ext_id) {
-                    Some(mono::Type::Record {
-                        fields: extra_fields,
-                    }) => {
-                        for (extra_name, extra_ty) in extra_fields.iter() {
-                            let old = all_fields.insert(extra_name.clone(), extra_ty.clone());
-                            if old.is_some() {
-                                panic!("BUG: Duplicate field in constructor fields");
-                            }
-                        }
+            if let Some(ext) = extension {
+                let extra_fields = resolve_extension_record(&ext.node, ty_map, poly_pgm, mono_pgm);
+                for (extra_name, extra_ty) in extra_fields {
+                    let old = all_fields.insert(extra_name, extra_ty);
+                    if old.is_some() {
+                        panic!("BUG: Duplicate field in constructor fields");
                     }
-                    Some(other) => {
-                        panic!("BUG: ConFields extension is not a record: {other:?}")
-                    }
-                    None => panic!(
-                        "BUG: ConFields extension is not in ty map: {ext_id}\n\
-                        Ty map = {ty_map:#?}"
-                    ),
                 }
             }
 
@@ -2062,7 +2047,7 @@ fn get_variant_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::NamedType>
 
 fn collect_record_labels(
     ast_fields: &[(Id, ast::Type)],
-    extension: &Option<Id>,
+    extension: &Option<Box<ast::L<ast::Type>>>,
     ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
@@ -2079,23 +2064,13 @@ fn collect_record_labels(
         }
     }
 
-    if let Some(extension) = extension {
-        match ty_map.get(extension) {
-            Some(mono::Type::Record {
-                fields: extra_fields,
-            }) => {
-                for (extra_field_name, extra_field_ty) in extra_fields.iter() {
-                    let old = fields.insert(extra_field_name.clone(), extra_field_ty.clone());
-                    if old.is_some() {
-                        panic!("BUG: Duplicate label in record");
-                    }
-                }
+    if let Some(ext) = extension {
+        let extra_fields = resolve_extension_record(&ext.node, ty_map, poly_pgm, mono_pgm);
+        for (extra_field_name, extra_field_ty) in extra_fields {
+            let old = fields.insert(extra_field_name, extra_field_ty);
+            if old.is_some() {
+                panic!("BUG: Duplicate label in record");
             }
-            Some(other) => panic!("BUG: Record extension is not a record: {other:?}"),
-            None => panic!(
-                "BUG: Record extension is not in ty map: {extension}\n\
-                Ty map = {ty_map:#?}"
-            ),
         }
     }
 
@@ -2104,7 +2079,7 @@ fn collect_record_labels(
 
 fn collect_variant_labels(
     ast_alts: &[ast::NamedType],
-    extension: &Option<Id>,
+    extension: &Option<Box<ast::L<ast::Type>>>,
     ty_map: &HashMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
@@ -2142,27 +2117,73 @@ fn collect_variant_labels(
         }
     }
 
-    if let Some(extension) = extension {
-        match ty_map.get(extension) {
-            Some(mono::Type::Variant { alts: extra_alts }) => {
-                for (extra_alt_label, extra_alt_ty) in extra_alts.iter() {
-                    let old = alts.insert(extra_alt_label.clone(), extra_alt_ty.clone());
-                    if let Some(old) = old.as_ref()
-                        && old != extra_alt_ty
-                    {
-                        panic!("Type error: duplicate label in variant");
-                    }
-                }
+    if let Some(ext) = extension {
+        let extra_alts = resolve_extension_variant(&ext.node, ty_map, poly_pgm, mono_pgm);
+        for (extra_alt_label, extra_alt_ty) in extra_alts {
+            let old = alts.insert(extra_alt_label, extra_alt_ty.clone());
+            if let Some(old) = old.as_ref()
+                && old != &extra_alt_ty
+            {
+                panic!("Type error: duplicate label in variant");
             }
-            Some(other) => panic!("BUG: Variant extension is not a variant: {other:?}"),
-            None => panic!(
-                "BUG: Variant extension is not in ty map: {extension}\n\
-                Ty map = {ty_map:#?}"
-            ),
         }
     }
 
     alts
+}
+
+fn resolve_extension_record(
+    ext: &ast::Type,
+    ty_map: &HashMap<Id, mono::Type>,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
+) -> OrdMap<Id, mono::Type> {
+    match ext {
+        ast::Type::Var(id) => match ty_map.get(id) {
+            Some(mono::Type::Record { fields }) => fields.clone(),
+            Some(other) => panic!("BUG: Record extension is not a record: {other:?}"),
+            None => panic!(
+                "BUG: Record extension var not in ty map: {id}\n\
+                Ty map = {ty_map:#?}"
+            ),
+        },
+        ast::Type::Record {
+            fields,
+            extension,
+            is_row,
+        } => {
+            assert!(*is_row);
+            collect_record_labels(fields, extension, ty_map, poly_pgm, mono_pgm)
+        }
+        other => panic!("BUG: Record extension is not a var or record: {other:?}"),
+    }
+}
+
+fn resolve_extension_variant(
+    ext: &ast::Type,
+    ty_map: &HashMap<Id, mono::Type>,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
+) -> OrdMap<Id, mono::NamedType> {
+    match ext {
+        ast::Type::Var(id) => match ty_map.get(id) {
+            Some(mono::Type::Variant { alts }) => alts.clone(),
+            Some(other) => panic!("BUG: Variant extension is not a variant: {other:?}"),
+            None => panic!(
+                "BUG: Variant extension var not in ty map: {id}\n\
+                Ty map = {ty_map:#?}"
+            ),
+        },
+        ast::Type::Variant {
+            alts,
+            extension,
+            is_row,
+        } => {
+            assert!(*is_row);
+            collect_variant_labels(alts, extension, ty_map, poly_pgm, mono_pgm)
+        }
+        other => panic!("BUG: Variant extension is not a var or variant: {other:?}"),
+    }
 }
 
 fn collect_record_rows(
@@ -2170,6 +2191,7 @@ fn collect_record_rows(
     ty_map: &HashMap<Id, mono::Type>,
     rows: &mut OrdMap<Id, mono::Type>,
 ) {
+    assert!(matches!(ext_ty.kind(), Kind::Row(_)));
     match ext_ty {
         Ty::RVar(var, _kind) => {
             let ext = ty_map.get(var).unwrap();

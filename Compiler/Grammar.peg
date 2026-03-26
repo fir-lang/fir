@@ -158,10 +158,10 @@ recordType RecordType:
             _lastToken = TokenIdx(idx = last),
         )
 
-    start=recordTypeStart ".." ext=^ "LowerId" last=^ ")":
+    start=recordTypeStart ".." ext=type_ last=^ ")":
         RecordType(
             fields = Vec.empty(),
-            extension = Option.Some(newId(ext)),
+            extension = Option.Some(ext),
             isRow = start.isRow,
             _firstToken = start.start,
             _lastToken = TokenIdx(idx = last),
@@ -184,9 +184,9 @@ recordTypeStart (start: TokenIdx, isRow: Bool):
     start=^ "row(": (start = TokenIdx(idx = start), isRow = Bool.True)
 
 
-recordTypeCont Option[Id]:
-    "," id=(_".." ^ _"LowerId")?:
-        id.map(\(id: U32): newId(id))
+recordTypeCont Option[Type]:
+    "," ext=(_".." type_)?:
+        ext
 
 
 # - []
@@ -205,10 +205,10 @@ variantType VariantType:
             _lastToken = TokenIdx(idx = last),
         )
 
-    start=variantTypeStart ".." ext=^ "LowerId" last=^ "]":
+    start=variantTypeStart ".." ext=type_ last=^ "]":
         VariantType(
             alts = Vec.empty(),
-            extension = Option.Some(newId(ext)),
+            extension = Option.Some(ext),
             isRow = start.isRow,
             _firstToken = start.start,
             _lastToken = TokenIdx(idx = last),
@@ -230,13 +230,13 @@ variantTypeStart (start: TokenIdx, isRow: Bool):
     start=^ "row[": (start = TokenIdx(idx = start), isRow = Bool.True)
 
 
-variantTypeCont Option[Id]:
-    "," id=(_".." ^ _"LowerId")?:
-        id.map(\(id: U32): newId(id))
+variantTypeCont Option[Type]:
+    "," ext=(_".." type_)?:
+        ext
 
 
 recordTypeFields Vec[Named[Type]]:
-    f0=recordTypeField fs=(_"," recordTypeField)* "," ".." "LowerId":
+    f0=recordTypeField fs=(_"," recordTypeField)* "," ".." type_:
         # TODO: Extension?
         # TODO: We do we need the type annotation here?
         let vec: Vec[Named[Type]] = Vec.fromIter(once(f0).chain(fs.iter()))
@@ -293,7 +293,7 @@ typeDecl TypeDecl:
     # Sum type: at least one constructors
     attr=attr? val=^ valToken="value"? "type"
             name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT"
-            rhs=conDecl* ext=(_".." ^ _"LowerId" _"NEWLINE")? "DEDENT":
+            rhs=conDecl* ext=(_".." type_ _"NEWLINE")? "DEDENT":
         TypeDecl(
             attr,
             value_ = valToken.map(\(a): TokenIdx(idx = val)),
@@ -303,7 +303,7 @@ typeDecl TypeDecl:
                 Option.Some(params): params
                 Option.None: Vec.empty(),
             typeParamKinds = Vec.empty(),
-            rhs = Option.Some(TypeDeclRhs.Sum(cons = rhs, extension = ext.map(\(id: U32): newId(id)))),
+            rhs = Option.Some(TypeDeclRhs.Sum(cons = rhs, extension = ext)),
         )
 
     # Product type
@@ -379,13 +379,13 @@ conFields (fields: ConFields, lastToken: TokenIdx):
     "(" last=^ ")":
         (fields = ConFields.Empty, lastToken = TokenIdx(idx = last))
 
-    "(" f0=conField fs=(_"," conField)* ","? ext=(_".." ^ _"LowerId")? last=^ ")":
+    "(" f0=conField fs=(_"," conField)* ","? ext=(_".." type_)? last=^ ")":
         let vec: Vec[(name: Option[Id], ty: Type)] =
             Vec.fromIter(once(f0).chain(fs.iter()))
-        (fields = processFields(vec, ext.map(\(id: U32): newId(id))), lastToken = TokenIdx(idx = last))
+        (fields = processFields(vec, ext), lastToken = TokenIdx(idx = last))
 
-    "(" ".." ext=^ "LowerId" last=^ ")":
-        (fields = processFields(Vec.empty(), Option.Some(newId(ext))), lastToken = TokenIdx(idx = last))
+    "(" ".." ext=type_ last=^ ")":
+        (fields = processFields(Vec.empty(), Option.Some(ext)), lastToken = TokenIdx(idx = last))
 
 
 # A constructor field with optional name: `Type` or `foo: Type`.

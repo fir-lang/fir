@@ -164,7 +164,7 @@ pub enum TypeDeclRhs {
     /// A sum type, with more than one constructor.
     Sum {
         cons: Vec<ConDecl>,
-        extension: Option<Id>,
+        extension: Option<Box<L<Type>>>,
     },
 
     /// A product type uses the type name as the constructor and only has fields.
@@ -186,7 +186,7 @@ pub enum ConFields {
     Empty,
     Named {
         fields: Vec<(Id, L<Type>)>,
-        extension: Option<Id>,
+        extension: Option<Box<L<Type>>>,
     },
     Unnamed {
         fields: Vec<L<Type>>,
@@ -206,14 +206,14 @@ pub enum Type {
     /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..r)`.
     Record {
         fields: Vec<(Id, Type)>,
-        extension: Option<Id>,
+        extension: Option<Box<L<Type>>>,
         is_row: bool,
     },
 
     /// An anonymous variant type, e.g. `[Str, Option[U32], ..r]`.
     Variant {
         alts: Vec<NamedType>,
-        extension: Option<Id>,
+        extension: Option<Box<L<Type>>>,
         is_row: bool,
     },
 
@@ -937,32 +937,14 @@ impl Type {
                 extension,
                 is_row,
             } => {
-                let mut fields: Vec<(Id, Type)> = fields
+                let fields: Vec<(Id, Type)> = fields
                     .iter()
                     .map(|(name, ty)| (name.clone(), ty.subst_ids(substs)))
                     .collect();
 
-                let mut extension = extension.clone();
-
-                if let Some(ext) = &extension
-                    && let Some(ext_ty) = substs.get(ext)
-                {
-                    match ext_ty {
-                        Type::Var(new_ext) => extension = Some(new_ext.clone()),
-
-                        Type::Record {
-                            fields: ext_fields,
-                            extension: new_ext,
-                            is_row,
-                        } => {
-                            assert!(*is_row);
-                            fields.extend(ext_fields.iter().cloned());
-                            extension = new_ext.clone();
-                        }
-
-                        _ => panic!("Weird substitution for record extension {ext}: {ext_ty}"),
-                    }
-                };
+                let extension = extension
+                    .as_ref()
+                    .map(|ext| Box::new(ext.map_as_ref(|ty| ty.subst_ids(substs))));
 
                 Type::Record {
                     fields,
@@ -976,7 +958,7 @@ impl Type {
                 extension,
                 is_row,
             } => {
-                let mut alts: Vec<NamedType> = alts
+                let alts: Vec<NamedType> = alts
                     .iter()
                     .map(|NamedType { name, args }| NamedType {
                         name: name.clone(),
@@ -990,27 +972,9 @@ impl Type {
                     })
                     .collect();
 
-                let mut extension = extension.clone();
-
-                if let Some(ext) = &extension
-                    && let Some(ext_ty) = substs.get(ext)
-                {
-                    match ext_ty {
-                        Type::Var(new_ext) => extension = Some(new_ext.clone()),
-
-                        Type::Variant {
-                            alts: ext_alts,
-                            extension: new_ext,
-                            is_row,
-                        } => {
-                            assert!(*is_row);
-                            alts.extend(ext_alts.iter().cloned());
-                            extension = new_ext.clone();
-                        }
-
-                        _ => panic!("Weird substitution for variant extension {ext}: {ext_ty}"),
-                    }
-                }
+                let extension = extension
+                    .as_ref()
+                    .map(|ext| Box::new(ext.map_as_ref(|ty| ty.subst_ids(substs))));
 
                 Type::Variant {
                     alts,

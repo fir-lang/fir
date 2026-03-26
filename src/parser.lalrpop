@@ -220,14 +220,18 @@ TypeParams: Vec<Id> = {
         params.into_iter().map(|id| id.smol_str()).collect(),
 }
 
-ConDecls: (Vec<ConDecl>, Option<Id>) = {
-    <decls:ConDecl+> <extension:(".." <LowerId> NEWLINE)?> => {
-        (decls, extension.map(|id| id.smol_str()))
+ConDecls: (Vec<ConDecl>, Option<Box<L<Type>>>) = {
+    <decls:ConDecl+> <extension:SumExtension?> => {
+        (decls, extension)
     },
 
-    ".." <extension:LowerId> NEWLINE => {
-        (vec![], Some(extension.smol_str()))
+    <extension:SumExtension> => {
+        (vec![], Some(extension))
     },
+}
+
+SumExtension: Box<L<Type>> = {
+    ".." <l:@L> <ty:TypeNoFn> <r:@R> NEWLINE => Box::new(L::new(module, l, r, ty)),
 }
 
 ConDecl: ConDecl = {
@@ -348,10 +352,10 @@ NamedType: NamedType = {
         NamedType { name: name.smol_str(), args },
 }
 
-RowExtension: Option<Id> = {
+RowExtension: Option<Box<L<Type>>> = {
     => None,
 
-    ".." <id:LowerId> => Some(id.smol_str()),
+    ".." <ty:LTypeNoFn> => Some(Box::new(ty)),
 }
 
 TypeArg: L<(Option<Id>, L<Type>)> = {
