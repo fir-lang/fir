@@ -59,66 +59,48 @@ impl TypeDeclRhs {
                     }
                     buf.push_str(&INDENTS[..indent as usize]);
                     buf.push_str(&con.name);
-                    match &con.fields {
-                        ConFields::Empty => {}
-
-                        ConFields::Named(fields) => {
-                            buf.push_str("(\n");
-                            for (field_name, field_ty) in fields.iter() {
-                                buf.push_str(&INDENTS[..indent as usize + 4]);
-                                buf.push_str(field_name);
-                                buf.push_str(": ");
-                                field_ty.node.print(buf);
-                                buf.push_str(",\n");
-                            }
-                            buf.push_str("    )");
-                        }
-
-                        ConFields::Unnamed(fields) => {
-                            buf.push('(');
-                            for (i, field_ty) in fields.iter().enumerate() {
-                                if i != 0 {
-                                    buf.push_str(", ");
-                                }
-                                field_ty.node.print(buf);
-                            }
-                            buf.push(')');
-                        }
-                    }
+                    print_con_fields(&con.fields, buf, indent);
                 }
             }
 
-            TypeDeclRhs::Product(fields) => match fields {
-                ConFields::Empty => {}
-
-                ConFields::Named(fields) => {
-                    buf.push_str("(\n");
-                    for (field_name, field_ty) in fields.iter() {
-                        buf.push_str(&INDENTS[..indent as usize]);
-                        buf.push_str(field_name);
-                        buf.push_str(": ");
-                        field_ty.node.print(buf);
-                        buf.push_str(",\n");
-                    }
-                    buf.push(')');
-                }
-
-                ConFields::Unnamed(fields) => {
-                    buf.push('(');
-                    for (i, field_ty) in fields.iter().enumerate() {
-                        if i != 0 {
-                            buf.push_str(", ");
-                        }
-                        field_ty.node.print(buf);
-                    }
-                    buf.push(')');
-                }
-            },
+            TypeDeclRhs::Product(fields) => {
+                print_con_fields(fields, buf, indent);
+            }
 
             TypeDeclRhs::Synonym(ty) => {
                 buf.push_str(" = ");
                 ty.node.print(buf);
             }
+        }
+    }
+}
+
+fn print_con_fields(fields: &ConFields, buf: &mut String, indent: u32) {
+    match fields {
+        ConFields::Empty => {}
+
+        ConFields::Named(fields) => {
+            buf.push_str("(\n");
+            for (field_name, field_ty) in fields.iter() {
+                buf.push_str(&INDENTS[..indent as usize + 4]);
+                buf.push_str(field_name);
+                buf.push_str(": ");
+                field_ty.node.print(buf);
+                buf.push_str(",\n");
+            }
+            buf.push_str(&INDENTS[..indent as usize]);
+            buf.push(')');
+        }
+
+        ConFields::Unnamed(fields) => {
+            buf.push('(');
+            for (i, field_ty) in fields.iter().enumerate() {
+                if i != 0 {
+                    buf.push_str(", ");
+                }
+                field_ty.node.print(buf);
+            }
+            buf.push(')');
         }
     }
 }
