@@ -51,7 +51,7 @@ impl TypeDecl {
 impl TypeDeclRhs {
     pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
-            TypeDeclRhs::Sum(cons) => {
+            TypeDeclRhs::Sum { cons, extension } => {
                 buf.push_str(":\n");
                 for (i, con) in cons.iter().enumerate() {
                     if i != 0 {
@@ -60,6 +60,11 @@ impl TypeDeclRhs {
                     buf.push_str(&INDENTS[..indent as usize]);
                     buf.push_str(&con.name);
                     print_con_fields(&con.fields, buf, indent);
+                }
+                if let Some(ext) = extension {
+                    buf.push('\n');
+                    buf.push_str(&INDENTS[..indent as usize]);
+                    write!(buf, "..{ext}").unwrap();
                 }
             }
 
@@ -79,7 +84,7 @@ fn print_con_fields(fields: &ConFields, buf: &mut String, indent: u32) {
     match fields {
         ConFields::Empty => {}
 
-        ConFields::Named(fields) => {
+        ConFields::Named { fields, extension } => {
             buf.push_str("(\n");
             for (field_name, field_ty) in fields.iter() {
                 buf.push_str(&INDENTS[..indent as usize + 4]);
@@ -88,11 +93,15 @@ fn print_con_fields(fields: &ConFields, buf: &mut String, indent: u32) {
                 field_ty.node.print(buf);
                 buf.push_str(",\n");
             }
+            if let Some(ext) = extension {
+                buf.push_str(&INDENTS[..indent as usize + 4]);
+                writeln!(buf, "..{ext},").unwrap();
+            }
             buf.push_str(&INDENTS[..indent as usize]);
             buf.push(')');
         }
 
-        ConFields::Unnamed(fields) => {
+        ConFields::Unnamed { fields } => {
             buf.push('(');
             for (i, field_ty) in fields.iter().enumerate() {
                 if i != 0 {

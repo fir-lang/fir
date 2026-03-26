@@ -206,7 +206,7 @@ convertFields(module: Module, vars: ScopeMap[Str, Ty], fields: ConFields) Option
     match fields:
         ConFields.Empty: Option.None
 
-        ConFields.Named(namedFields):
+        ConFields.Named(fields = namedFields, ..):
             Option.Some(
                 FunArgs.Named(
                     HashMap.fromIter(

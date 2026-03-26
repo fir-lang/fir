@@ -128,12 +128,12 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             let ty = apply_con_ty(
                 &con_ty,
                 &pat_field_tys,
+                *ignore_rest,
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
                 level,
                 &pat.loc,
-                *ignore_rest,
                 tc_state.assumps,
                 tc_state.preds,
             );

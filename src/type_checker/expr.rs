@@ -496,7 +496,16 @@ pub(super) fn check_expr(
                     ret: ret_ty,
                     exceptions,
                 } => {
-                    if param_tys.len() != args.len() {
+                    if param_tys.has_extension() {
+                        if args.len() < param_tys.len() {
+                            panic!(
+                                "{}: Function with minimum arity {} is passed {} args",
+                                loc_display(loc),
+                                param_tys.len(),
+                                args.len()
+                            );
+                        }
+                    } else if param_tys.len() != args.len() {
                         panic!(
                             "{}: Function with arity {} is passed {} args",
                             loc_display(loc),
@@ -518,7 +527,7 @@ pub(super) fn check_expr(
                     );
 
                     match param_tys {
-                        FunArgs::Positional(param_tys) => {
+                        FunArgs::Positional { args: param_tys } => {
                             for arg in args.iter() {
                                 if arg.name.is_some() {
                                     panic!(
@@ -542,7 +551,10 @@ pub(super) fn check_expr(
                             }
                         }
 
-                        FunArgs::Named(param_tys) => {
+                        FunArgs::Named {
+                            args: param_tys,
+                            extension,
+                        } => {
                             for arg in args.iter_mut() {
                                 if arg.name.is_none() {
                                     match &arg.expr.node {
@@ -552,6 +564,7 @@ pub(super) fn check_expr(
                                             ty_args: _,
                                             inferred_ty: _,
                                         }) => {
+                                            // Convert `a` ==> `a = a`.
                                             arg.name = Some(id.clone());
                                         }
                                         _ => {
@@ -568,7 +581,19 @@ pub(super) fn check_expr(
                             let arg_names: HashSet<&Id> =
                                 args.iter().map(|arg| arg.name.as_ref().unwrap()).collect();
 
-                            if param_names != arg_names {
+                            if extension.is_some() {
+                                // With extension: all param names must be present in args, extra
+                                // args go into the extension.
+                                let missing: HashSet<&&Id> =
+                                    param_names.difference(&arg_names).collect();
+                                if !missing.is_empty() {
+                                    panic!(
+                                        "{}: Missing required arguments: {:?}",
+                                        loc_display(loc),
+                                        missing
+                                    );
+                                }
+                            } else if param_names != arg_names {
                                 panic!(
                                     "{}: Function expects arguments with names {:?}, but passed {:?}",
                                     loc_display(loc),
@@ -577,28 +602,71 @@ pub(super) fn check_expr(
                                 );
                             }
 
+                            let mut extra_fields: OrdMap<Id, Ty> = OrdMap::new();
                             for arg in args.iter_mut() {
                                 let arg_name: &Id = arg.name.as_ref().unwrap();
-                                let param_ty: &Ty = param_tys.get(arg_name).unwrap();
-                                let (arg_ty, _) = check_expr(
-                                    tc_state,
-                                    &mut arg.expr.node,
-                                    &arg.expr.loc,
-                                    Some(param_ty),
-                                    level,
-                                    loop_stack,
-                                );
-                                unify(
-                                    &arg_ty,
-                                    param_ty,
-                                    tc_state.tys.tys.cons(),
-                                    tc_state.trait_env,
-                                    tc_state.var_gen,
-                                    level,
-                                    loc,
-                                    tc_state.assumps,
-                                    tc_state.preds,
-                                );
+                                match param_tys.get(arg_name) {
+                                    Some(param_ty) => {
+                                        let (arg_ty, _) = check_expr(
+                                            tc_state,
+                                            &mut arg.expr.node,
+                                            &arg.expr.loc,
+                                            Some(param_ty),
+                                            level,
+                                            loop_stack,
+                                        );
+                                        unify(
+                                            &arg_ty,
+                                            param_ty,
+                                            tc_state.tys.tys.cons(),
+                                            tc_state.trait_env,
+                                            tc_state.var_gen,
+                                            level,
+                                            loc,
+                                            tc_state.assumps,
+                                            tc_state.preds,
+                                        );
+                                    }
+                                    None => {
+                                        let (arg_ty, _) = check_expr(
+                                            tc_state,
+                                            &mut arg.expr.node,
+                                            &arg.expr.loc,
+                                            None,
+                                            level,
+                                            loop_stack,
+                                        );
+                                        extra_fields.insert(arg_name.clone(), arg_ty);
+                                    }
+                                }
+                            }
+
+                            // Unify extra fields with the extension type.
+                            match extension {
+                                Some(ext_ty) => {
+                                    let extra_row = Ty::Anonymous {
+                                        labels: extra_fields,
+                                        extension: None,
+                                        record_or_variant: RecordOrVariant::Record,
+                                        is_row: true,
+                                    };
+                                    unify(
+                                        ext_ty,
+                                        &extra_row,
+                                        tc_state.tys.tys.cons(),
+                                        tc_state.trait_env,
+                                        tc_state.var_gen,
+                                        level,
+                                        loc,
+                                        tc_state.assumps,
+                                        tc_state.preds,
+                                    );
+                                }
+                                None => {
+                                    // When extension is not available, param names are compared
+                                    // with arg names above, so this branch shouldn't be taken.
+                                    assert!(extra_fields.is_empty());
+                                }
                             }
                         }
                     }
@@ -650,7 +718,7 @@ pub(super) fn check_expr(
 
                 let assoc_fn_ty = match &fun_ty {
                     Ty::Fun {
-                        args: FunArgs::Positional(method_args),
+                        args: FunArgs::Positional { args: method_args },
                         ret,
                         exceptions,
                     } => {
@@ -659,7 +727,7 @@ pub(super) fn check_expr(
                         let mut full_args = vec![object.node.inferred_ty().unwrap()];
                         full_args.extend(method_args.iter().cloned());
                         Ty::Fun {
-                            args: FunArgs::Positional(full_args),
+                            args: FunArgs::Positional { args: full_args },
                             ret: ret.clone(),
                             exceptions: exceptions.clone(),
                         }
@@ -922,7 +990,7 @@ pub(super) fn check_expr(
                                     user_ty_args: vec![],
                                     ty_args: vec![tc_state.exceptions.clone()],
                                     inferred_ty: Some(Ty::Fun {
-                                        args: FunArgs::Positional(vec![]),
+                                        args: FunArgs::Positional { args: vec![] },
                                         ret: Box::new(str_buf_ty.clone()),
                                         exceptions: Some(Box::new(tc_state.exceptions.clone())),
                                     }),
@@ -948,10 +1016,12 @@ pub(super) fn check_expr(
                                 user_ty_args: vec![],
                                 ty_args: vec![exn.clone()],
                                 inferred_ty: Some(Ty::Fun {
-                                    args: FunArgs::Positional(vec![
-                                        str_buf_ty.clone(),
-                                        Ty::Con(SmolStr::new_static("Str"), Kind::Star),
-                                    ]),
+                                    args: FunArgs::Positional {
+                                        args: vec![
+                                            str_buf_ty.clone(),
+                                            Ty::Con(SmolStr::new_static("Str"), Kind::Star),
+                                        ],
+                                    },
                                     ret: Box::new(Ty::unit()),
                                     exceptions: Some(Box::new(exn)),
                                 }),
@@ -1019,7 +1089,9 @@ pub(super) fn check_expr(
                                     user_ty_args: vec![],
                                     ty_args: vec![part_ty.clone(), tc_state.exceptions.clone()],
                                     inferred_ty: Some(Ty::Fun {
-                                        args: FunArgs::Positional(vec![part_ty]),
+                                        args: FunArgs::Positional {
+                                            args: vec![part_ty],
+                                        },
                                         ret: Box::new(Ty::Con(
                                             SmolStr::new_static("Str"),
                                             Kind::Star,
@@ -1055,7 +1127,9 @@ pub(super) fn check_expr(
                             user_ty_args: vec![],
                             ty_args: vec![str_buf_ty.clone(), tc_state.exceptions.clone()],
                             inferred_ty: Some(Ty::Fun {
-                                args: FunArgs::Positional(vec![str_buf_ty.clone()]),
+                                args: FunArgs::Positional {
+                                    args: vec![str_buf_ty.clone()],
+                                },
                                 ret: Box::new(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
                                 exceptions: Some(Box::new(tc_state.exceptions.clone())),
                             }),
@@ -1248,10 +1322,9 @@ pub(super) fn check_expr(
                             user_ty_args: vec![],
                             ty_args: vec![tc_state.exceptions.clone()],
                             inferred_ty: Some(Ty::Fun {
-                                args: FunArgs::Positional(vec![Ty::Con(
-                                    SmolStr::new("Bool"),
-                                    Kind::Star,
-                                )]),
+                                args: FunArgs::Positional {
+                                    args: vec![Ty::Con(SmolStr::new("Bool"), Kind::Star)],
+                                },
                                 ret: Box::new(Ty::Con(SmolStr::new("Bool"), Kind::Star)),
                                 exceptions: Some(Box::new(tc_state.exceptions.clone())),
                             }),
@@ -1457,10 +1530,10 @@ pub(super) fn check_expr(
                     expected_args
                         .as_ref()
                         .and_then(|expected_args| match expected_args {
-                            FunArgs::Positional(expected_args) => {
-                                expected_args.get(param_idx).cloned()
-                            }
-                            FunArgs::Named(_) => None,
+                            FunArgs::Positional {
+                                args: expected_args,
+                            } => expected_args.get(param_idx).cloned(),
+                            FunArgs::Named { .. } => None,
                         })
                         .unwrap_or_else(|| {
                             panic!(
@@ -1498,7 +1571,7 @@ pub(super) fn check_expr(
             tc_state.env.exit();
 
             let ty = Ty::Fun {
-                args: FunArgs::Positional(param_tys),
+                args: FunArgs::Positional { args: param_tys },
                 ret: Box::new(ret_ty),
                 exceptions: Some(Box::new(exceptions)),
             };
@@ -2104,7 +2177,7 @@ fn check_field_sel(
     };
 
     match &mut args {
-        FunArgs::Positional(args) => {
+        FunArgs::Positional { args } => {
             // Type arguments of the receiver already substituted for type parameters in
             // `select_method`. Drop 'self' argument.
             let self_arg = args.remove(0);
@@ -2120,7 +2193,7 @@ fn check_field_sel(
                 tc_state.preds,
             );
         }
-        FunArgs::Named(_) => panic!(),
+        FunArgs::Named { .. } => panic!(),
     }
 
     let ty = Ty::Fun {
@@ -2173,11 +2246,23 @@ fn select_field(
         }) if !sum => {
             assert_eq!(cons.len(), 1);
             let con_scheme = cons.values().next().unwrap();
-            let con_ty = con_scheme.instantiate_with_tys(ty_args, tc_state.preds, loc);
+
+            let con_ty = con_scheme
+                .instantiate_with_tys(ty_args, tc_state.preds, loc)
+                .deep_normalize(
+                    tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
+                    tc_state.var_gen,
+                    tc_state.assumps,
+                );
 
             match con_ty {
                 Ty::Fun {
-                    args: FunArgs::Named(fields),
+                    args:
+                        FunArgs::Named {
+                            args: fields,
+                            extension: _,
+                        },
                     ret: _,
                     exceptions: _,
                 } => fields.get(field).cloned(),
@@ -2205,7 +2290,7 @@ fn select_method(
         let (ty, _) = candidate.instantiate(level, tc_state.var_gen, &mut Default::default(), loc);
         let candidate_self_ty = match &ty {
             Ty::Fun {
-                args: FunArgs::Positional(args),
+                args: FunArgs::Positional { args },
                 ret: _,
                 exceptions: _,
             } => &args[0],

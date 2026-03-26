@@ -1,5 +1,5 @@
 use crate::ast::{self, Id};
-use crate::collections::{HashMap, HashSet};
+use crate::collections::{HashMap, HashSet, OrdMap};
 use crate::type_checker::{FunArgs, Scheme, TcFunState, Ty, TypeDetails, row_utils};
 #[allow(unused)]
 use crate::utils::loc_display;
@@ -472,14 +472,36 @@ impl PatMatrix {
 
         let named_args;
 
+        // `all_named_args` includes both the known args and any extension fields (after
+        // normalization). This is used to build the coverage matrix columns and to fill in missing
+        // patterns with `Ignore`.
+        let mut all_named_args: OrdMap<Id, Ty> = Default::default();
+
         let args_positional: Vec<Ty> = match &args {
-            FunArgs::Positional(args) => {
+            FunArgs::Positional { args } => {
                 named_args = false;
                 args.clone()
             }
-            FunArgs::Named(args) => {
+            FunArgs::Named { args, extension } => {
                 named_args = true;
-                let mut args_vec: Vec<(&Id, &Ty)> = args.iter().collect();
+                let mut merged = args.clone();
+                if let Some(ext_ty) = extension {
+                    let (ext_labels, _) = row_utils::collect_rows(
+                        tc_state.tys.tys.cons(),
+                        ext_ty,
+                        RecordOrVariant::Record,
+                        &OrdMap::new(),
+                        Some(Box::new(ext_ty.as_ref().clone())),
+                        tc_state.trait_env,
+                        tc_state.var_gen,
+                        &[],
+                    );
+                    for (label, ty) in ext_labels {
+                        merged.insert(label, ty);
+                    }
+                }
+                all_named_args = merged.clone();
+                let mut args_vec: Vec<(&Id, &Ty)> = merged.iter().collect();
                 args_vec.sort_by_key(|(id, _)| *id);
                 args_vec.into_iter().map(|(_, ty)| ty.clone()).collect()
             }
@@ -536,7 +558,7 @@ impl PatMatrix {
                                 })
                                 .collect();
 
-                            for (arg_name, _) in args.as_named().iter() {
+                            for (arg_name, _) in all_named_args.iter() {
                                 if !field_pat_names.contains(arg_name) {
                                     fields_vec.push((
                                         arg_name.clone(),

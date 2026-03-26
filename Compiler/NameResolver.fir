@@ -41,7 +41,7 @@ resolveNames(pgm: Program):
 
             if tyDecl.rhs is Option.Some(rhs):
                 match rhs:
-                    TypeDeclRhs.Sum(cons):
+                    TypeDeclRhs.Sum(cons, ..):
                         for con: ConDecl in cons.iter():
                             visitor.visitConFields(con.fields)
 

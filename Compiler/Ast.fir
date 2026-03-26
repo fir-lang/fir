@@ -85,7 +85,10 @@ impl Tokens[TypeDecl]:
 #[derive(ToDoc)]
 type TypeDeclRhs:
     ## A sum type, with more than one constructor.
-    Sum(Vec[ConDecl])
+    Sum(
+        cons: Vec[ConDecl],
+        extension: Option[Id],
+    )
 
     ## A product type uses the type name as the constructor and only has fields.
     Product(ConFields)
@@ -114,7 +117,10 @@ impl Tokens[ConDecl]:
 #[derive(ToDoc)]
 type ConFields:
     Empty
-    Named(Vec[NamedField])
+    Named(
+        fields: Vec[NamedField],
+        extension: Option[Id],
+    )
     Unnamed(Vec[Type])
 
 
@@ -1663,9 +1669,17 @@ impl ToDoc[TypeDecl]:
 impl ToDoc[TypeDeclRhs]:
     toDoc(self: TypeDeclRhs) Doc:
         match self:
-            TypeDeclRhs.Sum(i0):
+            TypeDeclRhs.Sum(cons, extension):
                 let args = Doc.break_(0)
-                args += i0.toDoc()
+                args += Doc.grouped(
+                    Doc.str("cons =")
+                        + Doc.nested(4, Doc.break_(1) + cons.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("extension =")
+                        + Doc.nested(4, Doc.break_(1) + extension.toDoc()),
+                )
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("TypeDeclRhs.Sum") + Doc.char('(') + args)
             TypeDeclRhs.Product(i0):
@@ -1708,9 +1722,17 @@ impl ToDoc[ConFields]:
     toDoc(self: ConFields) Doc:
         match self:
             ConFields.Empty: Doc.str("ConFields.Empty")
-            ConFields.Named(i0):
+            ConFields.Named(fields, extension):
                 let args = Doc.break_(0)
-                args += i0.toDoc()
+                args += Doc.grouped(
+                    Doc.str("fields =")
+                        + Doc.nested(4, Doc.break_(1) + fields.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("extension =")
+                        + Doc.nested(4, Doc.break_(1) + extension.toDoc()),
+                )
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("ConFields.Named") + Doc.char('(') + args)
             ConFields.Unnamed(i0):

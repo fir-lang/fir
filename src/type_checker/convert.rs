@@ -79,11 +79,12 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             ret,
             exceptions,
         }) => {
-            let args = FunArgs::Positional(
-                args.iter()
+            let args = FunArgs::Positional {
+                args: args
+                    .iter()
                     .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
                     .collect(),
-            );
+            };
 
             let ret = Box::new(match ret {
                 Some(ret) => convert_ast_ty(tys, &ret.node, &ret.loc),
@@ -150,21 +151,34 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
     Ty::App(ty_con.id.clone(), converted_args, Kind::Star)
 }
 
-pub(super) fn convert_fields(tys: &TyMap, fields: &ast::ConFields) -> Option<FunArgs> {
+pub(super) fn convert_fields(
+    tys: &TyMap,
+    fields: &ast::ConFields,
+    loc: &ast::Loc,
+) -> Option<FunArgs> {
     match fields {
         ast::ConFields::Empty => None,
-        ast::ConFields::Named(named_fields) => Some(FunArgs::Named(
-            named_fields
+        ast::ConFields::Named { fields, extension } => Some(FunArgs::Named {
+            args: fields
                 .iter()
                 .map(|(name, ty)| (name.clone(), convert_ast_ty(tys, &ty.node, &ty.loc)))
                 .collect(),
-        )),
-        ast::ConFields::Unnamed(fields) => Some(FunArgs::Positional(
-            fields
+            extension: extension.as_ref().map(|ext_id| {
+                Box::new(
+                    tys.get_var(ext_id)
+                        .unwrap_or_else(|| {
+                            panic!("{}: Unbound type variable {}", loc_display(loc), ext_id)
+                        })
+                        .clone(),
+                )
+            }),
+        }),
+        ast::ConFields::Unnamed { fields } => Some(FunArgs::Positional {
+            args: fields
                 .iter()
                 .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
                 .collect(),
-        )),
+        }),
     }
 }
 

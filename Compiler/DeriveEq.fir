@@ -57,7 +57,8 @@ genTree(typeDecl: TypeDecl, tokens: Array[Token]) Doc:
     let methodBody = match typeDecl.rhs:
         Option.None: Doc.empty()
 
-        Option.Some(TypeDeclRhs.Sum(cons)): genSumAlts(typeName, cons, tokens)
+        Option.Some(TypeDeclRhs.Sum(cons, ..)):
+            genSumAlts(typeName, cons, tokens)
 
         Option.Some(TypeDeclRhs.Product(fields)):
             genProduct(typeName, fields, tokens)
@@ -145,7 +146,8 @@ genConPat(
                 + Doc.char('.')
                 + Doc.str(tokens.get(conDecl.name.token.idx).text)
 
-        ConFields.Named(fields): genNamedFieldPats(varPrefix, fields, tokens)
+        ConFields.Named(fields, ..):
+            genNamedFieldPats(varPrefix, fields, tokens)
 
         ConFields.Unnamed(fields): genUnnamedFieldPats(varPrefix, fields)
 
@@ -195,7 +197,7 @@ genSumRhs(typeName: Str, conDecl: ConDecl) Doc:
     let numFields = match conDecl.fields:
         ConFields.Empty: return Doc.str("Bool.True")
 
-        ConFields.Named(fields): fields.len()
+        ConFields.Named(fields, ..): fields.len()
 
         ConFields.Unnamed(fields): fields.len()
 
@@ -218,7 +220,7 @@ genProduct(typeName: Str, fields: ConFields, tokens: Array[Token]) Doc:
     match fields:
         ConFields.Empty: Doc.empty()
 
-        ConFields.Named(fields):
+        ConFields.Named(fields, ..):
             let doc = Doc.empty()
             let i = u32(0)
             for field: NamedField in fields.iter():

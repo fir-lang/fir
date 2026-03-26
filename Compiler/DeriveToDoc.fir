@@ -102,7 +102,8 @@ genItem(item: TypeDecl, tokens: Array[Token]) Doc:
 
     let methodBody = match item.rhs:
         Option.None: panic("Type doesn't have RHS")
-        Option.Some(TypeDeclRhs.Sum(cons)): genSumBody(item.name, cons, tokens)
+        Option.Some(TypeDeclRhs.Sum(cons, ..)):
+            genSumBody(item.name, cons, tokens)
         Option.Some(TypeDeclRhs.Product(fields)):
             genProductBody(item.name, fields, tokens)
         Option.Some(TypeDeclRhs.Synonym(_)):
@@ -152,7 +153,7 @@ genSumBody(tyName: Id, cons: Vec[ConDecl], tokens: Array[Token]) Doc:
         match con.fields:
             ConFields.Empty: ()
 
-            ConFields.Named(namedFields):
+            ConFields.Named(fields = namedFields, ..):
                 altHead += Doc.char('(')
                 let fieldIdx: U32 = 0
                 for field: NamedField in namedFields.iter():
@@ -181,7 +182,7 @@ genSumBody(tyName: Id, cons: Vec[ConDecl], tokens: Array[Token]) Doc:
         match con.fields:
             ConFields.Empty: altBody += Doc.str("Doc.str(\"`conNameStr`\")")
 
-            ConFields.Named(namedFields):
+            ConFields.Named(fields = namedFields, ..):
                 altBody += Doc.str("let args = Doc.break_(0)") + Doc.hardLine()
 
                 let fieldIdx: U32 = 0
@@ -238,7 +239,7 @@ genProductBody(ty: Id, fields: ConFields, tokens: Array[Token]) Doc:
     match fields:
         ConFields.Empty: ()
 
-        ConFields.Named(namedFields):
+        ConFields.Named(fields = namedFields, ..):
             doc += Doc.str("let args = Doc.break_(0)") + Doc.hardLine()
 
             let fieldIdx: U32 = 0

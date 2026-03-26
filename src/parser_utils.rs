@@ -120,11 +120,18 @@ pub(crate) fn path_parts(path: &SmolStr) -> Vec<SmolStr> {
 
 pub(crate) fn process_fields(
     fields: Vec<(Option<Id>, L<ast::Type>)>,
+    extension: Option<Id>,
     module: &std::rc::Rc<str>,
     loc: &lexgen_util::Loc,
 ) -> ast::ConFields {
     if fields.is_empty() {
-        return ast::ConFields::Empty;
+        return match extension {
+            Some(extension) => ast::ConFields::Named {
+                fields: vec![],
+                extension: Some(extension),
+            },
+            None => ast::ConFields::Empty,
+        };
     }
 
     let mut found_named = false;
@@ -147,8 +154,21 @@ pub(crate) fn process_fields(
     }
 
     if found_named {
-        ast::ConFields::Named(fields.into_iter().map(|(n, t)| (n.unwrap(), t)).collect())
+        ast::ConFields::Named {
+            fields: fields.into_iter().map(|(n, t)| (n.unwrap(), t)).collect(),
+            extension,
+        }
     } else {
-        ast::ConFields::Unnamed(fields.into_iter().map(|(_, t)| t).collect())
+        if extension.is_some() {
+            panic!(
+                "{}:{}:{}: Unnamed fields cannot have row extensions",
+                module,
+                loc.line + 1,
+                loc.col + 1,
+            );
+        }
+        ast::ConFields::Unnamed {
+            fields: fields.into_iter().map(|(_, t)| t).collect(),
+        }
     }
 }

@@ -285,7 +285,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             )
 
         match tyDecl.rhs:
-            Option.Some(TypeDeclRhs.Sum(cons)):
+            Option.Some(TypeDeclRhs.Sum(cons, ..)):
                 for con: ConDecl in cons.iter():
                     let conName = mod.idText(con.name)
                     let ty = match convertFields(mod, varMap, con.fields):
