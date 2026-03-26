@@ -355,7 +355,7 @@ NamedType: NamedType = {
 RowExtension: Option<Box<L<Type>>> = {
     => None,
 
-    ".." <l:@L> <ty:TypeNoFn> <r:@R> => Some(Box::new(L::new(module, l, r, ty))),
+    ".." <ty:LTypeNoFn> => Some(Box::new(ty)),
 }
 
 TypeArg: L<(Option<Id>, L<Type>)> = {

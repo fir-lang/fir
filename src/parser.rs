@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: 0d20c585a82d33891347bf92ef9e1250b7506e018deac1b4f09b882ae36c373b
+// sha3: 3d654bd87539e3ec8f20c839df5fb67bb66fb1fce3873abba54d2fdf7a0faebd
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -2100,6 +2100,7 @@ mod __parse__LExpr {
             },
             122 => match state {
                 72 => 295,
+                78 => 311,
                 81 => 323,
                 _ => 256,
             },
@@ -2187,10 +2188,7 @@ mod __parse__LExpr {
                 52 | 69 | 72 | 78 | 81 | 94 => 258,
                 _ => 175,
             },
-            180 => match state {
-                78 => 311,
-                _ => 259,
-            },
+            180 => 259,
             182 => match state {
                 47 => 240,
                 _ => 169,
@@ -10013,10 +10011,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Alts =  => ActionFn(632);
+        // Alts =  => ActionFn(630);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action632::<>(module, &__start, &__end);
+        let __nt = super::__action630::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (0, 70)
     }
@@ -10029,11 +10027,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Alts = Alt+ => ActionFn(633);
+        // Alts = Alt+ => ActionFn(631);
         let __sym0 = __pop_Variant39(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action633::<>(module, __sym0);
+        let __nt = super::__action631::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 70)
     }
@@ -10550,13 +10548,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ConDecls = ConDecl+, SumExtension => ActionFn(716);
+        // ConDecls = ConDecl+, SumExtension => ActionFn(714);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant91(__symbols);
         let __sym0 = __pop_Variant48(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action716::<>(module, __sym0, __sym1);
+        let __nt = super::__action714::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (2, 80)
     }
@@ -10569,11 +10567,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ConDecls = ConDecl+ => ActionFn(717);
+        // ConDecls = ConDecl+ => ActionFn(715);
         let __sym0 = __pop_Variant48(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action717::<>(module, __sym0);
+        let __nt = super::__action715::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (1, 80)
     }
@@ -10904,7 +10902,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = FunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(561);
+        // FunDecl = FunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(560);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant10(__symbols);
@@ -10914,7 +10912,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant56(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action561::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action560::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 89)
     }
@@ -10927,14 +10925,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = "prim", FunSig, NEWLINE => ActionFn(562);
+        // FunDecl = "prim", FunSig, NEWLINE => ActionFn(561);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action562::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action561::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (3, 89)
     }
@@ -10947,13 +10945,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = FunSig, NEWLINE => ActionFn(563);
+        // FunDecl = FunSig, NEWLINE => ActionFn(562);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action563::<>(module, __sym0, __sym1);
+        let __nt = super::__action562::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (2, 89)
     }
@@ -10966,7 +10964,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = FunSig, ":", LInlineExpr, NEWLINE => ActionFn(564);
+        // FunDecl = FunSig, ":", LInlineExpr, NEWLINE => ActionFn(563);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant61(__symbols);
@@ -10974,7 +10972,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant56(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action564::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action563::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (4, 89)
     }
@@ -11008,7 +11006,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]", ":", NEWLINE, INDENT, ImplDeclItem+, DEDENT => ActionFn(565);
+        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]", ":", NEWLINE, INDENT, ImplDeclItem+, DEDENT => ActionFn(564);
         assert!(__symbols.len() >= 10);
         let __sym9 = __pop_Variant0(__symbols);
         let __sym8 = __pop_Variant59(__symbols);
@@ -11022,7 +11020,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym9.2.clone();
-        let __nt = super::__action565::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
+        let __nt = super::__action564::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (10, 91)
     }
@@ -11035,7 +11033,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]" => ActionFn(566);
+        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]" => ActionFn(565);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant76(__symbols);
@@ -11044,7 +11042,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action566::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action565::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (5, 91)
     }
@@ -11132,7 +11130,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, ",", "]", NEWLINE => ActionFn(567);
+        // ImportDecl = "import", "[", ImportPath, ",", "]", NEWLINE => ActionFn(566);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant0(__symbols);
@@ -11142,7 +11140,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action567::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action566::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (6, 94)
     }
@@ -11155,7 +11153,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, ",", "]", NEWLINE => ActionFn(568);
+        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, ",", "]", NEWLINE => ActionFn(567);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
         let __sym5 = __pop_Variant0(__symbols);
@@ -11166,7 +11164,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym6.2.clone();
-        let __nt = super::__action568::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action567::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (7, 94)
     }
@@ -11179,7 +11177,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, "]", NEWLINE => ActionFn(569);
+        // ImportDecl = "import", "[", ImportPath, "]", NEWLINE => ActionFn(568);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
@@ -11188,7 +11186,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action569::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action568::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (5, 94)
     }
@@ -11201,7 +11199,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, "]", NEWLINE => ActionFn(570);
+        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, "]", NEWLINE => ActionFn(569);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant0(__symbols);
@@ -11211,7 +11209,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action570::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action569::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (6, 94)
     }
@@ -11506,7 +11504,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr0 = InlineExpr0, "(", Sep<CallArg, ",">, ")" => ActionFn(571);
+        // InlineExpr0 = InlineExpr0, "(", Sep<CallArg, ",">, ")" => ActionFn(570);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant79(__symbols);
@@ -11514,7 +11512,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action571::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action570::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (4, 97)
     }
@@ -11527,7 +11525,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr0 = InlineExpr0, ".", LowerId, UserTyArgs => ActionFn(572);
+        // InlineExpr0 = InlineExpr0, ".", LowerId, UserTyArgs => ActionFn(571);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant76(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -11535,7 +11533,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action572::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action571::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (4, 97)
     }
@@ -11588,14 +11586,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr10 = InlineExpr10, "and", InlineExpr9 => ActionFn(573);
+        // InlineExpr10 = InlineExpr10, "and", InlineExpr9 => ActionFn(572);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action573::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action572::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 98)
     }
@@ -11625,14 +11623,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr11 = InlineExpr11, "or", InlineExpr10 => ActionFn(574);
+        // InlineExpr11 = InlineExpr11, "or", InlineExpr10 => ActionFn(573);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action574::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action573::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 99)
     }
@@ -11645,11 +11643,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr11 = "return" => ActionFn(575);
+        // InlineExpr11 = "return" => ActionFn(574);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action575::<>(module, __sym0);
+        let __nt = super::__action574::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (1, 99)
     }
@@ -11679,13 +11677,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr2 = "not", InlineExpr2 => ActionFn(576);
+        // InlineExpr2 = "not", InlineExpr2 => ActionFn(575);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant44(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action576::<>(module, __sym0, __sym1);
+        let __nt = super::__action575::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 100)
     }
@@ -11698,13 +11696,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr2 = "-", InlineExpr2 => ActionFn(577);
+        // InlineExpr2 = "-", InlineExpr2 => ActionFn(576);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant44(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action577::<>(module, __sym0, __sym1);
+        let __nt = super::__action576::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 100)
     }
@@ -11717,13 +11715,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr2 = "~", InlineExpr2 => ActionFn(578);
+        // InlineExpr2 = "~", InlineExpr2 => ActionFn(577);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant44(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action578::<>(module, __sym0, __sym1);
+        let __nt = super::__action577::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 100)
     }
@@ -11753,14 +11751,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr4 = InlineExpr4, "*", InlineExpr2 => ActionFn(579);
+        // InlineExpr4 = InlineExpr4, "*", InlineExpr2 => ActionFn(578);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action579::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action578::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 101)
     }
@@ -11773,14 +11771,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr4 = InlineExpr4, "/", InlineExpr2 => ActionFn(580);
+        // InlineExpr4 = InlineExpr4, "/", InlineExpr2 => ActionFn(579);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action580::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action579::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 101)
     }
@@ -11810,14 +11808,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr5 = InlineExpr5, "+", InlineExpr4 => ActionFn(581);
+        // InlineExpr5 = InlineExpr5, "+", InlineExpr4 => ActionFn(580);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action581::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action580::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 102)
     }
@@ -11830,14 +11828,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr5 = InlineExpr5, "-", InlineExpr4 => ActionFn(582);
+        // InlineExpr5 = InlineExpr5, "-", InlineExpr4 => ActionFn(581);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action582::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action581::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 102)
     }
@@ -11867,14 +11865,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr6 = InlineExpr6, "<<", InlineExpr5 => ActionFn(583);
+        // InlineExpr6 = InlineExpr6, "<<", InlineExpr5 => ActionFn(582);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action583::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action582::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 103)
     }
@@ -11887,14 +11885,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr6 = InlineExpr6, ">>", InlineExpr5 => ActionFn(584);
+        // InlineExpr6 = InlineExpr6, ">>", InlineExpr5 => ActionFn(583);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action584::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action583::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 103)
     }
@@ -11924,14 +11922,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr7 = InlineExpr7, "&", InlineExpr6 => ActionFn(585);
+        // InlineExpr7 = InlineExpr7, "&", InlineExpr6 => ActionFn(584);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action585::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action584::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 104)
     }
@@ -11961,14 +11959,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr8 = InlineExpr8, "|", InlineExpr7 => ActionFn(586);
+        // InlineExpr8 = InlineExpr8, "|", InlineExpr7 => ActionFn(585);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action586::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action585::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 105)
     }
@@ -11998,14 +11996,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "==", InlineExpr8 => ActionFn(587);
+        // InlineExpr9 = InlineExpr9, "==", InlineExpr8 => ActionFn(586);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action587::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action586::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -12018,14 +12016,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "!=", InlineExpr8 => ActionFn(588);
+        // InlineExpr9 = InlineExpr9, "!=", InlineExpr8 => ActionFn(587);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action588::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action587::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -12038,14 +12036,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "<", InlineExpr8 => ActionFn(589);
+        // InlineExpr9 = InlineExpr9, "<", InlineExpr8 => ActionFn(588);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action589::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action588::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -12058,14 +12056,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, ">", InlineExpr8 => ActionFn(590);
+        // InlineExpr9 = InlineExpr9, ">", InlineExpr8 => ActionFn(589);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action590::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action589::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -12078,14 +12076,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "<=", InlineExpr8 => ActionFn(591);
+        // InlineExpr9 = InlineExpr9, "<=", InlineExpr8 => ActionFn(590);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action591::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action590::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -12098,14 +12096,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, ">=", InlineExpr8 => ActionFn(592);
+        // InlineExpr9 = InlineExpr9, ">=", InlineExpr8 => ActionFn(591);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action592::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action591::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -12118,14 +12116,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "is", Pat => ActionFn(593);
+        // InlineExpr9 = InlineExpr9, "is", Pat => ActionFn(592);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant71(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action593::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action592::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -12155,11 +12153,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LBlockExpr = BlockExpr => ActionFn(594);
+        // LBlockExpr = BlockExpr => ActionFn(593);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action594::<>(module, __sym0);
+        let __nt = super::__action593::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 107)
     }
@@ -12172,11 +12170,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LExpr = Expr => ActionFn(595);
+        // LExpr = Expr => ActionFn(594);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action595::<>(module, __sym0);
+        let __nt = super::__action594::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 108)
     }
@@ -12189,11 +12187,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LInlineExpr = InlineExpr => ActionFn(596);
+        // LInlineExpr = InlineExpr => ActionFn(595);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action596::<>(module, __sym0);
+        let __nt = super::__action595::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 109)
     }
@@ -12206,11 +12204,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LLowerId = LowerId => ActionFn(597);
+        // LLowerId = LowerId => ActionFn(596);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action597::<>(module, __sym0);
+        let __nt = super::__action596::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 110)
     }
@@ -12256,11 +12254,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LPat = Pat => ActionFn(598);
+        // LPat = Pat => ActionFn(597);
         let __sym0 = __pop_Variant71(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action598::<>(module, __sym0);
+        let __nt = super::__action597::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant63(__nt), __end));
         (1, 112)
     }
@@ -12273,11 +12271,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LPred = Pred => ActionFn(599);
+        // LPred = Pred => ActionFn(598);
         let __sym0 = __pop_Variant72(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action599::<>(module, __sym0);
+        let __nt = super::__action598::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (1, 113)
     }
@@ -12323,11 +12321,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LStmt = Stmt => ActionFn(600);
+        // LStmt = Stmt => ActionFn(599);
         let __sym0 = __pop_Variant90(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action600::<>(module, __sym0);
+        let __nt = super::__action599::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 115)
     }
@@ -12409,10 +12407,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LStmts =  => ActionFn(662);
+        // LStmts =  => ActionFn(660);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action662::<>(module, &__start, &__end);
+        let __nt = super::__action660::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (0, 118)
     }
@@ -12425,11 +12423,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LStmts = LStmt+ => ActionFn(663);
+        // LStmts = LStmt+ => ActionFn(661);
         let __sym0 = __pop_Variant66(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action663::<>(module, __sym0);
+        let __nt = super::__action661::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (1, 118)
     }
@@ -12442,11 +12440,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LType = Type => ActionFn(601);
+        // LType = Type => ActionFn(600);
         let __sym0 = __pop_Variant99(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action601::<>(module, __sym0);
+        let __nt = super::__action600::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 119)
     }
@@ -12492,11 +12490,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LTypeNamed = TypeNamed => ActionFn(602);
+        // LTypeNamed = TypeNamed => ActionFn(601);
         let __sym0 = __pop_Variant99(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action602::<>(module, __sym0);
+        let __nt = super::__action601::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 121)
     }
@@ -12509,11 +12507,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LTypeNoFn = TypeNoFn => ActionFn(603);
+        // LTypeNoFn = TypeNoFn => ActionFn(602);
         let __sym0 = __pop_Variant99(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action603::<>(module, __sym0);
+        let __nt = super::__action602::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 122)
     }
@@ -12526,11 +12524,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LUpperId = UpperId => ActionFn(604);
+        // LUpperId = UpperId => ActionFn(603);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action604::<>(module, __sym0);
+        let __nt = super::__action603::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 123)
     }
@@ -12543,11 +12541,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LUpperIdLBracket = UpperIdLBracket => ActionFn(605);
+        // LUpperIdLBracket = UpperIdLBracket => ActionFn(604);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action605::<>(module, __sym0);
+        let __nt = super::__action604::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 124)
     }
@@ -12960,14 +12958,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Pat = Pat0, "|", Pat => ActionFn(606);
+        // Pat = Pat0, "|", Pat => ActionFn(605);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant71(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant71(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action606::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action605::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (3, 138)
     }
@@ -13104,13 +13102,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Pat0 = "~", Pat0 => ActionFn(607);
+        // Pat0 = "~", Pat0 => ActionFn(606);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant71(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action607::<>(module, __sym0, __sym1);
+        let __nt = super::__action606::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (2, 139)
     }
@@ -13303,13 +13301,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // RowExtension = "..", TypeNoFn => ActionFn(608);
+        // RowExtension = "..", LTypeNoFn => ActionFn(47);
         assert!(__symbols.len() >= 2);
-        let __sym1 = __pop_Variant99(__symbols);
+        let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action608::<>(module, __sym0, __sym1);
+        let __nt = super::__action47::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (2, 144)
     }
@@ -13504,11 +13502,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> = CallArg => ActionFn(642);
+        // Sep<CallArg, ","> = CallArg => ActionFn(640);
         let __sym0 = __pop_Variant16(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action642::<>(module, __sym0);
+        let __nt = super::__action640::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
     }
@@ -13521,10 +13519,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> =  => ActionFn(643);
+        // Sep<CallArg, ","> =  => ActionFn(641);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action643::<>(module, &__start, &__end);
+        let __nt = super::__action641::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (0, 148)
     }
@@ -13537,13 +13535,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> = (<CallArg> ",")+, CallArg => ActionFn(644);
+        // Sep<CallArg, ","> = (<CallArg> ",")+, CallArg => ActionFn(642);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant16(__symbols);
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action644::<>(module, __sym0, __sym1);
+        let __nt = super::__action642::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (2, 148)
     }
@@ -13556,11 +13554,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(645);
+        // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(643);
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action645::<>(module, __sym0);
+        let __nt = super::__action643::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
     }
@@ -13573,11 +13571,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> = Field => ActionFn(646);
+        // Sep<Field, ","> = Field => ActionFn(644);
         let __sym0 = __pop_Variant18(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action646::<>(module, __sym0);
+        let __nt = super::__action644::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
     }
@@ -13590,10 +13588,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> =  => ActionFn(647);
+        // Sep<Field, ","> =  => ActionFn(645);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action647::<>(module, &__start, &__end);
+        let __nt = super::__action645::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (0, 149)
     }
@@ -13606,13 +13604,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> = (<Field> ",")+, Field => ActionFn(648);
+        // Sep<Field, ","> = (<Field> ",")+, Field => ActionFn(646);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant18(__symbols);
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action648::<>(module, __sym0, __sym1);
+        let __nt = super::__action646::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (2, 149)
     }
@@ -13625,11 +13623,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> = (<Field> ",")+ => ActionFn(649);
+        // Sep<Field, ","> = (<Field> ",")+ => ActionFn(647);
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action649::<>(module, __sym0);
+        let __nt = super::__action647::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
     }
@@ -13642,11 +13640,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> = FieldPat => ActionFn(650);
+        // Sep<FieldPat, ","> = FieldPat => ActionFn(648);
         let __sym0 = __pop_Variant20(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action650::<>(module, __sym0);
+        let __nt = super::__action648::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (1, 150)
     }
@@ -13659,10 +13657,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> =  => ActionFn(651);
+        // Sep<FieldPat, ","> =  => ActionFn(649);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action651::<>(module, &__start, &__end);
+        let __nt = super::__action649::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (0, 150)
     }
@@ -13675,13 +13673,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> = (<FieldPat> ",")+, FieldPat => ActionFn(652);
+        // Sep<FieldPat, ","> = (<FieldPat> ",")+, FieldPat => ActionFn(650);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant20(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action652::<>(module, __sym0, __sym1);
+        let __nt = super::__action650::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (2, 150)
     }
@@ -13694,11 +13692,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> = (<FieldPat> ",")+ => ActionFn(653);
+        // Sep<FieldPat, ","> = (<FieldPat> ",")+ => ActionFn(651);
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action653::<>(module, __sym0);
+        let __nt = super::__action651::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (1, 150)
     }
@@ -13711,11 +13709,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> = LLowerId => ActionFn(654);
+        // Sep<LLowerId, ","> = LLowerId => ActionFn(652);
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action654::<>(module, __sym0);
+        let __nt = super::__action652::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (1, 151)
     }
@@ -13728,10 +13726,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> =  => ActionFn(655);
+        // Sep<LLowerId, ","> =  => ActionFn(653);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action655::<>(module, &__start, &__end);
+        let __nt = super::__action653::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (0, 151)
     }
@@ -13744,13 +13742,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> = (<LLowerId> ",")+, LLowerId => ActionFn(656);
+        // Sep<LLowerId, ","> = (<LLowerId> ",")+, LLowerId => ActionFn(654);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action656::<>(module, __sym0, __sym1);
+        let __nt = super::__action654::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 151)
     }
@@ -13763,11 +13761,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> = (<LLowerId> ",")+ => ActionFn(657);
+        // Sep<LLowerId, ","> = (<LLowerId> ",")+ => ActionFn(655);
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action657::<>(module, __sym0);
+        let __nt = super::__action655::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (1, 151)
     }
@@ -13780,11 +13778,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> = LPred => ActionFn(658);
+        // Sep<LPred, ","> = LPred => ActionFn(656);
         let __sym0 = __pop_Variant24(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action658::<>(module, __sym0);
+        let __nt = super::__action656::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 152)
     }
@@ -13797,10 +13795,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> =  => ActionFn(659);
+        // Sep<LPred, ","> =  => ActionFn(657);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action659::<>(module, &__start, &__end);
+        let __nt = super::__action657::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (0, 152)
     }
@@ -13813,13 +13811,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> = (<LPred> ",")+, LPred => ActionFn(660);
+        // Sep<LPred, ","> = (<LPred> ",")+, LPred => ActionFn(658);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant24(__symbols);
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action660::<>(module, __sym0, __sym1);
+        let __nt = super::__action658::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 152)
     }
@@ -13832,11 +13830,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> = (<LPred> ",")+ => ActionFn(661);
+        // Sep<LPred, ","> = (<LPred> ",")+ => ActionFn(659);
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action661::<>(module, __sym0);
+        let __nt = super::__action659::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 152)
     }
@@ -13849,11 +13847,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> = LType => ActionFn(664);
+        // Sep<LType, ","> = LType => ActionFn(662);
         let __sym0 = __pop_Variant4(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action664::<>(module, __sym0);
+        let __nt = super::__action662::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 153)
     }
@@ -13866,10 +13864,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> =  => ActionFn(665);
+        // Sep<LType, ","> =  => ActionFn(663);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action665::<>(module, &__start, &__end);
+        let __nt = super::__action663::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (0, 153)
     }
@@ -13882,13 +13880,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> = (<LType> ",")+, LType => ActionFn(666);
+        // Sep<LType, ","> = (<LType> ",")+, LType => ActionFn(664);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action666::<>(module, __sym0, __sym1);
+        let __nt = super::__action664::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (2, 153)
     }
@@ -13901,11 +13899,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> = (<LType> ",")+ => ActionFn(667);
+        // Sep<LType, ","> = (<LType> ",")+ => ActionFn(665);
         let __sym0 = __pop_Variant5(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action667::<>(module, __sym0);
+        let __nt = super::__action665::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 153)
     }
@@ -13918,11 +13916,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> = LowerId => ActionFn(680);
+        // Sep<LowerId, ","> = LowerId => ActionFn(678);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action680::<>(module, __sym0);
+        let __nt = super::__action678::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 154)
     }
@@ -13935,10 +13933,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> =  => ActionFn(681);
+        // Sep<LowerId, ","> =  => ActionFn(679);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action681::<>(module, &__start, &__end);
+        let __nt = super::__action679::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (0, 154)
     }
@@ -13951,13 +13949,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> = (<LowerId> ",")+, LowerId => ActionFn(682);
+        // Sep<LowerId, ","> = (<LowerId> ",")+, LowerId => ActionFn(680);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action682::<>(module, __sym0, __sym1);
+        let __nt = super::__action680::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (2, 154)
     }
@@ -13970,11 +13968,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> = (<LowerId> ",")+ => ActionFn(683);
+        // Sep<LowerId, ","> = (<LowerId> ",")+ => ActionFn(681);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action683::<>(module, __sym0);
+        let __nt = super::__action681::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 154)
     }
@@ -13987,11 +13985,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> = NamedType => ActionFn(694);
+        // Sep<NamedType, ","> = NamedType => ActionFn(692);
         let __sym0 = __pop_Variant27(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action694::<>(module, __sym0);
+        let __nt = super::__action692::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 155)
     }
@@ -14004,10 +14002,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> =  => ActionFn(695);
+        // Sep<NamedType, ","> =  => ActionFn(693);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action695::<>(module, &__start, &__end);
+        let __nt = super::__action693::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (0, 155)
     }
@@ -14020,13 +14018,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> = (<NamedType> ",")+, NamedType => ActionFn(696);
+        // Sep<NamedType, ","> = (<NamedType> ",")+, NamedType => ActionFn(694);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant27(__symbols);
         let __sym0 = __pop_Variant28(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action696::<>(module, __sym0, __sym1);
+        let __nt = super::__action694::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (2, 155)
     }
@@ -14039,11 +14037,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> = (<NamedType> ",")+ => ActionFn(697);
+        // Sep<NamedType, ","> = (<NamedType> ",")+ => ActionFn(695);
         let __sym0 = __pop_Variant28(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action697::<>(module, __sym0);
+        let __nt = super::__action695::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 155)
     }
@@ -14056,11 +14054,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> = Param => ActionFn(698);
+        // Sep<Param, ","> = Param => ActionFn(696);
         let __sym0 = __pop_Variant29(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action698::<>(module, __sym0);
+        let __nt = super::__action696::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (1, 156)
     }
@@ -14073,10 +14071,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> =  => ActionFn(699);
+        // Sep<Param, ","> =  => ActionFn(697);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action699::<>(module, &__start, &__end);
+        let __nt = super::__action697::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (0, 156)
     }
@@ -14089,13 +14087,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> = (<Param> ",")+, Param => ActionFn(700);
+        // Sep<Param, ","> = (<Param> ",")+, Param => ActionFn(698);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant29(__symbols);
         let __sym0 = __pop_Variant30(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action700::<>(module, __sym0, __sym1);
+        let __nt = super::__action698::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (2, 156)
     }
@@ -14108,11 +14106,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> = (<Param> ",")+ => ActionFn(701);
+        // Sep<Param, ","> = (<Param> ",")+ => ActionFn(699);
         let __sym0 = __pop_Variant30(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action701::<>(module, __sym0);
+        let __nt = super::__action699::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (1, 156)
     }
@@ -14125,11 +14123,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> = ParenExpr => ActionFn(702);
+        // Sep<ParenExpr, ","> = ParenExpr => ActionFn(700);
         let __sym0 = __pop_Variant31(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action702::<>(module, __sym0);
+        let __nt = super::__action700::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (1, 157)
     }
@@ -14142,10 +14140,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> =  => ActionFn(703);
+        // Sep<ParenExpr, ","> =  => ActionFn(701);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action703::<>(module, &__start, &__end);
+        let __nt = super::__action701::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (0, 157)
     }
@@ -14158,13 +14156,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+, ParenExpr => ActionFn(704);
+        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+, ParenExpr => ActionFn(702);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action704::<>(module, __sym0, __sym1);
+        let __nt = super::__action702::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (2, 157)
     }
@@ -14177,11 +14175,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(705);
+        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(703);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action705::<>(module, __sym0);
+        let __nt = super::__action703::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (1, 157)
     }
@@ -14194,11 +14192,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(708);
+        // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(706);
         let __sym0 = __pop_Variant33(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action708::<>(module, __sym0);
+        let __nt = super::__action706::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (1, 158)
     }
@@ -14211,10 +14209,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> =  => ActionFn(709);
+        // Sep<RecordTypeField, ","> =  => ActionFn(707);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action709::<>(module, &__start, &__end);
+        let __nt = super::__action707::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (0, 158)
     }
@@ -14227,13 +14225,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+, RecordTypeField => ActionFn(710);
+        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+, RecordTypeField => ActionFn(708);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action710::<>(module, __sym0, __sym1);
+        let __nt = super::__action708::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (2, 158)
     }
@@ -14246,11 +14244,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(711);
+        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(709);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action711::<>(module, __sym0);
+        let __nt = super::__action709::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (1, 158)
     }
@@ -14263,11 +14261,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> = SeqElem => ActionFn(712);
+        // Sep<SeqElem, ","> = SeqElem => ActionFn(710);
         let __sym0 = __pop_Variant35(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action712::<>(module, __sym0);
+        let __nt = super::__action710::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 159)
     }
@@ -14280,10 +14278,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> =  => ActionFn(713);
+        // Sep<SeqElem, ","> =  => ActionFn(711);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action713::<>(module, &__start, &__end);
+        let __nt = super::__action711::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (0, 159)
     }
@@ -14296,13 +14294,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> = (<SeqElem> ",")+, SeqElem => ActionFn(714);
+        // Sep<SeqElem, ","> = (<SeqElem> ",")+, SeqElem => ActionFn(712);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant35(__symbols);
         let __sym0 = __pop_Variant36(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action714::<>(module, __sym0, __sym1);
+        let __nt = super::__action712::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (2, 159)
     }
@@ -14315,11 +14313,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> = (<SeqElem> ",")+ => ActionFn(715);
+        // Sep<SeqElem, ","> = (<SeqElem> ",")+ => ActionFn(713);
         let __sym0 = __pop_Variant36(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action715::<>(module, __sym0);
+        let __nt = super::__action713::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 159)
     }
@@ -14402,14 +14400,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "break", Label, NEWLINE => ActionFn(668);
+        // Stmt = "break", Label, NEWLINE => ActionFn(666);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action668::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action666::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (3, 162)
     }
@@ -14422,13 +14420,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "break", NEWLINE => ActionFn(669);
+        // Stmt = "break", NEWLINE => ActionFn(667);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action669::<>(module, __sym0, __sym1);
+        let __nt = super::__action667::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (2, 162)
     }
@@ -14441,14 +14439,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "continue", Label, NEWLINE => ActionFn(670);
+        // Stmt = "continue", Label, NEWLINE => ActionFn(668);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action670::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action668::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (3, 162)
     }
@@ -14461,13 +14459,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "continue", NEWLINE => ActionFn(671);
+        // Stmt = "continue", NEWLINE => ActionFn(669);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action671::<>(module, __sym0, __sym1);
+        let __nt = super::__action669::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (2, 162)
     }
@@ -14611,13 +14609,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = InlineExpr, NEWLINE => ActionFn(609);
+        // Stmt = InlineExpr, NEWLINE => ActionFn(607);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action609::<>(module, __sym0, __sym1);
+        let __nt = super::__action607::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (2, 162)
     }
@@ -14630,11 +14628,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = BlockExpr => ActionFn(610);
+        // Stmt = BlockExpr => ActionFn(608);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action610::<>(module, __sym0);
+        let __nt = super::__action608::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (1, 162)
     }
@@ -14647,7 +14645,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(672);
+        // Stmt = Label, "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(670);
         assert!(__symbols.len() >= 12);
         let __sym11 = __pop_Variant0(__symbols);
         let __sym10 = __pop_Variant10(__symbols);
@@ -14663,7 +14661,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym11.2.clone();
-        let __nt = super::__action672::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
+        let __nt = super::__action670::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (12, 162)
     }
@@ -14676,7 +14674,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(673);
+        // Stmt = "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(671);
         assert!(__symbols.len() >= 11);
         let __sym10 = __pop_Variant0(__symbols);
         let __sym9 = __pop_Variant10(__symbols);
@@ -14691,7 +14689,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym10.2.clone();
-        let __nt = super::__action673::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
+        let __nt = super::__action671::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (11, 162)
     }
@@ -14704,7 +14702,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(674);
+        // Stmt = Label, "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(672);
         assert!(__symbols.len() >= 10);
         let __sym9 = __pop_Variant0(__symbols);
         let __sym8 = __pop_Variant10(__symbols);
@@ -14718,7 +14716,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym9.2.clone();
-        let __nt = super::__action674::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
+        let __nt = super::__action672::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (10, 162)
     }
@@ -14731,7 +14729,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(675);
+        // Stmt = "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(673);
         assert!(__symbols.len() >= 9);
         let __sym8 = __pop_Variant0(__symbols);
         let __sym7 = __pop_Variant10(__symbols);
@@ -14744,7 +14742,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym8.2.clone();
-        let __nt = super::__action675::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
+        let __nt = super::__action673::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (9, 162)
     }
@@ -14757,7 +14755,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(676);
+        // Stmt = Label, "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(674);
         assert!(__symbols.len() >= 8);
         let __sym7 = __pop_Variant0(__symbols);
         let __sym6 = __pop_Variant10(__symbols);
@@ -14769,7 +14767,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym7.2.clone();
-        let __nt = super::__action676::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
+        let __nt = super::__action674::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (8, 162)
     }
@@ -14782,7 +14780,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(677);
+        // Stmt = "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(675);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
         let __sym5 = __pop_Variant10(__symbols);
@@ -14793,7 +14791,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym6.2.clone();
-        let __nt = super::__action677::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action675::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (7, 162)
     }
@@ -14806,7 +14804,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(678);
+        // Stmt = Label, "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(676);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
         let __sym5 = __pop_Variant10(__symbols);
@@ -14817,7 +14815,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym6.2.clone();
-        let __nt = super::__action678::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action676::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (7, 162)
     }
@@ -14830,7 +14828,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(679);
+        // Stmt = "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(677);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant10(__symbols);
@@ -14840,7 +14838,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action679::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action677::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (6, 162)
     }
@@ -14853,14 +14851,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // SumExtension = "..", TypeNoFn, NEWLINE => ActionFn(612);
+        // SumExtension = "..", TypeNoFn, NEWLINE => ActionFn(610);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant99(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action612::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action610::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (3, 163)
     }
@@ -14906,11 +14904,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = TypeDecl => ActionFn(684);
+        // TopDecl = TypeDecl => ActionFn(682);
         let __sym0 = __pop_Variant101(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action684::<>(module, __sym0);
+        let __nt = super::__action682::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -14923,13 +14921,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, TypeDecl => ActionFn(685);
+        // TopDecl = NEWLINE+, TypeDecl => ActionFn(683);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant101(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action685::<>(module, __sym0, __sym1);
+        let __nt = super::__action683::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -14942,11 +14940,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = TopFunDecl => ActionFn(686);
+        // TopDecl = TopFunDecl => ActionFn(684);
         let __sym0 = __pop_Variant55(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action686::<>(module, __sym0);
+        let __nt = super::__action684::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -14959,13 +14957,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, TopFunDecl => ActionFn(687);
+        // TopDecl = NEWLINE+, TopFunDecl => ActionFn(685);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant55(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action687::<>(module, __sym0, __sym1);
+        let __nt = super::__action685::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -14978,11 +14976,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = ImportDecl => ActionFn(688);
+        // TopDecl = ImportDecl => ActionFn(686);
         let __sym0 = __pop_Variant60(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action688::<>(module, __sym0);
+        let __nt = super::__action686::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -14995,13 +14993,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, ImportDecl => ActionFn(689);
+        // TopDecl = NEWLINE+, ImportDecl => ActionFn(687);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant60(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action689::<>(module, __sym0, __sym1);
+        let __nt = super::__action687::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -15014,11 +15012,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = TraitDecl => ActionFn(690);
+        // TopDecl = TraitDecl => ActionFn(688);
         let __sym0 = __pop_Variant96(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action690::<>(module, __sym0);
+        let __nt = super::__action688::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -15031,13 +15029,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, TraitDecl => ActionFn(691);
+        // TopDecl = NEWLINE+, TraitDecl => ActionFn(689);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant96(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action691::<>(module, __sym0, __sym1);
+        let __nt = super::__action689::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -15050,11 +15048,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = ImplDecl => ActionFn(692);
+        // TopDecl = ImplDecl => ActionFn(690);
         let __sym0 = __pop_Variant57(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action692::<>(module, __sym0);
+        let __nt = super::__action690::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -15067,13 +15065,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, ImplDecl => ActionFn(693);
+        // TopDecl = NEWLINE+, ImplDecl => ActionFn(691);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant57(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action693::<>(module, __sym0, __sym1);
+        let __nt = super::__action691::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -15155,10 +15153,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecls =  => ActionFn(718);
+        // TopDecls =  => ActionFn(716);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action718::<>(module, &__start, &__end);
+        let __nt = super::__action716::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant94(__nt), __end));
         (0, 168)
     }
@@ -15171,11 +15169,11 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecls = TopDecl+ => ActionFn(719);
+        // TopDecls = TopDecl+ => ActionFn(717);
         let __sym0 = __pop_Variant93(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action719::<>(module, __sym0);
+        let __nt = super::__action717::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant94(__nt), __end));
         (1, 168)
     }
@@ -15188,7 +15186,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = TopFunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(618);
+        // TopFunDecl = TopFunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(616);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant10(__symbols);
@@ -15198,7 +15196,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant95(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action618::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action616::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 169)
     }
@@ -15211,14 +15209,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = "prim", TopFunSig, NEWLINE => ActionFn(619);
+        // TopFunDecl = "prim", TopFunSig, NEWLINE => ActionFn(617);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant95(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action619::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action617::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (3, 169)
     }
@@ -15231,13 +15229,13 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = TopFunSig, NEWLINE => ActionFn(620);
+        // TopFunDecl = TopFunSig, NEWLINE => ActionFn(618);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant95(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action620::<>(module, __sym0, __sym1);
+        let __nt = super::__action618::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (2, 169)
     }
@@ -15250,7 +15248,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = TopFunSig, ":", LInlineExpr, NEWLINE => ActionFn(621);
+        // TopFunDecl = TopFunSig, ":", LInlineExpr, NEWLINE => ActionFn(619);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant61(__symbols);
@@ -15258,7 +15256,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant95(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action621::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action619::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (4, 169)
     }
@@ -15271,7 +15269,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunSig = ParentTy, LLowerId, Context, ParamList, ReturnType => ActionFn(706);
+        // TopFunSig = ParentTy, LLowerId, Context, ParamList, ReturnType => ActionFn(704);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant74(__symbols);
         let __sym3 = __pop_Variant69(__symbols);
@@ -15280,7 +15278,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action706::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action704::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant95(__nt), __end));
         (5, 170)
     }
@@ -15293,7 +15291,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunSig = LLowerId, Context, ParamList, ReturnType => ActionFn(707);
+        // TopFunSig = LLowerId, Context, ParamList, ReturnType => ActionFn(705);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant74(__symbols);
         let __sym2 = __pop_Variant69(__symbols);
@@ -15301,7 +15299,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action707::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action705::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant95(__nt), __end));
         (4, 170)
     }
@@ -15314,7 +15312,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(622);
+        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(620);
         assert!(__symbols.len() >= 9);
         let __sym8 = __pop_Variant0(__symbols);
         let __sym7 = __pop_Variant98(__symbols);
@@ -15327,7 +15325,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym8.2.clone();
-        let __nt = super::__action622::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
+        let __nt = super::__action620::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant96(__nt), __end));
         (9, 171)
     }
@@ -15340,7 +15338,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]" => ActionFn(623);
+        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]" => ActionFn(621);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant82(__symbols);
@@ -15348,7 +15346,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action623::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action621::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant96(__nt), __end));
         (4, 171)
     }
@@ -15611,14 +15609,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeArg = UpperId, "=", LType => ActionFn(624);
+        // TypeArg = UpperId, "=", LType => ActionFn(622);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action624::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action622::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant100(__nt), __end));
         (3, 176)
     }
@@ -15648,7 +15646,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "value", "type", UpperId, TypeDeclRhs => ActionFn(634);
+        // TypeDecl = Attribute, "value", "type", UpperId, TypeDeclRhs => ActionFn(632);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant102(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
@@ -15657,7 +15655,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action634::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action632::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -15670,7 +15668,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "value", "type", UpperId, TypeDeclRhs => ActionFn(635);
+        // TypeDecl = "value", "type", UpperId, TypeDeclRhs => ActionFn(633);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant102(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -15678,7 +15676,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action635::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action633::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -15691,7 +15689,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperId, TypeDeclRhs => ActionFn(636);
+        // TypeDecl = Attribute, "type", UpperId, TypeDeclRhs => ActionFn(634);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant102(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -15699,7 +15697,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action636::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action634::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -15712,14 +15710,14 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperId, TypeDeclRhs => ActionFn(637);
+        // TypeDecl = "type", UpperId, TypeDeclRhs => ActionFn(635);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant102(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action637::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action635::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (3, 177)
     }
@@ -15732,7 +15730,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(638);
+        // TypeDecl = Attribute, "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(636);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant102(__symbols);
         let __sym4 = __pop_Variant2(__symbols);
@@ -15742,7 +15740,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action638::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action636::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (6, 177)
     }
@@ -15755,7 +15753,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(639);
+        // TypeDecl = "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(637);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant102(__symbols);
         let __sym3 = __pop_Variant2(__symbols);
@@ -15764,7 +15762,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action639::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action637::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -15777,7 +15775,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(640);
+        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(638);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant102(__symbols);
         let __sym3 = __pop_Variant2(__symbols);
@@ -15786,7 +15784,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action640::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action638::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -15799,7 +15797,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(641);
+        // TypeDecl = "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(639);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant102(__symbols);
         let __sym2 = __pop_Variant2(__symbols);
@@ -15807,7 +15805,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action641::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action639::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -15820,7 +15818,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperId, "=", Type, NEWLINE => ActionFn(629);
+        // TypeDecl = "type", UpperId, "=", Type, NEWLINE => ActionFn(627);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant99(__symbols);
@@ -15829,7 +15827,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action629::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action627::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -15842,7 +15840,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "prim", "type", UpperId, NEWLINE => ActionFn(630);
+        // TypeDecl = "prim", "type", UpperId, NEWLINE => ActionFn(628);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -15850,7 +15848,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action630::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action628::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -15863,7 +15861,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "prim", "type", UpperIdLBracket, TypeParams, NEWLINE => ActionFn(631);
+        // TypeDecl = "prim", "type", UpperIdLBracket, TypeParams, NEWLINE => ActionFn(629);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant2(__symbols);
@@ -15872,7 +15870,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action631::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action629::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -15924,7 +15922,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDeclRhs = "(", Sep<Field, ",">, RowExtension, ")", NEWLINE => ActionFn(560);
+        // TypeDeclRhs = "(", Sep<Field, ",">, RowExtension, ")", NEWLINE => ActionFn(559);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
@@ -15933,7 +15931,7 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action560::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action559::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant102(__nt), __end));
         (5, 178)
     }
@@ -18309,6 +18307,7 @@ mod __parse__LStmt {
             },
             122 => match state {
                 83 => 336,
+                93 => 354,
                 95 => 363,
                 _ => 289,
             },
@@ -18396,10 +18395,7 @@ mod __parse__LStmt {
                 59 | 80 | 83 | 93 | 95 | 108 => 291,
                 _ => 207,
             },
-            180 => match state {
-                93 => 354,
-                _ => 292,
-            },
+            180 => 292,
             182 => match state {
                 56 => 281,
                 _ => 201,
@@ -26222,10 +26218,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Alts =  => ActionFn(632);
+        // Alts =  => ActionFn(630);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action632::<>(module, &__start, &__end);
+        let __nt = super::__action630::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (0, 70)
     }
@@ -26238,11 +26234,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Alts = Alt+ => ActionFn(633);
+        // Alts = Alt+ => ActionFn(631);
         let __sym0 = __pop_Variant39(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action633::<>(module, __sym0);
+        let __nt = super::__action631::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 70)
     }
@@ -26759,13 +26755,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ConDecls = ConDecl+, SumExtension => ActionFn(716);
+        // ConDecls = ConDecl+, SumExtension => ActionFn(714);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant91(__symbols);
         let __sym0 = __pop_Variant48(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action716::<>(module, __sym0, __sym1);
+        let __nt = super::__action714::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (2, 80)
     }
@@ -26778,11 +26774,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ConDecls = ConDecl+ => ActionFn(717);
+        // ConDecls = ConDecl+ => ActionFn(715);
         let __sym0 = __pop_Variant48(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action717::<>(module, __sym0);
+        let __nt = super::__action715::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (1, 80)
     }
@@ -27113,7 +27109,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = FunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(561);
+        // FunDecl = FunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(560);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant10(__symbols);
@@ -27123,7 +27119,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant56(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action561::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action560::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 89)
     }
@@ -27136,14 +27132,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = "prim", FunSig, NEWLINE => ActionFn(562);
+        // FunDecl = "prim", FunSig, NEWLINE => ActionFn(561);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action562::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action561::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (3, 89)
     }
@@ -27156,13 +27152,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = FunSig, NEWLINE => ActionFn(563);
+        // FunDecl = FunSig, NEWLINE => ActionFn(562);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action563::<>(module, __sym0, __sym1);
+        let __nt = super::__action562::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (2, 89)
     }
@@ -27175,7 +27171,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = FunSig, ":", LInlineExpr, NEWLINE => ActionFn(564);
+        // FunDecl = FunSig, ":", LInlineExpr, NEWLINE => ActionFn(563);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant61(__symbols);
@@ -27183,7 +27179,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant56(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action564::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action563::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (4, 89)
     }
@@ -27217,7 +27213,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]", ":", NEWLINE, INDENT, ImplDeclItem+, DEDENT => ActionFn(565);
+        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]", ":", NEWLINE, INDENT, ImplDeclItem+, DEDENT => ActionFn(564);
         assert!(__symbols.len() >= 10);
         let __sym9 = __pop_Variant0(__symbols);
         let __sym8 = __pop_Variant59(__symbols);
@@ -27231,7 +27227,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym9.2.clone();
-        let __nt = super::__action565::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
+        let __nt = super::__action564::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (10, 91)
     }
@@ -27244,7 +27240,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]" => ActionFn(566);
+        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]" => ActionFn(565);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant76(__symbols);
@@ -27253,7 +27249,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action566::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action565::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (5, 91)
     }
@@ -27341,7 +27337,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, ",", "]", NEWLINE => ActionFn(567);
+        // ImportDecl = "import", "[", ImportPath, ",", "]", NEWLINE => ActionFn(566);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant0(__symbols);
@@ -27351,7 +27347,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action567::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action566::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (6, 94)
     }
@@ -27364,7 +27360,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, ",", "]", NEWLINE => ActionFn(568);
+        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, ",", "]", NEWLINE => ActionFn(567);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
         let __sym5 = __pop_Variant0(__symbols);
@@ -27375,7 +27371,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym6.2.clone();
-        let __nt = super::__action568::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action567::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (7, 94)
     }
@@ -27388,7 +27384,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, "]", NEWLINE => ActionFn(569);
+        // ImportDecl = "import", "[", ImportPath, "]", NEWLINE => ActionFn(568);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
@@ -27397,7 +27393,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action569::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action568::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (5, 94)
     }
@@ -27410,7 +27406,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, "]", NEWLINE => ActionFn(570);
+        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, "]", NEWLINE => ActionFn(569);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant0(__symbols);
@@ -27420,7 +27416,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action570::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action569::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (6, 94)
     }
@@ -27715,7 +27711,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr0 = InlineExpr0, "(", Sep<CallArg, ",">, ")" => ActionFn(571);
+        // InlineExpr0 = InlineExpr0, "(", Sep<CallArg, ",">, ")" => ActionFn(570);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant79(__symbols);
@@ -27723,7 +27719,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action571::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action570::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (4, 97)
     }
@@ -27736,7 +27732,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr0 = InlineExpr0, ".", LowerId, UserTyArgs => ActionFn(572);
+        // InlineExpr0 = InlineExpr0, ".", LowerId, UserTyArgs => ActionFn(571);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant76(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -27744,7 +27740,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action572::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action571::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (4, 97)
     }
@@ -27797,14 +27793,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr10 = InlineExpr10, "and", InlineExpr9 => ActionFn(573);
+        // InlineExpr10 = InlineExpr10, "and", InlineExpr9 => ActionFn(572);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action573::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action572::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 98)
     }
@@ -27834,14 +27830,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr11 = InlineExpr11, "or", InlineExpr10 => ActionFn(574);
+        // InlineExpr11 = InlineExpr11, "or", InlineExpr10 => ActionFn(573);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action574::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action573::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 99)
     }
@@ -27854,11 +27850,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr11 = "return" => ActionFn(575);
+        // InlineExpr11 = "return" => ActionFn(574);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action575::<>(module, __sym0);
+        let __nt = super::__action574::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (1, 99)
     }
@@ -27888,13 +27884,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr2 = "not", InlineExpr2 => ActionFn(576);
+        // InlineExpr2 = "not", InlineExpr2 => ActionFn(575);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant44(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action576::<>(module, __sym0, __sym1);
+        let __nt = super::__action575::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 100)
     }
@@ -27907,13 +27903,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr2 = "-", InlineExpr2 => ActionFn(577);
+        // InlineExpr2 = "-", InlineExpr2 => ActionFn(576);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant44(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action577::<>(module, __sym0, __sym1);
+        let __nt = super::__action576::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 100)
     }
@@ -27926,13 +27922,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr2 = "~", InlineExpr2 => ActionFn(578);
+        // InlineExpr2 = "~", InlineExpr2 => ActionFn(577);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant44(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action578::<>(module, __sym0, __sym1);
+        let __nt = super::__action577::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 100)
     }
@@ -27962,14 +27958,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr4 = InlineExpr4, "*", InlineExpr2 => ActionFn(579);
+        // InlineExpr4 = InlineExpr4, "*", InlineExpr2 => ActionFn(578);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action579::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action578::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 101)
     }
@@ -27982,14 +27978,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr4 = InlineExpr4, "/", InlineExpr2 => ActionFn(580);
+        // InlineExpr4 = InlineExpr4, "/", InlineExpr2 => ActionFn(579);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action580::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action579::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 101)
     }
@@ -28019,14 +28015,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr5 = InlineExpr5, "+", InlineExpr4 => ActionFn(581);
+        // InlineExpr5 = InlineExpr5, "+", InlineExpr4 => ActionFn(580);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action581::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action580::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 102)
     }
@@ -28039,14 +28035,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr5 = InlineExpr5, "-", InlineExpr4 => ActionFn(582);
+        // InlineExpr5 = InlineExpr5, "-", InlineExpr4 => ActionFn(581);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action582::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action581::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 102)
     }
@@ -28076,14 +28072,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr6 = InlineExpr6, "<<", InlineExpr5 => ActionFn(583);
+        // InlineExpr6 = InlineExpr6, "<<", InlineExpr5 => ActionFn(582);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action583::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action582::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 103)
     }
@@ -28096,14 +28092,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr6 = InlineExpr6, ">>", InlineExpr5 => ActionFn(584);
+        // InlineExpr6 = InlineExpr6, ">>", InlineExpr5 => ActionFn(583);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action584::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action583::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 103)
     }
@@ -28133,14 +28129,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr7 = InlineExpr7, "&", InlineExpr6 => ActionFn(585);
+        // InlineExpr7 = InlineExpr7, "&", InlineExpr6 => ActionFn(584);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action585::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action584::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 104)
     }
@@ -28170,14 +28166,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr8 = InlineExpr8, "|", InlineExpr7 => ActionFn(586);
+        // InlineExpr8 = InlineExpr8, "|", InlineExpr7 => ActionFn(585);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action586::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action585::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 105)
     }
@@ -28207,14 +28203,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "==", InlineExpr8 => ActionFn(587);
+        // InlineExpr9 = InlineExpr9, "==", InlineExpr8 => ActionFn(586);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action587::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action586::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -28227,14 +28223,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "!=", InlineExpr8 => ActionFn(588);
+        // InlineExpr9 = InlineExpr9, "!=", InlineExpr8 => ActionFn(587);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action588::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action587::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -28247,14 +28243,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "<", InlineExpr8 => ActionFn(589);
+        // InlineExpr9 = InlineExpr9, "<", InlineExpr8 => ActionFn(588);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action589::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action588::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -28267,14 +28263,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, ">", InlineExpr8 => ActionFn(590);
+        // InlineExpr9 = InlineExpr9, ">", InlineExpr8 => ActionFn(589);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action590::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action589::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -28287,14 +28283,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "<=", InlineExpr8 => ActionFn(591);
+        // InlineExpr9 = InlineExpr9, "<=", InlineExpr8 => ActionFn(590);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action591::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action590::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -28307,14 +28303,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, ">=", InlineExpr8 => ActionFn(592);
+        // InlineExpr9 = InlineExpr9, ">=", InlineExpr8 => ActionFn(591);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action592::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action591::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -28327,14 +28323,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "is", Pat => ActionFn(593);
+        // InlineExpr9 = InlineExpr9, "is", Pat => ActionFn(592);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant71(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action593::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action592::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -28364,11 +28360,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LBlockExpr = BlockExpr => ActionFn(594);
+        // LBlockExpr = BlockExpr => ActionFn(593);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action594::<>(module, __sym0);
+        let __nt = super::__action593::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 107)
     }
@@ -28381,11 +28377,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LExpr = Expr => ActionFn(595);
+        // LExpr = Expr => ActionFn(594);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action595::<>(module, __sym0);
+        let __nt = super::__action594::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 108)
     }
@@ -28398,11 +28394,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LInlineExpr = InlineExpr => ActionFn(596);
+        // LInlineExpr = InlineExpr => ActionFn(595);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action596::<>(module, __sym0);
+        let __nt = super::__action595::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 109)
     }
@@ -28415,11 +28411,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LLowerId = LowerId => ActionFn(597);
+        // LLowerId = LowerId => ActionFn(596);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action597::<>(module, __sym0);
+        let __nt = super::__action596::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 110)
     }
@@ -28465,11 +28461,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LPat = Pat => ActionFn(598);
+        // LPat = Pat => ActionFn(597);
         let __sym0 = __pop_Variant71(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action598::<>(module, __sym0);
+        let __nt = super::__action597::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant63(__nt), __end));
         (1, 112)
     }
@@ -28482,11 +28478,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LPred = Pred => ActionFn(599);
+        // LPred = Pred => ActionFn(598);
         let __sym0 = __pop_Variant72(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action599::<>(module, __sym0);
+        let __nt = super::__action598::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (1, 113)
     }
@@ -28532,11 +28528,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LStmt = Stmt => ActionFn(600);
+        // LStmt = Stmt => ActionFn(599);
         let __sym0 = __pop_Variant90(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action600::<>(module, __sym0);
+        let __nt = super::__action599::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 115)
     }
@@ -28618,10 +28614,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LStmts =  => ActionFn(662);
+        // LStmts =  => ActionFn(660);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action662::<>(module, &__start, &__end);
+        let __nt = super::__action660::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (0, 118)
     }
@@ -28634,11 +28630,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LStmts = LStmt+ => ActionFn(663);
+        // LStmts = LStmt+ => ActionFn(661);
         let __sym0 = __pop_Variant66(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action663::<>(module, __sym0);
+        let __nt = super::__action661::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (1, 118)
     }
@@ -28651,11 +28647,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LType = Type => ActionFn(601);
+        // LType = Type => ActionFn(600);
         let __sym0 = __pop_Variant99(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action601::<>(module, __sym0);
+        let __nt = super::__action600::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 119)
     }
@@ -28701,11 +28697,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LTypeNamed = TypeNamed => ActionFn(602);
+        // LTypeNamed = TypeNamed => ActionFn(601);
         let __sym0 = __pop_Variant99(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action602::<>(module, __sym0);
+        let __nt = super::__action601::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 121)
     }
@@ -28718,11 +28714,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LTypeNoFn = TypeNoFn => ActionFn(603);
+        // LTypeNoFn = TypeNoFn => ActionFn(602);
         let __sym0 = __pop_Variant99(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action603::<>(module, __sym0);
+        let __nt = super::__action602::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 122)
     }
@@ -28735,11 +28731,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LUpperId = UpperId => ActionFn(604);
+        // LUpperId = UpperId => ActionFn(603);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action604::<>(module, __sym0);
+        let __nt = super::__action603::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 123)
     }
@@ -28752,11 +28748,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LUpperIdLBracket = UpperIdLBracket => ActionFn(605);
+        // LUpperIdLBracket = UpperIdLBracket => ActionFn(604);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action605::<>(module, __sym0);
+        let __nt = super::__action604::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 124)
     }
@@ -29169,14 +29165,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Pat = Pat0, "|", Pat => ActionFn(606);
+        // Pat = Pat0, "|", Pat => ActionFn(605);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant71(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant71(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action606::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action605::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (3, 138)
     }
@@ -29313,13 +29309,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Pat0 = "~", Pat0 => ActionFn(607);
+        // Pat0 = "~", Pat0 => ActionFn(606);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant71(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action607::<>(module, __sym0, __sym1);
+        let __nt = super::__action606::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (2, 139)
     }
@@ -29512,13 +29508,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // RowExtension = "..", TypeNoFn => ActionFn(608);
+        // RowExtension = "..", LTypeNoFn => ActionFn(47);
         assert!(__symbols.len() >= 2);
-        let __sym1 = __pop_Variant99(__symbols);
+        let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action608::<>(module, __sym0, __sym1);
+        let __nt = super::__action47::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (2, 144)
     }
@@ -29713,11 +29709,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> = CallArg => ActionFn(642);
+        // Sep<CallArg, ","> = CallArg => ActionFn(640);
         let __sym0 = __pop_Variant16(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action642::<>(module, __sym0);
+        let __nt = super::__action640::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
     }
@@ -29730,10 +29726,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> =  => ActionFn(643);
+        // Sep<CallArg, ","> =  => ActionFn(641);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action643::<>(module, &__start, &__end);
+        let __nt = super::__action641::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (0, 148)
     }
@@ -29746,13 +29742,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> = (<CallArg> ",")+, CallArg => ActionFn(644);
+        // Sep<CallArg, ","> = (<CallArg> ",")+, CallArg => ActionFn(642);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant16(__symbols);
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action644::<>(module, __sym0, __sym1);
+        let __nt = super::__action642::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (2, 148)
     }
@@ -29765,11 +29761,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(645);
+        // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(643);
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action645::<>(module, __sym0);
+        let __nt = super::__action643::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
     }
@@ -29782,11 +29778,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> = Field => ActionFn(646);
+        // Sep<Field, ","> = Field => ActionFn(644);
         let __sym0 = __pop_Variant18(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action646::<>(module, __sym0);
+        let __nt = super::__action644::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
     }
@@ -29799,10 +29795,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> =  => ActionFn(647);
+        // Sep<Field, ","> =  => ActionFn(645);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action647::<>(module, &__start, &__end);
+        let __nt = super::__action645::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (0, 149)
     }
@@ -29815,13 +29811,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> = (<Field> ",")+, Field => ActionFn(648);
+        // Sep<Field, ","> = (<Field> ",")+, Field => ActionFn(646);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant18(__symbols);
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action648::<>(module, __sym0, __sym1);
+        let __nt = super::__action646::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (2, 149)
     }
@@ -29834,11 +29830,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> = (<Field> ",")+ => ActionFn(649);
+        // Sep<Field, ","> = (<Field> ",")+ => ActionFn(647);
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action649::<>(module, __sym0);
+        let __nt = super::__action647::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
     }
@@ -29851,11 +29847,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> = FieldPat => ActionFn(650);
+        // Sep<FieldPat, ","> = FieldPat => ActionFn(648);
         let __sym0 = __pop_Variant20(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action650::<>(module, __sym0);
+        let __nt = super::__action648::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (1, 150)
     }
@@ -29868,10 +29864,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> =  => ActionFn(651);
+        // Sep<FieldPat, ","> =  => ActionFn(649);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action651::<>(module, &__start, &__end);
+        let __nt = super::__action649::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (0, 150)
     }
@@ -29884,13 +29880,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> = (<FieldPat> ",")+, FieldPat => ActionFn(652);
+        // Sep<FieldPat, ","> = (<FieldPat> ",")+, FieldPat => ActionFn(650);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant20(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action652::<>(module, __sym0, __sym1);
+        let __nt = super::__action650::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (2, 150)
     }
@@ -29903,11 +29899,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> = (<FieldPat> ",")+ => ActionFn(653);
+        // Sep<FieldPat, ","> = (<FieldPat> ",")+ => ActionFn(651);
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action653::<>(module, __sym0);
+        let __nt = super::__action651::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (1, 150)
     }
@@ -29920,11 +29916,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> = LLowerId => ActionFn(654);
+        // Sep<LLowerId, ","> = LLowerId => ActionFn(652);
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action654::<>(module, __sym0);
+        let __nt = super::__action652::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (1, 151)
     }
@@ -29937,10 +29933,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> =  => ActionFn(655);
+        // Sep<LLowerId, ","> =  => ActionFn(653);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action655::<>(module, &__start, &__end);
+        let __nt = super::__action653::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (0, 151)
     }
@@ -29953,13 +29949,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> = (<LLowerId> ",")+, LLowerId => ActionFn(656);
+        // Sep<LLowerId, ","> = (<LLowerId> ",")+, LLowerId => ActionFn(654);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action656::<>(module, __sym0, __sym1);
+        let __nt = super::__action654::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 151)
     }
@@ -29972,11 +29968,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> = (<LLowerId> ",")+ => ActionFn(657);
+        // Sep<LLowerId, ","> = (<LLowerId> ",")+ => ActionFn(655);
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action657::<>(module, __sym0);
+        let __nt = super::__action655::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (1, 151)
     }
@@ -29989,11 +29985,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> = LPred => ActionFn(658);
+        // Sep<LPred, ","> = LPred => ActionFn(656);
         let __sym0 = __pop_Variant24(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action658::<>(module, __sym0);
+        let __nt = super::__action656::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 152)
     }
@@ -30006,10 +30002,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> =  => ActionFn(659);
+        // Sep<LPred, ","> =  => ActionFn(657);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action659::<>(module, &__start, &__end);
+        let __nt = super::__action657::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (0, 152)
     }
@@ -30022,13 +30018,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> = (<LPred> ",")+, LPred => ActionFn(660);
+        // Sep<LPred, ","> = (<LPred> ",")+, LPred => ActionFn(658);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant24(__symbols);
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action660::<>(module, __sym0, __sym1);
+        let __nt = super::__action658::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 152)
     }
@@ -30041,11 +30037,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> = (<LPred> ",")+ => ActionFn(661);
+        // Sep<LPred, ","> = (<LPred> ",")+ => ActionFn(659);
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action661::<>(module, __sym0);
+        let __nt = super::__action659::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 152)
     }
@@ -30058,11 +30054,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> = LType => ActionFn(664);
+        // Sep<LType, ","> = LType => ActionFn(662);
         let __sym0 = __pop_Variant4(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action664::<>(module, __sym0);
+        let __nt = super::__action662::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 153)
     }
@@ -30075,10 +30071,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> =  => ActionFn(665);
+        // Sep<LType, ","> =  => ActionFn(663);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action665::<>(module, &__start, &__end);
+        let __nt = super::__action663::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (0, 153)
     }
@@ -30091,13 +30087,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> = (<LType> ",")+, LType => ActionFn(666);
+        // Sep<LType, ","> = (<LType> ",")+, LType => ActionFn(664);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action666::<>(module, __sym0, __sym1);
+        let __nt = super::__action664::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (2, 153)
     }
@@ -30110,11 +30106,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> = (<LType> ",")+ => ActionFn(667);
+        // Sep<LType, ","> = (<LType> ",")+ => ActionFn(665);
         let __sym0 = __pop_Variant5(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action667::<>(module, __sym0);
+        let __nt = super::__action665::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 153)
     }
@@ -30127,11 +30123,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> = LowerId => ActionFn(680);
+        // Sep<LowerId, ","> = LowerId => ActionFn(678);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action680::<>(module, __sym0);
+        let __nt = super::__action678::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 154)
     }
@@ -30144,10 +30140,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> =  => ActionFn(681);
+        // Sep<LowerId, ","> =  => ActionFn(679);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action681::<>(module, &__start, &__end);
+        let __nt = super::__action679::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (0, 154)
     }
@@ -30160,13 +30156,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> = (<LowerId> ",")+, LowerId => ActionFn(682);
+        // Sep<LowerId, ","> = (<LowerId> ",")+, LowerId => ActionFn(680);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action682::<>(module, __sym0, __sym1);
+        let __nt = super::__action680::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (2, 154)
     }
@@ -30179,11 +30175,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> = (<LowerId> ",")+ => ActionFn(683);
+        // Sep<LowerId, ","> = (<LowerId> ",")+ => ActionFn(681);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action683::<>(module, __sym0);
+        let __nt = super::__action681::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 154)
     }
@@ -30196,11 +30192,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> = NamedType => ActionFn(694);
+        // Sep<NamedType, ","> = NamedType => ActionFn(692);
         let __sym0 = __pop_Variant27(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action694::<>(module, __sym0);
+        let __nt = super::__action692::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 155)
     }
@@ -30213,10 +30209,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> =  => ActionFn(695);
+        // Sep<NamedType, ","> =  => ActionFn(693);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action695::<>(module, &__start, &__end);
+        let __nt = super::__action693::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (0, 155)
     }
@@ -30229,13 +30225,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> = (<NamedType> ",")+, NamedType => ActionFn(696);
+        // Sep<NamedType, ","> = (<NamedType> ",")+, NamedType => ActionFn(694);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant27(__symbols);
         let __sym0 = __pop_Variant28(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action696::<>(module, __sym0, __sym1);
+        let __nt = super::__action694::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (2, 155)
     }
@@ -30248,11 +30244,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> = (<NamedType> ",")+ => ActionFn(697);
+        // Sep<NamedType, ","> = (<NamedType> ",")+ => ActionFn(695);
         let __sym0 = __pop_Variant28(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action697::<>(module, __sym0);
+        let __nt = super::__action695::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 155)
     }
@@ -30265,11 +30261,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> = Param => ActionFn(698);
+        // Sep<Param, ","> = Param => ActionFn(696);
         let __sym0 = __pop_Variant29(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action698::<>(module, __sym0);
+        let __nt = super::__action696::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (1, 156)
     }
@@ -30282,10 +30278,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> =  => ActionFn(699);
+        // Sep<Param, ","> =  => ActionFn(697);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action699::<>(module, &__start, &__end);
+        let __nt = super::__action697::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (0, 156)
     }
@@ -30298,13 +30294,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> = (<Param> ",")+, Param => ActionFn(700);
+        // Sep<Param, ","> = (<Param> ",")+, Param => ActionFn(698);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant29(__symbols);
         let __sym0 = __pop_Variant30(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action700::<>(module, __sym0, __sym1);
+        let __nt = super::__action698::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (2, 156)
     }
@@ -30317,11 +30313,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> = (<Param> ",")+ => ActionFn(701);
+        // Sep<Param, ","> = (<Param> ",")+ => ActionFn(699);
         let __sym0 = __pop_Variant30(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action701::<>(module, __sym0);
+        let __nt = super::__action699::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (1, 156)
     }
@@ -30334,11 +30330,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> = ParenExpr => ActionFn(702);
+        // Sep<ParenExpr, ","> = ParenExpr => ActionFn(700);
         let __sym0 = __pop_Variant31(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action702::<>(module, __sym0);
+        let __nt = super::__action700::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (1, 157)
     }
@@ -30351,10 +30347,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> =  => ActionFn(703);
+        // Sep<ParenExpr, ","> =  => ActionFn(701);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action703::<>(module, &__start, &__end);
+        let __nt = super::__action701::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (0, 157)
     }
@@ -30367,13 +30363,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+, ParenExpr => ActionFn(704);
+        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+, ParenExpr => ActionFn(702);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action704::<>(module, __sym0, __sym1);
+        let __nt = super::__action702::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (2, 157)
     }
@@ -30386,11 +30382,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(705);
+        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(703);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action705::<>(module, __sym0);
+        let __nt = super::__action703::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (1, 157)
     }
@@ -30403,11 +30399,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(708);
+        // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(706);
         let __sym0 = __pop_Variant33(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action708::<>(module, __sym0);
+        let __nt = super::__action706::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (1, 158)
     }
@@ -30420,10 +30416,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> =  => ActionFn(709);
+        // Sep<RecordTypeField, ","> =  => ActionFn(707);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action709::<>(module, &__start, &__end);
+        let __nt = super::__action707::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (0, 158)
     }
@@ -30436,13 +30432,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+, RecordTypeField => ActionFn(710);
+        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+, RecordTypeField => ActionFn(708);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action710::<>(module, __sym0, __sym1);
+        let __nt = super::__action708::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (2, 158)
     }
@@ -30455,11 +30451,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(711);
+        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(709);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action711::<>(module, __sym0);
+        let __nt = super::__action709::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (1, 158)
     }
@@ -30472,11 +30468,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> = SeqElem => ActionFn(712);
+        // Sep<SeqElem, ","> = SeqElem => ActionFn(710);
         let __sym0 = __pop_Variant35(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action712::<>(module, __sym0);
+        let __nt = super::__action710::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 159)
     }
@@ -30489,10 +30485,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> =  => ActionFn(713);
+        // Sep<SeqElem, ","> =  => ActionFn(711);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action713::<>(module, &__start, &__end);
+        let __nt = super::__action711::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (0, 159)
     }
@@ -30505,13 +30501,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> = (<SeqElem> ",")+, SeqElem => ActionFn(714);
+        // Sep<SeqElem, ","> = (<SeqElem> ",")+, SeqElem => ActionFn(712);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant35(__symbols);
         let __sym0 = __pop_Variant36(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action714::<>(module, __sym0, __sym1);
+        let __nt = super::__action712::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (2, 159)
     }
@@ -30524,11 +30520,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> = (<SeqElem> ",")+ => ActionFn(715);
+        // Sep<SeqElem, ","> = (<SeqElem> ",")+ => ActionFn(713);
         let __sym0 = __pop_Variant36(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action715::<>(module, __sym0);
+        let __nt = super::__action713::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 159)
     }
@@ -30611,14 +30607,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "break", Label, NEWLINE => ActionFn(668);
+        // Stmt = "break", Label, NEWLINE => ActionFn(666);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action668::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action666::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (3, 162)
     }
@@ -30631,13 +30627,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "break", NEWLINE => ActionFn(669);
+        // Stmt = "break", NEWLINE => ActionFn(667);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action669::<>(module, __sym0, __sym1);
+        let __nt = super::__action667::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (2, 162)
     }
@@ -30650,14 +30646,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "continue", Label, NEWLINE => ActionFn(670);
+        // Stmt = "continue", Label, NEWLINE => ActionFn(668);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action670::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action668::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (3, 162)
     }
@@ -30670,13 +30666,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "continue", NEWLINE => ActionFn(671);
+        // Stmt = "continue", NEWLINE => ActionFn(669);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action671::<>(module, __sym0, __sym1);
+        let __nt = super::__action669::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (2, 162)
     }
@@ -30820,13 +30816,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = InlineExpr, NEWLINE => ActionFn(609);
+        // Stmt = InlineExpr, NEWLINE => ActionFn(607);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action609::<>(module, __sym0, __sym1);
+        let __nt = super::__action607::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (2, 162)
     }
@@ -30839,11 +30835,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = BlockExpr => ActionFn(610);
+        // Stmt = BlockExpr => ActionFn(608);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action610::<>(module, __sym0);
+        let __nt = super::__action608::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (1, 162)
     }
@@ -30856,7 +30852,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(672);
+        // Stmt = Label, "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(670);
         assert!(__symbols.len() >= 12);
         let __sym11 = __pop_Variant0(__symbols);
         let __sym10 = __pop_Variant10(__symbols);
@@ -30872,7 +30868,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym11.2.clone();
-        let __nt = super::__action672::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
+        let __nt = super::__action670::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (12, 162)
     }
@@ -30885,7 +30881,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(673);
+        // Stmt = "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(671);
         assert!(__symbols.len() >= 11);
         let __sym10 = __pop_Variant0(__symbols);
         let __sym9 = __pop_Variant10(__symbols);
@@ -30900,7 +30896,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym10.2.clone();
-        let __nt = super::__action673::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
+        let __nt = super::__action671::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (11, 162)
     }
@@ -30913,7 +30909,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(674);
+        // Stmt = Label, "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(672);
         assert!(__symbols.len() >= 10);
         let __sym9 = __pop_Variant0(__symbols);
         let __sym8 = __pop_Variant10(__symbols);
@@ -30927,7 +30923,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym9.2.clone();
-        let __nt = super::__action674::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
+        let __nt = super::__action672::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (10, 162)
     }
@@ -30940,7 +30936,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(675);
+        // Stmt = "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(673);
         assert!(__symbols.len() >= 9);
         let __sym8 = __pop_Variant0(__symbols);
         let __sym7 = __pop_Variant10(__symbols);
@@ -30953,7 +30949,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym8.2.clone();
-        let __nt = super::__action675::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
+        let __nt = super::__action673::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (9, 162)
     }
@@ -30966,7 +30962,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(676);
+        // Stmt = Label, "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(674);
         assert!(__symbols.len() >= 8);
         let __sym7 = __pop_Variant0(__symbols);
         let __sym6 = __pop_Variant10(__symbols);
@@ -30978,7 +30974,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym7.2.clone();
-        let __nt = super::__action676::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
+        let __nt = super::__action674::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (8, 162)
     }
@@ -30991,7 +30987,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(677);
+        // Stmt = "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(675);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
         let __sym5 = __pop_Variant10(__symbols);
@@ -31002,7 +30998,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym6.2.clone();
-        let __nt = super::__action677::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action675::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (7, 162)
     }
@@ -31015,7 +31011,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(678);
+        // Stmt = Label, "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(676);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
         let __sym5 = __pop_Variant10(__symbols);
@@ -31026,7 +31022,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym6.2.clone();
-        let __nt = super::__action678::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action676::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (7, 162)
     }
@@ -31039,7 +31035,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(679);
+        // Stmt = "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(677);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant10(__symbols);
@@ -31049,7 +31045,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action679::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action677::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (6, 162)
     }
@@ -31062,14 +31058,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // SumExtension = "..", TypeNoFn, NEWLINE => ActionFn(612);
+        // SumExtension = "..", TypeNoFn, NEWLINE => ActionFn(610);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant99(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action612::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action610::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (3, 163)
     }
@@ -31115,11 +31111,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = TypeDecl => ActionFn(684);
+        // TopDecl = TypeDecl => ActionFn(682);
         let __sym0 = __pop_Variant101(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action684::<>(module, __sym0);
+        let __nt = super::__action682::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -31132,13 +31128,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, TypeDecl => ActionFn(685);
+        // TopDecl = NEWLINE+, TypeDecl => ActionFn(683);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant101(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action685::<>(module, __sym0, __sym1);
+        let __nt = super::__action683::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -31151,11 +31147,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = TopFunDecl => ActionFn(686);
+        // TopDecl = TopFunDecl => ActionFn(684);
         let __sym0 = __pop_Variant55(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action686::<>(module, __sym0);
+        let __nt = super::__action684::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -31168,13 +31164,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, TopFunDecl => ActionFn(687);
+        // TopDecl = NEWLINE+, TopFunDecl => ActionFn(685);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant55(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action687::<>(module, __sym0, __sym1);
+        let __nt = super::__action685::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -31187,11 +31183,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = ImportDecl => ActionFn(688);
+        // TopDecl = ImportDecl => ActionFn(686);
         let __sym0 = __pop_Variant60(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action688::<>(module, __sym0);
+        let __nt = super::__action686::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -31204,13 +31200,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, ImportDecl => ActionFn(689);
+        // TopDecl = NEWLINE+, ImportDecl => ActionFn(687);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant60(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action689::<>(module, __sym0, __sym1);
+        let __nt = super::__action687::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -31223,11 +31219,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = TraitDecl => ActionFn(690);
+        // TopDecl = TraitDecl => ActionFn(688);
         let __sym0 = __pop_Variant96(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action690::<>(module, __sym0);
+        let __nt = super::__action688::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -31240,13 +31236,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, TraitDecl => ActionFn(691);
+        // TopDecl = NEWLINE+, TraitDecl => ActionFn(689);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant96(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action691::<>(module, __sym0, __sym1);
+        let __nt = super::__action689::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -31259,11 +31255,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = ImplDecl => ActionFn(692);
+        // TopDecl = ImplDecl => ActionFn(690);
         let __sym0 = __pop_Variant57(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action692::<>(module, __sym0);
+        let __nt = super::__action690::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -31276,13 +31272,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, ImplDecl => ActionFn(693);
+        // TopDecl = NEWLINE+, ImplDecl => ActionFn(691);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant57(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action693::<>(module, __sym0, __sym1);
+        let __nt = super::__action691::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -31364,10 +31360,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecls =  => ActionFn(718);
+        // TopDecls =  => ActionFn(716);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action718::<>(module, &__start, &__end);
+        let __nt = super::__action716::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant94(__nt), __end));
         (0, 168)
     }
@@ -31380,11 +31376,11 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecls = TopDecl+ => ActionFn(719);
+        // TopDecls = TopDecl+ => ActionFn(717);
         let __sym0 = __pop_Variant93(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action719::<>(module, __sym0);
+        let __nt = super::__action717::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant94(__nt), __end));
         (1, 168)
     }
@@ -31397,7 +31393,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = TopFunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(618);
+        // TopFunDecl = TopFunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(616);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant10(__symbols);
@@ -31407,7 +31403,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant95(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action618::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action616::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 169)
     }
@@ -31420,14 +31416,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = "prim", TopFunSig, NEWLINE => ActionFn(619);
+        // TopFunDecl = "prim", TopFunSig, NEWLINE => ActionFn(617);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant95(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action619::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action617::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (3, 169)
     }
@@ -31440,13 +31436,13 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = TopFunSig, NEWLINE => ActionFn(620);
+        // TopFunDecl = TopFunSig, NEWLINE => ActionFn(618);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant95(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action620::<>(module, __sym0, __sym1);
+        let __nt = super::__action618::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (2, 169)
     }
@@ -31459,7 +31455,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = TopFunSig, ":", LInlineExpr, NEWLINE => ActionFn(621);
+        // TopFunDecl = TopFunSig, ":", LInlineExpr, NEWLINE => ActionFn(619);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant61(__symbols);
@@ -31467,7 +31463,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant95(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action621::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action619::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (4, 169)
     }
@@ -31480,7 +31476,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunSig = ParentTy, LLowerId, Context, ParamList, ReturnType => ActionFn(706);
+        // TopFunSig = ParentTy, LLowerId, Context, ParamList, ReturnType => ActionFn(704);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant74(__symbols);
         let __sym3 = __pop_Variant69(__symbols);
@@ -31489,7 +31485,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action706::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action704::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant95(__nt), __end));
         (5, 170)
     }
@@ -31502,7 +31498,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunSig = LLowerId, Context, ParamList, ReturnType => ActionFn(707);
+        // TopFunSig = LLowerId, Context, ParamList, ReturnType => ActionFn(705);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant74(__symbols);
         let __sym2 = __pop_Variant69(__symbols);
@@ -31510,7 +31506,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action707::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action705::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant95(__nt), __end));
         (4, 170)
     }
@@ -31523,7 +31519,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(622);
+        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(620);
         assert!(__symbols.len() >= 9);
         let __sym8 = __pop_Variant0(__symbols);
         let __sym7 = __pop_Variant98(__symbols);
@@ -31536,7 +31532,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym8.2.clone();
-        let __nt = super::__action622::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
+        let __nt = super::__action620::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant96(__nt), __end));
         (9, 171)
     }
@@ -31549,7 +31545,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]" => ActionFn(623);
+        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]" => ActionFn(621);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant82(__symbols);
@@ -31557,7 +31553,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action623::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action621::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant96(__nt), __end));
         (4, 171)
     }
@@ -31820,14 +31816,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeArg = UpperId, "=", LType => ActionFn(624);
+        // TypeArg = UpperId, "=", LType => ActionFn(622);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action624::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action622::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant100(__nt), __end));
         (3, 176)
     }
@@ -31857,7 +31853,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "value", "type", UpperId, TypeDeclRhs => ActionFn(634);
+        // TypeDecl = Attribute, "value", "type", UpperId, TypeDeclRhs => ActionFn(632);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant102(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
@@ -31866,7 +31862,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action634::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action632::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -31879,7 +31875,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "value", "type", UpperId, TypeDeclRhs => ActionFn(635);
+        // TypeDecl = "value", "type", UpperId, TypeDeclRhs => ActionFn(633);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant102(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -31887,7 +31883,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action635::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action633::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -31900,7 +31896,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperId, TypeDeclRhs => ActionFn(636);
+        // TypeDecl = Attribute, "type", UpperId, TypeDeclRhs => ActionFn(634);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant102(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -31908,7 +31904,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action636::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action634::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -31921,14 +31917,14 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperId, TypeDeclRhs => ActionFn(637);
+        // TypeDecl = "type", UpperId, TypeDeclRhs => ActionFn(635);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant102(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action637::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action635::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (3, 177)
     }
@@ -31941,7 +31937,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(638);
+        // TypeDecl = Attribute, "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(636);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant102(__symbols);
         let __sym4 = __pop_Variant2(__symbols);
@@ -31951,7 +31947,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action638::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action636::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (6, 177)
     }
@@ -31964,7 +31960,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(639);
+        // TypeDecl = "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(637);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant102(__symbols);
         let __sym3 = __pop_Variant2(__symbols);
@@ -31973,7 +31969,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action639::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action637::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -31986,7 +31982,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(640);
+        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(638);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant102(__symbols);
         let __sym3 = __pop_Variant2(__symbols);
@@ -31995,7 +31991,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action640::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action638::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -32008,7 +32004,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(641);
+        // TypeDecl = "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(639);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant102(__symbols);
         let __sym2 = __pop_Variant2(__symbols);
@@ -32016,7 +32012,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action641::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action639::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -32029,7 +32025,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperId, "=", Type, NEWLINE => ActionFn(629);
+        // TypeDecl = "type", UpperId, "=", Type, NEWLINE => ActionFn(627);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant99(__symbols);
@@ -32038,7 +32034,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action629::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action627::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -32051,7 +32047,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "prim", "type", UpperId, NEWLINE => ActionFn(630);
+        // TypeDecl = "prim", "type", UpperId, NEWLINE => ActionFn(628);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -32059,7 +32055,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action630::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action628::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -32072,7 +32068,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "prim", "type", UpperIdLBracket, TypeParams, NEWLINE => ActionFn(631);
+        // TypeDecl = "prim", "type", UpperIdLBracket, TypeParams, NEWLINE => ActionFn(629);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant2(__symbols);
@@ -32081,7 +32077,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action631::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action629::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -32133,7 +32129,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDeclRhs = "(", Sep<Field, ",">, RowExtension, ")", NEWLINE => ActionFn(560);
+        // TypeDeclRhs = "(", Sep<Field, ",">, RowExtension, ")", NEWLINE => ActionFn(559);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
@@ -32142,7 +32138,7 @@ mod __parse__LStmt {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action560::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action559::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant102(__nt), __end));
         (5, 178)
     }
@@ -35493,6 +35489,7 @@ mod __parse__TopDecls {
             122 => match state {
                 83 => 392,
                 114 => 467,
+                132 => 510,
                 _ => 295,
             },
             123 => match state {
@@ -35659,7 +35656,6 @@ mod __parse__TopDecls {
                 _ => 277,
             },
             180 => match state {
-                132 => 510,
                 146 => 558,
                 _ => 298,
             },
@@ -43492,10 +43488,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Alts =  => ActionFn(632);
+        // Alts =  => ActionFn(630);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action632::<>(module, &__start, &__end);
+        let __nt = super::__action630::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (0, 70)
     }
@@ -43508,11 +43504,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Alts = Alt+ => ActionFn(633);
+        // Alts = Alt+ => ActionFn(631);
         let __sym0 = __pop_Variant39(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action633::<>(module, __sym0);
+        let __nt = super::__action631::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 70)
     }
@@ -44029,13 +44025,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ConDecls = ConDecl+, SumExtension => ActionFn(716);
+        // ConDecls = ConDecl+, SumExtension => ActionFn(714);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant91(__symbols);
         let __sym0 = __pop_Variant48(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action716::<>(module, __sym0, __sym1);
+        let __nt = super::__action714::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (2, 80)
     }
@@ -44048,11 +44044,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ConDecls = ConDecl+ => ActionFn(717);
+        // ConDecls = ConDecl+ => ActionFn(715);
         let __sym0 = __pop_Variant48(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action717::<>(module, __sym0);
+        let __nt = super::__action715::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (1, 80)
     }
@@ -44383,7 +44379,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = FunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(561);
+        // FunDecl = FunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(560);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant10(__symbols);
@@ -44393,7 +44389,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant56(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action561::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action560::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 89)
     }
@@ -44406,14 +44402,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = "prim", FunSig, NEWLINE => ActionFn(562);
+        // FunDecl = "prim", FunSig, NEWLINE => ActionFn(561);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant56(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action562::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action561::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (3, 89)
     }
@@ -44426,13 +44422,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = FunSig, NEWLINE => ActionFn(563);
+        // FunDecl = FunSig, NEWLINE => ActionFn(562);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant56(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action563::<>(module, __sym0, __sym1);
+        let __nt = super::__action562::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (2, 89)
     }
@@ -44445,7 +44441,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // FunDecl = FunSig, ":", LInlineExpr, NEWLINE => ActionFn(564);
+        // FunDecl = FunSig, ":", LInlineExpr, NEWLINE => ActionFn(563);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant61(__symbols);
@@ -44453,7 +44449,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant56(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action564::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action563::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (4, 89)
     }
@@ -44487,7 +44483,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]", ":", NEWLINE, INDENT, ImplDeclItem+, DEDENT => ActionFn(565);
+        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]", ":", NEWLINE, INDENT, ImplDeclItem+, DEDENT => ActionFn(564);
         assert!(__symbols.len() >= 10);
         let __sym9 = __pop_Variant0(__symbols);
         let __sym8 = __pop_Variant59(__symbols);
@@ -44501,7 +44497,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym9.2.clone();
-        let __nt = super::__action565::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
+        let __nt = super::__action564::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (10, 91)
     }
@@ -44514,7 +44510,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]" => ActionFn(566);
+        // ImplDecl = "impl", Context, LUpperIdLBracket, Sep<LType, ",">, "]" => ActionFn(565);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant76(__symbols);
@@ -44523,7 +44519,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action566::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action565::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (5, 91)
     }
@@ -44611,7 +44607,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, ",", "]", NEWLINE => ActionFn(567);
+        // ImportDecl = "import", "[", ImportPath, ",", "]", NEWLINE => ActionFn(566);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant0(__symbols);
@@ -44621,7 +44617,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action567::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action566::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (6, 94)
     }
@@ -44634,7 +44630,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, ",", "]", NEWLINE => ActionFn(568);
+        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, ",", "]", NEWLINE => ActionFn(567);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
         let __sym5 = __pop_Variant0(__symbols);
@@ -44645,7 +44641,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym6.2.clone();
-        let __nt = super::__action568::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action567::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (7, 94)
     }
@@ -44658,7 +44654,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, "]", NEWLINE => ActionFn(569);
+        // ImportDecl = "import", "[", ImportPath, "]", NEWLINE => ActionFn(568);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
@@ -44667,7 +44663,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action569::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action568::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (5, 94)
     }
@@ -44680,7 +44676,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, "]", NEWLINE => ActionFn(570);
+        // ImportDecl = "import", "[", ImportPath, ("," <ImportPath>)+, "]", NEWLINE => ActionFn(569);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant0(__symbols);
@@ -44690,7 +44686,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action570::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action569::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (6, 94)
     }
@@ -44985,7 +44981,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr0 = InlineExpr0, "(", Sep<CallArg, ",">, ")" => ActionFn(571);
+        // InlineExpr0 = InlineExpr0, "(", Sep<CallArg, ",">, ")" => ActionFn(570);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant79(__symbols);
@@ -44993,7 +44989,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action571::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action570::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (4, 97)
     }
@@ -45006,7 +45002,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr0 = InlineExpr0, ".", LowerId, UserTyArgs => ActionFn(572);
+        // InlineExpr0 = InlineExpr0, ".", LowerId, UserTyArgs => ActionFn(571);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant76(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -45014,7 +45010,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action572::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action571::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (4, 97)
     }
@@ -45067,14 +45063,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr10 = InlineExpr10, "and", InlineExpr9 => ActionFn(573);
+        // InlineExpr10 = InlineExpr10, "and", InlineExpr9 => ActionFn(572);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action573::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action572::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 98)
     }
@@ -45104,14 +45100,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr11 = InlineExpr11, "or", InlineExpr10 => ActionFn(574);
+        // InlineExpr11 = InlineExpr11, "or", InlineExpr10 => ActionFn(573);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action574::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action573::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 99)
     }
@@ -45124,11 +45120,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr11 = "return" => ActionFn(575);
+        // InlineExpr11 = "return" => ActionFn(574);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action575::<>(module, __sym0);
+        let __nt = super::__action574::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (1, 99)
     }
@@ -45158,13 +45154,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr2 = "not", InlineExpr2 => ActionFn(576);
+        // InlineExpr2 = "not", InlineExpr2 => ActionFn(575);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant44(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action576::<>(module, __sym0, __sym1);
+        let __nt = super::__action575::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 100)
     }
@@ -45177,13 +45173,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr2 = "-", InlineExpr2 => ActionFn(577);
+        // InlineExpr2 = "-", InlineExpr2 => ActionFn(576);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant44(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action577::<>(module, __sym0, __sym1);
+        let __nt = super::__action576::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 100)
     }
@@ -45196,13 +45192,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr2 = "~", InlineExpr2 => ActionFn(578);
+        // InlineExpr2 = "~", InlineExpr2 => ActionFn(577);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant44(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action578::<>(module, __sym0, __sym1);
+        let __nt = super::__action577::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (2, 100)
     }
@@ -45232,14 +45228,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr4 = InlineExpr4, "*", InlineExpr2 => ActionFn(579);
+        // InlineExpr4 = InlineExpr4, "*", InlineExpr2 => ActionFn(578);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action579::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action578::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 101)
     }
@@ -45252,14 +45248,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr4 = InlineExpr4, "/", InlineExpr2 => ActionFn(580);
+        // InlineExpr4 = InlineExpr4, "/", InlineExpr2 => ActionFn(579);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action580::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action579::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 101)
     }
@@ -45289,14 +45285,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr5 = InlineExpr5, "+", InlineExpr4 => ActionFn(581);
+        // InlineExpr5 = InlineExpr5, "+", InlineExpr4 => ActionFn(580);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action581::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action580::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 102)
     }
@@ -45309,14 +45305,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr5 = InlineExpr5, "-", InlineExpr4 => ActionFn(582);
+        // InlineExpr5 = InlineExpr5, "-", InlineExpr4 => ActionFn(581);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action582::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action581::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 102)
     }
@@ -45346,14 +45342,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr6 = InlineExpr6, "<<", InlineExpr5 => ActionFn(583);
+        // InlineExpr6 = InlineExpr6, "<<", InlineExpr5 => ActionFn(582);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action583::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action582::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 103)
     }
@@ -45366,14 +45362,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr6 = InlineExpr6, ">>", InlineExpr5 => ActionFn(584);
+        // InlineExpr6 = InlineExpr6, ">>", InlineExpr5 => ActionFn(583);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action584::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action583::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 103)
     }
@@ -45403,14 +45399,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr7 = InlineExpr7, "&", InlineExpr6 => ActionFn(585);
+        // InlineExpr7 = InlineExpr7, "&", InlineExpr6 => ActionFn(584);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action585::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action584::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 104)
     }
@@ -45440,14 +45436,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr8 = InlineExpr8, "|", InlineExpr7 => ActionFn(586);
+        // InlineExpr8 = InlineExpr8, "|", InlineExpr7 => ActionFn(585);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action586::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action585::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 105)
     }
@@ -45477,14 +45473,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "==", InlineExpr8 => ActionFn(587);
+        // InlineExpr9 = InlineExpr9, "==", InlineExpr8 => ActionFn(586);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action587::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action586::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -45497,14 +45493,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "!=", InlineExpr8 => ActionFn(588);
+        // InlineExpr9 = InlineExpr9, "!=", InlineExpr8 => ActionFn(587);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action588::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action587::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -45517,14 +45513,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "<", InlineExpr8 => ActionFn(589);
+        // InlineExpr9 = InlineExpr9, "<", InlineExpr8 => ActionFn(588);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action589::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action588::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -45537,14 +45533,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, ">", InlineExpr8 => ActionFn(590);
+        // InlineExpr9 = InlineExpr9, ">", InlineExpr8 => ActionFn(589);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action590::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action589::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -45557,14 +45553,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "<=", InlineExpr8 => ActionFn(591);
+        // InlineExpr9 = InlineExpr9, "<=", InlineExpr8 => ActionFn(590);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action591::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action590::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -45577,14 +45573,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, ">=", InlineExpr8 => ActionFn(592);
+        // InlineExpr9 = InlineExpr9, ">=", InlineExpr8 => ActionFn(591);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant44(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action592::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action591::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -45597,14 +45593,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // InlineExpr9 = InlineExpr9, "is", Pat => ActionFn(593);
+        // InlineExpr9 = InlineExpr9, "is", Pat => ActionFn(592);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant71(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action593::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action592::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (3, 106)
     }
@@ -45634,11 +45630,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LBlockExpr = BlockExpr => ActionFn(594);
+        // LBlockExpr = BlockExpr => ActionFn(593);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action594::<>(module, __sym0);
+        let __nt = super::__action593::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 107)
     }
@@ -45651,11 +45647,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LExpr = Expr => ActionFn(595);
+        // LExpr = Expr => ActionFn(594);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action595::<>(module, __sym0);
+        let __nt = super::__action594::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 108)
     }
@@ -45668,11 +45664,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LInlineExpr = InlineExpr => ActionFn(596);
+        // LInlineExpr = InlineExpr => ActionFn(595);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action596::<>(module, __sym0);
+        let __nt = super::__action595::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (1, 109)
     }
@@ -45685,11 +45681,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LLowerId = LowerId => ActionFn(597);
+        // LLowerId = LowerId => ActionFn(596);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action597::<>(module, __sym0);
+        let __nt = super::__action596::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 110)
     }
@@ -45735,11 +45731,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LPat = Pat => ActionFn(598);
+        // LPat = Pat => ActionFn(597);
         let __sym0 = __pop_Variant71(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action598::<>(module, __sym0);
+        let __nt = super::__action597::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant63(__nt), __end));
         (1, 112)
     }
@@ -45752,11 +45748,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LPred = Pred => ActionFn(599);
+        // LPred = Pred => ActionFn(598);
         let __sym0 = __pop_Variant72(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action599::<>(module, __sym0);
+        let __nt = super::__action598::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (1, 113)
     }
@@ -45802,11 +45798,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LStmt = Stmt => ActionFn(600);
+        // LStmt = Stmt => ActionFn(599);
         let __sym0 = __pop_Variant90(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action600::<>(module, __sym0);
+        let __nt = super::__action599::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant65(__nt), __end));
         (1, 115)
     }
@@ -45888,10 +45884,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LStmts =  => ActionFn(662);
+        // LStmts =  => ActionFn(660);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action662::<>(module, &__start, &__end);
+        let __nt = super::__action660::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (0, 118)
     }
@@ -45904,11 +45900,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LStmts = LStmt+ => ActionFn(663);
+        // LStmts = LStmt+ => ActionFn(661);
         let __sym0 = __pop_Variant66(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action663::<>(module, __sym0);
+        let __nt = super::__action661::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (1, 118)
     }
@@ -45921,11 +45917,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LType = Type => ActionFn(601);
+        // LType = Type => ActionFn(600);
         let __sym0 = __pop_Variant99(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action601::<>(module, __sym0);
+        let __nt = super::__action600::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 119)
     }
@@ -45971,11 +45967,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LTypeNamed = TypeNamed => ActionFn(602);
+        // LTypeNamed = TypeNamed => ActionFn(601);
         let __sym0 = __pop_Variant99(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action602::<>(module, __sym0);
+        let __nt = super::__action601::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 121)
     }
@@ -45988,11 +45984,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LTypeNoFn = TypeNoFn => ActionFn(603);
+        // LTypeNoFn = TypeNoFn => ActionFn(602);
         let __sym0 = __pop_Variant99(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action603::<>(module, __sym0);
+        let __nt = super::__action602::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (1, 122)
     }
@@ -46005,11 +46001,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LUpperId = UpperId => ActionFn(604);
+        // LUpperId = UpperId => ActionFn(603);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action604::<>(module, __sym0);
+        let __nt = super::__action603::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 123)
     }
@@ -46022,11 +46018,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // LUpperIdLBracket = UpperIdLBracket => ActionFn(605);
+        // LUpperIdLBracket = UpperIdLBracket => ActionFn(604);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action605::<>(module, __sym0);
+        let __nt = super::__action604::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 124)
     }
@@ -46439,14 +46435,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Pat = Pat0, "|", Pat => ActionFn(606);
+        // Pat = Pat0, "|", Pat => ActionFn(605);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant71(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant71(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action606::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action605::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (3, 138)
     }
@@ -46583,13 +46579,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Pat0 = "~", Pat0 => ActionFn(607);
+        // Pat0 = "~", Pat0 => ActionFn(606);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant71(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action607::<>(module, __sym0, __sym1);
+        let __nt = super::__action606::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant71(__nt), __end));
         (2, 139)
     }
@@ -46782,13 +46778,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // RowExtension = "..", TypeNoFn => ActionFn(608);
+        // RowExtension = "..", LTypeNoFn => ActionFn(47);
         assert!(__symbols.len() >= 2);
-        let __sym1 = __pop_Variant99(__symbols);
+        let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action608::<>(module, __sym0, __sym1);
+        let __nt = super::__action47::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant75(__nt), __end));
         (2, 144)
     }
@@ -46983,11 +46979,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> = CallArg => ActionFn(642);
+        // Sep<CallArg, ","> = CallArg => ActionFn(640);
         let __sym0 = __pop_Variant16(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action642::<>(module, __sym0);
+        let __nt = super::__action640::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
     }
@@ -47000,10 +46996,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> =  => ActionFn(643);
+        // Sep<CallArg, ","> =  => ActionFn(641);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action643::<>(module, &__start, &__end);
+        let __nt = super::__action641::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (0, 148)
     }
@@ -47016,13 +47012,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> = (<CallArg> ",")+, CallArg => ActionFn(644);
+        // Sep<CallArg, ","> = (<CallArg> ",")+, CallArg => ActionFn(642);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant16(__symbols);
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action644::<>(module, __sym0, __sym1);
+        let __nt = super::__action642::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (2, 148)
     }
@@ -47035,11 +47031,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(645);
+        // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(643);
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action645::<>(module, __sym0);
+        let __nt = super::__action643::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant79(__nt), __end));
         (1, 148)
     }
@@ -47052,11 +47048,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> = Field => ActionFn(646);
+        // Sep<Field, ","> = Field => ActionFn(644);
         let __sym0 = __pop_Variant18(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action646::<>(module, __sym0);
+        let __nt = super::__action644::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
     }
@@ -47069,10 +47065,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> =  => ActionFn(647);
+        // Sep<Field, ","> =  => ActionFn(645);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action647::<>(module, &__start, &__end);
+        let __nt = super::__action645::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (0, 149)
     }
@@ -47085,13 +47081,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> = (<Field> ",")+, Field => ActionFn(648);
+        // Sep<Field, ","> = (<Field> ",")+, Field => ActionFn(646);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant18(__symbols);
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action648::<>(module, __sym0, __sym1);
+        let __nt = super::__action646::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (2, 149)
     }
@@ -47104,11 +47100,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Field, ","> = (<Field> ",")+ => ActionFn(649);
+        // Sep<Field, ","> = (<Field> ",")+ => ActionFn(647);
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action649::<>(module, __sym0);
+        let __nt = super::__action647::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant80(__nt), __end));
         (1, 149)
     }
@@ -47121,11 +47117,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> = FieldPat => ActionFn(650);
+        // Sep<FieldPat, ","> = FieldPat => ActionFn(648);
         let __sym0 = __pop_Variant20(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action650::<>(module, __sym0);
+        let __nt = super::__action648::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (1, 150)
     }
@@ -47138,10 +47134,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> =  => ActionFn(651);
+        // Sep<FieldPat, ","> =  => ActionFn(649);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action651::<>(module, &__start, &__end);
+        let __nt = super::__action649::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (0, 150)
     }
@@ -47154,13 +47150,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> = (<FieldPat> ",")+, FieldPat => ActionFn(652);
+        // Sep<FieldPat, ","> = (<FieldPat> ",")+, FieldPat => ActionFn(650);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant20(__symbols);
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action652::<>(module, __sym0, __sym1);
+        let __nt = super::__action650::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (2, 150)
     }
@@ -47173,11 +47169,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<FieldPat, ","> = (<FieldPat> ",")+ => ActionFn(653);
+        // Sep<FieldPat, ","> = (<FieldPat> ",")+ => ActionFn(651);
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action653::<>(module, __sym0);
+        let __nt = super::__action651::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant81(__nt), __end));
         (1, 150)
     }
@@ -47190,11 +47186,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> = LLowerId => ActionFn(654);
+        // Sep<LLowerId, ","> = LLowerId => ActionFn(652);
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action654::<>(module, __sym0);
+        let __nt = super::__action652::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (1, 151)
     }
@@ -47207,10 +47203,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> =  => ActionFn(655);
+        // Sep<LLowerId, ","> =  => ActionFn(653);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action655::<>(module, &__start, &__end);
+        let __nt = super::__action653::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (0, 151)
     }
@@ -47223,13 +47219,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> = (<LLowerId> ",")+, LLowerId => ActionFn(656);
+        // Sep<LLowerId, ","> = (<LLowerId> ",")+, LLowerId => ActionFn(654);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant22(__symbols);
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action656::<>(module, __sym0, __sym1);
+        let __nt = super::__action654::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (2, 151)
     }
@@ -47242,11 +47238,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LLowerId, ","> = (<LLowerId> ",")+ => ActionFn(657);
+        // Sep<LLowerId, ","> = (<LLowerId> ",")+ => ActionFn(655);
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action657::<>(module, __sym0);
+        let __nt = super::__action655::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant82(__nt), __end));
         (1, 151)
     }
@@ -47259,11 +47255,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> = LPred => ActionFn(658);
+        // Sep<LPred, ","> = LPred => ActionFn(656);
         let __sym0 = __pop_Variant24(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action658::<>(module, __sym0);
+        let __nt = super::__action656::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 152)
     }
@@ -47276,10 +47272,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> =  => ActionFn(659);
+        // Sep<LPred, ","> =  => ActionFn(657);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action659::<>(module, &__start, &__end);
+        let __nt = super::__action657::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (0, 152)
     }
@@ -47292,13 +47288,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> = (<LPred> ",")+, LPred => ActionFn(660);
+        // Sep<LPred, ","> = (<LPred> ",")+, LPred => ActionFn(658);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant24(__symbols);
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action660::<>(module, __sym0, __sym1);
+        let __nt = super::__action658::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (2, 152)
     }
@@ -47311,11 +47307,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LPred, ","> = (<LPred> ",")+ => ActionFn(661);
+        // Sep<LPred, ","> = (<LPred> ",")+ => ActionFn(659);
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action661::<>(module, __sym0);
+        let __nt = super::__action659::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant83(__nt), __end));
         (1, 152)
     }
@@ -47328,11 +47324,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> = LType => ActionFn(664);
+        // Sep<LType, ","> = LType => ActionFn(662);
         let __sym0 = __pop_Variant4(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action664::<>(module, __sym0);
+        let __nt = super::__action662::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 153)
     }
@@ -47345,10 +47341,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> =  => ActionFn(665);
+        // Sep<LType, ","> =  => ActionFn(663);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action665::<>(module, &__start, &__end);
+        let __nt = super::__action663::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (0, 153)
     }
@@ -47361,13 +47357,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> = (<LType> ",")+, LType => ActionFn(666);
+        // Sep<LType, ","> = (<LType> ",")+, LType => ActionFn(664);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant4(__symbols);
         let __sym0 = __pop_Variant5(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action666::<>(module, __sym0, __sym1);
+        let __nt = super::__action664::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (2, 153)
     }
@@ -47380,11 +47376,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LType, ","> = (<LType> ",")+ => ActionFn(667);
+        // Sep<LType, ","> = (<LType> ",")+ => ActionFn(665);
         let __sym0 = __pop_Variant5(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action667::<>(module, __sym0);
+        let __nt = super::__action665::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant76(__nt), __end));
         (1, 153)
     }
@@ -47397,11 +47393,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> = LowerId => ActionFn(680);
+        // Sep<LowerId, ","> = LowerId => ActionFn(678);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action680::<>(module, __sym0);
+        let __nt = super::__action678::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 154)
     }
@@ -47414,10 +47410,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> =  => ActionFn(681);
+        // Sep<LowerId, ","> =  => ActionFn(679);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action681::<>(module, &__start, &__end);
+        let __nt = super::__action679::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (0, 154)
     }
@@ -47430,13 +47426,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> = (<LowerId> ",")+, LowerId => ActionFn(682);
+        // Sep<LowerId, ","> = (<LowerId> ",")+, LowerId => ActionFn(680);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action682::<>(module, __sym0, __sym1);
+        let __nt = super::__action680::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (2, 154)
     }
@@ -47449,11 +47445,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<LowerId, ","> = (<LowerId> ",")+ => ActionFn(683);
+        // Sep<LowerId, ","> = (<LowerId> ",")+ => ActionFn(681);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action683::<>(module, __sym0);
+        let __nt = super::__action681::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant77(__nt), __end));
         (1, 154)
     }
@@ -47466,11 +47462,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> = NamedType => ActionFn(694);
+        // Sep<NamedType, ","> = NamedType => ActionFn(692);
         let __sym0 = __pop_Variant27(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action694::<>(module, __sym0);
+        let __nt = super::__action692::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 155)
     }
@@ -47483,10 +47479,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> =  => ActionFn(695);
+        // Sep<NamedType, ","> =  => ActionFn(693);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action695::<>(module, &__start, &__end);
+        let __nt = super::__action693::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (0, 155)
     }
@@ -47499,13 +47495,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> = (<NamedType> ",")+, NamedType => ActionFn(696);
+        // Sep<NamedType, ","> = (<NamedType> ",")+, NamedType => ActionFn(694);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant27(__symbols);
         let __sym0 = __pop_Variant28(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action696::<>(module, __sym0, __sym1);
+        let __nt = super::__action694::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (2, 155)
     }
@@ -47518,11 +47514,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<NamedType, ","> = (<NamedType> ",")+ => ActionFn(697);
+        // Sep<NamedType, ","> = (<NamedType> ",")+ => ActionFn(695);
         let __sym0 = __pop_Variant28(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action697::<>(module, __sym0);
+        let __nt = super::__action695::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant84(__nt), __end));
         (1, 155)
     }
@@ -47535,11 +47531,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> = Param => ActionFn(698);
+        // Sep<Param, ","> = Param => ActionFn(696);
         let __sym0 = __pop_Variant29(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action698::<>(module, __sym0);
+        let __nt = super::__action696::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (1, 156)
     }
@@ -47552,10 +47548,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> =  => ActionFn(699);
+        // Sep<Param, ","> =  => ActionFn(697);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action699::<>(module, &__start, &__end);
+        let __nt = super::__action697::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (0, 156)
     }
@@ -47568,13 +47564,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> = (<Param> ",")+, Param => ActionFn(700);
+        // Sep<Param, ","> = (<Param> ",")+, Param => ActionFn(698);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant29(__symbols);
         let __sym0 = __pop_Variant30(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action700::<>(module, __sym0, __sym1);
+        let __nt = super::__action698::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (2, 156)
     }
@@ -47587,11 +47583,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<Param, ","> = (<Param> ",")+ => ActionFn(701);
+        // Sep<Param, ","> = (<Param> ",")+ => ActionFn(699);
         let __sym0 = __pop_Variant30(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action701::<>(module, __sym0);
+        let __nt = super::__action699::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant85(__nt), __end));
         (1, 156)
     }
@@ -47604,11 +47600,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> = ParenExpr => ActionFn(702);
+        // Sep<ParenExpr, ","> = ParenExpr => ActionFn(700);
         let __sym0 = __pop_Variant31(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action702::<>(module, __sym0);
+        let __nt = super::__action700::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (1, 157)
     }
@@ -47621,10 +47617,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> =  => ActionFn(703);
+        // Sep<ParenExpr, ","> =  => ActionFn(701);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action703::<>(module, &__start, &__end);
+        let __nt = super::__action701::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (0, 157)
     }
@@ -47637,13 +47633,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+, ParenExpr => ActionFn(704);
+        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+, ParenExpr => ActionFn(702);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action704::<>(module, __sym0, __sym1);
+        let __nt = super::__action702::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (2, 157)
     }
@@ -47656,11 +47652,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(705);
+        // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(703);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action705::<>(module, __sym0);
+        let __nt = super::__action703::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant86(__nt), __end));
         (1, 157)
     }
@@ -47673,11 +47669,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(708);
+        // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(706);
         let __sym0 = __pop_Variant33(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action708::<>(module, __sym0);
+        let __nt = super::__action706::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (1, 158)
     }
@@ -47690,10 +47686,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> =  => ActionFn(709);
+        // Sep<RecordTypeField, ","> =  => ActionFn(707);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action709::<>(module, &__start, &__end);
+        let __nt = super::__action707::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (0, 158)
     }
@@ -47706,13 +47702,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+, RecordTypeField => ActionFn(710);
+        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+, RecordTypeField => ActionFn(708);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action710::<>(module, __sym0, __sym1);
+        let __nt = super::__action708::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (2, 158)
     }
@@ -47725,11 +47721,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(711);
+        // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(709);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action711::<>(module, __sym0);
+        let __nt = super::__action709::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant87(__nt), __end));
         (1, 158)
     }
@@ -47742,11 +47738,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> = SeqElem => ActionFn(712);
+        // Sep<SeqElem, ","> = SeqElem => ActionFn(710);
         let __sym0 = __pop_Variant35(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action712::<>(module, __sym0);
+        let __nt = super::__action710::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 159)
     }
@@ -47759,10 +47755,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> =  => ActionFn(713);
+        // Sep<SeqElem, ","> =  => ActionFn(711);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action713::<>(module, &__start, &__end);
+        let __nt = super::__action711::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (0, 159)
     }
@@ -47775,13 +47771,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> = (<SeqElem> ",")+, SeqElem => ActionFn(714);
+        // Sep<SeqElem, ","> = (<SeqElem> ",")+, SeqElem => ActionFn(712);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant35(__symbols);
         let __sym0 = __pop_Variant36(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action714::<>(module, __sym0, __sym1);
+        let __nt = super::__action712::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (2, 159)
     }
@@ -47794,11 +47790,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<SeqElem, ","> = (<SeqElem> ",")+ => ActionFn(715);
+        // Sep<SeqElem, ","> = (<SeqElem> ",")+ => ActionFn(713);
         let __sym0 = __pop_Variant36(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action715::<>(module, __sym0);
+        let __nt = super::__action713::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant88(__nt), __end));
         (1, 159)
     }
@@ -47881,14 +47877,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "break", Label, NEWLINE => ActionFn(668);
+        // Stmt = "break", Label, NEWLINE => ActionFn(666);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action668::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action666::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (3, 162)
     }
@@ -47901,13 +47897,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "break", NEWLINE => ActionFn(669);
+        // Stmt = "break", NEWLINE => ActionFn(667);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action669::<>(module, __sym0, __sym1);
+        let __nt = super::__action667::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (2, 162)
     }
@@ -47920,14 +47916,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "continue", Label, NEWLINE => ActionFn(670);
+        // Stmt = "continue", Label, NEWLINE => ActionFn(668);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action670::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action668::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (3, 162)
     }
@@ -47940,13 +47936,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "continue", NEWLINE => ActionFn(671);
+        // Stmt = "continue", NEWLINE => ActionFn(669);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action671::<>(module, __sym0, __sym1);
+        let __nt = super::__action669::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (2, 162)
     }
@@ -48090,13 +48086,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = InlineExpr, NEWLINE => ActionFn(609);
+        // Stmt = InlineExpr, NEWLINE => ActionFn(607);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action609::<>(module, __sym0, __sym1);
+        let __nt = super::__action607::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (2, 162)
     }
@@ -48109,11 +48105,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = BlockExpr => ActionFn(610);
+        // Stmt = BlockExpr => ActionFn(608);
         let __sym0 = __pop_Variant44(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action610::<>(module, __sym0);
+        let __nt = super::__action608::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (1, 162)
     }
@@ -48126,7 +48122,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(672);
+        // Stmt = Label, "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(670);
         assert!(__symbols.len() >= 12);
         let __sym11 = __pop_Variant0(__symbols);
         let __sym10 = __pop_Variant10(__symbols);
@@ -48142,7 +48138,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym11.2.clone();
-        let __nt = super::__action672::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
+        let __nt = super::__action670::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (12, 162)
     }
@@ -48155,7 +48151,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(673);
+        // Stmt = "for", LPat, ":", LType, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(671);
         assert!(__symbols.len() >= 11);
         let __sym10 = __pop_Variant0(__symbols);
         let __sym9 = __pop_Variant10(__symbols);
@@ -48170,7 +48166,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym10.2.clone();
-        let __nt = super::__action673::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
+        let __nt = super::__action671::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (11, 162)
     }
@@ -48183,7 +48179,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(674);
+        // Stmt = Label, "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(672);
         assert!(__symbols.len() >= 10);
         let __sym9 = __pop_Variant0(__symbols);
         let __sym8 = __pop_Variant10(__symbols);
@@ -48197,7 +48193,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym9.2.clone();
-        let __nt = super::__action674::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
+        let __nt = super::__action672::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (10, 162)
     }
@@ -48210,7 +48206,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(675);
+        // Stmt = "for", LPat, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(673);
         assert!(__symbols.len() >= 9);
         let __sym8 = __pop_Variant0(__symbols);
         let __sym7 = __pop_Variant10(__symbols);
@@ -48223,7 +48219,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym8.2.clone();
-        let __nt = super::__action675::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
+        let __nt = super::__action673::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (9, 162)
     }
@@ -48236,7 +48232,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(676);
+        // Stmt = Label, "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(674);
         assert!(__symbols.len() >= 8);
         let __sym7 = __pop_Variant0(__symbols);
         let __sym6 = __pop_Variant10(__symbols);
@@ -48248,7 +48244,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym7.2.clone();
-        let __nt = super::__action676::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
+        let __nt = super::__action674::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (8, 162)
     }
@@ -48261,7 +48257,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(677);
+        // Stmt = "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(675);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
         let __sym5 = __pop_Variant10(__symbols);
@@ -48272,7 +48268,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym6.2.clone();
-        let __nt = super::__action677::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action675::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (7, 162)
     }
@@ -48285,7 +48281,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = Label, "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(678);
+        // Stmt = Label, "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(676);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
         let __sym5 = __pop_Variant10(__symbols);
@@ -48296,7 +48292,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym6.2.clone();
-        let __nt = super::__action678::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action676::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (7, 162)
     }
@@ -48309,7 +48305,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Stmt = "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(679);
+        // Stmt = "loop", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(677);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant10(__symbols);
@@ -48319,7 +48315,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action679::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action677::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant90(__nt), __end));
         (6, 162)
     }
@@ -48332,14 +48328,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // SumExtension = "..", TypeNoFn, NEWLINE => ActionFn(612);
+        // SumExtension = "..", TypeNoFn, NEWLINE => ActionFn(610);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant99(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action612::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action610::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant91(__nt), __end));
         (3, 163)
     }
@@ -48385,11 +48381,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = TypeDecl => ActionFn(684);
+        // TopDecl = TypeDecl => ActionFn(682);
         let __sym0 = __pop_Variant101(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action684::<>(module, __sym0);
+        let __nt = super::__action682::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -48402,13 +48398,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, TypeDecl => ActionFn(685);
+        // TopDecl = NEWLINE+, TypeDecl => ActionFn(683);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant101(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action685::<>(module, __sym0, __sym1);
+        let __nt = super::__action683::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -48421,11 +48417,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = TopFunDecl => ActionFn(686);
+        // TopDecl = TopFunDecl => ActionFn(684);
         let __sym0 = __pop_Variant55(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action686::<>(module, __sym0);
+        let __nt = super::__action684::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -48438,13 +48434,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, TopFunDecl => ActionFn(687);
+        // TopDecl = NEWLINE+, TopFunDecl => ActionFn(685);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant55(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action687::<>(module, __sym0, __sym1);
+        let __nt = super::__action685::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -48457,11 +48453,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = ImportDecl => ActionFn(688);
+        // TopDecl = ImportDecl => ActionFn(686);
         let __sym0 = __pop_Variant60(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action688::<>(module, __sym0);
+        let __nt = super::__action686::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -48474,13 +48470,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, ImportDecl => ActionFn(689);
+        // TopDecl = NEWLINE+, ImportDecl => ActionFn(687);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant60(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action689::<>(module, __sym0, __sym1);
+        let __nt = super::__action687::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -48493,11 +48489,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = TraitDecl => ActionFn(690);
+        // TopDecl = TraitDecl => ActionFn(688);
         let __sym0 = __pop_Variant96(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action690::<>(module, __sym0);
+        let __nt = super::__action688::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -48510,13 +48506,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, TraitDecl => ActionFn(691);
+        // TopDecl = NEWLINE+, TraitDecl => ActionFn(689);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant96(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action691::<>(module, __sym0, __sym1);
+        let __nt = super::__action689::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -48529,11 +48525,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = ImplDecl => ActionFn(692);
+        // TopDecl = ImplDecl => ActionFn(690);
         let __sym0 = __pop_Variant57(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action692::<>(module, __sym0);
+        let __nt = super::__action690::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (1, 165)
     }
@@ -48546,13 +48542,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecl = NEWLINE+, ImplDecl => ActionFn(693);
+        // TopDecl = NEWLINE+, ImplDecl => ActionFn(691);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant57(__symbols);
         let __sym0 = __pop_Variant6(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action693::<>(module, __sym0, __sym1);
+        let __nt = super::__action691::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant92(__nt), __end));
         (2, 165)
     }
@@ -48634,10 +48630,10 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecls =  => ActionFn(718);
+        // TopDecls =  => ActionFn(716);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action718::<>(module, &__start, &__end);
+        let __nt = super::__action716::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant94(__nt), __end));
         (0, 168)
     }
@@ -48650,11 +48646,11 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopDecls = TopDecl+ => ActionFn(719);
+        // TopDecls = TopDecl+ => ActionFn(717);
         let __sym0 = __pop_Variant93(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym0.2.clone();
-        let __nt = super::__action719::<>(module, __sym0);
+        let __nt = super::__action717::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant94(__nt), __end));
         (1, 168)
     }
@@ -48667,7 +48663,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = TopFunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(618);
+        // TopFunDecl = TopFunSig, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(616);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
         let __sym4 = __pop_Variant10(__symbols);
@@ -48677,7 +48673,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant95(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action618::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action616::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (6, 169)
     }
@@ -48690,14 +48686,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = "prim", TopFunSig, NEWLINE => ActionFn(619);
+        // TopFunDecl = "prim", TopFunSig, NEWLINE => ActionFn(617);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant95(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action619::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action617::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (3, 169)
     }
@@ -48710,13 +48706,13 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = TopFunSig, NEWLINE => ActionFn(620);
+        // TopFunDecl = TopFunSig, NEWLINE => ActionFn(618);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant95(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym1.2.clone();
-        let __nt = super::__action620::<>(module, __sym0, __sym1);
+        let __nt = super::__action618::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (2, 169)
     }
@@ -48729,7 +48725,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunDecl = TopFunSig, ":", LInlineExpr, NEWLINE => ActionFn(621);
+        // TopFunDecl = TopFunSig, ":", LInlineExpr, NEWLINE => ActionFn(619);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant61(__symbols);
@@ -48737,7 +48733,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant95(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action621::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action619::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (4, 169)
     }
@@ -48750,7 +48746,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunSig = ParentTy, LLowerId, Context, ParamList, ReturnType => ActionFn(706);
+        // TopFunSig = ParentTy, LLowerId, Context, ParamList, ReturnType => ActionFn(704);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant74(__symbols);
         let __sym3 = __pop_Variant69(__symbols);
@@ -48759,7 +48755,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action706::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action704::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant95(__nt), __end));
         (5, 170)
     }
@@ -48772,7 +48768,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TopFunSig = LLowerId, Context, ParamList, ReturnType => ActionFn(707);
+        // TopFunSig = LLowerId, Context, ParamList, ReturnType => ActionFn(705);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant74(__symbols);
         let __sym2 = __pop_Variant69(__symbols);
@@ -48780,7 +48776,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action707::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action705::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant95(__nt), __end));
         (4, 170)
     }
@@ -48793,7 +48789,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(622);
+        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(620);
         assert!(__symbols.len() >= 9);
         let __sym8 = __pop_Variant0(__symbols);
         let __sym7 = __pop_Variant98(__symbols);
@@ -48806,7 +48802,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym8.2.clone();
-        let __nt = super::__action622::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
+        let __nt = super::__action620::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant96(__nt), __end));
         (9, 171)
     }
@@ -48819,7 +48815,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]" => ActionFn(623);
+        // TraitDecl = "trait", LUpperIdLBracket, Sep<LLowerId, ",">, "]" => ActionFn(621);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant82(__symbols);
@@ -48827,7 +48823,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action623::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action621::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant96(__nt), __end));
         (4, 171)
     }
@@ -49090,14 +49086,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeArg = UpperId, "=", LType => ActionFn(624);
+        // TypeArg = UpperId, "=", LType => ActionFn(622);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant4(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action624::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action622::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant100(__nt), __end));
         (3, 176)
     }
@@ -49127,7 +49123,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "value", "type", UpperId, TypeDeclRhs => ActionFn(634);
+        // TypeDecl = Attribute, "value", "type", UpperId, TypeDeclRhs => ActionFn(632);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant102(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
@@ -49136,7 +49132,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action634::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action632::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -49149,7 +49145,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "value", "type", UpperId, TypeDeclRhs => ActionFn(635);
+        // TypeDecl = "value", "type", UpperId, TypeDeclRhs => ActionFn(633);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant102(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -49157,7 +49153,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action635::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action633::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -49170,7 +49166,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperId, TypeDeclRhs => ActionFn(636);
+        // TypeDecl = Attribute, "type", UpperId, TypeDeclRhs => ActionFn(634);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant102(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -49178,7 +49174,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action636::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action634::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -49191,14 +49187,14 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperId, TypeDeclRhs => ActionFn(637);
+        // TypeDecl = "type", UpperId, TypeDeclRhs => ActionFn(635);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant102(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym2.2.clone();
-        let __nt = super::__action637::<>(module, __sym0, __sym1, __sym2);
+        let __nt = super::__action635::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (3, 177)
     }
@@ -49211,7 +49207,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(638);
+        // TypeDecl = Attribute, "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(636);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant102(__symbols);
         let __sym4 = __pop_Variant2(__symbols);
@@ -49221,7 +49217,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym5.2.clone();
-        let __nt = super::__action638::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action636::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (6, 177)
     }
@@ -49234,7 +49230,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(639);
+        // TypeDecl = "value", "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(637);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant102(__symbols);
         let __sym3 = __pop_Variant2(__symbols);
@@ -49243,7 +49239,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action639::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action637::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -49256,7 +49252,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(640);
+        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(638);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant102(__symbols);
         let __sym3 = __pop_Variant2(__symbols);
@@ -49265,7 +49261,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action640::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action638::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -49278,7 +49274,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(641);
+        // TypeDecl = "type", UpperIdLBracket, TypeParams, TypeDeclRhs => ActionFn(639);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant102(__symbols);
         let __sym2 = __pop_Variant2(__symbols);
@@ -49286,7 +49282,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action641::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action639::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -49299,7 +49295,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperId, "=", Type, NEWLINE => ActionFn(629);
+        // TypeDecl = "type", UpperId, "=", Type, NEWLINE => ActionFn(627);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant99(__symbols);
@@ -49308,7 +49304,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action629::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action627::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -49321,7 +49317,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "prim", "type", UpperId, NEWLINE => ActionFn(630);
+        // TypeDecl = "prim", "type", UpperId, NEWLINE => ActionFn(628);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -49329,7 +49325,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym3.2.clone();
-        let __nt = super::__action630::<>(module, __sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action628::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (4, 177)
     }
@@ -49342,7 +49338,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "prim", "type", UpperIdLBracket, TypeParams, NEWLINE => ActionFn(631);
+        // TypeDecl = "prim", "type", UpperIdLBracket, TypeParams, NEWLINE => ActionFn(629);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant2(__symbols);
@@ -49351,7 +49347,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action631::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action629::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant101(__nt), __end));
         (5, 177)
     }
@@ -49403,7 +49399,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDeclRhs = "(", Sep<Field, ",">, RowExtension, ")", NEWLINE => ActionFn(560);
+        // TypeDeclRhs = "(", Sep<Field, ",">, RowExtension, ")", NEWLINE => ActionFn(559);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
@@ -49412,7 +49408,7 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0.clone();
         let __end = __sym4.2.clone();
-        let __nt = super::__action560::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action559::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant102(__nt), __end));
         (5, 178)
     }
@@ -50535,11 +50531,9 @@ fn __action46<'a>(
 fn __action47<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, l, _): (Loc, Loc, Loc),
-    (_, ty, _): (Loc, Type, Loc),
-    (_, r, _): (Loc, Loc, Loc),
+    (_, ty, _): (Loc, L<Type>, Loc),
 ) -> Option<Box<L<Type>>> {
-    Some(Box::new(L::new(module, l, r, ty)))
+    Some(Box::new(ty))
 }
 
 #[allow(unused_variables)]
@@ -58958,25 +58952,6 @@ fn __action535<'a>(
 )]
 fn __action536<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Token, Loc),
-    __1: (Loc, Type, Loc),
-    __2: (Loc, Loc, Loc),
-) -> Option<Box<L<Type>>> {
-    let __start0 = __0.2;
-    let __end0 = __1.0;
-    let __temp0 = __action258(module, &__start0, &__end0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action47(module, __0, __temp0, __1, __2)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action537<'a>(
-    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -58994,7 +58969,7 @@ fn __action537<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action538<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Loc, Loc)) -> Stmt {
+fn __action537<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Loc, Loc)) -> Stmt {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action258(module, &__start0, &__end0);
@@ -59008,7 +58983,7 @@ fn __action538<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Loc, L
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action539<'a>(
+fn __action538<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Option<Token>, Loc),
     __1: (Loc, Token, Loc),
@@ -59032,7 +59007,7 @@ fn __action539<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action540<'a>(
+fn __action539<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Type, Loc),
@@ -59052,7 +59027,7 @@ fn __action540<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action541<'a>(
+fn __action540<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<TypeDecl>, Loc),
@@ -59071,7 +59046,7 @@ fn __action541<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action542<'a>(
+fn __action541<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<FunDecl>, Loc),
@@ -59090,7 +59065,7 @@ fn __action542<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action543<'a>(
+fn __action542<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<ImportDecl>, Loc),
@@ -59109,7 +59084,7 @@ fn __action543<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action544<'a>(
+fn __action543<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<TraitDecl>, Loc),
@@ -59128,7 +59103,7 @@ fn __action544<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action545<'a>(
+fn __action544<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<ImplDecl>, Loc),
@@ -59147,7 +59122,7 @@ fn __action545<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action546<'a>(
+fn __action545<'a>(
     module: &'a Rc<str>,
     __0: (Loc, (Option<L<Id>>, L<Id>, FunSig), Loc),
     __1: (Loc, Token, Loc),
@@ -59170,7 +59145,7 @@ fn __action546<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action547<'a>(
+fn __action546<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, (Option<L<Id>>, L<Id>, FunSig), Loc),
@@ -59190,7 +59165,7 @@ fn __action547<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action548<'a>(
+fn __action547<'a>(
     module: &'a Rc<str>,
     __0: (Loc, (Option<L<Id>>, L<Id>, FunSig), Loc),
     __1: (Loc, Token, Loc),
@@ -59209,7 +59184,7 @@ fn __action548<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action549<'a>(
+fn __action548<'a>(
     module: &'a Rc<str>,
     __0: (Loc, (Option<L<Id>>, L<Id>, FunSig), Loc),
     __1: (Loc, Token, Loc),
@@ -59230,7 +59205,7 @@ fn __action549<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action550<'a>(
+fn __action549<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Id>, Loc),
@@ -59258,7 +59233,7 @@ fn __action550<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action551<'a>(
+fn __action550<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Id>, Loc),
@@ -59279,7 +59254,7 @@ fn __action551<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action552<'a>(
+fn __action551<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -59299,7 +59274,7 @@ fn __action552<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action553<'a>(
+fn __action552<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Option<Attribute>, Loc),
     __1: (Loc, Token, Loc),
@@ -59321,7 +59296,7 @@ fn __action553<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action554<'a>(
+fn __action553<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Option<Attribute>, Loc),
     __1: (Loc, Token, Loc),
@@ -59342,7 +59317,7 @@ fn __action554<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action555<'a>(
+fn __action554<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Option<Attribute>, Loc),
     __1: (Loc, Token, Loc),
@@ -59365,7 +59340,7 @@ fn __action555<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action556<'a>(
+fn __action555<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Option<Attribute>, Loc),
     __1: (Loc, Token, Loc),
@@ -59387,7 +59362,7 @@ fn __action556<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action557<'a>(
+fn __action556<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -59414,7 +59389,7 @@ fn __action557<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action558<'a>(
+fn __action557<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -59435,7 +59410,7 @@ fn __action558<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action559<'a>(
+fn __action558<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -59457,7 +59432,7 @@ fn __action559<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action560<'a>(
+fn __action559<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Vec<(Option<Id>, L<Type>)>, Loc),
@@ -59478,7 +59453,7 @@ fn __action560<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action561<'a>(
+fn __action560<'a>(
     module: &'a Rc<str>,
     __0: (Loc, (L<Id>, FunSig), Loc),
     __1: (Loc, Token, Loc),
@@ -59500,7 +59475,7 @@ fn __action561<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action562<'a>(
+fn __action561<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, (L<Id>, FunSig), Loc),
@@ -59519,7 +59494,7 @@ fn __action562<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action563<'a>(
+fn __action562<'a>(
     module: &'a Rc<str>,
     __0: (Loc, (L<Id>, FunSig), Loc),
     __1: (Loc, Token, Loc),
@@ -59537,7 +59512,7 @@ fn __action563<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action564<'a>(
+fn __action563<'a>(
     module: &'a Rc<str>,
     __0: (Loc, (L<Id>, FunSig), Loc),
     __1: (Loc, Token, Loc),
@@ -59557,7 +59532,7 @@ fn __action564<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action565<'a>(
+fn __action564<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Context, Loc),
@@ -59585,7 +59560,7 @@ fn __action565<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action566<'a>(
+fn __action565<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Context, Loc),
@@ -59606,7 +59581,7 @@ fn __action566<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action567<'a>(
+fn __action566<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -59628,7 +59603,7 @@ fn __action567<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action568<'a>(
+fn __action567<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -59651,7 +59626,7 @@ fn __action568<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action569<'a>(
+fn __action568<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -59672,7 +59647,7 @@ fn __action569<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action570<'a>(
+fn __action569<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -59694,7 +59669,7 @@ fn __action570<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action571<'a>(
+fn __action570<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -59714,7 +59689,7 @@ fn __action571<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action572<'a>(
+fn __action571<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -59734,7 +59709,7 @@ fn __action572<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action573<'a>(
+fn __action572<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -59757,7 +59732,7 @@ fn __action573<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action574<'a>(
+fn __action573<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -59780,7 +59755,7 @@ fn __action574<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action575<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Expr {
+fn __action574<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -59794,7 +59769,7 @@ fn __action575<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Expr {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action576<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr, Loc)) -> Expr {
+fn __action575<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -59808,7 +59783,7 @@ fn __action576<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action577<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr, Loc)) -> Expr {
+fn __action576<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -59822,7 +59797,7 @@ fn __action577<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action578<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr, Loc)) -> Expr {
+fn __action577<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -59836,7 +59811,7 @@ fn __action578<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action579<'a>(
+fn __action578<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -59859,7 +59834,7 @@ fn __action579<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action580<'a>(
+fn __action579<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -59882,7 +59857,7 @@ fn __action580<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action581<'a>(
+fn __action580<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -59905,7 +59880,7 @@ fn __action581<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action582<'a>(
+fn __action581<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -59928,7 +59903,7 @@ fn __action582<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action583<'a>(
+fn __action582<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -59951,7 +59926,7 @@ fn __action583<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action584<'a>(
+fn __action583<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -59974,7 +59949,7 @@ fn __action584<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action585<'a>(
+fn __action584<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -59997,7 +59972,7 @@ fn __action585<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action586<'a>(
+fn __action585<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -60020,7 +59995,7 @@ fn __action586<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action587<'a>(
+fn __action586<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -60043,7 +60018,7 @@ fn __action587<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action588<'a>(
+fn __action587<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -60066,7 +60041,7 @@ fn __action588<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action589<'a>(
+fn __action588<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -60089,7 +60064,7 @@ fn __action589<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action590<'a>(
+fn __action589<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -60112,7 +60087,7 @@ fn __action590<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action591<'a>(
+fn __action590<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -60135,7 +60110,7 @@ fn __action591<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action592<'a>(
+fn __action591<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -60158,7 +60133,7 @@ fn __action592<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action593<'a>(
+fn __action592<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
@@ -60181,7 +60156,7 @@ fn __action593<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action594<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
+fn __action593<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60195,7 +60170,7 @@ fn __action594<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action595<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
+fn __action594<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60209,7 +60184,7 @@ fn __action595<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action596<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
+fn __action595<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60223,7 +60198,7 @@ fn __action596<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action597<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
+fn __action596<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60237,7 +60212,7 @@ fn __action597<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action598<'a>(module: &'a Rc<str>, __0: (Loc, Pat, Loc)) -> L<Pat> {
+fn __action597<'a>(module: &'a Rc<str>, __0: (Loc, Pat, Loc)) -> L<Pat> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60251,7 +60226,7 @@ fn __action598<'a>(module: &'a Rc<str>, __0: (Loc, Pat, Loc)) -> L<Pat> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action599<'a>(module: &'a Rc<str>, __0: (Loc, Pred, Loc)) -> L<Pred> {
+fn __action598<'a>(module: &'a Rc<str>, __0: (Loc, Pred, Loc)) -> L<Pred> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60265,7 +60240,7 @@ fn __action599<'a>(module: &'a Rc<str>, __0: (Loc, Pred, Loc)) -> L<Pred> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action600<'a>(module: &'a Rc<str>, __0: (Loc, Stmt, Loc)) -> L<Stmt> {
+fn __action599<'a>(module: &'a Rc<str>, __0: (Loc, Stmt, Loc)) -> L<Stmt> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60279,7 +60254,7 @@ fn __action600<'a>(module: &'a Rc<str>, __0: (Loc, Stmt, Loc)) -> L<Stmt> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action601<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
+fn __action600<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60293,7 +60268,7 @@ fn __action601<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action602<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
+fn __action601<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60307,7 +60282,7 @@ fn __action602<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action603<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
+fn __action602<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60321,7 +60296,7 @@ fn __action603<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action604<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
+fn __action603<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60335,7 +60310,7 @@ fn __action604<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action605<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
+fn __action604<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60349,7 +60324,7 @@ fn __action605<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action606<'a>(
+fn __action605<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Pat, Loc),
     __1: (Loc, Token, Loc),
@@ -60368,7 +60343,7 @@ fn __action606<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action607<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Pat, Loc)) -> Pat {
+fn __action606<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Pat, Loc)) -> Pat {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action257(module, &__start0, &__end0);
@@ -60382,30 +60357,12 @@ fn __action607<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Pat, 
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action608<'a>(
-    module: &'a Rc<str>,
-    __0: (Loc, Token, Loc),
-    __1: (Loc, Type, Loc),
-) -> Option<Box<L<Type>>> {
-    let __start0 = __1.2;
-    let __end0 = __1.2;
-    let __temp0 = __action257(module, &__start0, &__end0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action536(module, __0, __1, __temp0)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action609<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Token, Loc)) -> Stmt {
+fn __action607<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Token, Loc)) -> Stmt {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action537(module, __0, __temp0, __1)
+    __action536(module, __0, __temp0, __1)
 }
 
 #[allow(unused_variables)]
@@ -60414,12 +60371,12 @@ fn __action609<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Token,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action610<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> Stmt {
+fn __action608<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> Stmt {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action538(module, __0, __temp0)
+    __action537(module, __0, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -60428,7 +60385,7 @@ fn __action610<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> Stmt {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action611<'a>(
+fn __action609<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Option<Token>, Loc),
     __1: (Loc, Token, Loc),
@@ -60442,7 +60399,44 @@ fn __action611<'a>(
     let __end0 = __2.0;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action539(module, __0, __1, __temp0, __2, __3, __4, __5, __6)
+    __action538(module, __0, __1, __temp0, __2, __3, __4, __5, __6)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action610<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Type, Loc),
+    __2: (Loc, Token, Loc),
+) -> Box<L<Type>> {
+    let __start0 = __1.2;
+    let __end0 = __2.0;
+    let __temp0 = __action257(module, &__start0, &__end0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action539(module, __0, __1, __temp0, __2)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action611<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
+    __1: (Loc, L<TypeDecl>, Loc),
+) -> L<TopDecl> {
+    let __start0 = __1.2;
+    let __end0 = __1.2;
+    let __temp0 = __action257(module, &__start0, &__end0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action540(module, __0, __1, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -60453,27 +60447,8 @@ fn __action611<'a>(
 )]
 fn __action612<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Token, Loc),
-    __1: (Loc, Type, Loc),
-    __2: (Loc, Token, Loc),
-) -> Box<L<Type>> {
-    let __start0 = __1.2;
-    let __end0 = __2.0;
-    let __temp0 = __action257(module, &__start0, &__end0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action540(module, __0, __1, __temp0, __2)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action613<'a>(
-    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<TypeDecl>, Loc),
+    __1: (Loc, L<FunDecl>, Loc),
 ) -> L<TopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
@@ -60488,10 +60463,10 @@ fn __action613<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action614<'a>(
+fn __action613<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<FunDecl>, Loc),
+    __1: (Loc, L<ImportDecl>, Loc),
 ) -> L<TopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
@@ -60506,10 +60481,10 @@ fn __action614<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action615<'a>(
+fn __action614<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<ImportDecl>, Loc),
+    __1: (Loc, L<TraitDecl>, Loc),
 ) -> L<TopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
@@ -60524,10 +60499,10 @@ fn __action615<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action616<'a>(
+fn __action615<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<TraitDecl>, Loc),
+    __1: (Loc, L<ImplDecl>, Loc),
 ) -> L<TopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
@@ -60542,25 +60517,7 @@ fn __action616<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action617<'a>(
-    module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<ImplDecl>, Loc),
-) -> L<TopDecl> {
-    let __start0 = __1.2;
-    let __end0 = __1.2;
-    let __temp0 = __action257(module, &__start0, &__end0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action545(module, __0, __1, __temp0)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action618<'a>(
+fn __action616<'a>(
     module: &'a Rc<str>,
     __0: (Loc, (Option<L<Id>>, L<Id>, FunSig), Loc),
     __1: (Loc, Token, Loc),
@@ -60573,7 +60530,44 @@ fn __action618<'a>(
     let __end0 = __5.2;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action546(module, __0, __1, __2, __3, __4, __5, __temp0)
+    __action545(module, __0, __1, __2, __3, __4, __5, __temp0)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action617<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, (Option<L<Id>>, L<Id>, FunSig), Loc),
+    __2: (Loc, Token, Loc),
+) -> L<FunDecl> {
+    let __start0 = __2.2;
+    let __end0 = __2.2;
+    let __temp0 = __action257(module, &__start0, &__end0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action546(module, __0, __1, __2, __temp0)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action618<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, (Option<L<Id>>, L<Id>, FunSig), Loc),
+    __1: (Loc, Token, Loc),
+) -> L<FunDecl> {
+    let __start0 = __1.2;
+    let __end0 = __1.2;
+    let __temp0 = __action257(module, &__start0, &__end0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action547(module, __0, __1, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -60584,43 +60578,6 @@ fn __action618<'a>(
 )]
 fn __action619<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Token, Loc),
-    __1: (Loc, (Option<L<Id>>, L<Id>, FunSig), Loc),
-    __2: (Loc, Token, Loc),
-) -> L<FunDecl> {
-    let __start0 = __2.2;
-    let __end0 = __2.2;
-    let __temp0 = __action257(module, &__start0, &__end0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action547(module, __0, __1, __2, __temp0)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action620<'a>(
-    module: &'a Rc<str>,
-    __0: (Loc, (Option<L<Id>>, L<Id>, FunSig), Loc),
-    __1: (Loc, Token, Loc),
-) -> L<FunDecl> {
-    let __start0 = __1.2;
-    let __end0 = __1.2;
-    let __temp0 = __action257(module, &__start0, &__end0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action548(module, __0, __1, __temp0)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action621<'a>(
-    module: &'a Rc<str>,
     __0: (Loc, (Option<L<Id>>, L<Id>, FunSig), Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, L<Expr>, Loc),
@@ -60630,7 +60587,7 @@ fn __action621<'a>(
     let __end0 = __3.2;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action549(module, __0, __1, __2, __3, __temp0)
+    __action548(module, __0, __1, __2, __3, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -60639,7 +60596,7 @@ fn __action621<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action622<'a>(
+fn __action620<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Id>, Loc),
@@ -60655,7 +60612,7 @@ fn __action622<'a>(
     let __end0 = __8.2;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action550(module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __temp0)
+    __action549(module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -60664,7 +60621,7 @@ fn __action622<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action623<'a>(
+fn __action621<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Id>, Loc),
@@ -60675,7 +60632,47 @@ fn __action623<'a>(
     let __end0 = __3.2;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action551(module, __0, __1, __2, __3, __temp0)
+    __action550(module, __0, __1, __2, __3, __temp0)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action622<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, L<Type>, Loc),
+) -> L<(Option<Id>, L<Type>)> {
+    let __start0 = __2.2;
+    let __end0 = __2.2;
+    let __temp0 = __action257(module, &__start0, &__end0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action551(module, __0, __1, __2, __temp0)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action623<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Option<Attribute>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, TypeDeclRhs, Loc),
+) -> L<TypeDecl> {
+    let __start0 = __4.2;
+    let __end0 = __4.2;
+    let __temp0 = __action257(module, &__start0, &__end0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action552(module, __0, __1, __2, __3, __4, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -60686,15 +60683,16 @@ fn __action623<'a>(
 )]
 fn __action624<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Token, Loc),
+    __0: (Loc, Option<Attribute>, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Type>, Loc),
-) -> L<(Option<Id>, L<Type>)> {
-    let __start0 = __2.2;
-    let __end0 = __2.2;
+    __2: (Loc, Token, Loc),
+    __3: (Loc, TypeDeclRhs, Loc),
+) -> L<TypeDecl> {
+    let __start0 = __3.2;
+    let __end0 = __3.2;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action552(module, __0, __1, __2, __temp0)
+    __action553(module, __0, __1, __2, __3, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -60709,13 +60707,14 @@ fn __action625<'a>(
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, TypeDeclRhs, Loc),
+    __4: (Loc, Vec<Id>, Loc),
+    __5: (Loc, TypeDeclRhs, Loc),
 ) -> L<TypeDecl> {
-    let __start0 = __4.2;
-    let __end0 = __4.2;
+    let __start0 = __5.2;
+    let __end0 = __5.2;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action553(module, __0, __1, __2, __3, __4, __temp0)
+    __action554(module, __0, __1, __2, __3, __4, __5, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -60729,13 +60728,14 @@ fn __action626<'a>(
     __0: (Loc, Option<Attribute>, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, TypeDeclRhs, Loc),
+    __3: (Loc, Vec<Id>, Loc),
+    __4: (Loc, TypeDeclRhs, Loc),
 ) -> L<TypeDecl> {
-    let __start0 = __3.2;
-    let __end0 = __3.2;
+    let __start0 = __4.2;
+    let __end0 = __4.2;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action554(module, __0, __1, __2, __3, __temp0)
+    __action555(module, __0, __1, __2, __3, __4, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -60745,49 +60745,6 @@ fn __action626<'a>(
     clippy::just_underscores_and_digits
 )]
 fn __action627<'a>(
-    module: &'a Rc<str>,
-    __0: (Loc, Option<Attribute>, Loc),
-    __1: (Loc, Token, Loc),
-    __2: (Loc, Token, Loc),
-    __3: (Loc, Token, Loc),
-    __4: (Loc, Vec<Id>, Loc),
-    __5: (Loc, TypeDeclRhs, Loc),
-) -> L<TypeDecl> {
-    let __start0 = __5.2;
-    let __end0 = __5.2;
-    let __temp0 = __action257(module, &__start0, &__end0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action555(module, __0, __1, __2, __3, __4, __5, __temp0)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action628<'a>(
-    module: &'a Rc<str>,
-    __0: (Loc, Option<Attribute>, Loc),
-    __1: (Loc, Token, Loc),
-    __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<Id>, Loc),
-    __4: (Loc, TypeDeclRhs, Loc),
-) -> L<TypeDecl> {
-    let __start0 = __4.2;
-    let __end0 = __4.2;
-    let __temp0 = __action257(module, &__start0, &__end0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action556(module, __0, __1, __2, __3, __4, __temp0)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action629<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -60803,7 +60760,7 @@ fn __action629<'a>(
     let __temp0 = (__start0, __temp0, __end0);
     let __temp1 = __action257(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action557(module, __0, __1, __2, __3, __temp0, __4, __temp1)
+    __action556(module, __0, __1, __2, __3, __temp0, __4, __temp1)
 }
 
 #[allow(unused_variables)]
@@ -60812,7 +60769,7 @@ fn __action629<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action630<'a>(
+fn __action628<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -60823,7 +60780,7 @@ fn __action630<'a>(
     let __end0 = __3.2;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action558(module, __0, __1, __2, __3, __temp0)
+    __action557(module, __0, __1, __2, __3, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -60832,7 +60789,7 @@ fn __action630<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action631<'a>(
+fn __action629<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -60844,7 +60801,7 @@ fn __action631<'a>(
     let __end0 = __4.2;
     let __temp0 = __action257(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action559(module, __0, __1, __2, __3, __4, __temp0)
+    __action558(module, __0, __1, __2, __3, __4, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -60853,7 +60810,7 @@ fn __action631<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action632<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Alt> {
+fn __action630<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Alt> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -60867,7 +60824,7 @@ fn __action632<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action633<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Alt>, Loc)) -> Vec<Alt> {
+fn __action631<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Alt>, Loc)) -> Vec<Alt> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action228(module, __0);
@@ -60881,7 +60838,7 @@ fn __action633<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Alt>, Loc)) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action634<'a>(
+fn __action632<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Attribute, Loc),
     __1: (Loc, Token, Loc),
@@ -60893,7 +60850,47 @@ fn __action634<'a>(
     let __end0 = __0.2;
     let __temp0 = __action255(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action625(module, __temp0, __1, __2, __3, __4)
+    __action623(module, __temp0, __1, __2, __3, __4)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action633<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, TypeDeclRhs, Loc),
+) -> L<TypeDecl> {
+    let __start0 = __0.0;
+    let __end0 = __0.0;
+    let __temp0 = __action256(module, &__start0, &__end0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action623(module, __temp0, __0, __1, __2, __3)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action634<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Attribute, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, TypeDeclRhs, Loc),
+) -> L<TypeDecl> {
+    let __start0 = __0.0;
+    let __end0 = __0.2;
+    let __temp0 = __action255(module, __0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action624(module, __temp0, __1, __2, __3)
 }
 
 #[allow(unused_variables)]
@@ -60906,14 +60903,13 @@ fn __action635<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Token, Loc),
-    __3: (Loc, TypeDeclRhs, Loc),
+    __2: (Loc, TypeDeclRhs, Loc),
 ) -> L<TypeDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action256(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action625(module, __temp0, __0, __1, __2, __3)
+    __action624(module, __temp0, __0, __1, __2)
 }
 
 #[allow(unused_variables)]
@@ -60927,13 +60923,15 @@ fn __action636<'a>(
     __0: (Loc, Attribute, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, TypeDeclRhs, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Id>, Loc),
+    __5: (Loc, TypeDeclRhs, Loc),
 ) -> L<TypeDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action255(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action626(module, __temp0, __1, __2, __3)
+    __action625(module, __temp0, __1, __2, __3, __4, __5)
 }
 
 #[allow(unused_variables)]
@@ -60946,13 +60944,15 @@ fn __action637<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, TypeDeclRhs, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Id>, Loc),
+    __4: (Loc, TypeDeclRhs, Loc),
 ) -> L<TypeDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action256(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action626(module, __temp0, __0, __1, __2)
+    __action625(module, __temp0, __0, __1, __2, __3, __4)
 }
 
 #[allow(unused_variables)]
@@ -60966,15 +60966,14 @@ fn __action638<'a>(
     __0: (Loc, Attribute, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Token, Loc),
-    __4: (Loc, Vec<Id>, Loc),
-    __5: (Loc, TypeDeclRhs, Loc),
+    __3: (Loc, Vec<Id>, Loc),
+    __4: (Loc, TypeDeclRhs, Loc),
 ) -> L<TypeDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action255(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action627(module, __temp0, __1, __2, __3, __4, __5)
+    __action626(module, __temp0, __1, __2, __3, __4)
 }
 
 #[allow(unused_variables)]
@@ -60987,48 +60986,6 @@ fn __action639<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<Id>, Loc),
-    __4: (Loc, TypeDeclRhs, Loc),
-) -> L<TypeDecl> {
-    let __start0 = __0.0;
-    let __end0 = __0.0;
-    let __temp0 = __action256(module, &__start0, &__end0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action627(module, __temp0, __0, __1, __2, __3, __4)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action640<'a>(
-    module: &'a Rc<str>,
-    __0: (Loc, Attribute, Loc),
-    __1: (Loc, Token, Loc),
-    __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<Id>, Loc),
-    __4: (Loc, TypeDeclRhs, Loc),
-) -> L<TypeDecl> {
-    let __start0 = __0.0;
-    let __end0 = __0.2;
-    let __temp0 = __action255(module, __0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action628(module, __temp0, __1, __2, __3, __4)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action641<'a>(
-    module: &'a Rc<str>,
-    __0: (Loc, Token, Loc),
-    __1: (Loc, Token, Loc),
     __2: (Loc, Vec<Id>, Loc),
     __3: (Loc, TypeDeclRhs, Loc),
 ) -> L<TypeDecl> {
@@ -61036,7 +60993,7 @@ fn __action641<'a>(
     let __end0 = __0.0;
     let __temp0 = __action256(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action628(module, __temp0, __0, __1, __2, __3)
+    __action626(module, __temp0, __0, __1, __2, __3)
 }
 
 #[allow(unused_variables)]
@@ -61045,7 +61002,7 @@ fn __action641<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action642<'a>(module: &'a Rc<str>, __0: (Loc, CallArg, Loc)) -> Vec<CallArg> {
+fn __action640<'a>(module: &'a Rc<str>, __0: (Loc, CallArg, Loc)) -> Vec<CallArg> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action310(module, __0);
@@ -61059,7 +61016,7 @@ fn __action642<'a>(module: &'a Rc<str>, __0: (Loc, CallArg, Loc)) -> Vec<CallArg
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action643<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<CallArg> {
+fn __action641<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<CallArg> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action311(module, &__start0, &__end0);
@@ -61073,7 +61030,7 @@ fn __action643<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action644<'a>(
+fn __action642<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<CallArg>, Loc),
     __1: (Loc, CallArg, Loc),
@@ -61091,7 +61048,7 @@ fn __action644<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action645<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<CallArg>, Loc)) -> Vec<CallArg> {
+fn __action643<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<CallArg>, Loc)) -> Vec<CallArg> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action311(module, &__start0, &__end0);
@@ -61105,7 +61062,7 @@ fn __action645<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<CallArg>, Loc
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action646<'a>(
+fn __action644<'a>(
     module: &'a Rc<str>,
     __0: (Loc, (Option<Id>, L<Type>), Loc),
 ) -> Vec<(Option<Id>, L<Type>)> {
@@ -61122,7 +61079,7 @@ fn __action646<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action647<'a>(
+fn __action645<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
@@ -61140,7 +61097,7 @@ fn __action647<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action648<'a>(
+fn __action646<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<Id>, L<Type>)>, Loc),
     __1: (Loc, (Option<Id>, L<Type>), Loc),
@@ -61158,7 +61115,7 @@ fn __action648<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action649<'a>(
+fn __action647<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<Id>, L<Type>)>, Loc),
 ) -> Vec<(Option<Id>, L<Type>)> {
@@ -61175,7 +61132,7 @@ fn __action649<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action650<'a>(module: &'a Rc<str>, __0: (Loc, Named<L<Pat>>, Loc)) -> Vec<Named<L<Pat>>> {
+fn __action648<'a>(module: &'a Rc<str>, __0: (Loc, Named<L<Pat>>, Loc)) -> Vec<Named<L<Pat>>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action320(module, __0);
@@ -61189,7 +61146,7 @@ fn __action650<'a>(module: &'a Rc<str>, __0: (Loc, Named<L<Pat>>, Loc)) -> Vec<N
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action651<'a>(
+fn __action649<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
@@ -61207,7 +61164,7 @@ fn __action651<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action652<'a>(
+fn __action650<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Named<L<Pat>>>, Loc),
     __1: (Loc, Named<L<Pat>>, Loc),
@@ -61225,7 +61182,7 @@ fn __action652<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action653<'a>(
+fn __action651<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Named<L<Pat>>>, Loc),
 ) -> Vec<Named<L<Pat>>> {
@@ -61242,7 +61199,7 @@ fn __action653<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action654<'a>(module: &'a Rc<str>, __0: (Loc, L<Id>, Loc)) -> Vec<L<Id>> {
+fn __action652<'a>(module: &'a Rc<str>, __0: (Loc, L<Id>, Loc)) -> Vec<L<Id>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action329(module, __0);
@@ -61256,7 +61213,7 @@ fn __action654<'a>(module: &'a Rc<str>, __0: (Loc, L<Id>, Loc)) -> Vec<L<Id>> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action655<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Id>> {
+fn __action653<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Id>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action330(module, &__start0, &__end0);
@@ -61270,7 +61227,7 @@ fn __action655<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action656<'a>(
+fn __action654<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<L<Id>>, Loc),
     __1: (Loc, L<Id>, Loc),
@@ -61288,7 +61245,7 @@ fn __action656<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action657<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Id>>, Loc)) -> Vec<L<Id>> {
+fn __action655<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Id>>, Loc)) -> Vec<L<Id>> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action330(module, &__start0, &__end0);
@@ -61302,7 +61259,7 @@ fn __action657<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Id>>, Loc))
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action658<'a>(module: &'a Rc<str>, __0: (Loc, L<Pred>, Loc)) -> Vec<L<Pred>> {
+fn __action656<'a>(module: &'a Rc<str>, __0: (Loc, L<Pred>, Loc)) -> Vec<L<Pred>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action334(module, __0);
@@ -61316,7 +61273,7 @@ fn __action658<'a>(module: &'a Rc<str>, __0: (Loc, L<Pred>, Loc)) -> Vec<L<Pred>
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action659<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Pred>> {
+fn __action657<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Pred>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action335(module, &__start0, &__end0);
@@ -61330,7 +61287,7 @@ fn __action659<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action660<'a>(
+fn __action658<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<L<Pred>>, Loc),
     __1: (Loc, L<Pred>, Loc),
@@ -61348,7 +61305,7 @@ fn __action660<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action661<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Pred>>, Loc)) -> Vec<L<Pred>> {
+fn __action659<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Pred>>, Loc)) -> Vec<L<Pred>> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action335(module, &__start0, &__end0);
@@ -61362,7 +61319,7 @@ fn __action661<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Pred>>, Loc
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action662<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Stmt>> {
+fn __action660<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Stmt>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action231(module, &__start0, &__end0);
@@ -61376,7 +61333,7 @@ fn __action662<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action663<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Stmt>>, Loc)) -> Vec<L<Stmt>> {
+fn __action661<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Stmt>>, Loc)) -> Vec<L<Stmt>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action232(module, __0);
@@ -61390,7 +61347,7 @@ fn __action663<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Stmt>>, Loc
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action664<'a>(module: &'a Rc<str>, __0: (Loc, L<Type>, Loc)) -> Vec<L<Type>> {
+fn __action662<'a>(module: &'a Rc<str>, __0: (Loc, L<Type>, Loc)) -> Vec<L<Type>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action269(module, __0);
@@ -61404,7 +61361,7 @@ fn __action664<'a>(module: &'a Rc<str>, __0: (Loc, L<Type>, Loc)) -> Vec<L<Type>
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action665<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Type>> {
+fn __action663<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Type>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action270(module, &__start0, &__end0);
@@ -61418,7 +61375,7 @@ fn __action665<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action666<'a>(
+fn __action664<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<L<Type>>, Loc),
     __1: (Loc, L<Type>, Loc),
@@ -61436,7 +61393,7 @@ fn __action666<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action667<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Type>>, Loc)) -> Vec<L<Type>> {
+fn __action665<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Type>>, Loc)) -> Vec<L<Type>> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action270(module, &__start0, &__end0);
@@ -61450,7 +61407,7 @@ fn __action667<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Type>>, Loc
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action668<'a>(
+fn __action666<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -61469,7 +61426,7 @@ fn __action668<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action669<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> Stmt {
+fn __action667<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> Stmt {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action230(module, &__start0, &__end0);
@@ -61483,7 +61440,7 @@ fn __action669<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Token
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action670<'a>(
+fn __action668<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -61502,7 +61459,7 @@ fn __action670<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action671<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> Stmt {
+fn __action669<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> Stmt {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action230(module, &__start0, &__end0);
@@ -61516,7 +61473,7 @@ fn __action671<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Token
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action672<'a>(
+fn __action670<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -61546,7 +61503,7 @@ fn __action672<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action673<'a>(
+fn __action671<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Pat>, Loc),
@@ -61575,7 +61532,7 @@ fn __action673<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action674<'a>(
+fn __action672<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -61601,7 +61558,7 @@ fn __action674<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action675<'a>(
+fn __action673<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Pat>, Loc),
@@ -61626,7 +61583,7 @@ fn __action675<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action676<'a>(
+fn __action674<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -61650,7 +61607,7 @@ fn __action676<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action677<'a>(
+fn __action675<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
@@ -61673,7 +61630,7 @@ fn __action677<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action678<'a>(
+fn __action676<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -61687,7 +61644,7 @@ fn __action678<'a>(
     let __end0 = __0.2;
     let __temp0 = __action229(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action611(module, __temp0, __1, __2, __3, __4, __5, __6)
+    __action609(module, __temp0, __1, __2, __3, __4, __5, __6)
 }
 
 #[allow(unused_variables)]
@@ -61696,7 +61653,7 @@ fn __action678<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action679<'a>(
+fn __action677<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
@@ -61709,7 +61666,7 @@ fn __action679<'a>(
     let __end0 = __0.0;
     let __temp0 = __action230(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action611(module, __temp0, __0, __1, __2, __3, __4, __5)
+    __action609(module, __temp0, __0, __1, __2, __3, __4, __5)
 }
 
 #[allow(unused_variables)]
@@ -61718,7 +61675,7 @@ fn __action679<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action680<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Vec<Token> {
+fn __action678<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action264(module, __0);
@@ -61732,7 +61689,7 @@ fn __action680<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Vec<Token> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action681<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Token> {
+fn __action679<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Token> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action265(module, &__start0, &__end0);
@@ -61746,7 +61703,7 @@ fn __action681<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action682<'a>(
+fn __action680<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, Token, Loc),
@@ -61764,7 +61721,7 @@ fn __action682<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action683<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Token>, Loc)) -> Vec<Token> {
+fn __action681<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Token>, Loc)) -> Vec<Token> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action265(module, &__start0, &__end0);
@@ -61778,7 +61735,71 @@ fn __action683<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Token>, Loc))
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action684<'a>(module: &'a Rc<str>, __0: (Loc, L<TypeDecl>, Loc)) -> L<TopDecl> {
+fn __action682<'a>(module: &'a Rc<str>, __0: (Loc, L<TypeDecl>, Loc)) -> L<TopDecl> {
+    let __start0 = __0.0;
+    let __end0 = __0.0;
+    let __temp0 = __action192(module, &__start0, &__end0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action611(module, __temp0, __0)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action683<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
+    __1: (Loc, L<TypeDecl>, Loc),
+) -> L<TopDecl> {
+    let __start0 = __0.0;
+    let __end0 = __0.2;
+    let __temp0 = __action193(module, __0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action611(module, __temp0, __1)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action684<'a>(module: &'a Rc<str>, __0: (Loc, L<FunDecl>, Loc)) -> L<TopDecl> {
+    let __start0 = __0.0;
+    let __end0 = __0.0;
+    let __temp0 = __action192(module, &__start0, &__end0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action612(module, __temp0, __0)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action685<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
+    __1: (Loc, L<FunDecl>, Loc),
+) -> L<TopDecl> {
+    let __start0 = __0.0;
+    let __end0 = __0.2;
+    let __temp0 = __action193(module, __0);
+    let __temp0 = (__start0, __temp0, __end0);
+    __action612(module, __temp0, __1)
+}
+
+#[allow(unused_variables)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action686<'a>(module: &'a Rc<str>, __0: (Loc, L<ImportDecl>, Loc)) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action192(module, &__start0, &__end0);
@@ -61792,10 +61813,10 @@ fn __action684<'a>(module: &'a Rc<str>, __0: (Loc, L<TypeDecl>, Loc)) -> L<TopDe
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action685<'a>(
+fn __action687<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<TypeDecl>, Loc),
+    __1: (Loc, L<ImportDecl>, Loc),
 ) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
@@ -61810,7 +61831,7 @@ fn __action685<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action686<'a>(module: &'a Rc<str>, __0: (Loc, L<FunDecl>, Loc)) -> L<TopDecl> {
+fn __action688<'a>(module: &'a Rc<str>, __0: (Loc, L<TraitDecl>, Loc)) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action192(module, &__start0, &__end0);
@@ -61824,10 +61845,10 @@ fn __action686<'a>(module: &'a Rc<str>, __0: (Loc, L<FunDecl>, Loc)) -> L<TopDec
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action687<'a>(
+fn __action689<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<FunDecl>, Loc),
+    __1: (Loc, L<TraitDecl>, Loc),
 ) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
@@ -61842,7 +61863,7 @@ fn __action687<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action688<'a>(module: &'a Rc<str>, __0: (Loc, L<ImportDecl>, Loc)) -> L<TopDecl> {
+fn __action690<'a>(module: &'a Rc<str>, __0: (Loc, L<ImplDecl>, Loc)) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action192(module, &__start0, &__end0);
@@ -61856,10 +61877,10 @@ fn __action688<'a>(module: &'a Rc<str>, __0: (Loc, L<ImportDecl>, Loc)) -> L<Top
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action689<'a>(
+fn __action691<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<ImportDecl>, Loc),
+    __1: (Loc, L<ImplDecl>, Loc),
 ) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
@@ -61874,71 +61895,7 @@ fn __action689<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action690<'a>(module: &'a Rc<str>, __0: (Loc, L<TraitDecl>, Loc)) -> L<TopDecl> {
-    let __start0 = __0.0;
-    let __end0 = __0.0;
-    let __temp0 = __action192(module, &__start0, &__end0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action616(module, __temp0, __0)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action691<'a>(
-    module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<TraitDecl>, Loc),
-) -> L<TopDecl> {
-    let __start0 = __0.0;
-    let __end0 = __0.2;
-    let __temp0 = __action193(module, __0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action616(module, __temp0, __1)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action692<'a>(module: &'a Rc<str>, __0: (Loc, L<ImplDecl>, Loc)) -> L<TopDecl> {
-    let __start0 = __0.0;
-    let __end0 = __0.0;
-    let __temp0 = __action192(module, &__start0, &__end0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action617(module, __temp0, __0)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action693<'a>(
-    module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<ImplDecl>, Loc),
-) -> L<TopDecl> {
-    let __start0 = __0.0;
-    let __end0 = __0.2;
-    let __temp0 = __action193(module, __0);
-    let __temp0 = (__start0, __temp0, __end0);
-    __action617(module, __temp0, __1)
-}
-
-#[allow(unused_variables)]
-#[allow(
-    clippy::too_many_arguments,
-    clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits
-)]
-fn __action694<'a>(module: &'a Rc<str>, __0: (Loc, NamedType, Loc)) -> Vec<NamedType> {
+fn __action692<'a>(module: &'a Rc<str>, __0: (Loc, NamedType, Loc)) -> Vec<NamedType> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action279(module, __0);
@@ -61952,7 +61909,7 @@ fn __action694<'a>(module: &'a Rc<str>, __0: (Loc, NamedType, Loc)) -> Vec<Named
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action695<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<NamedType> {
+fn __action693<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<NamedType> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action280(module, &__start0, &__end0);
@@ -61966,7 +61923,7 @@ fn __action695<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action696<'a>(
+fn __action694<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<NamedType>, Loc),
     __1: (Loc, NamedType, Loc),
@@ -61984,7 +61941,7 @@ fn __action696<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action697<'a>(
+fn __action695<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<NamedType>, Loc),
 ) -> Vec<NamedType> {
@@ -62001,7 +61958,7 @@ fn __action697<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action698<'a>(
+fn __action696<'a>(
     module: &'a Rc<str>,
     __0: (Loc, (SmolStr, Option<L<Type>>), Loc),
 ) -> Vec<(SmolStr, Option<L<Type>>)> {
@@ -62018,7 +61975,7 @@ fn __action698<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action699<'a>(
+fn __action697<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
@@ -62036,7 +61993,7 @@ fn __action699<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action700<'a>(
+fn __action698<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(SmolStr, Option<L<Type>>)>, Loc),
     __1: (Loc, (SmolStr, Option<L<Type>>), Loc),
@@ -62054,7 +62011,7 @@ fn __action700<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action701<'a>(
+fn __action699<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(SmolStr, Option<L<Type>>)>, Loc),
 ) -> Vec<(SmolStr, Option<L<Type>>)> {
@@ -62071,7 +62028,7 @@ fn __action701<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action702<'a>(module: &'a Rc<str>, __0: (Loc, (Id, L<Expr>), Loc)) -> Vec<(Id, L<Expr>)> {
+fn __action700<'a>(module: &'a Rc<str>, __0: (Loc, (Id, L<Expr>), Loc)) -> Vec<(Id, L<Expr>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action303(module, __0);
@@ -62085,7 +62042,7 @@ fn __action702<'a>(module: &'a Rc<str>, __0: (Loc, (Id, L<Expr>), Loc)) -> Vec<(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action703<'a>(
+fn __action701<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
@@ -62103,7 +62060,7 @@ fn __action703<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action704<'a>(
+fn __action702<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Id, L<Expr>)>, Loc),
     __1: (Loc, (Id, L<Expr>), Loc),
@@ -62121,7 +62078,7 @@ fn __action704<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action705<'a>(
+fn __action703<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Id, L<Expr>)>, Loc),
 ) -> Vec<(Id, L<Expr>)> {
@@ -62138,7 +62095,7 @@ fn __action705<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action706<'a>(
+fn __action704<'a>(
     module: &'a Rc<str>,
     __0: (Loc, L<Id>, Loc),
     __1: (Loc, L<Id>, Loc),
@@ -62159,7 +62116,7 @@ fn __action706<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action707<'a>(
+fn __action705<'a>(
     module: &'a Rc<str>,
     __0: (Loc, L<Id>, Loc),
     __1: (Loc, Context, Loc),
@@ -62179,7 +62136,7 @@ fn __action707<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action708<'a>(module: &'a Rc<str>, __0: (Loc, (Id, Type), Loc)) -> Vec<(Id, Type)> {
+fn __action706<'a>(module: &'a Rc<str>, __0: (Loc, (Id, Type), Loc)) -> Vec<(Id, Type)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action274(module, __0);
@@ -62193,7 +62150,7 @@ fn __action708<'a>(module: &'a Rc<str>, __0: (Loc, (Id, Type), Loc)) -> Vec<(Id,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action709<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<(Id, Type)> {
+fn __action707<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<(Id, Type)> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action275(module, &__start0, &__end0);
@@ -62207,7 +62164,7 @@ fn __action709<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action710<'a>(
+fn __action708<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Id, Type)>, Loc),
     __1: (Loc, (Id, Type), Loc),
@@ -62225,7 +62182,7 @@ fn __action710<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action711<'a>(
+fn __action709<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Id, Type)>, Loc),
 ) -> Vec<(Id, Type)> {
@@ -62242,7 +62199,7 @@ fn __action711<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action712<'a>(
+fn __action710<'a>(
     module: &'a Rc<str>,
     __0: (Loc, (Option<L<Expr>>, L<Expr>), Loc),
 ) -> Vec<(Option<L<Expr>>, L<Expr>)> {
@@ -62259,7 +62216,7 @@ fn __action712<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action713<'a>(
+fn __action711<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
@@ -62277,7 +62234,7 @@ fn __action713<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action714<'a>(
+fn __action712<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<L<Expr>>, L<Expr>)>, Loc),
     __1: (Loc, (Option<L<Expr>>, L<Expr>), Loc),
@@ -62295,7 +62252,7 @@ fn __action714<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action715<'a>(
+fn __action713<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<L<Expr>>, L<Expr>)>, Loc),
 ) -> Vec<(Option<L<Expr>>, L<Expr>)> {
@@ -62312,7 +62269,7 @@ fn __action715<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action716<'a>(
+fn __action714<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<ConDecl>, Loc),
     __1: (Loc, Box<L<Type>>, Loc),
@@ -62330,7 +62287,7 @@ fn __action716<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action717<'a>(
+fn __action715<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<ConDecl>, Loc),
 ) -> (Vec<ConDecl>, Option<Box<L<Type>>>) {
@@ -62347,7 +62304,7 @@ fn __action717<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action718<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<TopDecl>> {
+fn __action716<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<TopDecl>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action194(module, &__start0, &__end0);
@@ -62361,7 +62318,7 @@ fn __action718<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action719<'a>(
+fn __action717<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
 ) -> Vec<L<TopDecl>> {
