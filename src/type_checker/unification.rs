@@ -653,7 +653,7 @@ fn try_unify_labels_one_way(
 ) -> bool {
     let (labels1, mut extension1) = collect_rows(
         cons,
-        &ty1,
+        ty1,
         record_or_variant,
         labels1,
         extension1.clone(),
@@ -663,7 +663,7 @@ fn try_unify_labels_one_way(
     );
     let (labels2, extension2) = collect_rows(
         cons,
-        &ty2,
+        ty2,
         record_or_variant,
         labels2,
         extension2.clone(),
