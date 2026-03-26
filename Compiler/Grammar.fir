@@ -309,12 +309,7 @@ recordType(state: ParserState[Token, ()]) RecordType / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let ext = state.nextCursor()
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.LowerId, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
+            let ext = type_(state)
             let last = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.RParen, ..):
@@ -324,7 +319,7 @@ recordType(state: ParserState[Token, ()]) RecordType / U32:
             let val = do:
                 RecordType(
                     fields = Vec.empty(),
-                    extension = Option.Some(newId(ext)),
+                    extension = Option.Some(ext),
                     isRow = start.isRow,
                     _firstToken = start.start,
                     _lastToken = TokenIdx(idx = last),
@@ -430,7 +425,7 @@ recordTypeStart(state: ParserState[Token, ()]) (start: TokenIdx, isRow: Bool) / 
     throw(state.updateErrorCursor(state._cursor))
 
 
-recordTypeCont(state: ParserState[Token, ()]) Option[Id] / U32:
+recordTypeCont(state: ParserState[Token, ()]) Option[Type] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -447,15 +442,10 @@ recordTypeCont(state: ParserState[Token, ()]) Option[Id] / U32:
                         state._cursor += 1
                     else:
                         throw(state.updateErrorCursor(state._cursor))
-                    let id = state.nextCursor()
-                    if state.peek() is Option.Some(sym)
-                            and sym is Token(kind = TokenKind.LowerId, ..):
-                        state._cursor += 1
-                    else:
-                        throw(state.updateErrorCursor(state._cursor))
-                    id,
+                    let ext = type_(state)
+                    ext,
             )
-            let id = match symResult:
+            let ext = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
                     Option.None
@@ -463,7 +453,7 @@ recordTypeCont(state: ParserState[Token, ()]) Option[Id] / U32:
                     ()
                     Option.Some(ok)
             let val = do:
-                id.map(\(id: U32): newId(id))
+                ext
             val,
     )
     match altResult:
@@ -504,12 +494,7 @@ variantType(state: ParserState[Token, ()]) VariantType / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let ext = state.nextCursor()
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.LowerId, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
+            let ext = type_(state)
             let last = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.RBracket, ..):
@@ -519,7 +504,7 @@ variantType(state: ParserState[Token, ()]) VariantType / U32:
             let val = do:
                 VariantType(
                     alts = Vec.empty(),
-                    extension = Option.Some(newId(ext)),
+                    extension = Option.Some(ext),
                     isRow = start.isRow,
                     _firstToken = start.start,
                     _lastToken = TokenIdx(idx = last),
@@ -622,7 +607,7 @@ variantTypeStart(state: ParserState[Token, ()]) (start: TokenIdx, isRow: Bool) /
     throw(state.updateErrorCursor(state._cursor))
 
 
-variantTypeCont(state: ParserState[Token, ()]) Option[Id] / U32:
+variantTypeCont(state: ParserState[Token, ()]) Option[Type] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -639,15 +624,10 @@ variantTypeCont(state: ParserState[Token, ()]) Option[Id] / U32:
                         state._cursor += 1
                     else:
                         throw(state.updateErrorCursor(state._cursor))
-                    let id = state.nextCursor()
-                    if state.peek() is Option.Some(sym)
-                            and sym is Token(kind = TokenKind.LowerId, ..):
-                        state._cursor += 1
-                    else:
-                        throw(state.updateErrorCursor(state._cursor))
-                    id,
+                    let ext = type_(state)
+                    ext,
             )
-            let id = match symResult:
+            let ext = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
                     Option.None
@@ -655,7 +635,7 @@ variantTypeCont(state: ParserState[Token, ()]) Option[Id] / U32:
                     ()
                     Option.Some(ok)
             let val = do:
-                id.map(\(id: U32): newId(id))
+                ext
             val,
     )
     match altResult:
@@ -698,11 +678,7 @@ recordTypeFields(state: ParserState[Token, ()]) Vec[Named[Type]] / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.LowerId, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
+            type_(state)
             let val = do:
                 let vec: Vec[Named[Type]] = Vec.fromIter(
                     once(f0).chain(fs.iter()),
@@ -1060,12 +1036,7 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
                         state._cursor += 1
                     else:
                         throw(state.updateErrorCursor(state._cursor))
-                    let ext = state.nextCursor()
-                    if state.peek() is Option.Some(sym)
-                            and sym is Token(kind = TokenKind.LowerId, ..):
-                        state._cursor += 1
-                    else:
-                        throw(state.updateErrorCursor(state._cursor))
+                    let ext = type_(state)
                     if state.peek() is Option.Some(sym)
                             and sym is Token(kind = TokenKind.Newline, ..):
                         state._cursor += 1
@@ -1097,12 +1068,7 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
                             Option.None: Vec.empty(),
                     typeParamKinds = Vec.empty(),
                     rhs =
-                        Option.Some(
-                            TypeDeclRhs.Sum(
-                                cons = rhs,
-                                extension = ext.map(\(id: U32): newId(id)),
-                            ),
-                        ),
+                        Option.Some(TypeDeclRhs.Sum(cons = rhs, extension = ext)),
                 )
             val,
     )
@@ -1505,12 +1471,7 @@ conFields(state: ParserState[Token, ()]) (fields: ConFields, lastToken: TokenIdx
                         state._cursor += 1
                     else:
                         throw(state.updateErrorCursor(state._cursor))
-                    let ext = state.nextCursor()
-                    if state.peek() is Option.Some(sym)
-                            and sym is Token(kind = TokenKind.LowerId, ..):
-                        state._cursor += 1
-                    else:
-                        throw(state.updateErrorCursor(state._cursor))
+                    let ext = type_(state)
                     ext,
             )
             let ext = match symResult:
@@ -1531,7 +1492,7 @@ conFields(state: ParserState[Token, ()]) (fields: ConFields, lastToken: TokenIdx
                     once(f0).chain(fs.iter()),
                 )
                 (
-                    fields = processFields(vec, ext.map(\(id: U32): newId(id))),
+                    fields = processFields(vec, ext),
                     lastToken = TokenIdx(idx = last),
                 )
             val,
@@ -1551,12 +1512,7 @@ conFields(state: ParserState[Token, ()]) (fields: ConFields, lastToken: TokenIdx
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let ext = state.nextCursor()
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.LowerId, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
+            let ext = type_(state)
             let last = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.RParen, ..):
@@ -1565,7 +1521,7 @@ conFields(state: ParserState[Token, ()]) (fields: ConFields, lastToken: TokenIdx
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 (
-                    fields = processFields(Vec.empty(), Option.Some(newId(ext))),
+                    fields = processFields(Vec.empty(), Option.Some(ext)),
                     lastToken = TokenIdx(idx = last),
                 )
             val,

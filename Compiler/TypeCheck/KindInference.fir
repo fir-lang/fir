@@ -231,28 +231,34 @@ _collectTvs(
                 _collectTvs(field.node, tvs, tokens)
 
             if extension is Option.Some(ext):
-                let extName = tokens.get(ext.token.idx).text
-                if tvs.insert(
-                        extName,
-                        Option.Some(Kind.Row(RecordOrVariant.Record)),
-                    )
-                        is Option.Some(Option.Some(old))
-                        and old != Kind.Row(RecordOrVariant.Record):
-                    panic("Conflicting kind of type variable")
+                match ext:
+                    Type.Var(var_):
+                        let extName = tokens.get(var_.token.idx).text
+                        if tvs.insert(
+                                extName,
+                                Option.Some(Kind.Row(RecordOrVariant.Record)),
+                            )
+                                is Option.Some(Option.Some(old))
+                                and old != Kind.Row(RecordOrVariant.Record):
+                            panic("Conflicting kind of type variable")
+                    other: _collectTvs(other, tvs, tokens)
 
         Type.Variant(VariantType(alts, extension, ..)):
             for alt: NamedType in alts.iter():
                 _collectNamedTyTvs(alt, tvs, tokens)
 
             if extension is Option.Some(ext):
-                let extName = tokens.get(ext.token.idx).text
-                if tvs.insert(
-                        extName,
-                        Option.Some(Kind.Row(RecordOrVariant.Variant)),
-                    )
-                        is Option.Some(Option.Some(old))
-                        and old != Kind.Row(RecordOrVariant.Variant):
-                    panic("Conflicting kind of type variable")
+                match ext:
+                    Type.Var(var_):
+                        let extName = tokens.get(var_.token.idx).text
+                        if tvs.insert(
+                                extName,
+                                Option.Some(Kind.Row(RecordOrVariant.Variant)),
+                            )
+                                is Option.Some(Option.Some(old))
+                                and old != Kind.Row(RecordOrVariant.Variant):
+                            panic("Conflicting kind of type variable")
+                    other: _collectTvs(other, tvs, tokens)
 
         Type.Fn_(FnType(args, ret, exceptions, ..)):
             for arg: Type in args.iter():
