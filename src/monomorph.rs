@@ -1697,7 +1697,7 @@ fn mono_tc_ty(
                         .collect();
 
                     if let Some(ty) = extension {
-                        collect_record_rows(&ty, ty_map, &mut all_args);
+                        collect_record_rows(&ty, ty_map, &mut all_args, poly_pgm, mono_pgm);
                     }
 
                     mono::FunArgs::Named(all_args)
@@ -1726,7 +1726,7 @@ fn mono_tc_ty(
                 }
 
                 if let Some(ty) = extension {
-                    collect_record_rows(&ty, ty_map, &mut all_fields);
+                    collect_record_rows(&ty, ty_map, &mut all_fields, poly_pgm, mono_pgm);
                 }
 
                 mono::Type::Record { fields: all_fields }
@@ -1766,7 +1766,7 @@ fn mono_tc_ty(
                             assert!(var.link().is_none());
                         }
 
-                        other => todo!("Weird row extension {:?}", other),
+                        other => todo!("Weird row extension {other} ({other:?})"),
                     }
                 }
 
@@ -1816,9 +1816,10 @@ fn mono_ast_ty(
         ast::Type::Record {
             fields,
             extension,
-            is_row,
+            is_row: _,
         } => {
-            assert!(!*is_row);
+            // For now we represent row and non-row records as the same type, but we may want to
+            // pass this to `mono::Type::Record` if it helps with sanity checking in the use sites.
             mono::Type::Record {
                 fields: collect_record_labels(fields, extension, ty_map, poly_pgm, mono_pgm),
             }
@@ -1827,9 +1828,9 @@ fn mono_ast_ty(
         ast::Type::Variant {
             alts,
             extension,
-            is_row,
+            is_row: _,
         } => {
-            assert!(!*is_row);
+            // Same as the record case, we lose row and type distinction here.
             mono::Type::Variant {
                 alts: collect_variant_labels(alts, extension, ty_map, poly_pgm, mono_pgm),
             }
@@ -1993,11 +1994,12 @@ fn mono_fields(
                 .collect();
 
             if let Some(ext) = extension {
-                let extra_fields = resolve_extension_record(&ext.node, ty_map, poly_pgm, mono_pgm);
-                for (extra_name, extra_ty) in extra_fields {
-                    let old = all_fields.insert(extra_name, extra_ty);
-                    if old.is_some() {
-                        panic!("BUG: Duplicate field in constructor fields");
+                match mono_ast_ty(&ext.node, ty_map, poly_pgm, mono_pgm) {
+                    mono::Type::Record { fields } => all_fields.extend(fields),
+                    other @ (mono::Type::Named(_)
+                    | mono::Type::Variant { .. }
+                    | mono::Type::Fn(_)) => {
+                        panic!("Weird row extension: {other} ({other:?})");
                     }
                 }
             }
@@ -2187,9 +2189,33 @@ fn collect_record_rows(
     ext_ty: &Ty,
     ty_map: &HashMap<Id, mono::Type>,
     rows: &mut OrdMap<Id, mono::Type>,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) {
-    assert!(matches!(ext_ty.kind(), Kind::Row(_)));
+    // We can't check this yet as we don't keep track of `ast::Type::AssocTySelect` kinds and return
+    // `*` for all assoc types in `ast::Type::kind` and also the `Ty::kind`.
+    // assert!(matches!(ext_ty.kind(), Kind::Row(_)));
     match ext_ty {
+        Ty::AssocTySelect { ty, assoc_ty } => {
+            let (trait_name, trait_args): (&Id, &[Ty]) = match ty.as_ref() {
+                Ty::App(name, args, _kind) => (name, args.as_slice()),
+                Ty::Con(name, _kind) => (name, &[]),
+                _ => panic!("Expected trait constructor in AssocTySelect, got {:?}", ty),
+            };
+            let mono_args: Vec<mono::Type> = trait_args
+                .iter()
+                .map(|arg| mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm))
+                .collect();
+            let mono_ext_ty =
+                resolve_assoc_ty(trait_name, &mono_args, assoc_ty, poly_pgm, mono_pgm);
+            match mono_ext_ty {
+                mono::Type::Record { fields } => rows.extend(fields),
+                mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_) => {
+                    panic!("Weird row extension: {mono_ext_ty} ({mono_ext_ty:?})")
+                }
+            }
+        }
+
         Ty::RVar(var, _kind) => {
             let ext = ty_map.get(var).unwrap();
             match ext {
@@ -2204,6 +2230,6 @@ fn collect_record_rows(
             assert!(var.link().is_none());
         }
 
-        other => todo!("Weird row extension {:?}", other),
+        other => panic!("Weird row extension: {other} ({other:?})"),
     }
 }
