@@ -793,9 +793,20 @@ pub struct DoExpr {
     pub inferred_ty: Option<Ty>,
 }
 
+/// A record expression, e.g.
+/// - `()` (empty record)
+/// - `(msg = "hi")` (single field)
+/// - `(msg = "hi", x = 123,)` (multiple fields, with trailing comma)
+/// - `(msg = "hi", ..f())` (with splicing)
 #[derive(Debug, Clone)]
 pub struct RecordExpr {
+    /// Named fields of the reocrd, before any splicing.
     pub fields: Vec<(Id, L<Expr>)>,
+
+    /// Record splice: `(msg = "hi", ..<expr>)`.
+    pub splice: Option<Box<L<Expr>>>,
+
+    /// Inferred type of the record, filled in by the type checker.
     pub inferred_ty: Option<Ty>,
 }
 
@@ -1233,11 +1244,15 @@ impl Expr {
 
             Expr::Record(RecordExpr {
                 fields,
+                splice,
                 inferred_ty,
             }) => {
                 assert!(inferred_ty.is_none());
                 for (_field_name, field_expr) in fields {
                     field_expr.node.subst_ty_ids(substs);
+                }
+                if let Some(expr) = splice {
+                    expr.node.subst_ty_ids(substs);
                 }
             }
 

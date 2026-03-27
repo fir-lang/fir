@@ -552,7 +552,11 @@ impl Expr {
                 }
             }
 
-            Expr::Record(RecordExpr { fields, ty: _ }) => {
+            Expr::Record(RecordExpr {
+                fields,
+                splice,
+                ty: _,
+            }) => {
                 buf.push('(');
                 for (i, (field_name, field_expr)) in fields.iter().enumerate() {
                     if i != 0 {
@@ -561,6 +565,12 @@ impl Expr {
                     buf.push_str(field_name);
                     buf.push_str(" = ");
                     field_expr.node.print(buf, indent);
+                }
+                if let Some(expr) = splice {
+                    if !fields.is_empty() {
+                        buf.push_str(", ");
+                    }
+                    expr.node.print(buf, 0);
                 }
                 buf.push(')');
             }

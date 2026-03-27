@@ -898,7 +898,15 @@ RecordExpr.format(self, tokens: Array[Token]) Doc:
             trailingComma = Bool.True
             docRest += formatToken(next, tokens)
 
-    if self.fields.len() != 0 and not trailingComma:
+    if self.splice is Option.Some(splice):
+        let dotdot = prevNonTrivia(splice.firstToken(tokens), tokens).unwrap()
+        assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+
+        docRest += formatToken(dotdot, tokens) + splice.format(tokens)
+
+    if self.fields.len() != 0
+            and self.splice is Option.None
+            and not trailingComma:
         docRest += Doc.whenNotFlat(Doc.char(','))
 
     let rparen = self.lastToken(tokens)

@@ -727,7 +727,15 @@ InlineExpr: Expr = {
     },
 
     "(" <fields:Sep<ParenExpr, ",">> ")" => {
-        Expr::Record(RecordExpr { fields, inferred_ty: None })
+        Expr::Record(RecordExpr { fields, splice: None, inferred_ty: None })
+    },
+
+    "(" ".." <splice:LInlineExpr> ")" => {
+        Expr::Record(RecordExpr { fields: vec![], splice: Some(Box::new(splice)), inferred_ty: None })
+    },
+
+    "(" <fields:(<ParenExpr> ",")+> ".." <splice:LInlineExpr> ")" => {
+        Expr::Record(RecordExpr { fields, splice: Some(Box::new(splice)), inferred_ty: None })
     },
 
     <l:@L> <int:IntLit> => {
@@ -927,7 +935,7 @@ InlineExpr: Expr = {
 
     <l:@L> "return" <r:@R> =>
         Expr::Return(ReturnExpr {
-            expr: Box::new(L::new(module, l, r, Expr::Record(RecordExpr { fields: vec![], inferred_ty: None }))),
+            expr: Box::new(L::new(module, l, r, Expr::Record(RecordExpr { fields: vec![], splice: None, inferred_ty: None }))),
             inferred_ty: None,
         }),
 

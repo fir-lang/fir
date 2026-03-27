@@ -1320,6 +1320,7 @@ impl Tokens[UnOpExpr]:
 #[derive(ToDoc)]
 type RecordExpr(
     fields: Vec[Named[Expr]],
+    splice: Option[Expr],
     _firstToken: TokenIdx,
     _lastToken: TokenIdx,
 )
@@ -1681,7 +1682,7 @@ impl ToDoc[TypeDeclRhs]:
                         + Doc.nested(4, Doc.break_(1) + extension.toDoc()),
                 )
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("TypeDeclRhs.Sum") + Doc.char('(') + args)
+                Doc.str("TypeDeclRhs.Sum") + Doc.char('(') + args
             TypeDeclRhs.Product(i0):
                 let args = Doc.break_(0)
                 args += i0.toDoc()
@@ -1734,7 +1735,7 @@ impl ToDoc[ConFields]:
                         + Doc.nested(4, Doc.break_(1) + extension.toDoc()),
                 )
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("ConFields.Named") + Doc.char('(') + args)
+                Doc.str("ConFields.Named") + Doc.char('(') + args
             ConFields.Unnamed(i0):
                 let args = Doc.break_(0)
                 args += i0.toDoc()
@@ -2977,6 +2978,11 @@ impl ToDoc[RecordExpr]:
         args += Doc.grouped(
             Doc.str("fields =")
                 + Doc.nested(4, Doc.break_(1) + self.fields.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("splice =")
+                + Doc.nested(4, Doc.break_(1) + self.splice.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(

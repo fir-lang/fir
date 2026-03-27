@@ -397,6 +397,7 @@ pub struct AssocFnSelExpr {
 #[derive(Debug, Clone)]
 pub struct RecordExpr {
     pub fields: Vec<(Id, L<Expr>)>,
+    pub splice: Option<Box<L<Expr>>>,
     pub ty: OrdMap<Id, Type>, // the record type
 }
 

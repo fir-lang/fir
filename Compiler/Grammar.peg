@@ -548,12 +548,31 @@ simpleExpr Expr:
     con=con:
         Expr.ConSel(con)
 
+    # Record with splice only: `(..<expr>)`.
+    first=^ "(" ".." splice=inlineExpr last=^ ")":
+        Expr.Record(RecordExpr(
+            fields = Vec.empty(),
+            splice = Option.Some(splice),
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = TokenIdx(idx = last),
+        ))
+
+    # Record with fields and splice: `(a = 1, b = 2, ..<expr>)`.
+    first=^ "(" fields=(e0=parenExpr es=(_"," parenExpr)*) _"," ".." splice=inlineExpr last=^ ")":
+        Expr.Record(RecordExpr(
+            fields = Vec.fromIter(once(fields.e0).chain(fields.es.iter())),
+            splice = Option.Some(splice),
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = TokenIdx(idx = last),
+        ))
+
     # Records and parenthesized expressions: `(1 + 2)`, `(a, b)`, `(a = 1, b = 2)`.
     first=^ "(" exprs=(e0=parenExpr es=(_"," parenExpr)* comma=","?)? last=^ ")":
         match exprs:
             Option.None:
                 Expr.Record(RecordExpr(
                     fields = Vec.empty(),
+                    splice = Option.None,
                     _firstToken = TokenIdx(idx = first),
                     _lastToken = TokenIdx(idx = last),
                 ))
@@ -567,6 +586,7 @@ simpleExpr Expr:
                 else:
                     Expr.Record(RecordExpr(
                         fields = Vec.fromIter(once(fields.e0).chain(fields.es.iter())),
+                        splice = Option.None,
                         _firstToken = TokenIdx(idx = first),
                         _lastToken = TokenIdx(idx = last),
                     ))

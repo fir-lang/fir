@@ -939,6 +939,7 @@ fn mono_expr(
 
         ast::Expr::Record(ast::RecordExpr {
             fields,
+            splice,
             inferred_ty,
         }) => mono::Expr::Record(mono::RecordExpr {
             fields: fields
@@ -950,6 +951,10 @@ fn mono_expr(
                     )
                 })
                 .collect(),
+
+            splice: splice
+                .as_ref()
+                .map(|expr| mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals)),
 
             ty: get_record_ty(
                 mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
