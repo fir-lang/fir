@@ -271,6 +271,7 @@ fn normalize_expr(
 
         ast::Expr::Record(ast::RecordExpr {
             fields,
+            splice,
             inferred_ty,
         }) => {
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(
@@ -287,6 +288,9 @@ fn normalize_expr(
                     trait_env,
                     var_gen,
                 );
+            }
+            if let Some(expr) = splice {
+                normalize_expr(&mut expr.node, &expr.loc, cons, trait_env, var_gen);
             }
         }
 

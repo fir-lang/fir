@@ -1244,11 +1244,15 @@ impl Expr {
 
             Expr::Record(RecordExpr {
                 fields,
+                splice,
                 inferred_ty,
             }) => {
                 assert!(inferred_ty.is_none());
                 for (_field_name, field_expr) in fields {
                     field_expr.node.subst_ty_ids(substs);
+                }
+                if let Some(expr) = splice {
+                    expr.node.subst_ty_ids(substs);
                 }
             }
 
