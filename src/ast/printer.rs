@@ -570,6 +570,7 @@ impl Expr {
             Expr::Call(CallExpr {
                 fun,
                 args,
+                splice,
                 inferred_ty: _,
             }) => {
                 let parens = !matches!(
@@ -597,6 +598,13 @@ impl Expr {
                         buf.push_str(" = ");
                     }
                     expr.node.print(buf, indent);
+                }
+                if let Some(splice) = splice {
+                    if !args.is_empty() {
+                        buf.push_str(", ");
+                    }
+                    buf.push_str("..");
+                    splice.node.print(buf, indent);
                 }
                 buf.push(')');
             }

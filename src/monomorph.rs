@@ -758,6 +758,7 @@ fn mono_expr(
         ast::Expr::Call(ast::CallExpr {
             fun,
             args,
+            splice,
             inferred_ty,
         }) => mono::Expr::Call(mono::CallExpr {
             fun: mono_bl_expr(fun, ty_map, poly_pgm, mono_pgm, locals),

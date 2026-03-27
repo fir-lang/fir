@@ -148,6 +148,7 @@ fn normalize_expr(
         ast::Expr::Call(ast::CallExpr {
             fun,
             args,
+            splice,
             inferred_ty,
         }) => {
             *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
@@ -159,6 +160,9 @@ fn normalize_expr(
             normalize_expr(&mut fun.node, &fun.loc, cons, trait_env, var_gen);
             for arg in args {
                 normalize_expr(&mut arg.expr.node, &arg.expr.loc, cons, trait_env, var_gen);
+            }
+            if let Some(expr) = splice {
+                normalize_expr(&mut expr.node, &expr.loc, cons, trait_env, var_gen);
             }
         }
 

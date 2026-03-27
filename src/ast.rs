@@ -1143,11 +1143,15 @@ impl Expr {
             Expr::Call(CallExpr {
                 fun,
                 args,
+                splice,
                 inferred_ty,
             }) => {
                 assert!(inferred_ty.is_none());
                 fun.node.subst_ty_ids(substs);
                 for CallArg { name: _, expr } in args {
+                    expr.node.subst_ty_ids(substs);
+                }
+                if let Some(expr) = splice {
                     expr.node.subst_ty_ids(substs);
                 }
             }

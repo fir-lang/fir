@@ -481,6 +481,7 @@ pub(super) fn check_expr(
         ast::Expr::Call(ast::CallExpr {
             fun,
             args,
+            splice,
             inferred_ty,
         }) => {
             assert!(inferred_ty.is_none());
@@ -997,6 +998,7 @@ pub(super) fn check_expr(
                                 }),
                             }),
                             args: vec![],
+                            splice: None,
                             inferred_ty: Some(str_buf_ty.clone()),
                         }),
                     },
@@ -1045,6 +1047,7 @@ pub(super) fn check_expr(
                                 expr: arg,
                             },
                         ],
+                        splice: None,
                         inferred_ty: Some(Ty::unit()),
                     })),
                 }
@@ -1108,6 +1111,7 @@ pub(super) fn check_expr(
                                     loc: expr.loc.clone(),
                                 },
                             }],
+                            splice: None,
                             inferred_ty: Some(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
                         });
                         desugared_stmts.push(make_push(expr, tc_state.exceptions.clone()));
@@ -1148,6 +1152,7 @@ pub(super) fn check_expr(
                             loc: loc.clone(),
                         },
                     }],
+                    splice: None,
                     inferred_ty: Some(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
                 })),
             });
@@ -1296,6 +1301,7 @@ pub(super) fn check_expr(
                     name: None,
                     expr: (**right).clone(),
                 }],
+                splice: None,
                 inferred_ty: None,
             });
 
@@ -1334,6 +1340,7 @@ pub(super) fn check_expr(
                         name: None,
                         expr: *arg.clone(),
                     }],
+                    splice: None,
                     inferred_ty: Some(Ty::bool()),
                 });
                 (
@@ -1364,6 +1371,7 @@ pub(super) fn check_expr(
                         }),
                     }),
                     args: vec![],
+                    splice: None,
                     inferred_ty: None,
                 });
                 check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
@@ -1646,6 +1654,7 @@ pub(super) fn check_expr(
                             }),
                         }),
                         args: vec![],
+                        splice: None,
                         inferred_ty: None,
                     }),
                 }
@@ -1699,6 +1708,7 @@ pub(super) fn check_expr(
                                 name: None,
                                 expr: elem,
                             }],
+                            splice: None,
                             inferred_ty: None,
                         }),
                     });
@@ -1722,6 +1732,7 @@ pub(super) fn check_expr(
                             name: None,
                             expr: next,
                         }],
+                        splice: None,
                         inferred_ty: None,
                     }),
                 })
@@ -1747,6 +1758,7 @@ pub(super) fn check_expr(
                             name: None,
                             expr: iter_expr,
                         }],
+                        splice: None,
                         inferred_ty: None,
                     })
                 }
@@ -1774,6 +1786,7 @@ pub(super) fn check_expr(
                                         name: None,
                                         expr: iter_expr,
                                     }],
+                                    splice: None,
                                     inferred_ty: None,
                                 })
                             }
