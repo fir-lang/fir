@@ -353,11 +353,14 @@ fn visit_expr(
             }
         }
 
-        mono::Expr::Record(mono::RecordExpr { fields, ty }) => {
+        mono::Expr::Record(mono::RecordExpr { fields, splice, ty }) => {
             ty.values().for_each(|ty| visit_ty(ty, records, variants));
             records.insert(RecordType { fields: ty.clone() });
             for (_field_name, field_expr) in fields {
                 visit_expr(&field_expr.node, records, variants);
+            }
+            if let Some(splice) = splice {
+                visit_expr(&splice.node, records, variants);
             }
         }
 
