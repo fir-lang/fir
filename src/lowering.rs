@@ -1869,6 +1869,74 @@ fn lower_expr(
                         })
                     }
 
+                    if let Some(splice) = splice {
+                        let splice_ty: mono::Type = splice.node.ty();
+                        let splice_field_tys: OrdMap<Id, mono::Type> = match &splice_ty {
+                            mono::Type::Record { fields } => fields.clone(),
+                            mono::Type::Named(_)
+                            | mono::Type::Variant { .. }
+                            | mono::Type::Fn(_) => {
+                                panic!(
+                                    "{}: Record expression splice is not a record",
+                                    loc_display(&splice.loc)
+                                )
+                            }
+                        };
+                        let splice_local_idx = LocalIdx(scope.locals.len() as u32);
+                        scope.locals.push(LocalInfo {
+                            name: Id::new_static("splice"),
+                            ty: mono::Type::Record {
+                                fields: splice_field_tys.clone(),
+                            },
+                        });
+                        stmts.push(L {
+                            node: Stmt::Assign(AssignStmt {
+                                lhs: L {
+                                    node: Expr::LocalVar(splice_local_idx),
+                                    loc: splice.loc.clone(),
+                                },
+                                rhs: lower_l_expr(splice, closures, indices, scope, mono_pgm).0,
+                            }),
+                            loc: splice.loc.clone(),
+                        });
+                        for splice_field_name in splice_field_tys.keys() {
+                            let arg_local = arg_locals.get(splice_field_name).unwrap();
+                            let field_idx = {
+                                let mut field_idx: u32 = 0;
+                                for (field_idx_, ty_field_name) in
+                                    splice_field_tys.keys().enumerate()
+                                {
+                                    if ty_field_name == splice_field_name {
+                                        field_idx = field_idx_ as u32;
+                                        break;
+                                    }
+                                }
+                                field_idx
+                            };
+                            stmts.push(L {
+                                node: Stmt::Assign(AssignStmt {
+                                    lhs: L {
+                                        node: Expr::LocalVar(*arg_local),
+                                        loc: splice.loc.clone(),
+                                    },
+                                    rhs: L {
+                                        node: Expr::FieldSel(FieldSelExpr {
+                                            object: Box::new(L {
+                                                node: Expr::LocalVar(splice_local_idx),
+                                                loc: splice.loc.clone(),
+                                            }),
+                                            field: splice_field_name.clone(),
+                                            idx: field_idx,
+                                            object_ty: splice_ty.clone(),
+                                        }),
+                                        loc: splice.loc.clone(),
+                                    },
+                                }),
+                                loc: splice.loc.clone(),
+                            })
+                        }
+                    }
+
                     let args = named_args
                         .keys()
                         .map(|name| L {
