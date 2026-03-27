@@ -404,6 +404,8 @@ defaultVisitUnOp[Visitor[v]](v: v, e: UnOpExpr):
 defaultVisitRecord[Visitor[v]](v: v, e: RecordExpr):
     for field: Named[Expr] in e.fields.iter():
         v.visitExpr(field.node)
+    if e.splice is Option.Some(splice):
+        v.visitExpr(splice)
 
 
 defaultVisitReturn[Visitor[v]](v: v, e: ReturnExpr):

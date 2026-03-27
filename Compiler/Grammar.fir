@@ -2344,6 +2344,101 @@ simpleExpr(state: ParserState[Token, ()]) Expr / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.DotDot, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let splice = inlineExpr(state)
+            let last = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                Expr.Record(
+                    RecordExpr(
+                        fields = Vec.empty(),
+                        splice = Option.Some(splice),
+                        _firstToken = TokenIdx(idx = first),
+                        _lastToken = TokenIdx(idx = last),
+                    ),
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let first = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let e0 = parenExpr(state)
+            let zeroOrMoreCursor0 = state._cursor
+            let es = Vec.empty()
+            loop:
+                let esLen0 = es.len()
+                let symResult = try(
+                    \():
+                        if state.peek() is Option.Some(sym)
+                                and sym is Token(kind = TokenKind.Comma, ..):
+                            state._cursor += 1
+                        else:
+                            throw(state.updateErrorCursor(state._cursor))
+                        es.push(parenExpr(state)),
+                )
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        es.truncate(esLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
+            let fields = (e0 = e0, es = es)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Comma, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.DotDot, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let splice = inlineExpr(state)
+            let last = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                Expr.Record(
+                    RecordExpr(
+                        fields =
+                            Vec.fromIter(once(fields.e0).chain(fields.es.iter())),
+                        splice = Option.Some(splice),
+                        _firstToken = TokenIdx(idx = first),
+                        _lastToken = TokenIdx(idx = last),
+                    ),
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let first = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             let optionalCursor0 = state._cursor
             let symResult = try(
                 \():
@@ -2408,6 +2503,7 @@ simpleExpr(state: ParserState[Token, ()]) Expr / U32:
                         Expr.Record(
                             RecordExpr(
                                 fields = Vec.empty(),
+                                splice = Option.None,
                                 _firstToken = TokenIdx(idx = first),
                                 _lastToken = TokenIdx(idx = last),
                             ),
@@ -2432,6 +2528,7 @@ simpleExpr(state: ParserState[Token, ()]) Expr / U32:
                                                 fields.es.iter(),
                                             ),
                                         ),
+                                    splice = Option.None,
                                     _firstToken = TokenIdx(idx = first),
                                     _lastToken = TokenIdx(idx = last),
                                 ),
