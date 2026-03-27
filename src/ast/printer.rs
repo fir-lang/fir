@@ -696,6 +696,7 @@ impl Expr {
 
             Expr::Record(RecordExpr {
                 fields,
+                splice,
                 inferred_ty: _,
             }) => {
                 buf.push('(');
@@ -706,6 +707,12 @@ impl Expr {
                     buf.push_str(field_name);
                     buf.push_str(" = ");
                     field_expr.node.print(buf, 0);
+                }
+                if let Some(expr) = splice {
+                    if !fields.is_empty() {
+                        buf.push_str(", ");
+                    }
+                    expr.node.print(buf, 0);
                 }
                 buf.push(')');
             }
