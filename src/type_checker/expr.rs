@@ -1677,6 +1677,7 @@ pub(super) fn check_expr(
                                     (SmolStr::new("key"), k.clone()),
                                     (SmolStr::new("val"), v.clone()),
                                 ],
+                                splice: None,
                                 inferred_ty: None,
                             }),
                         },
@@ -1790,6 +1791,7 @@ pub(super) fn check_expr(
 
         ast::Expr::Record(ast::RecordExpr {
             fields,
+            splice,
             inferred_ty,
         }) => {
             assert!(inferred_ty.is_none());
@@ -1833,9 +1835,44 @@ pub(super) fn check_expr(
                 record_fields.insert(field_name.clone(), field_ty);
             }
 
+            let extension: Option<Box<Ty>> = splice.as_mut().map(|splice| {
+                // Spliced expression is type checked as `(..r)` (where `r` is fresh), and `r` is
+                // then used as the extension of the record including the splice.
+                let (splice_ty, _) = check_expr(
+                    tc_state,
+                    &mut splice.node,
+                    &splice.loc,
+                    None,
+                    level,
+                    loop_stack,
+                );
+                let extension = Box::new(Ty::UVar(tc_state.var_gen.new_var(
+                    level,
+                    Kind::Row(RecordOrVariant::Record),
+                    splice.loc.clone(),
+                )));
+                unify(
+                    &splice_ty,
+                    &Ty::Anonymous {
+                        labels: Default::default(),
+                        extension: Some(extension.clone()),
+                        record_or_variant: RecordOrVariant::Record,
+                        is_row: false,
+                    },
+                    tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
+                    tc_state.var_gen,
+                    level,
+                    &splice.loc,
+                    tc_state.assumps,
+                    tc_state.preds,
+                );
+                extension
+            });
+
             let ty = Ty::Anonymous {
                 labels: record_fields,
-                extension: None,
+                extension,
                 record_or_variant: RecordOrVariant::Record,
                 is_row: false,
             };
