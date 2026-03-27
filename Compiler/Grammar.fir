@@ -2061,9 +2061,9 @@ prefixExpr(state: ParserState[Token, ()]) Expr / U32:
                                     userTyArgs = tyArgs,
                                 ),
                             )
-                        ExprSuffix.Args(args, _lastToken):
+                        ExprSuffix.Args(args, splice, _lastToken):
                             ret = Expr.Call(
-                                CallExpr(fun = ret, args, _lastToken),
+                                CallExpr(fun = ret, args, splice, _lastToken),
                             )
                 if pfx is Option.Some(pfx):
                     match pfx:
@@ -2127,6 +2127,7 @@ exprSuffix(state: ParserState[Token, ()]) ExprSuffix / U32:
             let val = do:
                 ExprSuffix.Args(
                     args = args.args,
+                    splice = args.splice,
                     _lastToken = TokenIdx(idx = args.cursorRight),
                 )
             val,
@@ -2162,8 +2163,94 @@ field(state: ParserState[Token, ()]) Id / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-args(state: ParserState[Token, ()]) (args: Vec[Named[Expr]], cursorRight: U32) / U32:
+args(state: ParserState[Token, ()]) (args: Vec[Named[Expr]], splice: Option[Expr], cursorRight: U32) / U32:
     let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.DotDot, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let splice = inlineExpr(state)
+            let last = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                (
+                    args = Vec.empty(),
+                    splice = Option.Some(splice),
+                    cursorRight = last,
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let arg0 = arg(state)
+            let zeroOrMoreCursor0 = state._cursor
+            let args = Vec.empty()
+            loop:
+                let argsLen0 = args.len()
+                let symResult = try(
+                    \():
+                        if state.peek() is Option.Some(sym)
+                                and sym is Token(kind = TokenKind.Comma, ..):
+                            state._cursor += 1
+                        else:
+                            throw(state.updateErrorCursor(state._cursor))
+                        args.push(arg(state)),
+                )
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        args.truncate(argsLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
+            let args = (arg0 = arg0, args = args)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Comma, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.DotDot, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let splice = inlineExpr(state)
+            let last = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                (
+                    args = Vec.fromIter(once(args.arg0).chain(args.args.iter())),
+                    splice = Option.Some(splice),
+                    cursorRight = last,
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
     let altResult = try(
         \():
             if state.peek() is Option.Some(sym)
@@ -2234,6 +2321,7 @@ args(state: ParserState[Token, ()]) (args: Vec[Named[Expr]], cursorRight: U32) /
                                     once(arg0).chain(args.iter()),
                                 )
                                 vec,
+                    splice = Option.None,
                     cursorRight = last,
                 )
             val,

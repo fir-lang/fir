@@ -390,6 +390,8 @@ defaultVisitCallExpr[Visitor[v]](v: v, e: CallExpr):
     v.visitExpr(e.fun)
     for arg: Named[Expr] in e.args.iter():
         v.visitExpr(arg.node)
+    if e.splice is Option.Some(splice):
+        v.visitExpr(splice)
 
 
 defaultVisitBinOp[Visitor[v]](v: v, e: BinOpExpr):

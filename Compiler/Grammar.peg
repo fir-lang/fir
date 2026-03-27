@@ -472,8 +472,8 @@ prefixExpr Expr:
                         userTyArgs = tyArgs,
                     ))
 
-                ExprSuffix.Args(args, _lastToken):
-                    ret = Expr.Call(CallExpr(fun = ret, args, _lastToken))
+                ExprSuffix.Args(args, splice, _lastToken):
+                    ret = Expr.Call(CallExpr(fun = ret, args, splice, _lastToken))
 
         if pfx is Option.Some(pfx):
             match pfx:
@@ -502,7 +502,7 @@ exprSuffix ExprSuffix:
         ExprSuffix.Field(field, tyArgs = args)
 
     args=args:
-        ExprSuffix.Args(args = args.args, _lastToken = TokenIdx(idx = args.cursorRight))
+        ExprSuffix.Args(args = args.args, splice = args.splice, _lastToken = TokenIdx(idx = args.cursorRight))
 
 
 field Id:
@@ -510,7 +510,17 @@ field Id:
         newId(field)
 
 
-args (args: Vec[Named[Expr]], cursorRight: U32):
+args (args: Vec[Named[Expr]], splice: Option[Expr], cursorRight: U32):
+    # Args with splice only: `(..<expr>)`.
+    "(" ".." splice=inlineExpr last=^ ")":
+        (args = Vec.empty(), splice = Option.Some(splice), cursorRight = last)
+
+    # Args with fields and splice: `(a = 1, b = 2, ..<expr>)`.
+    "(" args=(arg0=arg args=(_"," arg)*) _"," ".." splice=inlineExpr last=^ ")":
+        (args = Vec.fromIter(once(args.arg0).chain(args.args.iter())),
+         splice = Option.Some(splice),
+         cursorRight = last)
+
     "(" args=(arg0=arg args=(_"," arg)* ","?)? last=^ ")":
         (args = match args:
              Option.None:
@@ -519,6 +529,7 @@ args (args: Vec[Named[Expr]], cursorRight: U32):
                  let vec: Vec[Named[Expr]] =
                      Vec.fromIter(once(arg0).chain(args.iter()))
                  vec,
+         splice = Option.None,
          cursorRight = last)
 
 

@@ -28,6 +28,7 @@ type ExprSuffix:
     )
     Args(
         args: Vec[Named[Expr]],
+        splice: Option[Expr],
         _lastToken: TokenIdx,
     )
 
