@@ -344,7 +344,12 @@ impl Expr {
                 print_ty_args(ty_args, buf);
             }
 
-            Expr::Call(CallExpr { fun, args, ty: _ }) => {
+            Expr::Call(CallExpr {
+                fun,
+                args,
+                splice,
+                ty: _,
+            }) => {
                 let parens = !matches!(
                     &fun.node,
                     Expr::LocalVar(_, _)
@@ -370,6 +375,12 @@ impl Expr {
                         buf.push_str(" = ");
                     }
                     expr.node.print(buf, indent);
+                }
+                if let Some(expr) = splice {
+                    if !args.is_empty() {
+                        buf.push_str(", ");
+                    }
+                    expr.node.print(buf, 0);
                 }
                 buf.push(')');
             }

@@ -1785,7 +1785,12 @@ fn lower_expr(
             (Expr::Fun(fun_idx), Default::default())
         }
 
-        mono::Expr::Call(mono::CallExpr { fun, args, ty: _ }) => {
+        mono::Expr::Call(mono::CallExpr {
+            fun,
+            args,
+            splice,
+            ty: _,
+        }) => {
             let fun_ty = fun.node.ty();
 
             let (fun, _fun_vars) = lower_bl_expr(fun, closures, indices, scope, mono_pgm);

@@ -370,6 +370,7 @@ pub struct VarExpr {
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
     pub args: Vec<CallArg>,
+    pub splice: Option<Box<L<Expr>>>,
     pub ty: Type,
 }
 
