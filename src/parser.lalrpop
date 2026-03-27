@@ -756,6 +756,24 @@ InlineExpr: Expr = {
         Expr::Call(CallExpr {
             fun: Box::new(L::new(module, l, r, fun)),
             args,
+            splice: None,
+            inferred_ty: None,
+        }),
+
+    <l:@L> <fun:InlineExpr> <r:@R> "(" ".." <splice:LInlineExpr> ")" =>
+        Expr::Call(CallExpr {
+            fun: Box::new(L::new(module, l, r, fun)),
+            args: vec![],
+            splice: Some(Box::new(splice)),
+            inferred_ty: None,
+        }),
+
+
+    <l:@L> <fun:InlineExpr> <r:@R> "(" <args:(<CallArg> ",")+> ".." <splice:LInlineExpr> ")" =>
+        Expr::Call(CallExpr {
+            fun: Box::new(L::new(module, l, r, fun)),
+            args,
+            splice: Some(Box::new(splice)),
             inferred_ty: None,
         }),
 
