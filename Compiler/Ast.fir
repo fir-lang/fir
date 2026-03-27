@@ -1185,6 +1185,7 @@ impl Tokens[AssocFnSelExpr]:
 type CallExpr(
     fun: Expr,
     args: Vec[Named[Expr]],
+    splice: Option[Expr],
     _lastToken: TokenIdx,
 )
 

@@ -620,6 +620,7 @@ fn mono_expr(
                                         }),
                                     }),
                                     args: assoc_fn_args,
+                                    splice: None,
                                     ty: inferred_ty.clone(),
                                 })),
                             }],
@@ -758,6 +759,7 @@ fn mono_expr(
         ast::Expr::Call(ast::CallExpr {
             fun,
             args,
+            splice,
             inferred_ty,
         }) => mono::Expr::Call(mono::CallExpr {
             fun: mono_bl_expr(fun, ty_map, poly_pgm, mono_pgm, locals),
@@ -768,6 +770,9 @@ fn mono_expr(
                     expr: mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals),
                 })
                 .collect(),
+            splice: splice
+                .as_ref()
+                .map(|expr| mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals)),
             ty: mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
         }),
 

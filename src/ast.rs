@@ -601,6 +601,7 @@ pub struct VarExpr {
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
     pub args: Vec<CallArg>,
+    pub splice: Option<Box<L<Expr>>>,
     pub inferred_ty: Option<Ty>,
 }
 
@@ -1142,11 +1143,15 @@ impl Expr {
             Expr::Call(CallExpr {
                 fun,
                 args,
+                splice,
                 inferred_ty,
             }) => {
                 assert!(inferred_ty.is_none());
                 fun.node.subst_ty_ids(substs);
                 for CallArg { name: _, expr } in args {
+                    expr.node.subst_ty_ids(substs);
+                }
+                if let Some(expr) = splice {
                     expr.node.subst_ty_ids(substs);
                 }
             }

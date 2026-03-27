@@ -1785,7 +1785,12 @@ fn lower_expr(
             (Expr::Fun(fun_idx), Default::default())
         }
 
-        mono::Expr::Call(mono::CallExpr { fun, args, ty: _ }) => {
+        mono::Expr::Call(mono::CallExpr {
+            fun,
+            args,
+            splice,
+            ty: _,
+        }) => {
             let fun_ty = fun.node.ty();
 
             let (fun, _fun_vars) = lower_bl_expr(fun, closures, indices, scope, mono_pgm);
@@ -1862,6 +1867,18 @@ fn lower_expr(
                             }),
                             loc: expr.loc.clone(),
                         })
+                    }
+
+                    if let Some(splice) = splice {
+                        lower_splice(
+                            splice,
+                            &arg_locals,
+                            &mut stmts,
+                            closures,
+                            indices,
+                            scope,
+                            mono_pgm,
+                        );
                     }
 
                     let args = named_args
@@ -1994,67 +2011,15 @@ fn lower_expr(
             }
 
             if let Some(splice) = splice {
-                let splice_ty: mono::Type = splice.node.ty();
-                let splice_field_tys: OrdMap<Id, mono::Type> = match &splice_ty {
-                    mono::Type::Record { fields } => fields.clone(),
-                    mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_) => {
-                        panic!(
-                            "{}: Record expression splice is not a record",
-                            loc_display(&splice.loc)
-                        )
-                    }
-                };
-                let splice_local_idx = LocalIdx(scope.locals.len() as u32);
-                scope.locals.push(LocalInfo {
-                    name: Id::new_static("splice"),
-                    ty: mono::Type::Record {
-                        fields: splice_field_tys.clone(),
-                    },
-                });
-                stmts.push(L {
-                    node: Stmt::Assign(AssignStmt {
-                        lhs: L {
-                            node: Expr::LocalVar(splice_local_idx),
-                            loc: splice.loc.clone(),
-                        },
-                        rhs: lower_l_expr(splice, closures, indices, scope, mono_pgm).0,
-                    }),
-                    loc: splice.loc.clone(),
-                });
-                for splice_field_name in splice_field_tys.keys() {
-                    let arg_local = arg_locals.get(splice_field_name).unwrap();
-                    let field_idx = {
-                        let mut field_idx: u32 = 0;
-                        for (field_idx_, ty_field_name) in splice_field_tys.keys().enumerate() {
-                            if ty_field_name == splice_field_name {
-                                field_idx = field_idx_ as u32;
-                                break;
-                            }
-                        }
-                        field_idx
-                    };
-                    stmts.push(L {
-                        node: Stmt::Assign(AssignStmt {
-                            lhs: L {
-                                node: Expr::LocalVar(*arg_local),
-                                loc: splice.loc.clone(),
-                            },
-                            rhs: L {
-                                node: Expr::FieldSel(FieldSelExpr {
-                                    object: Box::new(L {
-                                        node: Expr::LocalVar(splice_local_idx),
-                                        loc: splice.loc.clone(),
-                                    }),
-                                    field: splice_field_name.clone(),
-                                    idx: field_idx,
-                                    object_ty: splice_ty.clone(),
-                                }),
-                                loc: splice.loc.clone(),
-                            },
-                        }),
-                        loc: splice.loc.clone(),
-                    })
-                }
+                lower_splice(
+                    splice,
+                    &arg_locals,
+                    &mut stmts,
+                    closures,
+                    indices,
+                    scope,
+                    mono_pgm,
+                );
             }
 
             let ty = mono::Type::Record {
@@ -2547,5 +2512,80 @@ fn lower_source_fun(
     SourceFunDecl {
         body,
         locals: scope.locals,
+    }
+}
+
+/// Lower a splice expression (`..expr`) by evaluating the splice, then assigning each of its fields
+/// to the corresponding local in `arg_locals`. Used for both record expressions and named function
+/// call arguments.
+fn lower_splice(
+    splice: &L<mono::Expr>,
+    arg_locals: &HashMap<Id, LocalIdx>,
+    stmts: &mut Vec<L<Stmt>>,
+    closures: &mut Vec<Closure>,
+    indices: &Indices,
+    scope: &mut FunScope,
+    mono_pgm: &mono::MonoPgm,
+) {
+    let splice_ty: mono::Type = splice.node.ty();
+    let splice_field_tys: OrdMap<Id, mono::Type> = match &splice_ty {
+        mono::Type::Record { fields } => fields.clone(),
+        mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_) => {
+            panic!(
+                "{}: Record expression splice is not a record",
+                loc_display(&splice.loc)
+            )
+        }
+    };
+    let splice_local_idx = LocalIdx(scope.locals.len() as u32);
+    scope.locals.push(LocalInfo {
+        name: Id::new_static("splice"),
+        ty: mono::Type::Record {
+            fields: splice_field_tys.clone(),
+        },
+    });
+    stmts.push(L {
+        node: Stmt::Assign(AssignStmt {
+            lhs: L {
+                node: Expr::LocalVar(splice_local_idx),
+                loc: splice.loc.clone(),
+            },
+            rhs: lower_l_expr(splice, closures, indices, scope, mono_pgm).0,
+        }),
+        loc: splice.loc.clone(),
+    });
+    for splice_field_name in splice_field_tys.keys() {
+        let arg_local = arg_locals.get(splice_field_name).unwrap();
+        let field_idx = {
+            let mut field_idx: u32 = 0;
+            for (field_idx_, ty_field_name) in splice_field_tys.keys().enumerate() {
+                if ty_field_name == splice_field_name {
+                    field_idx = field_idx_ as u32;
+                    break;
+                }
+            }
+            field_idx
+        };
+        stmts.push(L {
+            node: Stmt::Assign(AssignStmt {
+                lhs: L {
+                    node: Expr::LocalVar(*arg_local),
+                    loc: splice.loc.clone(),
+                },
+                rhs: L {
+                    node: Expr::FieldSel(FieldSelExpr {
+                        object: Box::new(L {
+                            node: Expr::LocalVar(splice_local_idx),
+                            loc: splice.loc.clone(),
+                        }),
+                        field: splice_field_name.clone(),
+                        idx: field_idx,
+                        object_ty: splice_ty.clone(),
+                    }),
+                    loc: splice.loc.clone(),
+                },
+            }),
+            loc: splice.loc.clone(),
+        })
     }
 }

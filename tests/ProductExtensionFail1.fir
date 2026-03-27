@@ -9,4 +9,4 @@ main():
 
 # expected exit status: 101
 # expected stderr:
-# tests/ProductExtensionFail1.fir:8:15: Function with minimum arity 2 is passed 1 args
+# tests/ProductExtensionFail1.fir:8:15: Unable to unify (x: U32) with (x: U32, y: U32, .._1)

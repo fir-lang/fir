@@ -159,6 +159,7 @@ fn check_stmt(
                             name: None,
                             expr: (*rhs).clone(),
                         }],
+                        splice: None,
                         inferred_ty: None,
                     }),
                 };
@@ -490,6 +491,7 @@ fn check_stmt(
                                                     }),
                                                 },
                                             }],
+                                            splice: None,
                                             inferred_ty: Some(Ty::App(
                                                 SmolStr::new_static("Option"),
                                                 vec![pat_ty.clone()],

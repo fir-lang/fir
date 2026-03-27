@@ -481,6 +481,7 @@ pub(super) fn check_expr(
         ast::Expr::Call(ast::CallExpr {
             fun,
             args,
+            splice,
             inferred_ty,
         }) => {
             assert!(inferred_ty.is_none());
@@ -496,24 +497,6 @@ pub(super) fn check_expr(
                     ret: ret_ty,
                     exceptions,
                 } => {
-                    if param_tys.has_extension() {
-                        if args.len() < param_tys.len() {
-                            panic!(
-                                "{}: Function with minimum arity {} is passed {} args",
-                                loc_display(loc),
-                                param_tys.len(),
-                                args.len()
-                            );
-                        }
-                    } else if param_tys.len() != args.len() {
-                        panic!(
-                            "{}: Function with arity {} is passed {} args",
-                            loc_display(loc),
-                            param_tys.len(),
-                            args.len()
-                        );
-                    }
-
                     let ret_ty = unify_expected_ty(
                         (**ret_ty).clone(),
                         expected_ty,
@@ -537,6 +520,22 @@ pub(super) fn check_expr(
                                 }
                             }
 
+                            if splice.is_some() {
+                                panic!(
+                                    "{}: Function with positional arguments can't have a spliced argument",
+                                    loc_display(loc),
+                                );
+                            }
+
+                            if param_tys.len() != args.len() {
+                                panic!(
+                                    "{}: Function with arity {} is passed {} args",
+                                    loc_display(loc),
+                                    param_tys.len(),
+                                    args.len()
+                                );
+                            }
+
                             let mut arg_tys: Vec<Ty> = Vec::with_capacity(args.len());
                             for (param_ty, arg) in param_tys.iter().zip(args.iter_mut()) {
                                 let (arg_ty, _) = check_expr(
@@ -555,6 +554,7 @@ pub(super) fn check_expr(
                             args: param_tys,
                             extension,
                         } => {
+                            // Convert `a` ==> `a = a` in the arg list.
                             for arg in args.iter_mut() {
                                 if arg.name.is_none() {
                                     match &arg.expr.node {
@@ -564,7 +564,6 @@ pub(super) fn check_expr(
                                             ty_args: _,
                                             inferred_ty: _,
                                         }) => {
-                                            // Convert `a` ==> `a = a`.
                                             arg.name = Some(id.clone());
                                         }
                                         _ => {
@@ -577,100 +576,62 @@ pub(super) fn check_expr(
                                 }
                             }
 
-                            let param_names: HashSet<&Id> = param_tys.keys().collect();
+                            // Conceptually type checking is the same as record type checking:
+                            //
+                            //     (field1 = expr1, field2 = expr2, ..expr3)
+                            //
+                            // is checked against the function type's parameter types and extension:
+                            //
+                            //     (field3: Type1, field4: Type2, ..r)
+                            //
+                            // So we reuse the type checking code for records here. To be able to
+                            // pass named arguments we first collect the exprs in a vector as
+                            // expected by `check_record_expr` and then move them back to the
+                            // original AST.
+                            let mut fields: Vec<(Id, ast::L<ast::Expr>)> = args
+                                .iter_mut()
+                                .map(|arg| {
+                                    let expr =
+                                        std::mem::replace(&mut arg.expr.node, ast::Expr::Char('a'));
+                                    (
+                                        arg.name.as_ref().unwrap().clone(),
+                                        arg.expr.map_as_ref(|_| expr),
+                                    )
+                                })
+                                .collect();
 
-                            let arg_names: HashSet<&Id> =
-                                args.iter().map(|arg| arg.name.as_ref().unwrap()).collect();
+                            let expected_ty = Ty::Anonymous {
+                                labels: param_tys.clone(),
+                                extension: extension.clone(),
+                                record_or_variant: RecordOrVariant::Record,
+                                is_row: false,
+                            };
 
-                            let missing: HashSet<&&Id> =
-                                param_names.difference(&arg_names).collect();
+                            let arg_ty = check_record_expr(
+                                tc_state,
+                                &mut fields,
+                                splice,
+                                loc,
+                                Some(&expected_ty),
+                                level,
+                                loop_stack,
+                            );
 
-                            if !missing.is_empty() {
-                                panic!(
-                                    "{}: Missing required arguments: {:?}",
-                                    loc_display(loc),
-                                    missing
-                                );
-                            }
+                            unify(
+                                &arg_ty,
+                                &expected_ty,
+                                tc_state.tys.tys.cons(),
+                                tc_state.trait_env,
+                                tc_state.var_gen,
+                                level,
+                                loc,
+                                tc_state.assumps,
+                                tc_state.preds,
+                            );
 
-                            if extension.is_none() && param_names != arg_names {
-                                // This branch currently can't be taken as we have an arity check
-                                // above that catches extra arguments. I think it may make sense to
-                                // do the arity checking only for positional arguments and rely on
-                                // name set checks for named arguments.
-                                panic!(
-                                    "{}: Function expects arguments with names {:?}, but passed {:?}",
-                                    loc_display(loc),
-                                    param_names,
-                                    arg_names
-                                );
-                            }
-
-                            let mut extra_fields: OrdMap<Id, Ty> = OrdMap::new();
-                            for arg in args.iter_mut() {
-                                let arg_name: &Id = arg.name.as_ref().unwrap();
-                                match param_tys.get(arg_name) {
-                                    Some(param_ty) => {
-                                        let (arg_ty, _) = check_expr(
-                                            tc_state,
-                                            &mut arg.expr.node,
-                                            &arg.expr.loc,
-                                            Some(param_ty),
-                                            level,
-                                            loop_stack,
-                                        );
-                                        unify(
-                                            &arg_ty,
-                                            param_ty,
-                                            tc_state.tys.tys.cons(),
-                                            tc_state.trait_env,
-                                            tc_state.var_gen,
-                                            level,
-                                            loc,
-                                            tc_state.assumps,
-                                            tc_state.preds,
-                                        );
-                                    }
-                                    None => {
-                                        let (arg_ty, _) = check_expr(
-                                            tc_state,
-                                            &mut arg.expr.node,
-                                            &arg.expr.loc,
-                                            None,
-                                            level,
-                                            loop_stack,
-                                        );
-                                        extra_fields.insert(arg_name.clone(), arg_ty);
-                                    }
-                                }
-                            }
-
-                            // Unify extra fields with the extension type.
-                            match extension {
-                                Some(ext_ty) => {
-                                    let extra_row = Ty::Anonymous {
-                                        labels: extra_fields,
-                                        extension: None,
-                                        record_or_variant: RecordOrVariant::Record,
-                                        is_row: true,
-                                    };
-                                    unify(
-                                        ext_ty,
-                                        &extra_row,
-                                        tc_state.tys.tys.cons(),
-                                        tc_state.trait_env,
-                                        tc_state.var_gen,
-                                        level,
-                                        loc,
-                                        tc_state.assumps,
-                                        tc_state.preds,
-                                    );
-                                }
-                                None => {
-                                    // When extension is not available, param names are compared
-                                    // with arg names above, so this branch shouldn't be taken.
-                                    assert!(extra_fields.is_empty());
-                                }
+                            // Move updated named arguments back to the AST.
+                            for (arg, field) in args.iter_mut().zip(fields.into_iter()) {
+                                arg.expr = field.1;
                             }
                         }
                     }
@@ -1001,6 +962,7 @@ pub(super) fn check_expr(
                                 }),
                             }),
                             args: vec![],
+                            splice: None,
                             inferred_ty: Some(str_buf_ty.clone()),
                         }),
                     },
@@ -1049,6 +1011,7 @@ pub(super) fn check_expr(
                                 expr: arg,
                             },
                         ],
+                        splice: None,
                         inferred_ty: Some(Ty::unit()),
                     })),
                 }
@@ -1112,6 +1075,7 @@ pub(super) fn check_expr(
                                     loc: expr.loc.clone(),
                                 },
                             }],
+                            splice: None,
                             inferred_ty: Some(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
                         });
                         desugared_stmts.push(make_push(expr, tc_state.exceptions.clone()));
@@ -1152,6 +1116,7 @@ pub(super) fn check_expr(
                             loc: loc.clone(),
                         },
                     }],
+                    splice: None,
                     inferred_ty: Some(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
                 })),
             });
@@ -1300,6 +1265,7 @@ pub(super) fn check_expr(
                     name: None,
                     expr: (**right).clone(),
                 }],
+                splice: None,
                 inferred_ty: None,
             });
 
@@ -1338,6 +1304,7 @@ pub(super) fn check_expr(
                         name: None,
                         expr: *arg.clone(),
                     }],
+                    splice: None,
                     inferred_ty: Some(Ty::bool()),
                 });
                 (
@@ -1368,6 +1335,7 @@ pub(super) fn check_expr(
                         }),
                     }),
                     args: vec![],
+                    splice: None,
                     inferred_ty: None,
                 });
                 check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
@@ -1650,6 +1618,7 @@ pub(super) fn check_expr(
                             }),
                         }),
                         args: vec![],
+                        splice: None,
                         inferred_ty: None,
                     }),
                 }
@@ -1703,6 +1672,7 @@ pub(super) fn check_expr(
                                 name: None,
                                 expr: elem,
                             }],
+                            splice: None,
                             inferred_ty: None,
                         }),
                     });
@@ -1726,6 +1696,7 @@ pub(super) fn check_expr(
                             name: None,
                             expr: next,
                         }],
+                        splice: None,
                         inferred_ty: None,
                     }),
                 })
@@ -1751,6 +1722,7 @@ pub(super) fn check_expr(
                             name: None,
                             expr: iter_expr,
                         }],
+                        splice: None,
                         inferred_ty: None,
                     })
                 }
@@ -1778,6 +1750,7 @@ pub(super) fn check_expr(
                                         name: None,
                                         expr: iter_expr,
                                     }],
+                                    splice: None,
                                     inferred_ty: None,
                                 })
                             }
@@ -1799,90 +1772,16 @@ pub(super) fn check_expr(
             inferred_ty,
         }) => {
             assert!(inferred_ty.is_none());
-
-            let mut field_names: HashSet<&Id> = Default::default();
-            for (field_name, _field_expr) in fields.iter() {
-                if !field_names.insert(field_name) {
-                    panic!(
-                        "{}: Field name {} occurs multiple times in the record",
-                        loc_display(loc),
-                        field_name
-                    );
-                }
-            }
-
-            // To give better error messages use the field types in the expected type as expected
-            // types of the expr fields when possible.
-            let expected_fields: OrdMap<Id, Ty> = match expected_ty
-                .as_ref()
-                .map(|ty| ty.normalize(tc_state.tys.tys.cons()))
-            {
-                Some(Ty::Anonymous {
-                    labels: expected_fields,
-                    extension: _,
-                    record_or_variant: RecordOrVariant::Record,
-                    is_row: _,
-                }) => expected_fields,
-                _ => Default::default(),
-            };
-
-            let mut record_fields: OrdMap<Id, Ty> = OrdMap::new();
-            for (field_name, field_expr) in fields.iter_mut() {
-                let (field_ty, _) = check_expr(
-                    tc_state,
-                    &mut field_expr.node,
-                    &field_expr.loc,
-                    expected_fields.get(field_name),
-                    level,
-                    loop_stack,
-                );
-                record_fields.insert(field_name.clone(), field_ty);
-            }
-
-            let extension: Option<Box<Ty>> = splice.as_mut().map(|splice| {
-                // Spliced expression is type checked as `(..r)` (where `r` is fresh), and `r` is
-                // then used as the extension of the record including the splice.
-                let (splice_ty, _) = check_expr(
-                    tc_state,
-                    &mut splice.node,
-                    &splice.loc,
-                    None,
-                    level,
-                    loop_stack,
-                );
-                let extension = Box::new(Ty::UVar(tc_state.var_gen.new_var(
-                    level,
-                    Kind::Row(RecordOrVariant::Record),
-                    splice.loc.clone(),
-                )));
-                unify(
-                    &splice_ty,
-                    &Ty::Anonymous {
-                        labels: Default::default(),
-                        extension: Some(extension.clone()),
-                        record_or_variant: RecordOrVariant::Record,
-                        is_row: false,
-                    },
-                    tc_state.tys.tys.cons(),
-                    tc_state.trait_env,
-                    tc_state.var_gen,
-                    level,
-                    &splice.loc,
-                    tc_state.assumps,
-                    tc_state.preds,
-                );
-                extension
-            });
-
-            let ty = Ty::Anonymous {
-                labels: record_fields,
-                extension,
-                record_or_variant: RecordOrVariant::Record,
-                is_row: false,
-            };
-
+            let ty = check_record_expr(
+                tc_state,
+                fields,
+                splice,
+                loc,
+                expected_ty,
+                level,
+                loop_stack,
+            );
             *inferred_ty = Some(ty.clone());
-
             (
                 unify_expected_ty(
                     ty,
@@ -2551,5 +2450,97 @@ fn add_coercions(
                 &pat.loc,
             );
         }
+    }
+}
+
+/// This checks both records and function named arguments.
+fn check_record_expr(
+    tc_state: &mut TcFunState,
+    fields: &mut [(Id, ast::L<ast::Expr>)],
+    splice: &mut Option<Box<ast::L<ast::Expr>>>,
+    loc: &ast::Loc,
+    expected_ty: Option<&Ty>,
+    level: u32,
+    loop_stack: &mut Vec<Option<Id>>,
+) -> Ty {
+    let mut field_names: HashSet<&Id> = Default::default();
+    for (field_name, _field_expr) in fields.iter() {
+        if !field_names.insert(field_name) {
+            panic!(
+                "{}: Field name {} occurs multiple times in the record",
+                loc_display(loc),
+                field_name
+            );
+        }
+    }
+
+    // To give better error messages use the field types in the expected type as expected
+    // types of the expr fields when possible.
+    let expected_fields: OrdMap<Id, Ty> = match expected_ty
+        .as_ref()
+        .map(|ty| ty.normalize(tc_state.tys.tys.cons()))
+    {
+        Some(Ty::Anonymous {
+            labels: expected_fields,
+            extension: _,
+            record_or_variant: RecordOrVariant::Record,
+            is_row: _,
+        }) => expected_fields,
+        _ => Default::default(),
+    };
+
+    let mut record_fields: OrdMap<Id, Ty> = OrdMap::new();
+    for (field_name, field_expr) in fields.iter_mut() {
+        let (field_ty, _) = check_expr(
+            tc_state,
+            &mut field_expr.node,
+            &field_expr.loc,
+            expected_fields.get(field_name),
+            level,
+            loop_stack,
+        );
+        record_fields.insert(field_name.clone(), field_ty);
+    }
+
+    let extension: Option<Box<Ty>> = splice.as_mut().map(|splice| {
+        // Spliced expression is type checked as `(..r)` (where `r` is fresh), and `r` is
+        // then used as the extension of the record including the splice.
+        let (splice_ty, _) = check_expr(
+            tc_state,
+            &mut splice.node,
+            &splice.loc,
+            None,
+            level,
+            loop_stack,
+        );
+        let extension = Box::new(Ty::UVar(tc_state.var_gen.new_var(
+            level,
+            Kind::Row(RecordOrVariant::Record),
+            splice.loc.clone(),
+        )));
+        unify(
+            &splice_ty,
+            &Ty::Anonymous {
+                labels: Default::default(),
+                extension: Some(extension.clone()),
+                record_or_variant: RecordOrVariant::Record,
+                is_row: false,
+            },
+            tc_state.tys.tys.cons(),
+            tc_state.trait_env,
+            tc_state.var_gen,
+            level,
+            &splice.loc,
+            tc_state.assumps,
+            tc_state.preds,
+        );
+        extension
+    });
+
+    Ty::Anonymous {
+        labels: record_fields,
+        extension,
+        record_or_variant: RecordOrVariant::Record,
+        is_row: false,
     }
 }

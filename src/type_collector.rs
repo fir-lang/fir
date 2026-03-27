@@ -279,11 +279,19 @@ fn visit_expr(
             visit_expr(&object.node, records, variants);
         }
 
-        mono::Expr::Call(mono::CallExpr { fun, args, ty }) => {
+        mono::Expr::Call(mono::CallExpr {
+            fun,
+            args,
+            splice,
+            ty,
+        }) => {
             visit_ty(ty, records, variants);
             visit_expr(&fun.node, records, variants);
             for arg in args {
                 visit_expr(&arg.expr.node, records, variants);
+            }
+            if let Some(splice) = splice {
+                visit_expr(&splice.node, records, variants);
             }
         }
 
