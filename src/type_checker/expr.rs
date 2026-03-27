@@ -578,22 +578,26 @@ pub(super) fn check_expr(
                             }
 
                             let param_names: HashSet<&Id> = param_tys.keys().collect();
+
                             let arg_names: HashSet<&Id> =
                                 args.iter().map(|arg| arg.name.as_ref().unwrap()).collect();
 
-                            if extension.is_some() {
-                                // With extension: all param names must be present in args, extra
-                                // args go into the extension.
-                                let missing: HashSet<&&Id> =
-                                    param_names.difference(&arg_names).collect();
-                                if !missing.is_empty() {
-                                    panic!(
-                                        "{}: Missing required arguments: {:?}",
-                                        loc_display(loc),
-                                        missing
-                                    );
-                                }
-                            } else if param_names != arg_names {
+                            let missing: HashSet<&&Id> =
+                                param_names.difference(&arg_names).collect();
+
+                            if !missing.is_empty() {
+                                panic!(
+                                    "{}: Missing required arguments: {:?}",
+                                    loc_display(loc),
+                                    missing
+                                );
+                            }
+
+                            if extension.is_none() && param_names != arg_names {
+                                // This branch currently can't be taken as we have an arity check
+                                // above that catches extra arguments. I think it may make sense to
+                                // do the arity checking only for positional arguments and rely on
+                                // name set checks for named arguments.
                                 panic!(
                                     "{}: Function expects arguments with names {:?}, but passed {:?}",
                                     loc_display(loc),
