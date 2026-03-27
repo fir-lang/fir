@@ -807,11 +807,19 @@ CallExpr.format(self, tokens: Array[Token]) Doc:
                 trailingComma = Bool.True
                 args += formatToken(next, tokens)
 
+        if self.splice is Option.Some(splice):
+            let dotdot = prevNonTrivia(splice.firstToken(tokens), tokens).unwrap()
+            assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+
+            args += formatToken(dotdot, tokens) + splice.format(tokens)
+
+        if self.args.len() != 0
+                and self.splice is Option.None
+                and not trailingComma:
+            args += Doc.whenNotFlat(Doc.char(','))
+
         let rparen = self.lastToken(tokens)
         assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
-
-        if self.args.len() != 0 and not trailingComma:
-            args += Doc.whenNotFlat(Doc.char(','))
 
         Doc.grouped(args.nest(4) + Doc.break_(0)) + formatToken(rparen, tokens)
 
