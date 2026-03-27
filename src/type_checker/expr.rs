@@ -1807,28 +1807,26 @@ pub(super) fn check_expr(
 
             // To give better error messages use the field types in the expected type as expected
             // types of the expr fields when possible.
-            let expected_fields = expected_ty.and_then(|expected_ty| {
-                match expected_ty.normalize(tc_state.tys.tys.cons()) {
-                    Ty::Anonymous {
-                        labels: expected_fields,
-                        extension: _,
-                        record_or_variant: RecordOrVariant::Record,
-                        is_row: _,
-                    } => Some(expected_fields),
-                    _ => None,
-                }
-            });
+            let expected_fields: OrdMap<Id, Ty> = match expected_ty
+                .as_ref()
+                .map(|ty| ty.normalize(tc_state.tys.tys.cons()))
+            {
+                Some(Ty::Anonymous {
+                    labels: expected_fields,
+                    extension: _,
+                    record_or_variant: RecordOrVariant::Record,
+                    is_row: _,
+                }) => expected_fields,
+                _ => Default::default(),
+            };
 
             let mut record_fields: OrdMap<Id, Ty> = OrdMap::new();
             for (field_name, field_expr) in fields.iter_mut() {
-                let expected_ty = expected_fields
-                    .as_ref()
-                    .and_then(|expected_fields| expected_fields.get(field_name));
                 let (field_ty, _) = check_expr(
                     tc_state,
                     &mut field_expr.node,
                     &field_expr.loc,
-                    expected_ty,
+                    expected_fields.get(field_name),
                     level,
                     loop_stack,
                 );
