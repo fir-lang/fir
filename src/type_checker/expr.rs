@@ -1794,25 +1794,6 @@ pub(super) fn check_expr(
         }) => {
             assert!(inferred_ty.is_none());
 
-            if fields.is_empty() {
-                *inferred_ty = Some(Ty::unit());
-                return (
-                    unify_expected_ty(
-                        Ty::unit(),
-                        expected_ty,
-                        tc_state.tys.tys.cons(),
-                        tc_state.trait_env,
-                        tc_state.var_gen,
-                        level,
-                        loc,
-                        tc_state.assumps,
-                        tc_state.preds,
-                    ),
-                    Default::default(),
-                );
-            }
-
-            // TODO: For now only supporting named fields.
             let mut field_names: HashSet<&Id> = Default::default();
             for (field_name, _field_expr) in fields.iter() {
                 if !field_names.insert(field_name) {
