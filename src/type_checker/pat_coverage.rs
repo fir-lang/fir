@@ -309,7 +309,7 @@ impl PatMatrix {
                         match pat.node {
                             ast::Pat::Record(ast::RecordPat {
                                 fields: pat_fields,
-                                ignore_rest: _,
+                                rest,
                                 ..
                             }) => {
                                 let mut fields_positional: Vec<ast::L<ast::Pat>> =
@@ -356,12 +356,19 @@ impl PatMatrix {
 
                                 fields_positional.extend(row.pats[1..].iter().cloned());
 
-                                new_rows.push(Row {
+                                let mut new_row = Row {
                                     arm_index: row.arm_index,
                                     pats: fields_positional,
                                     bound_vars: row.bound_vars.clone(),
                                     guarded: row.guarded,
-                                });
+                                };
+                                if let ast::RestPat::Bind(var_pat) = &rest {
+                                    new_row.bind(
+                                        var_pat.var.clone(),
+                                        var_pat.ty.as_ref().unwrap().clone(),
+                                    );
+                                }
+                                new_rows.push(new_row);
                             } // ast::Pat::Record
 
                             ast::Pat::Or(pat1, pat2) => {
@@ -518,7 +525,7 @@ impl PatMatrix {
                     ast::Pat::Con(ast::ConPat {
                         con: ast::Con { ty, con, .. },
                         fields,
-                        ignore_rest: _,
+                        rest,
                     }) => {
                         let con = con.unwrap_or_else(|| ty.clone());
 
@@ -582,12 +589,16 @@ impl PatMatrix {
 
                         fields_positional.extend(row.pats[1..].iter().cloned());
 
-                        new_rows.push(Row {
+                        let mut new_row = Row {
                             arm_index: row.arm_index,
                             pats: fields_positional,
                             bound_vars: row.bound_vars.clone(),
                             guarded: row.guarded,
-                        });
+                        };
+                        if let ast::RestPat::Bind(var_pat) = &rest {
+                            new_row.bind(var_pat.var.clone(), var_pat.ty.as_ref().unwrap().clone());
+                        }
+                        new_rows.push(new_row);
                     }
 
                     ast::Pat::Var(var) => {

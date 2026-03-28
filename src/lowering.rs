@@ -567,6 +567,28 @@ pub struct VarPat {
 pub struct ConPat {
     pub con: HeapObjIdx,
     pub fields: Vec<L<Pat>>,
+    pub rest: RestPat,
+}
+
+/// Rest pattern in a constructor or record pattern.
+#[derive(Debug, Clone)]
+pub enum RestPat {
+    /// No rest pattern.
+    No,
+
+    /// `..`, ignore the rest.
+    Ignore,
+
+    /// `..rest`, bind `rest` a record with the unmatched fields.
+    Bind {
+        var: VarPat,
+
+        /// Index of the `rest` record type.
+        rest_con: HeapObjIdx,
+
+        /// Indices of the fields in the matched object that belong to the `rest` record, in order.
+        rest_field_indices: Vec<u32>,
+    },
 }
 
 #[derive(Debug)]
@@ -2311,6 +2333,7 @@ fn lower_pat(
                     ty: _,
                 },
             fields,
+            rest,
         }) => {
             let con_idx: HeapObjIdx = match con {
                 Some(con) => *indices
@@ -2399,19 +2422,26 @@ fn lower_pat(
                 }
             };
 
+            let lowered_rest =
+                lower_rest_pat(rest, fields, con_fields, indices, scope, mapped_binders);
+
             Pat::Con(ConPat {
                 con: con_idx,
                 fields: field_pats,
+                rest: lowered_rest,
             })
         }
 
-        mono::Pat::Record(mono::RecordPat { fields, ty }) => {
+        mono::Pat::Record(mono::RecordPat { fields, ty, rest }) => {
             let idx = *indices
                 .records
                 .get(&RecordType { fields: ty.clone() })
                 .unwrap();
 
             let mut field_pats: Vec<L<Pat>> = Vec::with_capacity(ty.len());
+
+            // Build a ConFields::Named from the record type so we can reuse lower_rest_pat.
+            let con_fields_named = mono::ConFields::Named(ty.clone());
 
             for field_name in ty.keys() {
                 let pat = match fields.iter().find_map(|field_pat| {
@@ -2430,9 +2460,19 @@ fn lower_pat(
                 field_pats.push(pat);
             }
 
+            let lowered_rest = lower_rest_pat(
+                rest,
+                fields,
+                &con_fields_named,
+                indices,
+                scope,
+                mapped_binders,
+            );
+
             Pat::Con(ConPat {
                 fields: field_pats,
                 con: idx,
+                rest: lowered_rest,
             })
         }
 
@@ -2477,6 +2517,70 @@ fn lower_l_pat(
     mapped_binders: &mut HashMap<Id, LocalIdx>,
 ) -> L<Pat> {
     pat.map_as_ref(|pat_| lower_pat(pat_, indices, scope, mono_pgm, &pat.loc, mapped_binders))
+}
+
+/// Lower a `mono::RestPat` to a `lowered::RestPat`.
+///
+/// `pat_fields` are the fields explicitly matched by the pattern.
+/// `all_fields` are all fields of the constructor/record being matched.
+fn lower_rest_pat(
+    rest: &mono::RestPat,
+    pat_fields: &[crate::ast::Named<L<mono::Pat>>],
+    all_fields: &mono::ConFields,
+    indices: &Indices,
+    scope: &mut FunScope,
+    mapped_binders: &mut HashMap<Id, LocalIdx>,
+) -> RestPat {
+    match rest {
+        mono::RestPat::No => RestPat::No,
+        mono::RestPat::Ignore => RestPat::Ignore,
+        mono::RestPat::Bind(var_pat) => {
+            let mono::ConFields::Named(all_named_fields) = all_fields else {
+                panic!("BUG: RestPat::Bind on non-named fields");
+            };
+
+            // Compute which field indices are "rest" (not explicitly matched).
+            let matched_names: HashSet<&Id> =
+                pat_fields.iter().filter_map(|f| f.name.as_ref()).collect();
+
+            let mut rest_field_indices: Vec<u32> = Vec::new();
+
+            for (i, (name, _ty)) in all_named_fields.iter().enumerate() {
+                if !matched_names.contains(name) {
+                    rest_field_indices.push(i as u32);
+                }
+            }
+
+            let rest_record_fields = match &var_pat.ty {
+                mono::Type::Record { fields } => fields.clone(),
+                other => panic!("BUG: RestPat::Bind var has non-record type: {:?}", other),
+            };
+
+            let rest_con = *indices
+                .records
+                .get(&RecordType {
+                    fields: rest_record_fields,
+                })
+                .unwrap();
+
+            let var_idx = LocalIdx(scope.locals.len() as u32);
+            scope.locals.push(LocalInfo {
+                name: var_pat.var.clone(),
+                ty: var_pat.refined.as_ref().unwrap_or(&var_pat.ty).clone(),
+            });
+            scope.bounds.insert(var_pat.var.clone(), var_idx);
+            mapped_binders.insert(var_pat.var.clone(), var_idx);
+
+            RestPat::Bind {
+                var: VarPat {
+                    idx: var_idx,
+                    original_ty: var_pat.ty.clone(),
+                },
+                rest_con,
+                rest_field_indices,
+            }
+        }
+    }
 }
 
 fn lower_source_fun(

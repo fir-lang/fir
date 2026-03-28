@@ -890,14 +890,10 @@ impl Pat {
                 }
             }
 
-            Pat::Con(ConPat {
-                con,
-                fields,
-                ignore_rest,
-            }) => {
+            Pat::Con(ConPat { con, fields, rest }) => {
                 con.print(buf);
 
-                if !fields.is_empty() || *ignore_rest {
+                if !fields.is_empty() || matches!(rest, RestPat::Ignore | RestPat::Bind(_)) {
                     buf.push('(');
                     for (i, field) in fields.iter().enumerate() {
                         if i != 0 {
@@ -909,11 +905,21 @@ impl Pat {
                         }
                         field.node.node.print(buf);
                     }
-                    if *ignore_rest {
-                        if !fields.is_empty() {
-                            buf.push_str(", ");
+                    match rest {
+                        RestPat::Ignore => {
+                            if !fields.is_empty() {
+                                buf.push_str(", ");
+                            }
+                            buf.push_str("..");
                         }
-                        buf.push_str("..");
+                        RestPat::Bind(binder) => {
+                            if !fields.is_empty() {
+                                buf.push_str(", ");
+                            }
+                            buf.push_str("..");
+                            buf.push_str(&binder.var);
+                        }
+                        RestPat::No => {}
                     }
                     buf.push(')');
                 }
@@ -921,7 +927,7 @@ impl Pat {
 
             Pat::Record(RecordPat {
                 fields,
-                ignore_rest,
+                rest,
                 inferred_ty,
             }) => {
                 buf.push('(');
@@ -936,11 +942,21 @@ impl Pat {
                     }
                     node.node.print(buf);
                 }
-                if *ignore_rest {
-                    if !fields.is_empty() {
-                        buf.push_str(", ");
+                match rest {
+                    RestPat::Ignore => {
+                        if !fields.is_empty() {
+                            buf.push_str(", ");
+                        }
+                        buf.push_str("..");
                     }
-                    buf.push_str("..");
+                    RestPat::Bind(binder) => {
+                        if !fields.is_empty() {
+                            buf.push_str(", ");
+                        }
+                        buf.push_str("..");
+                        buf.push_str(&binder.var);
+                    }
+                    RestPat::No => {}
                 }
                 buf.push(')');
                 if let Some(ty) = inferred_ty {

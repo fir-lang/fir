@@ -816,10 +816,17 @@ impl Tokens[VarPat]:
 
 
 #[derive(ToDoc)]
+type RestPat:
+    No
+    Ignore
+    Bind(VarPat)
+
+
+#[derive(ToDoc)]
 type ConPat(
     con: Con,
     fields: Vec[Named[Pat]],
-    ignoreRest: Bool,
+    rest: RestPat,
     _lastToken: TokenIdx,
 )
 
@@ -835,7 +842,7 @@ impl Tokens[ConPat]:
 #[derive(ToDoc)]
 type RecordPat(
     fields: Vec[Named[Pat]],
-    ignoreRest: Bool,
+    rest: RestPat,
     inferredTy: Option[Ty],
     _firstToken: TokenIdx,
     _lastToken: TokenIdx,
@@ -2473,6 +2480,18 @@ impl ToDoc[VarPat]:
         Doc.grouped(Doc.str("VarPat") + Doc.char('(') + args)
 
 
+impl ToDoc[RestPat]:
+    toDoc(self: RestPat) Doc:
+        match self:
+            RestPat.No: Doc.str("RestPat.No")
+            RestPat.Ignore: Doc.str("RestPat.Ignore")
+            RestPat.Bind(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("RestPat.Bind") + Doc.char('(') + args)
+
+
 impl ToDoc[ConPat]:
     toDoc(self: ConPat) Doc:
         let args = Doc.break_(0)
@@ -2486,8 +2505,7 @@ impl ToDoc[ConPat]:
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
-            Doc.str("ignoreRest =")
-                + Doc.nested(4, Doc.break_(1) + self.ignoreRest.toDoc()),
+            Doc.str("rest =") + Doc.nested(4, Doc.break_(1) + self.rest.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
@@ -2507,8 +2525,7 @@ impl ToDoc[RecordPat]:
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
-            Doc.str("ignoreRest =")
-                + Doc.nested(4, Doc.break_(1) + self.ignoreRest.toDoc()),
+            Doc.str("rest =") + Doc.nested(4, Doc.break_(1) + self.rest.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
@@ -2824,6 +2841,11 @@ impl ToDoc[CallExpr]:
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("args =") + Doc.nested(4, Doc.break_(1) + self.args.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("splice =")
+                + Doc.nested(4, Doc.break_(1) + self.splice.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(

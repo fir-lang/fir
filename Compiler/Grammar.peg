@@ -879,11 +879,11 @@ simplePat Pat:
                 Option.None: Vec.empty()
                 Option.Some((pats, ..)): pats.map(\(ps): ps.fields).unwrapOr(Vec.empty()),
 
-            ignoreRest = match fs:
+            rest = match fs:
                 Option.None:
-                    Bool.False
+                    RestPat.No
                 Option.Some((pats, ..)):
-                    pats.map(\(ps): ps.ignoreRest).unwrapOr(Bool.False),
+                    pats.map(\(ps): ps.rest).unwrapOr(RestPat.No),
 
             _lastToken = match fs:
                 Option.None: con.lastToken(state._tokens)
@@ -894,7 +894,7 @@ simplePat Pat:
     first=^ "(" pats=conFieldPats? last=^ ")":
         Pat.Record(RecordPat(
             fields = pats.map(\(ps): ps.fields).unwrapOr(Vec.empty()),
-            ignoreRest = pats.map(\(ps): ps.ignoreRest).unwrapOr(Bool.False),
+            rest = pats.map(\(ps): ps.rest).unwrapOr(RestPat.No),
             inferredTy = Option.None,
             _firstToken = TokenIdx(idx = first),
             _lastToken = TokenIdx(idx = last),
@@ -918,17 +918,21 @@ simplePat Pat:
 # Contents of parens in a constructor or record pattern `Ty.Con(...)`.
 #
 # Note: you want to use this with `?` as this does not accept empty contents.
-conFieldPats (fields: Vec[Named[Pat]], ignoreRest: Bool):
-    "..": (fields = Vec.empty(), ignoreRest = Bool.True)
+conFieldPats (fields: Vec[Named[Pat]], rest: RestPat):
+    ".." var_=^ "LowerId":
+        (fields = Vec.empty(), rest = RestPat.Bind(VarPat(var_ = newId(var_), ty = Option.None)))
 
-    p0=conFieldPat ps=(_"," conFieldPat)* ignoreRest=conFieldPatsCont?:
+    "..": (fields = Vec.empty(), rest = RestPat.Ignore)
+
+    p0=conFieldPat ps=(_"," conFieldPat)* rest=conFieldPatsCont?:
         let fields: Vec[Named[Pat]] = Vec.fromIter(once(p0).chain(ps.iter()))
-        (fields = fields, ignoreRest = ignoreRest.unwrapOr(Bool.False))
+        (fields = fields, rest = rest.unwrapOr(RestPat.No))
 
 
-conFieldPatsCont Bool:
-    "," "..": Bool.True
-    ",": Bool.False
+conFieldPatsCont RestPat:
+    "," ".." var_=^ "LowerId": RestPat.Bind(VarPat(var_ = newId(var_), ty = Option.None))
+    "," "..": RestPat.Ignore
+    ",": RestPat.No
 
 
 # A single constructor field (including records), named or unnamed.

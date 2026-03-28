@@ -2396,11 +2396,11 @@ fn add_coercions(
         ast::Pat::Con(ast::ConPat {
             con: _,
             fields,
-            ignore_rest: _,
+            rest,
         })
         | ast::Pat::Record(ast::RecordPat {
             fields,
-            ignore_rest: _,
+            rest,
             inferred_ty: _,
         }) => {
             for field in fields {
@@ -2412,6 +2412,24 @@ fn add_coercions(
                     var_gen,
                     &field.node.loc,
                 );
+            }
+            match rest {
+                ast::RestPat::Bind(ast::VarPat { var, ty, refined }) => {
+                    let refined_ty = refined_binders.get(var).unwrap().deep_normalize(
+                        cons,
+                        trait_env,
+                        var_gen,
+                        &[],
+                    );
+                    let ty = ty
+                        .as_ref()
+                        .unwrap()
+                        .deep_normalize(cons, trait_env, var_gen, &[]);
+                    if refined_ty != ty {
+                        *refined = Some(refined_ty);
+                    }
+                }
+                ast::RestPat::Ignore | ast::RestPat::No => {}
             }
         }
 

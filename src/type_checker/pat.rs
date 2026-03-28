@@ -34,7 +34,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     inferred_ty,
                 },
             fields: pat_fields,
-            ignore_rest,
+            rest,
         }) => {
             assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
@@ -125,18 +125,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 })
                 .collect();
 
-            let ty = apply_con_ty(
-                &con_ty,
-                &pat_field_tys,
-                *ignore_rest,
-                tc_state.tys.tys.cons(),
-                tc_state.trait_env,
-                tc_state.var_gen,
-                level,
-                &pat.loc,
-                tc_state.assumps,
-                tc_state.preds,
-            );
+            let ty = apply_con_ty(tc_state, &con_ty, &pat_field_tys, rest, level, &pat.loc);
             *inferred_ty = Some(ty.clone());
             ty
         }
@@ -215,19 +204,36 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
 
         ast::Pat::Record(ast::RecordPat {
             fields,
-            ignore_rest,
+            rest,
             inferred_ty,
         }) => {
             assert!(inferred_ty.is_none());
 
-            let extension: Option<Box<Ty>> = if *ignore_rest {
-                Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
+            let extension: Option<Box<Ty>> = match rest {
+                ast::RestPat::Ignore => Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
                     level,
                     Kind::Row(RecordOrVariant::Record),
                     pat.loc.clone(),
-                ))))
-            } else {
-                None
+                )))),
+                ast::RestPat::Bind(ast::VarPat { var, ty, refined }) => {
+                    assert!(ty.is_none());
+                    assert!(refined.is_none());
+                    let row_ty = Ty::UVar(tc_state.var_gen.new_var(
+                        level,
+                        Kind::Row(RecordOrVariant::Record),
+                        pat.loc.clone(),
+                    ));
+                    let binder_ty = Ty::Anonymous {
+                        labels: Default::default(),
+                        extension: Some(Box::new(row_ty.clone())),
+                        record_or_variant: RecordOrVariant::Record,
+                        is_row: false,
+                    };
+                    tc_state.env.insert(var.clone(), binder_ty.clone());
+                    *ty = Some(binder_ty.clone());
+                    Some(Box::new(row_ty))
+                }
+                ast::RestPat::No => None,
             };
 
             // Similar to constructor patterns, update unnamed variable pattern `foo` as shorthand

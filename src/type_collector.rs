@@ -218,11 +218,37 @@ fn visit_pat(
     variants: &mut HashSet<VariantType>,
 ) {
     match pat {
-        mono::Pat::Var(_) | mono::Pat::Ignore | mono::Pat::Str(_) | mono::Pat::Char(_) => {}
+        mono::Pat::Var(mono::VarPat {
+            var: _,
+            ty,
+            refined,
+        }) => {
+            visit_ty(ty, records, variants);
+            if let Some(ty) = refined {
+                visit_ty(ty, records, variants);
+            }
+        }
 
-        mono::Pat::Con(mono::ConPat { con: _, fields }) => {
+        mono::Pat::Ignore | mono::Pat::Str(_) | mono::Pat::Char(_) => {}
+
+        mono::Pat::Con(mono::ConPat {
+            con: _,
+            fields,
+            rest,
+        }) => {
             for field in fields {
                 visit_pat(&field.node.node, records, variants);
+            }
+            if let mono::RestPat::Bind(mono::VarPat {
+                var: _,
+                ty,
+                refined,
+            }) = rest
+            {
+                visit_ty(ty, records, variants);
+                if let Some(ty) = refined {
+                    visit_ty(ty, records, variants);
+                }
             }
         }
 
@@ -231,11 +257,22 @@ fn visit_pat(
             visit_pat(&pat2.node, records, variants);
         }
 
-        mono::Pat::Record(mono::RecordPat { fields, ty }) => {
+        mono::Pat::Record(mono::RecordPat { fields, ty, rest }) => {
             ty.values().for_each(|ty| visit_ty(ty, records, variants));
             records.insert(RecordType { fields: ty.clone() });
             for field in fields {
                 visit_pat(&field.node.node, records, variants);
+            }
+            if let mono::RestPat::Bind(mono::VarPat {
+                var: _,
+                ty,
+                refined,
+            }) = rest
+            {
+                visit_ty(ty, records, variants);
+                if let Some(ty) = refined {
+                    visit_ty(ty, records, variants);
+                }
             }
         }
 

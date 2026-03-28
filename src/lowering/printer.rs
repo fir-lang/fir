@@ -409,13 +409,37 @@ impl Pat {
                 original_ty: _,
             }) => write!(buf, "local{}", idx.0).unwrap(),
 
-            Pat::Con(ConPat { con, fields }) => {
+            Pat::Con(ConPat { con, fields, rest }) => {
                 write!(buf, "con{}(", con.0).unwrap();
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
                         buf.push_str(", ");
                     }
                     field.node.print(buf);
+                }
+                match rest {
+                    RestPat::No => {}
+                    RestPat::Ignore => {
+                        if !fields.is_empty() {
+                            buf.push_str(", ");
+                        }
+                        buf.push_str("..");
+                    }
+                    RestPat::Bind {
+                        var,
+                        rest_con,
+                        rest_field_indices,
+                    } => {
+                        if !fields.is_empty() {
+                            buf.push_str(", ");
+                        }
+                        write!(
+                            buf,
+                            "..local{} [con={}, fields={:?}]",
+                            var.idx.0, rest_con.0, rest_field_indices
+                        )
+                        .unwrap();
+                    }
                 }
                 buf.push(')');
             }

@@ -1594,7 +1594,7 @@ VarPat.format(self, tokens: Array[Token]) Doc:
 ConPat.format(self, tokens: Array[Token]) Doc:
     let con = self.con.format(tokens)
 
-    if self.fields.isEmpty() and not self.ignoreRest:
+    if self.fields.isEmpty() and self.rest is RestPat.No:
         return con
 
     let lparen = nextNonTrivia(self.con.lastToken(tokens), tokens).unwrap()
@@ -1618,16 +1618,29 @@ ConPat.format(self, tokens: Array[Token]) Doc:
             args += formatToken(next, tokens)
             lastToken = next
 
-    if self.ignoreRest:
-        if trailingComma:
-            args += Doc.break_(1)
+    match self.rest:
+        RestPat.Ignore:
+            if trailingComma:
+                args += Doc.break_(1)
 
-        let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
-        assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+            let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
+            assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
 
-        args += formatToken(dotdot, tokens)
-    elif self.fields.len() != 0 and not trailingComma:
-        args += Doc.whenNotFlat(Doc.char(','))
+            args += formatToken(dotdot, tokens)
+
+        RestPat.Bind(..):
+            if trailingComma:
+                args += Doc.break_(1)
+
+            let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
+            assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+
+            let ident = nextNonTrivia(dotdot, tokens).unwrap()
+            args += formatToken(dotdot, tokens) + formatToken(ident, tokens)
+
+        RestPat.No:
+            if self.fields.len() != 0 and not trailingComma:
+                args += Doc.whenNotFlat(Doc.char(','))
 
     let rparen = self.lastToken(tokens)
     Doc.grouped(
@@ -1660,16 +1673,29 @@ RecordPat.format(self, tokens: Array[Token]) Doc:
             doc += formatToken(next, tokens)
             lastToken = next
 
-    if self.ignoreRest:
-        if trailingComma:
-            doc += Doc.blank(1)
+    match self.rest:
+        RestPat.Ignore:
+            if trailingComma:
+                doc += Doc.blank(1)
 
-        let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
-        assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+            let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
+            assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
 
-        doc += formatToken(dotdot, tokens)
-    elif not trailingComma:
-        doc += Doc.whenNotFlat(Doc.char(','))
+            doc += formatToken(dotdot, tokens)
+
+        RestPat.Bind(..):
+            if trailingComma:
+                doc += Doc.blank(1)
+
+            let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
+            assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+
+            let ident = nextNonTrivia(dotdot, tokens).unwrap()
+            doc += formatToken(dotdot, tokens) + formatToken(ident, tokens)
+
+        RestPat.No:
+            if not trailingComma:
+                doc += Doc.whenNotFlat(Doc.char(','))
 
     let rparen = self.lastToken(tokens)
     Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rparen, tokens))

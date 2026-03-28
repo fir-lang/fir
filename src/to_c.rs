@@ -2383,7 +2383,7 @@ fn pat_to_cond(
             }
         }
 
-        Pat::Con(ConPat { con, fields }) => {
+        Pat::Con(ConPat { con, fields, rest }) => {
             let struct_name = heap_obj_struct_name(cg.pgm, *con);
             let tag_name = heap_obj_tag_name(cg.pgm, *con);
             let tag_check = match tag_expr {
@@ -2415,6 +2415,37 @@ fn pat_to_cond(
                     pat_to_cond(&field_pat.node, &field_expr, field_ty, None, locals, cg);
                 cond = format!("({cond} && {field_cond})");
             }
+
+            // Bind rest fields to a new record.
+            if let RestPat::Bind {
+                var,
+                rest_con,
+                rest_field_indices,
+            } = rest
+            {
+                let rest_struct_name = heap_obj_struct_name(cg.pgm, *rest_con);
+                let mut rest_init = format!("(({rest_struct_name}){{");
+                for (rest_i, &src_field_idx) in rest_field_indices.iter().enumerate() {
+                    if rest_i > 0 {
+                        rest_init.push(',');
+                    }
+                    let field_expr = if value_sum {
+                        format!("({scrutinee})._con_{}._{src_field_idx}", con.0)
+                    } else if value {
+                        format!("({scrutinee})._{src_field_idx}")
+                    } else {
+                        format!("(({struct_name}*){scrutinee})->_{src_field_idx}")
+                    };
+                    rest_init.push_str(&format!(" ._{rest_i} = {field_expr}"));
+                }
+                rest_init.push_str(" })");
+                cond = format!(
+                    "({cond} && ({{ _{} = {}; 1; }}))",
+                    var.idx.as_usize(),
+                    rest_init
+                );
+            }
+
             cond
         }
 
