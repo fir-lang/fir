@@ -1090,6 +1090,8 @@ FieldPats: (Vec<Named<L<Pat>>>, RestPat) = {
     <fields:Sep<FieldPat, ",">> => (fields, RestPat::No),
 
     <fields:(<FieldPat> ",")+> ".." => (fields, RestPat::Yes),
+    
+    <fields:(<FieldPat> ",")+> ".." <binder:LowerId> => (fields, RestPat::Bind(VarPat { var: binder.smol_str(), ty: None, refined: None })),
 }
 
 FieldPat: Named<L<Pat>> = {

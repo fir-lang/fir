@@ -1,6 +1,5 @@
 use crate::ast::{self, Id};
 use crate::collections::OrdMap;
-use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::unification::unify;
 use crate::type_checker::*;
 use crate::utils::loc_display;
@@ -10,19 +9,15 @@ use crate::utils::loc_display;
 /// The constructor type should be a function type if it takes arguments. Otherwise `args` should be
 /// empty.
 pub(crate) fn apply_con_ty(
+    tc_state: &mut TcFunState,
     // Type of the constructor being applied.
     con_ty: &Ty,
     // Types of the arguments passed to the constructor.
     args: &Vec<ast::Named<Ty>>,
     // The `..binder` part of the pattern.
     rest: &mut ast::RestPat,
-    cons: &HashMap<Id, TyCon>,
-    trait_env: &TraitEnv,
-    var_gen: &UVarGen,
     level: u32,
     loc: &ast::Loc,
-    local_assoc_tys: &[Pred],
-    preds: &mut Vec<Pred>,
 ) -> Ty {
     match con_ty {
         Ty::Fun {
@@ -56,13 +51,13 @@ pub(crate) fn apply_con_ty(
                         unify(
                             ty1,
                             &ty2.node,
-                            cons,
-                            trait_env,
-                            var_gen,
+                            tc_state.tys.tys.cons(),
+                            tc_state.trait_env,
+                            tc_state.var_gen,
                             level,
                             loc,
-                            local_assoc_tys,
-                            preds,
+                            tc_state.assumps,
+                            tc_state.preds,
                         );
                     }
                 }
@@ -95,13 +90,13 @@ pub(crate) fn apply_con_ty(
                             unify(
                                 con_ty_arg,
                                 &arg.node,
-                                cons,
-                                trait_env,
-                                var_gen,
+                                tc_state.tys.tys.cons(),
+                                tc_state.trait_env,
+                                tc_state.var_gen,
                                 level,
                                 loc,
-                                local_assoc_tys,
-                                preds,
+                                tc_state.assumps,
+                                tc_state.preds,
                             );
                         } else if con_ty_extension.is_some() {
                             extra_fields.insert(name.clone(), arg.node.clone());
@@ -158,23 +153,22 @@ pub(crate) fn apply_con_ty(
                             // `Fn(x: U32, y: U32, ..r) Ret[r]`. In this case the pattern can have
                             // extra fields, they go into the extension.
                             let row_extension: Option<Box<Ty>> = match rest {
-                                ast::RestPat::Yes => Some(Box::new(Ty::UVar(var_gen.new_var(
-                                    level,
-                                    Kind::Row(RecordOrVariant::Record),
-                                    loc.clone(),
-                                )))),
-                                ast::RestPat::Bind(ast::VarPat {
-                                    var: _,
-                                    ty,
-                                    refined,
-                                }) => {
+                                ast::RestPat::Yes => {
+                                    Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
+                                        level,
+                                        Kind::Row(RecordOrVariant::Record),
+                                        loc.clone(),
+                                    ))))
+                                }
+                                ast::RestPat::Bind(ast::VarPat { var, ty, refined }) => {
                                     assert!(ty.is_none());
                                     assert!(refined.is_none());
-                                    let binder_ty = Ty::UVar(var_gen.new_var(
+                                    let binder_ty = Ty::UVar(tc_state.var_gen.new_var(
                                         level,
                                         Kind::Row(RecordOrVariant::Record),
                                         loc.clone(),
                                     ));
+                                    tc_state.env.insert(var.clone(), binder_ty.clone());
                                     *ty = Some(binder_ty.clone());
                                     Some(Box::new(binder_ty))
                                 }
@@ -189,13 +183,13 @@ pub(crate) fn apply_con_ty(
                             unify(
                                 con_ty_extension,
                                 &extra_row,
-                                cons,
-                                trait_env,
-                                var_gen,
+                                tc_state.tys.tys.cons(),
+                                tc_state.trait_env,
+                                tc_state.var_gen,
                                 level,
                                 loc,
-                                local_assoc_tys,
-                                preds,
+                                tc_state.assumps,
+                                tc_state.preds,
                             );
                         }
                     }
