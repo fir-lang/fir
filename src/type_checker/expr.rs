@@ -2371,7 +2371,7 @@ fn refine_binders(binders: &HashMap<Id, HashSet<Ty>>, loc: &ast::Loc) -> HashMap
 fn add_coercions(
     pat: &mut ast::Pat,
     refined_binders: &HashMap<Id, Ty>,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &HashMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     _loc: &ast::Loc,

@@ -1,32 +1,30 @@
 use crate::ast::Id;
-use crate::collections::ScopeMap;
+use crate::collections::{HashMap, ScopeMap};
 use crate::type_checker::{Ty, TyCon};
 
 /// A map of type constructors, variables, and synonyms in scope.
 #[derive(Debug, Default)]
 pub struct TyMap {
-    cons: ScopeMap<Id, TyCon>,
+    cons: HashMap<Id, TyCon>,
     vars: ScopeMap<Id, Ty>,
     synonyms: ScopeMap<Id, Ty>,
 }
 
 impl TyMap {
     pub fn len_scopes(&self) -> usize {
-        self.cons.len_scopes()
+        self.vars.len_scopes()
     }
 
-    pub fn cons(&self) -> &ScopeMap<Id, TyCon> {
+    pub fn cons(&self) -> &HashMap<Id, TyCon> {
         &self.cons
     }
 
     pub fn enter_scope(&mut self) {
-        self.cons.enter();
         self.vars.enter();
         self.synonyms.enter();
     }
 
     pub fn exit_scope(&mut self) {
-        self.cons.exit();
         self.vars.exit();
         self.synonyms.exit();
     }
@@ -49,11 +47,6 @@ impl TyMap {
 
     pub fn has_con(&self, id: &Id) -> bool {
         self.get_con(id).is_some()
-    }
-
-    #[allow(unused)]
-    pub fn has_var(&self, id: &Id) -> bool {
-        self.get_var(id).is_some()
     }
 
     pub fn insert_var(&mut self, id: Id, ty: Ty) {

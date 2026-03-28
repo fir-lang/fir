@@ -174,7 +174,7 @@ impl TraitImpl {
         &self,
         args: &[Ty],
         var_gen: &UVarGen,
-        cons: &ScopeMap<Id, TyCon>,
+        cons: &HashMap<Id, TyCon>,
         loc: &ast::Loc,
     ) -> Option<(Vec<Pred>, HashMap<Id, Ty>)> {
         if args.len() != self.trait_args.len() {

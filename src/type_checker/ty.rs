@@ -415,7 +415,7 @@ impl Scheme {
     /// places.
     pub(super) fn eq_modulo_alpha(
         &self,
-        cons: &ScopeMap<Id, TyCon>,
+        cons: &HashMap<Id, TyCon>,
         other: &Scheme,
         loc: &ast::Loc,
     ) -> bool {
@@ -521,7 +521,7 @@ impl Scheme {
 }
 
 fn ty_eq_modulo_alpha(
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &HashMap<Id, TyCon>,
     ty1: &Ty,
     ty2: &Ty,
     ty1_qvars: &HashMap<Id, u32>,
@@ -946,7 +946,7 @@ impl Ty {
     /// If the type is a unification variable, follow the links.
     ///
     /// Otherwise returns the original type.
-    pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
+    pub(super) fn normalize(&self, cons: &HashMap<Id, TyCon>) -> Ty {
         match self {
             Ty::UVar(var_ref) => var_ref.normalize(cons),
             _ => self.clone(),
@@ -955,7 +955,7 @@ impl Ty {
 
     pub(super) fn deep_normalize(
         &self,
-        cons: &ScopeMap<Id, TyCon>,
+        cons: &HashMap<Id, TyCon>,
         trait_env: &TraitEnv,
         var_gen: &UVarGen,
         assumps: &[Pred],
@@ -1108,7 +1108,7 @@ impl Ty {
     }
 
     /// Get the type constructor of the type and the type arguments.
-    pub fn con(&self, cons: &ScopeMap<Id, TyCon>) -> Option<(Id, Vec<Ty>)> {
+    pub fn con(&self, cons: &HashMap<Id, TyCon>) -> Option<(Id, Vec<Ty>)> {
         match self.normalize(cons) {
             Ty::Con(con, _) => Some((con.clone(), vec![])),
 
@@ -1183,7 +1183,7 @@ impl UVarRef {
         self.0.level.set(std::cmp::min(level, self_level));
     }
 
-    pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
+    pub(super) fn normalize(&self, cons: &HashMap<Id, TyCon>) -> Ty {
         let link = match &*self.0.link.borrow() {
             Some(link) => link.normalize(cons),
             None => return Ty::UVar(self.clone()),

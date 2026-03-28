@@ -13,7 +13,7 @@ pub(crate) fn apply_con_ty(
     con_ty: &Ty,
     args: &Vec<ast::Named<Ty>>,
     ignore_rest: bool,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &HashMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     level: u32,

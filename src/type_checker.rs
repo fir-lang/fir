@@ -242,7 +242,7 @@ const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
 fn collect_types(module: &mut ast::Module) -> PgmTypes {
     let mut tys = collect_cons(module);
     let (top_schemes, associated_fn_schemes, method_schemes) = collect_schemes(module, &mut tys);
-    check_value_type_sizes(tys.cons().last());
+    check_value_type_sizes(tys.cons());
     PgmTypes {
         top_schemes,
         associated_fn_schemes,
@@ -1770,7 +1770,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 fn resolve_preds(
     trait_env: &TraitEnv,
     assumps: &[Pred],
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &HashMap<Id, TyCon>,
     mut goals: Vec<Pred>,
     var_gen: &UVarGen,
     _level: u32,
