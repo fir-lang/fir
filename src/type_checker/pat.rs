@@ -210,7 +210,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             assert!(inferred_ty.is_none());
 
             let extension: Option<Box<Ty>> = match rest {
-                ast::RestPat::Yes => Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
+                ast::RestPat::Ignore => Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
                     level,
                     Kind::Row(RecordOrVariant::Record),
                     pat.loc.clone(),

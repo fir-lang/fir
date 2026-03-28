@@ -787,13 +787,11 @@ fn try_bind_pat(pgm: &Pgm, heap: &mut Heap, pat: &L<Pat>, locals: &mut [u64], va
                 rest_field_indices,
             } = rest
             {
-                // Allocate a new record for the rest fields.
-                let n_rest_fields = rest_field_indices.len();
-                let rest_addr = heap.allocate(1 + n_rest_fields);
+                let rest_addr = heap.allocate(1 + rest_field_indices.len());
                 heap[rest_addr] = rest_con.as_u64();
-                for (rest_i, &src_field_idx) in rest_field_indices.iter().enumerate() {
-                    let field_value = heap[value + 1 + (src_field_idx as u64)];
-                    heap[rest_addr + 1 + (rest_i as u64)] = field_value;
+                for (rest_idx, src_field_idx) in rest_field_indices.iter().enumerate() {
+                    let field_value = heap[value + 1 + u64::from(*src_field_idx)];
+                    heap[rest_addr + 1 + (rest_idx as u64)] = field_value;
                 }
                 locals[var.idx.as_usize()] = rest_addr;
             }

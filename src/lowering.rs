@@ -579,14 +579,14 @@ pub enum RestPat {
     /// `..`, ignore the rest.
     Ignore,
 
-    /// `..rest`, bind the rest fields to a new record.
+    /// `..rest`, bind `rest` a record with the unmatched fields.
     Bind {
         var: VarPat,
 
-        /// Index of the rest record type.
+        /// Index of the `rest` record type.
         rest_con: HeapObjIdx,
 
-        /// Indices of the fields in the matched object that belong to the rest record, in order.
+        /// Indices of the fields in the matched object that belong to the `rest` record, in order.
         rest_field_indices: Vec<u32>,
     },
 }
@@ -2422,15 +2422,8 @@ fn lower_pat(
                 }
             };
 
-            let lowered_rest = lower_rest_pat(
-                rest,
-                fields,
-                con_fields,
-                indices,
-                scope,
-                mono_pgm,
-                mapped_binders,
-            );
+            let lowered_rest =
+                lower_rest_pat(rest, fields, con_fields, indices, scope, mapped_binders);
 
             Pat::Con(ConPat {
                 con: con_idx,
@@ -2473,7 +2466,6 @@ fn lower_pat(
                 &con_fields_named,
                 indices,
                 scope,
-                mono_pgm,
                 mapped_binders,
             );
 
@@ -2537,7 +2529,6 @@ fn lower_rest_pat(
     all_fields: &mono::ConFields,
     indices: &Indices,
     scope: &mut FunScope,
-    _mono_pgm: &mono::MonoPgm,
     mapped_binders: &mut HashMap<Id, LocalIdx>,
 ) -> RestPat {
     match rest {

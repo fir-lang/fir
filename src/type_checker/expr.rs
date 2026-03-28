@@ -2429,7 +2429,7 @@ fn add_coercions(
                         *refined = Some(refined_ty);
                     }
                 }
-                ast::RestPat::Yes | ast::RestPat::No => {}
+                ast::RestPat::Ignore | ast::RestPat::No => {}
             }
         }
 

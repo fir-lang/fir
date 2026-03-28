@@ -445,7 +445,7 @@ pub struct RecordPat {
 /// An `..` or `..binder` in a record or constructor field.
 #[derive(Debug, Clone)]
 pub enum RestPat {
-    Yes,
+    Ignore,
     Bind(VarPat),
     No,
 }

@@ -187,7 +187,7 @@ pub(crate) fn apply_con_ty(
                             // `Fn(x: U32, y: U32, ..r) Ret[r]`. In this case the pattern can have
                             // extra fields, they go into the extension.
                             let row_extension: Option<Box<Ty>> = match rest {
-                                ast::RestPat::Yes => {
+                                ast::RestPat::Ignore => {
                                     Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
                                         level,
                                         Kind::Row(RecordOrVariant::Record),

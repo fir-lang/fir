@@ -893,7 +893,7 @@ impl Pat {
             Pat::Con(ConPat { con, fields, rest }) => {
                 con.print(buf);
 
-                if !fields.is_empty() || matches!(rest, RestPat::Yes | RestPat::Bind(_)) {
+                if !fields.is_empty() || matches!(rest, RestPat::Ignore | RestPat::Bind(_)) {
                     buf.push('(');
                     for (i, field) in fields.iter().enumerate() {
                         if i != 0 {
@@ -906,7 +906,7 @@ impl Pat {
                         field.node.node.print(buf);
                     }
                     match rest {
-                        RestPat::Yes => {
+                        RestPat::Ignore => {
                             if !fields.is_empty() {
                                 buf.push_str(", ");
                             }
@@ -943,7 +943,7 @@ impl Pat {
                     node.node.print(buf);
                 }
                 match rest {
-                    RestPat::Yes => {
+                    RestPat::Ignore => {
                         if !fields.is_empty() {
                             buf.push_str(", ");
                         }

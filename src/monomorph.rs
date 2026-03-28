@@ -1413,7 +1413,7 @@ fn mono_rest_pat(
     locals: &mut ScopeSet<Id>,
 ) -> mono::RestPat {
     match rest {
-        ast::RestPat::Yes => mono::RestPat::Ignore,
+        ast::RestPat::Ignore => mono::RestPat::Ignore,
         ast::RestPat::Bind(var_pat) => {
             mono::RestPat::Bind(mono_var_pat(var_pat, ty_map, poly_pgm, mono_pgm, locals))
         }

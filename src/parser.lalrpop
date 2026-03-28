@@ -1083,13 +1083,13 @@ ConPat: ConPat = {
 }
 
 FieldPats: (Vec<Named<L<Pat>>>, RestPat) = {
-    ".." => (vec![], RestPat::Yes),
+    ".." => (vec![], RestPat::Ignore),
     
     ".." <binder:LowerId> => (vec![], RestPat::Bind(VarPat { var: binder.smol_str(), ty: None, refined: None })),
 
     <fields:Sep<FieldPat, ",">> => (fields, RestPat::No),
 
-    <fields:(<FieldPat> ",")+> ".." => (fields, RestPat::Yes),
+    <fields:(<FieldPat> ",")+> ".." => (fields, RestPat::Ignore),
     
     <fields:(<FieldPat> ",")+> ".." <binder:LowerId> => (fields, RestPat::Bind(VarPat { var: binder.smol_str(), ty: None, refined: None })),
 }

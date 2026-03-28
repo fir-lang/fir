@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: 9525178857b2f0d14aed0ba21006c65741af79a2dd7d1e6c311ef56a1569cf03
+// sha3: a69d2052edac8b69b3dd9dc2de6214c1e361c24eab5f96e48f742e09a572f72a
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -53570,7 +53570,7 @@ fn __action170<'a>(
     module: &'a Rc<str>,
     (_, __0, _): (Loc, Token, Loc),
 ) -> (Vec<Named<L<Pat>>>, RestPat) {
-    (vec![], RestPat::Yes)
+    (vec![], RestPat::Ignore)
 }
 
 #[allow(unused_variables)]
@@ -53618,7 +53618,7 @@ fn __action173<'a>(
     (_, fields, _): (Loc, alloc::vec::Vec<Named<L<Pat>>>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> (Vec<Named<L<Pat>>>, RestPat) {
-    (fields, RestPat::Yes)
+    (fields, RestPat::Ignore)
 }
 
 #[allow(unused_variables)]
