@@ -2405,7 +2405,7 @@ fn lower_pat(
             })
         }
 
-        mono::Pat::Record(mono::RecordPat { fields, ty }) => {
+        mono::Pat::Record(mono::RecordPat { fields, ty, rest }) => {
             let idx = *indices
                 .records
                 .get(&RecordType { fields: ty.clone() })

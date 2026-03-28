@@ -626,7 +626,7 @@ impl Pat {
                 }
             }
 
-            Pat::Record(RecordPat { fields, ty }) => {
+            Pat::Record(RecordPat { fields, ty, rest }) => {
                 buf.push('(');
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
@@ -638,6 +638,22 @@ impl Pat {
                         buf.push_str(" = ");
                     }
                     node.node.print(buf);
+                }
+                match rest {
+                    RestPat::Ignore => {
+                        if !fields.is_empty() {
+                            buf.push_str(", ");
+                        }
+                        buf.push_str("..");
+                    }
+                    RestPat::Bind(binder) => {
+                        if !fields.is_empty() {
+                            buf.push_str(", ");
+                        }
+                        buf.push_str("..");
+                        buf.push_str(&binder.var);
+                    }
+                    RestPat::No => {}
                 }
                 buf.push_str("): ");
                 Type::Record { fields: ty.clone() }.print(buf);

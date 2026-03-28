@@ -1292,18 +1292,7 @@ fn mono_pat(
     loc: &ast::Loc,
 ) -> mono::Pat {
     match pat {
-        ast::Pat::Var(ast::VarPat { var, ty, refined }) => {
-            let mono_ty = mono_tc_ty(ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
-            let refined = refined
-                .as_ref()
-                .map(|refined| mono_tc_ty(refined, ty_map, poly_pgm, mono_pgm));
-            locals.insert(var.clone());
-            mono::Pat::Var(mono::VarPat {
-                var: var.clone(),
-                ty: mono_ty,
-                refined,
-            })
-        }
+        ast::Pat::Var(pat) => mono::Pat::Var(mono_var_pat(pat, ty_map, poly_pgm, mono_pgm, locals)),
 
         ast::Pat::Ignore => mono::Pat::Ignore,
 
@@ -1362,7 +1351,7 @@ fn mono_pat(
 
         ast::Pat::Record(ast::RecordPat {
             fields,
-            rest: _,
+            rest,
             inferred_ty,
         }) => mono::Pat::Record(mono::RecordPat {
             fields: fields
@@ -1373,6 +1362,7 @@ fn mono_pat(
                 mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
                 loc,
             ),
+            rest: mono_rest_pat(rest, ty_map, poly_pgm, mono_pgm, locals),
         }),
 
         ast::Pat::Variant(ast::VariantPat {
@@ -1392,6 +1382,41 @@ fn mono_pat(
                 mono_pgm,
             ),
         }),
+    }
+}
+
+fn mono_var_pat(
+    ast::VarPat { var, ty, refined }: &ast::VarPat,
+    ty_map: &HashMap<Id, mono::Type>,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
+    locals: &mut ScopeSet<Id>,
+) -> mono::VarPat {
+    let mono_ty = mono_tc_ty(ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+    let refined = refined
+        .as_ref()
+        .map(|refined| mono_tc_ty(refined, ty_map, poly_pgm, mono_pgm));
+    locals.insert(var.clone());
+    mono::VarPat {
+        var: var.clone(),
+        ty: mono_ty,
+        refined,
+    }
+}
+
+fn mono_rest_pat(
+    rest: &ast::RestPat,
+    ty_map: &HashMap<Id, mono::Type>,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
+    locals: &mut ScopeSet<Id>,
+) -> mono::RestPat {
+    match rest {
+        ast::RestPat::Yes => mono::RestPat::Ignore,
+        ast::RestPat::Bind(var_pat) => {
+            mono::RestPat::Bind(mono_var_pat(var_pat, ty_map, poly_pgm, mono_pgm, locals))
+        }
+        ast::RestPat::No => mono::RestPat::No,
     }
 }
 

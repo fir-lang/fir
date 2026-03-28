@@ -259,10 +259,19 @@ pub struct RecordPat {
 
     /// The record type.
     ///
-    /// Note that the type can have more fields than `fields`. Those fields are ignored by the
-    /// pattern.
-    /// TODO: Maybe have a `ignore_rest` flag here as well?
+    /// Type of the record this pattern matches. Note that this type can have more fields than the
+    /// pattern. When this has extra fields, `rest` field will be `RestPat::Bind` or
+    /// `RestPat::Ignore`, to handle the extra fields.
     pub ty: OrdMap<Id, Type>,
+
+    pub rest: RestPat,
+}
+
+#[derive(Debug, Clone)]
+pub enum RestPat {
+    Ignore,
+    Bind(VarPat),
+    No,
 }
 
 #[derive(Debug, Clone)]
