@@ -128,7 +128,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             let ty = apply_con_ty(
                 &con_ty,
                 &pat_field_tys,
-                *ignore_rest,
+                rest,
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
@@ -215,19 +215,33 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
 
         ast::Pat::Record(ast::RecordPat {
             fields,
-            ignore_rest,
+            rest,
             inferred_ty,
         }) => {
             assert!(inferred_ty.is_none());
 
-            let extension: Option<Box<Ty>> = if *ignore_rest {
-                Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
+            let extension: Option<Box<Ty>> = match rest {
+                ast::RestPat::Yes => Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
                     level,
                     Kind::Row(RecordOrVariant::Record),
                     pat.loc.clone(),
-                ))))
-            } else {
-                None
+                )))),
+                ast::RestPat::Bind(ast::VarPat {
+                    var: _,
+                    ty,
+                    refined,
+                }) => {
+                    assert!(ty.is_none());
+                    assert!(refined.is_none());
+                    let binder_ty = Ty::UVar(tc_state.var_gen.new_var(
+                        level,
+                        Kind::Row(RecordOrVariant::Record),
+                        pat.loc.clone(),
+                    ));
+                    *ty = Some(binder_ty.clone());
+                    Some(Box::new(binder_ty))
+                }
+                ast::RestPat::No => None,
             };
 
             // Similar to constructor patterns, update unnamed variable pattern `foo` as shorthand

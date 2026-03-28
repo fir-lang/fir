@@ -1326,7 +1326,7 @@ fn mono_pat(
                     inferred_ty,
                 },
             fields,
-            ignore_rest: _,
+            rest: _,
         }) => {
             let inferred_ty = mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
 
@@ -1362,7 +1362,7 @@ fn mono_pat(
 
         ast::Pat::Record(ast::RecordPat {
             fields,
-            ignore_rest: _,
+            rest: _,
             inferred_ty,
         }) => mono::Pat::Record(mono::RecordPat {
             fields: fields

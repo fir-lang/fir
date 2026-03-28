@@ -309,7 +309,7 @@ impl PatMatrix {
                         match pat.node {
                             ast::Pat::Record(ast::RecordPat {
                                 fields: pat_fields,
-                                ignore_rest: _,
+                                rest: _,
                                 ..
                             }) => {
                                 let mut fields_positional: Vec<ast::L<ast::Pat>> =
@@ -518,7 +518,7 @@ impl PatMatrix {
                     ast::Pat::Con(ast::ConPat {
                         con: ast::Con { ty, con, .. },
                         fields,
-                        ignore_rest: _,
+                        rest: _,
                     }) => {
                         let con = con.unwrap_or_else(|| ty.clone());
 

@@ -10,9 +10,12 @@ use crate::utils::loc_display;
 /// The constructor type should be a function type if it takes arguments. Otherwise `args` should be
 /// empty.
 pub(crate) fn apply_con_ty(
+    // Type of the constructor being applied.
     con_ty: &Ty,
+    // Types of the arguments passed to the constructor.
     args: &Vec<ast::Named<Ty>>,
-    ignore_rest: bool,
+    // The `..binder` part of the pattern.
+    rest: &mut ast::RestPat,
     cons: &HashMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
@@ -32,7 +35,7 @@ pub(crate) fn apply_con_ty(
 
             match con_ty_args {
                 FunArgs::Positional { args: con_ty_args } => {
-                    if (!ignore_rest && con_ty_args.len() != args.len())
+                    if (matches!(rest, ast::RestPat::No) && con_ty_args.len() != args.len())
                         || args.len() > con_ty_args.len()
                     {
                         panic!(
@@ -111,14 +114,19 @@ pub(crate) fn apply_con_ty(
                         }
                     }
 
-                    // Check that all known args are provided (unless ignore_extra).
-                    if !ignore_rest {
+                    // Check that all known args are provided (unless we bind/ignore extra fields).
+                    if matches!(rest, ast::RestPat::No) {
+                        // Constructor's parameter names.
                         let con_ty_arg_names: HashSet<&Id> = con_ty_args.keys().collect();
+
+                        // Names of arguments being passed.
                         let known_arg_names: HashSet<&Id> = arg_names
                             .iter()
                             .filter(|n| con_ty_args.contains_key(**n))
                             .copied()
                             .collect();
+
+                        // Without the `..rest` part in the pattern the names must match.
                         if con_ty_arg_names != known_arg_names {
                             let con_args_str = con_ty_arg_names
                                 .iter()
@@ -145,15 +153,32 @@ pub(crate) fn apply_con_ty(
                             // This case should be handled above.
                             assert!(extra_fields.is_empty());
                         }
-                        Some(ext_ty) => {
-                            let row_extension = if ignore_rest {
-                                Some(Box::new(Ty::UVar(var_gen.new_var(
+                        Some(con_ty_extension) => {
+                            // Constructor takes named arguments, and has a row extension. E.g.
+                            // `Fn(x: U32, y: U32, ..r) Ret[r]`. In this case the pattern can have
+                            // extra fields, they go into the extension.
+                            let row_extension: Option<Box<Ty>> = match rest {
+                                ast::RestPat::Yes => Some(Box::new(Ty::UVar(var_gen.new_var(
                                     level,
                                     Kind::Row(RecordOrVariant::Record),
                                     loc.clone(),
-                                ))))
-                            } else {
-                                None
+                                )))),
+                                ast::RestPat::Bind(ast::VarPat {
+                                    var: _,
+                                    ty,
+                                    refined,
+                                }) => {
+                                    assert!(ty.is_none());
+                                    assert!(refined.is_none());
+                                    let binder_ty = Ty::UVar(var_gen.new_var(
+                                        level,
+                                        Kind::Row(RecordOrVariant::Record),
+                                        loc.clone(),
+                                    ));
+                                    *ty = Some(binder_ty.clone());
+                                    Some(Box::new(binder_ty))
+                                }
+                                ast::RestPat::No => None,
                             };
                             let extra_row = Ty::Anonymous {
                                 labels: extra_fields,
@@ -162,7 +187,7 @@ pub(crate) fn apply_con_ty(
                                 is_row: true,
                             };
                             unify(
-                                ext_ty,
+                                con_ty_extension,
                                 &extra_row,
                                 cons,
                                 trait_env,
