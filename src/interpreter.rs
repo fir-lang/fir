@@ -767,6 +767,7 @@ fn try_bind_pat(pgm: &Pgm, heap: &mut Heap, pat: &L<Pat>, locals: &mut [u64], va
         Pat::Con(ConPat {
             con: con_idx,
             fields: field_pats,
+            rest,
         }) => {
             let value_tag = heap[value];
             if value_tag != con_idx.as_u64() {
@@ -778,6 +779,23 @@ fn try_bind_pat(pgm: &Pgm, heap: &mut Heap, pat: &L<Pat>, locals: &mut [u64], va
                 if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
                     return false;
                 }
+            }
+
+            if let RestPat::Bind {
+                var,
+                rest_con,
+                rest_field_indices,
+            } = rest
+            {
+                // Allocate a new record for the rest fields.
+                let n_rest_fields = rest_field_indices.len();
+                let rest_addr = heap.allocate(1 + n_rest_fields);
+                heap[rest_addr] = rest_con.as_u64();
+                for (rest_i, &src_field_idx) in rest_field_indices.iter().enumerate() {
+                    let field_value = heap[value + 1 + (src_field_idx as u64)];
+                    heap[rest_addr + 1 + (rest_i as u64)] = field_value;
+                }
+                locals[var.idx.as_usize()] = rest_addr;
             }
 
             true

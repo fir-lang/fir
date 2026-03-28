@@ -231,9 +231,24 @@ fn visit_pat(
 
         mono::Pat::Ignore | mono::Pat::Str(_) | mono::Pat::Char(_) => {}
 
-        mono::Pat::Con(mono::ConPat { con: _, fields }) => {
+        mono::Pat::Con(mono::ConPat {
+            con: _,
+            fields,
+            rest,
+        }) => {
             for field in fields {
                 visit_pat(&field.node.node, records, variants);
+            }
+            if let mono::RestPat::Bind(mono::VarPat {
+                var: _,
+                ty,
+                refined,
+            }) = rest
+            {
+                visit_ty(ty, records, variants);
+                if let Some(ty) = refined {
+                    visit_ty(ty, records, variants);
+                }
             }
         }
 

@@ -342,7 +342,7 @@ fn normalize_pat(
                     ..
                 },
             fields,
-            rest: _,
+            rest,
         }) => {
             *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
                 cons,
@@ -356,6 +356,21 @@ fn normalize_pat(
             for ty_arg in ty_args {
                 *ty_arg = ty_arg.deep_normalize(cons, trait_env, var_gen, &[]);
             }
+            if let ast::RestPat::Bind(ast::VarPat {
+                var: _,
+                ty,
+                refined,
+            }) = rest
+            {
+                *ty = Some(
+                    ty.as_ref()
+                        .unwrap()
+                        .deep_normalize(cons, trait_env, var_gen, &[]),
+                );
+                refined
+                    .as_mut()
+                    .map(|ty| ty.deep_normalize(cons, trait_env, var_gen, &[]));
+            }
         }
 
         ast::Pat::Or(pat1, pat2) => {
@@ -365,7 +380,7 @@ fn normalize_pat(
 
         ast::Pat::Record(ast::RecordPat {
             fields,
-            rest: _,
+            rest,
             inferred_ty,
         }) => {
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(
@@ -377,6 +392,21 @@ fn normalize_pat(
             fields.iter_mut().for_each(|ast::Named { name: _, node }| {
                 normalize_pat(&mut node.node, cons, trait_env, var_gen)
             });
+            if let ast::RestPat::Bind(ast::VarPat {
+                var: _,
+                ty,
+                refined,
+            }) = rest
+            {
+                *ty = Some(
+                    ty.as_ref()
+                        .unwrap()
+                        .deep_normalize(cons, trait_env, var_gen, &[]),
+                );
+                refined
+                    .as_mut()
+                    .map(|ty| ty.deep_normalize(cons, trait_env, var_gen, &[]));
+            }
         }
 
         ast::Pat::Variant(ast::VariantPat {

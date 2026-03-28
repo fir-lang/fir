@@ -1315,7 +1315,7 @@ fn mono_pat(
                     inferred_ty,
                 },
             fields,
-            rest: _,
+            rest,
         }) => {
             let inferred_ty = mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
 
@@ -1346,6 +1346,7 @@ fn mono_pat(
                     ty: inferred_ty,
                 },
                 fields: mono_fields,
+                rest: mono_rest_pat(rest, ty_map, poly_pgm, mono_pgm, locals),
             })
         }
 

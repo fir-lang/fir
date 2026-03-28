@@ -218,14 +218,20 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 ast::RestPat::Bind(ast::VarPat { var, ty, refined }) => {
                     assert!(ty.is_none());
                     assert!(refined.is_none());
-                    let binder_ty = Ty::UVar(tc_state.var_gen.new_var(
+                    let row_ty = Ty::UVar(tc_state.var_gen.new_var(
                         level,
                         Kind::Row(RecordOrVariant::Record),
                         pat.loc.clone(),
                     ));
+                    let binder_ty = Ty::Anonymous {
+                        labels: Default::default(),
+                        extension: Some(Box::new(row_ty.clone())),
+                        record_or_variant: RecordOrVariant::Record,
+                        is_row: false,
+                    };
                     tc_state.env.insert(var.clone(), binder_ty.clone());
                     *ty = Some(binder_ty.clone());
-                    Some(Box::new(binder_ty))
+                    Some(Box::new(row_ty))
                 }
                 ast::RestPat::No => None,
             };

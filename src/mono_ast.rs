@@ -243,6 +243,8 @@ pub struct ConPat {
 
     // Note: this does not need to bind or match all fields!
     pub fields: Vec<Named<L<Pat>>>,
+
+    pub rest: RestPat,
 }
 
 #[derive(Debug, Clone)]
