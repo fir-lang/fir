@@ -342,7 +342,7 @@ fn normalize_pat(
                     ..
                 },
             fields,
-            ignore_rest: _,
+            rest: _,
         }) => {
             *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
                 cons,
@@ -365,7 +365,7 @@ fn normalize_pat(
 
         ast::Pat::Record(ast::RecordPat {
             fields,
-            ignore_rest: _,
+            rest: _,
             inferred_ty,
         }) => {
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(

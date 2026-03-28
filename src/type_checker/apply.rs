@@ -66,7 +66,7 @@ pub(crate) fn apply_con_ty(
 
                 FunArgs::Named {
                     args: con_ty_args,
-                    extension,
+                    extension: con_ty_extension,
                 } => {
                     let mut arg_names: HashSet<&Id> = Default::default();
                     let mut extra_fields: OrdMap<Id, Ty> = OrdMap::new();
@@ -100,7 +100,7 @@ pub(crate) fn apply_con_ty(
                                 local_assoc_tys,
                                 preds,
                             );
-                        } else if extension.is_some() {
+                        } else if con_ty_extension.is_some() {
                             extra_fields.insert(name.clone(), arg.node.clone());
                         } else {
                             panic!(
@@ -140,7 +140,7 @@ pub(crate) fn apply_con_ty(
                     }
 
                     // Unify extra fields with the constructor's function type's extension type.
-                    match extension {
+                    match con_ty_extension {
                         None => {
                             // This case should be handled above.
                             assert!(extra_fields.is_empty());

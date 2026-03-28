@@ -34,7 +34,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     inferred_ty,
                 },
             fields: pat_fields,
-            ignore_rest,
+            rest,
         }) => {
             assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());

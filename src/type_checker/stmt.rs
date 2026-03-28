@@ -517,7 +517,7 @@ fn check_stmt(
                                                 name: None,
                                                 node: pat.clone(),
                                             }],
-                                            ignore_rest: false,
+                                            rest: ast::RestPat::No,
                                         }),
                                     },
                                 }),

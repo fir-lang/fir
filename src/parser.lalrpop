@@ -1030,7 +1030,7 @@ Pat: Pat = {
     "(" <fields:FieldPats> ")" =>
         Pat::Record(RecordPat {
             fields: fields.0,
-            ignore_rest: fields.1,
+            rest: fields.1,
             inferred_ty: None,
         }),
 
@@ -1072,22 +1072,24 @@ Con: Con = {
 
 ConPat: ConPat = {
     <con:Con> =>
-        ConPat { con, fields: vec![], ignore_rest: false },
+        ConPat { con, fields: vec![], rest: RestPat::No },
 
     <con:Con> "(" <fields:FieldPats> ")" =>
         ConPat {
             con,
             fields: fields.0,
-            ignore_rest: fields.1,
+            rest: fields.1,
         },
 }
 
-FieldPats: (Vec<Named<L<Pat>>>, bool) = {
-    ".." => (vec![], true),
+FieldPats: (Vec<Named<L<Pat>>>, RestPat) = {
+    ".." => (vec![], RestPat::Yes),
+    
+    ".." <binder:LowerId> => (vec![], RestPat::Bind(VarPat { var: binder.smol_str(), ty: None, refined: None })),
 
-    <fields:Sep<FieldPat, ",">> => (fields, false),
+    <fields:Sep<FieldPat, ",">> => (fields, RestPat::No),
 
-    <fields:(<FieldPat> ",")+> ".." => (fields, true),
+    <fields:(<FieldPat> ",")+> ".." => (fields, RestPat::Yes),
 }
 
 FieldPat: Named<L<Pat>> = {

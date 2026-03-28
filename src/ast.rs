@@ -424,15 +424,30 @@ pub struct ConPat {
 
     pub fields: Vec<Named<L<Pat>>>,
 
-    /// Whether we ignore fields with `..`: `MyStruct(a = 1u32, ..)`.
-    pub ignore_rest: bool,
+    /// Matches the rest of the fields:
+    /// - `MyStruct(a = 1u32, ..)` ignores the rest of the fields.
+    /// - `MyStruct(a = 1u32, ..rest)` binds `rest` to the rest of the fields as a record.
+    pub rest: RestPat,
 }
 
 #[derive(Debug, Clone)]
 pub struct RecordPat {
     pub fields: Vec<Named<L<Pat>>>,
-    pub ignore_rest: bool,
+
+    /// Matches the rest of the fields:
+    /// - `MyStruct(a = 1u32, ..)` ignores the rest of the fields.
+    /// - `MyStruct(a = 1u32, ..rest)` binds `rest` to the rest of the fields as a record.
+    pub rest: RestPat,
+
     pub inferred_ty: Option<Ty>,
+}
+
+/// An `..` or `..binder` in a record or constructor field.
+#[derive(Debug, Clone)]
+pub enum RestPat {
+    Yes,
+    Bind(VarPat),
+    No,
 }
 
 #[derive(Debug, Clone)]

@@ -800,8 +800,14 @@ impl Ty {
                 }
             }
 
-            Ty::AssocTySelect { .. } => {
-                Kind::Star // TODO
+            Ty::AssocTySelect { ty: _, assoc_ty } => {
+                if assoc_ty.ends_with("RecRow") {
+                    Kind::Row(RecordOrVariant::Record)
+                } else if assoc_ty.ends_with("VarRow") {
+                    Kind::Row(RecordOrVariant::Variant)
+                } else {
+                    Kind::Star
+                }
             }
         }
     }
