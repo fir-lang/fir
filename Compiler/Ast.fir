@@ -2466,18 +2466,6 @@ impl ToDoc[Pat]:
                 Doc.grouped(Doc.str("Pat.Variant") + Doc.char('(') + args)
 
 
-impl ToDoc[RestPat]:
-    toDoc(self: RestPat) Doc:
-        match self:
-            RestPat.No: Doc.str("RestPat.No")
-            RestPat.Ignore: Doc.str("RestPat.Ignore")
-            RestPat.Bind(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("RestPat.Bind") + Doc.char('(') + args)
-
-
 impl ToDoc[VarPat]:
     toDoc(self: VarPat) Doc:
         let args = Doc.break_(0)
@@ -2490,6 +2478,18 @@ impl ToDoc[VarPat]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("VarPat") + Doc.char('(') + args)
+
+
+impl ToDoc[RestPat]:
+    toDoc(self: RestPat) Doc:
+        match self:
+            RestPat.No: Doc.str("RestPat.No")
+            RestPat.Ignore: Doc.str("RestPat.Ignore")
+            RestPat.Bind(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("RestPat.Bind") + Doc.char('(') + args)
 
 
 impl ToDoc[ConPat]:
@@ -2841,6 +2841,11 @@ impl ToDoc[CallExpr]:
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
             Doc.str("args =") + Doc.nested(4, Doc.break_(1) + self.args.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("splice =")
+                + Doc.nested(4, Doc.break_(1) + self.splice.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
