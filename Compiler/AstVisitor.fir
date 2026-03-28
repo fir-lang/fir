@@ -521,11 +521,17 @@ defaultVisitConPat[Visitor[v]](v: v, s: ConPat):
     v.visitCon(s.con)
     for field: Named[Pat] in s.fields.iter():
         v.visitPat(field.node)
+    match s.rest:
+        RestPat.Bind(varPat): v.visitVarPat(varPat)
+        _: ()
 
 
 defaultVisitRecordPat[Visitor[v]](v: v, s: RecordPat):
     for field: Named[Pat] in s.fields.iter():
         v.visitPat(field.node)
+    match s.rest:
+        RestPat.Bind(varPat): v.visitVarPat(varPat)
+        _: ()
 
 
 defaultVisitOrPat[Visitor[v]](v: v, ps: Vec[Pat]):

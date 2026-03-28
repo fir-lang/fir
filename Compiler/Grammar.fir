@@ -4341,13 +4341,11 @@ simplePat(state: ParserState[Token, ()]) Pat / U32:
                                     pats.map(\(ps): ps.fields).unwrapOr(
                                         Vec.empty(),
                                     ),
-                        ignoreRest =
+                        rest =
                             match fs:
-                                Option.None: Bool.False
+                                Option.None: RestPat.No
                                 Option.Some((pats, ..)):
-                                    pats.map(\(ps): ps.ignoreRest).unwrapOr(
-                                        Bool.False,
-                                    ),
+                                    pats.map(\(ps): ps.rest).unwrapOr(RestPat.No),
                         _lastToken =
                             match fs:
                                 Option.None: con.lastToken(state._tokens)
@@ -4391,8 +4389,7 @@ simplePat(state: ParserState[Token, ()]) Pat / U32:
                     RecordPat(
                         fields =
                             pats.map(\(ps): ps.fields).unwrapOr(Vec.empty()),
-                        ignoreRest =
-                            pats.map(\(ps): ps.ignoreRest).unwrapOr(Bool.False),
+                        rest = pats.map(\(ps): ps.rest).unwrapOr(RestPat.No),
                         inferredTy = Option.None,
                         _firstToken = TokenIdx(idx = first),
                         _lastToken = TokenIdx(idx = last),
@@ -4460,7 +4457,7 @@ simplePat(state: ParserState[Token, ()]) Pat / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-conFieldPats(state: ParserState[Token, ()]) (fields: Vec[Named[Pat]], ignoreRest: Bool) / U32:
+conFieldPats(state: ParserState[Token, ()]) (fields: Vec[Named[Pat]], rest: RestPat) / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -4469,8 +4466,34 @@ conFieldPats(state: ParserState[Token, ()]) (fields: Vec[Named[Pat]], ignoreRest
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
+            let var_ = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LowerId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                (fields = Vec.empty(), ignoreRest = Bool.True)
+                (
+                    fields = Vec.empty(),
+                    rest =
+                        RestPat.Bind(
+                            VarPat(var_ = newId(var_), ty = Option.None),
+                        ),
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.DotDot, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                (fields = Vec.empty(), rest = RestPat.Ignore)
             val,
     )
     match altResult:
@@ -4501,10 +4524,10 @@ conFieldPats(state: ParserState[Token, ()]) (fields: Vec[Named[Pat]], ignoreRest
             let optionalCursor0 = state._cursor
             let symResult = try(
                 \():
-                    let ignoreRest = conFieldPatsCont(state)
-                    ignoreRest,
+                    let rest = conFieldPatsCont(state)
+                    rest,
             )
-            let ignoreRest = match symResult:
+            let rest = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
                     Option.None
@@ -4515,7 +4538,7 @@ conFieldPats(state: ParserState[Token, ()]) (fields: Vec[Named[Pat]], ignoreRest
                 let fields: Vec[Named[Pat]] = Vec.fromIter(
                     once(p0).chain(ps.iter()),
                 )
-                (fields = fields, ignoreRest = ignoreRest.unwrapOr(Bool.False))
+                (fields = fields, rest = rest.unwrapOr(RestPat.No))
             val,
     )
     match altResult:
@@ -4524,7 +4547,7 @@ conFieldPats(state: ParserState[Token, ()]) (fields: Vec[Named[Pat]], ignoreRest
     throw(state.updateErrorCursor(state._cursor))
 
 
-conFieldPatsCont(state: ParserState[Token, ()]) Bool / U32:
+conFieldPatsCont(state: ParserState[Token, ()]) RestPat / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -4538,8 +4561,33 @@ conFieldPatsCont(state: ParserState[Token, ()]) Bool / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
+            let var_ = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LowerId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                Bool.True
+                RestPat.Bind(VarPat(var_ = newId(var_), ty = Option.None))
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Comma, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.DotDot, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                RestPat.Ignore
             val,
     )
     match altResult:
@@ -4553,7 +4601,7 @@ conFieldPatsCont(state: ParserState[Token, ()]) Bool / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                Bool.False
+                RestPat.No
             val,
     )
     match altResult:
