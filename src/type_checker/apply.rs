@@ -202,8 +202,22 @@ pub(crate) fn apply_con_ty(
                                         Kind::Row(RecordOrVariant::Record),
                                         loc.clone(),
                                     ));
+
+                                    // Collect unmatched fixed fields for the rest binder.
+                                    let con_ty_arg_names: HashSet<&Id> =
+                                        con_ty_args.keys().collect();
+                                    let unmatched_labels: OrdMap<Id, Ty> = con_ty_arg_names
+                                        .difference(&arg_names)
+                                        .map(|field_name| {
+                                            (
+                                                (*field_name).clone(),
+                                                con_ty_args.get(*field_name).unwrap().clone(),
+                                            )
+                                        })
+                                        .collect();
+
                                     let binder_ty = Ty::Anonymous {
-                                        labels: Default::default(),
+                                        labels: unmatched_labels,
                                         extension: Some(Box::new(row_ty.clone())),
                                         record_or_variant: RecordOrVariant::Record,
                                         is_row: false,
