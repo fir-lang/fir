@@ -66,15 +66,18 @@ pub(crate) fn apply_con_ty(
                     args: con_ty_args,
                     extension: con_ty_extension,
                 } => {
+                    // Names of fields in the pattern.
                     let mut arg_names: HashSet<&Id> = Default::default();
-                    let mut extra_fields: OrdMap<Id, Ty> = OrdMap::new();
+
+                    // Names in the patterns that are not in the function's type.
+                    let mut extra_pat_fields: OrdMap<Id, Ty> = OrdMap::new();
 
                     for arg in args {
                         let name = match arg.name.as_ref() {
                             Some(name) => name,
                             None => {
                                 panic!(
-                                    "{}: Constructor takes named arguments, but applied positional argument",
+                                    "{}: Constructor takes named arguments, but passed positional argument",
                                     loc_display(loc)
                                 );
                             }
@@ -99,7 +102,7 @@ pub(crate) fn apply_con_ty(
                                 tc_state.preds,
                             );
                         } else if con_ty_extension.is_some() {
-                            extra_fields.insert(name.clone(), arg.node.clone());
+                            extra_pat_fields.insert(name.clone(), arg.node.clone());
                         } else {
                             panic!(
                                 "{}: Constructor doesn't take named argument '{}'",
@@ -115,14 +118,14 @@ pub(crate) fn apply_con_ty(
                         let con_ty_arg_names: HashSet<&Id> = con_ty_args.keys().collect();
 
                         // Names of arguments being passed.
-                        let known_arg_names: HashSet<&Id> = arg_names
+                        let passed_arg_names: HashSet<&Id> = arg_names
                             .iter()
                             .filter(|n| con_ty_args.contains_key(**n))
                             .copied()
                             .collect();
 
                         // Without the `..rest` part in the pattern the names must match.
-                        if con_ty_arg_names != known_arg_names {
+                        if con_ty_arg_names != passed_arg_names {
                             let con_args_str = con_ty_arg_names
                                 .iter()
                                 .map(ToString::to_string)
@@ -146,7 +149,38 @@ pub(crate) fn apply_con_ty(
                     match con_ty_extension {
                         None => {
                             // This case should be handled above.
-                            assert!(extra_fields.is_empty());
+                            assert!(extra_pat_fields.is_empty());
+                            if let ast::RestPat::Bind(ast::VarPat { var, ty, refined }) = rest {
+                                assert!(ty.is_none());
+                                assert!(refined.is_none());
+
+                                // Argument patterns already unified with the constructor parameter
+                                // types.
+
+                                // Constructor's parameter names.
+                                let con_ty_arg_names: HashSet<&Id> = con_ty_args.keys().collect();
+
+                                let unmatched_field_names: HashSet<&&Id> =
+                                    con_ty_arg_names.difference(&arg_names).collect();
+
+                                let rest_ty = Ty::Anonymous {
+                                    labels: unmatched_field_names
+                                        .iter()
+                                        .map(|field_name| {
+                                            (
+                                                (**field_name).clone(),
+                                                con_ty_args.get(**field_name).unwrap().clone(),
+                                            )
+                                        })
+                                        .collect(),
+                                    extension: None,
+                                    record_or_variant: RecordOrVariant::Record,
+                                    is_row: false,
+                                };
+
+                                tc_state.env.insert(var.clone(), rest_ty.clone());
+                                *ty = Some(rest_ty.clone());
+                            }
                         }
                         Some(con_ty_extension) => {
                             // Constructor takes named arguments, and has a row extension. E.g.
@@ -181,7 +215,7 @@ pub(crate) fn apply_con_ty(
                                 ast::RestPat::No => None,
                             };
                             let extra_row = Ty::Anonymous {
-                                labels: extra_fields,
+                                labels: extra_pat_fields,
                                 extension: row_extension,
                                 record_or_variant: RecordOrVariant::Record,
                                 is_row: true,
