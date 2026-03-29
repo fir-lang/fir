@@ -245,7 +245,7 @@ trait RowToList[recRow]:
 
 
 trait RecordToRow[rec]:
-    type RecRow
+    type RecRow: Row[Rec]
 
 
 impl RecordToRow[(..recRow)]:
