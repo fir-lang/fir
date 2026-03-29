@@ -130,16 +130,23 @@ TypeDecl.format(self, tokens: Array[Token]) Doc:
         doc += formatToken(lbracket, tokens)
 
         let trailingComma = Bool.False
-        for typeParam: Id in self.typeParams.iter():
+        for typeParam: DeclTypeParam in self.typeParams.iter():
             if trailingComma:
                 doc += Doc.blank(1)
                 trailingComma = Bool.False
 
-            doc += formatToken(typeParam.token, tokens)
-            lastToken = typeParam.token
+            doc += formatToken(typeParam.name.token, tokens)
+            lastToken = typeParam.name.token
 
-            if nextNonTrivia(typeParam.lastToken(tokens), tokens)
-                    is Option.Some(next)
+            if typeParam.kind is Option.Some(kind):
+                let colon = nextNonTrivia(typeParam.name.token, tokens).unwrap()
+                assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+                doc += formatToken(colon, tokens)
+                    + Doc.blank(1)
+                    + kind.format(tokens)
+                lastToken = kind.lastToken(tokens)
+
+            if nextNonTrivia(lastToken, tokens) is Option.Some(next)
                     and tokens.get(next.idx).kind is TokenKind.Comma:
                 trailingComma = Bool.True
                 doc += formatToken(next, tokens)
@@ -406,6 +413,16 @@ _formatContext(context: Context, tokens: Array[Token]) Doc:
             trailingComma = Bool.False
 
         match pred:
+            Pred_.Kind(name = kindVar, kind):
+                doc += formatToken(kindVar.token, tokens)
+                lastToken = kindVar.token
+                if kind is Option.Some(kind):
+                    let colon = nextNonTrivia(kindVar.token, tokens).unwrap()
+                    assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+                    doc += formatToken(colon, tokens)
+                        + Doc.blank(1)
+                        + kind.format(tokens)
+                    lastToken = kind.lastToken(tokens)
             Pred_.App(app):
                 doc += app.format(tokens)
                 lastToken = app.lastToken(tokens)
@@ -530,7 +547,8 @@ TraitDecl.format(self, tokens: Array[Token]) Doc:
     let trait_ = prevNonTrivia(self.name.token, tokens).unwrap()
     assert(tokens.get(trait_.idx).kind is TokenKind.Trait)
 
-    let lbracket = prevNonTrivia(self.typeParams.get(0).token, tokens).unwrap()
+    let lbracket = prevNonTrivia(self.typeParams.get(0).name.token, tokens)
+        .unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
     let doc0 = formatToken(trait_, tokens)
@@ -540,15 +558,23 @@ TraitDecl.format(self, tokens: Array[Token]) Doc:
     let docRest = formatToken(lbracket, tokens)
     let lastToken = lbracket
     let trailingComma = Bool.False
-    for typeParam: Id in self.typeParams.iter():
+    for typeParam: DeclTypeParam in self.typeParams.iter():
         if trailingComma:
             docRest += Doc.blank(1)
             trailingComma = Bool.False
 
-        lastToken = typeParam.token
-        docRest += formatToken(typeParam.token, tokens)
+        lastToken = typeParam.name.token
+        docRest += formatToken(typeParam.name.token, tokens)
 
-        if nextNonTrivia(typeParam.token, tokens) is Option.Some(next)
+        if typeParam.kind is Option.Some(kind):
+            let colon = nextNonTrivia(typeParam.name.token, tokens).unwrap()
+            assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+            docRest += formatToken(colon, tokens)
+                + Doc.blank(1)
+                + kind.format(tokens)
+            lastToken = kind.lastToken(tokens)
+
+        if nextNonTrivia(lastToken, tokens) is Option.Some(next)
                 and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             docRest += formatToken(next, tokens)
@@ -582,12 +608,19 @@ TraitDecl.format(self, tokens: Array[Token]) Doc:
 
 TraitDeclItem.format(self, tokens: Array[Token]) Doc:
     match self:
-        TraitDeclItem.Type(id):
+        TraitDeclItem.Type(name = id, kind):
             let typeToken = prevNonTrivia(id.token, tokens).unwrap()
             assert(tokens.get(typeToken.idx).kind is TokenKind.Type)
-            formatToken(typeToken, tokens)
+            let doc = formatToken(typeToken, tokens)
                 + Doc.blank(1)
                 + formatToken(id.token, tokens)
+            if kind is Option.Some(kind):
+                let colon = nextNonTrivia(id.token, tokens).unwrap()
+                assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+                doc += formatToken(colon, tokens)
+                    + Doc.blank(1)
+                    + kind.format(tokens)
+            doc
         TraitDeclItem.Fun(fun): fun.format(tokens)
 
 

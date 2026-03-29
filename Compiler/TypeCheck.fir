@@ -116,7 +116,7 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                                                             mod.idText(
                                                                 tyDecl
                                                                     .typeParams
-                                                                    .get(i),
+                                                                    .get(i).name,
                                                             ),
                                                     ),
                                                 kind =
@@ -152,7 +152,7 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                                                             mod.idText(
                                                                 traitDecl
                                                                     .typeParams
-                                                                    .get(i),
+                                                                    .get(i).name,
                                                             ),
                                                     ),
                                                 kind =
@@ -246,7 +246,10 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                         TypeParam(
                             name =
                                 LocalId(
-                                    name = mod.idText(tyDecl.typeParams.get(i)),
+                                    name =
+                                        mod.idText(
+                                            tyDecl.typeParams.get(i).name,
+                                        ),
                                 ),
                             kind = tyDecl.typeParamKinds.get(i),
                         ),
@@ -267,7 +270,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             range(u32(0), tyDecl.typeParams.len()).map(
                 \(typeParamIdx):
                     let paramNameStr = mod.idText(
-                        tyDecl.typeParams.get(typeParamIdx),
+                        tyDecl.typeParams.get(typeParamIdx).name,
                     )
                     QVar(
                         id = LocalId(name = paramNameStr),
@@ -343,7 +346,9 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                             name =
                                 LocalId(
                                     name =
-                                        mod.idText(traitDecl.typeParams.get(i)),
+                                        mod.idText(
+                                            traitDecl.typeParams.get(i).name,
+                                        ),
                                 ),
                             kind = traitDecl.typeParamKinds.get(i),
                         ),
@@ -367,7 +372,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                                     LocalId(
                                         name =
                                             mod.idText(
-                                                traitDecl.typeParams.get(i),
+                                                traitDecl.typeParams.get(i).name,
                                             ),
                                     ),
                                 kind = traitDecl.typeParamKinds.get(i),
@@ -378,7 +383,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             Ty.App(conId = tyCon.idx, args = tyArgs)
 
         for item: TraitDeclItem in traitDecl.items.iter():
-            if item is TraitDeclItem.Type(assocTyId):
+            if item is TraitDeclItem.Type(name = assocTyId, ..):
                 varMap.insert(
                     mod.idText(assocTyId),
                     Ty.AssocTySelect(ty = traitTy, assocTy = assocTyId),
@@ -388,7 +393,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
         for item: TraitDeclItem in traitDecl.items.iter():
             match item:
-                TraitDeclItem.Type(_): continue
+                TraitDeclItem.Type(..): continue
                 TraitDeclItem.Fun(method):
                     varMap.enterScope()
 
@@ -426,7 +431,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                                             mod.idText(
                                                 traitDecl.typeParams.get(
                                                     traitTyArgIdx,
-                                                ),
+                                                ).name,
                                             ),
                                     ),
                                 kind =
