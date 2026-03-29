@@ -171,7 +171,11 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
 fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> Ty {
     let ast::NamedType { name, args } = named_ty;
 
-    if let Some(syn_ty) = tys.get_synonym(name) {
+    let ty_con = tys
+        .get_con(name)
+        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), name));
+
+    if let TyConDetails::Synonym(syn_ty) = &ty_con.details {
         if !args.is_empty() {
             panic!(
                 "{}: Type synonym {} does not take type arguments",
@@ -181,10 +185,6 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
         }
         return syn_ty.clone();
     }
-
-    let ty_con = tys
-        .get_con(name)
-        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), name));
 
     if ty_con.arity() as usize != args.len() {
         panic!(

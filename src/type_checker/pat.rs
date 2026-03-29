@@ -81,8 +81,8 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     }
                 },
 
-                TyConDetails::Trait { .. } => panic!(
-                    "{}: Type constructor {} is a trait",
+                TyConDetails::Trait { .. } | TyConDetails::Synonym(_) => panic!(
+                    "{}: Type constructor {} is a trait or synonym",
                     loc_display(&pat.loc),
                     pat_ty_name
                 ),

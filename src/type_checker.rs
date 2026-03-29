@@ -471,12 +471,16 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                     Ty::App(trait_name, args, Kind::Star)
                                 }
                             };
-                            tys.insert_synonym(
+                            tys.insert_con(
                                 assoc_ty.node.clone(),
-                                Ty::AssocTySelect {
-                                    ty: Box::new(trait_ty),
-                                    assoc_ty: assoc_ty.node.clone(),
-                                    kind,
+                                TyCon {
+                                    id: assoc_ty.node.clone(),
+                                    ty_params: vec![],
+                                    details: TyConDetails::Synonym(Ty::AssocTySelect {
+                                        ty: Box::new(trait_ty),
+                                        assoc_ty: assoc_ty.node.clone(),
+                                        kind,
+                                    }),
                                 },
                             );
                         }
@@ -620,7 +624,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 methods,
                 assoc_tys: _,
             }) => methods,
-            TyConDetails::Type { .. } => {
+            TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
                 panic!() // checked above
             }
         };
@@ -701,7 +705,7 @@ fn resolve_synonym(
     tys: &mut TyMap,
 ) {
     // Already resolved in a previous call.
-    if tys.get_synonym(name).is_some() {
+    if tys.has_con(name) {
         return;
     }
 
@@ -716,7 +720,14 @@ fn resolve_synonym(
     resolve_synonym_deps(&rhs_ty.node, synonym_asts, resolving, tys);
 
     let converted = convert_ast_ty(tys, &rhs_ty.node, &rhs_ty.loc);
-    tys.insert_synonym(name.clone(), converted);
+    tys.insert_con(
+        name.clone(),
+        TyCon {
+            id: name.clone(),
+            ty_params: vec![],
+            details: TyConDetails::Synonym(converted),
+        },
+    );
 
     resolving.remove(name);
 }
@@ -771,8 +782,8 @@ fn resolve_synonym_deps(
     }
 }
 
-fn check_value_type_sizes(ty_cons: &HashMap<Id, TyCon>) {
-    for ty_con in ty_cons.values() {
+fn check_value_type_sizes(ty_cons: &ScopeMap<Id, TyCon>) {
+    for ty_con in ty_cons.last().values() {
         let mut visited: HashSet<Id> = Default::default();
         let ty_args: Vec<Ty> = ty_con
             .ty_params
@@ -792,11 +803,11 @@ fn check_value_type_sizes(ty_cons: &HashMap<Id, TyCon>) {
 fn visit_ty_con(
     ty_con: &TyCon,
     ty_args: &[Ty],
-    ty_cons: &HashMap<Id, TyCon>,
+    ty_cons: &ScopeMap<Id, TyCon>,
     visited: &mut HashSet<Id>,
 ) -> bool {
     let ty_con_details = match &ty_con.details {
-        TyConDetails::Trait(_) => return false,
+        TyConDetails::Trait(_) | TyConDetails::Synonym(_) => return false,
         TyConDetails::Type(details) => details,
     };
 
@@ -982,12 +993,16 @@ fn collect_schemes(
                                     Ty::App(trait_name, args, Kind::Star)
                                 }
                             };
-                            tys.insert_synonym(
+                            tys.insert_con(
                                 assoc_ty.node.clone(),
-                                Ty::AssocTySelect {
-                                    ty: Box::new(trait_ty),
-                                    assoc_ty: assoc_ty.node.clone(),
-                                    kind,
+                                TyCon {
+                                    id: assoc_ty.node.clone(),
+                                    ty_params: vec![],
+                                    details: TyConDetails::Synonym(Ty::AssocTySelect {
+                                        ty: Box::new(trait_ty),
+                                        assoc_ty: assoc_ty.node.clone(),
+                                        kind,
+                                    }),
                                 },
                             );
                         }
@@ -1355,12 +1370,16 @@ fn collect_schemes(
                                     assoc_ty.node,
                                 )
                             });
-                        tys.insert_synonym(
+                        tys.insert_con(
                             assoc_ty.node.clone(),
-                            Ty::AssocTySelect {
-                                ty: Box::new(impl_trait_ty.clone()),
-                                assoc_ty: assoc_ty.node.clone(),
-                                kind,
+                            TyCon {
+                                id: assoc_ty.node.clone(),
+                                ty_params: vec![],
+                                details: TyConDetails::Synonym(Ty::AssocTySelect {
+                                    ty: Box::new(impl_trait_ty.clone()),
+                                    assoc_ty: assoc_ty.node.clone(),
+                                    kind,
+                                }),
                             },
                         );
                     }
@@ -1650,7 +1669,14 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                     converted.kind(),
                 );
             }
-            tys.tys.insert_synonym(assoc_ty.node.clone(), converted);
+            tys.tys.insert_con(
+                assoc_ty.node.clone(),
+                TyCon {
+                    id: assoc_ty.node.clone(),
+                    ty_params: vec![],
+                    details: TyConDetails::Synonym(converted),
+                },
+            );
         }
     }
 
@@ -1819,7 +1845,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 fn resolve_preds(
     trait_env: &TraitEnv,
     assumps: &[Pred],
-    cons: &HashMap<Id, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     mut goals: Vec<Pred>,
     var_gen: &UVarGen,
     _level: u32,
