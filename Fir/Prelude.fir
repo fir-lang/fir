@@ -235,8 +235,6 @@ trait Clone[t]:
 
 # This trait will only be implemented by the compiler, for record types, as
 # needed.
-# Type parameter name needs `recRow` prefix so that the kind will be inferred as
-# `row(rec)`.
 trait RowToList[recRow]:
     # This will always be `ListCons` or `ListNil`.
     type List
