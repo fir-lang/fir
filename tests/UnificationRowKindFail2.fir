@@ -1,4 +1,4 @@
-type Test[recRowRec](
+type Test[recRowRec: Row[Rec]](
     record: (..recRowRec),
 )
 

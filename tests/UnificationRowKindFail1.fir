@@ -1,5 +1,5 @@
-type Test[varRowVar](
-    variant: [..varRowVar],
+type Test[row: Row[Var]](
+    variant: [..row],
 )
 
 type Foo:

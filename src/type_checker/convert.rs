@@ -227,21 +227,23 @@ pub(super) fn convert_and_bind_context(
 
     // Convert preds.
     for ty in &context_ast.preds {
-        let pred = convert_pred(tys, &ty.node, &ty.loc);
-        preds_converted.push(pred);
+        if let Some(pred) = convert_pred(tys, &ty.node, &ty.loc) {
+            preds_converted.push(pred);
+        }
     }
 
     preds_converted
 }
 
-fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
+fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Option<Pred> {
     match pred_ast {
         ast::Pred::Kind { .. } => {
-            // Kind annotations should've been handled and removed by the kind inference pass.
-            panic!("{}: Kind annotation in convert_pred", loc_display(loc));
+            // Kind annotations are used by the kind inference. Kind inference could remove them
+            // from the context, but at least for now we keep the list as-is and skip these here.
+            None
         }
 
-        ast::Pred::App(ast::NamedType { name, args }) => Pred {
+        ast::Pred::App(ast::NamedType { name, args }) => Some(Pred {
             trait_: name.clone(),
             params: args
                 .iter()
@@ -249,13 +251,13 @@ fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
                 .collect(),
             assoc_ty: None,
             loc: loc.clone(),
-        },
+        }),
 
         ast::Pred::AssocTyEq {
             ty: ast::NamedType { name, args },
             assoc_ty,
             eq,
-        } => Pred {
+        } => Some(Pred {
             trait_: name.clone(),
             params: args
                 .iter()
@@ -263,6 +265,6 @@ fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
                 .collect(),
             assoc_ty: Some((assoc_ty.clone(), convert_ast_ty(tys, &eq.node, &eq.loc))),
             loc: loc.clone(),
-        },
+        }),
     }
 }
