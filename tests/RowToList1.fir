@@ -8,3 +8,7 @@ printRecord[
 
 main():
     printRecord((x = u32(0), y = u32(1), msg = "hi"))
+
+# expected stdout:
+# x = 0
+# rest = msg = hi -> y = 1 -> []

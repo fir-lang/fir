@@ -228,8 +228,8 @@ pub(super) fn unify(
             );
         }
 
-        // Unify an empty anonymous row with a rigid type variable of row kind.
-        // E.g. `row(.._1) ~ RVar("r")` just links `_1 -> RVar("r")`.
+        // Unify an empty anonymous row with another type.
+        // `row(..ext)` with no labels is just `ext`.
         (
             Ty::Anonymous {
                 labels,
@@ -237,10 +237,10 @@ pub(super) fn unify(
                 is_row: true,
                 ..
             },
-            rvar @ Ty::RVar(_, _),
+            other,
         )
         | (
-            rvar @ Ty::RVar(_, _),
+            other,
             Ty::Anonymous {
                 labels,
                 extension: Some(ext),
@@ -249,7 +249,7 @@ pub(super) fn unify(
             },
         ) if labels.is_empty() => {
             unify(
-                ext, rvar, cons, trait_env, var_gen, level, loc, assumps, preds,
+                ext, other, cons, trait_env, var_gen, level, loc, assumps, preds,
             );
         }
 

@@ -1834,6 +1834,7 @@ fn resolve_preds(
             }
 
             if pred.trait_ == kind_inference::ROW_TO_LIST_TRAIT_ID {
+                assert_eq!(pred.params.len(), 1);
                 let param = &pred.params[0];
                 match param {
                     // Rule 1 & 3: Concrete row (with or without fields).
@@ -1898,8 +1899,9 @@ fn resolve_preds(
                         continue 'goals;
                     }
 
-                    // Rule 2: Unresolved type variable, resolve without resolving assoc ty.
-                    Ty::RVar(_, _) | Ty::UVar(_) | Ty::QVar(_, _) => {
+                    // Rule 2: Unresolved type variable or associated type selection,
+                    // resolve without resolving assoc ty.
+                    Ty::RVar(_, _) | Ty::UVar(_) | Ty::QVar(_, _) | Ty::AssocTySelect { .. } => {
                         continue 'goals;
                     }
 
