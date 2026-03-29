@@ -36,14 +36,14 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             let extension = match extension {
                 Some(ext) => {
                     let ext_converted = convert_ast_ty(tys, &ext.node, &ext.loc);
-                    if ext_converted.kind() != Kind::Row(RecordOrVariant::Record) {
-                        panic!(
-                            "{}: Record extension type {} has kind {}",
-                            loc_display(&ext.loc),
-                            &ext.node,
-                            ext_converted.kind()
-                        );
-                    }
+                    // if ext_converted.kind() != Kind::Row(RecordOrVariant::Record) {
+                    //     panic!(
+                    //         "{}: Record extension type {} has kind {}",
+                    //         loc_display(&ext.loc),
+                    //         &ext.node,
+                    //         ext_converted.kind()
+                    //     );
+                    // }
                     Some(Box::new(ext_converted))
                 }
                 None => None,

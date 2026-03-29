@@ -800,8 +800,14 @@ impl Ty {
                 }
             }
 
-            Ty::AssocTySelect { .. } => {
-                Kind::Star // TODO
+            Ty::AssocTySelect { ty: _, assoc_ty } => {
+                if assoc_ty.ends_with("RecRow") {
+                    Kind::Row(RecordOrVariant::Record)
+                } else if assoc_ty.ends_with("VarRow") {
+                    Kind::Row(RecordOrVariant::Variant)
+                } else {
+                    Kind::Star
+                }
             }
         }
     }
@@ -1064,7 +1070,9 @@ impl Ty {
                         if let Some((_subgoals, assoc_tys)) =
                             impl_.try_match(trait_args, var_gen, cons, &ast::Loc::dummy())
                         {
-                            let resolved = assoc_tys.get(assoc_ty).unwrap();
+                            let resolved = assoc_tys.get(assoc_ty).unwrap_or_else(|| {
+                                panic!("Trait {trait_name} doesn't have associated type {assoc_ty}")
+                            });
                             return resolved.deep_normalize(cons, trait_env, var_gen, assumps);
                         }
                     }

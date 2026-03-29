@@ -120,7 +120,14 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
     let mut trait_context_vars: HashSet<Id> = Default::default();
 
     for param in &decl.type_params {
-        trait_context_var_kinds.insert(param.node.clone(), None);
+        let kind = if param.node.as_str().starts_with("recRow") {
+            Some(Kind::Row(RecordOrVariant::Record))
+        } else if param.node.as_str().starts_with("varRow") {
+            Some(Kind::Row(RecordOrVariant::Variant))
+        } else {
+            None
+        };
+        trait_context_var_kinds.insert(param.node.clone(), kind);
         trait_context_vars.insert(param.node.clone());
     }
 
