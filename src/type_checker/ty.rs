@@ -86,6 +86,7 @@ pub enum Ty {
     AssocTySelect {
         ty: Box<Ty>,
         assoc_ty: Id,
+        kind: Kind,
     },
 }
 
@@ -179,7 +180,7 @@ pub struct UVar {
 /// Kind of a type.
 ///
 /// We don't support higher-kinded variables yet, so this is either a `*` or `row` for now.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Kind {
     Star,
     Row(RecordOrVariant),
@@ -728,10 +729,12 @@ fn ty_eq_modulo_alpha(
             Ty::AssocTySelect {
                 ty: ty1,
                 assoc_ty: assoc_ty1,
+                kind: _,
             },
             Ty::AssocTySelect {
                 ty: ty2,
                 assoc_ty: assoc_ty2,
+                kind: _,
             },
         ) => {
             assoc_ty1 == assoc_ty2 && ty_eq_modulo_alpha(cons, ty1, ty2, ty1_qvars, ty2_qvars, loc)
@@ -800,9 +803,7 @@ impl Ty {
                 }
             }
 
-            Ty::AssocTySelect { .. } => {
-                Kind::Star // TODO
-            }
+            Ty::AssocTySelect { kind, .. } => *kind,
         }
     }
 
@@ -868,9 +869,11 @@ impl Ty {
             Ty::AssocTySelect {
                 ty: inner_ty,
                 assoc_ty,
+                kind,
             } => Ty::AssocTySelect {
                 ty: Box::new(inner_ty.subst(var, ty)),
                 assoc_ty: assoc_ty.clone(),
+                kind: *kind,
             },
         }
     }
@@ -936,9 +939,10 @@ impl Ty {
                     .map(|exn| Box::new(exn.subst_qvars(vars))),
             },
 
-            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+            Ty::AssocTySelect { ty, assoc_ty, kind } => Ty::AssocTySelect {
                 ty: Box::new(ty.subst_qvars(vars)),
                 assoc_ty: assoc_ty.clone(),
+                kind: *kind,
             },
         }
     }
@@ -1044,6 +1048,7 @@ impl Ty {
             Ty::AssocTySelect {
                 ty: inner_ty,
                 assoc_ty,
+                kind,
             } => {
                 let inner_ty = inner_ty.deep_normalize(cons, trait_env, var_gen, assumps);
 
@@ -1054,6 +1059,7 @@ impl Ty {
                         return Ty::AssocTySelect {
                             ty: Box::new(inner_ty),
                             assoc_ty: assoc_ty.clone(),
+                            kind: *kind,
                         };
                     }
                 };
@@ -1102,6 +1108,7 @@ impl Ty {
                 Ty::AssocTySelect {
                     ty: Box::new(inner_ty),
                     assoc_ty: assoc_ty.clone(),
+                    kind: *kind,
                 }
             }
         }
@@ -1357,7 +1364,11 @@ impl fmt::Display for Ty {
                 Ok(())
             }
 
-            Ty::AssocTySelect { ty, assoc_ty } => {
+            Ty::AssocTySelect {
+                ty,
+                assoc_ty,
+                kind: _,
+            } => {
                 write!(f, "{}.{}", ty, assoc_ty)
             }
         }

@@ -130,10 +130,41 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             }
         }
 
-        ast::Type::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
-            ty: Box::new(convert_ast_ty(tys, &ty.node, &ty.loc)),
-            assoc_ty: assoc_ty.clone(),
-        },
+        ast::Type::AssocTySelect { ty, assoc_ty } => {
+            let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
+            if let Ty::App(trait_, _trait_args, kind) = &ty {
+                assert_eq!(*kind, Kind::Star);
+                let kind = *tys
+                    .cons()
+                    .get(trait_)
+                    .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), trait_))
+                    .details
+                    .trait_details()
+                    .unwrap_or_else(|| {
+                        panic!("{}: Type {} is not a trait", loc_display(loc), trait_)
+                    })
+                    .assoc_tys
+                    .get(assoc_ty)
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "{}: Trait {} does not have an associated type named {}",
+                            loc_display(loc),
+                            trait_,
+                            assoc_ty
+                        )
+                    });
+                Ty::AssocTySelect {
+                    ty: Box::new(ty),
+                    assoc_ty: assoc_ty.clone(),
+                    kind,
+                }
+            } else {
+                panic!(
+                    "{}: Type in associated type selection is not a trait",
+                    loc_display(loc)
+                );
+            }
+        }
     }
 }
 

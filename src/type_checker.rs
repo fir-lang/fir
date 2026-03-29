@@ -323,7 +323,18 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .collect(),
                         details: TyConDetails::Trait(TraitDetails {
                             methods: Default::default(),
-                            assoc_tys: Default::default(),
+                            assoc_tys: trait_decl
+                                .node
+                                .items
+                                .iter()
+                                .filter_map(|item| match item {
+                                    ast::TraitDeclItem::Type { name, kind } => Some((
+                                        name.node.clone(),
+                                        kind_inference::convert_kind(kind).unwrap_or(Kind::Star),
+                                    )),
+                                    ast::TraitDeclItem::Fun(_) => None,
+                                })
+                                .collect(),
                         }),
                     },
                 );
@@ -432,10 +443,8 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             name: assoc_ty,
                             kind,
                         } => {
-                            let old = assoc_tys.insert(
-                                assoc_ty.node.clone(),
-                                kind_inference::convert_kind(kind).unwrap_or(Kind::Star),
-                            );
+                            let kind = kind_inference::convert_kind(kind).unwrap_or(Kind::Star);
+                            let old = assoc_tys.insert(assoc_ty.node.clone(), kind);
                             if old.is_some() {
                                 panic!(
                                     "{}: Associated type {} declared multiple times",
@@ -467,6 +476,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                 Ty::AssocTySelect {
                                     ty: Box::new(trait_ty),
                                     assoc_ty: assoc_ty.node.clone(),
+                                    kind,
                                 },
                             );
                         }
@@ -954,6 +964,7 @@ fn collect_schemes(
                             kind,
                         } = trait_item
                         {
+                            let kind = kind_inference::convert_kind(kind).unwrap_or(Kind::Star);
                             let trait_ty = {
                                 let trait_name = trait_decl.node.name.node.clone();
                                 let args: Vec<Ty> = trait_decl
@@ -976,6 +987,7 @@ fn collect_schemes(
                                 Ty::AssocTySelect {
                                     ty: Box::new(trait_ty),
                                     assoc_ty: assoc_ty.node.clone(),
+                                    kind,
                                 },
                             );
                         }
@@ -1312,8 +1324,8 @@ fn collect_schemes(
                 // Add type synonyms for associated types, mapping to
                 // `TraitName[args...].AssocTyName` so that both trait and impl sides produce the
                 // same `AssocTySelect` structure for `eq_modulo_alpha`.
+                let trait_name = impl_decl.node.trait_.node.clone();
                 let impl_trait_ty = {
-                    let trait_name = impl_decl.node.trait_.node.clone();
                     let args: Vec<Ty> = impl_decl
                         .node
                         .tys
@@ -1321,18 +1333,36 @@ fn collect_schemes(
                         .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
                         .collect();
                     if args.is_empty() {
-                        Ty::Con(trait_name, Kind::Star)
+                        Ty::Con(trait_name.clone(), Kind::Star)
                     } else {
-                        Ty::App(trait_name, args, Kind::Star)
+                        Ty::App(trait_name.clone(), args, Kind::Star)
                     }
                 };
                 for item in &impl_decl.node.items {
                     if let ast::ImplDeclItem::Type { assoc_ty, .. } = item {
+                        let kind = *tys
+                            .cons()
+                            .get(&trait_name)
+                            .unwrap()
+                            .details
+                            .trait_details()
+                            .unwrap()
+                            .assoc_tys
+                            .get(&assoc_ty.node)
+                            .unwrap_or_else(|| {
+                                panic!(
+                                    "{}: Trait {} does not have associated type {}",
+                                    loc_display(&assoc_ty.loc),
+                                    trait_name,
+                                    assoc_ty.node,
+                                )
+                            });
                         tys.insert_synonym(
                             assoc_ty.node.clone(),
                             Ty::AssocTySelect {
                                 ty: Box::new(impl_trait_ty.clone()),
                                 assoc_ty: assoc_ty.node.clone(),
+                                kind,
                             },
                         );
                     }
@@ -1713,14 +1743,6 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     for item in &impl_.node.items {
         let fun = match item {
             ast::ImplDeclItem::Type { assoc_ty, rhs: _ } => {
-                if !trait_details.assoc_tys.contains_key(&assoc_ty.node) {
-                    panic!(
-                        "{}: Trait {} does not have associated type {}",
-                        loc_display(&assoc_ty.loc),
-                        &trait_ty_con_id.node,
-                        &assoc_ty.node
-                    );
-                }
                 let new = implemented_assoc_tys.insert(assoc_ty.node.clone());
                 if !new {
                     panic!(
