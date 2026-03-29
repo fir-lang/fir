@@ -256,6 +256,18 @@ trait RowToList[recRow]:
     rowToList(rec: (..recRow)) List
 
 
+trait RecordToRow[rec]:
+    type RecRow
+
+
+impl RecordToRow[(..recRow)]:
+    type RecRow = recRow
+
+
+trait RowToRecord[recRow]:
+    type Rec
+
+
 type ListCons[head, tail](
     head: head,
     tail: tail,
