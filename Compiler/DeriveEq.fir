@@ -70,9 +70,9 @@ genTree(typeDecl: TypeDecl, tokens: Array[Token]) Doc:
         preds = _brackets(
             _interleave(
                 typeDecl.typeParams,
-                \(param):
+                \(param: DeclTypeParam):
                     Doc.str("Eq[")
-                        + Doc.str(tokens.get(param.token.idx).text)
+                        + Doc.str(tokens.get(param.name.token.idx).text)
                         + Doc.char(']'),
                 Doc.str(", "),
             ),
@@ -83,7 +83,8 @@ genTree(typeDecl: TypeDecl, tokens: Array[Token]) Doc:
         typeParamsDoc = _brackets(
             _interleave(
                 typeDecl.typeParams,
-                \(param): Doc.str(tokens.get(param.token.idx).text),
+                \(param: DeclTypeParam):
+                    Doc.str(tokens.get(param.name.token.idx).text),
                 Doc.str(", "),
             ),
         )

@@ -1,9 +1,9 @@
 type Foo:
     Foo
 
-type Test[varRowVar, recRowRec](
-    variant: [..varRowVar],
-    record: (..recRowRec),
+type Test[varRow, recRow](
+    variant: [..varRow],
+    record: (..recRow),
 )
 
 main():

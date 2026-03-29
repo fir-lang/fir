@@ -47,14 +47,8 @@ addMissingTypeParams(mod: Vec[TopDecl], tokens: Array[Token]):
 _addMissingTypeParamsType(ty: TypeDecl, tokens: Array[Token]):
     let kinds: Vec[Kind] = Vec.withCapacity(ty.typeParams.len())
 
-    for tyParam: Id in ty.typeParams.iter():
-        let tyParamStr = tokens.get(tyParam.token.idx).text
-        let kind = if tyParamStr.startsWith("recRow"):
-            Kind.Row(RecordOrVariant.Record)
-        elif tyParamStr.startsWith("varRow"):
-            Kind.Row(RecordOrVariant.Variant)
-        else:
-            Kind.Star
+    for tyParam: DeclTypeParam in ty.typeParams.iter():
+        let kind = _convertKind(tyParam.kind, tokens)
         kinds.push(kind)
 
     ty.typeParamKinds = kinds
@@ -77,6 +71,10 @@ _addMissingTypeParamsFun(
     if sig.context is Option.Some(context):
         for pred: Pred_ in context.preds.iter():
             match pred:
+                Pred_.Kind(name = kindVar, kind):
+                    let varStr = tokens.get(kindVar.token.idx).text
+                    let kind = _convertKind(kind, tokens)
+                    tvs.insert(varStr, Option.Some(kind))
                 Pred_.App(NamedType(name = _, args)):
                     for arg: Type in args.unwrap().args.iter():
                         _collectTvs(arg, tvs, tokens)
@@ -116,14 +114,15 @@ _addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
         .empty()
     let traitContextVars: HashSet[Str] = HashSet.empty()
 
-    for param: Id in trait_.typeParams.iter():
-        let paramStr = tokens.get(param.token.idx).text
-        traitContextVarKinds.insert(paramStr, Option.None)
+    for param: DeclTypeParam in trait_.typeParams.iter():
+        let paramStr = tokens.get(param.name.token.idx).text
+        let kind = _convertKind(param.kind, tokens)
+        traitContextVarKinds.insert(paramStr, Option.Some(kind))
         traitContextVars.insert(paramStr)
 
     for item: TraitDeclItem in trait_.items.iter():
         let fun = match item:
-            TraitDeclItem.Type(_): continue
+            TraitDeclItem.Type(..): continue
             TraitDeclItem.Fun(fun): fun
 
         # Update trait context variable kinds. This also adds function context
@@ -158,6 +157,10 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
     if impl_.context is Option.Some(context):
         for pred: Pred_ in context.preds.iter():
             match pred:
+                Pred_.Kind(name = kindVar, kind):
+                    let varStr = tokens.get(kindVar.token.idx).text
+                    let kind = _convertKind(kind, tokens)
+                    implContextVarKinds.insert(varStr, Option.Some(kind))
                 Pred_.App(NamedType(name = _, args)):
                     for arg: Type in args.unwrap().args.iter():
                         _collectTvs(arg, implContextVarKinds, tokens)
@@ -202,6 +205,32 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
                     ),
             ),
         )
+
+
+## Convert an optional AST kind annotation to an internal Kind.
+##
+## Returns Kind.Star when no annotation, otherwise expects `Row[Rec]` or
+## `Row[Var]`.
+_convertKind(kind: Option[Type], tokens: Array[Token]) Kind:
+    match kind:
+        Option.None: Kind.Star
+        Option.Some(Type.Named(NamedType(name, args))):
+            if tokens.get(name.token.idx).text != "Row":
+                panic("Kind annotation must be Row[Rec] or Row[Var]")
+            let args = args.unwrap().args
+            if args.len() != 1:
+                panic("Kind annotation must be Row[Rec] or Row[Var]")
+            match args.get(0):
+                Type.Named(NamedType(name = argName, args = _)):
+                    let argNameStr = tokens.get(argName.token.idx).text
+                    if argNameStr == "Rec":
+                        Kind.Row(RecordOrVariant.Record)
+                    elif argNameStr == "Var":
+                        Kind.Row(RecordOrVariant.Variant)
+                    else:
+                        panic("Kind annotation must be Row[Rec] or Row[Var]")
+                _: panic("Kind annotation must be Row[Rec] or Row[Var]")
+        _: panic("Kind annotation must be Row[Rec] or Row[Var]")
 
 
 ## Collect type variables in `ty` in `tvs`.

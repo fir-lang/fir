@@ -55,7 +55,7 @@ resolveNames(pgm: Program):
             visitor._tyEnv.enterScope()
             for item: TraitDeclItem in traitDecl.items.iter():
                 match item:
-                    TraitDeclItem.Type(assocTyId):
+                    TraitDeclItem.Type(name = assocTyId, ..):
                         let assocTyName = visitor._tokens.get(
                             assocTyId.token.idx,
                         ).text
@@ -67,7 +67,7 @@ resolveNames(pgm: Program):
                     TraitDeclItem.Fun(_): ()
             for item: TraitDeclItem in traitDecl.items.iter():
                 match item:
-                    TraitDeclItem.Type(_): ()
+                    TraitDeclItem.Type(..): ()
                     TraitDeclItem.Fun(funDecl): visitor.visitFunDecl(funDecl)
             visitor._tyEnv.exitScope()
 

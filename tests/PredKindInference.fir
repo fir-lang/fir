@@ -2,7 +2,7 @@ type Foo[recRow](
     record: (b: Bool, ..recRow)
 )
 
-foo[RecRow[r]](foo: Foo[r]):
+foo[r: Row[Rec]](foo: Foo[r]):
     match foo.record:
         (b = Bool.True, ..):
             print("true")

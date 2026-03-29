@@ -130,10 +130,41 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             }
         }
 
-        ast::Type::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
-            ty: Box::new(convert_ast_ty(tys, &ty.node, &ty.loc)),
-            assoc_ty: assoc_ty.clone(),
-        },
+        ast::Type::AssocTySelect { ty, assoc_ty } => {
+            let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
+            if let Ty::App(trait_, _trait_args, kind) = &ty {
+                assert_eq!(*kind, Kind::Star);
+                let kind = *tys
+                    .cons()
+                    .get(trait_)
+                    .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), trait_))
+                    .details
+                    .trait_details()
+                    .unwrap_or_else(|| {
+                        panic!("{}: Type {} is not a trait", loc_display(loc), trait_)
+                    })
+                    .assoc_tys
+                    .get(assoc_ty)
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "{}: Trait {} does not have an associated type named {}",
+                            loc_display(loc),
+                            trait_,
+                            assoc_ty
+                        )
+                    });
+                Ty::AssocTySelect {
+                    ty: Box::new(ty),
+                    assoc_ty: assoc_ty.clone(),
+                    kind,
+                }
+            } else {
+                panic!(
+                    "{}: Type in associated type selection is not a trait",
+                    loc_display(loc)
+                );
+            }
+        }
     }
 }
 
@@ -227,16 +258,23 @@ pub(super) fn convert_and_bind_context(
 
     // Convert preds.
     for ty in &context_ast.preds {
-        let pred = convert_pred(tys, &ty.node, &ty.loc);
-        preds_converted.push(pred);
+        if let Some(pred) = convert_pred(tys, &ty.node, &ty.loc) {
+            preds_converted.push(pred);
+        }
     }
 
     preds_converted
 }
 
-fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
+fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Option<Pred> {
     match pred_ast {
-        ast::Pred::App(ast::NamedType { name, args }) => Pred {
+        ast::Pred::Kind { .. } => {
+            // Kind annotations are used by the kind inference. Kind inference could remove them
+            // from the context, but at least for now we keep the list as-is and skip these here.
+            None
+        }
+
+        ast::Pred::App(ast::NamedType { name, args }) => Some(Pred {
             trait_: name.clone(),
             params: args
                 .iter()
@@ -244,13 +282,13 @@ fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
                 .collect(),
             assoc_ty: None,
             loc: loc.clone(),
-        },
+        }),
 
         ast::Pred::AssocTyEq {
             ty: ast::NamedType { name, args },
             assoc_ty,
             eq,
-        } => Pred {
+        } => Some(Pred {
             trait_: name.clone(),
             params: args
                 .iter()
@@ -258,6 +296,6 @@ fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
                 .collect(),
             assoc_ty: Some((assoc_ty.clone(), convert_ast_ty(tys, &eq.node, &eq.loc))),
             loc: loc.clone(),
-        },
+        }),
     }
 }

@@ -215,11 +215,6 @@ TypeDeclRhs: TypeDeclRhs = {
     }
 }
 
-TypeParams: Vec<Id> = {
-    <params:Sep<LowerId, ",">> "]" =>
-        params.into_iter().map(|id| id.smol_str()).collect(),
-}
-
 ConDecls: (Vec<ConDecl>, Option<Box<L<Type>>>) = {
     <decls:ConDecl+> <extension:SumExtension?> => {
         (decls, extension)
@@ -1132,7 +1127,7 @@ ImportPath: Vec<Id> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TraitDecl: L<TraitDecl> = {
-    <l:@L> "trait" <name:LUpperIdLBracket> <type_params:Sep<LLowerId, ",">> "]" ":"
+    <l:@L> "trait" <name:LUpperIdLBracket> <type_params:TypeParams> ":"
             NEWLINE INDENT <items:TraitDeclItem+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
@@ -1141,7 +1136,7 @@ TraitDecl: L<TraitDecl> = {
             items,
         }),
 
-    <l:@L> "trait" <name:LUpperIdLBracket> <type_params:Sep<LLowerId, ",">> "]" <r:@R> =>
+    <l:@L> "trait" <name:LUpperIdLBracket> <type_params:TypeParams> <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
             type_params,
@@ -1152,13 +1147,22 @@ TraitDecl: L<TraitDecl> = {
 }
 
 TraitDeclItem: TraitDeclItem = {
-    "type" <id:LUpperId> NEWLINE => {
-        TraitDeclItem::Type(id)
+    "type" <id:LUpperId> <kind:(":" <LType>)?> NEWLINE => {
+        TraitDeclItem::Type { name: id, kind }
     },
 
     <fun:FunDecl> => {
         TraitDeclItem::Fun(fun)
     },
+}
+
+TypeParam: TypeParam = {
+    <name:LLowerId> <kind:(":" <LType>)?> =>
+        TypeParam { name, kind },
+}
+
+TypeParams: Vec<TypeParam> = {
+    <params:Sep<TypeParam, ",">> "]" => params,
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1216,6 +1220,9 @@ LPred: L<Pred> = {
 }
 
 Pred: Pred = {
+    <var:LowerId> <kind:(":" <LType>)?> =>
+        Pred::Kind { var: var.smol_str(), kind },
+
     <ty:NamedType> =>
         Pred::App(ty),
 

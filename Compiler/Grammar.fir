@@ -1290,20 +1290,15 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-typeParams(state: ParserState[Token, ()]) Vec[Id] / U32:
+typeParams(state: ParserState[Token, ()]) Vec[DeclTypeParam] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
-            let id0 = state.nextCursor()
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.LowerId, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
+            let p0 = declTypeParam(state)
             let zeroOrMoreCursor0 = state._cursor
-            let ids = Vec.empty()
+            let ps = Vec.empty()
             loop:
-                let idsLen0 = ids.len()
+                let psLen0 = ps.len()
                 let symResult = try(
                     \():
                         if state.peek() is Option.Some(sym)
@@ -1311,17 +1306,12 @@ typeParams(state: ParserState[Token, ()]) Vec[Id] / U32:
                             state._cursor += 1
                         else:
                             throw(state.updateErrorCursor(state._cursor))
-                        ids.push(state.nextCursor())
-                        if state.peek() is Option.Some(sym)
-                                and sym is Token(kind = TokenKind.LowerId, ..):
-                            state._cursor += 1
-                        else:
-                            throw(state.updateErrorCursor(state._cursor)),
+                        ps.push(declTypeParam(state)),
                 )
                 match symResult:
                     Result.Err(err):
                         state._cursor = zeroOrMoreCursor0
-                        ids.truncate(idsLen0)
+                        ps.truncate(psLen0)
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let optionalCursor0 = state._cursor
@@ -1338,10 +1328,45 @@ typeParams(state: ParserState[Token, ()]) Vec[Id] / U32:
                 Result.Err(err): state._cursor = optionalCursor0
                 Result.Ok(ok): ()
             let val = do:
-                let vec: Vec[Id] = Vec.fromIter(
-                    once(newId(id0)).chain(ids.iter().map(\(id: U32): newId(id))),
-                )
-                vec
+                Vec.fromIter(once(p0).chain(ps.iter()))
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+declTypeParam(state: ParserState[Token, ()]) DeclTypeParam / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let name = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LowerId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Colon, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let kind = type_(state)
+                    kind,
+            )
+            let kind = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
+            let val = do:
+                DeclTypeParam(name = newId(name), kind)
             val,
     )
     match altResult:
@@ -5046,6 +5071,39 @@ pred(state: ParserState[Token, ()]) Pred_ / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
+            let varId = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LowerId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Colon, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let kind = type_(state)
+                    kind,
+            )
+            let kind = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
+            let val = do:
+                Pred_.Kind(name = newId(varId), kind)
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
             let app = namedType(state)
             let optionalCursor0 = state._cursor
             let symResult = try(
@@ -5338,13 +5396,31 @@ traitDeclItem(state: ParserState[Token, ()]) TraitDeclItem / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Colon, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let kind = type_(state)
+                    kind,
+            )
+            let kind = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Newline, ..):
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                TraitDeclItem.Type(newId(name))
+                TraitDeclItem.Type(name = newId(name), kind)
             val,
     )
     match altResult:

@@ -80,12 +80,12 @@ genItem(item: TypeDecl, tokens: Array[Token]) Doc:
         head += Doc.char('[')
 
         let typeParamIdx: U32 = 0
-        for typeParam: Id in item.typeParams.iter():
+        for typeParam: DeclTypeParam in item.typeParams.iter():
             if typeParamIdx != 0:
                 head += Doc.str(", ")
 
             head += Doc.str("ToDoc[")
-                + Doc.str(tokens.get(typeParam.token.idx).text)
+                + Doc.str(tokens.get(typeParam.name.token.idx).text)
                 + Doc.char(']')
 
             typeParamIdx += 1
@@ -118,18 +118,18 @@ genItem(item: TypeDecl, tokens: Array[Token]) Doc:
         )
 
 
-typeWithParams(ty: Id, typeParams: Vec[Id], tokens: Array[Token]) Doc:
+typeWithParams(ty: Id, typeParams: Vec[DeclTypeParam], tokens: Array[Token]) Doc:
     let doc = Doc.str(tokens.get(ty.token.idx).text)
 
     if not typeParams.isEmpty():
         doc += Doc.char('[')
 
         let typeParamIdx: U32 = 0
-        for typeParam: Id in typeParams.iter():
+        for typeParam: DeclTypeParam in typeParams.iter():
             if typeParamIdx != 0:
                 doc += Doc.str(", ")
 
-            doc += Doc.str(tokens.get(typeParam.token.idx).text)
+            doc += Doc.str(tokens.get(typeParam.name.token.idx).text)
 
             typeParamIdx += 1
 

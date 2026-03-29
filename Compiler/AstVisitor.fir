@@ -581,6 +581,9 @@ defaultVisitTyArgs[Visitor[v]](v: v, t: TyArgs):
 
 defaultVisitPred[Visitor[v]](v: v, p: Pred_):
     match p:
+        Pred_.Kind(name = _, kind):
+            if kind is Option.Some(kind):
+                v.visitType(kind)
         Pred_.App(app): v.visitNamedType(app)
         Pred_.AssocTyEq(ty, assocTy = _, eq):
             v.visitNamedType(ty)

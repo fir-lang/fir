@@ -355,6 +355,7 @@ fn check_stmt(
                     Kind::Star,
                 )),
                 assoc_ty: SmolStr::new_static("Item"),
+                kind: Kind::Star,
             };
             let resolved_item_ty = assoc_ty_select.deep_normalize(
                 tc_state.tys.tys.cons(),
