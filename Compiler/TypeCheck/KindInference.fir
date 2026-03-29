@@ -48,7 +48,7 @@ _addMissingTypeParamsType(ty: TypeDecl, tokens: Array[Token]):
     let kinds: Vec[Kind] = Vec.withCapacity(ty.typeParams.len())
 
     for tyParam: DeclTypeParam in ty.typeParams.iter():
-        let kind = _convertKind(tyParam.kind, tokens)
+        let kind = _convertKind(tyParam.kind, tokens).unwrapOr(Kind.Star)
         kinds.push(kind)
 
     ty.typeParamKinds = kinds
@@ -74,7 +74,7 @@ _addMissingTypeParamsFun(
                 Pred_.Kind(name = kindVar, kind):
                     let varStr = tokens.get(kindVar.token.idx).text
                     let kind = _convertKind(kind, tokens)
-                    tvs.insert(varStr, Option.Some(kind))
+                    tvs.insert(varStr, kind)
                 Pred_.App(NamedType(name = _, args)):
                     for arg: Type in args.unwrap().args.iter():
                         _collectTvs(arg, tvs, tokens)
@@ -117,7 +117,7 @@ _addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
     for param: DeclTypeParam in trait_.typeParams.iter():
         let paramStr = tokens.get(param.name.token.idx).text
         let kind = _convertKind(param.kind, tokens)
-        traitContextVarKinds.insert(paramStr, Option.Some(kind))
+        traitContextVarKinds.insert(paramStr, kind)
         traitContextVars.insert(paramStr)
 
     for item: TraitDeclItem in trait_.items.iter():
@@ -160,7 +160,7 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
                 Pred_.Kind(name = kindVar, kind):
                     let varStr = tokens.get(kindVar.token.idx).text
                     let kind = _convertKind(kind, tokens)
-                    implContextVarKinds.insert(varStr, Option.Some(kind))
+                    implContextVarKinds.insert(varStr, kind)
                 Pred_.App(NamedType(name = _, args)):
                     for arg: Type in args.unwrap().args.iter():
                         _collectTvs(arg, implContextVarKinds, tokens)
@@ -209,11 +209,11 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
 
 ## Convert an optional AST kind annotation to an internal Kind.
 ##
-## Returns Kind.Star when no annotation, otherwise expects `Row[Rec]` or
+## Returns `None` when no annotation, otherwise expects `Row[Rec]` or
 ## `Row[Var]`.
-_convertKind(kind: Option[Type], tokens: Array[Token]) Kind:
+_convertKind(kind: Option[Type], tokens: Array[Token]) Option[Kind]:
     match kind:
-        Option.None: Kind.Star
+        Option.None: Option.None
         Option.Some(Type.Named(NamedType(name, args))):
             if tokens.get(name.token.idx).text != "Row":
                 panic("Kind annotation must be Row[Rec] or Row[Var]")
@@ -224,9 +224,9 @@ _convertKind(kind: Option[Type], tokens: Array[Token]) Kind:
                 Type.Named(NamedType(name = argName, args = _)):
                     let argNameStr = tokens.get(argName.token.idx).text
                     if argNameStr == "Rec":
-                        Kind.Row(RecordOrVariant.Record)
+                        Option.Some(Kind.Row(RecordOrVariant.Record))
                     elif argNameStr == "Var":
-                        Kind.Row(RecordOrVariant.Variant)
+                        Option.Some(Kind.Row(RecordOrVariant.Variant))
                     else:
                         panic("Kind annotation must be Row[Rec] or Row[Var]")
                 _: panic("Kind annotation must be Row[Rec] or Row[Var]")
@@ -308,28 +308,6 @@ _collectNamedTyTvs(
     tvs: OrderedHashMap[Str, Option[Kind]],
     tokens: Array[Token],
 ):
-    if namedTy.name.name == "RecRow" or namedTy.name.name == "VarRow":
-        let kind = Kind.Row(
-            if namedTy.name.name == "RecRow":
-                RecordOrVariant.Record
-            else:
-                RecordOrVariant.Variant,
-        )
-
-        assert(namedTy.args.unwrap().args.len() == 1)
-
-        match namedTy.args.unwrap().args.get(0):
-            Type.Var(var_):
-                let varName = tokens.get(var_.token.idx).text
-                let old = tvs.insert(varName, Option.Some(kind))
-                if old is Option.Some(Option.Some(oldKind)) and oldKind != kind:
-                    panic("Conflicting kinds")
-
-            other:
-                panic("RecRow or RecVar argument needs to be a type variable")
-
-        return
-
     if namedTy.args is Option.Some(args):
         for arg: Type in args.args.iter():
             _collectTvs(arg, tvs, tokens)
