@@ -1,4 +1,4 @@
-type Foo[recRow: Row[Rec]](
+type Foo[recRow](
     x: Bool,
     ..recRow
 )

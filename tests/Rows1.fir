@@ -1,12 +1,12 @@
-test[r: Row[Rec]](r: (x: I32, y: I32, ..r)):
+test(r: (x: I32, y: I32, ..r)):
     printStr(r.x.toStr())
     printStr(r.y.toStr())
 
-id[r: Row[Rec]](r: (x: I32, ..r)) (x: I32, ..r):
+id(r: (x: I32, ..r)) (x: I32, ..r):
     printStr(r.x.toStr())
     r
 
-type Test[recRow: Row[Rec]](
+type Test[recRow](
     x: (x: I32, ..recRow),
 )
 

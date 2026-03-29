@@ -1,7 +1,7 @@
 type Foo:
     Foo
 
-type Test[varRow: Row[Var], recRow: Row[Rec]](
+type Test[varRow, recRow](
     variant: [..varRow],
     record: (..recRow),
 )

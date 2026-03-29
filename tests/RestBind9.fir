@@ -1,4 +1,4 @@
-type Foo[extras: Row[Rec]](
+type Foo[extras](
     x: U32,
     y: U32,
     msg: Str,

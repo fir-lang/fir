@@ -1,4 +1,4 @@
-type Box[recRowR: Row[Rec]](inner: (..recRowR))
+type Box[recRowR](inner: (..recRowR))
 
 identity(b: Box[r]) Box[row(..r)]:
     b

@@ -1,4 +1,4 @@
-type Test[row: Row[Var]](
+type Test[row](
     variant: [..row],
 )
 

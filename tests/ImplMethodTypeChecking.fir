@@ -6,7 +6,7 @@ trait Iter2[iter, item, errs]:
     map2(self: iter, f: Fn(item) b / [..errs]) Map2[iter, item, b, errs] / [..errs2]:
         Map2(iter = self, f = f)
 
-type Map2[iter, a, b, errs: Row[Var]](
+type Map2[iter, a, b, errs](
     iter: iter,
     f: Fn(a) b / [..errs],
 )

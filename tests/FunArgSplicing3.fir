@@ -1,4 +1,4 @@
-type Foo[extras: Row[Rec]](x: U32, ..extras)
+type Foo[extras](x: U32, ..extras)
 
 main():
     let rest = (y = u32(2), z = "hello")
