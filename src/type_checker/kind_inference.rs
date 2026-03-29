@@ -163,12 +163,32 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
 
 fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     assert!(ty.type_param_kinds.is_empty());
-    ty.type_param_kinds.reserve(ty.type_params.len());
+
+    let mut type_param_kinds: OrderMap<Id, Option<Kind>> = Default::default();
     for param in &ty.type_params {
-        // We could check the type definition for type variables in row positions, but for now we
-        // require kind annotations or default to `*`.
-        ty.type_param_kinds
-            .push(convert_kind(&param.kind).unwrap_or(Kind::Star));
+        type_param_kinds.insert(param.name.node.clone(), convert_kind(&param.kind));
+    }
+
+    match &ty.rhs {
+        Some(ast::TypeDeclRhs::Product(fields)) => {
+            collect_fields_tvs(fields, &mut type_param_kinds);
+        }
+        Some(ast::TypeDeclRhs::Sum { cons, extension }) => {
+            for ast::ConDecl { name: _, fields } in cons.iter() {
+                collect_fields_tvs(fields, &mut type_param_kinds);
+            }
+            collect_extension_tvs(extension, &mut type_param_kinds, RecordOrVariant::Variant);
+        }
+        Some(ast::TypeDeclRhs::Synonym(ty)) => {
+            collect_tvs(&ty.node, &ty.loc, &mut type_param_kinds);
+        }
+        None => {}
+    }
+
+    for param in &ty.type_params {
+        let kind = type_param_kinds.get(&param.name.node).unwrap().clone();
+        let kind = kind.unwrap_or(Kind::Star);
+        ty.type_param_kinds.push(kind);
     }
 }
 
@@ -195,23 +215,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
             for (_field_name, field_ty) in fields {
                 collect_tvs(field_ty, loc, tvs);
             }
-            if let Some(ext) = extension {
-                match &ext.node {
-                    ast::Type::Var(var) => {
-                        let old = tvs.insert(var.clone(), Some(Kind::Row(RecordOrVariant::Record)));
-                        if let Some(Some(old)) = old
-                            && old != Kind::Row(RecordOrVariant::Record)
-                        {
-                            panic!(
-                                "{}: Conflicting kind of type variable {}",
-                                loc_display(loc),
-                                var,
-                            );
-                        }
-                    }
-                    other => collect_tvs(other, &ext.loc, tvs),
-                }
-            }
+            collect_extension_tvs(extension, tvs, RecordOrVariant::Record);
         }
 
         ast::Type::Variant {
@@ -222,24 +226,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
             for alt in alts {
                 collect_named_ty_tvs(alt, loc, tvs);
             }
-            if let Some(ext) = extension {
-                match &ext.node {
-                    ast::Type::Var(var) => {
-                        let old =
-                            tvs.insert(var.clone(), Some(Kind::Row(RecordOrVariant::Variant)));
-                        if let Some(Some(old)) = old
-                            && old != Kind::Row(RecordOrVariant::Variant)
-                        {
-                            panic!(
-                                "{}: Conflicting kind of type variable {}",
-                                loc_display(loc),
-                                var,
-                            );
-                        }
-                    }
-                    other => collect_tvs(other, &ext.loc, tvs),
-                }
-            }
+            collect_extension_tvs(extension, tvs, RecordOrVariant::Variant);
         }
 
         ast::Type::Fn(ast::FnType {
@@ -289,6 +276,47 @@ fn collect_pred_tvs(pred: &ast::Pred, loc: &ast::Loc, tvs: &mut OrderMap<Id, Opt
         } => {
             collect_named_ty_tvs(ty, loc, tvs);
             collect_tvs(&eq.node, &eq.loc, tvs);
+        }
+    }
+}
+
+fn collect_fields_tvs(fields: &ast::ConFields, tvs: &mut OrderMap<Id, Option<Kind>>) {
+    match fields {
+        ast::ConFields::Empty => {}
+        ast::ConFields::Named { fields, extension } => {
+            for (_, ty) in fields.iter() {
+                collect_tvs(&ty.node, &ty.loc, tvs);
+            }
+            collect_extension_tvs(extension, tvs, RecordOrVariant::Record);
+        }
+        ast::ConFields::Unnamed { fields } => {
+            for ty in fields.iter() {
+                collect_tvs(&ty.node, &ty.loc, tvs);
+            }
+        }
+    }
+}
+
+fn collect_extension_tvs(
+    extension: &Option<Box<ast::L<ast::Type>>>,
+    tvs: &mut OrderMap<Id, Option<Kind>>,
+    record_or_variant: RecordOrVariant,
+) {
+    if let Some(ext) = extension {
+        match &ext.node {
+            ast::Type::Var(var) => {
+                let old = tvs.insert(var.clone(), Some(Kind::Row(record_or_variant)));
+                if let Some(Some(old)) = old
+                    && old != Kind::Row(record_or_variant)
+                {
+                    panic!(
+                        "{}: Conflicting kind of type variable {}",
+                        loc_display(&ext.loc),
+                        var,
+                    );
+                }
+            }
+            other => collect_tvs(other, &ext.loc, tvs),
         }
     }
 }
