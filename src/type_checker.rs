@@ -1790,9 +1790,6 @@ fn resolve_preds(
     var_gen: &UVarGen,
     _level: u32,
 ) {
-    let mut ambiguous_var_rows: Vec<UVarRef> = vec![];
-    let mut ambiguous_rec_rows: Vec<UVarRef> = vec![];
-
     // TODO: Not sure if this is a bug or not, but resolving a predicate may allow other predicates
     // to be resolved as well. Keep looping as long as we resolve predicates.
     let mut progress = true;
@@ -1805,48 +1802,6 @@ fn resolve_preds(
             pred.params
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]));
-
-            if pred.trait_ == kind_inference::REC_ROW_TRAIT_ID {
-                assert!(pred.assoc_ty.is_none());
-                match &pred.params[0] {
-                    Ty::Anonymous {
-                        record_or_variant,
-                        is_row,
-                        ..
-                    } => {
-                        if *is_row && *record_or_variant == RecordOrVariant::Record {
-                            continue;
-                        }
-                    }
-                    Ty::UVar(var_ref) => {
-                        assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Record));
-                        ambiguous_rec_rows.push(var_ref.clone());
-                        continue;
-                    }
-                    _ => {}
-                }
-            }
-
-            if pred.trait_ == kind_inference::VAR_ROW_TRAIT_ID {
-                assert!(pred.assoc_ty.is_none());
-                match &pred.params[0] {
-                    Ty::Anonymous {
-                        record_or_variant,
-                        is_row,
-                        ..
-                    } => {
-                        if *is_row && *record_or_variant == RecordOrVariant::Variant {
-                            continue;
-                        }
-                    }
-                    Ty::UVar(var_ref) => {
-                        assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Variant));
-                        ambiguous_var_rows.push(var_ref.clone());
-                        continue;
-                    }
-                    _ => {}
-                }
-            }
 
             for assump in assumps {
                 // We can't use set lookup as locs will be different.
@@ -1938,28 +1893,6 @@ fn resolve_preds(
             writeln!(&mut msg, "{}: {}", loc_display(&goal.loc.clone()), goal).unwrap();
         }
         panic!("{}", msg);
-    }
-
-    for rec_row in ambiguous_rec_rows {
-        if rec_row.link().is_none() {
-            rec_row.set_link(Ty::Anonymous {
-                labels: Default::default(),
-                extension: None,
-                record_or_variant: RecordOrVariant::Record,
-                is_row: true,
-            });
-        }
-    }
-
-    for var_row in ambiguous_var_rows {
-        if var_row.link().is_none() {
-            var_row.set_link(Ty::Anonymous {
-                labels: Default::default(),
-                extension: None,
-                record_or_variant: RecordOrVariant::Variant,
-                is_row: true,
-            });
-        }
     }
 }
 

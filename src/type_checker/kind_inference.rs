@@ -1,3 +1,9 @@
+/*
+Simple kind inference: analyzes one declaration at a time, infers kind of a type parameter without
+explicit kind annotation from the definition. If a type parameter is used in a row position its kind
+is inferred. Otherwise it's defaulted as `*`.
+*/
+
 use crate::ast;
 use crate::collections::*;
 use crate::type_checker::{Id, Kind, RecordOrVariant};
@@ -166,9 +172,6 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     }
 }
 
-pub(crate) const REC_ROW_TRAIT_ID: Id = Id::new_static("RecRow");
-pub(crate) const VAR_ROW_TRAIT_ID: Id = Id::new_static("VarRow");
-
 /// Collect type variables in `ty` in `tvs`.
 ///
 /// If a type variable is an argument to the special marker traits `RecRow` or `VarRow`, or the
@@ -263,39 +266,10 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
 
 fn collect_named_ty_tvs(
     named_ty: &ast::NamedType,
-    loc: &ast::Loc,
+    _loc: &ast::Loc,
     tvs: &mut OrderMap<Id, Option<Kind>>,
 ) {
-    let ast::NamedType { name, args } = named_ty;
-
-    if *name == REC_ROW_TRAIT_ID || *name == VAR_ROW_TRAIT_ID {
-        let kind = if *name == REC_ROW_TRAIT_ID {
-            Kind::Row(RecordOrVariant::Record)
-        } else {
-            Kind::Row(RecordOrVariant::Variant)
-        };
-        assert_eq!(args.len(), 1);
-        match &args[0].node {
-            ast::Type::Var(var) => {
-                let old = tvs.insert(var.clone(), Some(kind.clone()));
-                if let Some(Some(old)) = old
-                    && old != kind
-                {
-                    panic!(
-                        "{}: Conflicting kind of type variable {}",
-                        loc_display(loc),
-                        var,
-                    );
-                }
-            }
-            _ => panic!(
-                "{}: RecRow argument needs to be a type variable",
-                loc_display(loc)
-            ),
-        }
-        return;
-    }
-
+    let ast::NamedType { name: _, args } = named_ty;
     for arg in args {
         collect_tvs(&arg.node, &arg.loc, tvs);
     }
