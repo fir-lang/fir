@@ -73,3 +73,6 @@ makeAstGeneric[ExprExts[t]]() Expr[t]:
     Expr.Var(name = "hi", ..ExprExts[t].defaultVarExt())
 
 # args: --typecheck
+# expected stderr:
+# Unable to resolve predicates:
+# tests/RowToList2.fir:73:29: ExprExts[t].VarExt = (..RecordToRow[ExprExts[t].VarExt].RecRow)
