@@ -1641,7 +1641,17 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     // concrete type within impl method bodies.
     for item in &impl_.node.items {
         if let ast::ImplDeclItem::Type { assoc_ty, rhs } = item {
+            let assoc_ty_expected_kind = *trait_details.assoc_tys.get(&assoc_ty.node).unwrap();
             let converted = convert_ast_ty(&tys.tys, &rhs.node, &rhs.loc);
+            if converted.kind() != assoc_ty_expected_kind {
+                panic!(
+                    "{}: Associated type {} is expected to have kind {}, but has kind {}",
+                    loc_display(&assoc_ty.loc),
+                    &assoc_ty.node,
+                    assoc_ty_expected_kind,
+                    converted.kind(),
+                );
+            }
             tys.tys.insert_synonym(assoc_ty.node.clone(), converted);
         }
     }
