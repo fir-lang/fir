@@ -71,7 +71,7 @@ fn add_missing_type_params_fun(
         if bound_vars.contains(fv) {
             continue;
         }
-        let fv_kind = tvs.get(fv).unwrap().clone().unwrap_or(Kind::Star);
+        let fv_kind = (*tvs.get(fv).unwrap()).unwrap_or(Kind::Star);
         sig.context.type_params.push(((*fv).clone(), fv_kind));
     }
 }
@@ -110,11 +110,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
     decl.context.type_params = impl_context_vars
         .into_iter()
         .map(|id| {
-            let kind = impl_context_var_kinds
-                .get(&id)
-                .unwrap()
-                .clone()
-                .unwrap_or(Kind::Star);
+            let kind = (*impl_context_var_kinds.get(&id).unwrap()).unwrap_or(Kind::Star);
             (id, kind)
         })
         .collect();
@@ -152,11 +148,7 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
         .type_params
         .iter()
         .map(|param| {
-            trait_context_var_kinds
-                .get(&param.name.node)
-                .unwrap()
-                .clone()
-                .unwrap_or(Kind::Star)
+            (*trait_context_var_kinds.get(&param.name.node).unwrap()).unwrap_or(Kind::Star)
         })
         .collect();
 }
@@ -186,7 +178,7 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     }
 
     for param in &ty.type_params {
-        let kind = type_param_kinds.get(&param.name.node).unwrap().clone();
+        let kind = *type_param_kinds.get(&param.name.node).unwrap();
         let kind = kind.unwrap_or(Kind::Star);
         ty.type_param_kinds.push(kind);
     }

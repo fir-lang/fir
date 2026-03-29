@@ -303,7 +303,7 @@ impl Scheme {
 
         // Instantiate quantified variables of the scheme.
         for (qvar, kind) in &self.quantified_vars {
-            let instantiated_var = var_gen.new_var(level, kind.clone(), self.loc.clone());
+            let instantiated_var = var_gen.new_var(level, *kind, self.loc.clone());
             var_map.insert(qvar.clone(), Ty::UVar(instantiated_var.clone()));
             instantiations.push(instantiated_var);
         }
@@ -381,7 +381,7 @@ impl Scheme {
                 .quantified_vars
                 .iter()
                 .filter(|(qvar, _)| qvar != var)
-                .map(|(qvar, kind)| (qvar.clone(), kind.clone()))
+                .map(|(qvar, kind)| (qvar.clone(), *kind))
                 .collect(),
             preds: self
                 .preds
@@ -489,8 +489,8 @@ impl Scheme {
             .iter()
             .map(|(qvar, kind)| {
                 let new_qvar = rename_domain_var(qvar, uniq);
-                subst_map.insert(qvar.clone(), Ty::QVar(new_qvar.clone(), kind.clone()));
-                (new_qvar, kind.clone())
+                subst_map.insert(qvar.clone(), Ty::QVar(new_qvar.clone(), *kind));
+                (new_qvar, *kind)
             })
             .collect();
 
@@ -781,13 +781,13 @@ impl Ty {
 
     pub fn kind(&self) -> Kind {
         match self {
-            Ty::Con(_, kind) | Ty::RVar(_, kind) => kind.clone(),
+            Ty::Con(_, kind) | Ty::RVar(_, kind) => *kind,
 
             Ty::UVar(var) => var.kind(),
 
-            Ty::App(_, _, kind) => kind.clone(),
+            Ty::App(_, _, kind) => *kind,
 
-            Ty::QVar(_, kind) => kind.clone(),
+            Ty::QVar(_, kind) => *kind,
 
             Ty::Fun { .. } => Kind::Star,
 
@@ -810,16 +810,16 @@ impl Ty {
     /// Substitute `ty` for quantified `var` in `self`.
     pub(super) fn subst(&self, var: &Id, ty: &Ty) -> Ty {
         match self {
-            Ty::Con(id, kind) => Ty::Con(id.clone(), kind.clone()),
+            Ty::Con(id, kind) => Ty::Con(id.clone(), *kind),
 
-            Ty::RVar(id, kind) => Ty::RVar(id.clone(), kind.clone()),
+            Ty::RVar(id, kind) => Ty::RVar(id.clone(), *kind),
 
             Ty::UVar(var) => Ty::UVar(var.clone()),
 
             Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
                 args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
-                kind.clone(),
+                *kind,
             ),
 
             Ty::Anonymous {
@@ -841,7 +841,7 @@ impl Ty {
                 if qvar == var {
                     ty.clone()
                 } else {
-                    Ty::QVar(qvar.clone(), kind.clone())
+                    Ty::QVar(qvar.clone(), *kind)
                 }
             }
 
@@ -880,16 +880,16 @@ impl Ty {
 
     pub(super) fn subst_qvars(&self, vars: &HashMap<Id, Ty>) -> Ty {
         match self {
-            Ty::Con(con, kind) => Ty::Con(con.clone(), kind.clone()),
+            Ty::Con(con, kind) => Ty::Con(con.clone(), *kind),
 
-            Ty::RVar(id, kind) => Ty::RVar(id.clone(), kind.clone()),
+            Ty::RVar(id, kind) => Ty::RVar(id.clone(), *kind),
 
             Ty::UVar(var) => Ty::UVar(var.clone()),
 
             Ty::App(ty, tys, kind) => Ty::App(
                 ty.clone(),
                 tys.iter().map(|ty| ty.subst_qvars(vars)).collect(),
-                kind.clone(),
+                *kind,
             ),
 
             Ty::Anonymous {
@@ -981,7 +981,7 @@ impl Ty {
                 args.iter()
                     .map(|ty| ty.deep_normalize(cons, trait_env, var_gen, assumps))
                     .collect(),
-                kind.clone(),
+                *kind,
             ),
 
             Ty::Anonymous {
@@ -1174,7 +1174,7 @@ impl UVarRef {
     }
 
     pub fn kind(&self) -> Kind {
-        self.0.kind.clone()
+        self.0.kind
     }
 
     pub fn link(&self) -> Option<Ty> {

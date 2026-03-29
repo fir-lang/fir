@@ -462,7 +462,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                     .iter()
                                     .zip(trait_decl.node.type_param_kinds.iter())
                                     .map(|(type_param, kind)| {
-                                        Ty::QVar(type_param.name.node.clone(), kind.clone())
+                                        Ty::QVar(type_param.name.node.clone(), *kind)
                                     })
                                     .collect();
                                 if args.is_empty() {
@@ -655,7 +655,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 .iter()
                 .map(|(ty_param, kind)| {
                     let new_param = SmolStr::new(format!("{}$copy", ty_param));
-                    new_type_params.push((new_param.clone(), kind.clone()));
+                    new_type_params.push((new_param.clone(), *kind));
                     (ty_param.clone(), ast::Type::Var(new_param))
                 })
                 .collect();
@@ -777,7 +777,7 @@ fn check_value_type_sizes(ty_cons: &HashMap<Id, TyCon>) {
         let ty_args: Vec<Ty> = ty_con
             .ty_params
             .iter()
-            .map(|(name, kind)| Ty::Con(SmolStr::new(format!("#{}", name)), kind.clone()))
+            .map(|(name, kind)| Ty::Con(SmolStr::new(format!("#{}", name)), *kind))
             .collect();
         if visit_ty_con(ty_con, &ty_args, ty_cons, &mut visited) {
             panic!(
@@ -973,7 +973,7 @@ fn collect_schemes(
                                     .iter()
                                     .zip(trait_decl.node.type_param_kinds.iter())
                                     .map(|(type_param, kind)| {
-                                        Ty::QVar(type_param.name.node.clone(), kind.clone())
+                                        Ty::QVar(type_param.name.node.clone(), *kind)
                                     })
                                     .collect();
                                 if args.is_empty() {
@@ -1200,7 +1200,7 @@ fn collect_schemes(
                 {
                     tys.insert_var(
                         type_param.name.node.clone(),
-                        Ty::QVar(type_param.name.node.clone(), kind.clone()),
+                        Ty::QVar(type_param.name.node.clone(), *kind),
                     );
                 }
 
@@ -1215,9 +1215,7 @@ fn collect_schemes(
                             .type_params
                             .iter()
                             .zip(ty_decl.node.type_param_kinds.iter())
-                            .map(|(type_param, kind)| {
-                                Ty::QVar(type_param.name.node.clone(), kind.clone())
-                            })
+                            .map(|(type_param, kind)| Ty::QVar(type_param.name.node.clone(), *kind))
                             .collect(),
                         Kind::Star,
                     )
@@ -1970,7 +1968,7 @@ pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
                 for item in &trait_decl.node.items {
                     if let ast::TraitDeclItem::Type {
                         name: assoc_ty,
-                        kind,
+                        kind: _,
                     } = item
                     {
                         let trait_ty = ast::Type::Named(ast::NamedType {
