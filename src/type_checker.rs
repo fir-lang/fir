@@ -142,7 +142,7 @@ fn add_exception_types(module: &mut ast::Module, main: &str) {
             ast::TopDecl::Trait(ast::L { node, .. }) => {
                 for item in &mut node.items {
                     match item {
-                        ast::TraitDeclItem::Type(_) => {}
+                        ast::TraitDeclItem::Type { .. } => {}
                         ast::TraitDeclItem::Fun(fun) => {
                             if fun.node.sig.exceptions.is_none() {
                                 fun.node.sig.exceptions =
@@ -284,7 +284,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .node
                             .type_params
                             .iter()
-                            .cloned()
+                            .map(|type_param| type_param.name.node.clone())
                             .zip(ty_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
                         details: TyConDetails::Type(TypeDetails {
@@ -318,7 +318,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .node
                             .type_params
                             .iter()
-                            .map(|node| node.node.clone())
+                            .map(|type_param| type_param.name.node.clone())
                             .zip(trait_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
                         details: TyConDetails::Trait(TraitDetails {
@@ -410,7 +410,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         .node
                         .type_params
                         .iter()
-                        .map(|id| id.node.clone())
+                        .map(|type_param| type_param.name.node.clone())
                         .zip(trait_decl.node.type_param_kinds.iter().cloned())
                         .collect(),
                     preds: vec![],
@@ -428,7 +428,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
                 for item in &trait_decl.node.items {
                     match item {
-                        ast::TraitDeclItem::Type(assoc_ty) => {
+                        ast::TraitDeclItem::Type {
+                            name: assoc_ty,
+                            kind,
+                        } => {
                             let new = assoc_tys.insert(assoc_ty.node.clone());
                             if !new {
                                 panic!(
@@ -446,7 +449,9 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                     .type_params
                                     .iter()
                                     .zip(trait_decl.node.type_param_kinds.iter())
-                                    .map(|(p, k)| Ty::QVar(p.node.clone(), k.clone()))
+                                    .map(|(type_param, kind)| {
+                                        Ty::QVar(type_param.name.node.clone(), kind.clone())
+                                    })
                                     .collect();
                                 if args.is_empty() {
                                     Ty::Con(trait_name, Kind::Star)
@@ -520,7 +525,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                     .node
                                     .type_params
                                     .iter()
-                                    .map(|id| id.node.clone())
+                                    .map(|type_param| type_param.name.node.clone())
                                     .zip(trait_decl.node.type_param_kinds.iter().cloned())
                                     .chain(fun.node.sig.context.type_params.iter().cloned())
                                     .collect(),
@@ -891,7 +896,7 @@ fn collect_schemes(
                     .node
                     .type_params
                     .iter()
-                    .map(|p| p.node.clone())
+                    .map(|type_param| type_param.name.node.clone())
                     .zip(trait_decl.node.type_param_kinds.iter().cloned())
                     .collect();
 
@@ -903,14 +908,18 @@ fn collect_schemes(
                             .node
                             .type_params
                             .iter()
-                            .map(|param| param.map_as_ref(|param| ast::Type::Var(param.clone())))
+                            .map(|type_param| {
+                                type_param.name.map_as_ref(|type_param_name| {
+                                    ast::Type::Var(type_param_name.clone())
+                                })
+                            })
                             .collect(),
                     }),
                 };
 
                 for item in &trait_decl.node.items {
                     let fun = match item {
-                        ast::TraitDeclItem::Type(_) => continue,
+                        ast::TraitDeclItem::Type { .. } => continue,
                         ast::TraitDeclItem::Fun(fun) => fun,
                     };
 
@@ -937,7 +946,11 @@ fn collect_schemes(
                     // Add type synonyms for associated types so that e.g. `Item` resolves to
                     // `TraitName[params...].Item` within method signatures.
                     for trait_item in &trait_decl.node.items {
-                        if let ast::TraitDeclItem::Type(assoc_ty) = trait_item {
+                        if let ast::TraitDeclItem::Type {
+                            name: assoc_ty,
+                            kind,
+                        } = trait_item
+                        {
                             let trait_ty = {
                                 let trait_name = trait_decl.node.name.node.clone();
                                 let args: Vec<Ty> = trait_decl
@@ -945,7 +958,9 @@ fn collect_schemes(
                                     .type_params
                                     .iter()
                                     .zip(trait_decl.node.type_param_kinds.iter())
-                                    .map(|(p, k)| Ty::QVar(p.node.clone(), k.clone()))
+                                    .map(|(type_param, kind)| {
+                                        Ty::QVar(type_param.name.node.clone(), kind.clone())
+                                    })
                                     .collect();
                                 if args.is_empty() {
                                     Ty::Con(trait_name, Kind::Star)
@@ -1162,15 +1177,15 @@ fn collect_schemes(
                     ty_decl.node.type_params.len(),
                     ty_decl.node.type_param_kinds.len()
                 );
-                for (ty_var, ty_var_kind) in ty_decl
+                for (type_param, kind) in ty_decl
                     .node
                     .type_params
                     .iter()
                     .zip(ty_decl.node.type_param_kinds.iter())
                 {
                     tys.insert_var(
-                        ty_var.clone(),
-                        Ty::QVar(ty_var.clone(), ty_var_kind.clone()),
+                        type_param.name.node.clone(),
+                        Ty::QVar(type_param.name.node.clone(), kind.clone()),
                     );
                 }
 
@@ -1185,8 +1200,8 @@ fn collect_schemes(
                             .type_params
                             .iter()
                             .zip(ty_decl.node.type_param_kinds.iter())
-                            .map(|(ty_var, ty_var_kind)| {
-                                Ty::QVar(ty_var.clone(), ty_var_kind.clone())
+                            .map(|(type_param, kind)| {
+                                Ty::QVar(type_param.name.node.clone(), kind.clone())
                             })
                             .collect(),
                         Kind::Star,
@@ -1216,7 +1231,7 @@ fn collect_schemes(
                                     .node
                                     .type_params
                                     .iter()
-                                    .cloned()
+                                    .map(|type_param| type_param.name.node.clone())
                                     .zip(ty_decl.node.type_param_kinds.iter().cloned())
                                     .collect(),
                                 preds: Default::default(),
@@ -1255,7 +1270,7 @@ fn collect_schemes(
                                 .node
                                 .type_params
                                 .iter()
-                                .cloned()
+                                .map(|type_param| type_param.name.node.clone())
                                 .zip(ty_decl.node.type_param_kinds.iter().cloned())
                                 .collect(),
                             preds: Default::default(),
@@ -1984,14 +1999,22 @@ pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
                 // Build scoped synonyms: trait associated types map to AssocTySelect.
                 let mut scoped = synonyms.clone();
                 for item in &trait_decl.node.items {
-                    if let ast::TraitDeclItem::Type(assoc_ty) = item {
+                    if let ast::TraitDeclItem::Type {
+                        name: assoc_ty,
+                        kind,
+                    } = item
+                    {
                         let trait_ty = ast::Type::Named(ast::NamedType {
                             name: trait_decl.node.name.node.clone(),
                             args: trait_decl
                                 .node
                                 .type_params
                                 .iter()
-                                .map(|p| p.map_as_ref(|p| ast::Type::Var(p.clone())))
+                                .map(|type_param| {
+                                    type_param.name.map_as_ref(|type_param_name| {
+                                        ast::Type::Var(type_param_name.clone())
+                                    })
+                                })
                                 .collect(),
                         });
                         scoped.insert(

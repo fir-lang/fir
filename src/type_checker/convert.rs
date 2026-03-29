@@ -236,6 +236,11 @@ pub(super) fn convert_and_bind_context(
 
 fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Pred {
     match pred_ast {
+        ast::Pred::Kind { .. } => {
+            // Kind annotations should've been handled and removed by the kind inference pass.
+            panic!("{}: Kind annotation in convert_pred", loc_display(loc));
+        }
+
         ast::Pred::App(ast::NamedType { name, args }) => Pred {
             trait_: name.clone(),
             params: args

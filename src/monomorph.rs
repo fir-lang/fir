@@ -108,7 +108,7 @@ fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
                             .node
                             .type_params
                             .iter()
-                            .map(|t| t.node.clone())
+                            .map(|type_param| type_param.name.node.clone())
                             .zip(trait_decl.node.type_param_kinds.iter().cloned())
                             .collect();
                     }
@@ -118,7 +118,7 @@ fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
                                 .node
                                 .type_params
                                 .iter()
-                                .map(|t| t.node.clone())
+                                .map(|type_param| type_param.name.node.clone())
                                 .zip(trait_decl.node.type_param_kinds.iter().cloned())
                                 .collect(),
                             impls: Default::default(),
@@ -1948,7 +1948,7 @@ fn mono_ty_decl(
     let ty_map: HashMap<Id, mono::Type> = ty_decl
         .type_params
         .iter()
-        .cloned()
+        .map(|type_param| type_param.name.node.clone())
         .zip(args.iter().cloned())
         .collect();
 

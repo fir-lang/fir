@@ -23,7 +23,7 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
 
 // `tvs` are the variables bound in the enclosing `trait` or `impl` context.
 //
-// When checking a `trait`, the updated kinds in `tvs` will be used as the kinds `trait` type
+// When checking a `trait`, the updated kinds in `tvs` will be used as the kinds of the `trait` type
 // parameters.
 //
 // When checking an `impl`, the kinds of type parameters in `tvs` should all be specified before
@@ -35,6 +35,7 @@ fn add_missing_type_params_fun(
 ) {
     assert!(sig.context.type_params.is_empty());
 
+    // Variables bound in the enclosing `trait` or `impl` context.
     let bound_vars: HashSet<Id> = tvs.keys().cloned().collect();
 
     for pred in &sig.context.preds {
@@ -120,13 +121,14 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
     let mut trait_context_vars: HashSet<Id> = Default::default();
 
     for param in &decl.type_params {
-        trait_context_var_kinds.insert(param.node.clone(), None);
-        trait_context_vars.insert(param.node.clone());
+        let kind = convert_kind(&param.kind);
+        trait_context_var_kinds.insert(param.name.node.clone(), Some(kind));
+        trait_context_vars.insert(param.name.node.clone());
     }
 
     for item in &mut decl.items {
         match item {
-            ast::TraitDeclItem::Type(_) => {}
+            ast::TraitDeclItem::Type { .. } => {}
             ast::TraitDeclItem::Fun(fun) => {
                 add_missing_type_params_fun(
                     &mut fun.node.sig,
@@ -143,9 +145,9 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
     decl.type_param_kinds = decl
         .type_params
         .iter()
-        .map(|id| {
+        .map(|param| {
             trait_context_var_kinds
-                .get(&id.node)
+                .get(&param.name.node)
                 .unwrap()
                 .clone()
                 .unwrap_or(Kind::Star)
@@ -154,55 +156,10 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
 }
 
 fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
-    // Collect type params used as row extensions in the type body.
-    let mut row_kinds: OrderMap<Id, Kind> = Default::default();
-    if let Some(rhs) = &ty.rhs {
-        collect_type_decl_extension_kinds(rhs, &mut row_kinds);
-    }
-
-    let mut kinds: Vec<Kind> = Vec::with_capacity(ty.type_params.len());
-    for ty_param in &ty.type_params {
-        let kind = if let Some(kind) = row_kinds.get(ty_param) {
-            kind.clone()
-        } else if ty_param.as_str().starts_with("recRow") {
-            Kind::Row(RecordOrVariant::Record)
-        } else if ty_param.as_str().starts_with("varRow") {
-            Kind::Row(RecordOrVariant::Variant)
-        } else {
-            Kind::Star
-        };
-        kinds.push(kind);
-    }
-
-    ty.type_param_kinds = kinds;
-}
-
-/// Collect type parameters used as extensions in a type declaration body.
-fn collect_type_decl_extension_kinds(rhs: &ast::TypeDeclRhs, kinds: &mut OrderMap<Id, Kind>) {
-    match rhs {
-        ast::TypeDeclRhs::Sum { cons, extension } => {
-            if let Some(ext) = extension
-                && let ast::Type::Var(id) = &ext.node
-            {
-                kinds.insert(id.clone(), Kind::Row(RecordOrVariant::Variant));
-            }
-            for con in cons {
-                collect_con_fields_extension_kinds(&con.fields, kinds);
-            }
-        }
-        ast::TypeDeclRhs::Product(fields) => {
-            collect_con_fields_extension_kinds(fields, kinds);
-        }
-        ast::TypeDeclRhs::Synonym(_) => {}
-    }
-}
-
-fn collect_con_fields_extension_kinds(fields: &ast::ConFields, kinds: &mut OrderMap<Id, Kind>) {
-    if let ast::ConFields::Named { extension, .. } = fields
-        && let Some(ext) = extension
-        && let ast::Type::Var(id) = &ext.node
-    {
-        kinds.insert(id.clone(), Kind::Row(RecordOrVariant::Record));
+    assert!(ty.type_param_kinds.is_empty());
+    ty.type_param_kinds.reserve(ty.type_params.len());
+    for param in &ty.type_params {
+        ty.type_param_kinds.push(convert_kind(&param.kind));
     }
 }
 
@@ -343,6 +300,10 @@ fn collect_named_ty_tvs(
 
 fn collect_pred_tvs(pred: &ast::Pred, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option<Kind>>) {
     match pred {
+        ast::Pred::Kind { var, kind } => {
+            let old = tvs.insert(var.clone(), Some(convert_kind(kind)));
+            assert!(old.is_none());
+        }
         ast::Pred::App(ty) => collect_named_ty_tvs(ty, loc, tvs),
         ast::Pred::AssocTyEq {
             ty,
@@ -353,4 +314,31 @@ fn collect_pred_tvs(pred: &ast::Pred, loc: &ast::Loc, tvs: &mut OrderMap<Id, Opt
             collect_tvs(&eq.node, &eq.loc, tvs);
         }
     }
+}
+
+fn convert_kind(kind: &Option<ast::L<ast::Type>>) -> Kind {
+    let kind = match kind {
+        Some(kind) => kind,
+        None => return Kind::Star,
+    };
+    if let ast::Type::Named(ast::NamedType { name, args }) = &kind.node
+        && name == "Row"
+        && args.len() == 1
+        && let ast::Type::Named(ast::NamedType {
+            name: kind_arg_name,
+            args: kind_arg_args,
+        }) = &args[0].node
+        && (kind_arg_name == "Rec" || kind_arg_name == "Var")
+        && kind_arg_args.is_empty()
+    {
+        return Kind::Row(match kind_arg_name.as_str() {
+            "Rec" => RecordOrVariant::Record,
+            "Var" => RecordOrVariant::Variant,
+            _ => unreachable!(),
+        });
+    }
+    panic!(
+        "{}: Kind annotation must be `Row[Rec]` (record row) or `Row[Var]` (variant row)",
+        loc_display(&kind.loc)
+    )
 }
