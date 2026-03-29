@@ -122,7 +122,7 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
 
     for param in &decl.type_params {
         let kind = convert_kind(&param.kind);
-        trait_context_var_kinds.insert(param.name.node.clone(), Some(kind));
+        trait_context_var_kinds.insert(param.name.node.clone(), kind);
         trait_context_vars.insert(param.name.node.clone());
     }
 
@@ -159,7 +159,10 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     assert!(ty.type_param_kinds.is_empty());
     ty.type_param_kinds.reserve(ty.type_params.len());
     for param in &ty.type_params {
-        ty.type_param_kinds.push(convert_kind(&param.kind));
+        // We could check the type definition for type variables in row positions, but for now we
+        // require kind annotations or default to `*`.
+        ty.type_param_kinds
+            .push(convert_kind(&param.kind).unwrap_or(Kind::Star));
     }
 }
 
@@ -301,7 +304,7 @@ fn collect_named_ty_tvs(
 fn collect_pred_tvs(pred: &ast::Pred, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option<Kind>>) {
     match pred {
         ast::Pred::Kind { var, kind } => {
-            let old = tvs.insert(var.clone(), Some(convert_kind(kind)));
+            let old = tvs.insert(var.clone(), convert_kind(kind));
             assert!(old.is_none());
         }
         ast::Pred::App(ty) => collect_named_ty_tvs(ty, loc, tvs),
@@ -316,10 +319,10 @@ fn collect_pred_tvs(pred: &ast::Pred, loc: &ast::Loc, tvs: &mut OrderMap<Id, Opt
     }
 }
 
-fn convert_kind(kind: &Option<ast::L<ast::Type>>) -> Kind {
+fn convert_kind(kind: &Option<ast::L<ast::Type>>) -> Option<Kind> {
     let kind = match kind {
         Some(kind) => kind,
-        None => return Kind::Star,
+        None => return None,
     };
     if let ast::Type::Named(ast::NamedType { name, args }) = &kind.node
         && name == "Row"
@@ -331,11 +334,11 @@ fn convert_kind(kind: &Option<ast::L<ast::Type>>) -> Kind {
         && (kind_arg_name == "Rec" || kind_arg_name == "Var")
         && kind_arg_args.is_empty()
     {
-        return Kind::Row(match kind_arg_name.as_str() {
+        return Some(Kind::Row(match kind_arg_name.as_str() {
             "Rec" => RecordOrVariant::Record,
             "Var" => RecordOrVariant::Variant,
             _ => unreachable!(),
-        });
+        }));
     }
     panic!(
         "{}: Kind annotation must be `Row[Rec]` (record row) or `Row[Var]` (variant row)",
