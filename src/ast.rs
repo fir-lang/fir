@@ -160,8 +160,10 @@ pub struct TypeDecl {
 
 /// A type parameter in a type or trait declaration.
 ///
-///     trait Foo[r: Row[Rec]]: ...
-///     type Bar[x, y: Row[Var]]: ...
+/// ```ignore
+/// trait Foo[r: Row[Rec]]: ...
+/// type Bar[x, y: Row[Var]]: ...
+/// ```
 #[derive(Debug, Clone)]
 pub struct TypeParam {
     /// Name of the type parameter. `r`, `x`, `y` in the example.
@@ -894,7 +896,9 @@ pub struct Context {
 
 /// A predicate in a context. E.g. in context
 ///
-///     [ext: Row[Rec], Iterator[iter, exn], Iterator[iter, exn].Item = U32]
+/// ```ignore
+/// [ext: Row[Rec], Iterator[iter, exn], Iterator[iter, exn].Item = U32]
+/// ```
 ///
 /// Predicates:
 ///
