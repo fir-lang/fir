@@ -233,7 +233,7 @@ pub(super) struct TraitDetails {
     pub(super) methods: HashMap<Id, TraitMethod>,
 
     /// Associated types of the trait.
-    pub(super) assoc_tys: HashSet<Id>,
+    pub(super) assoc_tys: HashMap<Id, Kind>,
 }
 
 #[derive(Debug, Clone)]

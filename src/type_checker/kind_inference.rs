@@ -321,7 +321,7 @@ fn collect_extension_tvs(
     }
 }
 
-fn convert_kind(kind: &Option<ast::L<ast::Type>>) -> Option<Kind> {
+pub(crate) fn convert_kind(kind: &Option<ast::L<ast::Type>>) -> Option<Kind> {
     let kind = match kind {
         Some(kind) => kind,
         None => return None,

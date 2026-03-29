@@ -424,7 +424,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     Default::default(),
                 );
 
-                let mut assoc_tys: HashSet<Id> = Default::default();
+                let mut assoc_tys: HashMap<Id, Kind> = Default::default();
 
                 for item in &trait_decl.node.items {
                     match item {
@@ -432,8 +432,11 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             name: assoc_ty,
                             kind,
                         } => {
-                            let new = assoc_tys.insert(assoc_ty.node.clone());
-                            if !new {
+                            let old = assoc_tys.insert(
+                                assoc_ty.node.clone(),
+                                kind_inference::convert_kind(kind).unwrap_or(Kind::Star),
+                            );
+                            if old.is_some() {
                                 panic!(
                                     "{}: Associated type {} declared multiple times",
                                     loc_display(&assoc_ty.loc),
@@ -1710,7 +1713,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     for item in &impl_.node.items {
         let fun = match item {
             ast::ImplDeclItem::Type { assoc_ty, rhs: _ } => {
-                if !trait_details.assoc_tys.contains(&assoc_ty.node) {
+                if !trait_details.assoc_tys.contains_key(&assoc_ty.node) {
                     panic!(
                         "{}: Trait {} does not have associated type {}",
                         loc_display(&assoc_ty.loc),
@@ -1768,7 +1771,8 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
     let missing_assoc_tys: Vec<&Id> = trait_details
         .assoc_tys
-        .difference(&implemented_assoc_tys)
+        .keys()
+        .filter(|trait_assoc_ty| !implemented_assoc_tys.contains(*trait_assoc_ty))
         .collect();
     if !missing_assoc_tys.is_empty() {
         panic!(
