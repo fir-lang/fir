@@ -277,18 +277,14 @@ type ListCons[head, tail](
 type ListNil
 
 
-trait TypeLevelListToStr[t]:
-    typeLevelListToStr(self: t) Str
-
-
-impl TypeLevelListToStr[ListNil]:
-    typeLevelListToStr(self: ListNil) Str:
+impl ToStr[ListNil]:
+    toStr(self: ListNil) Str:
         "[]"
 
 
-impl[ToStr[head], TypeLevelListToStr[tail]] TypeLevelListToStr[ListCons[head, tail]]:
-    typeLevelListToStr(self: ListCons[head, tail]) Str:
-        "`self.head` -> `self.tail.typeLevelListToStr()`"
+impl[ToStr[head], ToStr[tail]] ToStr[ListCons[head, tail]]:
+    toStr(self: ListCons[head, tail]) Str:
+        "`self.head` -> `self.tail`"
 
 
 type RecordField[t](

@@ -73,23 +73,23 @@ makeAstGeneric[ExprExts[t]]() Expr[t]:
 
 printExt[
     ExprExts[t],
-    TypeLevelListToStr[RowToList[ExprExts[t].VarExtRecRow].List],
-    TypeLevelListToStr[RowToList[ExprExts[t].AppExtRecRow].List],
-    TypeLevelListToStr[RowToList[ExprExts[t].AbsExtRecRow].List],
-    TypeLevelListToStr[RowToList[ExprExts[t].LetExtRecRow].List],
+    ToStr[RowToList[ExprExts[t].VarExtRecRow].List],
+    ToStr[RowToList[ExprExts[t].AppExtRecRow].List],
+    ToStr[RowToList[ExprExts[t].AbsExtRecRow].List],
+    ToStr[RowToList[ExprExts[t].LetExtRecRow].List],
 ](expr: Expr[t]):
     match expr:
         Expr.Var(name, ..ext):
-            print(RowToList[ExprExts[t].VarExtRecRow].rowToList(ext).typeLevelListToStr())
+            print(RowToList[ExprExts[t].VarExtRecRow].rowToList(ext))
 
         Expr.App(fun, arg, ..ext):
-            print(RowToList[ExprExts[t].AppExtRecRow].rowToList(ext).typeLevelListToStr())
+            print(RowToList[ExprExts[t].AppExtRecRow].rowToList(ext))
 
         Expr.Abs(param, body, ..ext):
-            print(RowToList[ExprExts[t].AbsExtRecRow].rowToList(ext).typeLevelListToStr())
+            print(RowToList[ExprExts[t].AbsExtRecRow].rowToList(ext))
 
         Expr.Let(name, rhs, body, ..ext):
-            print(RowToList[ExprExts[t].LetExtRecRow].rowToList(ext).typeLevelListToStr())
+            print(RowToList[ExprExts[t].LetExtRecRow].rowToList(ext))
 
 main():
     printExt(makeAstGeneric[FmtExprExts, []]())
