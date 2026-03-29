@@ -1070,6 +1070,44 @@ impl Ty {
                     }
                 }
 
+                // RowToList[row].List: compute the List type from the row's fields.
+                if *trait_name == super::kind_inference::ROW_TO_LIST_TRAIT_ID && *assoc_ty == "List"
+                {
+                    let row_ty = trait_args[0].deep_normalize(cons, trait_env, var_gen, assumps);
+                    if let Ty::Anonymous {
+                        labels,
+                        extension,
+                        record_or_variant: RecordOrVariant::Record,
+                        is_row: true,
+                    } = &row_ty
+                    {
+                        let mut list_ty = match extension {
+                            None => Ty::Con(Id::new_static("ListNil"), Kind::Star),
+                            Some(ext) => Ty::AssocTySelect {
+                                ty: Box::new(Ty::App(
+                                    Id::new_static("RowToList"),
+                                    vec![*ext.clone()],
+                                    Kind::Star,
+                                )),
+                                assoc_ty: Id::new_static("List"),
+                            },
+                        };
+                        for (_field_name, field_ty) in labels.iter().rev() {
+                            let record_field_ty = Ty::App(
+                                Id::new_static("RecordField"),
+                                vec![field_ty.clone()],
+                                Kind::Star,
+                            );
+                            list_ty = Ty::App(
+                                Id::new_static("ListCons"),
+                                vec![record_field_ty, list_ty],
+                                Kind::Star,
+                            );
+                        }
+                        return list_ty.deep_normalize(cons, trait_env, var_gen, assumps);
+                    }
+                }
+
                 // Try resolving via local equality constraints (e.g. from function context
                 // `Container[c].Item = item`).
                 for assump in assumps {

@@ -243,3 +243,48 @@ trait Hash[t]:
 
 trait Clone[t]:
     clone(self: t) t
+
+
+# This trait will only be implemented by the compiler, for record types, as
+# needed.
+# Type parameter name needs `recRow` prefix so that the kind will be inferred as
+# `row(rec)`.
+trait RowToList[recRow]:
+    # This will always be `ListCons` or `ListNil`.
+    type List
+
+    rowToList(rec: (..recRow)) List
+
+
+type ListCons[head, tail](
+    head: head,
+    tail: tail,
+)
+
+
+type ListNil
+
+
+trait TypeLevelListToStr[t]:
+    typeLevelListToStr(self: t) Str
+
+
+impl TypeLevelListToStr[ListNil]:
+    typeLevelListToStr(self: ListNil) Str:
+        "[]"
+
+
+impl[ToStr[head], TypeLevelListToStr[tail]] TypeLevelListToStr[ListCons[head, tail]]:
+    typeLevelListToStr(self: ListCons[head, tail]) Str:
+        "`self.head` -> `self.tail.typeLevelListToStr()`"
+
+
+type RecordField[t](
+    label: Str,
+    value_: t,
+)
+
+
+impl[ToStr[t]] ToStr[RecordField[t]]:
+    toStr(self: RecordField[t]) Str:
+        "`self.label` = `self.value_`"

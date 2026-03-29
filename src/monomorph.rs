@@ -1002,6 +1002,182 @@ fn mono_method(
     mono_pgm: &mut MonoPgm,
     loc: &ast::Loc,
 ) {
+    // RowToList.rowToList: synthesize a method that converts a record to a list.
+    if *method_ty_id == "RowToList" && *method_id == "rowToList" {
+        if mono_pgm
+            .associated
+            .get("RowToList")
+            .and_then(|m| m.get("rowToList"))
+            .and_then(|m| m.get(ty_args))
+            .is_some()
+        {
+            return;
+        }
+
+        let fields = match &ty_args[0] {
+            mono::Type::Record { fields } => fields.clone(),
+            other => panic!("RowToList type arg is not a record: {other:?}"),
+        };
+
+        // The method parameter type is (..recRow) which is a record with the row's fields.
+        let rec_ty = mono::Type::Record {
+            fields: fields.clone(),
+        };
+
+        let list_ty = row_to_list_type(&fields, poly_pgm, mono_pgm);
+
+        // Build body: ListCons(head = RecordField(label = "f1", value_ = rec.f1),
+        //                      tail = ListCons(..., tail = ListNil()))
+        let dummy_loc = ast::Loc::dummy();
+        let l = |expr| ast::L {
+            node: expr,
+            loc: dummy_loc.clone(),
+        };
+
+        // Start with ListNil()
+        let list_nil_ty = mono::Type::Named(mono::NamedType {
+            name: SmolStr::new_static("ListNil"),
+            args: vec![],
+        });
+        let mut body_expr = l(mono::Expr::ConSel(mono::Con {
+            ty_id: SmolStr::new_static("ListNil"),
+            con: None,
+            ty_args: vec![],
+            ty: list_nil_ty.clone(),
+        }));
+        let mut tail_ty = list_nil_ty;
+
+        // Wrap each field in RecordField and ListCons, from last to first.
+        for (field_name, field_ty) in fields.iter().rev() {
+            // rec.fieldName
+            let field_sel = l(mono::Expr::FieldSel(mono::FieldSelExpr {
+                object: Box::new(l(mono::Expr::LocalVar(
+                    SmolStr::new_static("rec"),
+                    rec_ty.clone(),
+                ))),
+                field: field_name.clone(),
+                ty: field_ty.clone(),
+            }));
+
+            // RecordField[field_ty]
+            let record_field_con_ty = mono::Type::Named(mono::NamedType {
+                name: SmolStr::new_static("RecordField"),
+                args: vec![field_ty.clone()],
+            });
+            let record_field_fn_ty = mono::Type::Fn(mono::FnType {
+                args: mono::FunArgs::Named(
+                    [
+                        (SmolStr::new_static("label"), mono::Type::str()),
+                        (SmolStr::new_static("value_"), field_ty.clone()),
+                    ]
+                    .into_iter()
+                    .collect(),
+                ),
+                ret: Box::new(record_field_con_ty.clone()),
+                exn: Box::new(mono::Type::empty()),
+            });
+            let record_field_expr = l(mono::Expr::Call(mono::CallExpr {
+                fun: Box::new(l(mono::Expr::ConSel(mono::Con {
+                    ty_id: SmolStr::new_static("RecordField"),
+                    con: None,
+                    ty_args: vec![field_ty.clone()],
+                    ty: record_field_fn_ty,
+                }))),
+                args: vec![
+                    mono::CallArg {
+                        name: Some(SmolStr::new_static("label")),
+                        expr: l(mono::Expr::Str(field_name.to_string())),
+                    },
+                    mono::CallArg {
+                        name: Some(SmolStr::new_static("value_")),
+                        expr: field_sel,
+                    },
+                ],
+                splice: None,
+                ty: record_field_con_ty.clone(),
+            }));
+
+            // ListCons[RecordField[field_ty], tail_ty]
+            let list_cons_ty = mono::Type::Named(mono::NamedType {
+                name: SmolStr::new_static("ListCons"),
+                args: vec![record_field_con_ty.clone(), tail_ty.clone()],
+            });
+            let list_cons_fn_ty = mono::Type::Fn(mono::FnType {
+                args: mono::FunArgs::Named(
+                    [
+                        (SmolStr::new_static("head"), record_field_con_ty),
+                        (SmolStr::new_static("tail"), tail_ty.clone()),
+                    ]
+                    .into_iter()
+                    .collect(),
+                ),
+                ret: Box::new(list_cons_ty.clone()),
+                exn: Box::new(mono::Type::empty()),
+            });
+            body_expr = l(mono::Expr::Call(mono::CallExpr {
+                fun: Box::new(l(mono::Expr::ConSel(mono::Con {
+                    ty_id: SmolStr::new_static("ListCons"),
+                    con: None,
+                    ty_args: vec![
+                        mono::Type::Named(mono::NamedType {
+                            name: SmolStr::new_static("RecordField"),
+                            args: vec![field_ty.clone()],
+                        }),
+                        tail_ty,
+                    ],
+                    ty: list_cons_fn_ty,
+                }))),
+                args: vec![
+                    mono::CallArg {
+                        name: Some(SmolStr::new_static("head")),
+                        expr: record_field_expr,
+                    },
+                    mono::CallArg {
+                        name: Some(SmolStr::new_static("tail")),
+                        expr: body_expr,
+                    },
+                ],
+                splice: None,
+                ty: list_cons_ty.clone(),
+            }));
+            tail_ty = list_cons_ty;
+        }
+
+        let l_id = |id| ast::L {
+            node: id,
+            loc: dummy_loc.clone(),
+        };
+        let l_ty = |ty| ast::L {
+            node: ty,
+            loc: dummy_loc.clone(),
+        };
+        let l_stmt = |stmt| ast::L {
+            node: stmt,
+            loc: dummy_loc.clone(),
+        };
+
+        let fun_decl = mono::FunDecl {
+            parent_ty: Some(l_id(SmolStr::new_static("RowToList"))),
+            name: l_id(SmolStr::new_static("rowToList")),
+            sig: mono::FunSig {
+                params: vec![(SmolStr::new_static("rec"), l_ty(rec_ty))],
+                return_ty: Some(l_ty(list_ty)),
+                exceptions: None,
+            },
+            body: Some(vec![l_stmt(mono::Stmt::Expr(body_expr.node))]),
+        };
+
+        mono_pgm
+            .associated
+            .entry(SmolStr::new_static("RowToList"))
+            .or_default()
+            .entry(SmolStr::new_static("rowToList"))
+            .or_default()
+            .insert(ty_args.to_vec(), fun_decl);
+
+        return;
+    }
+
     if let Some(PolyTrait {
         ty_args: trait_ty_args,
         impls,
@@ -1634,6 +1810,15 @@ fn resolve_assoc_ty(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::Type {
+    // RowToList[row].List: synthesize the List type from the row's fields.
+    if *trait_name == "RowToList" && *assoc_ty == "List" {
+        let fields = match &trait_args[0] {
+            mono::Type::Record { fields } => fields,
+            other => panic!("RowToList type arg is not a record: {other:?}"),
+        };
+        return row_to_list_type(fields, poly_pgm, mono_pgm);
+    }
+
     let poly_trait = poly_pgm
         .traits
         .get(trait_name)
@@ -1653,6 +1838,43 @@ fn resolve_assoc_ty(
         "No matching impl for {}.{} with args {:?}",
         trait_name, assoc_ty, trait_args
     )
+}
+
+/// Build the `List` type for `RowToList`: `ListCons[RecordField[T1], ListCons[...ListNil]]`.
+fn row_to_list_type(
+    fields: &OrdMap<Id, mono::Type>,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
+) -> mono::Type {
+    let list_nil_decl = poly_pgm.ty.get("ListNil").unwrap();
+    mono_ty_decl(list_nil_decl, &[], poly_pgm, mono_pgm);
+
+    let mut list_ty = mono::Type::Named(mono::NamedType {
+        name: SmolStr::new_static("ListNil"),
+        args: vec![],
+    });
+
+    for (_field_name, field_ty) in fields.iter().rev() {
+        // RecordField[field_ty]
+        let record_field_args = vec![field_ty.clone()];
+        let record_field_decl = poly_pgm.ty.get("RecordField").unwrap();
+        mono_ty_decl(record_field_decl, &record_field_args, poly_pgm, mono_pgm);
+        let record_field_ty = mono::Type::Named(mono::NamedType {
+            name: SmolStr::new_static("RecordField"),
+            args: record_field_args,
+        });
+
+        // ListCons[RecordField[field_ty], list_ty]
+        let list_cons_args = vec![record_field_ty, list_ty];
+        let list_cons_decl = poly_pgm.ty.get("ListCons").unwrap();
+        mono_ty_decl(list_cons_decl, &list_cons_args, poly_pgm, mono_pgm);
+        list_ty = mono::Type::Named(mono::NamedType {
+            name: SmolStr::new_static("ListCons"),
+            args: list_cons_args,
+        });
+    }
+
+    list_ty
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

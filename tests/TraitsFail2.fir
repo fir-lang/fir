@@ -15,4 +15,6 @@ prim printStr(s: Str) ()
 
 # args: --typecheck --no-prelude
 # expected exit status: 101
-# expected stderr: tests/TraitsFail2.fir:7:6: Unable to resolve pred ToStr[U32]
+# expected stderr:
+# Unable to resolve predicates:
+# tests/TraitsFail2.fir:7:6: ToStr[U32]

@@ -14,4 +14,6 @@ main():
     Box(thing = u32(123)).b()
 
 # expected exit status: 101
-# expected stderr: tests/Issue26.fir:14:5: Unable to resolve pred A[U32]
+# expected stderr:
+# Unable to resolve predicates:
+# tests/Issue26.fir:14:5: A[U32]

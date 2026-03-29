@@ -1833,6 +1833,80 @@ fn resolve_preds(
                 }
             }
 
+            if pred.trait_ == kind_inference::ROW_TO_LIST_TRAIT_ID {
+                let param = &pred.params[0];
+                match param {
+                    // Rule 1 & 3: Concrete row (with or without fields).
+                    Ty::Anonymous {
+                        labels,
+                        extension,
+                        record_or_variant: RecordOrVariant::Record,
+                        is_row: true,
+                    } => {
+                        if let Some((_assoc_ty_name, assoc_ty_rhs)) = &pred.assoc_ty {
+                            debug_assert_eq!(_assoc_ty_name, "List");
+
+                            // Build the tail: ListNil for closed rows, RowToList[rest].List for
+                            // open rows.
+                            let mut list_ty = match extension {
+                                None => Ty::Con(SmolStr::new_static("ListNil"), Kind::Star),
+                                Some(ext) => {
+                                    next_goals.push(Pred {
+                                        trait_: kind_inference::ROW_TO_LIST_TRAIT_ID,
+                                        params: vec![*ext.clone()],
+                                        assoc_ty: None,
+                                        loc: pred.loc.clone(),
+                                    });
+                                    Ty::AssocTySelect {
+                                        ty: Box::new(Ty::App(
+                                            SmolStr::new_static("RowToList"),
+                                            vec![*ext.clone()],
+                                            Kind::Star,
+                                        )),
+                                        assoc_ty: SmolStr::new_static("List"),
+                                    }
+                                }
+                            };
+
+                            // Wrap each field in ListCons[RecordField[T], ...], last to first.
+                            for (_field_name, field_ty) in labels.iter().rev() {
+                                let record_field_ty = Ty::App(
+                                    SmolStr::new_static("RecordField"),
+                                    vec![field_ty.clone()],
+                                    Kind::Star,
+                                );
+                                list_ty = Ty::App(
+                                    SmolStr::new_static("ListCons"),
+                                    vec![record_field_ty, list_ty],
+                                    Kind::Star,
+                                );
+                            }
+
+                            unification::unify(
+                                &list_ty,
+                                assoc_ty_rhs,
+                                cons,
+                                trait_env,
+                                var_gen,
+                                0,
+                                &pred.loc,
+                                &[],
+                                &mut next_goals,
+                            );
+                        }
+                        progress = true;
+                        continue 'goals;
+                    }
+
+                    // Rule 2: Unresolved type variable, resolve without resolving assoc ty.
+                    Ty::RVar(_, _) | Ty::UVar(_) | Ty::QVar(_, _) => {
+                        continue 'goals;
+                    }
+
+                    _ => {}
+                }
+            }
+
             for assump in assumps {
                 // We can't use set lookup as locs will be different.
                 if assump.trait_ == pred.trait_ && assump.params == pred.params {

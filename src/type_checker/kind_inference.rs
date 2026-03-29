@@ -208,6 +208,7 @@ fn collect_con_fields_extension_kinds(fields: &ast::ConFields, kinds: &mut Order
 
 pub(crate) const REC_ROW_TRAIT_ID: Id = Id::new_static("RecRow");
 pub(crate) const VAR_ROW_TRAIT_ID: Id = Id::new_static("VarRow");
+pub(crate) const ROW_TO_LIST_TRAIT_ID: Id = Id::new_static("RowToList");
 
 /// Collect type variables in `ty` in `tvs`.
 ///

@@ -11,4 +11,6 @@ f(a: a):
 
 # args: --typecheck --no-prelude
 # expected exit status: 101
-# expected stderr: tests/TraitsFail1.fir:10:14: Unable to resolve pred ToStr[a]
+# expected stderr:
+# Unable to resolve predicates:
+# tests/TraitsFail1.fir:10:14: ToStr[a]
