@@ -217,10 +217,10 @@ pub(super) fn convert_and_bind_context(
     for (id, kind) in &context_ast.type_params {
         match conversion {
             TyVarConversion::ToRVar => {
-                tys.insert_var(id.clone(), Ty::RVar(id.clone(), kind.clone()));
+                tys.insert_var(id.clone(), Ty::RVar(id.clone(), *kind));
             }
             TyVarConversion::ToQVar => {
-                tys.insert_var(id.clone(), Ty::QVar(id.clone(), kind.clone()));
+                tys.insert_var(id.clone(), Ty::QVar(id.clone(), *kind));
             }
         }
     }

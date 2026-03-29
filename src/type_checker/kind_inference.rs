@@ -64,7 +64,7 @@ fn add_missing_type_params_fun(
         if bound_vars.contains(fv) {
             continue;
         }
-        let fv_kind = tvs.get(fv).unwrap().clone().unwrap_or(Kind::Star);
+        let fv_kind = (*tvs.get(fv).unwrap()).unwrap_or(Kind::Star);
         sig.context.type_params.push(((*fv).clone(), fv_kind));
     }
 }
@@ -103,11 +103,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
     decl.context.type_params = impl_context_vars
         .into_iter()
         .map(|id| {
-            let kind = impl_context_var_kinds
-                .get(&id)
-                .unwrap()
-                .clone()
-                .unwrap_or(Kind::Star);
+            let kind = (*impl_context_var_kinds.get(&id).unwrap()).unwrap_or(Kind::Star);
             (id, kind)
         })
         .collect();
@@ -143,13 +139,7 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
     decl.type_param_kinds = decl
         .type_params
         .iter()
-        .map(|id| {
-            trait_context_var_kinds
-                .get(&id.node)
-                .unwrap()
-                .clone()
-                .unwrap_or(Kind::Star)
-        })
+        .map(|id| (*trait_context_var_kinds.get(&id.node).unwrap()).unwrap_or(Kind::Star))
         .collect();
 }
 
@@ -163,7 +153,7 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     let mut kinds: Vec<Kind> = Vec::with_capacity(ty.type_params.len());
     for ty_param in &ty.type_params {
         let kind = if let Some(kind) = row_kinds.get(ty_param) {
-            kind.clone()
+            *kind
         } else if ty_param.as_str().starts_with("recRow") {
             Kind::Row(RecordOrVariant::Record)
         } else if ty_param.as_str().starts_with("varRow") {
@@ -317,7 +307,7 @@ fn collect_named_ty_tvs(
         assert_eq!(args.len(), 1);
         match &args[0].node {
             ast::Type::Var(var) => {
-                let old = tvs.insert(var.clone(), Some(kind.clone()));
+                let old = tvs.insert(var.clone(), Some(kind));
                 if let Some(Some(old)) = old
                     && old != kind
                 {
