@@ -238,16 +238,7 @@ trait Clone[t]:
 trait RowToList[recRow]:
     # This will always be `ListCons` or `ListNil`.
     type List
-
     rowToList(rec: (..recRow)) List
-
-
-trait RecordToRow[rec]:
-    type RecRow: Row[Rec]
-
-
-impl RecordToRow[(..recRow)]:
-    type RecRow = recRow
 
 
 trait RowToRecord[recRow]:
