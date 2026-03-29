@@ -142,7 +142,7 @@ fn add_exception_types(module: &mut ast::Module, main: &str) {
             ast::TopDecl::Trait(ast::L { node, .. }) => {
                 for item in &mut node.items {
                     match item {
-                        ast::TraitDeclItem::Type(_) => {}
+                        ast::TraitDeclItem::Type { .. } => {}
                         ast::TraitDeclItem::Fun(fun) => {
                             if fun.node.sig.exceptions.is_none() {
                                 fun.node.sig.exceptions =
@@ -284,7 +284,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .node
                             .type_params
                             .iter()
-                            .cloned()
+                            .map(|type_param| type_param.name.node.clone())
                             .zip(ty_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
                         details: TyConDetails::Type(TypeDetails {
@@ -318,12 +318,23 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .node
                             .type_params
                             .iter()
-                            .map(|node| node.node.clone())
+                            .map(|type_param| type_param.name.node.clone())
                             .zip(trait_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
                         details: TyConDetails::Trait(TraitDetails {
                             methods: Default::default(),
-                            assoc_tys: Default::default(),
+                            assoc_tys: trait_decl
+                                .node
+                                .items
+                                .iter()
+                                .filter_map(|item| match item {
+                                    ast::TraitDeclItem::Type { name, kind } => Some((
+                                        name.node.clone(),
+                                        kind_inference::convert_kind(kind).unwrap_or(Kind::Star),
+                                    )),
+                                    ast::TraitDeclItem::Fun(_) => None,
+                                })
+                                .collect(),
                         }),
                     },
                 );
@@ -410,7 +421,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         .node
                         .type_params
                         .iter()
-                        .map(|id| id.node.clone())
+                        .map(|type_param| type_param.name.node.clone())
                         .zip(trait_decl.node.type_param_kinds.iter().cloned())
                         .collect(),
                     preds: vec![],
@@ -424,13 +435,17 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     Default::default(),
                 );
 
-                let mut assoc_tys: HashSet<Id> = Default::default();
+                let mut assoc_tys: HashMap<Id, Kind> = Default::default();
 
                 for item in &trait_decl.node.items {
                     match item {
-                        ast::TraitDeclItem::Type(assoc_ty) => {
-                            let new = assoc_tys.insert(assoc_ty.node.clone());
-                            if !new {
+                        ast::TraitDeclItem::Type {
+                            name: assoc_ty,
+                            kind,
+                        } => {
+                            let kind = kind_inference::convert_kind(kind).unwrap_or(Kind::Star);
+                            let old = assoc_tys.insert(assoc_ty.node.clone(), kind);
+                            if old.is_some() {
                                 panic!(
                                     "{}: Associated type {} declared multiple times",
                                     loc_display(&assoc_ty.loc),
@@ -446,7 +461,9 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                     .type_params
                                     .iter()
                                     .zip(trait_decl.node.type_param_kinds.iter())
-                                    .map(|(p, k)| Ty::QVar(p.node.clone(), k.clone()))
+                                    .map(|(type_param, kind)| {
+                                        Ty::QVar(type_param.name.node.clone(), *kind)
+                                    })
                                     .collect();
                                 if args.is_empty() {
                                     Ty::Con(trait_name, Kind::Star)
@@ -459,6 +476,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                 Ty::AssocTySelect {
                                     ty: Box::new(trait_ty),
                                     assoc_ty: assoc_ty.node.clone(),
+                                    kind,
                                 },
                             );
                         }
@@ -520,7 +538,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                     .node
                                     .type_params
                                     .iter()
-                                    .map(|id| id.node.clone())
+                                    .map(|type_param| type_param.name.node.clone())
                                     .zip(trait_decl.node.type_param_kinds.iter().cloned())
                                     .chain(fun.node.sig.context.type_params.iter().cloned())
                                     .collect(),
@@ -637,7 +655,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 .iter()
                 .map(|(ty_param, kind)| {
                     let new_param = SmolStr::new(format!("{}$copy", ty_param));
-                    new_type_params.push((new_param.clone(), kind.clone()));
+                    new_type_params.push((new_param.clone(), *kind));
                     (ty_param.clone(), ast::Type::Var(new_param))
                 })
                 .collect();
@@ -759,7 +777,7 @@ fn check_value_type_sizes(ty_cons: &HashMap<Id, TyCon>) {
         let ty_args: Vec<Ty> = ty_con
             .ty_params
             .iter()
-            .map(|(name, kind)| Ty::Con(SmolStr::new(format!("#{}", name)), kind.clone()))
+            .map(|(name, kind)| Ty::Con(SmolStr::new(format!("#{}", name)), *kind))
             .collect();
         if visit_ty_con(ty_con, &ty_args, ty_cons, &mut visited) {
             panic!(
@@ -891,7 +909,7 @@ fn collect_schemes(
                     .node
                     .type_params
                     .iter()
-                    .map(|p| p.node.clone())
+                    .map(|type_param| type_param.name.node.clone())
                     .zip(trait_decl.node.type_param_kinds.iter().cloned())
                     .collect();
 
@@ -903,14 +921,18 @@ fn collect_schemes(
                             .node
                             .type_params
                             .iter()
-                            .map(|param| param.map_as_ref(|param| ast::Type::Var(param.clone())))
+                            .map(|type_param| {
+                                type_param.name.map_as_ref(|type_param_name| {
+                                    ast::Type::Var(type_param_name.clone())
+                                })
+                            })
                             .collect(),
                     }),
                 };
 
                 for item in &trait_decl.node.items {
                     let fun = match item {
-                        ast::TraitDeclItem::Type(_) => continue,
+                        ast::TraitDeclItem::Type { .. } => continue,
                         ast::TraitDeclItem::Fun(fun) => fun,
                     };
 
@@ -937,7 +959,12 @@ fn collect_schemes(
                     // Add type synonyms for associated types so that e.g. `Item` resolves to
                     // `TraitName[params...].Item` within method signatures.
                     for trait_item in &trait_decl.node.items {
-                        if let ast::TraitDeclItem::Type(assoc_ty) = trait_item {
+                        if let ast::TraitDeclItem::Type {
+                            name: assoc_ty,
+                            kind,
+                        } = trait_item
+                        {
+                            let kind = kind_inference::convert_kind(kind).unwrap_or(Kind::Star);
                             let trait_ty = {
                                 let trait_name = trait_decl.node.name.node.clone();
                                 let args: Vec<Ty> = trait_decl
@@ -945,7 +972,9 @@ fn collect_schemes(
                                     .type_params
                                     .iter()
                                     .zip(trait_decl.node.type_param_kinds.iter())
-                                    .map(|(p, k)| Ty::QVar(p.node.clone(), k.clone()))
+                                    .map(|(type_param, kind)| {
+                                        Ty::QVar(type_param.name.node.clone(), *kind)
+                                    })
                                     .collect();
                                 if args.is_empty() {
                                     Ty::Con(trait_name, Kind::Star)
@@ -958,6 +987,7 @@ fn collect_schemes(
                                 Ty::AssocTySelect {
                                     ty: Box::new(trait_ty),
                                     assoc_ty: assoc_ty.node.clone(),
+                                    kind,
                                 },
                             );
                         }
@@ -1162,15 +1192,15 @@ fn collect_schemes(
                     ty_decl.node.type_params.len(),
                     ty_decl.node.type_param_kinds.len()
                 );
-                for (ty_var, ty_var_kind) in ty_decl
+                for (type_param, kind) in ty_decl
                     .node
                     .type_params
                     .iter()
                     .zip(ty_decl.node.type_param_kinds.iter())
                 {
                     tys.insert_var(
-                        ty_var.clone(),
-                        Ty::QVar(ty_var.clone(), ty_var_kind.clone()),
+                        type_param.name.node.clone(),
+                        Ty::QVar(type_param.name.node.clone(), *kind),
                     );
                 }
 
@@ -1185,9 +1215,7 @@ fn collect_schemes(
                             .type_params
                             .iter()
                             .zip(ty_decl.node.type_param_kinds.iter())
-                            .map(|(ty_var, ty_var_kind)| {
-                                Ty::QVar(ty_var.clone(), ty_var_kind.clone())
-                            })
+                            .map(|(type_param, kind)| Ty::QVar(type_param.name.node.clone(), *kind))
                             .collect(),
                         Kind::Star,
                     )
@@ -1216,7 +1244,7 @@ fn collect_schemes(
                                     .node
                                     .type_params
                                     .iter()
-                                    .cloned()
+                                    .map(|type_param| type_param.name.node.clone())
                                     .zip(ty_decl.node.type_param_kinds.iter().cloned())
                                     .collect(),
                                 preds: Default::default(),
@@ -1255,7 +1283,7 @@ fn collect_schemes(
                                 .node
                                 .type_params
                                 .iter()
-                                .cloned()
+                                .map(|type_param| type_param.name.node.clone())
                                 .zip(ty_decl.node.type_param_kinds.iter().cloned())
                                 .collect(),
                             preds: Default::default(),
@@ -1294,8 +1322,8 @@ fn collect_schemes(
                 // Add type synonyms for associated types, mapping to
                 // `TraitName[args...].AssocTyName` so that both trait and impl sides produce the
                 // same `AssocTySelect` structure for `eq_modulo_alpha`.
+                let trait_name = impl_decl.node.trait_.node.clone();
                 let impl_trait_ty = {
-                    let trait_name = impl_decl.node.trait_.node.clone();
                     let args: Vec<Ty> = impl_decl
                         .node
                         .tys
@@ -1303,18 +1331,36 @@ fn collect_schemes(
                         .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
                         .collect();
                     if args.is_empty() {
-                        Ty::Con(trait_name, Kind::Star)
+                        Ty::Con(trait_name.clone(), Kind::Star)
                     } else {
-                        Ty::App(trait_name, args, Kind::Star)
+                        Ty::App(trait_name.clone(), args, Kind::Star)
                     }
                 };
                 for item in &impl_decl.node.items {
                     if let ast::ImplDeclItem::Type { assoc_ty, .. } = item {
+                        let kind = *tys
+                            .cons()
+                            .get(&trait_name)
+                            .unwrap()
+                            .details
+                            .trait_details()
+                            .unwrap()
+                            .assoc_tys
+                            .get(&assoc_ty.node)
+                            .unwrap_or_else(|| {
+                                panic!(
+                                    "{}: Trait {} does not have associated type {}",
+                                    loc_display(&assoc_ty.loc),
+                                    trait_name,
+                                    assoc_ty.node,
+                                )
+                            });
                         tys.insert_synonym(
                             assoc_ty.node.clone(),
                             Ty::AssocTySelect {
                                 ty: Box::new(impl_trait_ty.clone()),
                                 assoc_ty: assoc_ty.node.clone(),
+                                kind,
                             },
                         );
                     }
@@ -1593,7 +1639,17 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     // concrete type within impl method bodies.
     for item in &impl_.node.items {
         if let ast::ImplDeclItem::Type { assoc_ty, rhs } = item {
+            let assoc_ty_expected_kind = *trait_details.assoc_tys.get(&assoc_ty.node).unwrap();
             let converted = convert_ast_ty(&tys.tys, &rhs.node, &rhs.loc);
+            if converted.kind() != assoc_ty_expected_kind {
+                panic!(
+                    "{}: Associated type {} is expected to have kind {}, but has kind {}",
+                    loc_display(&assoc_ty.loc),
+                    &assoc_ty.node,
+                    assoc_ty_expected_kind,
+                    converted.kind(),
+                );
+            }
             tys.tys.insert_synonym(assoc_ty.node.clone(), converted);
         }
     }
@@ -1695,14 +1751,6 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     for item in &impl_.node.items {
         let fun = match item {
             ast::ImplDeclItem::Type { assoc_ty, rhs: _ } => {
-                if !trait_details.assoc_tys.contains(&assoc_ty.node) {
-                    panic!(
-                        "{}: Trait {} does not have associated type {}",
-                        loc_display(&assoc_ty.loc),
-                        &trait_ty_con_id.node,
-                        &assoc_ty.node
-                    );
-                }
                 let new = implemented_assoc_tys.insert(assoc_ty.node.clone());
                 if !new {
                     panic!(
@@ -1753,7 +1801,8 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
     let missing_assoc_tys: Vec<&Id> = trait_details
         .assoc_tys
-        .difference(&implemented_assoc_tys)
+        .keys()
+        .filter(|trait_assoc_ty| !implemented_assoc_tys.contains(*trait_assoc_ty))
         .collect();
     if !missing_assoc_tys.is_empty() {
         panic!(
@@ -1775,9 +1824,6 @@ fn resolve_preds(
     var_gen: &UVarGen,
     _level: u32,
 ) {
-    let mut ambiguous_var_rows: Vec<UVarRef> = vec![];
-    let mut ambiguous_rec_rows: Vec<UVarRef> = vec![];
-
     // TODO: Not sure if this is a bug or not, but resolving a predicate may allow other predicates
     // to be resolved as well. Keep looping as long as we resolve predicates.
     let mut progress = true;
@@ -1790,48 +1836,6 @@ fn resolve_preds(
             pred.params
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]));
-
-            if pred.trait_ == kind_inference::REC_ROW_TRAIT_ID {
-                assert!(pred.assoc_ty.is_none());
-                match &pred.params[0] {
-                    Ty::Anonymous {
-                        record_or_variant,
-                        is_row,
-                        ..
-                    } => {
-                        if *is_row && *record_or_variant == RecordOrVariant::Record {
-                            continue;
-                        }
-                    }
-                    Ty::UVar(var_ref) => {
-                        assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Record));
-                        ambiguous_rec_rows.push(var_ref.clone());
-                        continue;
-                    }
-                    _ => {}
-                }
-            }
-
-            if pred.trait_ == kind_inference::VAR_ROW_TRAIT_ID {
-                assert!(pred.assoc_ty.is_none());
-                match &pred.params[0] {
-                    Ty::Anonymous {
-                        record_or_variant,
-                        is_row,
-                        ..
-                    } => {
-                        if *is_row && *record_or_variant == RecordOrVariant::Variant {
-                            continue;
-                        }
-                    }
-                    Ty::UVar(var_ref) => {
-                        assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Variant));
-                        ambiguous_var_rows.push(var_ref.clone());
-                        continue;
-                    }
-                    _ => {}
-                }
-            }
 
             if pred.trait_ == kind_inference::ROW_TO_LIST_TRAIT_ID {
                 assert_eq!(pred.params.len(), 1);
@@ -1865,6 +1869,7 @@ fn resolve_preds(
                                             Kind::Star,
                                         )),
                                         assoc_ty: SmolStr::new_static("List"),
+                                        kind: Kind::Star,
                                     }
                                 }
                             };
@@ -2000,28 +2005,6 @@ fn resolve_preds(
         }
         panic!("{}", msg);
     }
-
-    for rec_row in ambiguous_rec_rows {
-        if rec_row.link().is_none() {
-            rec_row.set_link(Ty::Anonymous {
-                labels: Default::default(),
-                extension: None,
-                record_or_variant: RecordOrVariant::Record,
-                is_row: true,
-            });
-        }
-    }
-
-    for var_row in ambiguous_var_rows {
-        if var_row.link().is_none() {
-            var_row.set_link(Ty::Anonymous {
-                labels: Default::default(),
-                extension: None,
-                record_or_variant: RecordOrVariant::Variant,
-                is_row: true,
-            });
-        }
-    }
 }
 
 fn rename_domain_var(var: &Id, uniq: u32) -> Id {
@@ -2060,14 +2043,22 @@ pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
                 // Build scoped synonyms: trait associated types map to AssocTySelect.
                 let mut scoped = synonyms.clone();
                 for item in &trait_decl.node.items {
-                    if let ast::TraitDeclItem::Type(assoc_ty) = item {
+                    if let ast::TraitDeclItem::Type {
+                        name: assoc_ty,
+                        kind: _,
+                    } = item
+                    {
                         let trait_ty = ast::Type::Named(ast::NamedType {
                             name: trait_decl.node.name.node.clone(),
                             args: trait_decl
                                 .node
                                 .type_params
                                 .iter()
-                                .map(|p| p.map_as_ref(|p| ast::Type::Var(p.clone())))
+                                .map(|type_param| {
+                                    type_param.name.map_as_ref(|type_param_name| {
+                                        ast::Type::Var(type_param_name.clone())
+                                    })
+                                })
                                 .collect(),
                         });
                         scoped.insert(

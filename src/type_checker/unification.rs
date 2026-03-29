@@ -257,10 +257,12 @@ pub(super) fn unify(
             Ty::AssocTySelect {
                 ty: ty1_inner,
                 assoc_ty: assoc1,
+                kind: _,
             },
             Ty::AssocTySelect {
                 ty: ty2_inner,
                 assoc_ty: assoc2,
+                kind: _,
             },
         ) => {
             if assoc1 != assoc2 {
@@ -280,6 +282,7 @@ pub(super) fn unify(
             Ty::AssocTySelect {
                 ty: inner_ty,
                 assoc_ty,
+                kind: _,
             },
             other,
         )
@@ -288,6 +291,7 @@ pub(super) fn unify(
             Ty::AssocTySelect {
                 ty: inner_ty,
                 assoc_ty,
+                kind: _,
             },
         ) => {
             let (trait_name, trait_args): (&Id, &[Ty]) = match inner_ty.as_ref() {
@@ -622,10 +626,12 @@ pub(super) fn try_unify_one_way(
             Ty::AssocTySelect {
                 ty: ty1_inner,
                 assoc_ty: assoc1,
+                kind: _,
             },
             Ty::AssocTySelect {
                 ty: ty2_inner,
                 assoc_ty: assoc2,
+                kind: _,
             },
         ) => {
             if assoc1 != assoc2 {
@@ -848,7 +854,11 @@ fn prune_level(ty: &Ty, max_level: u32) {
             }
         }
 
-        Ty::AssocTySelect { ty, assoc_ty: _ } => {
+        Ty::AssocTySelect {
+            ty,
+            assoc_ty: _,
+            kind: _,
+        } => {
             prune_level(ty, max_level);
         }
     }

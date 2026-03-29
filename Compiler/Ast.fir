@@ -63,7 +63,7 @@ type TypeDecl(
     name: Id,
 
     ## Type parameters of the type. `[t]` in the example.
-    typeParams: Vec[Id],
+    typeParams: Vec[DeclTypeParam],
 
     ## Kinds of `type_params`. Filled in by kind inference.
     typeParamKinds: Vec[Kind],
@@ -244,7 +244,7 @@ type TraitDecl(
     name: Id,
 
     ## Type parameters of the trait.
-    typeParams: Vec[Id],
+    typeParams: Vec[DeclTypeParam],
 
     ## Kinds of `type_params`. Filled in by kind inference.
     typeParamKinds: Vec[Kind],
@@ -256,8 +256,11 @@ type TraitDecl(
 
 #[derive(ToDoc)]
 type TraitDeclItem:
-    ## `type Foo` in a `trait` declaration. Declares an associated type.
-    Type(Id)
+    ## An associated type declaration, with optional kind.
+    Type(
+        name: Id,
+        kind: Option[Type],
+    )
     Fun(FunDecl)
 
 
@@ -475,7 +478,16 @@ type Context(
 ##
 #[derive(ToDoc)]
 type Pred_:
+    ## A kind annotation: `ext: Row[Rec]`.
+    Kind(
+        name: Id,
+        kind: Option[Type],
+    )
+
+    ## A trait application: `Iterator[iter, exn]`.
     App(NamedType)
+
+    ## An associated type equality: `Iterator[iter, exn].Item = U32`.
     AssocTyEq(
         ty: NamedType,
         assocTy: Id,
@@ -486,11 +498,16 @@ type Pred_:
 impl Tokens[Pred_]:
     firstToken(self: Pred_, tokens: Array[Token]) TokenIdx:
         match self:
+            Pred_.Kind(name = kindVar, ..): kindVar.firstToken(tokens)
             Pred_.App(app): app.firstToken(tokens)
             Pred_.AssocTyEq(ty, ..): ty.firstToken(tokens)
 
     lastToken(self: Pred_, tokens: Array[Token]) TokenIdx:
         match self:
+            Pred_.Kind(name = _, kind):
+                match kind:
+                    Option.Some(kind): kind.lastToken(tokens)
+                    Option.None: self.firstToken(tokens)
             Pred_.App(app): app.lastToken(tokens)
             Pred_.AssocTyEq(eq, ..): eq.lastToken(tokens)
 
@@ -500,6 +517,29 @@ type TypeParam(
     name: LocalId,
     kind: Kind,
 )
+
+
+## A type parameter in a type or trait declaration, with optional kind annotation.
+##
+## E.g. `t` in `type Vec[t]`, `r: Row[Rec]` in `trait Foo[r: Row[Rec]]`.
+#[derive(ToDoc)]
+type DeclTypeParam(
+    ## Name of the type parameter.
+    name: Id,
+
+    ## Optional kind annotation.
+    kind: Option[Type],
+)
+
+
+impl Tokens[DeclTypeParam]:
+    firstToken(self: DeclTypeParam, tokens: Array[Token]) TokenIdx:
+        self.name.token
+
+    lastToken(self: DeclTypeParam, tokens: Array[Token]) TokenIdx:
+        match self.kind:
+            Option.Some(kind): kind.lastToken(tokens)
+            Option.None: self.name.token
 
 
 impl Tokens[Context]:
@@ -1899,9 +1939,17 @@ impl ToDoc[TraitDecl]:
 impl ToDoc[TraitDeclItem]:
     toDoc(self: TraitDeclItem) Doc:
         match self:
-            TraitDeclItem.Type(i0):
+            TraitDeclItem.Type(name, kind):
                 let args = Doc.break_(0)
-                args += i0.toDoc()
+                args += Doc.grouped(
+                    Doc.str("name =")
+                        + Doc.nested(4, Doc.break_(1) + name.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("kind =")
+                        + Doc.nested(4, Doc.break_(1) + kind.toDoc()),
+                )
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("TraitDeclItem.Type") + Doc.char('(') + args)
             TraitDeclItem.Fun(i0):
@@ -2133,6 +2181,19 @@ impl ToDoc[Context]:
 impl ToDoc[Pred_]:
     toDoc(self: Pred_) Doc:
         match self:
+            Pred_.Kind(name = kindVar, kind):
+                let args = Doc.break_(0)
+                args += Doc.grouped(
+                    Doc.str("name =")
+                        + Doc.nested(4, Doc.break_(1) + kindVar.toDoc()),
+                )
+                args += Doc.char(',') + Doc.break_(1)
+                args += Doc.grouped(
+                    Doc.str("kind =")
+                        + Doc.nested(4, Doc.break_(1) + kind.toDoc()),
+                )
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Pred_.Kind") + Doc.char('(') + args)
             Pred_.App(i0):
                 let args = Doc.break_(0)
                 args += i0.toDoc()
@@ -2168,6 +2229,20 @@ impl ToDoc[TypeParam]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("TypeParam") + Doc.char('(') + args)
+
+
+impl ToDoc[DeclTypeParam]:
+    toDoc(self: DeclTypeParam) Doc:
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("name =") + Doc.nested(4, Doc.break_(1) + self.name.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("kind =") + Doc.nested(4, Doc.break_(1) + self.kind.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("DeclTypeParam") + Doc.char('(') + args)
 
 
 impl ToDoc[NamedType]:

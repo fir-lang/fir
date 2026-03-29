@@ -196,7 +196,7 @@ impl TraitImpl {
             .qvars
             .iter()
             .map(|(qvar, kind)| {
-                let instantiated_var = var_gen.new_var(0, kind.clone(), loc.clone());
+                let instantiated_var = var_gen.new_var(0, *kind, loc.clone());
                 (qvar.clone(), Ty::UVar(instantiated_var.clone()))
             })
             .collect();

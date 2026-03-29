@@ -1,8 +1,8 @@
-test[RecRow[r]](r: (x: I32, y: I32, ..r)):
+test(r: (x: I32, y: I32, ..r)):
     printStr(r.x.toStr())
     printStr(r.y.toStr())
 
-id[RecRow[r]](r: (x: I32, ..r)) (x: I32, ..r):
+id(r: (x: I32, ..r)) (x: I32, ..r):
     printStr(r.x.toStr())
     r
 

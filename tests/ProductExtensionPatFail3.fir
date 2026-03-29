@@ -3,7 +3,7 @@ type Foo[recRow](
     ..recRow
 )
 
-foo[RecRow[r]](rec: Foo[r]):
+foo[r: Row[Rec]](rec: Foo[r]):
     match rec:
         Foo(x = Bool.True, y = "hi", ..):
             print("true")

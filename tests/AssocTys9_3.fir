@@ -2,10 +2,10 @@
 # them in the `Expr` type consturctors.
 
 trait ExprExts[t]:
-    type VarExt
-    type AppExt
-    type AbsExt
-    type LetExt
+    type VarExt: Row[Rec]
+    type AppExt: Row[Rec]
+    type AbsExt: Row[Rec]
+    type LetExt: Row[Rec]
 
 type Expr[exts]:
     Var(

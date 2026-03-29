@@ -349,11 +349,14 @@ typeDecl TypeDecl:
         )
 
 
-typeParams Vec[Id]:
-    id0=^ "LowerId" ids=(_"," ^ _"LowerId")* ","?:
-        let vec: Vec[Id] =
-            Vec.fromIter(once(newId(id0)).chain(ids.iter().map(\(id: U32): newId(id))))
-        vec
+typeParams Vec[DeclTypeParam]:
+    p0=declTypeParam ps=(_"," declTypeParam)* ","?:
+        Vec.fromIter(once(p0).chain(ps.iter()))
+
+
+declTypeParam DeclTypeParam:
+    name=^ "LowerId" kind=(_":" type_)?:
+        DeclTypeParam(name = newId(name), kind)
 
 
 conDecl ConDecl:
@@ -1027,6 +1030,9 @@ context Context:
 
 
 pred Pred_:
+    varId=^ "LowerId" kind=(_":" type_)?:
+        Pred_.Kind(name = newId(varId), kind)
+
     app=namedType selection=("." name=^ "UpperId" "=" ty=type_)?:
         match selection:
             Option.None: Pred_.App(app)
@@ -1073,7 +1079,7 @@ traitDeclRhs Vec[TraitDeclItem]:
 
 
 traitDeclItem TraitDeclItem:
-    "type" name=^ "UpperId" "NEWLINE": TraitDeclItem.Type(newId(name))
+    "type" name=^ "UpperId" kind=(_":" type_)? "NEWLINE": TraitDeclItem.Type(name = newId(name), kind)
     fun=funDecl: TraitDeclItem.Fun(fun)
 
 

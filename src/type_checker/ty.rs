@@ -86,6 +86,7 @@ pub enum Ty {
     AssocTySelect {
         ty: Box<Ty>,
         assoc_ty: Id,
+        kind: Kind,
     },
 }
 
@@ -179,7 +180,7 @@ pub struct UVar {
 /// Kind of a type.
 ///
 /// We don't support higher-kinded variables yet, so this is either a `*` or `row` for now.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Kind {
     Star,
     Row(RecordOrVariant),
@@ -233,7 +234,7 @@ pub(super) struct TraitDetails {
     pub(super) methods: HashMap<Id, TraitMethod>,
 
     /// Associated types of the trait.
-    pub(super) assoc_tys: HashSet<Id>,
+    pub(super) assoc_tys: HashMap<Id, Kind>,
 }
 
 #[derive(Debug, Clone)]
@@ -302,7 +303,7 @@ impl Scheme {
 
         // Instantiate quantified variables of the scheme.
         for (qvar, kind) in &self.quantified_vars {
-            let instantiated_var = var_gen.new_var(level, kind.clone(), self.loc.clone());
+            let instantiated_var = var_gen.new_var(level, *kind, self.loc.clone());
             var_map.insert(qvar.clone(), Ty::UVar(instantiated_var.clone()));
             instantiations.push(instantiated_var);
         }
@@ -380,7 +381,7 @@ impl Scheme {
                 .quantified_vars
                 .iter()
                 .filter(|(qvar, _)| qvar != var)
-                .map(|(qvar, kind)| (qvar.clone(), kind.clone()))
+                .map(|(qvar, kind)| (qvar.clone(), *kind))
                 .collect(),
             preds: self
                 .preds
@@ -488,8 +489,8 @@ impl Scheme {
             .iter()
             .map(|(qvar, kind)| {
                 let new_qvar = rename_domain_var(qvar, uniq);
-                subst_map.insert(qvar.clone(), Ty::QVar(new_qvar.clone(), kind.clone()));
-                (new_qvar, kind.clone())
+                subst_map.insert(qvar.clone(), Ty::QVar(new_qvar.clone(), *kind));
+                (new_qvar, *kind)
             })
             .collect();
 
@@ -728,10 +729,12 @@ fn ty_eq_modulo_alpha(
             Ty::AssocTySelect {
                 ty: ty1,
                 assoc_ty: assoc_ty1,
+                kind: _,
             },
             Ty::AssocTySelect {
                 ty: ty2,
                 assoc_ty: assoc_ty2,
+                kind: _,
             },
         ) => {
             assoc_ty1 == assoc_ty2 && ty_eq_modulo_alpha(cons, ty1, ty2, ty1_qvars, ty2_qvars, loc)
@@ -778,13 +781,13 @@ impl Ty {
 
     pub fn kind(&self) -> Kind {
         match self {
-            Ty::Con(_, kind) | Ty::RVar(_, kind) => kind.clone(),
+            Ty::Con(_, kind) | Ty::RVar(_, kind) => *kind,
 
             Ty::UVar(var) => var.kind(),
 
-            Ty::App(_, _, kind) => kind.clone(),
+            Ty::App(_, _, kind) => *kind,
 
-            Ty::QVar(_, kind) => kind.clone(),
+            Ty::QVar(_, kind) => *kind,
 
             Ty::Fun { .. } => Kind::Star,
 
@@ -800,31 +803,23 @@ impl Ty {
                 }
             }
 
-            Ty::AssocTySelect { ty: _, assoc_ty } => {
-                if assoc_ty.ends_with("RecRow") {
-                    Kind::Row(RecordOrVariant::Record)
-                } else if assoc_ty.ends_with("VarRow") {
-                    Kind::Row(RecordOrVariant::Variant)
-                } else {
-                    Kind::Star
-                }
-            }
+            Ty::AssocTySelect { kind, .. } => *kind,
         }
     }
 
     /// Substitute `ty` for quantified `var` in `self`.
     pub(super) fn subst(&self, var: &Id, ty: &Ty) -> Ty {
         match self {
-            Ty::Con(id, kind) => Ty::Con(id.clone(), kind.clone()),
+            Ty::Con(id, kind) => Ty::Con(id.clone(), *kind),
 
-            Ty::RVar(id, kind) => Ty::RVar(id.clone(), kind.clone()),
+            Ty::RVar(id, kind) => Ty::RVar(id.clone(), *kind),
 
             Ty::UVar(var) => Ty::UVar(var.clone()),
 
             Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
                 args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
-                kind.clone(),
+                *kind,
             ),
 
             Ty::Anonymous {
@@ -846,7 +841,7 @@ impl Ty {
                 if qvar == var {
                     ty.clone()
                 } else {
-                    Ty::QVar(qvar.clone(), kind.clone())
+                    Ty::QVar(qvar.clone(), *kind)
                 }
             }
 
@@ -874,25 +869,27 @@ impl Ty {
             Ty::AssocTySelect {
                 ty: inner_ty,
                 assoc_ty,
+                kind,
             } => Ty::AssocTySelect {
                 ty: Box::new(inner_ty.subst(var, ty)),
                 assoc_ty: assoc_ty.clone(),
+                kind: *kind,
             },
         }
     }
 
     pub(super) fn subst_qvars(&self, vars: &HashMap<Id, Ty>) -> Ty {
         match self {
-            Ty::Con(con, kind) => Ty::Con(con.clone(), kind.clone()),
+            Ty::Con(con, kind) => Ty::Con(con.clone(), *kind),
 
-            Ty::RVar(id, kind) => Ty::RVar(id.clone(), kind.clone()),
+            Ty::RVar(id, kind) => Ty::RVar(id.clone(), *kind),
 
             Ty::UVar(var) => Ty::UVar(var.clone()),
 
             Ty::App(ty, tys, kind) => Ty::App(
                 ty.clone(),
                 tys.iter().map(|ty| ty.subst_qvars(vars)).collect(),
-                kind.clone(),
+                *kind,
             ),
 
             Ty::Anonymous {
@@ -942,9 +939,10 @@ impl Ty {
                     .map(|exn| Box::new(exn.subst_qvars(vars))),
             },
 
-            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+            Ty::AssocTySelect { ty, assoc_ty, kind } => Ty::AssocTySelect {
                 ty: Box::new(ty.subst_qvars(vars)),
                 assoc_ty: assoc_ty.clone(),
+                kind: *kind,
             },
         }
     }
@@ -983,7 +981,7 @@ impl Ty {
                 args.iter()
                     .map(|ty| ty.deep_normalize(cons, trait_env, var_gen, assumps))
                     .collect(),
-                kind.clone(),
+                *kind,
             ),
 
             Ty::Anonymous {
@@ -1050,6 +1048,7 @@ impl Ty {
             Ty::AssocTySelect {
                 ty: inner_ty,
                 assoc_ty,
+                kind,
             } => {
                 let inner_ty = inner_ty.deep_normalize(cons, trait_env, var_gen, assumps);
 
@@ -1060,6 +1059,7 @@ impl Ty {
                         return Ty::AssocTySelect {
                             ty: Box::new(inner_ty),
                             assoc_ty: assoc_ty.clone(),
+                            kind: *kind,
                         };
                     }
                 };
@@ -1098,6 +1098,7 @@ impl Ty {
                                     Kind::Star,
                                 )),
                                 assoc_ty: Id::new_static("List"),
+                                kind: Kind::Star,
                             },
                         };
                         for (_field_name, field_ty) in labels.iter().rev() {
@@ -1148,6 +1149,7 @@ impl Ty {
                 Ty::AssocTySelect {
                     ty: Box::new(inner_ty),
                     assoc_ty: assoc_ty.clone(),
+                    kind: *kind,
                 }
             }
         }
@@ -1213,7 +1215,7 @@ impl UVarRef {
     }
 
     pub fn kind(&self) -> Kind {
-        self.0.kind.clone()
+        self.0.kind
     }
 
     pub fn link(&self) -> Option<Ty> {
@@ -1403,7 +1405,11 @@ impl fmt::Display for Ty {
                 Ok(())
             }
 
-            Ty::AssocTySelect { ty, assoc_ty } => {
+            Ty::AssocTySelect {
+                ty,
+                assoc_ty,
+                kind: _,
+            } => {
                 write!(f, "{}.{}", ty, assoc_ty)
             }
         }

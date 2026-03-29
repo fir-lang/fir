@@ -37,7 +37,7 @@ impl TypeDecl {
                 if i != 0 {
                     buf.push_str(", ");
                 }
-                buf.push_str(type_param);
+                type_param.print(buf);
             }
             buf.push(']');
         }
@@ -150,11 +150,11 @@ impl TraitDecl {
         buf.push_str("trait ");
         buf.push_str(&self.name.node);
         buf.push('[');
-        for (i, ty) in self.type_params.iter().enumerate() {
+        for (i, param) in self.type_params.iter().enumerate() {
             if i != 0 {
                 buf.push_str(", ");
             }
-            buf.push_str(&ty.node);
+            param.print(buf);
         }
         buf.push_str("]:\n");
         for (i, item) in self.items.iter().enumerate() {
@@ -167,12 +167,26 @@ impl TraitDecl {
     }
 }
 
+impl TypeParam {
+    pub fn print(&self, buf: &mut String) {
+        buf.push_str(&self.name.node);
+        if let Some(kind) = &self.kind {
+            buf.push_str(": ");
+            kind.node.print(buf);
+        }
+    }
+}
+
 impl TraitDeclItem {
     pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
-            TraitDeclItem::Type(ty) => {
+            TraitDeclItem::Type { name, kind } => {
                 buf.push_str("type ");
-                buf.push_str(ty.node.as_str());
+                buf.push_str(name.node.as_str());
+                if let Some(kind) = kind {
+                    buf.push_str(": ");
+                    kind.node.print(buf);
+                }
             }
             TraitDeclItem::Fun(fun) => {
                 fun.node.print(buf, indent + 4);
@@ -348,6 +362,13 @@ impl NamedType {
 impl Pred {
     pub fn print(&self, buf: &mut String) {
         match self {
+            Pred::Kind { var, kind } => {
+                buf.push_str(var);
+                if let Some(kind) = kind {
+                    buf.push_str(": ");
+                    kind.node.print(buf);
+                }
+            }
             Pred::App(type_app) => type_app.print(buf),
             Pred::AssocTyEq { ty, assoc_ty, eq } => {
                 ty.print(buf);

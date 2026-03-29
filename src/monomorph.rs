@@ -108,7 +108,7 @@ fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
                             .node
                             .type_params
                             .iter()
-                            .map(|t| t.node.clone())
+                            .map(|type_param| type_param.name.node.clone())
                             .zip(trait_decl.node.type_param_kinds.iter().cloned())
                             .collect();
                     }
@@ -118,7 +118,7 @@ fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
                                 .node
                                 .type_params
                                 .iter()
-                                .map(|t| t.node.clone())
+                                .map(|type_param| type_param.name.node.clone())
                                 .zip(trait_decl.node.type_param_kinds.iter().cloned())
                                 .collect(),
                             impls: Default::default(),
@@ -2032,7 +2032,11 @@ fn mono_tc_ty(
             }
         },
 
-        Ty::AssocTySelect { ty, assoc_ty } => {
+        Ty::AssocTySelect {
+            ty,
+            assoc_ty,
+            kind: _,
+        } => {
             // The `ty` is a trait application like `Trait[Arg]`, not a regular type. Extract the
             // trait name and args directly, monomorphize only the args.
             let (trait_name, trait_args): (&Id, &[Ty]) = match ty.as_ref() {
@@ -2170,7 +2174,7 @@ fn mono_ty_decl(
     let ty_map: HashMap<Id, mono::Type> = ty_decl
         .type_params
         .iter()
-        .cloned()
+        .map(|type_param| type_param.name.node.clone())
         .zip(args.iter().cloned())
         .collect();
 
@@ -2454,7 +2458,11 @@ fn collect_record_rows(
     // `*` for all assoc types in `ast::Type::kind` and also the `Ty::kind`.
     // assert!(matches!(ext_ty.kind(), Kind::Row(_)));
     match ext_ty {
-        Ty::AssocTySelect { ty, assoc_ty } => {
+        Ty::AssocTySelect {
+            ty,
+            assoc_ty,
+            kind: _,
+        } => {
             let (trait_name, trait_args): (&Id, &[Ty]) = match ty.as_ref() {
                 Ty::App(name, args, _kind) => (name, args.as_slice()),
                 Ty::Con(name, _kind) => (name, &[]),
