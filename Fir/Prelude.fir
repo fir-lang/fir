@@ -126,11 +126,6 @@ trait ToStr[t]:
     toStr(self: t) Str
 
 
-impl ToStr[()]:
-    toStr(self: ()) Str:
-        "()"
-
-
 impl ToDoc[()]:
     toDoc(self: ()) Doc:
         Doc.str("()")

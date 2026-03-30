@@ -1704,9 +1704,9 @@ fn match_(
                 return false;
             }
 
-            if !fields2_map.is_empty() {
-                let ext_var = match extension.as_ref().map(|e| &e.node) {
-                    Some(ast::Type::Var(id)) => id,
+            if let Some(ext) = extension.as_ref() {
+                let ext_var = match &ext.node {
+                    ast::Type::Var(id) => id,
                     _ => panic!("BUG: Non-variable record extension in match_"),
                 };
                 substs.insert(
