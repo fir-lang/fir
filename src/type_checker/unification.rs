@@ -206,10 +206,10 @@ pub(super) fn unify(
             Ty::Anonymous {
                 labels: labels2,
                 extension: extension2,
-                record_or_variant: _, // kind checked above
+                record_or_variant: record_or_variant_2,
                 is_row: _,
             },
-        ) => {
+        ) if record_or_variant_1 == record_or_variant_2 => {
             unify_labels(
                 &ty1,
                 labels1,
