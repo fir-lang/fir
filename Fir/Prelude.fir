@@ -246,13 +246,13 @@ trait RowToRecord[recRow]:
     type Rec
 
 
-type ListCons[head, tail](
+value type ListCons[head, tail](
     head: head,
     tail: tail,
 )
 
 
-type ListNil
+value type ListNil
 
 
 impl ToStr[ListNil]:
