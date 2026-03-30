@@ -5,11 +5,18 @@
 ##
 ## The associated type `List` is the heterogeneous list type for the rows. E.g.
 ##
-##     RecRowToList[row(msg: Str, x: U32)].List
-##
-## resolves to
-##
+##     RecRowToList[row(x: U32, msg: Str)].List
+##     ==>
 ##     List[RecordField[Str], List[RecordField[U32], []]]
+##
+## Note that the list fields are ordered based on labels. In the example above, the field `msg: Str`
+## comes first.
+##
+## Example with a row with an extension:
+##
+##     RecRowToList[row(msg: Str, ..rest)].List
+##     ==>
+##     List[RecordField[Str], RecRowToList[rest].List]
 ##
 trait RecRowToList[recRow]:
     type List
