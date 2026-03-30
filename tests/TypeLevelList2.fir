@@ -6,4 +6,4 @@ main():
         ),
     )
 
-# expected stdout: 1 -> Bool.True -> hi -> []
+# expected stdout: 1, Bool.True, hi, 

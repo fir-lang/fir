@@ -9,4 +9,3 @@ main():
 
 # expected stdout:
 # [42]
-

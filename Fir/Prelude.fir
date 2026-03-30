@@ -242,10 +242,6 @@ trait RowToList[recRow]:
     rowToList(rec: (..recRow)) List
 
 
-trait RowToRecord[recRow]:
-    type Rec
-
-
 value type ListCons[head, tail](
     head: head,
     tail: tail,
@@ -257,12 +253,12 @@ value type ListNil
 
 impl ToStr[ListNil]:
     toStr(self: ListNil) Str:
-        "[]"
+        ""
 
 
 impl[ToStr[head], ToStr[tail]] ToStr[ListCons[head, tail]]:
     toStr(self: ListCons[head, tail]) Str:
-        "`self.head` -> `self.tail`"
+        "`self.head`, `self.tail`"
 
 
 type RecordField[t](
@@ -274,3 +270,9 @@ type RecordField[t](
 impl[ToStr[t]] ToStr[RecordField[t]]:
     toStr(self: RecordField[t]) Str:
         "`self.label` = `self.value_`"
+
+
+impl[ToStr[RowToList[r].List]] ToStr[(..r)]:
+    toStr(self: (..r)) Str:
+        let list = RowToList[r].rowToList(self)
+        "(`list`)"
