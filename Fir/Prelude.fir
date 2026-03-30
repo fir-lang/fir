@@ -126,11 +126,6 @@ trait ToStr[t]:
     toStr(self: t) Str
 
 
-impl ToDoc[()]:
-    toDoc(self: ()) Doc:
-        Doc.str("()")
-
-
 impl ToStr[[]]:
     toStr(self: []) Str:
         "unreachable"
@@ -249,6 +244,14 @@ impl[ToStr[head], ToStr[tail]] ToStr[ListCons[head, tail]]:
             Option.Some(t): "`self.head`, `t`"
 
 
+impl[ToDoc[head], ToDoc[tail]] ToDoc[ListCons[head, tail]]:
+    toDoc(self: ListCons[head, tail]) Doc:
+        match self.tail:
+            Option.None: self.head.toDoc() + Doc.whenNotFlat(Doc.char(','))
+            Option.Some(t):
+                self.head.toDoc() + Doc.char(',') + Doc.break_(1) + t.toDoc()
+
+
 type RecordField[t](
     label: Str,
     value_: t,
@@ -265,3 +268,24 @@ impl[ToStr[RowToList[r].List]] ToStr[(..r)]:
         match RowToList[r].rowToList(self):
             Option.None: "()"
             Option.Some(list): "(`list`)"
+
+
+impl[ToDoc[t]] ToDoc[RecordField[t]]:
+    toDoc(self: RecordField[t]) Doc:
+        Doc.str(self.label)
+            + Doc.blank(1)
+            + Doc.char('=')
+            + Doc.blank(1)
+            + self.value_.toDoc()
+
+
+impl[ToDoc[RowToList[r].List]] ToDoc[(..r)]:
+    toDoc(self: (..r)) Doc:
+        match RowToList[r].rowToList(self):
+            Option.None: Doc.str("()")
+            Option.Some(list):
+                Doc.grouped(
+                    Doc.nested(4, Doc.char('(') + Doc.break_(0) + list.toDoc())
+                        + Doc.break_(0)
+                        + Doc.char(')'),
+                )
