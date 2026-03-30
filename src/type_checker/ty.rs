@@ -912,10 +912,10 @@ impl Ty {
                 is_row: *is_row,
             },
 
-            Ty::QVar(id, _) => vars
-                .get(id)
-                .cloned()
-                .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {id}")),
+            Ty::QVar(id, _) => match vars.get(id) {
+                Some(ty) => ty.clone(),
+                None => self.clone(),
+            },
 
             Ty::Fun {
                 args,

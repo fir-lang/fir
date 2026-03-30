@@ -171,6 +171,16 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(rhs),
         }),
 
+    <l:@L> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "=" <tl:@L> <ty:Type> <tr:@R> NEWLINE <r:@R> =>
+        L::new(module, l, r, TypeDecl {
+            attr: None,
+            value: false,
+            name: type_name.smol_str(),
+            type_params,
+            type_param_kinds: vec![],
+            rhs: Some(TypeDeclRhs::Synonym(L::new(module, tl, tr, ty))),
+        }),
+
     <l:@L> "type" <type_name:UpperId> "=" <tl:@L> <ty:Type> <tr:@R> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
             attr: None,

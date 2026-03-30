@@ -175,17 +175,6 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
         .get_con(name)
         .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), name));
 
-    if let TyConDetails::Synonym(syn_ty) = &ty_con.details {
-        if !args.is_empty() {
-            panic!(
-                "{}: Type synonym {} does not take type arguments",
-                loc_display(loc),
-                name
-            );
-        }
-        return syn_ty.clone();
-    }
-
     if ty_con.arity() as usize != args.len() {
         panic!(
             "{}: Incorrect number of type arguments to {}, expected {}, found {}",
@@ -194,6 +183,21 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
             ty_con.arity(),
             args.len()
         )
+    }
+
+    if let TyConDetails::Synonym(syn_ty) = &ty_con.details {
+        assert_eq!(args.len(), ty_con.ty_params.len());
+        let converted_args: Vec<Ty> = args
+            .iter()
+            .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+            .collect();
+        let subst_map: HashMap<Id, Ty> = ty_con
+            .ty_params
+            .iter()
+            .map(|(name, _)| name.clone())
+            .zip(converted_args)
+            .collect();
+        return syn_ty.subst_qvars(&subst_map);
     }
 
     if args.is_empty() {
