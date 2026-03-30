@@ -136,6 +136,14 @@ impl ToDoc[[]]:
         panic("unreachable")
 
 
+impl Eq[[]]:
+    __eq(self: [], other: []) Bool:
+        panic("unreachable")
+
+    __neq(self: [], other: []) Bool:
+        panic("unreachable")
+
+
 trait ToDoc[t]:
     toDoc(self: t) Doc
 
@@ -252,6 +260,11 @@ impl[ToDoc[head], ToDoc[tail]] ToDoc[ListCons[head, tail]]:
                 self.head.toDoc() + Doc.char(',') + Doc.break_(1) + t.toDoc()
 
 
+impl[Eq[head], Eq[tail]] Eq[ListCons[head, tail]]:
+    __eq(self: ListCons[head, tail], other: ListCons[head, tail]) Bool:
+        self.head == other.head and self.tail == other.tail
+
+
 type RecordField[t](
     label: Str,
     value_: t,
@@ -263,13 +276,6 @@ impl[ToStr[t]] ToStr[RecordField[t]]:
         "`self.label` = `self.value_`"
 
 
-impl[ToStr[RowToList[r].List]] ToStr[(..r)]:
-    toStr(self: (..r)) Str:
-        match RowToList[r].rowToList(self):
-            Option.None: "()"
-            Option.Some(list): "(`list`)"
-
-
 impl[ToDoc[t]] ToDoc[RecordField[t]]:
     toDoc(self: RecordField[t]) Doc:
         Doc.str(self.label)
@@ -277,6 +283,18 @@ impl[ToDoc[t]] ToDoc[RecordField[t]]:
             + Doc.char('=')
             + Doc.blank(1)
             + self.value_.toDoc()
+
+
+impl[Eq[t]] Eq[RecordField[t]]:
+    __eq(self: RecordField[t], other: RecordField[t]) Bool:
+        self.label == other.label and self.value_ == other.value_
+
+
+impl[ToStr[RowToList[r].List]] ToStr[(..r)]:
+    toStr(self: (..r)) Str:
+        match RowToList[r].rowToList(self):
+            Option.None: "()"
+            Option.Some(list): "(`list`)"
 
 
 impl[ToDoc[RowToList[r].List]] ToDoc[(..r)]:
@@ -289,3 +307,13 @@ impl[ToDoc[RowToList[r].List]] ToDoc[(..r)]:
                         + Doc.break_(0)
                         + Doc.char(')'),
                 )
+
+
+impl[Eq[RowToList[r].List]] Eq[(..r)]:
+    __eq(self: (..r), other: (..r)) Bool:
+        RowToList[r].rowToList(self) == RowToList[r].rowToList(other)
+
+    # Explicitly implement `__neq`, the default method calls a method on `self` and we don't support
+    # method calls on records yet.
+    __neq(self: (..r), other: (..r)) Bool:
+        not (RowToList[r].rowToList(self) == RowToList[r].rowToList(other))
