@@ -2336,7 +2336,8 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
         return;
     }
 
-    assert_eq!(ty_args.len(), 1);
+    // row, exn (implicit)
+    assert_eq!(ty_args.len(), 2);
 
     let fields = match &ty_args[0] {
         mono::Type::Record { fields } => fields.clone(),
