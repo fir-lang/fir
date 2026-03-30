@@ -6,10 +6,12 @@ import [
     Fir/HashMap,
     Fir/HashSet,
     Fir/Iter,
+    Fir/List,
     Fir/Num,
     Fir/Option,
     Fir/PPrint,
     Fir/Result,
+    Fir/RowToList,
     Fir/Str,
     Fir/StrBuf,
     Fir/Vec,
@@ -229,91 +231,3 @@ trait Hash[t]:
 
 trait Clone[t]:
     clone(self: t) t
-
-
-# This trait will only be implemented by the compiler, for record types, as
-# needed.
-trait RowToList[recRow]:
-    type List
-
-    rowToList(rec: (..recRow)) Option[List]
-
-
-value type ListCons[head, tail](
-    head: head,
-    tail: Option[tail],
-)
-
-
-impl[ToStr[head], ToStr[tail]] ToStr[ListCons[head, tail]]:
-    toStr(self: ListCons[head, tail]) Str:
-        match self.tail:
-            Option.None: "`self.head`"
-            Option.Some(t): "`self.head`, `t`"
-
-
-impl[ToDoc[head], ToDoc[tail]] ToDoc[ListCons[head, tail]]:
-    toDoc(self: ListCons[head, tail]) Doc:
-        match self.tail:
-            Option.None: self.head.toDoc() + Doc.whenNotFlat(Doc.char(','))
-            Option.Some(t):
-                self.head.toDoc() + Doc.char(',') + Doc.break_(1) + t.toDoc()
-
-
-impl[Eq[head], Eq[tail]] Eq[ListCons[head, tail]]:
-    __eq(self: ListCons[head, tail], other: ListCons[head, tail]) Bool:
-        self.head == other.head and self.tail == other.tail
-
-
-type RecordField[t](
-    label: Str,
-    value_: t,
-)
-
-
-impl[ToStr[t]] ToStr[RecordField[t]]:
-    toStr(self: RecordField[t]) Str:
-        "`self.label` = `self.value_`"
-
-
-impl[ToDoc[t]] ToDoc[RecordField[t]]:
-    toDoc(self: RecordField[t]) Doc:
-        Doc.str(self.label)
-            + Doc.blank(1)
-            + Doc.char('=')
-            + Doc.blank(1)
-            + self.value_.toDoc()
-
-
-impl[Eq[t]] Eq[RecordField[t]]:
-    __eq(self: RecordField[t], other: RecordField[t]) Bool:
-        self.label == other.label and self.value_ == other.value_
-
-
-impl[ToStr[RowToList[r].List]] ToStr[(..r)]:
-    toStr(self: (..r)) Str:
-        match RowToList[r].rowToList(self):
-            Option.None: "()"
-            Option.Some(list): "(`list`)"
-
-
-impl[ToDoc[RowToList[r].List]] ToDoc[(..r)]:
-    toDoc(self: (..r)) Doc:
-        match RowToList[r].rowToList(self):
-            Option.None: Doc.str("()")
-            Option.Some(list):
-                Doc.grouped(
-                    Doc.nested(4, Doc.char('(') + Doc.break_(0) + list.toDoc())
-                        + Doc.break_(0)
-                        + Doc.char(')'),
-                )
-
-
-impl[Eq[RowToList[r].List]] Eq[(..r)]:
-    __eq(self: (..r), other: (..r)) Bool:
-        RowToList[r].rowToList(self) == RowToList[r].rowToList(other)
-
-    # Explicitly implement `__neq`, the default method calls a method on `self` and we don't support
-    # method calls on records yet.
-    __neq(self: (..r), other: (..r)) Bool:
-        not (RowToList[r].rowToList(self) == RowToList[r].rowToList(other))
