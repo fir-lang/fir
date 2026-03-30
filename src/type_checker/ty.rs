@@ -1081,8 +1081,8 @@ impl Ty {
                     }
                 }
 
-                // `RowToList[row].List`: compute the List type from the row's fields.
-                if *trait_name == super::ROW_TO_LIST_TRAIT_ID {
+                // `RecRowToList[row].List`: compute the List type from the row's fields.
+                if *trait_name == super::REC_ROW_TO_LIST_TRAIT_ID {
                     assert_eq!(assoc_ty, "List");
 
                     let row_ty = trait_args[0].deep_normalize(cons, trait_env, var_gen, assumps);

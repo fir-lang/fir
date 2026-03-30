@@ -71,13 +71,13 @@ impl ExprExts[TcExprExts]:
 makeAstGeneric[ExprExts[t]]() Expr[t]:
     Expr.Var(name = "hi", ..ExprExts[t].defaultVarExt())
 
-recordToList(record: (..r)) Option[RowToList[r].List]:
-    RowToList[r].rowToList(record)
+recordToList(record: (..r)) Option[RecRowToList[r].List]:
+    RecRowToList[r].rowToList(record)
 
-type VarExtsList[t] = RowToList[ExprExts[t].VarExt].List
-type AppExtsList[t] = RowToList[ExprExts[t].AppExt].List
-type AbsExtsList[t] = RowToList[ExprExts[t].AbsExt].List
-type LetExtsList[t] = RowToList[ExprExts[t].LetExt].List
+type VarExtsList[t] = RecRowToList[ExprExts[t].VarExt].List
+type AppExtsList[t] = RecRowToList[ExprExts[t].AppExt].List
+type AbsExtsList[t] = RecRowToList[ExprExts[t].AbsExt].List
+type LetExtsList[t] = RecRowToList[ExprExts[t].LetExt].List
 
 printExt[
     ExprExts[t],

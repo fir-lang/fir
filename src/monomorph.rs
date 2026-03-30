@@ -1002,8 +1002,8 @@ fn mono_method(
     mono_pgm: &mut MonoPgm,
     loc: &ast::Loc,
 ) {
-    // RowToList.rowToList: synthesize a method that converts a record to a list.
-    if *method_ty_id == "RowToList" && *method_id == "rowToList" {
+    // RecRowToList.rowToList: synthesize a method that converts a record to a list.
+    if *method_ty_id == "RecRowToList" && *method_id == "rowToList" {
         return synthesize_row_to_list(ty_args, poly_pgm, mono_pgm);
     }
 
@@ -1639,11 +1639,11 @@ fn resolve_assoc_ty(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::Type {
-    // RowToList[row].List: synthesize the List type from the row's fields.
-    if *trait_name == "RowToList" && *assoc_ty == "List" {
+    // RecRowToList[row].List: synthesize the List type from the row's fields.
+    if *trait_name == "RecRowToList" && *assoc_ty == "List" {
         let fields = match &trait_args[0] {
             mono::Type::Record { fields } => fields,
-            other => panic!("RowToList type arg is not a record: {other:?}"),
+            other => panic!("RecRowToList type arg is not a record: {other:?}"),
         };
         return row_to_list_type(fields, poly_pgm, mono_pgm);
     }
@@ -1669,7 +1669,7 @@ fn resolve_assoc_ty(
     )
 }
 
-/// Build the `List` type for `RowToList`: `List[RecordField[T1], List[..., []]]`.
+/// Build the `List` type for `RecRowToList`: `List[RecordField[T1], List[..., []]]`.
 ///
 /// This is the same function as `crate::type_checker::row_to_list_type`, but works on mono types.
 fn row_to_list_type(
@@ -2328,7 +2328,7 @@ fn collect_record_rows(
 fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: &mut MonoPgm) {
     if mono_pgm
         .associated
-        .get("RowToList")
+        .get("RecRowToList")
         .and_then(|m| m.get("rowToList"))
         .and_then(|m| m.get(ty_args))
         .is_some()
@@ -2341,7 +2341,7 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
 
     let fields = match &ty_args[0] {
         mono::Type::Record { fields } => fields.clone(),
-        other => panic!("RowToList type arg is not a record: {other:?}"),
+        other => panic!("RecRowToList type arg is not a record: {other:?}"),
     };
 
     // The method parameter type is (..recRow) which is a record with the row's fields.
@@ -2535,7 +2535,7 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
     };
 
     let fun_decl = mono::FunDecl {
-        parent_ty: Some(ast::L::new_dummy(SmolStr::new_static("RowToList"))),
+        parent_ty: Some(ast::L::new_dummy(SmolStr::new_static("RecRowToList"))),
         name: ast::L::new_dummy(SmolStr::new_static("rowToList")),
         sig: mono::FunSig {
             params: vec![(SmolStr::new_static("rec"), ast::L::new_dummy(rec_ty))],
@@ -2547,7 +2547,7 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
 
     mono_pgm
         .associated
-        .entry(SmolStr::new_static("RowToList"))
+        .entry(SmolStr::new_static("RecRowToList"))
         .or_default()
         .entry(SmolStr::new_static("rowToList"))
         .or_default()

@@ -1,10 +1,10 @@
 printRecord[
-    RowToList[recRow],
-    ToStr[RowToList[recRow].List],
+    RecRowToList[recRow],
+    ToStr[RecRowToList[recRow].List],
 ](record: (x: U32, ..recRow)):
     let (x, ..rest) = record
     print("x = `x`")
-    print("rest = `RowToList[recRow].rowToList(rest)`")
+    print("rest = `RecRowToList[recRow].rowToList(rest)`")
     print("full = `(x = x, ..rest)`")
 
 main():

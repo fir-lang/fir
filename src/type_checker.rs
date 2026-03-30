@@ -1884,7 +1884,7 @@ fn resolve_preds(
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]));
 
-            if pred.trait_ == ROW_TO_LIST_TRAIT_ID {
+            if pred.trait_ == REC_ROW_TO_LIST_TRAIT_ID {
                 resolve_row_to_list(trait_env, &pred, &mut next_goals, cons, var_gen);
                 progress = true;
                 continue;
@@ -1983,13 +1983,13 @@ fn resolve_preds(
     }
 }
 
-pub(crate) const ROW_TO_LIST_TRAIT_ID: Id = Id::new_static("RowToList");
+pub(crate) const REC_ROW_TO_LIST_TRAIT_ID: Id = Id::new_static("RecRowToList");
 
 /*
-`RowToList[t]` always resolves for any `t`, but we need to check associated type selections to rule
-out weird cases like `RowToList[t].List = U32`. E.g.
+`RecRowToList[t]` always resolves for any `t`, but we need to check associated type selections to
+rule out weird cases like `RecRowToList[t].List = U32`. E.g.
 
-    foo[RowToList[r].List = U32](): ()
+    foo[RecRowToList[r].List = U32](): ()
     main(): foo[row(msg: Str), []]()
 */
 fn resolve_row_to_list(
@@ -2012,8 +2012,8 @@ fn resolve_row_to_list(
         assert_eq!(*record_or_variant, RecordOrVariant::Record);
         assert_eq!(assoc_ty_name, "List");
         assert!(is_row);
-        // Note: we don't generate `RowToList[ext]` here (when `extension` is `Some(...)`). I'm not
-        // sure if that's necessary as `RowToList[r]` will always resolve for any `r`.
+        // Note: we don't generate `RecRowToList[ext]` here (when `extension` is `Some(...)`). I'm
+        // not sure if that's necessary as `RecRowToList[r]` will always resolve for any `r`.
         let list_ty = row_to_list_type(labels, extension);
         unification::unify(
             &list_ty,
@@ -2034,7 +2034,7 @@ fn row_to_list_type(labels: &OrdMap<Id, Ty>, extension: &Option<Box<Ty>>) -> Ty 
         None => Ty::empty_variant(),
         Some(ext) => Ty::AssocTySelect {
             ty: Box::new(Ty::App(
-                SmolStr::new_static("RowToList"),
+                SmolStr::new_static("RecRowToList"),
                 vec![*ext.clone()],
                 Kind::Star,
             )),

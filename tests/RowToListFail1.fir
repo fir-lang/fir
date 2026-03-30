@@ -1,4 +1,4 @@
-foo[RowToList[r].List = U32]():
+foo[RecRowToList[r].List = U32]():
     ()
 
 
