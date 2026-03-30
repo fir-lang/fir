@@ -1670,17 +1670,14 @@ fn resolve_assoc_ty(
 }
 
 /// Build the `List` type for `RowToList`: `ListCons[RecordField[T1], ListCons[..., []]]`.
-/// Terminal tail type is `[]` (empty variant). For empty rows, returns `[]`.
+///
+/// This is the same function as `crate::type_checker::row_to_list_type`, but works on mono types.
 fn row_to_list_type(
     fields: &OrdMap<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::Type {
-    let void_ty = mono::Type::Variant {
-        alts: OrdMap::default(),
-    };
-
-    let mut list_ty = void_ty;
+    let mut list_ty = mono::Type::empty();
 
     for (_field_name, field_ty) in fields.iter().rev() {
         // RecordField[field_ty]
@@ -2339,6 +2336,8 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
         return;
     }
 
+    assert_eq!(ty_args.len(), 1);
+
     let fields = match &ty_args[0] {
         mono::Type::Record { fields } => fields.clone(),
         other => panic!("RowToList type arg is not a record: {other:?}"),
@@ -2353,7 +2352,7 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
 
     // Build body that returns `Option[ListCons[...]]`.
 
-    // Return type is Option[list_ty].
+    // Return type is `Option[list_ty]`.
     let option_list_ty = mono::Type::Named(mono::NamedType {
         name: SmolStr::new_static("Option"),
         args: vec![list_ty.clone()],
@@ -2368,25 +2367,22 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
             ty: option_list_ty.clone(),
         }))
     } else {
-        let void_ty = mono::Type::Variant {
-            alts: OrdMap::default(),
-        };
-
-        // Start with Option.None for the innermost tail.
+        // Start with `Option.None` for the innermost tail.
         let mut inner_expr = ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
             ty_id: SmolStr::new_static("Option"),
             con: Some(SmolStr::new_static("None")),
-            ty_args: vec![void_ty.clone()],
+            ty_args: vec![mono::Type::empty()],
             ty: mono::Type::Named(mono::NamedType {
                 name: SmolStr::new_static("Option"),
-                args: vec![void_ty.clone()],
+                args: vec![mono::Type::empty()],
             }),
         }));
-        let mut tail_ty = void_ty;
 
-        let fields_vec: Vec<_> = fields.iter().collect();
+        let mut tail_ty = mono::Type::empty();
 
-        // Wrap each field in RecordField and ListCons, from last to first.
+        let fields_vec: Vec<(&Id, &mono::Type)> = fields.iter().collect();
+
+        // Wrap each field in `RecordField` and `ListCons`, from last to first.
         for (i, (field_name, field_ty)) in fields_vec.iter().copied().enumerate().rev() {
             // rec.fieldName
             let field_sel = ast::L::new_dummy(mono::Expr::FieldSel(mono::FieldSelExpr {

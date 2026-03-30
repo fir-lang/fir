@@ -2030,9 +2030,6 @@ fn resolve_row_to_list(
 }
 
 fn row_to_list_type(labels: &OrdMap<Id, Ty>, extension: &Option<Box<Ty>>) -> Ty {
-    let mut fields_rev: Vec<(&Id, &Ty)> = labels.iter().collect();
-    fields_rev.reverse();
-
     let mut list_ty: Ty = match extension {
         None => Ty::empty_variant(),
         Some(ext) => Ty::AssocTySelect {
@@ -2046,7 +2043,7 @@ fn row_to_list_type(labels: &OrdMap<Id, Ty>, extension: &Option<Box<Ty>>) -> Ty 
         },
     };
 
-    for (_field_name, field_ty) in &fields_rev {
+    for (_field_name, field_ty) in labels.iter().rev() {
         let record_field_ty = Ty::App(
             SmolStr::new_static("RecordField"),
             vec![(*field_ty).clone()],
