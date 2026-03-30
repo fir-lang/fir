@@ -1899,10 +1899,14 @@ fn resolve_preds(
                         if let Some((_assoc_ty_name, assoc_ty_rhs)) = &pred.assoc_ty {
                             debug_assert_eq!(_assoc_ty_name, "List");
 
-                            // Build the tail: ListNil for closed rows, RowToList[rest].List for
-                            // open rows.
-                            let mut list_ty = match extension {
-                                None => Ty::Con(SmolStr::new_static("ListNil"), Kind::Star),
+                            // Empty variant `[]` is the terminal tail type for the last ListCons.
+                            // (its tail field will be Option.None at runtime)
+                            let void_ty = Ty::empty_variant();
+
+                            // For open rows, the tail of the outermost `ListCons` is the inner list
+                            // from `RowToList` on the extension.
+                            let open_tail = match extension {
+                                None => None,
                                 Some(ext) => {
                                     next_goals.push(Pred {
                                         trait_: kind_inference::ROW_TO_LIST_TRAIT_ID,
@@ -1910,7 +1914,7 @@ fn resolve_preds(
                                         assoc_ty: None,
                                         loc: pred.loc.clone(),
                                     });
-                                    Ty::AssocTySelect {
+                                    Some(Ty::AssocTySelect {
                                         ty: Box::new(Ty::App(
                                             SmolStr::new_static("RowToList"),
                                             vec![*ext.clone()],
@@ -1918,23 +1922,29 @@ fn resolve_preds(
                                         )),
                                         assoc_ty: SmolStr::new_static("List"),
                                         kind: Kind::Star,
-                                    }
+                                    })
                                 }
                             };
 
-                            // Wrap each field in ListCons[RecordField[T], ...], last to first.
-                            for (_field_name, field_ty) in labels.iter().rev() {
+                            // Build `ListCons` chain from last to first field.
+                            let mut fields_rev: Vec<_> = labels.iter().collect();
+                            fields_rev.reverse();
+                            let mut list_ty: Option<Ty> = open_tail;
+                            for (_field_name, field_ty) in &fields_rev {
                                 let record_field_ty = Ty::App(
                                     SmolStr::new_static("RecordField"),
-                                    vec![field_ty.clone()],
+                                    vec![(*field_ty).clone()],
                                     Kind::Star,
                                 );
-                                list_ty = Ty::App(
+                                let tail_ty = list_ty.unwrap_or_else(|| void_ty.clone());
+                                list_ty = Some(Ty::App(
                                     SmolStr::new_static("ListCons"),
-                                    vec![record_field_ty, list_ty],
+                                    vec![record_field_ty, tail_ty],
                                     Kind::Star,
-                                );
+                                ));
                             }
+                            // For empty rows with no extension, List = [].
+                            let list_ty = list_ty.unwrap_or_else(|| void_ty.clone());
 
                             unification::unify(
                                 &list_ty,

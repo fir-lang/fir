@@ -1092,30 +1092,38 @@ impl Ty {
                         is_row: true,
                     } = &row_ty
                     {
-                        let mut list_ty = match extension {
-                            None => Ty::Con(Id::new_static("ListNil"), Kind::Star),
-                            Some(ext) => Ty::AssocTySelect {
-                                ty: Box::new(Ty::App(
-                                    Id::new_static("RowToList"),
-                                    vec![*ext.clone()],
-                                    Kind::Star,
-                                )),
-                                assoc_ty: Id::new_static("List"),
-                                kind: Kind::Star,
-                            },
+                        let void_ty = Ty::Anonymous {
+                            labels: Default::default(),
+                            extension: None,
+                            record_or_variant: RecordOrVariant::Variant,
+                            is_row: false,
                         };
-                        for (_field_name, field_ty) in labels.iter().rev() {
+                        let open_tail = extension.as_ref().map(|ext| Ty::AssocTySelect {
+                            ty: Box::new(Ty::App(
+                                Id::new_static("RowToList"),
+                                vec![*ext.clone()],
+                                Kind::Star,
+                            )),
+                            assoc_ty: Id::new_static("List"),
+                            kind: Kind::Star,
+                        });
+                        let mut fields_rev: Vec<_> = labels.iter().collect();
+                        fields_rev.reverse();
+                        let mut list_ty: Option<Ty> = open_tail;
+                        for (_field_name, field_ty) in &fields_rev {
                             let record_field_ty = Ty::App(
                                 Id::new_static("RecordField"),
-                                vec![field_ty.clone()],
+                                vec![(*field_ty).clone()],
                                 Kind::Star,
                             );
-                            list_ty = Ty::App(
+                            let tail_ty = list_ty.unwrap_or_else(|| void_ty.clone());
+                            list_ty = Some(Ty::App(
                                 Id::new_static("ListCons"),
-                                vec![record_field_ty, list_ty],
+                                vec![record_field_ty, tail_ty],
                                 Kind::Star,
-                            );
+                            ));
                         }
+                        let list_ty = list_ty.unwrap_or_else(|| void_ty.clone());
                         return list_ty.deep_normalize(cons, trait_env, var_gen, assumps);
                     }
                 }

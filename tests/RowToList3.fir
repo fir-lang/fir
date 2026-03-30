@@ -95,5 +95,6 @@ main():
     printExt(makeAstGeneric[FmtExprExts, []]())
     printExt(makeAstGeneric[TcExprExts, []]())
 
-# expected stdout: 
-# inferredTy = Option.None, 
+# expected stdout:
+# Option.None
+# Option.Some(inferredTy = Option.None)

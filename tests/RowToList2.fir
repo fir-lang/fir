@@ -4,4 +4,4 @@ main():
 
 # expected stdout:
 # ()
-# (msg = hi, x = 123, )
+# (msg = hi, x = 123)

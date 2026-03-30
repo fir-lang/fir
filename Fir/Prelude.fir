@@ -231,29 +231,22 @@ trait Clone[t]:
 # This trait will only be implemented by the compiler, for record types, as
 # needed.
 trait RowToList[recRow]:
-    # This will always be `ListCons` or `ListNil`.
     type List
 
-    rowToList(rec: (..recRow)) List
+    rowToList(rec: (..recRow)) Option[List]
 
 
 value type ListCons[head, tail](
     head: head,
-    tail: tail,
+    tail: Option[tail],
 )
-
-
-value type ListNil
-
-
-impl ToStr[ListNil]:
-    toStr(self: ListNil) Str:
-        ""
 
 
 impl[ToStr[head], ToStr[tail]] ToStr[ListCons[head, tail]]:
     toStr(self: ListCons[head, tail]) Str:
-        "`self.head`, `self.tail`"
+        match self.tail:
+            Option.None: "`self.head`"
+            Option.Some(t): "`self.head`, `t`"
 
 
 type RecordField[t](
@@ -269,5 +262,6 @@ impl[ToStr[t]] ToStr[RecordField[t]]:
 
 impl[ToStr[RowToList[r].List]] ToStr[(..r)]:
     toStr(self: (..r)) Str:
-        let list = RowToList[r].rowToList(self)
-        "(`list`)"
+        match RowToList[r].rowToList(self):
+            Option.None: "()"
+            Option.Some(list): "(`list`)"

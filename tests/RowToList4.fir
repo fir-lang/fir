@@ -71,7 +71,7 @@ impl ExprExts[TcExprExts]:
 makeAstGeneric[ExprExts[t]]() Expr[t]:
     Expr.Var(name = "hi", ..ExprExts[t].defaultVarExt())
 
-recordToList(record: (..r)) RowToList[r].List:
+recordToList(record: (..r)) Option[RowToList[r].List]:
     RowToList[r].rowToList(record)
 
 type VarExtsList[t] = RowToList[ExprExts[t].VarExt].List
@@ -103,5 +103,6 @@ main():
     printExt(makeAstGeneric[FmtExprExts, []]())
     printExt(makeAstGeneric[TcExprExts, []]())
 
-# expected stdout: 
-# inferredTy = Option.None, 
+# expected stdout:
+# Option.None
+# Option.Some(inferredTy = Option.None)
