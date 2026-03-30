@@ -1628,7 +1628,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
     }
 
-    resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen, 0);
+    resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen);
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
@@ -1776,7 +1776,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
 
-            resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen, 0);
+            resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen);
 
             for stmt in body.iter_mut() {
                 normalize_stmt(
@@ -1870,7 +1870,6 @@ fn resolve_preds(
     cons: &ScopeMap<Id, TyCon>,
     mut goals: Vec<Pred>,
     var_gen: &UVarGen,
-    _level: u32,
 ) {
     // TODO: Not sure if this is a bug or not, but resolving a predicate may allow other predicates
     // to be resolved as well. Keep looping as long as we resolve predicates.
@@ -1885,91 +1884,10 @@ fn resolve_preds(
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]));
 
-            if pred.trait_ == kind_inference::ROW_TO_LIST_TRAIT_ID {
-                assert_eq!(pred.params.len(), 1);
-                let param = &pred.params[0];
-                match param {
-                    // Rule 1 & 3: Concrete row (with or without fields).
-                    Ty::Anonymous {
-                        labels,
-                        extension,
-                        record_or_variant: RecordOrVariant::Record,
-                        is_row: true,
-                    } => {
-                        if let Some((_assoc_ty_name, assoc_ty_rhs)) = &pred.assoc_ty {
-                            debug_assert_eq!(_assoc_ty_name, "List");
-
-                            // Empty variant `[]` is the terminal tail type for the last ListCons.
-                            // (its tail field will be Option.None at runtime)
-                            let void_ty = Ty::empty_variant();
-
-                            // For open rows, the tail of the outermost `ListCons` is the inner list
-                            // from `RowToList` on the extension.
-                            let open_tail = match extension {
-                                None => None,
-                                Some(ext) => {
-                                    next_goals.push(Pred {
-                                        trait_: kind_inference::ROW_TO_LIST_TRAIT_ID,
-                                        params: vec![*ext.clone()],
-                                        assoc_ty: None,
-                                        loc: pred.loc.clone(),
-                                    });
-                                    Some(Ty::AssocTySelect {
-                                        ty: Box::new(Ty::App(
-                                            SmolStr::new_static("RowToList"),
-                                            vec![*ext.clone()],
-                                            Kind::Star,
-                                        )),
-                                        assoc_ty: SmolStr::new_static("List"),
-                                        kind: Kind::Star,
-                                    })
-                                }
-                            };
-
-                            // Build `ListCons` chain from last to first field.
-                            let mut fields_rev: Vec<_> = labels.iter().collect();
-                            fields_rev.reverse();
-                            let mut list_ty: Option<Ty> = open_tail;
-                            for (_field_name, field_ty) in &fields_rev {
-                                let record_field_ty = Ty::App(
-                                    SmolStr::new_static("RecordField"),
-                                    vec![(*field_ty).clone()],
-                                    Kind::Star,
-                                );
-                                let tail_ty = list_ty.unwrap_or_else(|| void_ty.clone());
-                                list_ty = Some(Ty::App(
-                                    SmolStr::new_static("ListCons"),
-                                    vec![record_field_ty, tail_ty],
-                                    Kind::Star,
-                                ));
-                            }
-                            // For empty rows with no extension, List = [].
-                            let list_ty = list_ty.unwrap_or_else(|| void_ty.clone());
-
-                            unification::unify(
-                                &list_ty,
-                                assoc_ty_rhs,
-                                cons,
-                                trait_env,
-                                var_gen,
-                                0,
-                                &pred.loc,
-                                &[],
-                                &mut next_goals,
-                            );
-                        }
-                        progress = true;
-                        continue 'goals;
-                    }
-
-                    // Rule 2: Unresolved type variable or associated type selection,
-                    // resolve without resolving assoc ty.
-                    Ty::RVar(_, _) | Ty::UVar(_) | Ty::QVar(_, _) | Ty::AssocTySelect { .. } => {
-                        continue 'goals;
-                    }
-
-                    _ => {}
-                }
+            if pred.trait_ == ROW_TO_LIST_TRAIT_ID {
+                resolve_row_to_list(trait_env, &pred, &mut next_goals, cons, var_gen);
+                progress = true;
+                continue;
             }
 
             for assump in assumps {
@@ -2063,6 +1981,85 @@ fn resolve_preds(
         }
         panic!("{}", msg);
     }
+}
+
+pub(crate) const ROW_TO_LIST_TRAIT_ID: Id = Id::new_static("RowToList");
+
+/*
+`RowToList[t]` always resolves for any `t`, but we need to check associated type selections to rule
+out weird cases like `RowToList[t].List = U32`. E.g.
+
+    foo[RowToList[r].List = U32](): ()
+    main(): foo[row(msg: Str), []]()
+*/
+fn resolve_row_to_list(
+    trait_env: &TraitEnv,
+    pred: &Pred,
+    next_goals: &mut Vec<Pred>,
+    cons: &ScopeMap<Id, TyCon>,
+    var_gen: &UVarGen,
+) {
+    assert_eq!(pred.params.len(), 1);
+    let param = &pred.params[0];
+    if let Ty::Anonymous {
+        labels,
+        extension,
+        record_or_variant,
+        is_row,
+    } = param
+        && let Some((assoc_ty_name, assoc_ty_rhs)) = &pred.assoc_ty
+    {
+        assert_eq!(*record_or_variant, RecordOrVariant::Record);
+        assert_eq!(assoc_ty_name, "List");
+        assert!(is_row);
+        // Note: we don't generate `RowToList[ext]` here (when `extension` is `Some(...)`). I'm not
+        // sure if that's necessary as `RowToList[r]` will always resolve for any `r`.
+        let list_ty = row_to_list_type(labels, extension);
+        unification::unify(
+            &list_ty,
+            assoc_ty_rhs,
+            cons,
+            trait_env,
+            var_gen,
+            0,
+            &pred.loc,
+            &[],
+            next_goals,
+        );
+    }
+}
+
+fn row_to_list_type(labels: &OrdMap<Id, Ty>, extension: &Option<Box<Ty>>) -> Ty {
+    let mut fields_rev: Vec<(&Id, &Ty)> = labels.iter().collect();
+    fields_rev.reverse();
+
+    let mut list_ty: Ty = match extension {
+        None => Ty::empty_variant(),
+        Some(ext) => Ty::AssocTySelect {
+            ty: Box::new(Ty::App(
+                SmolStr::new_static("RowToList"),
+                vec![*ext.clone()],
+                Kind::Star,
+            )),
+            assoc_ty: SmolStr::new_static("List"),
+            kind: Kind::Star,
+        },
+    };
+
+    for (_field_name, field_ty) in &fields_rev {
+        let record_field_ty = Ty::App(
+            SmolStr::new_static("RecordField"),
+            vec![(*field_ty).clone()],
+            Kind::Star,
+        );
+        list_ty = Ty::App(
+            SmolStr::new_static("ListCons"),
+            vec![record_field_ty, list_ty],
+            Kind::Star,
+        );
+    }
+
+    list_ty
 }
 
 fn rename_domain_var(var: &Id, uniq: u32) -> Id {

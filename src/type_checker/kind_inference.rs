@@ -184,8 +184,6 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     }
 }
 
-pub(crate) const ROW_TO_LIST_TRAIT_ID: Id = Id::new_static("RowToList");
-
 /// Collect type variables in `ty` in `tvs`.
 ///
 /// If a type variable is an argument to the special marker traits `RecRow` or `VarRow`, or the

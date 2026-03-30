@@ -1004,234 +1004,7 @@ fn mono_method(
 ) {
     // RowToList.rowToList: synthesize a method that converts a record to a list.
     if *method_ty_id == "RowToList" && *method_id == "rowToList" {
-        if mono_pgm
-            .associated
-            .get("RowToList")
-            .and_then(|m| m.get("rowToList"))
-            .and_then(|m| m.get(ty_args))
-            .is_some()
-        {
-            return;
-        }
-
-        let fields = match &ty_args[0] {
-            mono::Type::Record { fields } => fields.clone(),
-            other => panic!("RowToList type arg is not a record: {other:?}"),
-        };
-
-        // The method parameter type is (..recRow) which is a record with the row's fields.
-        let rec_ty = mono::Type::Record {
-            fields: fields.clone(),
-        };
-
-        let list_ty = row_to_list_type(&fields, poly_pgm, mono_pgm);
-
-        // Build body that returns `Option[ListCons[...]]`.
-
-        // Return type is Option[list_ty].
-        let option_list_ty = mono::Type::Named(mono::NamedType {
-            name: SmolStr::new_static("Option"),
-            args: vec![list_ty.clone()],
-        });
-
-        let body_expr = if fields.is_empty() {
-            // Option.None
-            ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-                ty_id: SmolStr::new_static("Option"),
-                con: Some(SmolStr::new_static("None")),
-                ty_args: vec![list_ty.clone()],
-                ty: option_list_ty.clone(),
-            }))
-        } else {
-            let void_ty = mono::Type::Variant {
-                alts: OrdMap::default(),
-            };
-
-            // Start with Option.None for the innermost tail.
-            let mut inner_expr = ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-                ty_id: SmolStr::new_static("Option"),
-                con: Some(SmolStr::new_static("None")),
-                ty_args: vec![void_ty.clone()],
-                ty: mono::Type::Named(mono::NamedType {
-                    name: SmolStr::new_static("Option"),
-                    args: vec![void_ty.clone()],
-                }),
-            }));
-            let mut tail_ty = void_ty;
-
-            let fields_vec: Vec<_> = fields.iter().collect();
-
-            // Wrap each field in RecordField and ListCons, from last to first.
-            for (i, (field_name, field_ty)) in fields_vec.iter().copied().enumerate().rev() {
-                // rec.fieldName
-                let field_sel = ast::L::new_dummy(mono::Expr::FieldSel(mono::FieldSelExpr {
-                    object: Box::new(ast::L::new_dummy(mono::Expr::LocalVar(
-                        SmolStr::new_static("rec"),
-                        rec_ty.clone(),
-                    ))),
-                    field: field_name.clone(),
-                    ty: field_ty.clone(),
-                }));
-
-                // RecordField[field_ty]
-                let record_field_con_ty = mono::Type::Named(mono::NamedType {
-                    name: SmolStr::new_static("RecordField"),
-                    args: vec![field_ty.clone()],
-                });
-                let record_field_fn_ty = mono::Type::Fn(mono::FnType {
-                    args: mono::FunArgs::Named(
-                        [
-                            (SmolStr::new_static("label"), mono::Type::str()),
-                            (SmolStr::new_static("value_"), field_ty.clone()),
-                        ]
-                        .into_iter()
-                        .collect(),
-                    ),
-                    ret: Box::new(record_field_con_ty.clone()),
-                    exn: Box::new(mono::Type::empty()),
-                });
-                let record_field_expr = ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
-                    fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-                        ty_id: SmolStr::new_static("RecordField"),
-                        con: None,
-                        ty_args: vec![field_ty.clone()],
-                        ty: record_field_fn_ty,
-                    }))),
-                    args: vec![
-                        mono::CallArg {
-                            name: Some(SmolStr::new_static("label")),
-                            expr: ast::L::new_dummy(mono::Expr::Str(field_name.to_string())),
-                        },
-                        mono::CallArg {
-                            name: Some(SmolStr::new_static("value_")),
-                            expr: field_sel,
-                        },
-                    ],
-                    splice: None,
-                    ty: record_field_con_ty.clone(),
-                }));
-
-                // Option[tail_ty], the type of the `tail` field
-                let option_tail_ty = mono::Type::Named(mono::NamedType {
-                    name: SmolStr::new_static("Option"),
-                    args: vec![tail_ty.clone()],
-                });
-
-                // ListCons[RecordField[field_ty], tail_ty]
-                let list_cons_ty = mono::Type::Named(mono::NamedType {
-                    name: SmolStr::new_static("ListCons"),
-                    args: vec![record_field_con_ty.clone(), tail_ty.clone()],
-                });
-                let list_cons_fn_ty = mono::Type::Fn(mono::FnType {
-                    args: mono::FunArgs::Named(
-                        [
-                            (SmolStr::new_static("head"), record_field_con_ty),
-                            (SmolStr::new_static("tail"), option_tail_ty),
-                        ]
-                        .into_iter()
-                        .collect(),
-                    ),
-                    ret: Box::new(list_cons_ty.clone()),
-                    exn: Box::new(mono::Type::empty()),
-                });
-                inner_expr = ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
-                    fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-                        ty_id: SmolStr::new_static("ListCons"),
-                        con: None,
-                        ty_args: vec![
-                            mono::Type::Named(mono::NamedType {
-                                name: SmolStr::new_static("RecordField"),
-                                args: vec![field_ty.clone()],
-                            }),
-                            tail_ty,
-                        ],
-                        ty: list_cons_fn_ty,
-                    }))),
-                    args: vec![
-                        mono::CallArg {
-                            name: Some(SmolStr::new_static("head")),
-                            expr: record_field_expr,
-                        },
-                        mono::CallArg {
-                            name: Some(SmolStr::new_static("tail")),
-                            expr: inner_expr,
-                        },
-                    ],
-                    splice: None,
-                    ty: list_cons_ty.clone(),
-                }));
-
-                // If not the outermost element, wrap in `Option.Some` for the next iteration.
-                if i > 0 {
-                    let option_cons_ty = mono::Type::Named(mono::NamedType {
-                        name: SmolStr::new_static("Option"),
-                        args: vec![list_cons_ty.clone()],
-                    });
-                    let some_fn_ty = mono::Type::Fn(mono::FnType {
-                        args: mono::FunArgs::Positional(vec![list_cons_ty.clone()]),
-                        ret: Box::new(option_cons_ty.clone()),
-                        exn: Box::new(mono::Type::empty()),
-                    });
-                    inner_expr = ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
-                        fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-                            ty_id: SmolStr::new_static("Option"),
-                            con: Some(SmolStr::new_static("Some")),
-                            ty_args: vec![list_cons_ty.clone()],
-                            ty: some_fn_ty,
-                        }))),
-                        args: vec![mono::CallArg {
-                            name: None,
-                            expr: inner_expr,
-                        }],
-                        splice: None,
-                        ty: option_cons_ty,
-                    }));
-                }
-                tail_ty = list_cons_ty;
-            }
-
-            // Wrap the outermost ListCons in Option.Some.
-            let some_fn_ty = mono::Type::Fn(mono::FnType {
-                args: mono::FunArgs::Positional(vec![list_ty.clone()]),
-                ret: Box::new(option_list_ty.clone()),
-                exn: Box::new(mono::Type::empty()),
-            });
-            ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
-                fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-                    ty_id: SmolStr::new_static("Option"),
-                    con: Some(SmolStr::new_static("Some")),
-                    ty_args: vec![list_ty.clone()],
-                    ty: some_fn_ty,
-                }))),
-                args: vec![mono::CallArg {
-                    name: None,
-                    expr: inner_expr,
-                }],
-                splice: None,
-                ty: option_list_ty.clone(),
-            }))
-        };
-
-        let fun_decl = mono::FunDecl {
-            parent_ty: Some(ast::L::new_dummy(SmolStr::new_static("RowToList"))),
-            name: ast::L::new_dummy(SmolStr::new_static("rowToList")),
-            sig: mono::FunSig {
-                params: vec![(SmolStr::new_static("rec"), ast::L::new_dummy(rec_ty))],
-                return_ty: Some(ast::L::new_dummy(option_list_ty)),
-                exceptions: None,
-            },
-            body: Some(vec![ast::L::new_dummy(mono::Stmt::Expr(body_expr.node))]),
-        };
-
-        mono_pgm
-            .associated
-            .entry(SmolStr::new_static("RowToList"))
-            .or_default()
-            .entry(SmolStr::new_static("rowToList"))
-            .or_default()
-            .insert(ty_args.to_vec(), fun_decl);
-
-        return;
+        return synthesize_row_to_list(ty_args, poly_pgm, mono_pgm);
     }
 
     if let Some(PolyTrait {
@@ -2553,4 +2326,233 @@ fn collect_record_rows(
 
         other => panic!("Weird row extension: {other} ({other:?})"),
     }
+}
+
+fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: &mut MonoPgm) {
+    if mono_pgm
+        .associated
+        .get("RowToList")
+        .and_then(|m| m.get("rowToList"))
+        .and_then(|m| m.get(ty_args))
+        .is_some()
+    {
+        return;
+    }
+
+    let fields = match &ty_args[0] {
+        mono::Type::Record { fields } => fields.clone(),
+        other => panic!("RowToList type arg is not a record: {other:?}"),
+    };
+
+    // The method parameter type is (..recRow) which is a record with the row's fields.
+    let rec_ty = mono::Type::Record {
+        fields: fields.clone(),
+    };
+
+    let list_ty = row_to_list_type(&fields, poly_pgm, mono_pgm);
+
+    // Build body that returns `Option[ListCons[...]]`.
+
+    // Return type is Option[list_ty].
+    let option_list_ty = mono::Type::Named(mono::NamedType {
+        name: SmolStr::new_static("Option"),
+        args: vec![list_ty.clone()],
+    });
+
+    let body_expr = if fields.is_empty() {
+        // Option.None
+        ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
+            ty_id: SmolStr::new_static("Option"),
+            con: Some(SmolStr::new_static("None")),
+            ty_args: vec![list_ty.clone()],
+            ty: option_list_ty.clone(),
+        }))
+    } else {
+        let void_ty = mono::Type::Variant {
+            alts: OrdMap::default(),
+        };
+
+        // Start with Option.None for the innermost tail.
+        let mut inner_expr = ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
+            ty_id: SmolStr::new_static("Option"),
+            con: Some(SmolStr::new_static("None")),
+            ty_args: vec![void_ty.clone()],
+            ty: mono::Type::Named(mono::NamedType {
+                name: SmolStr::new_static("Option"),
+                args: vec![void_ty.clone()],
+            }),
+        }));
+        let mut tail_ty = void_ty;
+
+        let fields_vec: Vec<_> = fields.iter().collect();
+
+        // Wrap each field in RecordField and ListCons, from last to first.
+        for (i, (field_name, field_ty)) in fields_vec.iter().copied().enumerate().rev() {
+            // rec.fieldName
+            let field_sel = ast::L::new_dummy(mono::Expr::FieldSel(mono::FieldSelExpr {
+                object: Box::new(ast::L::new_dummy(mono::Expr::LocalVar(
+                    SmolStr::new_static("rec"),
+                    rec_ty.clone(),
+                ))),
+                field: field_name.clone(),
+                ty: field_ty.clone(),
+            }));
+
+            // RecordField[field_ty]
+            let record_field_con_ty = mono::Type::Named(mono::NamedType {
+                name: SmolStr::new_static("RecordField"),
+                args: vec![field_ty.clone()],
+            });
+            let record_field_fn_ty = mono::Type::Fn(mono::FnType {
+                args: mono::FunArgs::Named(
+                    [
+                        (SmolStr::new_static("label"), mono::Type::str()),
+                        (SmolStr::new_static("value_"), field_ty.clone()),
+                    ]
+                    .into_iter()
+                    .collect(),
+                ),
+                ret: Box::new(record_field_con_ty.clone()),
+                exn: Box::new(mono::Type::empty()),
+            });
+            let record_field_expr = ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
+                fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
+                    ty_id: SmolStr::new_static("RecordField"),
+                    con: None,
+                    ty_args: vec![field_ty.clone()],
+                    ty: record_field_fn_ty,
+                }))),
+                args: vec![
+                    mono::CallArg {
+                        name: Some(SmolStr::new_static("label")),
+                        expr: ast::L::new_dummy(mono::Expr::Str(field_name.to_string())),
+                    },
+                    mono::CallArg {
+                        name: Some(SmolStr::new_static("value_")),
+                        expr: field_sel,
+                    },
+                ],
+                splice: None,
+                ty: record_field_con_ty.clone(),
+            }));
+
+            // Option[tail_ty], the type of the `tail` field
+            let option_tail_ty = mono::Type::Named(mono::NamedType {
+                name: SmolStr::new_static("Option"),
+                args: vec![tail_ty.clone()],
+            });
+
+            // ListCons[RecordField[field_ty], tail_ty]
+            let list_cons_ty = mono::Type::Named(mono::NamedType {
+                name: SmolStr::new_static("ListCons"),
+                args: vec![record_field_con_ty.clone(), tail_ty.clone()],
+            });
+            let list_cons_fn_ty = mono::Type::Fn(mono::FnType {
+                args: mono::FunArgs::Named(
+                    [
+                        (SmolStr::new_static("head"), record_field_con_ty),
+                        (SmolStr::new_static("tail"), option_tail_ty),
+                    ]
+                    .into_iter()
+                    .collect(),
+                ),
+                ret: Box::new(list_cons_ty.clone()),
+                exn: Box::new(mono::Type::empty()),
+            });
+            inner_expr = ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
+                fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
+                    ty_id: SmolStr::new_static("ListCons"),
+                    con: None,
+                    ty_args: vec![
+                        mono::Type::Named(mono::NamedType {
+                            name: SmolStr::new_static("RecordField"),
+                            args: vec![field_ty.clone()],
+                        }),
+                        tail_ty,
+                    ],
+                    ty: list_cons_fn_ty,
+                }))),
+                args: vec![
+                    mono::CallArg {
+                        name: Some(SmolStr::new_static("head")),
+                        expr: record_field_expr,
+                    },
+                    mono::CallArg {
+                        name: Some(SmolStr::new_static("tail")),
+                        expr: inner_expr,
+                    },
+                ],
+                splice: None,
+                ty: list_cons_ty.clone(),
+            }));
+
+            // If not the outermost element, wrap in `Option.Some` for the next iteration.
+            if i > 0 {
+                let option_cons_ty = mono::Type::Named(mono::NamedType {
+                    name: SmolStr::new_static("Option"),
+                    args: vec![list_cons_ty.clone()],
+                });
+                let some_fn_ty = mono::Type::Fn(mono::FnType {
+                    args: mono::FunArgs::Positional(vec![list_cons_ty.clone()]),
+                    ret: Box::new(option_cons_ty.clone()),
+                    exn: Box::new(mono::Type::empty()),
+                });
+                inner_expr = ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
+                    fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
+                        ty_id: SmolStr::new_static("Option"),
+                        con: Some(SmolStr::new_static("Some")),
+                        ty_args: vec![list_cons_ty.clone()],
+                        ty: some_fn_ty,
+                    }))),
+                    args: vec![mono::CallArg {
+                        name: None,
+                        expr: inner_expr,
+                    }],
+                    splice: None,
+                    ty: option_cons_ty,
+                }));
+            }
+            tail_ty = list_cons_ty;
+        }
+
+        // Wrap the outermost ListCons in Option.Some.
+        let some_fn_ty = mono::Type::Fn(mono::FnType {
+            args: mono::FunArgs::Positional(vec![list_ty.clone()]),
+            ret: Box::new(option_list_ty.clone()),
+            exn: Box::new(mono::Type::empty()),
+        });
+        ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
+            fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
+                ty_id: SmolStr::new_static("Option"),
+                con: Some(SmolStr::new_static("Some")),
+                ty_args: vec![list_ty.clone()],
+                ty: some_fn_ty,
+            }))),
+            args: vec![mono::CallArg {
+                name: None,
+                expr: inner_expr,
+            }],
+            splice: None,
+            ty: option_list_ty.clone(),
+        }))
+    };
+
+    let fun_decl = mono::FunDecl {
+        parent_ty: Some(ast::L::new_dummy(SmolStr::new_static("RowToList"))),
+        name: ast::L::new_dummy(SmolStr::new_static("rowToList")),
+        sig: mono::FunSig {
+            params: vec![(SmolStr::new_static("rec"), ast::L::new_dummy(rec_ty))],
+            return_ty: Some(ast::L::new_dummy(option_list_ty)),
+            exceptions: None,
+        },
+        body: Some(vec![ast::L::new_dummy(mono::Stmt::Expr(body_expr.node))]),
+    };
+
+    mono_pgm
+        .associated
+        .entry(SmolStr::new_static("RowToList"))
+        .or_default()
+        .entry(SmolStr::new_static("rowToList"))
+        .or_default()
+        .insert(ty_args.to_vec(), fun_decl);
 }

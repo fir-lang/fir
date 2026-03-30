@@ -1081,49 +1081,21 @@ impl Ty {
                     }
                 }
 
-                // RowToList[row].List: compute the List type from the row's fields.
-                if *trait_name == super::kind_inference::ROW_TO_LIST_TRAIT_ID && *assoc_ty == "List"
-                {
+                // `RowToList[row].List`: compute the List type from the row's fields.
+                if *trait_name == super::ROW_TO_LIST_TRAIT_ID {
+                    assert_eq!(assoc_ty, "List");
+
                     let row_ty = trait_args[0].deep_normalize(cons, trait_env, var_gen, assumps);
                     if let Ty::Anonymous {
                         labels,
                         extension,
-                        record_or_variant: RecordOrVariant::Record,
-                        is_row: true,
+                        record_or_variant,
+                        is_row,
                     } = &row_ty
                     {
-                        let void_ty = Ty::Anonymous {
-                            labels: Default::default(),
-                            extension: None,
-                            record_or_variant: RecordOrVariant::Variant,
-                            is_row: false,
-                        };
-                        let open_tail = extension.as_ref().map(|ext| Ty::AssocTySelect {
-                            ty: Box::new(Ty::App(
-                                Id::new_static("RowToList"),
-                                vec![*ext.clone()],
-                                Kind::Star,
-                            )),
-                            assoc_ty: Id::new_static("List"),
-                            kind: Kind::Star,
-                        });
-                        let mut fields_rev: Vec<_> = labels.iter().collect();
-                        fields_rev.reverse();
-                        let mut list_ty: Option<Ty> = open_tail;
-                        for (_field_name, field_ty) in &fields_rev {
-                            let record_field_ty = Ty::App(
-                                Id::new_static("RecordField"),
-                                vec![(*field_ty).clone()],
-                                Kind::Star,
-                            );
-                            let tail_ty = list_ty.unwrap_or_else(|| void_ty.clone());
-                            list_ty = Some(Ty::App(
-                                Id::new_static("ListCons"),
-                                vec![record_field_ty, tail_ty],
-                                Kind::Star,
-                            ));
-                        }
-                        let list_ty = list_ty.unwrap_or_else(|| void_ty.clone());
+                        assert_eq!(*record_or_variant, RecordOrVariant::Record);
+                        assert!(is_row);
+                        let list_ty = super::row_to_list_type(labels, extension);
                         return list_ty.deep_normalize(cons, trait_env, var_gen, assumps);
                     }
                 }
