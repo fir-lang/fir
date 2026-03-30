@@ -1,3 +1,4 @@
+## A heterogeneous list.
 value type List[head, tail](
     head: head,
     tail: Option[tail],
