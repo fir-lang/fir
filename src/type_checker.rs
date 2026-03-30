@@ -2050,7 +2050,7 @@ fn row_to_list_type(labels: &OrdMap<Id, Ty>, extension: &Option<Box<Ty>>) -> Ty 
             Kind::Star,
         );
         list_ty = Ty::App(
-            SmolStr::new_static("ListCons"),
+            SmolStr::new_static("List"),
             vec![record_field_ty, list_ty],
             Kind::Star,
         );

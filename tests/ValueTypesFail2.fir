@@ -1,10 +1,11 @@
-value type List[t]:
+value type LinkList[t]:
     Cons(
         val: t,
-        rest: List[t],
+        rest: LinkList[t],
     )
     Nil
 
+
 # args: --typecheck
 # expected exit status: 101
-# expected stderr: Value type List has infinite size due to recursion
+# expected stderr: Value type LinkList has infinite size due to recursion

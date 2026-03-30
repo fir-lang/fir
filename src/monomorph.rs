@@ -1669,7 +1669,7 @@ fn resolve_assoc_ty(
     )
 }
 
-/// Build the `List` type for `RowToList`: `ListCons[RecordField[T1], ListCons[..., []]]`.
+/// Build the `List` type for `RowToList`: `List[RecordField[T1], List[..., []]]`.
 ///
 /// This is the same function as `crate::type_checker::row_to_list_type`, but works on mono types.
 fn row_to_list_type(
@@ -1689,12 +1689,12 @@ fn row_to_list_type(
             args: record_field_args,
         });
 
-        // ListCons[RecordField[field_ty], list_ty]
+        // List[RecordField[field_ty], list_ty]
         let list_cons_args = vec![record_field_ty, list_ty];
-        let list_cons_decl = poly_pgm.ty.get("ListCons").unwrap();
+        let list_cons_decl = poly_pgm.ty.get("List").unwrap();
         mono_ty_decl(list_cons_decl, &list_cons_args, poly_pgm, mono_pgm);
         list_ty = mono::Type::Named(mono::NamedType {
-            name: SmolStr::new_static("ListCons"),
+            name: SmolStr::new_static("List"),
             args: list_cons_args,
         });
     }
@@ -2351,7 +2351,7 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
 
     let list_ty = row_to_list_type(&fields, poly_pgm, mono_pgm);
 
-    // Build body that returns `Option[ListCons[...]]`.
+    // Build body that returns `Option[List[...]]`.
 
     // Return type is `Option[list_ty]`.
     let option_list_ty = mono::Type::Named(mono::NamedType {
@@ -2383,7 +2383,7 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
 
         let fields_vec: Vec<(&Id, &mono::Type)> = fields.iter().collect();
 
-        // Wrap each field in `RecordField` and `ListCons`, from last to first.
+        // Wrap each field in `RecordField` and `List`, from last to first.
         for (i, (field_name, field_ty)) in fields_vec.iter().copied().enumerate().rev() {
             // rec.fieldName
             let field_sel = ast::L::new_dummy(mono::Expr::FieldSel(mono::FieldSelExpr {
@@ -2439,9 +2439,9 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
                 args: vec![tail_ty.clone()],
             });
 
-            // ListCons[RecordField[field_ty], tail_ty]
+            // List[RecordField[field_ty], tail_ty]
             let list_cons_ty = mono::Type::Named(mono::NamedType {
-                name: SmolStr::new_static("ListCons"),
+                name: SmolStr::new_static("List"),
                 args: vec![record_field_con_ty.clone(), tail_ty.clone()],
             });
             let list_cons_fn_ty = mono::Type::Fn(mono::FnType {
@@ -2458,7 +2458,7 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
             });
             inner_expr = ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
                 fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-                    ty_id: SmolStr::new_static("ListCons"),
+                    ty_id: SmolStr::new_static("List"),
                     con: None,
                     ty_args: vec![
                         mono::Type::Named(mono::NamedType {
@@ -2512,7 +2512,7 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
             tail_ty = list_cons_ty;
         }
 
-        // Wrap the outermost ListCons in Option.Some.
+        // Wrap the outermost List in Option.Some.
         let some_fn_ty = mono::Type::Fn(mono::FnType {
             args: mono::FunArgs::Positional(vec![list_ty.clone()]),
             ret: Box::new(option_list_ty.clone()),

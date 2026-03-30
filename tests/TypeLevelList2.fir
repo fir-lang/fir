@@ -1,12 +1,19 @@
 main():
     print(
-        ListCons(
+        List(
             head = u32(1),
-            tail = Option.Some(ListCons(
-                head = Bool.True,
-                tail = Option.Some(ListCons(head = "hi", tail = Option.None[[]]))
-            )),
+            tail =
+                Option.Some(
+                    List(
+                        head = Bool.True,
+                        tail =
+                            Option.Some(
+                                List(head = "hi", tail = Option.None[[]]),
+                            ),
+                    ),
+                ),
         ),
     )
+
 
 # expected stdout: 1, Bool.True, hi

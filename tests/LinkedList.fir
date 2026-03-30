@@ -1,19 +1,25 @@
-type List[t]:
+type LinkList[t]:
     Cons(
         val: t,
-        rest: List[t],
+        rest: LinkList[t],
     )
     Nil
 
 
-impl[ToStr[t]] ToStr[List[t]]:
-    toStr(self: List[t]) Str:
+impl[ToStr[t]] ToStr[LinkList[t]]:
+    toStr(self: LinkList[t]) Str:
         match self:
-            List.Cons(val, rest): "`val` --> `rest`"
-            List.Nil: "Nil"
+            LinkList.Cons(val, rest): "`val` --> `rest`"
+            LinkList.Nil: "Nil"
 
 
 main():
-    print(List.Cons(val = u32(1), rest = List.Cons(val = u32(2), rest = List.Nil)))
+    print(
+        LinkList.Cons(
+            val = u32(1),
+            rest = LinkList.Cons(val = u32(2), rest = LinkList.Nil),
+        ),
+    )
+
 
 # expected stdout: 1 --> 2 --> Nil
