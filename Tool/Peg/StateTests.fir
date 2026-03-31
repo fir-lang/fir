@@ -3,7 +3,6 @@ import [
     Compiler/Lexer,
     Tool/Peg/PegTestLib,
     Tool/Peg/TestGrammarState,
-    Tool/Peg/TestState,
 ]
 
 
@@ -11,6 +10,18 @@ main():
     let state = UserState(a = 0, b = 0, c = 0)
     runTestState("Simple", "a b c", abcs, state)
     print(state)
+
+
+type UserState(
+    a: U32,
+    b: U32,
+    c: U32,
+)
+
+
+impl ToStr[UserState]:
+    toStr(self: UserState) Str:
+        "UserState(a = `self.a`, b = `self.b`, c = `self.c`)"
 
 
 # expected stdout:

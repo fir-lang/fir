@@ -162,6 +162,7 @@ mod native {
         let mut module = import_resolver::resolve_imports(
             module,
             !opts.no_prelude, // import_prelude
+            Some(file_path),
         );
 
         if opts.print_parsed_ast {
@@ -380,7 +381,7 @@ mod wasm {
 
         let module_name = SmolStr::new_static("FirWeb");
         let module = parse_module(&module_name, pgm);
-        let mut module = import_resolver::resolve_imports(module, true);
+        let mut module = import_resolver::resolve_imports(module, true, None);
 
         type_checker::check_module(&mut module, "main");
 

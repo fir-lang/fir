@@ -3,7 +3,7 @@
 import [
     Compiler/Token,
     Tool/Peg/ParseTree,
-    Tool/Peg/TestState,
+    Tool/Peg/StateTests,
 ]
 
 

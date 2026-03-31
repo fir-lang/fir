@@ -15,9 +15,22 @@ use smol_str::SmolStr;
 ///
 /// Imports `Fir.Prelude` always. Any other import path needs to have one component and will be
 /// resolved to a file at the root.
-pub fn resolve_imports(module: ast::Module, import_prelude: bool) -> ast::Module {
+pub fn resolve_imports(
+    module: ast::Module,
+    import_prelude: bool,
+    module_file_path: Option<&std::path::Path>,
+) -> ast::Module {
     let mut new_module: Vec<ast::L<ast::TopDecl>> = vec![];
     let mut imported_modules: HashSet<Vec<Id>> = Default::default();
+
+    if let Some(file_path) = module_file_path {
+        let import_path: Vec<Id> = file_path
+            .with_extension("")
+            .iter()
+            .map(|c| SmolStr::new(c.to_str().unwrap()))
+            .collect();
+        imported_modules.insert(import_path);
+    }
 
     resolve_imports_(module, &mut new_module, &mut imported_modules);
 
