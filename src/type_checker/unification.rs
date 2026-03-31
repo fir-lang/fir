@@ -228,8 +228,8 @@ pub(super) fn unify(
             );
         }
 
-        // Unify an empty anonymous row with another type.
-        // `row(..ext)` with no labels is just `ext`.
+        // Unify an empty anonymous row with another type. `row(..ext)` with no labels is just
+        // `ext`, which should unify with anything as long as kinds match.
         (
             Ty::Anonymous {
                 labels,
