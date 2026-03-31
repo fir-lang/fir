@@ -1628,7 +1628,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
     }
 
-    resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen, 0);
+    resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen);
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
@@ -1776,7 +1776,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
 
-            resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen, 0);
+            resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen);
 
             for stmt in body.iter_mut() {
                 normalize_stmt(
@@ -1870,7 +1870,6 @@ fn resolve_preds(
     cons: &ScopeMap<Id, TyCon>,
     mut goals: Vec<Pred>,
     var_gen: &UVarGen,
-    _level: u32,
 ) {
     // TODO: Not sure if this is a bug or not, but resolving a predicate may allow other predicates
     // to be resolved as well. Keep looping as long as we resolve predicates.
@@ -1884,6 +1883,12 @@ fn resolve_preds(
             pred.params
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]));
+
+            if pred.trait_ == REC_ROW_TO_LIST_TRAIT_ID {
+                resolve_row_to_list(trait_env, &pred, &mut next_goals, cons, var_gen);
+                progress = true;
+                continue;
+            }
 
             for assump in assumps {
                 // We can't use set lookup as locs will be different.
@@ -1976,6 +1981,82 @@ fn resolve_preds(
         }
         panic!("{}", msg);
     }
+}
+
+pub(crate) const REC_ROW_TO_LIST_TRAIT_ID: Id = Id::new_static("RecRowToList");
+
+/*
+`RecRowToList[t]` always resolves for any `t`, but we need to check associated type selections to
+rule out weird cases like `RecRowToList[t].List = U32`. E.g.
+
+    foo[RecRowToList[r].List = U32](): ()
+    main(): foo[row(msg: Str), []]()
+*/
+fn resolve_row_to_list(
+    trait_env: &TraitEnv,
+    pred: &Pred,
+    next_goals: &mut Vec<Pred>,
+    cons: &ScopeMap<Id, TyCon>,
+    var_gen: &UVarGen,
+) {
+    assert_eq!(pred.params.len(), 1);
+    let param = &pred.params[0];
+    if let Ty::Anonymous {
+        labels,
+        extension,
+        record_or_variant,
+        is_row,
+    } = param
+        && let Some((assoc_ty_name, assoc_ty_rhs)) = &pred.assoc_ty
+    {
+        assert_eq!(*record_or_variant, RecordOrVariant::Record);
+        assert_eq!(assoc_ty_name, "List");
+        assert!(is_row);
+        // Note: we don't generate `RecRowToList[ext]` here (when `extension` is `Some(...)`). I'm
+        // not sure if that's necessary as `RecRowToList[r]` will always resolve for any `r`.
+        let list_ty = row_to_list_type(labels, extension);
+        unification::unify(
+            &list_ty,
+            assoc_ty_rhs,
+            cons,
+            trait_env,
+            var_gen,
+            0,
+            &pred.loc,
+            &[],
+            next_goals,
+        );
+    }
+}
+
+fn row_to_list_type(labels: &OrdMap<Id, Ty>, extension: &Option<Box<Ty>>) -> Ty {
+    let mut list_ty: Ty = match extension {
+        None => Ty::empty_variant(),
+        Some(ext) => Ty::AssocTySelect {
+            ty: Box::new(Ty::App(
+                SmolStr::new_static("RecRowToList"),
+                vec![*ext.clone()],
+                Kind::Star,
+            )),
+            assoc_ty: SmolStr::new_static("List"),
+            kind: Kind::Star,
+        },
+    };
+
+    for (_field_name, field_ty) in labels.iter().rev() {
+        let record_field_ty = Ty::App(
+            SmolStr::new_static("RecordField"),
+            vec![(*field_ty).clone()],
+            Kind::Star,
+        );
+        list_ty = Ty::App(
+            SmolStr::new_static("List"),
+            vec![record_field_ty, list_ty],
+            Kind::Star,
+        );
+    }
+
+    list_ty
 }
 
 fn rename_domain_var(var: &Id, uniq: u32) -> Id {

@@ -1,27 +1,19 @@
-type Cons[head, tail](
-    head: head,
-    tail: tail,
-)
-
-type Nil
-
-trait TypeLevelListToStr[t]:
-    typeLevelListToStr(self: t) Str
-
-impl TypeLevelListToStr[Nil]:
-    typeLevelListToStr(self: Nil) Str:
-        "[]"
-
-impl[ToStr[head], TypeLevelListToStr[tail]] TypeLevelListToStr[Cons[head, tail]]:
-    typeLevelListToStr(self: Cons[head, tail]) Str:
-        "`self.head` -> `self.tail.typeLevelListToStr()`"
-
 main():
     print(
-        Cons(
+        List(
             head = u32(1),
-            tail = Cons(head = Bool.True, tail = Cons(head = "hi", tail = Nil)),
-        ).typeLevelListToStr(),
+            tail =
+                Option.Some(
+                    List(
+                        head = Bool.True,
+                        tail =
+                            Option.Some(
+                                List(head = "hi", tail = Option.None[[]]),
+                            ),
+                    ),
+                ),
+        ),
     )
 
-# expected stdout: 1 -> Bool.True -> hi -> []
+
+# expected stdout: 1, Bool.True, hi

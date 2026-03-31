@@ -6,10 +6,12 @@ import [
     Fir/HashMap,
     Fir/HashSet,
     Fir/Iter,
+    Fir/List,
     Fir/Num,
     Fir/Option,
     Fir/PPrint,
     Fir/Result,
+    Fir/RowToList,
     Fir/Str,
     Fir/StrBuf,
     Fir/Vec,
@@ -126,16 +128,6 @@ trait ToStr[t]:
     toStr(self: t) Str
 
 
-impl ToStr[()]:
-    toStr(self: ()) Str:
-        "()"
-
-
-impl ToDoc[()]:
-    toDoc(self: ()) Doc:
-        Doc.str("()")
-
-
 impl ToStr[[]]:
     toStr(self: []) Str:
         "unreachable"
@@ -143,6 +135,14 @@ impl ToStr[[]]:
 
 impl ToDoc[[]]:
     toDoc(self: []) Doc:
+        panic("unreachable")
+
+
+impl Eq[[]]:
+    __eq(self: [], other: []) Bool:
+        panic("unreachable")
+
+    __neq(self: [], other: []) Bool:
         panic("unreachable")
 
 

@@ -164,6 +164,13 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
         env.entry(trait_id.clone()).or_default().push(trait_impl);
     }
 
+    // Ensure all declared traits have entries, even those with no impls (e.g. RecRowToList).
+    for item in pgm {
+        if let ast::TopDecl::Trait(trait_decl) = &item.node {
+            env.entry(trait_decl.node.name.node.clone()).or_default();
+        }
+    }
+
     env
 }
 

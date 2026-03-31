@@ -1073,9 +1073,30 @@ impl Ty {
                         if let Some((_subgoals, assoc_tys)) =
                             impl_.try_match(trait_args, var_gen, cons, &ast::Loc::dummy())
                         {
-                            let resolved = assoc_tys.get(assoc_ty).unwrap();
+                            let resolved = assoc_tys.get(assoc_ty).unwrap_or_else(|| {
+                                panic!("Trait {trait_name} doesn't have associated type {assoc_ty}")
+                            });
                             return resolved.deep_normalize(cons, trait_env, var_gen, assumps);
                         }
+                    }
+                }
+
+                // `RecRowToList[row].List`: compute the List type from the row's fields.
+                if *trait_name == super::REC_ROW_TO_LIST_TRAIT_ID {
+                    assert_eq!(assoc_ty, "List");
+
+                    let row_ty = trait_args[0].deep_normalize(cons, trait_env, var_gen, assumps);
+                    if let Ty::Anonymous {
+                        labels,
+                        extension,
+                        record_or_variant,
+                        is_row,
+                    } = &row_ty
+                    {
+                        assert_eq!(*record_or_variant, RecordOrVariant::Record);
+                        assert!(is_row);
+                        let list_ty = super::row_to_list_type(labels, extension);
+                        return list_ty.deep_normalize(cons, trait_env, var_gen, assumps);
                     }
                 }
 

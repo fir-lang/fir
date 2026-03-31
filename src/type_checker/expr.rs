@@ -1534,7 +1534,6 @@ pub(super) fn check_expr(
                 tc_state.tys.tys.cons(),
                 new_preds,
                 tc_state.var_gen,
-                0,
             );
 
             let exceptions = replace(&mut tc_state.exceptions, old_exceptions);

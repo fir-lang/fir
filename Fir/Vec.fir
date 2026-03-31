@@ -228,6 +228,8 @@ impl[ToDoc[t]] ToDoc[Vec[t]]:
             if i != 0:
                 args += Doc.char(',') + Doc.break_(1)
             args += self.get(i).toDoc()
+        if self.len() != 0:
+            args += Doc.whenNotFlat(Doc.char(','))
         Doc.grouped(
             Doc.str("Vec.[")
                 + Doc.nested(4, Doc.break_(0) + args).group()
