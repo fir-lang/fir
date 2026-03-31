@@ -72,7 +72,10 @@ nonTerminalDecls:
     nonTerminalDecl*
 
 nonTerminalDecl:
-    "LowerId" type_? _":" _"NEWLINE" _"INDENT" nonTerminalAlt+ _"DEDENT"
+    "LowerId"
+        (_"[" type_ (_"," type_)* _","? _"]")?  # predicates
+        type_?                                  # return type
+        _":" _"NEWLINE" _"INDENT" nonTerminalAlt+ _"DEDENT"
 
 nonTerminalAlt:
     symbol+ nonTerminalRhs

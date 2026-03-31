@@ -599,6 +599,60 @@ nonTerminalDecl(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U
             let nodesLen0 = nodes.len()
             let symResult = try(
                 \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.LBracket, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    nodes.push(type_(state))
+                    let zeroOrMoreCursor0 = state._cursor
+                    loop:
+                        let nodesLen0 = nodes.len()
+                        let symResult = try(
+                            \():
+                                if state.peek() is Option.Some(sym)
+                                        and sym
+                                            is Token(kind = TokenKind.Comma, ..):
+                                    state._cursor += 1
+                                else:
+                                    throw(state.updateErrorCursor(state._cursor))
+                                nodes.push(type_(state)),
+                        )
+                        match symResult:
+                            Result.Err(err):
+                                state._cursor = zeroOrMoreCursor0
+                                nodes.truncate(nodesLen0)
+                                break
+                            Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
+                    let optionalCursor0 = state._cursor
+                    let symResult = try(
+                        \():
+                            if state.peek() is Option.Some(sym)
+                                    and sym is Token(kind = TokenKind.Comma, ..):
+                                state._cursor += 1
+                            else:
+                                throw(state.updateErrorCursor(state._cursor))
+                            (),
+                    )
+                    match symResult:
+                        Result.Err(err): state._cursor = optionalCursor0
+                        Result.Ok(ok): ()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.RBracket, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    (),
+            )
+            match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    nodes.truncate(nodesLen0)
+                Result.Ok(ok): ()
+            let optionalCursor0 = state._cursor
+            let nodesLen0 = nodes.len()
+            let symResult = try(
+                \():
                     nodes.push(type_(state))
                     (),
             )

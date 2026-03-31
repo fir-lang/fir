@@ -54,12 +54,14 @@ compiler_parser_test:
 compiler_golden_test: build
     goldentests target/debug/fir Tool/Peg/Tests.fir '# '
     goldentests target/debug/fir Tool/Peg/StateTests.fir '# '
+    goldentests target/debug/fir Tool/Peg/PredTests.fir '# '
     goldentests target/debug/fir Compiler/DeriveEq.fir '# '
     goldentests target/debug/fir Compiler/DeriveToDoc.fir '# '
 
 compiler_update_goldens:
     goldentests target/debug/fir Tool/Peg/Tests.fir '# ' --overwrite
     goldentests target/debug/fir Tool/Peg/StateTests.fir '# ' --overwrite
+    goldentests target/debug/fir Tool/Peg/PredTests.fir '# ' --overwrite
     goldentests target/debug/fir Compiler/DeriveEq.fir '# ' --overwrite
     goldentests target/debug/fir Compiler/DeriveToDoc.fir '# ' --overwrite
 
