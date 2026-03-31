@@ -28,7 +28,7 @@ trait RecRowToList[recRow]:
 type RecRowList[t] = RecRowToList[t].List
 
 
-type RecordField[t](
+value type RecordField[t](
     label: Str,
     value_: t,
 )
