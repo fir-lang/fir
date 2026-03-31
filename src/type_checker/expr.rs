@@ -9,7 +9,7 @@ use crate::type_checker::ty::*;
 use crate::type_checker::unification::{try_unify_one_way, unify, unify_expected_ty};
 use crate::type_checker::{TcFunState, loc_display};
 
-use std::mem::{replace, take};
+use std::mem::replace;
 
 use smol_str::SmolStr;
 
@@ -1523,18 +1523,8 @@ pub(super) fn check_expr(
 
             let old_ret_ty = replace(&mut tc_state.return_ty, ret_ty.clone());
             let old_exceptions = replace(&mut tc_state.exceptions, exceptions.clone());
-            let old_preds = take(tc_state.preds);
 
-            check_stmts(tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
-
-            let new_preds: Vec<Pred> = replace(tc_state.preds, old_preds);
-            crate::type_checker::resolve_preds(
-                tc_state.trait_env,
-                tc_state.assumps,
-                tc_state.tys.tys.cons(),
-                new_preds,
-                tc_state.var_gen,
-            );
+            check_stmts(tc_state, body, Some(&ret_ty), level + 1, &mut Vec::new());
 
             let exceptions = replace(&mut tc_state.exceptions, old_exceptions);
             let ret_ty = replace(&mut tc_state.return_ty, old_ret_ty);
