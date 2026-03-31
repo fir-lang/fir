@@ -59,6 +59,18 @@ Result.unwrap[ToStr[e]](self: Result[e, t]) t:
         Result.Err(err): panic(err.toStr())
 
 
+Result.or_(self: Result[e, t], other: Result[e, t]) Result[e, t]:
+    match self:
+        Result.Ok(val): Result.Ok(val)
+        Result.Err(_): other
+
+
+Result.orElse(self: Result[e, t], f: Fn() Result[e, t] / exn) Result[e, t] / exn:
+    match self:
+        Result.Ok(val): Result.Ok(val)
+        Result.Err(_): f()
+
+
 Result.unwrapOr(self: Result[e, t], default: t) t:
     match self:
         Result.Ok(val): val

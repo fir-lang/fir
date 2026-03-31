@@ -60,8 +60,14 @@ Option.unwrap(self: Option[t]) t:
 
 Option.or_(self: Option[t], other: Option[t]) Option[t]:
     match self:
-        Option.Some(t): Option.Some(t)
+        Option.Some(val): Option.Some(val)
         Option.None: other
+
+
+Option.orElse(self: Option[t], f: Fn() Option[t] / exn) Option[t] / exn:
+    match self:
+        Option.Some(val): Option.Some(val)
+        Option.None: f()
 
 
 Option.unwrapOr(self: Option[t], default: t) t:
