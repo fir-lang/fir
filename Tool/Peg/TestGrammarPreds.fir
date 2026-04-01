@@ -43,7 +43,7 @@ item[ItemExts[t],](state: ParserState[Token, ()]) Item[t] / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                Item.A(x = 0,..ItemExts[t].defaultA())
+                Item.A(x = 0, ..ItemExts[t].defaultA())
             val,
     )
     match altResult:
@@ -57,7 +57,7 @@ item[ItemExts[t],](state: ParserState[Token, ()]) Item[t] / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                Item.B(msg = "hi",..ItemExts[t].defaultB())
+                Item.B(msg = "hi", ..ItemExts[t].defaultB())
             val,
     )
     match altResult:

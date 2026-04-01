@@ -122,7 +122,9 @@ impl ToDoc[TyConDetails]:
                 let args = Doc.break_(0)
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("TyConDetails.Trait") + Doc.char('(') + args)
+                Doc.grouped(
+                    Doc.str("TyConDetails.Trait") + Doc.char('(') + args
+                )
             TyConDetails.Type(i0):
                 let args = Doc.break_(0)
                 args += i0.toDoc()

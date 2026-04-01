@@ -419,11 +419,7 @@ Lexer._nextInit(self) Option[Token] / Error:
         self._col += 4
         return Option.Some(
             Token(
-                kind = TokenKind.LBracketRow,
-                text = "row[",
-                byteIdx,
-                line,
-                col,
+                kind = TokenKind.LBracketRow, text = "row[", byteIdx, line, col,
             ),
         )
 
@@ -579,11 +575,7 @@ Lexer._nextInit(self) Option[Token] / Error:
         self._col += 2
         return Option.Some(
             Token(
-                kind = TokenKind.ExclamationEq,
-                text = "!=",
-                byteIdx,
-                line,
-                col,
+                kind = TokenKind.ExclamationEq, text = "!=", byteIdx, line, col,
             ),
         )
 
@@ -634,7 +626,9 @@ Lexer._nextInit(self) Option[Token] / Error:
         self._byteIdx += 2
         self._col += 2
         return Option.Some(
-            Token(kind = TokenKind.DoubleLAngle, text = "<<", byteIdx, line, col),
+            Token(
+                kind = TokenKind.DoubleLAngle, text = "<<", byteIdx, line, col
+            ),
         )
 
     if input.startsWith("<="):
@@ -655,7 +649,9 @@ Lexer._nextInit(self) Option[Token] / Error:
         self._byteIdx += 2
         self._col += 2
         return Option.Some(
-            Token(kind = TokenKind.DoubleRAngle, text = ">>", byteIdx, line, col),
+            Token(
+                kind = TokenKind.DoubleRAngle, text = ">>", byteIdx, line, col
+            ),
         )
 
     if input.startsWith(">="):
@@ -755,8 +751,7 @@ Lexer._nextInit(self) Option[Token] / Error:
             intToken.byteIdx -= 1
             intToken.col -= 1
             intToken.text = self._input.substr(
-                intToken.byteIdx,
-                intToken.byteIdx + intToken.text.len() + 1,
+                intToken.byteIdx, intToken.byteIdx + intToken.text.len() + 1,
             )
             return Option.Some(intToken)
 

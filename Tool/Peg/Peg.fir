@@ -290,7 +290,9 @@ convertAlt(nodes: Vec[PegParseTree]) Alt:
                 # print("-------")
                 return Alt(symbols, rhs = Option.Some(rhsNodes))
 
-        symbols.push(convertSymbol(symbolTree.asNonTerminal(NonTerminal.Symbol)))
+        symbols.push(
+            convertSymbol(symbolTree.asNonTerminal(NonTerminal.Symbol))
+        )
 
     Alt(symbols, rhs = Option.None)
 
@@ -345,7 +347,9 @@ convertSymbolNonRec(nodes: Vec[PegParseTree]) Symbol:
         match terminal.kind:
             TokenKind.LowerId: Symbol.NonTerminal(terminal.text)
             TokenKind.EndStr:
-                Symbol.Terminal(terminal.text.substr(0, terminal.text.len() - 1))
+                Symbol.Terminal(
+                    terminal.text.substr(0, terminal.text.len() - 1)
+                )
             TokenKind.Caret: Symbol.Cursor
             _: panic("")
     else:
@@ -556,9 +560,7 @@ generateNonTerminal(
 
         for symbol: Symbol in alt.symbols.iter():
             altResultDoc += generateSymbolParser(
-                symbol,
-                terminalPats,
-                symbolCont,
+                symbol, terminalPats, symbolCont,
             ) + Doc.hardLine()
 
         let valueDoc = match alt.rhs:
@@ -583,8 +585,7 @@ generateNonTerminal(
                 doc
 
         altResultDoc += Doc.nested(
-            4,
-            Doc.str("let val = do:") + Doc.hardLine() + valueDoc,
+            4, Doc.str("let val = do:") + Doc.hardLine() + valueDoc,
         )
 
         altResultDoc += Doc.hardLine()
@@ -826,9 +827,7 @@ generateSymbolParser(
                         Doc.str("let symResult = try(\\():")
                             + Doc.hardLine()
                             + generateSymbolParser(
-                                symbol,
-                                terminalPats,
-                                symbolCont,
+                                symbol, terminalPats, symbolCont,
                             ),
                     )
                     + Doc.hardLine()
@@ -893,9 +892,7 @@ generateSymbolParser(
                 + generateSymbolParser(symbol, terminalPats, symbolCont)
                 + Doc.hardLine()
                 + generateSymbolParser(
-                    Symbol.ZeroOrMore(symbol),
-                    terminalPats,
-                    symbolCont,
+                    Symbol.ZeroOrMore(symbol), terminalPats, symbolCont,
                 )
 
         Symbol.Optional(symbol):
@@ -984,9 +981,7 @@ generateSymbolParser(
                     Doc.str("let symResult = try(\\():")
                         + Doc.hardLine()
                         + generateSymbolParser(
-                            symbol,
-                            terminalPats,
-                            SymbolCont.Ignore,
+                            symbol, terminalPats, SymbolCont.Ignore,
                         ),
                 )
                 + Doc.hardLine()
@@ -1021,9 +1016,7 @@ generateSymbolParser(
                     Doc.str("let symResult = try(\\():")
                         + Doc.hardLine()
                         + generateSymbolParser(
-                            symbol,
-                            terminalPats,
-                            SymbolCont.Ignore,
+                            symbol, terminalPats, SymbolCont.Ignore,
                         ),
                 )
                 + Doc.hardLine()

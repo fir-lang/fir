@@ -91,8 +91,7 @@ processFields(
         match extension:
             Option.Some(extension):
                 return ConFields.Named(
-                    fields = Vec.empty(),
-                    extension = Option.Some(extension),
+                    fields = Vec.empty(), extension = Option.Some(extension),
                 )
             Option.None: return ConFields.Empty
 
@@ -182,12 +181,7 @@ associate(left: Expr, nodes: Vec[InlineExprCont]) Expr:
                     Expr.Is(IsExpr(expr = partLeft, pat = pat))
                 InlineExprCont.BinOp(op, rhs):
                     let leftAssoc = makeLeftAssoc(
-                        partLeft,
-                        op,
-                        rhs,
-                        0,
-                        partConts,
-                        Option.None,
+                        partLeft, op, rhs, 0, partConts, Option.None,
                     )
                     if leftAssoc.newIdx != partConts.len():
                         panic("Parse error")
@@ -196,7 +190,9 @@ associate(left: Expr, nodes: Vec[InlineExprCont]) Expr:
         ret = match ret:
             Option.None: Option.Some(expr)
             Option.Some(ret_):
-                Option.Some(Expr.BinOp(BinOpExpr(left = ret_, right = expr, op)))
+                Option.Some(
+                    Expr.BinOp(BinOpExpr(left = ret_, right = expr, op))
+                )
 
     ret.unwrap()
 

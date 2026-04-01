@@ -198,7 +198,9 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
                                         ._filePath`",
                                 )
 
-                            let new = existingItem.imports.insert(importedModIdx)
+                            let new = existingItem.imports.insert(
+                                importedModIdx
+                            )
 
                             # Note: we don't have `|=` syntax yet for `updated |= new`.
                             if new:
@@ -295,10 +297,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                         Option.None: ret
                         Option.Some(args): Ty.Fun(args, ret, exn = Option.None)
                     let scheme = Scheme(
-                        qvars,
-                        preds = Vec.empty(),
-                        ty,
-                        loc = mod.loc(con),
+                        qvars, preds = Vec.empty(), ty, loc = mod.loc(con),
                     )
                     let old = schemes.insert(conName, scheme)
                     assert(old is Option.None)
@@ -308,10 +307,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
                     Option.None: ret
                     Option.Some(args): Ty.Fun(args, ret, exn = Option.None)
                 let scheme = Scheme(
-                    qvars,
-                    preds = Vec.empty(),
-                    ty,
-                    loc = mod.loc(tyDecl),
+                    qvars, preds = Vec.empty(), ty, loc = mod.loc(tyDecl),
                 )
                 let old = schemes.insert(tyNameStr, scheme)
                 assert(old is Option.None)
@@ -672,7 +668,9 @@ addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
                                         ._filePath`",
                                 )
 
-                            let new = existingItem.imports.insert(importedModIdx)
+                            let new = existingItem.imports.insert(
+                                importedModIdx
+                            )
 
                             if new:
                                 updated = Bool.True
@@ -699,8 +697,7 @@ addImportedSchemes(pgm: Program, sccModules: HashSet[ModuleIdx]):
                             let typeFunMap: HashMap[Str, TcItem[AssocVarDefIdx, Scheme]] = HashMap
                                 .withCapacity(10)
                             modTcEnv._assocFnSchemes.insert(
-                                assocFunMap.key,
-                                typeFunMap,
+                                assocFunMap.key, typeFunMap,
                             )
                             typeFunMap
                         Option.Some(typeFunMap): typeFunMap

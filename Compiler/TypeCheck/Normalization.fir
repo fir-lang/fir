@@ -48,7 +48,9 @@ Ty.deepNormalize(self) Ty:
                         FunArgs.Positional(tys):
                             FunArgs.Positional(
                                 Vec.fromIter(
-                                    tys.iter().map(\(ty: Ty): ty.deepNormalize()),
+                                    tys.iter().map(
+                                        \(ty: Ty): ty.deepNormalize()
+                                    ),
                                 ),
                             )
                         FunArgs.Named(tys):

@@ -37,7 +37,9 @@ runParserState(
         match try(\(): scan[row[]](tokens)):
             Result.Err(~ScannerError(line, col, msg)):
                 throw(
-                    TestError.Other("scanner error: `line + 1`:`col + 1`: `msg`"),
+                    TestError.Other(
+                        "scanner error: `line + 1`:`col + 1`: `msg`"
+                    ),
                 )
             Result.Ok(tokens): tokens.takeArray()
     else:

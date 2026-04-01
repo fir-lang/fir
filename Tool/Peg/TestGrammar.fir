@@ -289,7 +289,9 @@ zeroOrMoreAThenB(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / 
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                ParseTree.NonTerminal(kind = NonTerminal.ZeroOrMoreAThenB, nodes)
+                ParseTree.NonTerminal(
+                    kind = NonTerminal.ZeroOrMoreAThenB, nodes
+                )
             val,
     )
     match altResult:
@@ -434,8 +436,7 @@ ignoreAThenIgnoreB(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] 
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 ParseTree.NonTerminal(
-                    kind = NonTerminal.IgnoreAThenIgnoreB,
-                    nodes,
+                    kind = NonTerminal.IgnoreAThenIgnoreB, nodes
                 )
             val,
     )
@@ -462,8 +463,7 @@ ignoreGroupAThenB(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] /
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 ParseTree.NonTerminal(
-                    kind = NonTerminal.IgnoreGroupAThenB,
-                    nodes,
+                    kind = NonTerminal.IgnoreGroupAThenB, nodes
                 )
             val,
     )
@@ -499,8 +499,7 @@ nonTerminalsBacktrack(state: ParserState[Token, ()]) ParseTree[Token, NonTermina
             nodes.push(terminalAOrB(state))
             let val = do:
                 ParseTree.NonTerminal(
-                    kind = NonTerminal.NonTerminalsBacktrack,
-                    nodes,
+                    kind = NonTerminal.NonTerminalsBacktrack, nodes
                 )
             val,
     )
@@ -524,8 +523,7 @@ nonTerminalsBacktrack(state: ParserState[Token, ()]) ParseTree[Token, NonTermina
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 ParseTree.NonTerminal(
-                    kind = NonTerminal.NonTerminalsBacktrack,
-                    nodes,
+                    kind = NonTerminal.NonTerminalsBacktrack, nodes
                 )
             val,
     )
@@ -806,8 +804,7 @@ bracketedOneOrMoreA(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal]
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 ParseTree.NonTerminal(
-                    kind = NonTerminal.BracketedOneOrMoreA,
-                    nodes,
+                    kind = NonTerminal.BracketedOneOrMoreA, nodes
                 )
             val,
     )
@@ -2136,8 +2133,7 @@ errorCursorBugAlt1(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] 
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 ParseTree.NonTerminal(
-                    kind = NonTerminal.ErrorCursorBugAlt1,
-                    nodes,
+                    kind = NonTerminal.ErrorCursorBugAlt1, nodes
                 )
             val,
     )
@@ -2172,8 +2168,7 @@ errorCursorBugAlt2(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] 
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 ParseTree.NonTerminal(
-                    kind = NonTerminal.ErrorCursorBugAlt2,
-                    nodes,
+                    kind = NonTerminal.ErrorCursorBugAlt2, nodes
                 )
             val,
     )

@@ -1897,7 +1897,9 @@ impl ToDoc[SelfParam]:
                 let args = Doc.break_(0)
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("SelfParam.Explicit") + Doc.char('(') + args)
+                Doc.grouped(
+                    Doc.str("SelfParam.Explicit") + Doc.char('(') + args
+                )
 
 
 impl ToDoc[ImportDecl]:
@@ -1951,7 +1953,9 @@ impl ToDoc[TraitDeclItem]:
                         + Doc.nested(4, Doc.break_(1) + kind.toDoc()),
                 )
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("TraitDeclItem.Type") + Doc.char('(') + args)
+                Doc.grouped(
+                    Doc.str("TraitDeclItem.Type") + Doc.char('(') + args
+                )
             TraitDeclItem.Fun(i0):
                 let args = Doc.break_(0)
                 args += i0.toDoc()
@@ -2049,7 +2053,9 @@ impl ToDoc[Type]:
                 let args = Doc.break_(0)
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Type.AssocTySelect") + Doc.char('(') + args)
+                Doc.grouped(
+                    Doc.str("Type.AssocTySelect") + Doc.char('(') + args
+                )
 
 
 impl ToDoc[RecordType]:

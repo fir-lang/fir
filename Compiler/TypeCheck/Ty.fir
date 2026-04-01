@@ -230,33 +230,25 @@ Ty.kind(self) Kind:
 
 Ty.unit() Ty:
     Ty.Record(
-        labels = HashMap.empty(),
-        extension = Option.None,
-        isRow = Bool.False,
+        labels = HashMap.empty(), extension = Option.None, isRow = Bool.False,
     )
 
 
 Ty.emptyVariant() Ty:
     Ty.Variant(
-        cons = HashMap.empty(),
-        extension = Option.None,
-        isRow = Bool.False,
+        cons = HashMap.empty(), extension = Option.None, isRow = Bool.False,
     )
 
 
 Ty.unitRecordRow() Ty:
     Ty.Record(
-        labels = HashMap.empty(),
-        extension = Option.None,
-        isRow = Bool.True,
+        labels = HashMap.empty(), extension = Option.None, isRow = Bool.True,
     )
 
 
 Ty.emptyVariantRow() Ty:
     Ty.Variant(
-        cons = HashMap.empty(),
-        extension = Option.None,
-        isRow = Bool.True,
+        cons = HashMap.empty(), extension = Option.None, isRow = Bool.True,
     )
 
 
@@ -429,7 +421,9 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
             Ty.App(
                 conId,
                 args =
-                    Vec.fromIter(args.iter().map(\(ty: Ty): ty.substQVars(vars))),
+                    Vec.fromIter(
+                        args.iter().map(\(ty: Ty): ty.substQVars(vars))
+                    ),
             )
 
         Ty.QVar(QVar(id, ..)):
@@ -675,7 +669,9 @@ impl ToDoc[FunArgs]:
                 let args = Doc.break_(0)
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("FunArgs.Positional") + Doc.char('(') + args)
+                Doc.grouped(
+                    Doc.str("FunArgs.Positional") + Doc.char('(') + args
+                )
             FunArgs.Named(i0):
                 let args = Doc.break_(0)
                 args += i0.toDoc()

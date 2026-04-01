@@ -103,9 +103,7 @@ scanIndented[
 
             TokenKind.BeginInterpolation:
                 scanNonIndented(
-                    tokens,
-                    newTokens,
-                    NonIndentedDelimKind.Interpolation,
+                    tokens, newTokens, NonIndentedDelimKind.Interpolation,
                 )
 
             TokenKind.LBrace:
@@ -237,9 +235,7 @@ scanNonIndented[
 
             TokenKind.BeginInterpolation:
                 scanNonIndented(
-                    tokens,
-                    newTokens,
-                    NonIndentedDelimKind.Interpolation,
+                    tokens, newTokens, NonIndentedDelimKind.Interpolation,
                 )
 
             TokenKind.LBrace:

@@ -130,8 +130,7 @@ genSumAlts(typeName: Str, decls: Vec[ConDecl], tokens: Array[Token]) Doc:
             pat + Doc.char(':') + Doc.hardLine() + genSumRhs(typeName, conDecl),
         )
     Doc.nested(
-        4,
-        Doc.str("match (l = self, r = other):") + Doc.hardLine() + alts,
+        4, Doc.str("match (l = self, r = other):") + Doc.hardLine() + alts,
     )
 
 

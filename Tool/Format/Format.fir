@@ -73,10 +73,7 @@ formatModule(mod: Vec[TopDecl], tokens: Array[Token]) Doc:
         if not mod.isEmpty():
             doc += emptyLines
         let comments = formatLeadingComments_(
-            commentStart,
-            eofTokenIdx,
-            2,
-            tokens,
+            commentStart, eofTokenIdx, 2, tokens,
         )
         doc += comments.doc
 
@@ -117,8 +114,7 @@ TypeDecl.format(self, tokens: Array[Token]) Doc:
 
     if not self.typeParams.isEmpty():
         let lbracket = prevNonTrivia(
-            self.typeParams.get(0).firstToken(tokens),
-            tokens,
+            self.typeParams.get(0).firstToken(tokens), tokens,
         ).unwrap()
         assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
@@ -173,8 +169,7 @@ TypeDeclRhs.format(self, tokens: Array[Token]) Doc:
                     prevNonTrivia(firstCon.name.token, tokens).unwrap()
                 Option.None:
                     let dotdot = prevNonTrivia(
-                        extension.unwrap().firstToken(tokens),
-                        tokens,
+                        extension.unwrap().firstToken(tokens), tokens,
                     ).unwrap()
                     assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
                     prevNonTrivia(dotdot, tokens).unwrap()
@@ -234,8 +229,7 @@ ConFields.format(self, tokens: Array[Token]) Doc:
                     prevNonTrivia(firstField.name.token, tokens).unwrap()
                 Option.None:
                     let dotdot = prevNonTrivia(
-                        extension.unwrap().firstToken(tokens),
-                        tokens,
+                        extension.unwrap().firstToken(tokens), tokens,
                     ).unwrap()
                     assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
                     prevNonTrivia(dotdot, tokens).unwrap()
@@ -831,7 +825,9 @@ CallExpr.format(self, tokens: Array[Token]) Doc:
     let rparen = self.lastToken(tokens)
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-    Doc.grouped(fun + _formatArgList(self.args, self.splice, lparen, rparen, tokens))
+    Doc.grouped(
+        fun + _formatArgList(self.args, self.splice, lparen, rparen, tokens)
+    )
 
 
 IntExpr.format(self, tokens: Array[Token]) Doc:
@@ -903,7 +899,13 @@ RecordExpr.format(self, tokens: Array[Token]) Doc:
     _formatArgList(self.fields, self.splice, lparen, rparen, tokens)
 
 
-_formatArgList(args: Vec[Named[Expr]], splice: Option[Expr], lparen: TokenIdx, rparen: TokenIdx, tokens: Array[Token]) Doc:
+_formatArgList(
+    args: Vec[Named[Expr]],
+    splice: Option[Expr],
+    lparen: TokenIdx,
+    rparen: TokenIdx,
+    tokens: Array[Token],
+) Doc:
     if args.isEmpty() and splice is Option.None:
         return formatToken(lparen, tokens) + formatToken(rparen, tokens)
 
@@ -930,9 +932,7 @@ _formatArgList(args: Vec[Named[Expr]], splice: Option[Expr], lparen: TokenIdx, r
             doc += Doc.break_(1)
         doc += formatToken(dotdot, tokens) + splice.format(tokens)
 
-    if args.len() != 0
-            and splice is Option.None
-            and not trailingComma:
+    if args.len() != 0 and splice is Option.None and not trailingComma:
         doc += Doc.whenNotFlat(Doc.char(','))
 
     formatToken(lparen, tokens)
@@ -1003,8 +1003,7 @@ Alt.format(self, tokens: Array[Token]) Doc:
 
     doc0
         + Doc.nested(
-            4,
-            docRest + formatToken(colon, tokens) + Doc.break_(1) + body,
+            4, docRest + formatToken(colon, tokens) + Doc.break_(1) + body,
         ).group()
 
 
@@ -1402,7 +1401,9 @@ BreakStmt.format(self, tokens: Array[Token]) Doc:
 
         Option.Some(label):
             formatToken(break_, tokens)
-                + Doc.nested(4, Doc.break_(1) + formatToken(label.token, tokens))
+                + Doc.nested(
+                    4, Doc.break_(1) + formatToken(label.token, tokens)
+                )
 
 
 ContinueStmt.format(self, tokens: Array[Token]) Doc:
@@ -1413,7 +1414,9 @@ ContinueStmt.format(self, tokens: Array[Token]) Doc:
 
         Option.Some(label):
             formatToken(continue_, tokens)
-                + Doc.nested(4, Doc.break_(1) + formatToken(label.token, tokens))
+                + Doc.nested(
+                    4, Doc.break_(1) + formatToken(label.token, tokens)
+                )
 
 
 # --------------------------------------------------------------------------------------------------
@@ -1436,7 +1439,9 @@ NamedType.format(self, tokens: Array[Token]) Doc:
 
 RecordType.format(self, tokens: Array[Token]) Doc:
     let lparen = self.firstToken(tokens)
-    assert(tokens.get(lparen.idx).kind is TokenKind.LParen | TokenKind.LParenRow)
+    assert(
+        tokens.get(lparen.idx).kind is TokenKind.LParen | TokenKind.LParenRow
+    )
 
     let doc0 = formatToken(lparen, tokens)
     let docRest = Doc.empty()
@@ -1752,10 +1757,7 @@ formatLeadingComments(tokenIdx: TokenIdx, tokens: Array[Token]) Doc:
             1
 
         let leading = formatLeadingComments_(
-            commentStart,
-            tokenIdx,
-            maxEmptyLines,
-            tokens,
+            commentStart, tokenIdx, maxEmptyLines, tokens,
         )
         doc += leading.doc
         let lastCommentToken = tokens.get(leading.lastCommentIdx.idx)

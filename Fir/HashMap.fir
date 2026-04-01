@@ -24,8 +24,7 @@ HashMap.empty() HashMap[k, v]:
 
 HashMap.withCapacity(cap: U32) HashMap[k, v]:
     let elems: Array[Option[Elem[k, v]]] = Array.fromIter(
-        repeatWith(\(): Option.None),
-        cap,
+        repeatWith(\(): Option.None), cap,
     )
     HashMap(
         _buckets = elems,
@@ -66,8 +65,7 @@ HashMap._grow[Eq[k], Hash[k]](self: HashMap[k, v]):
         currentCap * u32(2)
 
     let newElems: Array[Option[Elem[k, v]]] = Array.fromIter(
-        repeatWith(\(): Option.None),
-        newCap,
+        repeatWith(\(): Option.None), newCap,
     )
 
     let newCapacityLeft: U32 = HashMap._capacityBeforeGrowth(newCap)

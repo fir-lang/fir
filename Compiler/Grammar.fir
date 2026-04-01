@@ -126,8 +126,7 @@ type_(state: ParserState[Token, ()]) Type / U32:
                     Option.Some(selection):
                         Type.AssocTySelect(
                             AssocTySelectType(
-                                ty = Type.Named(t),
-                                assocTy = newId(selection),
+                                ty = Type.Named(t), assocTy = newId(selection)
                             ),
                         )
             val,
@@ -266,8 +265,7 @@ namedType(state: ParserState[Token, ()]) NamedType / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 NamedType(
-                    name = newTyId(name, state._tokens),
-                    args = Option.None,
+                    name = newTyId(name, state._tokens), args = Option.None
                 )
             val,
     )
@@ -373,7 +371,7 @@ recordType(state: ParserState[Token, ()]) RecordType / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 let fields: Vec[Named[Type]] = Vec.fromIter(
-                    once(f0).chain(fs.iter()),
+                    once(f0).chain(fs.iter())
                 )
                 RecordType(
                     fields,
@@ -681,7 +679,7 @@ recordTypeFields(state: ParserState[Token, ()]) Vec[Named[Type]] / U32:
             type_(state)
             let val = do:
                 let vec: Vec[Named[Type]] = Vec.fromIter(
-                    once(f0).chain(fs.iter()),
+                    once(f0).chain(fs.iter())
                 )
                 vec
             val,
@@ -726,7 +724,7 @@ recordTypeFields(state: ParserState[Token, ()]) Vec[Named[Type]] / U32:
                 Result.Ok(ok): ()
             let val = do:
                 let vec: Vec[Named[Type]] = Vec.fromIter(
-                    once(f0).chain(fs.iter()),
+                    once(f0).chain(fs.iter())
                 )
                 vec
             val,
@@ -1068,7 +1066,9 @@ typeDecl(state: ParserState[Token, ()]) TypeDecl / U32:
                             Option.None: Vec.empty(),
                     typeParamKinds = Vec.empty(),
                     rhs =
-                        Option.Some(TypeDeclRhs.Sum(cons = rhs, extension = ext)),
+                        Option.Some(
+                            TypeDeclRhs.Sum(cons = rhs, extension = ext)
+                        ),
                 )
             val,
     )
@@ -1459,9 +1459,7 @@ conDecl(state: ParserState[Token, ()]) ConDecl / U32:
                 match fs:
                     Option.Some(fs):
                         ConDecl(
-                            name,
-                            fields = fs.fields,
-                            _lastToken = fs.lastToken,
+                            name, fields = fs.fields, _lastToken = fs.lastToken,
                         )
                     Option.None:
                         ConDecl(
@@ -1565,7 +1563,7 @@ conFields(state: ParserState[Token, ()]) (fields: ConFields, lastToken: TokenIdx
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 let vec: Vec[(name: Option[Id], ty: Type)] = Vec.fromIter(
-                    once(f0).chain(fs.iter()),
+                    once(f0).chain(fs.iter())
                 )
                 (
                     fields = processFields(vec, ext),
@@ -2132,20 +2130,20 @@ prefixExpr(state: ParserState[Token, ()]) Expr / U32:
                         ExprSuffix.Field(field, tyArgs):
                             ret = Expr.FieldSel(
                                 FieldSelExpr(
-                                    object = ret,
-                                    field,
-                                    userTyArgs = tyArgs,
+                                    object = ret, field, userTyArgs = tyArgs,
                                 ),
                             )
                         ExprSuffix.Args(args, splice, _lastToken):
                             ret = Expr.Call(
-                                CallExpr(fun = ret, args, splice, _lastToken),
+                                CallExpr(fun = ret, args, splice, _lastToken)
                             )
                 if pfx is Option.Some(pfx):
                     match pfx:
                         ExprPrefix.Tilde(token):
                             ret = Expr.Variant(
-                                VariantExpr(expr = ret, inferredTy = Option.None),
+                                VariantExpr(
+                                    expr = ret, inferredTy = Option.None
+                                ),
                             )
                         ExprPrefix.Minus(token):
                             ret = Expr.UnOp(
@@ -2349,7 +2347,9 @@ args(state: ParserState[Token, ()]) (args: Vec[Named[Expr]], splice: Option[Expr
                                             is Token(kind = TokenKind.Comma, ..):
                                     state._cursor += 1
                                 else:
-                                    throw(state.updateErrorCursor(state._cursor))
+                                    throw(
+                                        state.updateErrorCursor(state._cursor)
+                                    )
                                 args.push(arg(state)),
                         )
                         match symResult:
@@ -2394,7 +2394,7 @@ args(state: ParserState[Token, ()]) (args: Vec[Named[Expr]], splice: Option[Expr
                             Option.None: Vec.empty()
                             Option.Some((arg0, args)):
                                 let vec: Vec[Named[Expr]] = Vec.fromIter(
-                                    once(arg0).chain(args.iter()),
+                                    once(arg0).chain(args.iter())
                                 )
                                 vec,
                     splice = Option.None,
@@ -2584,7 +2584,9 @@ simpleExpr(state: ParserState[Token, ()]) Expr / U32:
                 Expr.Record(
                     RecordExpr(
                         fields =
-                            Vec.fromIter(once(fields.e0).chain(fields.es.iter())),
+                            Vec.fromIter(
+                                once(fields.e0).chain(fields.es.iter())
+                            ),
                         splice = Option.Some(splice),
                         _firstToken = TokenIdx(idx = first),
                         _lastToken = TokenIdx(idx = last),
@@ -2618,7 +2620,9 @@ simpleExpr(state: ParserState[Token, ()]) Expr / U32:
                                             is Token(kind = TokenKind.Comma, ..):
                                     state._cursor += 1
                                 else:
-                                    throw(state.updateErrorCursor(state._cursor))
+                                    throw(
+                                        state.updateErrorCursor(state._cursor)
+                                    )
                                 es.push(parenExpr(state)),
                         )
                         match symResult:
@@ -2689,7 +2693,7 @@ simpleExpr(state: ParserState[Token, ()]) Expr / U32:
                                     fields =
                                         Vec.fromIter(
                                             once(fields.e0).chain(
-                                                fields.es.iter(),
+                                                fields.es.iter()
                                             ),
                                         ),
                                     splice = Option.None,
@@ -3683,7 +3687,9 @@ fnArgs(state: ParserState[Token, ()]) Vec[FunArg] / U32:
                                             is Token(kind = TokenKind.Colon, ..):
                                     state._cursor += 1
                                 else:
-                                    throw(state.updateErrorCursor(state._cursor))
+                                    throw(
+                                        state.updateErrorCursor(state._cursor)
+                                    )
                                 let ty = type_(state)
                                 ty,
                         )
@@ -3861,10 +3867,7 @@ stmt(state: ParserState[Token, ()]) Stmt / U32:
             let val = do:
                 Stmt.Let(
                     LetStmt(
-                        lhs = pat,
-                        ty,
-                        rhs,
-                        _firstToken = TokenIdx(idx = cur),
+                        lhs = pat, ty, rhs, _firstToken = TokenIdx(idx = cur)
                     ),
                 )
             val,
@@ -4025,10 +4028,7 @@ stmt(state: ParserState[Token, ()]) Stmt / U32:
             let val = do:
                 Stmt.While(
                     WhileStmt(
-                        label,
-                        cond,
-                        body,
-                        _firstToken = TokenIdx(idx = cur),
+                        label, cond, body, _firstToken = TokenIdx(idx = cur)
                     ),
                 )
             val,
@@ -4415,13 +4415,15 @@ simplePat(state: ParserState[Token, ()]) Pat / U32:
                                 Option.None: Vec.empty()
                                 Option.Some((pats, ..)):
                                     pats.map(\(ps): ps.fields).unwrapOr(
-                                        Vec.empty(),
+                                        Vec.empty()
                                     ),
                         rest =
                             match fs:
                                 Option.None: RestPat.No
                                 Option.Some((pats, ..)):
-                                    pats.map(\(ps): ps.rest).unwrapOr(RestPat.No),
+                                    pats.map(\(ps): ps.rest).unwrapOr(
+                                        RestPat.No
+                                    ),
                         _lastToken =
                             match fs:
                                 Option.None: con.lastToken(state._tokens)
@@ -4553,7 +4555,7 @@ conFieldPats(state: ParserState[Token, ()]) (fields: Vec[Named[Pat]], rest: Rest
                     fields = Vec.empty(),
                     rest =
                         RestPat.Bind(
-                            VarPat(var_ = newId(var_), ty = Option.None),
+                            VarPat(var_ = newId(var_), ty = Option.None)
                         ),
                 )
             val,
@@ -4612,7 +4614,7 @@ conFieldPats(state: ParserState[Token, ()]) (fields: Vec[Named[Pat]], rest: Rest
                     Option.Some(ok)
             let val = do:
                 let fields: Vec[Named[Pat]] = Vec.fromIter(
-                    once(p0).chain(ps.iter()),
+                    once(p0).chain(ps.iter())
                 )
                 (fields = fields, rest = rest.unwrapOr(RestPat.No))
             val,
@@ -4826,7 +4828,7 @@ path(state: ParserState[Token, ()]) Vec[Id] / U32:
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let val = do:
                 let vec: Vec[Id] = Vec.fromIter(
-                    once(newId(p0)).chain(ps.iter().map(newId)),
+                    once(newId(p0)).chain(ps.iter().map(newId))
                 )
                 vec
             val,

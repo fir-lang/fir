@@ -55,7 +55,9 @@ main():
     runTest("'a a a' as posLookahead3 (should fail)", "a a a", posLookahead3)
     runTest("'a a b' as posLookahead3 (should fail)", "a a b", posLookahead3)
 
-    runTest("'a a c' as oneOrMoreAThenB (should fail)", "a a c", oneOrMoreAThenB)
+    runTest(
+        "'a a c' as oneOrMoreAThenB (should fail)", "a a c", oneOrMoreAThenB
+    )
     runTest("'a b' as endOfInputTest", "a b", endOfInputTest)
     runTest("'a b ' as endOfInputTest", "a b ", endOfInputTest)
     runTest("'a b a' as endOfInputTest (should fail)", "a b a", endOfInputTest)
@@ -88,7 +90,12 @@ main():
     print(try(\(): runParser("", semanticActionOptional, Bool.False)))
 
     print("# Complex group ------------------------------------------")
-    match try(\(): runParser("a a a b b b c", semanticActionComplex, Bool.False)):
+    match try(
+                    \():
+                        runParser(
+                            "a a a b b b c", semanticActionComplex, Bool.False
+                        ),
+                ):
         Result.Err(err): print(err)
         Result.Ok(result):
             print("aVec = `result.aVec`")
@@ -129,8 +136,12 @@ main():
     print(try(\(): runParser("a b", restoreCursorOptional2, Bool.False)))
     print(try(\(): runParser("a b", restoreCursorZeroOrMore1, Bool.False)))
     print(try(\(): runParser("a b", restoreCursorZeroOrMore2, Bool.False)))
-    print(try(\(): runParser("a b c a b", restoreCursorZeroOrMore1, Bool.False)))
-    print(try(\(): runParser("a b c a b", restoreCursorZeroOrMore2, Bool.False)))
+    print(
+        try(\(): runParser("a b c a b", restoreCursorZeroOrMore1, Bool.False))
+    )
+    print(
+        try(\(): runParser("a b c a b", restoreCursorZeroOrMore2, Bool.False))
+    )
 
     print("# Zero-or-more vec truncate bug regression test ----------")
     print(try(\(): runParser("a,", zeroOrMoreResultBug1, Bool.False)))

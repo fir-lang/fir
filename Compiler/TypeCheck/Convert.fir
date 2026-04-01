@@ -21,7 +21,9 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
             )
 
         Type.Record(RecordType(fields, extension, isRow, ..)):
-            let labels: HashMap[LocalId, Ty] = HashMap.withCapacity(fields.len())
+            let labels: HashMap[LocalId, Ty] = HashMap.withCapacity(
+                fields.len()
+            )
 
             for namedField: Named[Type] in fields.iter():
                 let name = module.idText(
@@ -116,8 +118,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                 \():
                     throw(
                         TypeError(
-                            loc,
-                            msg = "Function type without exception type",
+                            loc, msg = "Function type without exception type",
                         ),
                     ),
             )
@@ -194,7 +195,9 @@ convertFields(module: Module, vars: ScopeMap[Str, Ty], fields: ConFields) Option
                             \(field: NamedField) (key: LocalId, val: Ty):
                                 (
                                     key =
-                                        LocalId(name = module.idText(field.name)),
+                                        LocalId(
+                                            name = module.idText(field.name)
+                                        ),
                                     val = convertAstTy(module, vars, field.ty),
                                 ),
                         ),

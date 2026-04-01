@@ -32,9 +32,7 @@ addMissingTypeParams(mod: Vec[TopDecl], tokens: Array[Token]):
 
             TopDecl.Fun(decl):
                 _addMissingTypeParamsFun(
-                    decl.sig,
-                    OrderedHashMap.empty(),
-                    tokens,
+                    decl.sig, OrderedHashMap.empty(), tokens,
                 )
 
             TopDecl.Import(decl): ()
@@ -390,6 +388,5 @@ impl[Clone[k], Clone[v]] Clone[OrderedHashMap[k, v]]:
 impl[Clone[t]] Clone[InsertionOrder[t]]:
     clone(self: InsertionOrder[t]) InsertionOrder[t]:
         InsertionOrder(
-            insertionOrder = self.insertionOrder,
-            thing = self.thing.clone(),
+            insertionOrder = self.insertionOrder, thing = self.thing.clone(),
         )

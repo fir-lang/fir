@@ -150,8 +150,7 @@ impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], exn]:
 impl[Clone[t]] Clone[InclusiveRangeIterator[t]]:
     clone(self: InclusiveRangeIterator[t]) InclusiveRangeIterator[t]:
         InclusiveRangeIterator(
-            current = self.current.clone(),
-            end = self.end.clone(),
+            current = self.current.clone(), end = self.end.clone(),
         )
 
 

@@ -60,8 +60,7 @@ resolveNames(pgm: Program):
                             assocTyId.token.idx,
                         ).text
                         let tyDefIdx = TyDefIdx(
-                            _mod = module._idx,
-                            _name = assocTyName,
+                            _mod = module._idx, _name = assocTyName,
                         )
                         visitor._tyEnv.insert(assocTyName, tyDefIdx)
                     TraitDeclItem.Fun(_): ()
@@ -76,11 +75,11 @@ resolveNames(pgm: Program):
             for item: ImplDeclItem in implDecl.items.iter():
                 match item:
                     ImplDeclItem.Type(assocTy = assocTy, ..):
-                        let assocTyName = visitor._tokens.get(assocTy.token.idx,)
-                            .text
+                        let assocTyName = visitor._tokens.get(
+                            assocTy.token.idx,
+                        ).text
                         let tyDefIdx = TyDefIdx(
-                            _mod = module._idx,
-                            _name = assocTyName,
+                            _mod = module._idx, _name = assocTyName,
                         )
                         visitor._tyEnv.insert(assocTyName, tyDefIdx)
                     ImplDeclItem.Fun(_): ()
@@ -365,18 +364,12 @@ _makeSccEnv(
                     )
 
     let selfEnv = _SccEnv(
-        _termEnv = termEnv,
-        _assocTermEnv = assocTermEnv,
-        _tyEnv = typeEnv,
+        _termEnv = termEnv, _assocTermEnv = assocTermEnv, _tyEnv = typeEnv,
     )
 
     for importedSccIdx: U32 in sccImports.get(sccIdx).iter():
         let importedSccEnv = _makeSccEnv(
-            pgm,
-            importedSccIdx,
-            sccs,
-            sccImports,
-            sccEnvs,
+            pgm, importedSccIdx, sccs, sccImports, sccEnvs,
         )
         selfEnv.merge(importedSccEnv)
 
