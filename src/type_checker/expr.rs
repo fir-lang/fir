@@ -171,17 +171,26 @@ pub(super) fn check_expr(
                             tc_state.var_gen,
                             &[],
                         );
-                        let ty = match labels.get(field) {
-                            Some(field_ty) => field_ty.clone(),
-                            None => panic!(
-                                "{}: Record with fields {:?} does not have field {}",
-                                loc_display(&object.loc),
-                                labels.keys().collect::<Vec<_>>(),
-                                field
-                            ),
-                        };
-                        *inferred_ty = Some(ty.clone());
-                        ty
+                        match labels.get(field) {
+                            Some(field_ty) => {
+                                let ty = field_ty.clone();
+                                *inferred_ty = Some(ty.clone());
+                                ty
+                            }
+                            None => {
+                                let (ty, new_expr) = check_field_sel(
+                                    tc_state,
+                                    object,
+                                    field,
+                                    user_ty_args,
+                                    &ty_normalized,
+                                    loc,
+                                    level,
+                                );
+                                *expr = new_expr;
+                                ty
+                            }
+                        }
                     }
 
                     other => {

@@ -1,17 +1,16 @@
 main():
-    print(ToDoc.toDoc(()).render(10))
-    print(ToDoc.toDoc((msg = "Hi")).render(10))
-    print(ToDoc.toDoc((msg = "Hi")).render(15))
+    print(().toDoc().render(10))
+    print((msg = "Hi").toDoc().render(10))
+    print((msg = "Hi").toDoc().render(15))
     print(
-        ToDoc.toDoc(
-            (
-                msg = "Hi",
-                x = u32(123),
-                y = (a = Vec.["a", "b", "c"], b = u32(456)),
-                z = (q = u32(0), z = u32(1)),
-            ),
-        ).render(15),
+        (
+            msg = "Hi",
+            x = u32(123),
+            y = (a = Vec.["a", "b", "c"], b = u32(456)),
+            z = (q = u32(0), z = u32(1)),
+        ).toDoc().render(15),
     )
+
 
 # expected stdout:
 # ()
