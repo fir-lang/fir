@@ -46,9 +46,12 @@ HashMap._capacityBeforeGrowth(cap: U32) U32:
     (u32(cap) * u32(8000)) / u32(10000)
 
 
-HashMap.fromIter[Iterator[iter, exn], Iterator[iter, exn].Item = (key: k, val: v), Eq[k], Hash[k]](
-    iter: iter,
-) HashMap[k, v] / exn:
+HashMap.fromIter[
+    Iterator[iter, exn],
+    Iterator[iter, exn].Item = (key: k, val: v),
+    Eq[k],
+    Hash[k],
+](iter: iter,) HashMap[k, v] / exn:
     let map = HashMap.withCapacity(10)
     for item in iter:
         map.insert(item.key, item.val)
@@ -78,9 +81,12 @@ HashMap._grow[Eq[k], Hash[k]](self: HashMap[k, v]):
         - self._numElements
 
 
-HashMap.fromEntries[Iterator[iter, exn], Iterator[iter, exn].Item = HashMapEntry[k, v], Eq[k], Hash[k]](
-    iter: iter,
-) HashMap[k, v] / exn:
+HashMap.fromEntries[
+    Iterator[iter, exn],
+    Iterator[iter, exn].Item = HashMapEntry[k, v],
+    Eq[k],
+    Hash[k],
+](iter: iter,) HashMap[k, v] / exn:
     let map = HashMap.withCapacity(10)
     for item in iter:
         map.insert(item.key, item.val)

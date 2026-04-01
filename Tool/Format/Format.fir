@@ -406,13 +406,13 @@ _formatContext(context: Context, tokens: Array[Token]) Doc:
     let rbracket = context.lastToken(tokens)
     assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
-    let doc = formatToken(lbracket, tokens)
+    let doc = formatToken(lbracket, tokens) + Doc.break_(0)
 
     let lastToken = lbracket
     let trailingComma = Bool.False
     for pred: Pred_ in context.preds.iter():
         if trailingComma:
-            doc += Doc.blank(1)
+            doc += Doc.break_(1)
             trailingComma = Bool.False
 
         match pred:
@@ -450,7 +450,10 @@ _formatContext(context: Context, tokens: Array[Token]) Doc:
             trailingComma = Bool.True
             doc += formatToken(next, tokens)
 
-    doc + formatToken(rbracket, tokens)
+    if context.preds.len() != 0 and not trailingComma:
+        doc += Doc.whenNotFlat(Doc.char(','))
+
+    Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rbracket, tokens))
 
 
 _formatSigArgList(lparen: TokenIdx, params: Vec[FunArg], tokens: Array[Token]) (doc: Doc, rparen: TokenIdx):
@@ -629,10 +632,12 @@ TraitDeclItem.format(self, tokens: Array[Token]) Doc:
 
 ImplDecl.format(self, tokens: Array[Token]) Doc:
     let impl_ = self._firstToken
-    let doc0 = formatToken(impl_, tokens)
+    assert(tokens.get(impl_.idx).kind is TokenKind.Impl)
 
-    let docRest = _formatOptContext(self.context, tokens)
-    docRest += Doc.blank(1) + formatToken(self.trait_.token, tokens)
+    let doc0 = formatToken(impl_, tokens)
+        + _formatOptContext(self.context, tokens)
+
+    let docRest = Doc.blank(1) + formatToken(self.trait_.token, tokens)
 
     let lbracket = nextNonTrivia(self.trait_.token, tokens).unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)

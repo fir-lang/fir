@@ -50,7 +50,10 @@ scan(tokens: Vec[Token]) Vec[Token] / [ScannerError, ..exn]:
 ##
 ## This function does not consume the token terminating the block, i.e. `}` or
 ## the dedented token.
-scanIndented[Iterator[iter, [ScannerError, ..exn]], Iterator[iter, [ScannerError, ..exn]].Item = Token](
+scanIndented[
+    Iterator[iter, [ScannerError, ..exn]],
+    Iterator[iter, [ScannerError, ..exn]].Item = Token,
+](
     tokens: Peekable[iter, Token, [ScannerError, ..exn]],
     newTokens: Vec[Token],
     blockCol: U32,
@@ -169,7 +172,10 @@ type NonIndentedDelimKind:
 ## Scan a non-indented block: `(...)` or `[...]`.
 ##
 ## Consumes the terminating `)` or `]`.
-scanNonIndented[Iterator[iter, [ScannerError, ..exn]], Iterator[iter, [ScannerError, ..exn]].Item = Token](
+scanNonIndented[
+    Iterator[iter, [ScannerError, ..exn]],
+    Iterator[iter, [ScannerError, ..exn]].Item = Token,
+](
     tokens: Peekable[iter, Token, [ScannerError, ..exn]],
     newTokens: Vec[Token],
     delimKind: NonIndentedDelimKind,
@@ -282,10 +288,10 @@ scanNonIndented[Iterator[iter, [ScannerError, ..exn]], Iterator[iter, [ScannerEr
             _: ()
 
 
-peek[Iterator[iter, [ScannerError, ..exn]], Iterator[iter, [ScannerError, ..exn]].Item = Token](
-    tokens: Peekable[iter, Token, [ScannerError, ..exn]],
-    newTokens: Vec[Token],
-) Option[Token] / [ScannerError, ..exn]:
+peek[
+    Iterator[iter, [ScannerError, ..exn]],
+    Iterator[iter, [ScannerError, ..exn]].Item = Token,
+](tokens: Peekable[iter, Token, [ScannerError, ..exn]], newTokens: Vec[Token],) Option[Token] / [ScannerError, ..exn]:
     while tokens.peek() is Option.Some(t):
         if t.isTrivia():
             newTokens.push(t)
@@ -297,10 +303,10 @@ peek[Iterator[iter, [ScannerError, ..exn]], Iterator[iter, [ScannerError, ..exn]
     Option.None
 
 
-next[Iterator[iter, [ScannerError, ..exn]], Iterator[iter, [ScannerError, ..exn]].Item = Token](
-    tokens: Peekable[iter, Token, [ScannerError, ..exn]],
-    newTokens: Vec[Token],
-) Option[Token] / [ScannerError, ..exn]:
+next[
+    Iterator[iter, [ScannerError, ..exn]],
+    Iterator[iter, [ScannerError, ..exn]].Item = Token,
+](tokens: Peekable[iter, Token, [ScannerError, ..exn]], newTokens: Vec[Token],) Option[Token] / [ScannerError, ..exn]:
     while tokens.next() is Option.Some(t):
         if t.isTrivia():
             newTokens.push(t)

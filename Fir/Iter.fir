@@ -377,7 +377,12 @@ type Chain[iter1, iter2, item, exn](
 )
 
 
-impl[Iterator[iter1, exn], Iterator[iter2, exn], Iterator[iter1, exn].Item = item, Iterator[iter2, exn].Item = item] Iterator[Chain[iter1, iter2, item, exn], exn]:
+impl[
+    Iterator[iter1, exn],
+    Iterator[iter2, exn],
+    Iterator[iter1, exn].Item = item,
+    Iterator[iter2, exn].Item = item,
+] Iterator[Chain[iter1, iter2, item, exn], exn]:
     type Item = item
 
     next(self: Chain[iter1, iter2, item, exn]) Option[Item] / exn:
