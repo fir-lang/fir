@@ -1569,7 +1569,18 @@ pub(super) fn check_expr(
                 tc_state.assumps,
                 tc_state.preds,
             );
-            (Ty::bool(), pat_binders)
+            let ty = unify_expected_ty(
+                Ty::bool(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.trait_env,
+                tc_state.var_gen,
+                level,
+                loc,
+                tc_state.assumps,
+                tc_state.preds,
+            );
+            (ty, pat_binders)
         }
 
         ast::Expr::Do(ast::DoExpr { stmts, inferred_ty }) => {
