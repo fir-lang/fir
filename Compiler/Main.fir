@@ -36,9 +36,7 @@ main():
 
     match try(\(): prepTcEnvs(pgm)):
         Result.Ok(()): ()
-        Result.Err(err):
-            print(err.toDoc().render(80))
-            return
+        Result.Err(err): panic(err.toDoc().render(80))
 
     # This prints too much stuff, commented out for now.
     # for mod: Module in pgm._modules.iter():

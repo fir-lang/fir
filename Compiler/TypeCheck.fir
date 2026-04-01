@@ -229,6 +229,13 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
         if tyDecl.rhs is Option.Some(TypeDeclRhs.Synonym(synRhsTy)):
             let tyDeclName = mod.idText(tyDecl.name)
             let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
+            for i in range(u32(0), tyDecl.typeParams.len()):
+                let paramName = mod.idText(tyDecl.typeParams.get(i).name)
+                let kind = tyDecl.typeParamKinds.get(i)
+                varMap.insert(
+                    paramName,
+                    Ty.QVar(QVar(id = LocalId(name = paramName), kind)),
+                )
             let synTy = convertAstTy(mod, varMap, synRhsTy)
             tcEnv._synonyms.insert(tyDeclName, synTy)
             continue
