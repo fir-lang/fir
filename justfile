@@ -189,3 +189,4 @@ build_site: generate_parser
     cp tests/ErrorHandling.fir $OUT_DIR/ErrorHandling.fir
     cp tests/ThrowingIter.fir $OUT_DIR/ThrowingIter.fir
     cp tests/PPrintExample.fir $OUT_DIR/PPrintExample.fir
+    cp tests/NamedTypeExtensions.fir $OUT_DIR/NamedTypeExtensions.fir
