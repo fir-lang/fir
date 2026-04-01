@@ -828,43 +828,10 @@ CallExpr.format(self, tokens: Array[Token]) Doc:
     let lparen = nextNonTrivia(self.fun.lastToken(tokens), tokens).unwrap()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-    let args = if self.args.isEmpty():
-        let rparen = nextNonTrivia(lparen, tokens).unwrap()
-        assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+    let rparen = self.lastToken(tokens)
+    assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-        formatToken(lparen, tokens) + formatToken(rparen, tokens)
-    else:
-        let args = formatToken(lparen, tokens) + Doc.break_(0)
-        let trailingComma = Bool.False
-        for arg: Named[Expr] in self.args.iter():
-            if trailingComma:
-                args += Doc.break_(1)
-                trailingComma = Bool.False
-
-            args += formatNamed(arg, Expr.format, tokens).group()
-
-            if nextNonTrivia(arg.lastToken(tokens), tokens) is Option.Some(next)
-                    and tokens.get(next.idx).kind is TokenKind.Comma:
-                trailingComma = Bool.True
-                args += formatToken(next, tokens)
-
-        if self.splice is Option.Some(splice):
-            let dotdot = prevNonTrivia(splice.firstToken(tokens), tokens).unwrap()
-            assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
-
-            args += formatToken(dotdot, tokens) + splice.format(tokens)
-
-        if self.args.len() != 0
-                and self.splice is Option.None
-                and not trailingComma:
-            args += Doc.whenNotFlat(Doc.char(','))
-
-        let rparen = self.lastToken(tokens)
-        assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
-
-        Doc.grouped(args.nest(4) + Doc.break_(0)) + formatToken(rparen, tokens)
-
-    Doc.grouped(fun + args)
+    Doc.grouped(fun + _formatArgList(self.args, self.splice, lparen, rparen, tokens))
 
 
 IntExpr.format(self, tokens: Array[Token]) Doc:
@@ -930,40 +897,47 @@ RecordExpr.format(self, tokens: Array[Token]) Doc:
     let lparen = self.firstToken(tokens)
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-    let lparen = formatToken(lparen, tokens)
-
-    let docRest = Doc.empty()
-    let fieldIdx: U32 = 0
-    let trailingComma = Bool.False
-    for field: Named[Expr] in self.fields.iter():
-        if trailingComma:
-            docRest += Doc.break_(1)
-            trailingComma = Bool.False
-
-        docRest += formatNamed(field, Expr.format, tokens)
-
-        if nextNonTrivia(field.lastToken(tokens), tokens) is Option.Some(next)
-                and tokens.get(next.idx).kind is TokenKind.Comma:
-            trailingComma = Bool.True
-            docRest += formatToken(next, tokens)
-
-    if self.splice is Option.Some(splice):
-        let dotdot = prevNonTrivia(splice.firstToken(tokens), tokens).unwrap()
-        assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
-
-        docRest += formatToken(dotdot, tokens) + splice.format(tokens)
-
-    if self.fields.len() != 0
-            and self.splice is Option.None
-            and not trailingComma:
-        docRest += Doc.whenNotFlat(Doc.char(','))
-
     let rparen = self.lastToken(tokens)
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-    lparen
+    _formatArgList(self.fields, self.splice, lparen, rparen, tokens)
+
+
+_formatArgList(args: Vec[Named[Expr]], splice: Option[Expr], lparen: TokenIdx, rparen: TokenIdx, tokens: Array[Token]) Doc:
+    if args.isEmpty() and splice is Option.None:
+        return formatToken(lparen, tokens) + formatToken(rparen, tokens)
+
+    let doc = Doc.empty()
+    let fieldIdx: U32 = 0
+    let trailingComma = Bool.False
+
+    for arg: Named[Expr] in args.iter():
+        if trailingComma:
+            doc += Doc.break_(1)
+            trailingComma = Bool.False
+
+        doc += formatNamed(arg, Expr.format, tokens)
+
+        if nextNonTrivia(arg.lastToken(tokens), tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
+            trailingComma = Bool.True
+            doc += formatToken(next, tokens)
+
+    if splice is Option.Some(splice):
+        let dotdot = prevNonTrivia(splice.firstToken(tokens), tokens).unwrap()
+        assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+        if args.len() != 0:
+            doc += Doc.break_(1)
+        doc += formatToken(dotdot, tokens) + splice.format(tokens)
+
+    if args.len() != 0
+            and splice is Option.None
+            and not trailingComma:
+        doc += Doc.whenNotFlat(Doc.char(','))
+
+    formatToken(lparen, tokens)
         + Doc.grouped(
-            Doc.nested(4, Doc.break_(0) + docRest.group())
+            Doc.nested(4, Doc.break_(0) + doc.group())
                 + Doc.break_(0)
                 + formatToken(rparen, tokens),
         )
