@@ -890,6 +890,7 @@ fn visit_ty_con(
         }
     }
 
+    visited.remove(&ty_con.id);
     false
 }
 

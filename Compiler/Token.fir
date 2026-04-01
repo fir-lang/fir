@@ -31,7 +31,7 @@ Token.isSpace(self: Token) Bool:
 
 
 #[derive(ToDoc)]
-type TokenIdx(
+value type TokenIdx(
     idx: U32,
 )
 
@@ -78,7 +78,7 @@ prevNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
     Option.None
 
 
-type TokenKind:
+value type TokenKind:
     # This includes all kinds of comments: single or multi-line, documentation or not.
     #
     # Single-line comments on consecutive lines are generated as separate tokens.
@@ -225,7 +225,7 @@ TokenKind.isSpace(self: TokenKind) Bool:
 
 
 #[derive(ToDoc)]
-type IntKind:
+value type IntKind:
     I8
     U8
     I32
