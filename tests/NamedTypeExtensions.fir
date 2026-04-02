@@ -219,16 +219,10 @@ impl ExprExts[TcExprExts]:
 
 
 # The type-checking types, used in the type checker's AST.
+#[derive(ToDoc)]
 type Ty:
     Var(Str)
     Arrow(Ty, Ty)
-
-
-impl ToDoc[Ty]:
-    toDoc(self: Ty) Doc:
-        match self:
-            Ty.Var(var_): Doc.str("Ty.Var(") + Doc.str(var_) + Doc.char(')')
-            Ty.Arrow(ty1, ty2): ty1.toDoc() + Doc.str(" -> ") + ty2.toDoc()
 
 
 main():

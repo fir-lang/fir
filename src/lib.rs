@@ -8,6 +8,7 @@
 mod ast;
 pub mod cli;
 mod collections;
+mod deriving;
 mod import_resolver;
 mod interpolation;
 mod interpreter;
@@ -164,6 +165,8 @@ mod native {
             !opts.no_prelude, // import_prelude
             Some(file_path),
         );
+
+        deriving::expand_derives(&mut module);
 
         if opts.print_parsed_ast {
             ast::printer::print_module(&module);
@@ -382,6 +385,8 @@ mod wasm {
         let module_name = SmolStr::new_static("FirWeb");
         let module = parse_module(&module_name, pgm);
         let mut module = import_resolver::resolve_imports(module, true, None);
+
+        deriving::expand_derives(&mut module);
 
         type_checker::check_module(&mut module, "main");
 

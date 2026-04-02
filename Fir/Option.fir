@@ -1,18 +1,7 @@
-#[derive(ToDoc)]
+#[derive(ToDoc, Eq)]
 value type Option[t]:
     None
     Some(t)
-
-
-impl[ToDoc[t]] ToDoc[Option[t]]:
-    toDoc(self: Option[t]) Doc:
-        match self:
-            Option.None: Doc.str("Option.None")
-            Option.Some(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Option.Some") + Doc.char('(') + args)
 
 
 impl[ToStr[t]] ToStr[Option[t]]:
@@ -20,23 +9,6 @@ impl[ToStr[t]] ToStr[Option[t]]:
         match self:
             Option.None: "Option.None"
             Option.Some(t): "Option.Some(`t`)"
-
-
-impl[Eq[t]] Eq[Option[t]]:
-    __eq(self: Option[t], other: Option[t]) Bool:
-        match (l = self, r = other):
-            (l = Option.None, r = Option.None): Bool.True
-            (l = Option.Some(l0), r = Option.Some(r0)): l0 == r0
-            _: Bool.False
-
-
-impl[Eq[t]] Eq[Option[t]]:
-    __eq(self: Option[t], other: Option[t]) Bool:
-        match (left = self, right = other):
-            (left = Option.None, right = Option.None): Bool.True
-            (left = Option.Some(left), right = Option.Some(right)):
-                left == right
-            _: Bool.False
 
 
 impl[Clone[t]] Clone[Option[t]]:

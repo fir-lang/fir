@@ -315,21 +315,3 @@ HashMap.toDebugDoc[ToDoc[k], ToDoc[v]](self: HashMap[k, v]) Doc:
     )
     args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
     Doc.grouped(Doc.str("HashMap") + Doc.char('(') + args)
-
-
-impl[ToDoc[k], ToDoc[v]] ToDoc[Elem[k, v]]:
-    toDoc(self: Elem[k, v]) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("key =") + Doc.nested(4, Doc.break_(1) + self.key.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("val =") + Doc.nested(4, Doc.break_(1) + self.val.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("next =") + Doc.nested(4, Doc.break_(1) + self.next.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("Elem") + Doc.char('(') + args)

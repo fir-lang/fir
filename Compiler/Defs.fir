@@ -16,15 +16,10 @@ import [
 ##
 ## This type is used both in binder position (e.g. function arguments, patterns,
 ## type arguments) and use position (e.g. expressions, type variables).
-#[derive(ToDoc)]
+#[derive(ToDoc, Eq)]
 value type LocalId(
     name: Str,
 )
-
-
-impl Eq[LocalId]:
-    __eq(self: LocalId, other: LocalId) Bool:
-        self.name == other.name
 
 
 impl Hash[LocalId]:
@@ -101,21 +96,13 @@ TyId.def(self) TyDefIdx:
 # Function items
 
 
-#[derive(ToDoc)]
+#[derive(ToDoc, Eq)]
 value type VarDefIdx:
     Local
     Top(TopVarDefIdx)
 
 
-impl Eq[VarDefIdx]:
-    __eq(self: VarDefIdx, other: VarDefIdx) Bool:
-        match (left = self, right = other):
-            (left = VarDefIdx.Local, right = VarDefIdx.Local): Bool.True
-            (left = VarDefIdx.Top(l1), right = VarDefIdx.Top(r1)): l1 == r1
-            _: Bool.False
-
-
-#[derive(ToDoc)]
+#[derive(ToDoc, Eq)]
 value type TopVarDefIdx(
     ## Module of the variable.
     _mod: ModuleIdx,
@@ -127,12 +114,7 @@ value type TopVarDefIdx(
 )
 
 
-impl Eq[TopVarDefIdx]:
-    __eq(self: TopVarDefIdx, other: TopVarDefIdx) Bool:
-        self._mod == other._mod and self._name == other._name
-
-
-#[derive(ToDoc)]
+#[derive(ToDoc, Eq)]
 type AssocVarDefIdx(
     ## Module of the type.
     ##
@@ -149,18 +131,11 @@ type AssocVarDefIdx(
 )
 
 
-impl Eq[AssocVarDefIdx]:
-    __eq(self: AssocVarDefIdx, other: AssocVarDefIdx) Bool:
-        self._mod == other._mod
-            and self._tyName == other._tyName
-            and self._varName == other._varName
-
-
 # ------------------------------------------------------------------------------
 # Type items
 
 
-#[derive(ToDoc)]
+#[derive(ToDoc, Eq)]
 value type TyDefIdx(
     ## The type's module.
     _mod: ModuleIdx,
@@ -170,153 +145,15 @@ value type TyDefIdx(
 )
 
 
-impl Eq[TyDefIdx]:
-    __eq(self: TyDefIdx, other: TyDefIdx) Bool:
-        self._mod == other._mod and self._name == other._name
-
-
 impl Hash[TyDefIdx]:
     hash(self: TyDefIdx) U32:
         self._mod.hash() + self._name.hash()
 
 
 # ------------------------------------------------------------------------------
-# Generated ToDoc implementations
-
-
-impl ToDoc[LocalId]:
-    toDoc(self: LocalId) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("name =") + Doc.nested(4, Doc.break_(1) + self.name.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("LocalId") + Doc.char('(') + args)
-
-
-impl ToDoc[VarId]:
-    toDoc(self: VarId) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("token =")
-                + Doc.nested(4, Doc.break_(1) + self.token.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_resolved =")
-                + Doc.nested(4, Doc.break_(1) + self._resolved.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("VarId") + Doc.char('(') + args)
-
-
-impl ToDoc[AssocVarId]:
-    toDoc(self: AssocVarId) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("token =")
-                + Doc.nested(4, Doc.break_(1) + self.token.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_resolved =")
-                + Doc.nested(4, Doc.break_(1) + self._resolved.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("AssocVarId") + Doc.char('(') + args)
-
-
-impl ToDoc[TyId]:
-    toDoc(self: TyId) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("token =")
-                + Doc.nested(4, Doc.break_(1) + self.token.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_resolved =")
-                + Doc.nested(4, Doc.break_(1) + self._resolved.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TyId") + Doc.char('(') + args)
-
-
-impl ToDoc[PackageUri]:
-    toDoc(self: PackageUri) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_uri =") + Doc.nested(4, Doc.break_(1) + self._uri.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("PackageUri") + Doc.char('(') + args)
-
-
-impl ToDoc[VarDefIdx]:
-    toDoc(self: VarDefIdx) Doc:
-        match self:
-            VarDefIdx.Local: Doc.str("VarDefIdx.Local")
-            VarDefIdx.Top(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("VarDefIdx.Top") + Doc.char('(') + args)
-
-
-impl ToDoc[TopVarDefIdx]:
-    toDoc(self: TopVarDefIdx) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_mod =") + Doc.nested(4, Doc.break_(1) + self._mod.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_name =")
-                + Doc.nested(4, Doc.break_(1) + self._name.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TopVarDefIdx") + Doc.char('(') + args)
-
-
-impl ToDoc[AssocVarDefIdx]:
-    toDoc(self: AssocVarDefIdx) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_mod =") + Doc.nested(4, Doc.break_(1) + self._mod.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_tyName =")
-                + Doc.nested(4, Doc.break_(1) + self._tyName.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_varName =")
-                + Doc.nested(4, Doc.break_(1) + self._varName.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("AssocVarDefIdx") + Doc.char('(') + args)
-
-
-impl ToDoc[TyDefIdx]:
-    toDoc(self: TyDefIdx) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_mod =") + Doc.nested(4, Doc.break_(1) + self._mod.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_name =")
-                + Doc.nested(4, Doc.break_(1) + self._name.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TyDefIdx") + Doc.char('(') + args)
-
-
-# ------------------------------------------------------------------------------
 # ToStr implementations. These are used when generating error messages, so they
 # should be readable by the users and should not expose implementation details.
+
 
 impl ToStr[LocalId]:
     toStr(self: LocalId) Str:

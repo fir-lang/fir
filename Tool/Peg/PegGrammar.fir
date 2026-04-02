@@ -6,6 +6,7 @@ import [
 ]
 
 
+#[derive(Eq)]
 type NonTerminal:
     Grammar
     ImportDecl
@@ -83,111 +84,6 @@ impl ToStr[NonTerminal]:
             NonTerminal.VariantAlt: "VariantAlt"
             NonTerminal.FnArgTys: "FnArgTys"
             NonTerminal.ReturnTy: "ReturnTy"
-
-
-impl Eq[NonTerminal]:
-    __eq(self: NonTerminal, other: NonTerminal) Bool:
-        match (left = self, right = other):
-            (left = NonTerminal.Grammar, right = NonTerminal.Grammar): Bool.True
-            (left = NonTerminal.ImportDecl, right = NonTerminal.ImportDecl):
-                Bool.True
-            (left = NonTerminal.Path, right = NonTerminal.Path): Bool.True
-            (left = NonTerminal.TypeDecls, right = NonTerminal.TypeDecls):
-                Bool.True
-            (left = NonTerminal.TypeDecl, right = NonTerminal.TypeDecl):
-                Bool.True
-            (
-                left = NonTerminal.TerminalsDecl,
-                right = NonTerminal.TerminalsDecl,
-            ): Bool.True
-            (left = NonTerminal.TerminalDecl, right = NonTerminal.TerminalDecl):
-                Bool.True
-            (
-                left = NonTerminal.NonTerminalDecls,
-                right = NonTerminal.NonTerminalDecls,
-            ): Bool.True
-            (
-                left = NonTerminal.NonTerminalDecl,
-                right = NonTerminal.NonTerminalDecl,
-            ): Bool.True
-            (
-                left = NonTerminal.NonTerminalAlt,
-                right = NonTerminal.NonTerminalAlt,
-            ): Bool.True
-            (left = NonTerminal.Symbol, right = NonTerminal.Symbol): Bool.True
-            (left = NonTerminal.SymbolPrefix, right = NonTerminal.SymbolPrefix):
-                Bool.True
-            (left = NonTerminal.SymbolNonRec, right = NonTerminal.SymbolNonRec):
-                Bool.True
-            (left = NonTerminal.SymbolSuffix, right = NonTerminal.SymbolSuffix):
-                Bool.True
-            (
-                left = NonTerminal.NonTerminalRhs,
-                right = NonTerminal.NonTerminalRhs,
-            ): Bool.True
-            (
-                left = NonTerminal.InlineTokenTree,
-                right = NonTerminal.InlineTokenTree,
-            ): Bool.True
-            (
-                left = NonTerminal.InlineTokenTreeSingle,
-                right = NonTerminal.InlineTokenTreeSingle,
-            ): Bool.True
-            (
-                left = NonTerminal.InlineTokenTreeTerminator,
-                right = NonTerminal.InlineTokenTreeTerminator,
-            ): Bool.True
-            (
-                left = NonTerminal.IndentedTokenTree,
-                right = NonTerminal.IndentedTokenTree,
-            ): Bool.True
-            (
-                left = NonTerminal.IndentedTokenTreeSingle,
-                right = NonTerminal.IndentedTokenTreeSingle,
-            ): Bool.True
-            (
-                left = NonTerminal.IndentedTokenTreeTerminator,
-                right = NonTerminal.IndentedTokenTreeTerminator,
-            ): Bool.True
-            (left = NonTerminal.Type_, right = NonTerminal.Type_): Bool.True
-            (left = NonTerminal.RecordType, right = NonTerminal.RecordType):
-                Bool.True
-            (
-                left = NonTerminal.RecordTypeStart,
-                right = NonTerminal.RecordTypeStart,
-            ): Bool.True
-            (
-                left = NonTerminal.RecordTypeCont,
-                right = NonTerminal.RecordTypeCont,
-            ): Bool.True
-            (left = NonTerminal.VariantType, right = NonTerminal.VariantType):
-                Bool.True
-            (
-                left = NonTerminal.VariantTypeStart,
-                right = NonTerminal.VariantTypeStart,
-            ): Bool.True
-            (
-                left = NonTerminal.VariantTypeCont,
-                right = NonTerminal.VariantTypeCont,
-            ): Bool.True
-            (left = NonTerminal.FnType, right = NonTerminal.FnType): Bool.True
-            (left = NonTerminal.NamedType, right = NonTerminal.NamedType):
-                Bool.True
-            (
-                left = NonTerminal.RecordTypeFields,
-                right = NonTerminal.RecordTypeFields,
-            ): Bool.True
-            (
-                left = NonTerminal.RecordTypeField,
-                right = NonTerminal.RecordTypeField,
-            ): Bool.True
-            (left = NonTerminal.VariantAlt, right = NonTerminal.VariantAlt):
-                Bool.True
-            (left = NonTerminal.FnArgTys, right = NonTerminal.FnArgTys):
-                Bool.True
-            (left = NonTerminal.ReturnTy, right = NonTerminal.ReturnTy):
-                Bool.True
-            _: Bool.False
 
 
 grammar(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:

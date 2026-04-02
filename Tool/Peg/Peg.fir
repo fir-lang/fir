@@ -107,11 +107,6 @@ main():
                 .render(80),
         )
         print("")
-        print(
-            generateNonTerminalEq(grammar.nonTerminalType, nonTerminalNames)
-                .render(80),
-        )
-        print("")
 
     let nonTerminalDeclIdx = 0
     for nonTerminalDecl: NonTerminalDecl in grammar.nonTerminalDecls.iter():
@@ -475,10 +470,13 @@ type Symbol:
 # Code generation
 
 generateNonTerminalType(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
-    let doc = Doc.str("type `typeName`:")
+    let header = Doc.str("#[derive(Eq)]")
+        + Doc.hardLine()
+        + Doc.str("type `typeName`:")
+    let cons = Doc.empty()
     for name: Str in nonTerminalNames.iter():
-        doc += Doc.hardLine() + Doc.str(capitalize(name))
-    doc.nest(4)
+        cons += Doc.hardLine() + Doc.str(capitalize(name))
+    header + cons.nest(4)
 
 
 generateNonTerminalToStr(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
@@ -493,25 +491,6 @@ generateNonTerminalToStr(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
         let capitalName = capitalize(name)
         matchDoc += Doc.hardLine()
             + Doc.str("`typeName`.`capitalName`: \"`capitalName`\"")
-
-    Doc.nested(4, doc + Doc.nested(4, fnDoc + Doc.nested(4, matchDoc)))
-
-
-generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
-    let doc = Doc.str("impl Eq[`typeName`]:")
-    doc += Doc.hardLine()
-
-    let fnDoc = Doc.str("__eq(self: `typeName`, other: `typeName`) Bool:")
-    fnDoc += Doc.hardLine()
-
-    let matchDoc = Doc.str("match (left = self, right = other):")
-    for name: Str in nonTerminalNames.iter():
-        let capitalName = capitalize(name)
-        matchDoc += Doc.hardLine()
-            + Doc.str(
-                "(left = `typeName`.`capitalName`, right = `typeName`.`capitalName`): Bool.True",
-            )
-    matchDoc += Doc.hardLine() + Doc.str("_: Bool.False")
 
     Doc.nested(4, doc + Doc.nested(4, fnDoc + Doc.nested(4, matchDoc)))
 

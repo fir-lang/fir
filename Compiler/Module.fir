@@ -13,16 +13,11 @@ value type PackageUri(
 )
 
 
-#[derive(ToDoc)]
+#[derive(ToDoc, Eq)]
 value type ModuleIdx(
     ## Index of the module in the program.
     _idx: U32,
 )
-
-
-impl Eq[ModuleIdx]:
-    __eq(self: ModuleIdx, other: ModuleIdx) Bool:
-        self._idx == other._idx
 
 
 impl Hash[ModuleIdx]:
@@ -160,97 +155,3 @@ Module.scheme(self, varIdx: TopVarDefIdx) Scheme:
 
     assert(item.idx == varIdx)
     item.info
-
-
-# ------------------------------------------------------------------------------
-# Generated ToDoc implementations
-
-
-impl ToDoc[ModuleIdx]:
-    toDoc(self: ModuleIdx) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_idx =") + Doc.nested(4, Doc.break_(1) + self._idx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("ModuleIdx") + Doc.char('(') + args)
-
-
-impl ToDoc[Module]:
-    toDoc(self: Module) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_package =")
-                + Doc.nested(4, Doc.break_(1) + self._package.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_filePath =")
-                + Doc.nested(4, Doc.break_(1) + self._filePath.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_path =")
-                + Doc.nested(4, Doc.break_(1) + self._path.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_idx =") + Doc.nested(4, Doc.break_(1) + self._idx.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_funItems =")
-                + Doc.nested(4, Doc.break_(1) + self._funItems.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_assocItems =")
-                + Doc.nested(4, Doc.break_(1) + self._assocItems.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_tyItems =")
-                + Doc.nested(4, Doc.break_(1) + self._tyItems.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_traitItems =")
-                + Doc.nested(4, Doc.break_(1) + self._traitItems.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_impls =")
-                + Doc.nested(4, Doc.break_(1) + self._impls.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_imports =")
-                + Doc.nested(4, Doc.break_(1) + self._imports.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_tokens =")
-                + Doc.nested(4, Doc.break_(1) + self._tokens.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_termEnv =")
-                + Doc.nested(4, Doc.break_(1) + self._termEnv.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_assocTermEnv =")
-                + Doc.nested(4, Doc.break_(1) + self._assocTermEnv.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_tyEnv =")
-                + Doc.nested(4, Doc.break_(1) + self._tyEnv.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_sccIdx =")
-                + Doc.nested(4, Doc.break_(1) + self._sccIdx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("Module") + Doc.char('(') + args)

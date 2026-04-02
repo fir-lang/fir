@@ -6,6 +6,7 @@ import [
 ]
 
 
+#[derive(Eq)]
 type NonTerminal:
     TerminalA
     TerminalB
@@ -58,94 +59,6 @@ impl ToStr[NonTerminal]:
             NonTerminal.ErrorCursorBug: "ErrorCursorBug"
             NonTerminal.ErrorCursorBugAlt1: "ErrorCursorBugAlt1"
             NonTerminal.ErrorCursorBugAlt2: "ErrorCursorBugAlt2"
-
-
-impl Eq[NonTerminal]:
-    __eq(self: NonTerminal, other: NonTerminal) Bool:
-        match (left = self, right = other):
-            (left = NonTerminal.TerminalA, right = NonTerminal.TerminalA):
-                Bool.True
-            (left = NonTerminal.TerminalB, right = NonTerminal.TerminalB):
-                Bool.True
-            (left = NonTerminal.TerminalAOrB, right = NonTerminal.TerminalAOrB):
-                Bool.True
-            (
-                left = NonTerminal.TerminalAThenB,
-                right = NonTerminal.TerminalAThenB,
-            ): Bool.True
-            (
-                left = NonTerminal.ZeroOrMoreAThenB,
-                right = NonTerminal.ZeroOrMoreAThenB,
-            ): Bool.True
-            (
-                left = NonTerminal.OneOrMoreAThenB,
-                right = NonTerminal.OneOrMoreAThenB,
-            ): Bool.True
-            (
-                left = NonTerminal.ZeroOrOneAThenB,
-                right = NonTerminal.ZeroOrOneAThenB,
-            ): Bool.True
-            (left = NonTerminal.IgnoreAThenB, right = NonTerminal.IgnoreAThenB):
-                Bool.True
-            (
-                left = NonTerminal.IgnoreAThenIgnoreB,
-                right = NonTerminal.IgnoreAThenIgnoreB,
-            ): Bool.True
-            (
-                left = NonTerminal.IgnoreGroupAThenB,
-                right = NonTerminal.IgnoreGroupAThenB,
-            ): Bool.True
-            (left = NonTerminal.NonTerminals, right = NonTerminal.NonTerminals):
-                Bool.True
-            (
-                left = NonTerminal.NonTerminalsBacktrack,
-                right = NonTerminal.NonTerminalsBacktrack,
-            ): Bool.True
-            (
-                left = NonTerminal.NegLookahead1,
-                right = NonTerminal.NegLookahead1,
-            ): Bool.True
-            (
-                left = NonTerminal.NegLookahead2,
-                right = NonTerminal.NegLookahead2,
-            ): Bool.True
-            (
-                left = NonTerminal.NegLookahead3,
-                right = NonTerminal.NegLookahead3,
-            ): Bool.True
-            (
-                left = NonTerminal.PosLookahead1,
-                right = NonTerminal.PosLookahead1,
-            ): Bool.True
-            (
-                left = NonTerminal.PosLookahead2,
-                right = NonTerminal.PosLookahead2,
-            ): Bool.True
-            (
-                left = NonTerminal.PosLookahead3,
-                right = NonTerminal.PosLookahead3,
-            ): Bool.True
-            (
-                left = NonTerminal.EndOfInputTest,
-                right = NonTerminal.EndOfInputTest,
-            ): Bool.True
-            (
-                left = NonTerminal.BracketedOneOrMoreA,
-                right = NonTerminal.BracketedOneOrMoreA,
-            ): Bool.True
-            (
-                left = NonTerminal.ErrorCursorBug,
-                right = NonTerminal.ErrorCursorBug,
-            ): Bool.True
-            (
-                left = NonTerminal.ErrorCursorBugAlt1,
-                right = NonTerminal.ErrorCursorBugAlt1,
-            ): Bool.True
-            (
-                left = NonTerminal.ErrorCursorBugAlt2,
-                right = NonTerminal.ErrorCursorBugAlt2,
-            ): Bool.True
-            _: Bool.False
 
 
 terminalA(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:

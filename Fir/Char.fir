@@ -1,11 +1,22 @@
+#[derive(Eq)]
 value type Char(
     _codePoint: U32,
 )
 
 
-impl Eq[Char]:
-    __eq(self: Char, other: Char) Bool:
-        self._codePoint == other._codePoint
+impl ToStr[Char]:
+    toStr(self: Char) Str:
+        let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2)
+        strBuf.push('\'')
+        strBuf.push(self)
+        strBuf.push('\'')
+        strBuf.toStr() # TODO: This copies the array, maybe add an internal version that doesn't
+
+
+
+impl ToDoc[Char]:
+    toDoc(self: Char) Doc:
+        Doc.str(self.toStr())
 
 
 impl Ord[Char]:
@@ -82,18 +93,3 @@ Char.toAsciiLowercase(self) Char:
     if self.isAsciiUppercase():
         return Char(_codePoint = self._codePoint + 32)
     return self
-
-
-impl ToStr[Char]:
-    toStr(self: Char) Str:
-        let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2)
-        strBuf.push('\'')
-        strBuf.push(self)
-        strBuf.push('\'')
-        strBuf.toStr() # TODO: This copies the array, maybe add an internal version that doesn't
-
-
-
-impl ToDoc[Char]:
-    toDoc(self: Char) Doc:
-        Doc.str(self.toStr())

@@ -188,6 +188,7 @@ impl ToStr[Ordering]:
             Ordering.Greater: "Ordering.Greater"
 
 
+#[derive(Eq)]
 value type Bool:
     False
     True
@@ -197,13 +198,6 @@ Bool.__not(self) Bool:
     match self:
         Bool.True: Bool.False
         Bool.False: Bool.True
-
-
-impl Eq[Bool]:
-    __eq(self: Bool, other: Bool) Bool:
-        match self:
-            Bool.True: other
-            Bool.False: not other
 
 
 impl ToStr[Bool]:

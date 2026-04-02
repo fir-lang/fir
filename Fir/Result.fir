@@ -4,34 +4,11 @@ type Result[e, t]:
     Ok(t)
 
 
-impl[ToDoc[e], ToDoc[t]] ToDoc[Result[e, t]]:
-    toDoc(self: Result[e, t]) Doc:
-        match self:
-            Result.Err(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Result.Err") + Doc.char('(') + args)
-            Result.Ok(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("Result.Ok") + Doc.char('(') + args)
-
-
 impl[ToStr[e], ToStr[t]] ToStr[Result[e, t]]:
     toStr(self: Result[e, t]) Str:
         match self:
             Result.Err(e): "Result.Err(`e`)"
             Result.Ok(t): "Result.Ok(`t`)"
-
-
-impl[Eq[e], Eq[t]] Eq[Result[e, t]]:
-    __eq(self: Result[e, t], other: Result[e, t]) Bool:
-        match (l = self, r = other):
-            (l = Result.Err(l0), r = Result.Err(r0)): l0 == r0
-            (l = Result.Ok(l0), r = Result.Ok(r0)): l0 == r0
-            _: Bool.False
 
 
 impl[Clone[e], Clone[t]] Clone[Result[e, t]]:
