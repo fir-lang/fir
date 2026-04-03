@@ -28,6 +28,24 @@ impl TopDecl {
 
 impl TypeDecl {
     pub fn print(&self, buf: &mut String, indent: u32) {
+        if !self.type_param_kinds.is_empty() {
+            buf.push_str("# inferred kinds = ");
+            for (i, (type_param, kind)) in self
+                .type_params
+                .iter()
+                .zip(self.type_param_kinds.iter())
+                .enumerate()
+            {
+                if i != 0 {
+                    buf.push_str(", ");
+                }
+                buf.push_str(&type_param.name.node);
+                buf.push_str(": ");
+                buf.push_str(&kind.to_string());
+            }
+            buf.push('\n');
+        }
+
         buf.push_str("type ");
         buf.push_str(&self.name);
 
@@ -88,19 +106,18 @@ fn print_con_fields(fields: &ConFields, buf: &mut String, indent: u32) {
         ConFields::Named { fields, extension } => {
             buf.push_str("(\n");
             for (field_name, field_ty) in fields.iter() {
-                buf.push_str(&INDENTS[..indent as usize + 4]);
+                buf.push_str(&INDENTS[..indent as usize]);
                 buf.push_str(field_name);
                 buf.push_str(": ");
                 field_ty.node.print(buf);
                 buf.push_str(",\n");
             }
             if let Some(ext) = extension {
-                buf.push_str(&INDENTS[..indent as usize + 4]);
+                buf.push_str(&INDENTS[..indent as usize]);
                 buf.push_str("..");
                 ext.node.print(buf);
                 buf.push('\n');
             }
-            buf.push_str(&INDENTS[..indent as usize]);
             buf.push(')');
         }
 
