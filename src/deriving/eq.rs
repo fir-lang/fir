@@ -51,7 +51,7 @@ pub fn derive_eq(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::TopDe
 /// For empty: `Bool.True`
 fn derive_eq_product(
     loc: &ast::Loc,
-    _type_name: &ast::Id,
+    type_name: &ast::Id,
     fields: &ast::ConFields,
 ) -> Vec<ast::L<ast::Stmt>> {
     match fields {
@@ -62,10 +62,33 @@ fn derive_eq_product(
             )]
         }
 
-        ast::ConFields::Named { fields, .. } => {
+        ast::ConFields::Named { fields, extension } => {
             let field_names: Vec<&ast::Id> = fields.iter().map(|(name, _)| name).collect();
-            let expr = chain_eq_fields(loc, &field_names, FieldAccess::SelfOther);
-            vec![l(loc, ast::Stmt::Expr(expr.node))]
+
+            if extension.is_some() {
+                let names: Vec<ast::Id> = fields.iter().map(|(name, _)| name.clone()).collect();
+                let mut stmts = vec![
+                    let_destructure_rest(loc, type_name, &names, "selfExts", var(loc, "self")),
+                    let_destructure_rest(loc, type_name, &names, "otherExts", var(loc, "other")),
+                ];
+                let mut eq = chain_eq_fields(loc, &field_names, FieldAccess::SelfOther);
+                let ext_eq = bin_op(
+                    loc,
+                    var(loc, "selfExts"),
+                    ast::BinOp::Equal,
+                    var(loc, "otherExts"),
+                );
+                eq = if field_names.is_empty() {
+                    ext_eq
+                } else {
+                    bin_op(loc, eq, ast::BinOp::And, ext_eq)
+                };
+                stmts.push(l(loc, ast::Stmt::Expr(eq.node)));
+                stmts
+            } else {
+                let expr = chain_eq_fields(loc, &field_names, FieldAccess::SelfOther);
+                vec![l(loc, ast::Stmt::Expr(expr.node))]
+            }
         }
 
         ast::ConFields::Unnamed { fields } => {
@@ -100,10 +123,10 @@ fn derive_eq_sum(
     let mut alts: Vec<ast::Alt> = Vec::new();
 
     for con in cons {
-        let (l_pats, r_pats, num_fields) = match &con.fields {
-            ast::ConFields::Empty => (vec![], vec![], 0),
+        let (l_pats, r_pats, num_fields, has_extension) = match &con.fields {
+            ast::ConFields::Empty => (vec![], vec![], 0, false),
 
-            ast::ConFields::Named { fields, .. } => {
+            ast::ConFields::Named { fields, extension } => {
                 let l_pats: Vec<ast::Named<ast::L<ast::Pat>>> = fields
                     .iter()
                     .enumerate()
@@ -136,7 +159,7 @@ fn derive_eq_sum(
                     })
                     .collect();
 
-                (l_pats, r_pats, fields.len())
+                (l_pats, r_pats, fields.len(), extension.is_some())
             }
 
             ast::ConFields::Unnamed { fields } => {
@@ -168,8 +191,28 @@ fn derive_eq_sum(
                     })
                     .collect();
 
-                (l_pats, r_pats, fields.len())
+                (l_pats, r_pats, fields.len(), false)
             }
+        };
+
+        let l_rest = if has_extension {
+            ast::RestPat::Bind(ast::VarPat {
+                var: SmolStr::new_static("lExts"),
+                ty: None,
+                refined: None,
+            })
+        } else {
+            ast::RestPat::No
+        };
+
+        let r_rest = if has_extension {
+            ast::RestPat::Bind(ast::VarPat {
+                var: SmolStr::new_static("rExts"),
+                ty: None,
+                refined: None,
+            })
+        } else {
+            ast::RestPat::No
         };
 
         let l_con_pat = ast::Con {
@@ -187,7 +230,7 @@ fn derive_eq_sum(
             ast::Pat::Con(ast::ConPat {
                 con: l_con_pat,
                 fields: l_pats,
-                rest: ast::RestPat::No,
+                rest: l_rest,
             }),
         );
 
@@ -196,7 +239,7 @@ fn derive_eq_sum(
             ast::Pat::Con(ast::ConPat {
                 con: r_con_pat,
                 fields: r_pats,
-                rest: ast::RestPat::No,
+                rest: r_rest,
             }),
         );
 
@@ -218,18 +261,31 @@ fn derive_eq_sum(
             }),
         );
 
-        let rhs = if num_fields == 0 {
+        let rhs = if num_fields == 0 && !has_extension {
             vec![l(
                 loc,
                 ast::Stmt::Expr(con_sel(loc, "Bool", Some("True")).node),
             )]
         } else {
-            let field_names: Vec<ast::Id> = (0..num_fields)
-                .map(|i| SmolStr::new(format!("{}", i)))
-                .collect();
-            let field_refs: Vec<&ast::Id> = field_names.iter().collect();
-            let eq_expr = chain_eq_fields(loc, &field_refs, FieldAccess::BoundVars);
-            vec![l(loc, ast::Stmt::Expr(eq_expr.node))]
+            let mut eq_expr = if num_fields > 0 {
+                let field_names: Vec<ast::Id> = (0..num_fields)
+                    .map(|i| SmolStr::new(format!("{}", i)))
+                    .collect();
+                let field_refs: Vec<&ast::Id> = field_names.iter().collect();
+                Some(chain_eq_fields(loc, &field_refs, FieldAccess::BoundVars))
+            } else {
+                None
+            };
+
+            if has_extension {
+                let ext_eq = bin_op(loc, var(loc, "lExts"), ast::BinOp::Equal, var(loc, "rExts"));
+                eq_expr = Some(match eq_expr {
+                    Some(prev) => bin_op(loc, prev, ast::BinOp::And, ext_eq),
+                    None => ext_eq,
+                });
+            }
+
+            vec![l(loc, ast::Stmt::Expr(eq_expr.unwrap().node))]
         };
 
         alts.push(ast::Alt {

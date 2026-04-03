@@ -40,11 +40,31 @@ fn derive_to_doc_product(
 
         ast::ConFields::Named {
             fields: named_fields,
-            ..
+            extension,
         } => {
-            let mut stmts = gen_named_field_args(loc, named_fields, &|loc, field_name| {
-                field_sel(loc, var(loc, "self"), field_name)
-            });
+            let mut stmts = vec![];
+
+            let ext_expr = if extension.is_some() {
+                let names: Vec<ast::Id> =
+                    named_fields.iter().map(|(name, _)| name.clone()).collect();
+                stmts.push(let_destructure_rest(
+                    loc,
+                    type_name,
+                    &names,
+                    "exts",
+                    var(loc, "self"),
+                ));
+                Some(var(loc, "exts"))
+            } else {
+                None
+            };
+
+            stmts.extend(gen_named_field_args(
+                loc,
+                named_fields,
+                &|loc, field_name| field_sel(loc, var(loc, "self"), field_name),
+                ext_expr,
+            ));
 
             // Doc.grouped(Doc.str("TypeName") + Doc.char('(') + args)
             let result = doc_grouped(
@@ -99,19 +119,19 @@ fn derive_to_doc_sum(
         let con_name_str = format!("{}.{}", type_name, con.name);
 
         // Build pattern and body based on field type
-        let (pat_fields, body) = match &con.fields {
+        let (pat_fields, rest_pat, body) = match &con.fields {
             ast::ConFields::Empty => {
                 // Pattern: TypeName.ConName (no fields)
                 // Body: Doc.str("TypeName.ConName")
                 let body = vec![l(loc, ast::Stmt::Expr(doc_str(loc, &con_name_str).node))];
-                (vec![], body)
+                (vec![], ast::RestPat::No, body)
             }
 
             ast::ConFields::Named {
                 fields: named_fields,
-                ..
+                extension,
             } => {
-                // Pattern: TypeName.ConName(field1, field2, ...)
+                // Pattern: TypeName.ConName(field1, field2, ..exts)
                 let pat_fields: Vec<ast::Named<ast::L<ast::Pat>>> = named_fields
                     .iter()
                     .map(|(name, _)| ast::Named {
@@ -127,19 +147,41 @@ fn derive_to_doc_sum(
                     })
                     .collect();
 
-                let mut body = gen_named_field_args(loc, named_fields, &|loc, field_name| {
-                    var(loc, field_name)
-                });
+                let rest_pat = if extension.is_some() {
+                    ast::RestPat::Bind(ast::VarPat {
+                        var: SmolStr::new_static("exts"),
+                        ty: None,
+                        refined: None,
+                    })
+                } else {
+                    ast::RestPat::No
+                };
 
-                // Doc.str("TypeName.ConName") + Doc.char('(') + args
-                let result = add(
+                let ext_expr = if extension.is_some() {
+                    Some(var(loc, "exts"))
+                } else {
+                    None
+                };
+
+                let mut body = gen_named_field_args(
                     loc,
-                    add(loc, doc_str(loc, &con_name_str), doc_char(loc, '(')),
-                    var(loc, "args"),
+                    named_fields,
+                    &|loc, field_name| var(loc, field_name),
+                    ext_expr,
+                );
+
+                // Doc.grouped(Doc.str("TypeName.ConName") + Doc.char('(') + args)
+                let result = doc_grouped(
+                    loc,
+                    add(
+                        loc,
+                        add(loc, doc_str(loc, &con_name_str), doc_char(loc, '(')),
+                        var(loc, "args"),
+                    ),
                 );
                 body.push(l(loc, ast::Stmt::Expr(result.node)));
 
-                (pat_fields, body)
+                (pat_fields, rest_pat, body)
             }
 
             ast::ConFields::Unnamed { fields } => {
@@ -171,7 +213,7 @@ fn derive_to_doc_sum(
                 );
                 body.push(l(loc, ast::Stmt::Expr(result.node)));
 
-                (pat_fields, body)
+                (pat_fields, ast::RestPat::No, body)
             }
         };
 
@@ -186,7 +228,7 @@ fn derive_to_doc_sum(
                     inferred_ty: None,
                 },
                 fields: pat_fields,
-                rest: ast::RestPat::No,
+                rest: rest_pat,
             }),
         );
 
@@ -210,10 +252,14 @@ fn derive_to_doc_sum(
 /// each field value.
 ///
 /// `accessor` takes (loc, field_name) and returns the expression for that field's value.
+///
+/// If `ext_expr` is provided, it is appended after the named fields (with a comma separator if
+/// there are named fields).
 fn gen_named_field_args(
     loc: &ast::Loc,
     fields: &[(ast::Id, ast::L<ast::Type>)],
     accessor: &dyn Fn(&ast::Loc, &ast::Id) -> ast::L<ast::Expr>,
+    ext_expr: Option<ast::L<ast::Expr>>,
 ) -> Vec<ast::L<ast::Stmt>> {
     let mut stmts = vec![];
 
@@ -239,6 +285,20 @@ fn gen_named_field_args(
             add(loc, doc_str(loc, &format!("{} =", field_name)), nested),
         );
         stmts.push(plus_eq_stmt(loc, "args", grouped));
+    }
+
+    if let Some(ext) = ext_expr {
+        if !fields.is_empty() {
+            // args += Doc.char(',') + Doc.break_(1)
+            stmts.push(plus_eq_stmt(
+                loc,
+                "args",
+                add(loc, doc_char(loc, ','), doc_break(loc, 1)),
+            ));
+        }
+        // args += ext.toDoc()
+        let to_doc_call = method_call(loc, ext, "toDoc", vec![]);
+        stmts.push(plus_eq_stmt(loc, "args", to_doc_call));
     }
 
     // args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
