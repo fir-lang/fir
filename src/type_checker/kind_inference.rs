@@ -130,7 +130,16 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
 
     for item in &mut decl.items {
         match item {
-            ast::TraitDeclItem::Type { .. } => {}
+            ast::TraitDeclItem::Type {
+                name: _,
+                kind: _,
+                default,
+            } => {
+                if let Some(default) = default {
+                    collect_tvs(&default.node, &default.loc, &mut trait_context_var_kinds);
+                }
+            }
+
             ast::TraitDeclItem::Fun(fun) => {
                 add_missing_type_params_fun(
                     &mut fun.node.sig,

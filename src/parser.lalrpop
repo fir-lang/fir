@@ -1157,8 +1157,8 @@ TraitDecl: L<TraitDecl> = {
 }
 
 TraitDeclItem: TraitDeclItem = {
-    "type" <id:LUpperId> <kind:(":" <LType>)?> NEWLINE => {
-        TraitDeclItem::Type { name: id, kind }
+    "type" <id:LUpperId> <kind:(":" <LType>)?> <default:("=" <LType>)?> NEWLINE => {
+        TraitDeclItem::Type { name: id, kind, default }
     },
 
     <fun:FunDecl> => {

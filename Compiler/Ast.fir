@@ -260,6 +260,7 @@ type TraitDeclItem:
     Type(
         name: Id,
         kind: Option[Type],
+        default: Option[Type],
     )
     Fun(FunDecl)
 

@@ -1091,7 +1091,7 @@ traitDeclRhs Vec[TraitDeclItem]:
 
 
 traitDeclItem TraitDeclItem:
-    "type" name=^ "UpperId" kind=(_":" type_)? "NEWLINE": TraitDeclItem.Type(name = newId(name), kind)
+    "type" name=^ "UpperId" kind=(_":" type_)? default=(_"=" type_)? "NEWLINE": TraitDeclItem.Type(name = newId(name), kind, default)
     fun=funDecl: TraitDeclItem.Fun(fun)
 
 

@@ -180,12 +180,20 @@ impl TypeParam {
 impl TraitDeclItem {
     pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
-            TraitDeclItem::Type { name, kind } => {
+            TraitDeclItem::Type {
+                name,
+                kind,
+                default,
+            } => {
                 buf.push_str("type ");
                 buf.push_str(name.node.as_str());
                 if let Some(kind) = kind {
                     buf.push_str(": ");
                     kind.node.print(buf);
+                }
+                if let Some(default) = default {
+                    buf.push_str(" = ");
+                    default.node.print(buf);
                 }
             }
             TraitDeclItem::Fun(fun) => {

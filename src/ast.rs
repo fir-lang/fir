@@ -877,6 +877,7 @@ pub enum TraitDeclItem {
     Type {
         name: L<Id>,
         kind: Option<L<Type>>,
+        default: Option<L<Type>>,
     },
 
     Fun(L<FunDecl>),
@@ -974,7 +975,7 @@ impl Type {
         self.subst_ids(&[(var.clone(), ty.clone())].into_iter().collect())
     }
 
-    fn subst_ids(&self, substs: &HashMap<Id, Type>) -> Type {
+    pub fn subst_ids(&self, substs: &HashMap<Id, Type>) -> Type {
         match self {
             Type::Named(NamedType { name, args }) => Type::Named(NamedType {
                 name: match substs.get(name) {

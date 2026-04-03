@@ -237,7 +237,16 @@ pub(super) struct TraitDetails {
     pub(super) methods: HashMap<Id, TraitMethod>,
 
     /// Associated types of the trait.
-    pub(super) assoc_tys: HashMap<Id, Kind>,
+    pub(super) assoc_tys: HashMap<Id, AssocTyDetails>,
+}
+
+#[derive(Debug, Clone)]
+pub(super) struct AssocTyDetails {
+    pub(super) kind: Kind,
+
+    /// The default type is copied to impls that don't implement them, so they need to be AST types
+    /// rather than type-checking types.
+    pub(super) default: Option<ast::L<ast::Type>>,
 }
 
 #[derive(Debug, Clone)]

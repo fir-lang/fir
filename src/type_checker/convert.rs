@@ -134,7 +134,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
             if let Ty::App(trait_, _trait_args, kind) = &ty {
                 assert_eq!(*kind, Kind::Star);
-                let kind = *tys
+                let kind = tys
                     .cons()
                     .get(trait_)
                     .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), trait_))
@@ -152,7 +152,8 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                             trait_,
                             assoc_ty
                         )
-                    });
+                    })
+                    .kind;
                 Ty::AssocTySelect {
                     ty: Box::new(ty),
                     assoc_ty: assoc_ty.clone(),

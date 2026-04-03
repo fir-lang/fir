@@ -241,7 +241,7 @@ const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
 /// Does not type check the code, only collects types and type schemes.
 fn collect_types(module: &mut ast::Module) -> PgmTypes {
     let mut tys = collect_cons(module);
-    add_default_impl_methods(module, &mut tys);
+    add_default_impl_items(module, &mut tys);
     let (top_schemes, associated_fn_schemes, method_schemes) = collect_schemes(module, &mut tys);
     check_value_type_sizes(tys.cons());
     PgmTypes {
@@ -329,9 +329,17 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                 .items
                                 .iter()
                                 .filter_map(|item| match item {
-                                    ast::TraitDeclItem::Type { name, kind } => Some((
+                                    ast::TraitDeclItem::Type {
+                                        name,
+                                        kind,
+                                        default: _,
+                                    } => Some((
                                         name.node.clone(),
-                                        kind_inference::convert_kind(kind).unwrap_or(Kind::Star),
+                                        AssocTyDetails {
+                                            kind: kind_inference::convert_kind(kind)
+                                                .unwrap_or(Kind::Star),
+                                            default: None, // we're not adding details in this pass
+                                        },
                                     )),
                                     ast::TraitDeclItem::Fun(_) => None,
                                 })
@@ -376,7 +384,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         }
     }
 
-    // Add fields and methods.
+    // Add fields, methods, associated types.
     // This is where we start converting AST types to type checking types, so the ty con map should
     // be populated at this point.
     for decl in module.iter() {
@@ -444,16 +452,23 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     Default::default(),
                 );
 
-                let mut assoc_tys: HashMap<Id, Kind> = Default::default();
+                let mut assoc_tys: HashMap<Id, AssocTyDetails> = Default::default();
 
                 for item in &trait_decl.node.items {
                     match item {
                         ast::TraitDeclItem::Type {
                             name: assoc_ty,
                             kind,
+                            default,
                         } => {
                             let kind = kind_inference::convert_kind(kind).unwrap_or(Kind::Star);
-                            let old = assoc_tys.insert(assoc_ty.node.clone(), kind);
+                            let old = assoc_tys.insert(
+                                assoc_ty.node.clone(),
+                                AssocTyDetails {
+                                    kind,
+                                    default: default.clone(),
+                                },
+                            );
                             if old.is_some() {
                                 panic!(
                                     "{}: Associated type {} declared multiple times",
@@ -588,7 +603,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 // Add default methods to impls.
 //
 // We don't need to type check default methods copied to impls, but for now we do.
-fn add_default_impl_methods(module: &mut ast::Module, tys: &mut TyMap) {
+fn add_default_impl_items(module: &mut ast::Module, tys: &mut TyMap) {
     for decl in module.iter_mut() {
         let impl_decl = match &mut decl.node {
             ast::TopDecl::Impl(impl_decl) => &mut impl_decl.node,
@@ -633,16 +648,53 @@ fn add_default_impl_methods(module: &mut ast::Module, tys: &mut TyMap) {
 
         let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap(); // checked above
         let trait_type_params = &trait_ty_con.ty_params;
-        let trait_methods = match &mut trait_ty_con.details {
-            TyConDetails::Trait(TraitDetails {
-                methods,
-                assoc_tys: _,
-            }) => methods,
+        let (trait_methods, trait_assoc_tys) = match &mut trait_ty_con.details {
+            TyConDetails::Trait(TraitDetails { methods, assoc_tys }) => (methods, assoc_tys),
             TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
                 panic!() // checked above
             }
         };
 
+        // Copy unimplemented associated types with defaults.
+        for (assoc_ty_name, assoc_ty_details) in trait_assoc_tys {
+            let assoc_ty_default = match &assoc_ty_details.default {
+                Some(default) => default,
+                None => {
+                    // Type doesn't have a default, can't be copied.
+                    continue;
+                }
+            };
+
+            if impl_decl.items.iter().any(|item| match item {
+                ast::ImplDeclItem::Type { assoc_ty, rhs: _ } => &assoc_ty.node == assoc_ty_name,
+                ast::ImplDeclItem::Fun(_) => false,
+            }) {
+                // Impl implements the type, no need to copy.
+                continue;
+            }
+
+            // Associated types can't have type parameters so there's no risk of shadowing impl's
+            // type parameters.
+
+            // Map type parameters of the trait to the impl types.
+            let substs: HashMap<Id, ast::Type> = trait_type_params
+                .iter()
+                .map(|(param, _param_kind)| param.clone())
+                .zip(impl_decl.tys.iter().map(|ty| ty.node.clone()))
+                .collect();
+
+            let default = assoc_ty_default.node.subst_ids(&substs);
+
+            impl_decl.items.push(ast::ImplDeclItem::Type {
+                assoc_ty: ast::L {
+                    loc: ast::Loc::dummy(),
+                    node: assoc_ty_name.clone(),
+                },
+                rhs: assoc_ty_default.map_as_ref(|_| default),
+            });
+        }
+
+        // Copy unimplemented methods with defaults.
         for (trait_method_id, trait_method_decl) in trait_methods {
             if trait_method_decl.fun_decl.node.body.is_none() {
                 continue;
@@ -999,6 +1051,7 @@ fn collect_schemes(
                         if let ast::TraitDeclItem::Type {
                             name: assoc_ty,
                             kind,
+                            default: _,
                         } = trait_item
                         {
                             let kind = kind_inference::convert_kind(kind).unwrap_or(Kind::Star);
@@ -1379,7 +1432,7 @@ fn collect_schemes(
                 };
                 for item in &impl_decl.node.items {
                     if let ast::ImplDeclItem::Type { assoc_ty, .. } = item {
-                        let kind = *tys
+                        let kind = tys
                             .cons()
                             .get(&trait_name)
                             .unwrap()
@@ -1395,7 +1448,8 @@ fn collect_schemes(
                                     trait_name,
                                     assoc_ty.node,
                                 )
-                            });
+                            })
+                            .kind;
                         tys.insert_con(
                             assoc_ty.node.clone(),
                             TyCon {
@@ -1684,7 +1738,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     // concrete type within impl method bodies.
     for item in &impl_.node.items {
         if let ast::ImplDeclItem::Type { assoc_ty, rhs } = item {
-            let assoc_ty_expected_kind = *trait_details.assoc_tys.get(&assoc_ty.node).unwrap();
+            let assoc_ty_expected_kind = trait_details.assoc_tys.get(&assoc_ty.node).unwrap().kind;
             let converted = convert_ast_ty(&tys.tys, &rhs.node, &rhs.loc);
             if converted.kind() != assoc_ty_expected_kind {
                 panic!(
@@ -2108,6 +2162,7 @@ pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
                     if let ast::TraitDeclItem::Type {
                         name: assoc_ty,
                         kind: _,
+                        default: _,
                     } = item
                     {
                         let trait_ty = ast::Type::Named(ast::NamedType {

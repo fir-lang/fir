@@ -5467,13 +5467,31 @@ traitDeclItem(state: ParserState[Token, ()]) TraitDeclItem / U32:
                 Result.Ok(ok):
                     ()
                     Option.Some(ok)
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Eq, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let default = type_(state)
+                    default,
+            )
+            let default = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Newline, ..):
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                TraitDeclItem.Type(name = newId(name), kind)
+                TraitDeclItem.Type(name = newId(name), kind, default)
             val,
     )
     match altResult:

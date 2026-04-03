@@ -608,19 +608,32 @@ TraitDecl.format(self, tokens: Array[Token]) Doc:
 
 TraitDeclItem.format(self, tokens: Array[Token]) Doc:
     match self:
-        TraitDeclItem.Type(name = id, kind):
-            let typeToken = prevNonTrivia(id.token, tokens).unwrap()
+        TraitDeclItem.Type(name, kind, default):
+            let typeToken = prevNonTrivia(name.token, tokens).unwrap()
             assert(tokens.get(typeToken.idx).kind is TokenKind.Type)
+
             let doc = formatToken(typeToken, tokens)
                 + Doc.blank(1)
-                + formatToken(id.token, tokens)
+                + formatToken(name.token, tokens)
+
             if kind is Option.Some(kind):
-                let colon = nextNonTrivia(id.token, tokens).unwrap()
+                let colon = nextNonTrivia(name.token, tokens).unwrap()
                 assert(tokens.get(colon.idx).kind is TokenKind.Colon)
                 doc += formatToken(colon, tokens)
                     + Doc.blank(1)
                     + kind.format(tokens)
+
+            if default is Option.Some(default):
+                let eq = prevNonTrivia(default.firstToken(tokens), tokens)
+                    .unwrap()
+                assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+                doc += Doc.blank(1)
+                    + formatToken(eq, tokens)
+                    + Doc.blank(1)
+                    + default.format(tokens)
+
             doc
+
         TraitDeclItem.Fun(fun): fun.format(tokens)
 
 

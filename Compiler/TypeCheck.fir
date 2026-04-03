@@ -386,7 +386,12 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             Ty.App(conId = tyCon.idx, args = tyArgs)
 
         for item: TraitDeclItem in traitDecl.items.iter():
-            if item is TraitDeclItem.Type(name = assocTyId, ..):
+            if item
+                    is TraitDeclItem.Type(
+                        name = assocTyId,
+                        kind = _,
+                        default = _,
+                    ):
                 varMap.insert(
                     mod.idText(assocTyId),
                     Ty.AssocTySelect(ty = traitTy, assocTy = assocTyId),
