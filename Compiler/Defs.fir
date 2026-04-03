@@ -1,10 +1,7 @@
 ## Defines identifiers, packages, modules, module-level items.
 
 
-import [
-    Compiler/Ast,
-    Compiler/Module,
-]
+import [Compiler/Module]
 
 
 # ------------------------------------------------------------------------------
