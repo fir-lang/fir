@@ -1,4 +1,7 @@
-import [Compiler/Token]
+import [
+    Compiler/Assert,
+    Compiler/Token,
+]
 
 
 ## Associated types for identifiers in the ASTs.
@@ -196,13 +199,13 @@ type FunDecl[exts](
 )
 
 
-impl Tokens[FunDecl[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[FunDecl[exts]]:
     firstToken(self: FunDecl[exts], tokens: Array[Token]) TokenIdx:
         if self.prim_ is Option.Some(t):
             return t
 
         if self.parentTy is Option.Some(tyId):
-            return tyId.token
+            return tyId.firstToken(tokens)
 
         self.name.token
 
@@ -229,7 +232,7 @@ type FunSig[exts](
 )
 
 
-impl Tokens[FunSig[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[FunSig[exts]]:
     firstToken(self: FunSig[exts], tokens: Array[Token]) TokenIdx:
         if self.context is Option.Some(context):
             return context.firstToken(tokens)
@@ -260,7 +263,7 @@ type FunArg[exts](
 )
 
 
-impl Tokens[FunArg[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[FunArg[exts]]:
     firstToken(self: FunArg[exts], tokens: Array[Token]) TokenIdx:
         self.name.token
 
@@ -377,7 +380,7 @@ type Type[exts]:
     AssocTySelect(AssocTySelectType[exts])
 
 
-impl Tokens[Type[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[Type[exts]]:
     firstToken(self: Type[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Type.Named(ty): ty.firstToken(tokens)
@@ -460,7 +463,7 @@ type FnType[exts](
 )
 
 
-impl Tokens[FnType[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[FnType[exts]]:
     firstToken(self: FnType[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -481,7 +484,7 @@ type AssocTySelectType[exts](
 )
 
 
-impl Tokens[AssocTySelectType[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[AssocTySelectType[exts]]:
     firstToken(self: AssocTySelectType[exts], tokens: Array[Token]) TokenIdx:
         self.ty.firstToken(tokens)
 
@@ -536,7 +539,7 @@ type Pred_[exts]:
     )
 
 
-impl Tokens[Pred_[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[Pred_[exts]]:
     firstToken(self: Pred_[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Pred_.Kind(name = kindVar, ..): kindVar.firstToken(tokens)
@@ -566,7 +569,7 @@ type DeclTypeParam[exts](
 )
 
 
-impl Tokens[DeclTypeParam[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[DeclTypeParam[exts]]:
     firstToken(self: DeclTypeParam[exts], tokens: Array[Token]) TokenIdx:
         self.name.token
 
@@ -601,14 +604,14 @@ NamedType.numTyArgs(self: NamedType[exts]) U32:
         Option.Some(args): args.args.len()
 
 
-impl Tokens[NamedType[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[NamedType[exts]]:
     firstToken(self: NamedType[exts], tokens: Array[Token]) TokenIdx:
-        self.name.token
+        self.name.firstToken(tokens)
 
     lastToken(self: NamedType[exts], tokens: Array[Token]) TokenIdx:
         match self.args:
             Option.Some(args): args.lastToken(tokens)
-            Option.None: self.name.token
+            Option.None: self.name.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -640,7 +643,7 @@ type Stmt[exts]:
     Continue(ContinueStmt)
 
 
-impl Tokens[Stmt[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[Stmt[exts]]:
     firstToken(self: Stmt[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Stmt.Let(e): e.firstToken(tokens)
@@ -674,7 +677,7 @@ type LetStmt[exts](
 )
 
 
-impl Tokens[LetStmt[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[LetStmt[exts]]:
     firstToken(self: LetStmt[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -690,7 +693,7 @@ type AssignStmt[exts](
 )
 
 
-impl Tokens[AssignStmt[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[AssignStmt[exts]]:
     firstToken(self: AssignStmt[exts], tokens: Array[Token]) TokenIdx:
         self.lhs.firstToken(tokens)
 
@@ -723,7 +726,7 @@ type ForStmt[exts](
 )
 
 
-impl Tokens[ForStmt[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[ForStmt[exts]]:
     firstToken(self: ForStmt[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -740,7 +743,7 @@ type WhileStmt[exts](
 )
 
 
-impl Tokens[WhileStmt[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[WhileStmt[exts]]:
     firstToken(self: WhileStmt[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -755,7 +758,7 @@ type LoopStmt[exts](
 )
 
 
-impl Tokens[LoopStmt[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[LoopStmt[exts]]:
     firstToken(self: LoopStmt[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -832,7 +835,7 @@ type Pat[exts]:
     Variant(VariantPat[exts])
 
 
-impl Tokens[Pat[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[Pat[exts]]:
     firstToken(self: Pat[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Pat.Var(pat): pat.firstToken(tokens)
@@ -896,7 +899,7 @@ type ConPat[exts](
 )
 
 
-impl Tokens[ConPat[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[ConPat[exts]]:
     firstToken(self: ConPat[exts], tokens: Array[Token]) TokenIdx:
         self.con.firstToken(tokens)
 
@@ -929,7 +932,7 @@ type VariantPat[exts](
 )
 
 
-impl Tokens[VariantPat[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[VariantPat[exts]]:
     firstToken(self: VariantPat[exts], tokens: Array[Token]) TokenIdx:
         let tilde = prevNonTrivia(self.pat.firstToken(tokens), tokens).unwrap()
         assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
@@ -958,7 +961,7 @@ type Con[exts](
 )
 
 
-impl Tokens[Con[exts]]:
+impl[Tokens[AstTyId[exts]]] Tokens[Con[exts]]:
     firstToken(self: Con[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -968,7 +971,7 @@ impl Tokens[Con[exts]]:
             Option.None:
                 match self.con:
                     Option.Some(con): con.token
-                    Option.None: self.ty.token
+                    Option.None: self.ty.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -1038,13 +1041,12 @@ type Expr[exts]:
     Variant(VariantExpr[exts])
 
 
-impl Tokens[Expr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[Expr[exts]]:
     firstToken(self: Expr[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Expr.Var(e): e.firstToken(tokens)
             Expr.ConSel(e): e.firstToken(tokens)
             Expr.FieldSel(e): e.firstToken(tokens)
-            Expr.MethodSel(e): e.firstToken(tokens)
             Expr.AssocFnSel(e): e.firstToken(tokens)
             Expr.Call(e): e.firstToken(tokens)
             Expr.Int(e): e.firstToken(tokens)
@@ -1068,7 +1070,6 @@ impl Tokens[Expr[exts]]:
             Expr.Var(e): e.lastToken(tokens)
             Expr.ConSel(e): e.lastToken(tokens)
             Expr.FieldSel(e): e.lastToken(tokens)
-            Expr.MethodSel(e): e.lastToken(tokens)
             Expr.AssocFnSel(e): e.lastToken(tokens)
             Expr.Call(e): e.lastToken(tokens)
             Expr.Int(e): e.lastToken(tokens)
@@ -1097,14 +1098,14 @@ type VarExpr[exts](
 )
 
 
-impl Tokens[VarExpr[exts]]:
+impl[Tokens[AstVarId[exts]]] Tokens[VarExpr[exts]]:
     firstToken(self: VarExpr[exts], tokens: Array[Token]) TokenIdx:
-        self.id.token
+        self.id.firstToken(tokens)
 
     lastToken(self: VarExpr[exts], tokens: Array[Token]) TokenIdx:
         match self.userTyArgs:
             Option.Some(tyArgs): tyArgs.lastToken(tokens)
-            Option.None: self.id.token
+            Option.None: self.id.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -1141,7 +1142,7 @@ type FieldSelExpr[exts](
 )
 
 
-impl Tokens[FieldSelExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[FieldSelExpr[exts]]:
     firstToken(self: FieldSelExpr[exts], tokens: Array[Token]) TokenIdx:
         self.object.firstToken(tokens)
 
@@ -1171,9 +1172,9 @@ type AssocFnSelExpr[exts](
 )
 
 
-impl Tokens[AssocFnSelExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[AssocFnSelExpr[exts]]:
     firstToken(self: AssocFnSelExpr[exts], tokens: Array[Token]) TokenIdx:
-        self.ty.token
+        self.ty.firstToken(tokens)
 
     lastToken(self: AssocFnSelExpr[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken
@@ -1188,7 +1189,7 @@ type CallExpr[exts](
 )
 
 
-impl Tokens[CallExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[CallExpr[exts]]:
     firstToken(self: CallExpr[exts], tokens: Array[Token]) TokenIdx:
         self.fun.firstToken(tokens)
 
@@ -1272,7 +1273,7 @@ type BinOpExpr[exts](
 )
 
 
-impl Tokens[BinOpExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[BinOpExpr[exts]]:
     firstToken(self: BinOpExpr[exts], tokens: Array[Token]) TokenIdx:
         self.left.firstToken(tokens)
 
@@ -1308,7 +1309,7 @@ type UnOpExpr[exts](
 )
 
 
-impl Tokens[UnOpExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[UnOpExpr[exts]]:
     firstToken(self: UnOpExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -1340,7 +1341,7 @@ type VariantExpr[exts](
 )
 
 
-impl Tokens[VariantExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[VariantExpr[exts]]:
     firstToken(self: VariantExpr[exts], tokens: Array[Token]) TokenIdx:
         let tilde = prevNonTrivia(self.expr.firstToken(tokens), tokens).unwrap()
         assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
@@ -1357,7 +1358,7 @@ type ReturnExpr[exts](
 )
 
 
-impl Tokens[ReturnExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[ReturnExpr[exts]]:
     firstToken(self: ReturnExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -1375,7 +1376,7 @@ type MatchExpr[exts](
 )
 
 
-impl Tokens[MatchExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[MatchExpr[exts]]:
     firstToken(self: MatchExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -1391,7 +1392,7 @@ type Alt[exts](
 )
 
 
-impl Tokens[Alt[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[Alt[exts]]:
     firstToken(self: Alt[exts], tokens: Array[Token]) TokenIdx:
         self.pat.firstToken(tokens)
 
@@ -1415,7 +1416,7 @@ type IfBranch[exts](
 )
 
 
-impl Tokens[IfExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[IfExpr[exts]]:
     firstToken(self: IfExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -1435,7 +1436,7 @@ type FnExpr[exts](
 )
 
 
-impl Tokens[FnExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[FnExpr[exts]]:
     firstToken(self: FnExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -1451,7 +1452,7 @@ type IsExpr[exts](
 )
 
 
-impl Tokens[IsExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[IsExpr[exts]]:
     firstToken(self: IsExpr[exts], tokens: Array[Token]) TokenIdx:
         self.expr.firstToken(tokens)
 
@@ -1466,7 +1467,7 @@ type DoExpr[exts](
 )
 
 
-impl Tokens[DoExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[DoExpr[exts]]:
     firstToken(self: DoExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
@@ -1496,7 +1497,7 @@ type SeqElem[exts](
 )
 
 
-impl Tokens[SeqExpr[exts]]:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[SeqExpr[exts]]:
     firstToken(self: SeqExpr[exts], tokens: Array[Token]) TokenIdx:
         match self.ty:
             Option.Some(ty): ty.firstToken(tokens)
