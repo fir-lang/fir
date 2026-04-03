@@ -241,6 +241,7 @@ const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
 /// Does not type check the code, only collects types and type schemes.
 fn collect_types(module: &mut ast::Module) -> PgmTypes {
     let mut tys = collect_cons(module);
+    add_default_impl_methods(module, &mut tys);
     let (top_schemes, associated_fn_schemes, method_schemes) = collect_schemes(module, &mut tys);
     check_value_type_sizes(tys.cons());
     PgmTypes {
@@ -580,9 +581,14 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         }
     }
 
-    // Add default methods to impls.
-    //
-    // We don't need to type check default methods copied to impls, but for now we do.
+    assert_eq!(tys.len_scopes(), 1);
+    tys
+}
+
+// Add default methods to impls.
+//
+// We don't need to type check default methods copied to impls, but for now we do.
+fn add_default_impl_methods(module: &mut ast::Module, tys: &mut TyMap) {
     for decl in module.iter_mut() {
         let impl_decl = match &mut decl.node {
             ast::TopDecl::Impl(impl_decl) => &mut impl_decl.node,
@@ -623,7 +629,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         tys.enter_scope();
 
         let _impl_context =
-            convert_and_bind_context(&mut tys, &impl_decl.context, TyVarConversion::ToQVar);
+            convert_and_bind_context(tys, &impl_decl.context, TyVarConversion::ToQVar);
 
         let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap(); // checked above
         let trait_type_params = &trait_ty_con.ty_params;
@@ -699,9 +705,6 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         tys.exit_scope();
         assert_eq!(tys.len_scopes(), 1);
     }
-
-    assert_eq!(tys.len_scopes(), 1);
-    tys
 }
 
 /// Resolve a type synonym by converting its RHS. If the RHS references another synonym, resolve

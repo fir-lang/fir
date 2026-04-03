@@ -105,7 +105,7 @@ pub struct TraitImpl {
     pub assoc_tys: HashMap<Id, Ty>,
 }
 
-pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
+pub(crate) fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
     let mut env: TraitEnv = Default::default();
 
     for item in pgm {
