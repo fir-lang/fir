@@ -444,14 +444,14 @@ fn ty_has_vars(ty: &ast::Type, params: &[&ast::Id]) -> bool {
             fields.iter().any(|(_, t)| ty_has_vars(t, params))
                 || extension
                     .as_ref()
-                    .map_or(false, |e| ty_has_vars(&e.node, params))
+                    .is_some_and(|e| ty_has_vars(&e.node, params))
         }
         ast::Type::Fn(fn_ty) => {
             fn_ty.args.iter().any(|a| ty_has_vars(&a.node, params))
                 || fn_ty
                     .ret
                     .as_ref()
-                    .map_or(false, |r| ty_has_vars(&r.node, params))
+                    .is_some_and(|r| ty_has_vars(&r.node, params))
         }
         ast::Type::Variant {
             alts, extension, ..
@@ -460,7 +460,7 @@ fn ty_has_vars(ty: &ast::Type, params: &[&ast::Id]) -> bool {
                 .any(|a| a.args.iter().any(|arg| ty_has_vars(&arg.node, params)))
                 || extension
                     .as_ref()
-                    .map_or(false, |e| ty_has_vars(&e.node, params))
+                    .is_some_and(|e| ty_has_vars(&e.node, params))
         }
         ast::Type::AssocTySelect { ty, .. } => ty_has_vars(&ty.node, params),
     }
@@ -479,14 +479,14 @@ fn ty_mentions(ty: &ast::Type, name: &ast::Id) -> bool {
             fields.iter().any(|(_, t)| ty_mentions(t, name))
                 || extension
                     .as_ref()
-                    .map_or(false, |e| ty_mentions(&e.node, name))
+                    .is_some_and(|e| ty_mentions(&e.node, name))
         }
         ast::Type::Fn(fn_ty) => {
             fn_ty.args.iter().any(|a| ty_mentions(&a.node, name))
                 || fn_ty
                     .ret
                     .as_ref()
-                    .map_or(false, |r| ty_mentions(&r.node, name))
+                    .is_some_and(|r| ty_mentions(&r.node, name))
         }
         ast::Type::Variant {
             alts, extension, ..
@@ -495,7 +495,7 @@ fn ty_mentions(ty: &ast::Type, name: &ast::Id) -> bool {
                 .any(|a| a.args.iter().any(|arg| ty_mentions(&arg.node, name)))
                 || extension
                     .as_ref()
-                    .map_or(false, |e| ty_mentions(&e.node, name))
+                    .is_some_and(|e| ty_mentions(&e.node, name))
         }
         ast::Type::AssocTySelect { ty, .. } => ty_mentions(&ty.node, name),
     }
@@ -510,12 +510,10 @@ fn collect_extension_row_params(type_decl: &ast::TypeDecl) -> Vec<ast::Id> {
             extension: Some(ext),
             ..
         } = fields
+            && let ast::Type::Var(var) = &ext.node
+            && !row_params.contains(var)
         {
-            if let ast::Type::Var(var) = &ext.node
-                && !row_params.contains(var)
-            {
-                row_params.push(var.clone());
-            }
+            row_params.push(var.clone());
         }
     };
 
