@@ -15,6 +15,15 @@ trait AstIds[t]:
     ## Identifiers that refer to associated variables.
     type AstAssocVarId
 
+    ## For parsing: create an `AstVarId` from a token.
+    astVarIdFromToken(token: TokenIdx) AstVarId
+    
+    ## For parsing: create an `AstTyId` from a token.
+    astTyIdFromToken(token: TokenIdx) AstTyId
+
+    ## For parsing: create an `AstAssocVarId` from a token.
+    astAssocVarIdFromToken(token: TokenIdx) AstAssocVarId
+
 
 trait AstExts[t]:
     ## Identifier types used in the AST. This should be an implementation of
@@ -22,28 +31,56 @@ trait AstExts[t]:
     type Ids
 
     ## Extensions for type declarations. (`TypeDecl`)
-    type TypeDeclExts: Row[Rec]
+    type TypeDeclExts: Row[Rec] = row()
 
     ## Extensions for trait declarations. (`TraitDecl`)
-    type TraitDeclExts: Row[Rec]
+    type TraitDeclExts: Row[Rec] = row()
 
     ## Extensions for impl declarations. (`ImplDecl`)
-    type ImplDeclExts: Row[Rec]
+    type ImplDeclExts: Row[Rec] = row()
 
     ## Extensions for function signatures. (`FunSig`)
-    type FunSigExts: Row[Rec]
+    type FunSigExts: Row[Rec] = row()
 
     ## Extensions for record patterns. (`RecordPat`)
-    type RecordPatExts: Row[Rec]
+    type RecordPatExts: Row[Rec] = row()
 
     ## Extensions for variant patterns. (`VariantPat`)
-    type VariantPatExts: Row[Rec]
+    type VariantPatExts: Row[Rec] = row()
 
     ## Extensions for type argument lists. (`TyArgs`)
-    type TyArgsExts: Row[Rec]
+    type TyArgsExts: Row[Rec] = row()
 
     ## Used in expressions with non-trivial types: inferred type fields.
-    type InferredTyExts: Row[Rec]
+    type InferredTyExts: Row[Rec] = row()
+
+    ## For constructing an AST: default values for the `TypeDeclExts` extension.
+    defaultTypeDeclExts() (..TypeDeclExts):
+        ()
+
+    ## For constructing an AST: default values for the `TraitDeclExts` extension.
+    defaultTraitDeclExts() (..TraitDeclExts):
+        ()
+
+    ## For constructing an AST: default values for the `ImplDeclExts` extension.
+    defaultImplDeclExts() (..ImplDeclExts):
+        ()
+
+    ## For constructing an AST: default values for the `FunSigExts` extension.
+    defaultFunSigExts() (..FunSigExts):
+        ()
+
+    ## For constructing an AST: default values for the `RecordPatExts` extension.
+    defaultRecordPatExts() (..RecordPatExts):
+        ()
+
+    ## For constructing an AST: default values for the `VariantPatExts` extension.
+    defaultVariantPatExts() (..VariantPatExts):
+        ()
+
+    ## For constructing an AST: default values for the `TyArgsExts` extension.
+    defaultTyArgsExts() (..TyArgsExts):
+        ()
 
 
 ## Type synonym to make it easy to access `AstIds.AstTyId` from an `AstExts`.
