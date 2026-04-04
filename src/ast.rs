@@ -524,9 +524,6 @@ pub struct ForStmt {
     /// Type annotation on the loop variable, the `item` type in `Iterator[iter, item, exn]`.
     pub item_ast_ty: Option<L<Type>>,
 
-    /// `item_ast_ty`, converted to type checking types by the type checker.
-    pub item_tc_ty: Option<Ty>,
-
     pub expr: L<Expr>,
 
     pub body: Vec<L<Stmt>>,
@@ -1103,7 +1100,6 @@ impl Stmt {
                 label: _,
                 pat: _,
                 item_ast_ty,
-                item_tc_ty: _,
                 expr,
                 body,
             }) => {

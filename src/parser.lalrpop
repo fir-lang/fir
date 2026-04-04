@@ -562,7 +562,6 @@ Stmt: Stmt = {
             label,
             pat,
             item_ast_ty,
-            item_tc_ty: None,
             expr,
             body,
         })

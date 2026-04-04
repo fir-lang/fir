@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: 0bd44ae8144963517c3955cdcd8ec9ba135a333de24b4b767f2c4fe13b56b350
+// sha3: e061061e092cc99fff97da817ce4eff45577da7d99ed77519517fd476020d87c
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -52070,7 +52070,6 @@ fn __action76<'a>(
             label,
             pat,
             item_ast_ty,
-            item_tc_ty: None,
             expr,
             body,
         })

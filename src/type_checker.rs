@@ -22,6 +22,7 @@ use traits::*;
 use ty::*;
 pub use ty::{FunArgs, Kind, RecordOrVariant, Ty};
 use ty_map::TyMap;
+use unification::unify;
 
 use crate::ast::{self, Id};
 use crate::collections::*;
@@ -98,7 +99,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, trait_env: &TraitEnv, main: &str) 
         panic!("Main function `{main}` can't have quantified variables and predicates.");
     }
 
-    unification::unify(
+    unify(
         &main_scheme.ty,
         &Ty::Fun {
             args: FunArgs::Positional { args: vec![] },
@@ -1686,7 +1687,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
     }
 
-    resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen);
+    resolve_preds(trait_env, assumps, tys.tys.cons(), preds, &var_gen);
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
@@ -1834,7 +1835,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
 
-            resolve_preds(trait_env, &assumps, tys.tys.cons(), preds, &var_gen);
+            resolve_preds(trait_env, assumps, tys.tys.cons(), preds, &var_gen);
 
             for stmt in body.iter_mut() {
                 normalize_stmt(
@@ -1924,13 +1925,11 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
 fn resolve_preds(
     trait_env: &TraitEnv,
-    assumps: &[Pred],
+    mut assumps: Vec<Pred>,
     cons: &ScopeMap<Id, TyCon>,
     mut goals: Vec<Pred>,
     var_gen: &UVarGen,
 ) {
-    // TODO: Not sure if this is a bug or not, but resolving a predicate may allow other predicates
-    // to be resolved as well. Keep looping as long as we resolve predicates.
     let mut progress = true;
 
     while progress {
@@ -1948,7 +1947,7 @@ fn resolve_preds(
                 continue;
             }
 
-            for assump in assumps {
+            for assump in assumps.iter() {
                 // We can't use set lookup as locs will be different.
                 if assump.trait_ == pred.trait_ && assump.params == pred.params {
                     match (&assump.assoc_ty, &pred.assoc_ty) {
@@ -1959,7 +1958,7 @@ fn resolve_preds(
                         (Some((assump_name, assump_rhs)), Some((pred_name, pred_rhs)))
                             if assump_name == pred_name =>
                         {
-                            unification::unify(
+                            unify(
                                 assump_rhs,
                                 pred_rhs,
                                 cons,
@@ -2004,7 +2003,7 @@ fn resolve_preds(
                         // Full unification is needed here because both sides may contain `UVar`s:
                         // the goal RHS from inference, and the matching RHS from `try_match`
                         // creating fresh `UVar`s for the impl's quantified variables.
-                        unification::unify(
+                        unify(
                             goal_assoc_ty_rhs,
                             matching_assoc_ty_rhs,
                             cons,
@@ -2016,6 +2015,8 @@ fn resolve_preds(
                             &mut next_goals,
                         );
                     }
+                    // Add solved pred to assumptions to handle recursion.
+                    assumps.push(pred);
                     next_goals.extend(subgoals);
                     progress = true;
                     continue 'goals;
@@ -2034,6 +2035,7 @@ fn resolve_preds(
         use std::fmt::Write;
         let mut msg = String::new();
         writeln!(&mut msg, "Unable to resolve predicates:").unwrap();
+
         for goal in goals {
             writeln!(&mut msg, "{}: {}", loc_display(&goal.loc.clone()), goal).unwrap();
         }
@@ -2073,7 +2075,7 @@ fn resolve_row_to_list(
         // Note: we don't generate `RecRowToList[ext]` here (when `extension` is `Some(...)`). I'm
         // not sure if that's necessary as `RecRowToList[r]` will always resolve for any `r`.
         let list_ty = row_to_list_type(labels, extension);
-        unification::unify(
+        unify(
             &list_ty,
             assoc_ty_rhs,
             cons,
