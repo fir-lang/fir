@@ -504,7 +504,6 @@ impl Stmt {
                 label,
                 pat,
                 item_ast_ty,
-                item_tc_ty: _,
                 expr,
                 body,
             }) => {

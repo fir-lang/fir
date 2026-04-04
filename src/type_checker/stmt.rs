@@ -306,7 +306,6 @@ fn check_stmt(
             label,
             pat,
             item_ast_ty,
-            item_tc_ty,
             expr,
             body,
         }) => {
@@ -380,8 +379,6 @@ fn check_stmt(
                     resolved_item_ty
                 }
             };
-
-            *item_tc_ty = Some(item_ty.clone());
 
             // Add predicate `Iterator[iter, exn], Iterator[iter, exn].Item = item`.
             tc_state.preds.push(Pred {
