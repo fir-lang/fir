@@ -17,7 +17,7 @@ trait AstIds[t]:
 
     ## For parsing: create an `AstVarId` from a token.
     astVarIdFromToken(token: TokenIdx) AstVarId
-    
+
     ## For parsing: create an `AstTyId` from a token.
     astTyIdFromToken(token: TokenIdx) AstTyId
 
