@@ -343,7 +343,7 @@ fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) ->
 
     let mut preds: Vec<ast::L<ast::Pred>> = vec![];
 
-    // Add kind annotations for row-typed parameters.
+    // Add kind annotations for row-typed parameters found via extensions.
     for param_name in &row_params {
         preds.push(l(
             loc,
@@ -366,14 +366,54 @@ fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) ->
         ));
     }
 
-    // For type params not used as row extensions, generate Trait[param].
+    // Add kind annotations for row-typed parameters declared with explicit kind but not used as
+    // extensions.
+    for p in &type_decl.type_params {
+        if !row_params.contains(&p.name.node) && is_row_rec_kind(&p.kind) {
+            preds.push(l(
+                loc,
+                ast::Pred::Kind {
+                    var: p.name.node.clone(),
+                    kind: Some(l(
+                        loc,
+                        ast::Type::Named(ast::NamedType {
+                            name: SmolStr::new_static("Row"),
+                            args: vec![l(
+                                loc,
+                                ast::Type::Named(ast::NamedType {
+                                    name: SmolStr::new_static("Rec"),
+                                    args: vec![],
+                                }),
+                            )],
+                        }),
+                    )),
+                },
+            ));
+        }
+    }
+
+    // For type params not used as row extensions, generate Trait[param] or
+    // Trait[RecRowList[param]] depending on the kind.
     for p in &type_decl.type_params {
         if !row_params.contains(&p.name.node) {
+            let arg = if is_row_rec_kind(&p.kind) {
+                // Row-kinded param used as a type argument (not as an extension field):
+                // generate Trait[RecRowList[param]].
+                l(
+                    loc,
+                    ast::Type::Named(ast::NamedType {
+                        name: SmolStr::new_static("RecRowList"),
+                        args: vec![l(loc, ast::Type::Var(p.name.node.clone()))],
+                    }),
+                )
+            } else {
+                l(loc, ast::Type::Var(p.name.node.clone()))
+            };
             preds.push(l(
                 loc,
                 ast::Pred::App(ast::NamedType {
                     name: SmolStr::new(trait_name),
-                    args: vec![l(loc, ast::Type::Var(p.name.node.clone()))],
+                    args: vec![arg],
                 }),
             ));
         }
@@ -400,6 +440,18 @@ fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) ->
         type_params: vec![],
         preds,
     }
+}
+
+/// Check if a type param kind annotation is `Row[Rec]`.
+fn is_row_rec_kind(kind: &Option<ast::L<ast::Type>>) -> bool {
+    if let Some(kind) = kind {
+        if let ast::Type::Named(named) = &kind.node {
+            return named.name == "Row"
+                && named.args.len() == 1
+                && matches!(&named.args[0].node, ast::Type::Named(n) if n.name == "Rec" && n.args.is_empty());
+        }
+    }
+    false
 }
 
 /// Collect extension types from a type declaration's fields.
