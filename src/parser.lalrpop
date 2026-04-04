@@ -1146,7 +1146,7 @@ TraitDecl: L<TraitDecl> = {
             items,
         }),
 
-    <l:@L> "trait" <name:LUpperIdLBracket> <type_params:TypeParams> <r:@R> =>
+    <l:@L> "trait" <name:LUpperIdLBracket> <type_params:TypeParams> NEWLINE <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
             type_params,
@@ -1192,7 +1192,7 @@ ImplDecl: L<ImplDecl> = {
         })
     },
 
-    <l:@L> "impl" <context:Context> <trait_:LUpperIdLBracket> <tys:Sep<LType, ",">> "]" <r:@R> => {
+    <l:@L> "impl" <context:Context> <trait_:LUpperIdLBracket> <tys:Sep<LType, ",">> "]" NEWLINE <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,
             trait_,
