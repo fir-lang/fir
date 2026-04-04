@@ -1,8 +1,4 @@
-import [
-    Compiler/Assert,
-    Compiler/Ast,
-    Compiler/Defs,
-]
+import [Compiler/Ast]
 
 
 value type ExprPrefix:
