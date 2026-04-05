@@ -33,6 +33,7 @@ type TyParam(
 type TyConDetails:
     Trait(TraitDetails)
     Type(TypeDetails)
+    Synonym(Ty)
 
 
 TyConDetails.placeholder() TyConDetails:

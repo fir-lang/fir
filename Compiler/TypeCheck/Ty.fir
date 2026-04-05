@@ -426,10 +426,7 @@ Ty.substQVars(self, vars: HashMap[LocalId, Ty]) Ty:
                     ),
             )
 
-        Ty.QVar(QVar(id, ..)):
-            vars.get(id).unwrapOrElse(
-                \(): panic("Ty.substQVars: unbound QVar `id.name`"),
-            )
+        Ty.QVar(QVar(id, ..)): vars.get(id).unwrapOr(self)
 
         Ty.Fun(args, ret, exn):
             Ty.Fun(
