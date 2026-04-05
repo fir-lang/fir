@@ -552,11 +552,15 @@ defaultVisitNamedType[Visitor[v]](v: v, t: NamedType):
 defaultVisitRecordType[Visitor[v]](v: v, t: RecordType):
     for field: Named[Type] in t.fields.iter():
         v.visitType(field.node)
+    if t.extension is Option.Some(ext):
+        v.visitType(ext)
 
 
 defaultVisitVariantType[Visitor[v]](v: v, t: VariantType):
     for alt: NamedType in t.alts.iter():
         v.visitNamedType(alt)
+    if t.extension is Option.Some(ext):
+        v.visitType(ext)
 
 
 defaultVisitFnType[Visitor[v]](v: v, t: FnType):
