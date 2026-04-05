@@ -336,10 +336,10 @@ fn type_with_params(
 
 /// Build the impl context for a derived trait.
 ///
-/// For type params used in normal (non-extension) positions, generates `Trait[param]`.
-/// For each extension type, generates `Trait[RecRowList[ext_ty]]`.
+/// Generates `Trait[fieldType]` for each field type with a type variable in the declaration. For
+/// extension fields `..ext`, generates `Trait[RecRowList[ext]]`.
 fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) -> ast::Context {
-    let (row_params, ext_types) = collect_extensions(type_decl);
+    let row_params = collect_extensions(type_decl);
 
     let mut preds: Vec<ast::L<ast::Pred>> = vec![];
 
@@ -366,32 +366,14 @@ fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) ->
         ));
     }
 
-    // For type params not used as row extensions, generate Trait[param].
-    for p in &type_decl.type_params {
-        if !row_params.contains(&p.name.node) {
-            preds.push(l(
-                loc,
-                ast::Pred::App(ast::NamedType {
-                    name: SmolStr::new(trait_name),
-                    args: vec![l(loc, ast::Type::Var(p.name.node.clone()))],
-                }),
-            ));
-        }
-    }
-
-    // For each extension type, generate Trait[RecRowList[ext_ty]].
-    for ext_ty in &ext_types {
+    // Collect all field types and generate `Trait[fieldType]` (or `Trait[RecRowList[fieldType]]`
+    // for extensions), if the field type  for each polymorphic field type.
+    for field_ty in collect_polymorphic_field_types(loc, type_decl) {
         preds.push(l(
             loc,
             ast::Pred::App(ast::NamedType {
                 name: SmolStr::new(trait_name),
-                args: vec![l(
-                    loc,
-                    ast::Type::Named(ast::NamedType {
-                        name: SmolStr::new_static("RecRowList"),
-                        args: vec![ext_ty.clone()],
-                    }),
-                )],
+                args: vec![field_ty],
             }),
         ));
     }
@@ -402,26 +384,19 @@ fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) ->
     }
 }
 
-/// Collect extension types from a type declaration's fields.
-///
-/// Returns the set of type param names used directly as extensions (e.g. `..t`), and the list of
-/// all extension types.
-fn collect_extensions(type_decl: &ast::TypeDecl) -> (Vec<ast::Id>, Vec<ast::L<ast::Type>>) {
+/// Returns the set of type param names used directly as extensions (e.g. `..t`).
+fn collect_extensions(type_decl: &ast::TypeDecl) -> Vec<ast::Id> {
     let mut row_params: Vec<ast::Id> = vec![];
-    let mut ext_types: Vec<ast::L<ast::Type>> = vec![];
 
     let mut collect_from_fields = |fields: &ast::ConFields| {
         if let ast::ConFields::Named {
+            fields: _,
             extension: Some(ext),
-            ..
         } = fields
+            && let ast::Type::Var(var) = &ext.node
+            && !row_params.contains(var)
         {
-            if let ast::Type::Var(var) = &ext.node
-                && !row_params.contains(var)
-            {
-                row_params.push(var.clone());
-            }
-            ext_types.push(l(&ext.loc, ext.node.clone()));
+            row_params.push(var.clone());
         }
     };
 
@@ -435,7 +410,99 @@ fn collect_extensions(type_decl: &ast::TypeDecl) -> (Vec<ast::Id>, Vec<ast::L<as
         _ => {}
     }
 
-    (row_params, ext_types)
+    row_params
+}
+
+/// Collect field types with type variables.
+///
+/// These will be used in `impl` context predicates, so for extension fields (`..ext`) this collects
+/// `RecRowList[ext]`.
+fn collect_polymorphic_field_types(
+    loc: &ast::Loc,
+    type_decl: &ast::TypeDecl,
+) -> Vec<ast::L<ast::Type>> {
+    let mut types: Vec<ast::L<ast::Type>> = vec![];
+
+    let mut collect_from_fields = |fields: &ast::ConFields| match fields {
+        ast::ConFields::Empty => {}
+
+        ast::ConFields::Named { fields, extension } => {
+            for (_name, ty) in fields {
+                if ty_has_vars(&ty.node) {
+                    types.push(ty.clone());
+                }
+            }
+            if let Some(ext) = extension
+                && ty_has_vars(&ext.node)
+            {
+                types.push(l(
+                    loc,
+                    ast::Type::Named(ast::NamedType {
+                        name: SmolStr::new_static("RecRowList"),
+                        args: vec![l(&ext.loc, ext.node.clone())],
+                    }),
+                ));
+            }
+        }
+
+        ast::ConFields::Unnamed { fields } => {
+            for ty in fields {
+                if ty_has_vars(&ty.node) {
+                    types.push(ty.clone());
+                }
+            }
+        }
+    };
+
+    match &type_decl.rhs {
+        Some(ast::TypeDeclRhs::Product(fields)) => collect_from_fields(fields),
+        Some(ast::TypeDeclRhs::Sum { cons, .. }) => {
+            for con in cons {
+                collect_from_fields(&con.fields);
+            }
+        }
+        _ => {}
+    }
+
+    types
+}
+
+/// Whether the type has a type variable.
+///
+/// These types are polymorphic in the type declaration, so they'll need prediactes in `impl`
+/// contexts.
+fn ty_has_vars(ty: &ast::Type) -> bool {
+    match ty {
+        ast::Type::Var(_) => true,
+
+        ast::Type::Named(named) => named.args.iter().any(|a| ty_has_vars(&a.node)),
+
+        ast::Type::Record {
+            fields,
+            extension,
+            is_row: _,
+        } => {
+            fields.iter().any(|(_, t)| ty_has_vars(t))
+                || extension.as_ref().is_some_and(|e| ty_has_vars(&e.node))
+        }
+
+        ast::Type::Fn(fn_ty) => {
+            fn_ty.args.iter().any(|a| ty_has_vars(&a.node))
+                || fn_ty.ret.as_ref().is_some_and(|r| ty_has_vars(&r.node))
+        }
+
+        ast::Type::Variant {
+            alts,
+            extension,
+            is_row: _,
+        } => {
+            alts.iter()
+                .any(|a| a.args.iter().any(|arg| ty_has_vars(&arg.node)))
+                || extension.as_ref().is_some_and(|e| ty_has_vars(&e.node))
+        }
+
+        ast::Type::AssocTySelect { ty, assoc_ty: _ } => ty_has_vars(&ty.node),
+    }
 }
 
 /// Build an `ImplDecl` wrapping a single `FunDecl`, as a `TopDecl`.
