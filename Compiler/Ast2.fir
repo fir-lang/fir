@@ -82,6 +82,10 @@ trait AstExts[t]:
     defaultTyArgsExts() (..TyArgsExts):
         ()
 
+    ## For constructing an AST: default values for the `InferredTyExts` extension.
+    defaultInferredTyExts() (..InferredTyExts):
+        ()
+
 
 ## Type synonym to make it easy to access `AstIds.AstTyId` from an `AstExts`.
 type AstTyId[exts] = AstIds[AstExts[exts].Ids].AstTyId
@@ -184,6 +188,9 @@ type TypeDecl[exts](
 
     ## The type name. `Vec` in the example.
     name: Id,
+
+    ## Constructors of the type.
+    rhs: Option[TypeDeclRhs[exts]],
 
     ## Type parameters of the type. `[t]` in the example.
     typeParams: Vec[DeclTypeParam[exts]],
