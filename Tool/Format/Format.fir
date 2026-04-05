@@ -6,174 +6,6 @@ import [
 ]
 
 
-type FmtTopDecl = TopDecl[DefaultAstExts]
-
-
-type FmtTypeDecl = TypeDecl[DefaultAstExts]
-
-
-type FmtTypeDeclRhs = TypeDeclRhs[DefaultAstExts]
-
-
-type FmtConDecl = ConDecl[DefaultAstExts]
-
-
-type FmtConFields = ConFields[DefaultAstExts]
-
-
-type FmtNamedField = NamedField[DefaultAstExts]
-
-
-type FmtFunDecl = FunDecl[DefaultAstExts]
-
-
-type FmtFunArg = FunArg[DefaultAstExts]
-
-
-type FmtTraitDecl = TraitDecl[DefaultAstExts]
-
-
-type FmtTraitDeclItem = TraitDeclItem[DefaultAstExts]
-
-
-type FmtImplDecl = ImplDecl[DefaultAstExts]
-
-
-type FmtImplDeclItem = ImplDeclItem[DefaultAstExts]
-
-
-type FmtType = Type[DefaultAstExts]
-
-
-type FmtNamedType = NamedType[DefaultAstExts]
-
-
-type FmtRecordType = RecordType[DefaultAstExts]
-
-
-type FmtVariantType = VariantType[DefaultAstExts]
-
-
-type FmtFnType = FnType[DefaultAstExts]
-
-
-type FmtAssocTySelectType = AssocTySelectType[DefaultAstExts]
-
-
-type FmtContext = Context[DefaultAstExts]
-
-
-type FmtPred_ = Pred_[DefaultAstExts]
-
-
-type FmtDeclTypeParam = DeclTypeParam[DefaultAstExts]
-
-
-type FmtStmt = Stmt[DefaultAstExts]
-
-
-type FmtLetStmt = LetStmt[DefaultAstExts]
-
-
-type FmtAssignStmt = AssignStmt[DefaultAstExts]
-
-
-type FmtForStmt = ForStmt[DefaultAstExts]
-
-
-type FmtWhileStmt = WhileStmt[DefaultAstExts]
-
-
-type FmtLoopStmt = LoopStmt[DefaultAstExts]
-
-
-type FmtPat = Pat[DefaultAstExts]
-
-
-type FmtConPat = ConPat[DefaultAstExts]
-
-
-type FmtRecordPat = RecordPat[DefaultAstExts]
-
-
-type FmtVariantPat = VariantPat[DefaultAstExts]
-
-
-type FmtCon = Con[DefaultAstExts]
-
-
-type FmtExpr = Expr[DefaultAstExts]
-
-
-type FmtVarExpr = VarExpr[DefaultAstExts]
-
-
-type FmtFieldSelExpr = FieldSelExpr[DefaultAstExts]
-
-
-type FmtAssocFnSelExpr = AssocFnSelExpr[DefaultAstExts]
-
-
-type FmtCallExpr = CallExpr[DefaultAstExts]
-
-
-type FmtStrExpr = StrExpr[DefaultAstExts]
-
-
-type FmtStrPart = StrPart[DefaultAstExts]
-
-
-type FmtBinOpExpr = BinOpExpr[DefaultAstExts]
-
-
-type FmtUnOpExpr = UnOpExpr[DefaultAstExts]
-
-
-type FmtRecordExpr = RecordExpr[DefaultAstExts]
-
-
-type FmtVariantExpr = VariantExpr[DefaultAstExts]
-
-
-type FmtReturnExpr = ReturnExpr[DefaultAstExts]
-
-
-type FmtMatchExpr = MatchExpr[DefaultAstExts]
-
-
-type FmtAlt = Alt[DefaultAstExts]
-
-
-type FmtIfExpr = IfExpr[DefaultAstExts]
-
-
-type FmtIfBranch = IfBranch[DefaultAstExts]
-
-
-type FmtFnExpr = FnExpr[DefaultAstExts]
-
-
-type FmtIsExpr = IsExpr[DefaultAstExts]
-
-
-type FmtDoExpr = DoExpr[DefaultAstExts]
-
-
-type FmtSeqExpr = SeqExpr[DefaultAstExts]
-
-
-type FmtSeqElem = SeqElem[DefaultAstExts]
-
-
-type FmtParenExpr = ParenExpr[DefaultAstExts]
-
-
-type FmtAttribute = Attribute[DefaultAstExts]
-
-
-type FmtTyArgs = TyArgs[DefaultAstExts]
-
-
 main():
     let args = getArgs()
 
@@ -2164,3 +1996,174 @@ commentAtStart(tokenIdx: TokenIdx, tokens: Array[Token]) Bool:
         return Bool.True
 
     tokens.get(idx).line != tokens.get(tokenIdx.idx).line
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+type FmtTopDecl = TopDecl[DefaultAstExts]
+
+
+type FmtTypeDecl = TypeDecl[DefaultAstExts]
+
+
+type FmtTypeDeclRhs = TypeDeclRhs[DefaultAstExts]
+
+
+type FmtConDecl = ConDecl[DefaultAstExts]
+
+
+type FmtConFields = ConFields[DefaultAstExts]
+
+
+type FmtNamedField = NamedField[DefaultAstExts]
+
+
+type FmtFunDecl = FunDecl[DefaultAstExts]
+
+
+type FmtFunArg = FunArg[DefaultAstExts]
+
+
+type FmtTraitDecl = TraitDecl[DefaultAstExts]
+
+
+type FmtTraitDeclItem = TraitDeclItem[DefaultAstExts]
+
+
+type FmtImplDecl = ImplDecl[DefaultAstExts]
+
+
+type FmtImplDeclItem = ImplDeclItem[DefaultAstExts]
+
+
+type FmtType = Type[DefaultAstExts]
+
+
+type FmtNamedType = NamedType[DefaultAstExts]
+
+
+type FmtRecordType = RecordType[DefaultAstExts]
+
+
+type FmtVariantType = VariantType[DefaultAstExts]
+
+
+type FmtFnType = FnType[DefaultAstExts]
+
+
+type FmtAssocTySelectType = AssocTySelectType[DefaultAstExts]
+
+
+type FmtContext = Context[DefaultAstExts]
+
+
+type FmtPred_ = Pred_[DefaultAstExts]
+
+
+type FmtDeclTypeParam = DeclTypeParam[DefaultAstExts]
+
+
+type FmtStmt = Stmt[DefaultAstExts]
+
+
+type FmtLetStmt = LetStmt[DefaultAstExts]
+
+
+type FmtAssignStmt = AssignStmt[DefaultAstExts]
+
+
+type FmtForStmt = ForStmt[DefaultAstExts]
+
+
+type FmtWhileStmt = WhileStmt[DefaultAstExts]
+
+
+type FmtLoopStmt = LoopStmt[DefaultAstExts]
+
+
+type FmtPat = Pat[DefaultAstExts]
+
+
+type FmtConPat = ConPat[DefaultAstExts]
+
+
+type FmtRecordPat = RecordPat[DefaultAstExts]
+
+
+type FmtVariantPat = VariantPat[DefaultAstExts]
+
+
+type FmtCon = Con[DefaultAstExts]
+
+
+type FmtExpr = Expr[DefaultAstExts]
+
+
+type FmtVarExpr = VarExpr[DefaultAstExts]
+
+
+type FmtFieldSelExpr = FieldSelExpr[DefaultAstExts]
+
+
+type FmtAssocFnSelExpr = AssocFnSelExpr[DefaultAstExts]
+
+
+type FmtCallExpr = CallExpr[DefaultAstExts]
+
+
+type FmtStrExpr = StrExpr[DefaultAstExts]
+
+
+type FmtStrPart = StrPart[DefaultAstExts]
+
+
+type FmtBinOpExpr = BinOpExpr[DefaultAstExts]
+
+
+type FmtUnOpExpr = UnOpExpr[DefaultAstExts]
+
+
+type FmtRecordExpr = RecordExpr[DefaultAstExts]
+
+
+type FmtVariantExpr = VariantExpr[DefaultAstExts]
+
+
+type FmtReturnExpr = ReturnExpr[DefaultAstExts]
+
+
+type FmtMatchExpr = MatchExpr[DefaultAstExts]
+
+
+type FmtAlt = Alt[DefaultAstExts]
+
+
+type FmtIfExpr = IfExpr[DefaultAstExts]
+
+
+type FmtIfBranch = IfBranch[DefaultAstExts]
+
+
+type FmtFnExpr = FnExpr[DefaultAstExts]
+
+
+type FmtIsExpr = IsExpr[DefaultAstExts]
+
+
+type FmtDoExpr = DoExpr[DefaultAstExts]
+
+
+type FmtSeqExpr = SeqExpr[DefaultAstExts]
+
+
+type FmtSeqElem = SeqElem[DefaultAstExts]
+
+
+type FmtParenExpr = ParenExpr[DefaultAstExts]
+
+
+type FmtAttribute = Attribute[DefaultAstExts]
+
+
+type FmtTyArgs = TyArgs[DefaultAstExts]
