@@ -339,31 +339,41 @@ fn type_with_params(
 /// Generates `Trait[fieldType]` for each field type with a type variable in the declaration. For
 /// extension fields `..ext`, generates `Trait[RecRowList[ext]]`.
 fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) -> ast::Context {
-    let row_params = collect_extensions(type_decl);
-
     let mut preds: Vec<ast::L<ast::Pred>> = vec![];
 
-    // Add kind annotations for row-typed parameters.
-    for param_name in &row_params {
-        preds.push(l(
+    // Because kind inference looks at one definition at a time, we have to collect row-kinded type
+    // parameters from the type definition, and add kind annotations in the `impl` context.
+    // Otherwise row-kinded type parameters in the type definition will get inferred kind `*` here.
+    // See issue #318 for improving this.
+    let type_row_params = collect_extension_row_params(type_decl);
+
+    // Add kind annotations for row-typed type parameters (explicit or from extensions).
+    let row_rec_kind = |loc: &ast::Loc| {
+        l(
             loc,
-            ast::Pred::Kind {
-                var: param_name.clone(),
-                kind: Some(l(
+            ast::Type::Named(ast::NamedType {
+                name: SmolStr::new_static("Row"),
+                args: vec![l(
                     loc,
                     ast::Type::Named(ast::NamedType {
-                        name: SmolStr::new_static("Row"),
-                        args: vec![l(
-                            loc,
-                            ast::Type::Named(ast::NamedType {
-                                name: SmolStr::new_static("Rec"),
-                                args: vec![],
-                            }),
-                        )],
+                        name: SmolStr::new_static("Rec"),
+                        args: vec![],
                     }),
-                )),
-            },
-        ));
+                )],
+            }),
+        )
+    };
+
+    for p in &type_decl.type_params {
+        if p.kind.is_some() || type_row_params.contains(&p.name.node) {
+            preds.push(l(
+                loc,
+                ast::Pred::Kind {
+                    var: p.name.node.clone(),
+                    kind: Some(p.kind.clone().unwrap_or_else(|| row_rec_kind(loc))),
+                },
+            ));
+        }
     }
 
     // Collect all field types and generate `Trait[fieldType]` (or `Trait[RecRowList[fieldType]]`
@@ -384,8 +394,11 @@ fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) ->
     }
 }
 
-/// Returns the set of type param names used directly as extensions (e.g. `..t`).
-fn collect_extensions(type_decl: &ast::TypeDecl) -> Vec<ast::Id> {
+/// Collect type param names used directly as row extensions (e.g. `..t`).
+///
+/// This is a hack and we should consider removing this. See the use site for why this function is
+/// needed.
+fn collect_extension_row_params(type_decl: &ast::TypeDecl) -> Vec<ast::Id> {
     let mut row_params: Vec<ast::Id> = vec![];
 
     let mut collect_from_fields = |fields: &ast::ConFields| {
