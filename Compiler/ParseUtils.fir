@@ -7,24 +7,24 @@ value type ExprPrefix:
     Not(TokenIdx)
 
 
-type InlineExprCont:
+type InlineExprCont[exts]:
     BinOp(
         op: BinOp,
-        rhs: Expr,
+        rhs: Expr[exts],
     )
     Is(
-        pat: Pat,
+        pat: Pat[exts],
     )
 
 
-type ExprSuffix:
+type ExprSuffix[exts]:
     Field(
         field: Id,
-        tyArgs: Option[TyArgs],
+        tyArgs: Option[TyArgs[exts]],
     )
     Args(
-        args: Vec[Named[Expr]],
-        splice: Option[Expr],
+        args: Vec[Named[Expr[exts]]],
+        splice: Option[Expr[exts]],
         _lastToken: TokenIdx,
     )
 
@@ -55,34 +55,22 @@ newId(cursor: U32) Id:
     Id(token = TokenIdx(idx = cursor))
 
 
-newVarId(cursor: U32, tokens: Array[Token]) VarId:
-    VarId(
-        token = TokenIdx(idx = cursor),
-        name = tokens.get(cursor).text,
-        _resolved = Option.None,
-    )
+newVarId[AstIds[ids]](cursor: U32) AstIds[ids].AstVarId:
+    AstIds[ids].astVarIdFromToken(TokenIdx(idx = cursor))
 
 
-newAssocId(cursor: U32, tokens: Array[Token]) AssocVarId:
-    AssocVarId(
-        token = TokenIdx(idx = cursor),
-        name = tokens.get(cursor).text,
-        _resolved = Option.None,
-    )
+newAssocId[AstIds[ids]](cursor: U32) AstIds[ids].AstAssocVarId:
+    AstIds[ids].astAssocVarIdFromToken(TokenIdx(idx = cursor))
 
 
-newTyId(cursor: U32, tokens: Array[Token]) TyId:
-    TyId(
-        token = TokenIdx(idx = cursor),
-        name = tokens.get(cursor).text,
-        _resolved = Option.None,
-    )
+newTyId[AstIds[ids]](cursor: U32) AstIds[ids].AstTyId:
+    AstIds[ids].astTyIdFromToken(TokenIdx(idx = cursor))
 
 
 processFields(
-    fields: Vec[(name: Option[Id], ty: Type)],
-    extension: Option[Type],
-) ConFields:
+    fields: Vec[(name: Option[Id], ty: Type[exts])],
+    extension: Option[Type[exts]],
+) ConFields[exts]:
     if fields.isEmpty():
         match extension:
             Option.Some(extension):
@@ -94,7 +82,7 @@ processFields(
     let foundNamed = Bool.False
     let foundUnnamed = Bool.False
 
-    for field: (name: Option[Id], ty: Type) in fields.iter():
+    for field: (name: Option[Id], ty: Type[exts]) in fields.iter():
         if field.name is Option.Some(_):
             foundNamed = Bool.True
         else:
@@ -104,9 +92,9 @@ processFields(
         panic("Field list cannot have both named and unnamed fields")
 
     if foundNamed:
-        let fs: Vec[NamedField] = Vec.fromIter(
+        let fs: Vec[NamedField[exts]] = Vec.fromIter(
             fields.iter().map(
-                \(f: (name: Option[Id], ty: Type)):
+                \(f: (name: Option[Id], ty: Type[exts])):
                     NamedField(name = f.name.unwrap(), ty = f.ty),
             ),
         )
@@ -114,8 +102,8 @@ processFields(
     else:
         if extension is Option.Some(_):
             panic("Unnamed fields cannot have row extensions")
-        let fs: Vec[Type] = Vec.fromIter(
-            fields.iter().map(\(f: (name: Option[Id], ty: Type)): f.ty,),
+        let fs: Vec[Type[exts]] = Vec.fromIter(
+            fields.iter().map(\(f: (name: Option[Id], ty: Type[exts])): f.ty,),
         )
         ConFields.Unnamed(fs)
 
@@ -123,7 +111,7 @@ processFields(
 # ------------------------------------------------------------------------------
 
 
-associate(left: Expr, nodes: Vec[InlineExprCont]) Expr:
+associate(left: Expr[exts], nodes: Vec[InlineExprCont[exts]]) Expr[exts]:
     if nodes.isEmpty():
         return left
 
@@ -137,13 +125,14 @@ associate(left: Expr, nodes: Vec[InlineExprCont]) Expr:
     # In other words, `foo is Pattern` can only be followed by an `and` or `or`. Anything else is a
     # parse error.
 
-    let parts: Vec[(left: Expr, conts: Vec[InlineExprCont])] = Vec.empty()
+    let parts: Vec[(left: Expr[exts], conts: Vec[InlineExprCont[exts]])] = Vec
+        .empty()
     let foundAnd = Bool.False
     let foundOr = Bool.False
 
     let currentLeft = left
     let currentConts = Vec.empty()
-    for node: InlineExprCont in nodes.iter():
+    for node: InlineExprCont[exts] in nodes.iter():
         if node is InlineExprCont.BinOp(op, rhs) and op is BinOp.And | BinOp.Or:
             foundOr = foundOr or op is BinOp.Or
             foundAnd = foundAnd or op is BinOp.And
@@ -164,8 +153,9 @@ associate(left: Expr, nodes: Vec[InlineExprCont]) Expr:
         BinOp.And
 
     let first = Bool.True
-    let ret: Option[Expr] = Option.None
-    for part: (left: Expr, conts: Vec[InlineExprCont]) in parts.iter():
+    let ret: Option[Expr[exts]] = Option.None
+    for part: (left: Expr[exts], conts: Vec[InlineExprCont[exts]]) in
+            parts.iter():
         let partLeft = part.left
         let partConts = part.conts
         let expr = if partConts.isEmpty():
@@ -194,13 +184,13 @@ associate(left: Expr, nodes: Vec[InlineExprCont]) Expr:
 
 
 makeLeftAssoc(
-    left: Expr,
+    left: Expr[exts],
     op: BinOp,
-    right: Expr,
+    right: Expr[exts],
     nextNodeIdx: U32,
-    nodes: Vec[InlineExprCont],
+    nodes: Vec[InlineExprCont[exts]],
     prec: Option[BinOp],
-) (expr: Expr, newIdx: U32):
+) (expr: Expr[exts], newIdx: U32):
     loop:
         if nextNodeIdx == nodes.len():
             return (

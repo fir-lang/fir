@@ -1,6 +1,6 @@
 import [
-    Compiler/Ast2,
-    Compiler/Grammar2,
+    Compiler/Ast,
+    Compiler/Grammar,
     Compiler/Lexer,
     Compiler/Scanner,
 ]

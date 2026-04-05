@@ -1,10 +1,10 @@
 import [Compiler/Ast]
 
 
-strParts(interpolations: Vec[(begin: Token, expr: Expr)]) Vec[StrPart]:
-    let parts: Vec[StrPart] = Vec.withCapacity(interpolations.len() * 2)
+strParts(interpolations: Vec[(begin: Token, expr: Expr[exts])]) Vec[StrPart[exts]]:
+    let parts: Vec[StrPart[exts]] = Vec.withCapacity(interpolations.len() * 2)
 
-    for part: (begin: Token, expr: Expr) in interpolations.iter():
+    for part: (begin: Token, expr: Expr[exts]) in interpolations.iter():
         # Drop the `
         let str = part.begin.text
         let str = str.substr(0, str.len() - 1)

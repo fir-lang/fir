@@ -5,7 +5,7 @@ import [
     Compiler/CompilerAst,
     Compiler/Defs,
     Compiler/Error,
-    Compiler/Grammar2,
+    Compiler/Grammar,
     Compiler/Module,
     Compiler/Scanner,
     Compiler/TypeCheck,

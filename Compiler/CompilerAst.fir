@@ -6,7 +6,7 @@
 
 
 import [
-    Compiler/Ast2,
+    Compiler/Ast,
     Compiler/Defs,
     Compiler/TypeCheck/Ty,
 ]

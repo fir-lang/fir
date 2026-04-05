@@ -1,7 +1,7 @@
 import [
-    Compiler/Ast2,
+    Compiler/Ast,
     Compiler/Error,
-    Compiler/Grammar2,
+    Compiler/Grammar,
     Compiler/Scanner,
 ]
 
