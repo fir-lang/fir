@@ -55,15 +55,15 @@ newId(cursor: U32) Id:
     Id(token = TokenIdx(idx = cursor))
 
 
-newVarId[AstIds[ids]](cursor: U32, tokens: Array[Token]) AstIds[ids].AstVarId:
+newVarId[AstIds[ids]](cursor: U32) AstIds[ids].AstVarId:
     AstIds[ids].astVarIdFromToken(TokenIdx(idx = cursor))
 
 
-newAssocId[AstIds[ids]](cursor: U32, tokens: Array[Token]) AstIds[ids].AstAssocVarId:
+newAssocId[AstIds[ids]](cursor: U32) AstIds[ids].AstAssocVarId:
     AstIds[ids].astAssocVarIdFromToken(TokenIdx(idx = cursor))
 
 
-newTyId[AstIds[ids]](cursor: U32, tokens: Array[Token]) AstIds[ids].AstTyId:
+newTyId[AstIds[ids]](cursor: U32) AstIds[ids].AstTyId:
     AstIds[ids].astTyIdFromToken(TokenIdx(idx = cursor))
 
 

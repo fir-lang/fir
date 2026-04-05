@@ -160,7 +160,7 @@ indentedTokenTreeTerminator:
 # in the PEG code generator.
 
 type_:
-    namedType
+    namedType ("." "UpperId")?
     "LowerId"
     recordType
     variantType
