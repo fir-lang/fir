@@ -86,22 +86,15 @@ Terminals:
     "EndInterpolation" = Token(kind = TokenKind.EndInterpolation, ..)
 
 
-justTesting[AstExts[exts], AstIds[AstExts[exts].Ids]] Expr[exts]:
-    cur=^ "LowerId":
-        Expr.Var(VarExpr(id = newVarId(cur), userTyArgs = Option.None))
-
-
-#|
-
 # --------------------------------------------------------------------------------------------------
 # Top-level declarations
 
 
-module Vec[TopDecl]:
+module[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[TopDecl[exts]]:
     ds=topDecl* $: ds
 
 
-topDecl TopDecl:
+topDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TopDecl[exts]:
     t=typeDecl: TopDecl.Type(t)
     t=importDecl: TopDecl.Import(t)
     t=traitDecl: TopDecl.Trait(t)
@@ -113,7 +106,7 @@ topDecl TopDecl:
 # Types
 
 
-type_ Type:
+type_[AstExts[exts], AstIds[AstExts[exts].Ids]] Type[exts]:
     t=namedType selection=(_"." ^ _"UpperId")?:
         match selection:
             Option.None:
@@ -133,11 +126,11 @@ type_ Type:
     t=fnType: Type.Fn_(t)
 
 
- namedType NamedType:
+ namedType[AstExts[exts], AstIds[AstExts[exts].Ids]] NamedType[exts]:
     name=^ "UpperId" argFirst=^ "[" arg0=type_ args=(_"," type_)* ","? argLast=^ "]":
         let args = Vec.fromIter(once(arg0).chain(args.iter()))
         NamedType(
-            name = newTyId(name, state._tokens),
+            name = newTyId(name),
             args = Option.Some(TyArgs(
                 args,
                 _firstToken = TokenIdx(idx = argFirst),
@@ -146,7 +139,7 @@ type_ Type:
         )
 
     name=^ "UpperId":
-        NamedType(name = newTyId(name, state._tokens), args = Option.None)
+        NamedType(name = newTyId(name), args = Option.None)
 
 
 # - ()
@@ -155,7 +148,7 @@ type_ Type:
 # - (x: U32, y: U32)
 # - (x: U32, ..foo)
 # - (..foo)
-recordType RecordType:
+recordType[AstExts[exts], AstIds[AstExts[exts].Ids]] RecordType[exts]:
     start=recordTypeStart last=^ ")":
         RecordType(
             fields = Vec.empty(),
@@ -175,7 +168,7 @@ recordType RecordType:
         )
 
     start=recordTypeStart f0=recordTypeField fs=(_"," recordTypeField)* ext=recordTypeCont? last=^ ")":
-        let fields: Vec[Named[Type]] = Vec.fromIter(once(f0).chain(fs.iter()))
+        let fields: Vec[Named[Type[exts]]] = Vec.fromIter(once(f0).chain(fs.iter()))
         RecordType(
             fields,
             extension = ext.flatten(),
@@ -191,7 +184,7 @@ recordTypeStart (start: TokenIdx, isRow: Bool):
     start=^ "row(": (start = TokenIdx(idx = start), isRow = Bool.True)
 
 
-recordTypeCont Option[Type]:
+recordTypeCont[AstExts[exts], AstIds[AstExts[exts].Ids]] Option[Type[exts]]:
     "," ext=(_".." type_)?:
         ext
 
@@ -202,7 +195,7 @@ recordTypeCont Option[Type]:
 # - [A, B]
 # - [A, ..foo]
 # - [..foo]
-variantType VariantType:
+variantType[AstExts[exts], AstIds[AstExts[exts].Ids]] VariantType[exts]:
     start=variantTypeStart last=^ "]":
         VariantType(
             alts = Vec.empty(),
@@ -237,24 +230,13 @@ variantTypeStart (start: TokenIdx, isRow: Bool):
     start=^ "row[": (start = TokenIdx(idx = start), isRow = Bool.True)
 
 
-variantTypeCont Option[Type]:
+variantTypeCont[AstExts[exts], AstIds[AstExts[exts].Ids]] Option[Type[exts]]:
     "," ext=(_".." type_)?:
         ext
 
 
-recordTypeFields Vec[Named[Type]]:
-    f0=recordTypeField fs=(_"," recordTypeField)* "," ".." type_:
-        # TODO: Extension?
-        # TODO: We do we need the type annotation here?
-        let vec: Vec[Named[Type]] = Vec.fromIter(once(f0).chain(fs.iter()))
-        vec
 
-    f0=recordTypeField fs=(_"," recordTypeField)* ","?:
-        let vec: Vec[Named[Type]] = Vec.fromIter(once(f0).chain(fs.iter()))
-        vec
-
-
-recordTypeField Named[Type]:
+recordTypeField[AstExts[exts], AstIds[AstExts[exts].Ids]] Named[Type[exts]]:
     name=^ "LowerId" ":" ty=type_:
         Named(name = Option.Some(newId(name)), node = ty)
 
@@ -262,7 +244,7 @@ recordTypeField Named[Type]:
         Named(name = Option.None, node = ty)
 
 
-fnType FnType:
+fnType[AstExts[exts], AstIds[AstExts[exts].Ids]] FnType[exts]:
     first=^ "Fn" "(" args=fnArgTys? rparen=^ ")" ret=returnTy?:
         let args = args.unwrapOr(Vec.empty())
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
@@ -275,13 +257,13 @@ fnType FnType:
         )
 
 
-fnArgTys Vec[Type]:
+fnArgTys[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[Type[exts]]:
     t0=type_ ts=(_"," type_)* ","?:
-        let vec: Vec[Type] = Vec.fromIter(once(t0).chain(ts.iter()))
+        let vec: Vec[Type[exts]] = Vec.fromIter(once(t0).chain(ts.iter()))
         vec
 
 
-returnTy (ret: Option[Type], exn: Option[Type]):
+returnTy[AstExts[exts], AstIds[AstExts[exts].Ids]] (ret: Option[Type[exts]], exn: Option[Type[exts]]):
     ret=type_ "/" exn=type_:
         (ret = Option.Some(ret), exn = Option.Some(exn))
 
@@ -296,7 +278,7 @@ returnTy (ret: Option[Type], exn: Option[Type]):
 # Type declarations
 
 
-typeDecl TypeDecl:
+typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
     # Sum type: at least one constructors
     attr=attr? val=^ valToken="value"? "type"
             name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT"
@@ -306,11 +288,11 @@ typeDecl TypeDecl:
             value_ = valToken.map(\(a): TokenIdx(idx = val)),
             prim_ = Option.None,
             name = newId(name),
+            rhs = Option.Some(TypeDeclRhs.Sum(cons = rhs, extension = ext)),
             typeParams = match params:
                 Option.Some(params): params
                 Option.None: Vec.empty(),
-            typeParamKinds = Vec.empty(),
-            rhs = Option.Some(TypeDeclRhs.Sum(cons = rhs, extension = ext)),
+            ..AstExts[exts].defaultTypeDeclExts()
         )
 
     # Product type
@@ -323,11 +305,11 @@ typeDecl TypeDecl:
             value_ = valToken.map(\(a): TokenIdx(idx = val)),
             prim_ = Option.None,
             name = newId(name),
+            rhs = Option.Some(TypeDeclRhs.Product(fs)),
             typeParams = match params:
                 Option.Some(params): params
                 Option.None: Vec.empty(),
-            typeParamKinds = Vec.empty(),
-            rhs = Option.Some(TypeDeclRhs.Product(fs))
+            ..AstExts[exts].defaultTypeDeclExts()
         )
 
     # Type synonym with type params
@@ -337,9 +319,9 @@ typeDecl TypeDecl:
             value_ = Option.None,
             prim_ = Option.None,
             name = newId(name),
-            typeParams = params,
-            typeParamKinds = Vec.empty(),
             rhs = Option.Some(TypeDeclRhs.Synonym(rhs)),
+            typeParams = params,
+            ..AstExts[exts].defaultTypeDeclExts()
         )
 
     # Type synonym
@@ -349,9 +331,9 @@ typeDecl TypeDecl:
             value_ = Option.None,
             prim_ = Option.None,
             name = newId(name),
-            typeParams = Vec.empty(),
-            typeParamKinds = Vec.empty(),
             rhs = Option.Some(TypeDeclRhs.Synonym(rhs)),
+            typeParams = Vec.empty(),
+            ..AstExts[exts].defaultTypeDeclExts()
         )
 
     prim_=^ "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
@@ -360,25 +342,25 @@ typeDecl TypeDecl:
             value_ = Option.None,
             prim_ = Option.Some(TokenIdx(idx = prim_)),
             name = newId(name),
+            rhs = Option.None,
             typeParams = match params:
                 Option.Some(params): params
                 Option.None: Vec.empty(),
-            typeParamKinds = Vec.empty(),
-            rhs = Option.None,
+            ..AstExts[exts].defaultTypeDeclExts()
         )
 
 
-typeParams Vec[DeclTypeParam]:
+typeParams[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[DeclTypeParam[exts]]:
     p0=declTypeParam ps=(_"," declTypeParam)* ","?:
         Vec.fromIter(once(p0).chain(ps.iter()))
 
 
-declTypeParam DeclTypeParam:
+declTypeParam[AstExts[exts], AstIds[AstExts[exts].Ids]] DeclTypeParam[exts]:
     name=^ "LowerId" kind=(_":" type_)?:
         DeclTypeParam(name = newId(name), kind)
 
 
-conDecl ConDecl:
+conDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] ConDecl[exts]:
     name=^ "UpperId" fs=conFields? "NEWLINE":
         let name = newId(name)
         match fs:
@@ -397,12 +379,12 @@ conDecl ConDecl:
 
 
 # One or more fields, with optional trailing comma.
-conFields (fields: ConFields, lastToken: TokenIdx):
+conFields[AstExts[exts], AstIds[AstExts[exts].Ids]] (fields: ConFields[exts], lastToken: TokenIdx):
     "(" last=^ ")":
         (fields = ConFields.Empty, lastToken = TokenIdx(idx = last))
 
     "(" f0=conField fs=(_"," conField)* ","? ext=(_".." type_)? last=^ ")":
-        let vec: Vec[(name: Option[Id], ty: Type)] =
+        let vec: Vec[(name: Option[Id], ty: Type[exts])] =
             Vec.fromIter(once(f0).chain(fs.iter()))
         (fields = processFields(vec, ext), lastToken = TokenIdx(idx = last))
 
@@ -411,7 +393,7 @@ conFields (fields: ConFields, lastToken: TokenIdx):
 
 
 # A constructor field with optional name: `Type` or `foo: Type`.
-conField (name: Option[Id], ty: Type):
+conField[AstExts[exts], AstIds[AstExts[exts].Ids]] (name: Option[Id], ty: Type[exts]):
     name=(^ _"LowerId" _":")? ty=type_:
         (name = name.map(\(name: U32): newId(name)), ty = ty)
 
@@ -420,19 +402,19 @@ conField (name: Option[Id], ty: Type):
 # Expressions
 
 
-expr Expr:
+expr[AstExts[exts], AstIds[AstExts[exts].Ids]] Expr[exts]:
     e=inlineExpr: e
     e=blockExpr: e
 
 
 # Inline expressions don't end with a NEWLINE or DEDENT.
-inlineExpr Expr:
+inlineExpr[AstExts[exts], AstIds[AstExts[exts].Ids]] Expr[exts]:
     expr=prefixExpr cont=inlineExprCont*:
         associate(expr, cont)
 
 
 # Block expressions include an indented block and always end with DEDENT.
-blockExpr Expr:
+blockExpr[AstExts[exts], AstIds[AstExts[exts].Ids]] Expr[exts]:
     cur=^ "match" scrut=inlineExpr ":" "NEWLINE" "INDENT" alts=matchAlt+ _"DEDENT":
         Expr.Match(MatchExpr(
             scrutinee = scrut,
@@ -447,7 +429,7 @@ blockExpr Expr:
             _firstToken = TokenIdx(idx = cur),
             branches =
                 Vec.fromIter(once(IfBranch(guard = cond0, body = body0))
-                    .chain(conds.iter().map(\(branch: (cond: Expr, body: Vec[Stmt])): IfBranch(guard = branch.cond, body = branch.body)))
+                    .chain(conds.iter().map(\(branch: (cond: Expr[exts], body: Vec[Stmt[exts]])): IfBranch(guard = branch.cond, body = branch.body)))
                     ),
             elseBranch = else_,
         ))
@@ -459,13 +441,13 @@ blockExpr Expr:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
-                typeParams = Vec.empty(),
                 context = Option.None,
                 self_ = SelfParam.No,
                 params = args.unwrapOr(Vec.empty()),
                 exceptions = ret.exn,
                 returnTy = ret.ret,
                 lparen = TokenIdx(idx = cur),
+                ..AstExts[exts].defaultFunSigExts()
             ),
             body,
             idx = 0,
@@ -473,7 +455,7 @@ blockExpr Expr:
         ))
 
 
-inlineExprCont InlineExprCont:
+inlineExprCont[AstExts[exts], AstIds[AstExts[exts].Ids]] InlineExprCont[exts]:
     op=binOp rhs=prefixExpr:
         InlineExprCont.BinOp(op, rhs)
 
@@ -481,7 +463,7 @@ inlineExprCont InlineExprCont:
         InlineExprCont.Is(pat)
 
 
-prefixExpr Expr:
+prefixExpr[AstExts[exts], AstIds[AstExts[exts].Ids]] Expr[exts]:
     pfx=exprPrefix? expr=simpleExpr suffix=exprSuffix*:
         let ret = expr
 
@@ -500,7 +482,10 @@ prefixExpr Expr:
         if pfx is Option.Some(pfx):
             match pfx:
                 ExprPrefix.Tilde(token):
-                    ret = Expr.Variant(VariantExpr(expr = ret, inferredTy = Option.None))
+                    ret = Expr.Variant(VariantExpr(
+                        expr = ret,
+                        ..AstExts[exts].defaultInferredTyExts()
+                    ))
 
                 ExprPrefix.Minus(token):
                     ret = Expr.UnOp(UnOpExpr(
@@ -519,7 +504,7 @@ prefixExpr Expr:
         ret
 
 
-exprSuffix ExprSuffix:
+exprSuffix[AstExts[exts], AstIds[AstExts[exts].Ids]] ExprSuffix[exts]:
     field=field args=tyArgs?:
         ExprSuffix.Field(field, tyArgs = args)
 
@@ -532,7 +517,7 @@ field Id:
         newId(field)
 
 
-args (args: Vec[Named[Expr]], splice: Option[Expr], cursorRight: U32):
+args[AstExts[exts], AstIds[AstExts[exts].Ids]] (args: Vec[Named[Expr[exts]]], splice: Option[Expr[exts]], cursorRight: U32):
     # Args with splice only: `(..<expr>)`.
     "(" ".." splice=inlineExpr last=^ ")":
         (args = Vec.empty(), splice = Option.Some(splice), cursorRight = last)
@@ -548,14 +533,14 @@ args (args: Vec[Named[Expr]], splice: Option[Expr], cursorRight: U32):
              Option.None:
                  Vec.empty()
              Option.Some((arg0, args)):
-                 let vec: Vec[Named[Expr]] =
+                 let vec: Vec[Named[Expr[exts]]] =
                      Vec.fromIter(once(arg0).chain(args.iter()))
                  vec,
          splice = Option.None,
          cursorRight = last)
 
 
-arg Named[Expr]:
+arg[AstExts[exts], AstIds[AstExts[exts].Ids]] Named[Expr[exts]]:
     name=^ "LowerId" "=" expr=expr:
         Named(name = Option.Some(newId(name)), node = expr)
 
@@ -563,7 +548,7 @@ arg Named[Expr]:
         Named(name = Option.None, node = expr)
 
 
-simpleExpr Expr:
+simpleExpr[AstExts[exts], AstIds[AstExts[exts].Ids]] Expr[exts]:
     # TODO: This will every time we parse a constructor selection as it needs to try `Con.[...]`
     # first.
     seq=sequence:
@@ -572,9 +557,8 @@ simpleExpr Expr:
     # Variables
     var_=^ "LowerId" tyArgs=tyArgs?:
         Expr.Var(VarExpr(
-            id = newVarId(var_, state._tokens),
+            id = newVarId(var_),
             userTyArgs = tyArgs,
-            tyArgs = Vec.empty(),
         ))
 
     # Constructor selection, or sequence
@@ -631,13 +615,13 @@ simpleExpr Expr:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
-                typeParams = Vec.empty(),
                 context = Option.None,
                 self_ = SelfParam.No,
                 params = args.unwrapOr(Vec.empty()),
                 exceptions = ret.exn,
                 returnTy = ret.ret,
                 lparen = TokenIdx(idx = cur),
+                ..AstExts[exts].defaultFunSigExts()
             ),
             body = Vec.[Stmt.Expr(body)],
             idx = 0,
@@ -677,7 +661,7 @@ simpleExpr Expr:
         ))
 
 
-sequence Expr:
+sequence[AstExts[exts], AstIds[AstExts[exts].Ids]] Expr[exts]:
     ty=(type_ _".")? elems=seqElems:
         Expr.Seq(SeqExpr(
             ty,
@@ -687,7 +671,7 @@ sequence Expr:
         ))
 
 
-seqElems (elems: Vec[SeqElem], lbracket: TokenIdx, rbracket: TokenIdx):
+seqElems[AstExts[exts], AstIds[AstExts[exts].Ids]] (elems: Vec[SeqElem[exts]], lbracket: TokenIdx, rbracket: TokenIdx):
     lbracket=^ "[" rbracket=^ "]":
         (
             elems = Vec.empty(),
@@ -696,7 +680,7 @@ seqElems (elems: Vec[SeqElem], lbracket: TokenIdx, rbracket: TokenIdx):
         )
 
     lbracket=^ "[" e0=seqElem es=(_"," seqElem)* ","? rbracket=^ "]":
-        let vec: Vec[SeqElem] =
+        let vec: Vec[SeqElem[exts]] =
             Vec.fromIter(once(e0).chain(es.iter()))
         (
             elems = vec,
@@ -705,7 +689,7 @@ seqElems (elems: Vec[SeqElem], lbracket: TokenIdx, rbracket: TokenIdx):
         )
 
 
-seqElem SeqElem:
+seqElem[AstExts[exts], AstIds[AstExts[exts].Ids]] SeqElem[exts]:
     e1=inlineExpr e2=("=" e=inlineExpr)?:
         match e2:
             Option.None:
@@ -714,20 +698,19 @@ seqElem SeqElem:
                 SeqElem(key = Option.Some(e1), val = e2)
 
 
-con Con:
+con[AstExts[exts], AstIds[AstExts[exts].Ids]] Con[exts]:
     ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Con(
-            ty = newTyId(ty, state._tokens),
+            ty = newTyId(ty),
             con = con.map(\(con: U32): newId(con)),
             userTyArgs,
-            tyArgs = Vec.empty(),
             _firstToken = TokenIdx(idx = ty),
         )
 
 
-tyArgs TyArgs:
+tyArgs[AstExts[exts], AstIds[AstExts[exts].Ids]] TyArgs[exts]:
     first=^ "[" t0=type_ ts=(_"," type_)* ","? last=^ "]":
-        let ts: Vec[Type] = Vec.fromIter(once(t0).chain(ts.iter()))
+        let ts: Vec[Type[exts]] = Vec.fromIter(once(t0).chain(ts.iter()))
         TyArgs(
             args = ts,
             _firstToken = TokenIdx(idx = first),
@@ -735,7 +718,7 @@ tyArgs TyArgs:
         )
 
 
-parenExpr Named[Expr]:
+parenExpr[AstExts[exts], AstIds[AstExts[exts].Ids]] Named[Expr[exts]]:
     name=^ "LowerId" "=" expr=expr:
         Named(name = Option.Some(newId(name)), node = expr)
 
@@ -768,7 +751,7 @@ binOp BinOp:
     "<=": BinOp.LtEq
 
 
-matchAlt Alt:
+matchAlt[AstExts[exts], AstIds[AstExts[exts].Ids]] Alt[exts]:
     pat=pat guard=altGuard? ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
         Alt(pat, guard, rhs = body)
 
@@ -776,16 +759,16 @@ matchAlt Alt:
         Alt(pat, guard, rhs = Vec.[body])
 
 
-altGuard Expr:
+altGuard[AstExts[exts], AstIds[AstExts[exts].Ids]] Expr[exts]:
     "if" expr=expr:
         expr
 
 
-fnArgs Vec[FunArg]:
+fnArgs[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[FunArg[exts]]:
     v0=^ "LowerId" ty0=(_":" type_)? vs=("," v=^ "LowerId" ty=(_":" type_)?)* ","?:
-        let vec: Vec[FunArg] =
+        let vec: Vec[FunArg[exts]] =
             Vec.fromIter(once(FunArg(name = newId(v0), ty = ty0))
-                .chain(vs.iter().map(\(v: (v: U32, ty: Option[Type])): FunArg(name = newId(v.v), ty = v.ty)))
+                .chain(vs.iter().map(\(v: (v: U32, ty: Option[Type[exts]])): FunArg(name = newId(v.v), ty = v.ty)))
                 )
         vec
 
@@ -794,7 +777,7 @@ fnArgs Vec[FunArg]:
 # Statements
 
 
-stmt Stmt:
+stmt[AstExts[exts], AstIds[AstExts[exts].Ids]] Stmt[exts]:
     cur=^ "break" labelLoc=^ label="label"? "NEWLINE":
         Stmt.Break(BreakStmt(
             label = label.map(\(l: Token): newId(labelLoc)),
@@ -817,9 +800,7 @@ stmt Stmt:
             label,
             pat,
             astTy = ty,
-            tcTy = Option.None,
             expr,
-            exprTy = Option.None,
             body,
             _firstToken = TokenIdx(idx = cur),
         ))
@@ -842,7 +823,7 @@ stmt Stmt:
         Stmt.Expr(expr)
 
 
-stmtExprCont Option[(op: AssignOp, rhs: Expr)]:
+stmtExprCont[AstExts[exts], AstIds[AstExts[exts].Ids]] Option[(op: AssignOp, rhs: Expr[exts])]:
     "NEWLINE":
         Option.None
 
@@ -858,7 +839,7 @@ loopLabel Id:
         newId(id)
 
 
-letRhs Expr:
+letRhs[AstExts[exts], AstIds[AstExts[exts].Ids]] Expr[exts]:
     expr=inlineExpr _"NEWLINE":
         expr
 
@@ -878,19 +859,22 @@ assignOp AssignOp:
 # Patterns
 
 
-pat Pat:
+pat[AstExts[exts], AstIds[AstExts[exts].Ids]] Pat[exts]:
     p0=simplePat ps=(_"|" simplePat)*:
         Pat.Or(Vec.fromIter(once(p0).chain(ps.iter())))
 
 
-simplePat Pat:
+simplePat[AstExts[exts], AstIds[AstExts[exts].Ids]] Pat[exts]:
     # Variant
     "~" pat=simplePat:
-        Pat.Variant(VariantPat(pat, inferredTy = Option.None, inferredPatTy = Option.None))
+        Pat.Variant(VariantPat(
+            pat,
+            ..AstExts[exts].defaultVariantPatExts()
+        ))
 
     # Variables
     var_=^ "LowerId":
-        Pat.Var(VarPat(var_ = newId(var_), ty = Option.None))
+        Pat.Var(VarPat(var_ = newId(var_)))
 
     # Constructors
     con=con fs=("(" pats=conFieldPats? last=^ ")")?:
@@ -908,7 +892,13 @@ simplePat Pat:
                     pats.map(\(ps): ps.rest).unwrapOr(RestPat.No),
 
             _lastToken = match fs:
-                Option.None: con.lastToken(state._tokens)
+                Option.None:
+                    match con.userTyArgs:
+                        Option.Some(tyArgs): tyArgs._lastToken
+                        Option.None:
+                            match con.con:
+                                Option.Some(conId): conId.token
+                                Option.None: con._firstToken
                 Option.Some((last, ..)): TokenIdx(idx = last),
         ))
 
@@ -917,9 +907,9 @@ simplePat Pat:
         Pat.Record(RecordPat(
             fields = pats.map(\(ps): ps.fields).unwrapOr(Vec.empty()),
             rest = pats.map(\(ps): ps.rest).unwrapOr(RestPat.No),
-            inferredTy = Option.None,
             _firstToken = TokenIdx(idx = first),
             _lastToken = TokenIdx(idx = last),
+            ..AstExts[exts].defaultRecordPatExts()
         ))
 
     # Ignore
@@ -940,25 +930,25 @@ simplePat Pat:
 # Contents of parens in a constructor or record pattern `Ty.Con(...)`.
 #
 # Note: you want to use this with `?` as this does not accept empty contents.
-conFieldPats (fields: Vec[Named[Pat]], rest: RestPat):
+conFieldPats[AstExts[exts], AstIds[AstExts[exts].Ids]] (fields: Vec[Named[Pat[exts]]], rest: RestPat):
     ".." var_=^ "LowerId":
-        (fields = Vec.empty(), rest = RestPat.Bind(VarPat(var_ = newId(var_), ty = Option.None)))
+        (fields = Vec.empty(), rest = RestPat.Bind(VarPat(var_ = newId(var_))))
 
     "..": (fields = Vec.empty(), rest = RestPat.Ignore)
 
     p0=conFieldPat ps=(_"," conFieldPat)* rest=conFieldPatsCont?:
-        let fields: Vec[Named[Pat]] = Vec.fromIter(once(p0).chain(ps.iter()))
+        let fields: Vec[Named[Pat[exts]]] = Vec.fromIter(once(p0).chain(ps.iter()))
         (fields = fields, rest = rest.unwrapOr(RestPat.No))
 
 
 conFieldPatsCont RestPat:
-    "," ".." var_=^ "LowerId": RestPat.Bind(VarPat(var_ = newId(var_), ty = Option.None))
+    "," ".." var_=^ "LowerId": RestPat.Bind(VarPat(var_ = newId(var_)))
     "," "..": RestPat.Ignore
     ",": RestPat.No
 
 
 # A single constructor field (including records), named or unnamed.
-conFieldPat Named[Pat]:
+conFieldPat[AstExts[exts], AstIds[AstExts[exts].Ids]] Named[Pat[exts]]:
     name=^ "LowerId" "=" pat=pat:
         Named(name = Option.Some(newId(name)), node = pat)
 
@@ -986,7 +976,7 @@ path Vec[Id]:
 # Top-level functions
 
 
-topFunDecl FunDecl:
+topFunDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] FunDecl[exts]:
     prim_=^ "prim" sig=topFunSig "NEWLINE":
         FunDecl(
             prim_ = Option.Some(TokenIdx(idx = prim_)),
@@ -1015,31 +1005,26 @@ topFunDecl FunDecl:
         )
 
 
-topFunSig (parentTy: Option[TyId], name: Id, sig: FunSig):
+topFunSig[AstExts[exts], AstIds[AstExts[exts].Ids]] (parentTy: Option[AstTyId[exts]], name: Id, sig: FunSig[exts]):
     parentTy=(^ _"UpperId" _".")? name=^ "LowerId" ctx=context? lparen=^ params=paramList ret=returnTy?:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         (
-            parentTy = parentTy.map(\(id: U32): newTyId(id, state._tokens)),
+            parentTy = parentTy.map(\(id: U32): newTyId(id)),
             name = newId(name),
             sig = FunSig(
-                typeParams = Vec.empty(),
                 context = ctx,
                 self_ = SelfParam.No,       # TODO
                 params,
                 exceptions = ret.exn,
                 returnTy = ret.ret,
                 lparen = TokenIdx(idx = lparen),
+                ..AstExts[exts].defaultFunSigExts()
             ),
         )
 
 
-# TODO: Weird name, rename.
-parentTy Id:
-    id=^ "UpperId" ".":
-        newId(id)
 
-
-context Context:
+context[AstExts[exts], AstIds[AstExts[exts].Ids]] Context[exts]:
     first=^ "[" p0=pred ps=(_"," pred)* ","? last=^ "]":
         Context(
             preds = Vec.fromIter(once(p0).chain(ps.iter())),
@@ -1048,7 +1033,7 @@ context Context:
         )
 
 
-pred Pred_:
+pred[AstExts[exts], AstIds[AstExts[exts].Ids]] Pred_[exts]:
     varId=^ "LowerId" kind=(_":" type_)?:
         Pred_.Kind(name = newId(varId), kind)
 
@@ -1063,17 +1048,17 @@ pred Pred_:
                 )
 
 
-paramList Vec[FunArg]:
+paramList[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[FunArg[exts]]:
     "(" ")":
         Vec.empty()
 
     "(" p0=param ps=(_"," param)* ","? ")":
-        let vec: Vec[FunArg] =
+        let vec: Vec[FunArg[exts]] =
             Vec.fromIter(once(p0).chain(ps.iter()))
         vec
 
 
-param FunArg:
+param[AstExts[exts], AstIds[AstExts[exts].Ids]] FunArg[exts]:
     name=^ "LowerId" ty=(_":" type_)?:
         FunArg(name = newId(name), ty = ty)
 
@@ -1082,22 +1067,22 @@ param FunArg:
 # Trait declarations
 
 
-traitDecl TraitDecl:
+traitDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TraitDecl[exts]:
     "trait" name=^ "UpperId" "[" tys=typeParams "]" rhs=traitDeclRhs?:
         TraitDecl(
             name = newId(name),
             typeParams = tys,
-            typeParamKinds = Vec.empty(),       # will be generated by kind inference
             items = rhs.unwrapOr(Vec.empty()),
+            ..AstExts[exts].defaultTraitDeclExts()
         )
 
 
-traitDeclRhs Vec[TraitDeclItem]:
+traitDeclRhs[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[TraitDeclItem[exts]]:
     "NEWLINE": Vec.empty()
     ":" "NEWLINE" "INDENT" items=traitDeclItem+ "DEDENT": items
 
 
-traitDeclItem TraitDeclItem:
+traitDeclItem[AstExts[exts], AstIds[AstExts[exts].Ids]] TraitDeclItem[exts]:
     "type" name=^ "UpperId" kind=(_":" type_)? default=(_"=" type_)? "NEWLINE": TraitDeclItem.Type(name = newId(name), kind, default)
     fun=funDecl: TraitDeclItem.Fun(fun)
 
@@ -1106,24 +1091,24 @@ traitDeclItem TraitDeclItem:
 # Impl declarations
 
 
-implDecl ImplDecl:
+implDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] ImplDecl[exts]:
     first=^ "impl" ctx=context? name=^ "UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]" rhs=implDeclRhs:
         ImplDecl(
-            typeParams = Vec.empty(),
             context = ctx,
-            trait_ = newTyId(name, state._tokens),
+            trait_ = newTyId(name),
             tys = Vec.fromIter(once(t0).chain(ts.iter())),
             items = rhs,
             _firstToken = TokenIdx(idx = first),
+            ..AstExts[exts].defaultImplDeclExts()
         )
 
 
-implDeclRhs Vec[ImplDeclItem]:
+implDeclRhs[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[ImplDeclItem[exts]]:
     "NEWLINE": Vec.empty()
     ":" "NEWLINE" "INDENT" items=implDeclItem+ "DEDENT": items
 
 
-implDeclItem ImplDeclItem:
+implDeclItem[AstExts[exts], AstIds[AstExts[exts].Ids]] ImplDeclItem[exts]:
     "type" name=^ "UpperId" "=" rhs=type_ "NEWLINE":
         ImplDeclItem.Type(
             assocTy = newId(name),
@@ -1135,7 +1120,7 @@ implDeclItem ImplDeclItem:
 # --------------------------------------------------------------------------------------------------
 
 
-funDecl FunDecl:
+funDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] FunDecl[exts]:
     prim_=^ primKw="prim"? sig=funSig _"NEWLINE":
         # TODO: Add prim to FunDecl
         FunDecl(
@@ -1156,28 +1141,28 @@ funDecl FunDecl:
         )
 
 
-funDeclRhs Vec[Stmt]:
+funDeclRhs[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[Stmt[exts]]:
     ":" "NEWLINE" "INDENT" stmts=stmt+ "DEDENT":
         stmts
 
     ":" expr=inlineExpr "NEWLINE":
-        let vec: Vec[Stmt] = Vec.[Stmt.Expr(expr)]
+        let vec: Vec[Stmt[exts]] = Vec.[Stmt.Expr(expr)]
         vec
 
 
-funSig (id: Id, sig: FunSig):
+funSig[AstExts[exts], AstIds[AstExts[exts].Ids]] (id: Id, sig: FunSig[exts]):
     id=^ "LowerId" ctx=context? lparen=^ params=paramList ret=returnTy?:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         (
             id = newId(id),
             sig = FunSig(
-                typeParams = Vec.empty(),
                 context = ctx,
                 self_ = SelfParam.No,       # TODO
                 params,
                 exceptions = ret.exn,
                 returnTy = ret.ret,
                 lparen = TokenIdx(idx = lparen),
+                ..AstExts[exts].defaultFunSigExts()
             ),
         )
 
@@ -1186,8 +1171,6 @@ funSig (id: Id, sig: FunSig):
 # Attributes
 
 
-attr Attribute:
+attr[AstExts[exts], AstIds[AstExts[exts].Ids]] Attribute[exts]:
     open=^ "#[" expr=expr close=^ "]" "NEWLINE":
         Attribute(expr, open = TokenIdx(idx = open), close = TokenIdx(idx = close))
-
-|#

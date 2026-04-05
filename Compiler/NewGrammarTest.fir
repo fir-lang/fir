@@ -17,8 +17,6 @@ main():
     if not path.endsWith(".fir"):
         panic("File extension should be .fir")
 
-    let path = path.substr(0, path.len() - ".fir".len())
-
     let fileContents = readFileUtf8(path)
 
     let (tokens, error) = tokenize(path, fileContents)
@@ -31,8 +29,8 @@ main():
             panic("`path`:`line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens.takeArray()
 
-    let result: Result[U32, Expr[DefaultAstExts]] = try(
-        \(): justTesting(ParserState.new(tokens, ()))
+    let result: Result[U32, Vec[TopDecl[DefaultAstExts]]] = try(
+        \(): module(ParserState.new(tokens, ()))
     )
 
     match result:
