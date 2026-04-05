@@ -1947,7 +1947,14 @@ fn resolve_preds(
                 continue;
             }
 
-            for assump in assumps.iter() {
+            for assump in assumps.iter_mut() {
+                // Re-normalize assumption params so that `UVar`s linked by recent unifications
+                // compare equal to the freshly-normalized goal params.
+                assump
+                    .params
+                    .iter_mut()
+                    .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]));
+
                 // We can't use set lookup as locs will be different.
                 if assump.trait_ == pred.trait_ && assump.params == pred.params {
                     match (&assump.assoc_ty, &pred.assoc_ty) {
