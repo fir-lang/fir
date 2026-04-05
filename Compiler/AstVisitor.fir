@@ -533,11 +533,15 @@ defaultVisitNamedType[Visitor[v]](v: v, t: CNamedType):
 defaultVisitRecordType[Visitor[v]](v: v, t: CRecordType):
     for field: Named[CType] in t.fields.iter():
         v.visitType(field.node)
+    if t.extension is Option.Some(ext):
+        v.visitType(ext)
 
 
 defaultVisitVariantType[Visitor[v]](v: v, t: CVariantType):
     for alt: CNamedType in t.alts.iter():
         v.visitNamedType(alt)
+    if t.extension is Option.Some(ext):
+        v.visitType(ext)
 
 
 defaultVisitFnType[Visitor[v]](v: v, t: CFnType):
