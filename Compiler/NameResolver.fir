@@ -3,8 +3,8 @@
 
 
 import [
-    Compiler/Ast,
     Compiler/AstVisitor,
+    Compiler/CompilerAst,
     Compiler/Defs,
     Compiler/Module,
     Compiler/ScopeMap,
@@ -32,28 +32,28 @@ resolveNames(pgm: Program):
             _tyEnv = ScopeMap.fromMap(module._tyEnv),
         )
 
-        for funDecl: HashMapEntry[Str, FunDecl] in module._funItems.iter():
+        for funDecl: HashMapEntry[Str, CFunDecl] in module._funItems.iter():
             let funDecl = funDecl.val
             visitor.visitFunDecl(funDecl)
 
-        for tyDecl: HashMapEntry[Str, TypeDecl] in module._tyItems.iter():
+        for tyDecl: HashMapEntry[Str, CTypeDecl] in module._tyItems.iter():
             let tyDecl = tyDecl.val
 
             if tyDecl.rhs is Option.Some(rhs):
                 match rhs:
                     TypeDeclRhs.Sum(cons, ..):
-                        for con: ConDecl in cons.iter():
+                        for con: CConDecl in cons.iter():
                             visitor.visitConFields(con.fields)
 
                     TypeDeclRhs.Product(fields): visitor.visitConFields(fields)
 
                     TypeDeclRhs.Synonym(ty): visitor.visitType(ty)
 
-        for traitDecl: HashMapEntry[Str, TraitDecl] in
+        for traitDecl: HashMapEntry[Str, CTraitDecl] in
                 module._traitItems.iter():
             let traitDecl = traitDecl.val
             visitor._tyEnv.enterScope()
-            for item: TraitDeclItem in traitDecl.items.iter():
+            for item: CTraitDeclItem in traitDecl.items.iter():
                 match item:
                     TraitDeclItem.Type(name = assocTyId, kind = _, default = _):
                         let assocTyName = visitor._tokens.get(
@@ -64,15 +64,15 @@ resolveNames(pgm: Program):
                         )
                         visitor._tyEnv.insert(assocTyName, tyDefIdx)
                     TraitDeclItem.Fun(_): ()
-            for item: TraitDeclItem in traitDecl.items.iter():
+            for item: CTraitDeclItem in traitDecl.items.iter():
                 match item:
                     TraitDeclItem.Type(..): ()
                     TraitDeclItem.Fun(funDecl): visitor.visitFunDecl(funDecl)
             visitor._tyEnv.exitScope()
 
-        for implDecl: ImplDecl in module._impls.iter():
+        for implDecl: CImplDecl in module._impls.iter():
             visitor._tyEnv.enterScope()
-            for item: ImplDeclItem in implDecl.items.iter():
+            for item: CImplDeclItem in implDecl.items.iter():
                 match item:
                     ImplDeclItem.Type(assocTy = assocTy, ..):
                         let assocTyName = visitor._tokens.get(
@@ -83,7 +83,7 @@ resolveNames(pgm: Program):
                         )
                         visitor._tyEnv.insert(assocTyName, tyDefIdx)
                     ImplDeclItem.Fun(_): ()
-            for item: ImplDeclItem in implDecl.items.iter():
+            for item: CImplDeclItem in implDecl.items.iter():
                 match item:
                     ImplDeclItem.Type(rhs = rhs, ..): visitor.visitType(rhs)
                     ImplDeclItem.Fun(funDecl): visitor.visitFunDecl(funDecl)
@@ -100,7 +100,7 @@ type _NameResolverVisitor(
 
 
 impl Visitor[_NameResolverVisitor]:
-    visitFunDecl(self: _NameResolverVisitor, funDecl: FunDecl):
+    visitFunDecl(self: _NameResolverVisitor, funDecl: CFunDecl):
         if funDecl.parentTy is Option.Some(id):
             self.visitTyId(id)
 
@@ -109,11 +109,11 @@ impl Visitor[_NameResolverVisitor]:
         if funDecl.body is Option.Some(stmts):
             self._termEnv.enterScope()
 
-            for param: FunArg in funDecl.sig.params.iter():
+            for param: CFunArg in funDecl.sig.params.iter():
                 let nameText = self._tokens.get(param.name.token.idx).text
                 self._termEnv.insert(nameText, VarDefIdx.Local)
 
-            for stmt: Stmt in stmts.iter():
+            for stmt: CStmt in stmts.iter():
                 self.visitStmt(stmt)
 
             self._termEnv.exitScope()
@@ -146,17 +146,17 @@ impl Visitor[_NameResolverVisitor]:
         self._termEnv.insert(varText, VarDefIdx.Local)
         ()
 
-    visitAlt(self: _NameResolverVisitor, alt: Alt):
+    visitAlt(self: _NameResolverVisitor, alt: CAlt):
         self._termEnv.enterScope()
         defaultVisitAlt(self, alt)
         self._termEnv.exitScope()
         ()
 
-    visitLetStmt(self: _NameResolverVisitor, stmt: LetStmt):
+    visitLetStmt(self: _NameResolverVisitor, stmt: CLetStmt):
         self.visitExpr(stmt.rhs)
         self.visitPat(stmt.lhs)
 
-    visitForStmt(self: _NameResolverVisitor, stmt: ForStmt):
+    visitForStmt(self: _NameResolverVisitor, stmt: CForStmt):
         self._termEnv.enterScope()
 
         # Visit iterator expression first as it cannot refer to loop binders.
@@ -172,14 +172,14 @@ impl Visitor[_NameResolverVisitor]:
 
         ()
 
-    visitFnExpr(self: _NameResolverVisitor, fn_: FnExpr):
+    visitFnExpr(self: _NameResolverVisitor, fn_: CFnExpr):
         self._termEnv.enterScope()
 
-        for param: FunArg in fn_.sig.params.iter():
+        for param: CFunArg in fn_.sig.params.iter():
             let nameText = self._tokens.get(param.name.token.idx).text
             self._termEnv.insert(nameText, VarDefIdx.Local)
 
-        for stmt: Stmt in fn_.body.iter():
+        for stmt: CStmt in fn_.body.iter():
             self.visitStmt(stmt)
 
         self._termEnv.exitScope()
@@ -314,7 +314,7 @@ _makeSccEnv(
         let mod = pgm._modules.get(modIdx._idx)
         let tokens = mod._tokens
 
-        for ty: HashMapEntry[Str, TypeDecl] in mod._tyItems.iter():
+        for ty: HashMapEntry[Str, CTypeDecl] in mod._tyItems.iter():
             let tyDefIdx = TyDefIdx(_mod = modIdx, _name = ty.key)
 
             let old = typeEnv.insert(ty.key, tyDefIdx)
@@ -323,7 +323,7 @@ _makeSccEnv(
                     "Type `ty.key` defined multiple times in a recursive import group",
                 )
 
-        for trait_: HashMapEntry[Str, TraitDecl] in mod._traitItems.iter():
+        for trait_: HashMapEntry[Str, CTraitDecl] in mod._traitItems.iter():
             let traitDefIdx = TyDefIdx(_mod = modIdx, _name = trait_.key)
             let old = typeEnv.insert(trait_.key, traitDefIdx)
             if old is Option.Some(_):
@@ -331,7 +331,7 @@ _makeSccEnv(
                     "Type `trait_.key` defined multiple times in a recursive import group",
                 )
 
-        for fun: HashMapEntry[Str, FunDecl] in mod._funItems.iter():
+        for fun: HashMapEntry[Str, CFunDecl] in mod._funItems.iter():
             let varDefIdx = TopVarDefIdx(_mod = modIdx, _name = fun.key)
 
             let old = termEnv.insert(fun.key, varDefIdx)
@@ -340,7 +340,7 @@ _makeSccEnv(
                     "Value `fun.key` defined multiple times in a recursive import group",
                 )
 
-        for assocDef: HashMapEntry[Str, HashMap[Str, FunDecl]] in
+        for assocDef: HashMapEntry[Str, HashMap[Str, CFunDecl]] in
                 mod._assocItems.iter():
             let tyMap = match assocTermEnv.get(assocDef.key):
                 Option.None:
@@ -349,7 +349,7 @@ _makeSccEnv(
                     map
                 Option.Some(map): map
 
-            for assocValue: HashMapEntry[Str, FunDecl] in assocDef.val.iter():
+            for assocValue: HashMapEntry[Str, CFunDecl] in assocDef.val.iter():
                 let old = tyMap.insert(
                     assocValue.key,
                     AssocVarDefIdx(

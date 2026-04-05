@@ -22,11 +22,11 @@ This also adds missing type parameters to function declarations, e.g.
 |#
 
 
-import [Compiler/Ast]
+import [Compiler/CompilerAst]
 
 
-addMissingTypeParams(mod: Vec[TopDecl], tokens: Array[Token]):
-    for decl: TopDecl in mod.iter():
+addMissingTypeParams(mod: Vec[CTopDecl], tokens: Array[Token]):
+    for decl: CTopDecl in mod.iter():
         match decl:
             TopDecl.Type(decl): _addMissingTypeParamsType(decl, tokens)
 
@@ -42,10 +42,10 @@ addMissingTypeParams(mod: Vec[TopDecl], tokens: Array[Token]):
             TopDecl.Impl(decl): _addMissingTypeParamsImpl(decl, tokens)
 
 
-_addMissingTypeParamsType(ty: TypeDecl, tokens: Array[Token]):
+_addMissingTypeParamsType(ty: CTypeDecl, tokens: Array[Token]):
     let kinds: Vec[Kind] = Vec.withCapacity(ty.typeParams.len())
 
-    for tyParam: DeclTypeParam in ty.typeParams.iter():
+    for tyParam: CDeclTypeParam in ty.typeParams.iter():
         let kind = _convertKind(tyParam.kind, tokens).unwrapOr(Kind.Star)
         kinds.push(kind)
 
@@ -60,24 +60,24 @@ _addMissingTypeParamsType(ty: TypeDecl, tokens: Array[Token]):
 ## When checking an `impl`, the kinds of type parameters in `tvs` should all be
 ## specified before calling this function.
 _addMissingTypeParamsFun(
-    sig: FunSig,
+    sig: CFunSig,
     tvs: OrderedHashMap[Str, Option[Kind]],
     tokens: Array[Token],
 ):
     let boundVars: HashSet[Str] = HashSet.fromIter(tvs.keys())
 
     if sig.context is Option.Some(context):
-        for pred: Pred_ in context.preds.iter():
+        for pred: CPred_ in context.preds.iter():
             match pred:
                 Pred_.Kind(name = kindVar, kind):
                     let varStr = tokens.get(kindVar.token.idx).text
                     let kind = _convertKind(kind, tokens)
                     tvs.insert(varStr, kind)
                 Pred_.App(NamedType(name = _, args)):
-                    for arg: Type in args.unwrap().args.iter():
+                    for arg: CType in args.unwrap().args.iter():
                         _collectTvs(arg, tvs, tokens)
                 Pred_.AssocTyEq(ty = NamedType(name = _, args), assocTy = _, eq):
-                    for arg: Type in args.unwrap().args.iter():
+                    for arg: CType in args.unwrap().args.iter():
                         _collectTvs(arg, tvs, tokens)
                     _collectTvs(eq, tvs, tokens)
 
@@ -85,7 +85,7 @@ _addMissingTypeParamsFun(
         SelfParam.No | SelfParam.Implicit: ()
         SelfParam.Explicit(ty): _collectTvs(ty, tvs, tokens)
 
-    for arg: FunArg in sig.params.iter():
+    for arg: CFunArg in sig.params.iter():
         if arg.ty is Option.Some(ty):
             _collectTvs(ty, tvs, tokens)
 
@@ -105,20 +105,20 @@ _addMissingTypeParamsFun(
         )
 
 
-_addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
+_addMissingTypeParamsTrait(trait_: CTraitDecl, tokens: Array[Token]):
     assert(trait_.typeParamKinds.isEmpty())
 
     let traitContextVarKinds: OrderedHashMap[Str, Option[Kind]] = OrderedHashMap
         .empty()
     let traitContextVars: HashSet[Str] = HashSet.empty()
 
-    for param: DeclTypeParam in trait_.typeParams.iter():
+    for param: CDeclTypeParam in trait_.typeParams.iter():
         let paramStr = tokens.get(param.name.token.idx).text
         let kind = _convertKind(param.kind, tokens)
         traitContextVarKinds.insert(paramStr, kind)
         traitContextVars.insert(paramStr)
 
-    for item: TraitDeclItem in trait_.items.iter():
+    for item: CTraitDeclItem in trait_.items.iter():
         let fun = match item:
             TraitDeclItem.Type(..): continue
             TraitDeclItem.Fun(fun): fun
@@ -146,28 +146,28 @@ _addMissingTypeParamsTrait(trait_: TraitDecl, tokens: Array[Token]):
     )
 
 
-_addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
+_addMissingTypeParamsImpl(impl_: CImplDecl, tokens: Array[Token]):
     assert(impl_.typeParams.isEmpty())
 
     let implContextVarKinds: OrderedHashMap[Str, Option[Kind]] = OrderedHashMap
         .empty()
 
     if impl_.context is Option.Some(context):
-        for pred: Pred_ in context.preds.iter():
+        for pred: CPred_ in context.preds.iter():
             match pred:
                 Pred_.Kind(name = kindVar, kind):
                     let varStr = tokens.get(kindVar.token.idx).text
                     let kind = _convertKind(kind, tokens)
                     implContextVarKinds.insert(varStr, kind)
                 Pred_.App(NamedType(name = _, args)):
-                    for arg: Type in args.unwrap().args.iter():
+                    for arg: CType in args.unwrap().args.iter():
                         _collectTvs(arg, implContextVarKinds, tokens)
                 Pred_.AssocTyEq(ty = NamedType(name = _, args), assocTy = _, eq):
-                    for arg: Type in args.unwrap().args.iter():
+                    for arg: CType in args.unwrap().args.iter():
                         _collectTvs(arg, implContextVarKinds, tokens)
                     _collectTvs(eq, implContextVarKinds, tokens)
 
-    for ty: Type in impl_.tys.iter():
+    for ty: CType in impl_.tys.iter():
         _collectTvs(ty, implContextVarKinds, tokens)
 
     # This is a set but we use the map type because I'm lazy.
@@ -176,7 +176,7 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
     for var_: Str in implContextVarKinds.keys():
         implContextVars.insert(var_, ())
 
-    for item: ImplDeclItem in impl_.items.iter():
+    for item: CImplDeclItem in impl_.items.iter():
         let fun = match item:
             ImplDeclItem.Type(..): continue
             ImplDeclItem.Fun(fun): fun
@@ -209,7 +209,7 @@ _addMissingTypeParamsImpl(impl_: ImplDecl, tokens: Array[Token]):
 ##
 ## Returns `None` when no annotation, otherwise expects `Row[Rec]` or
 ## `Row[Var]`.
-_convertKind(kind: Option[Type], tokens: Array[Token]) Option[Kind]:
+_convertKind(kind: Option[CType], tokens: Array[Token]) Option[Kind]:
     match kind:
         Option.None: Option.None
         Option.Some(Type.Named(NamedType(name, args))):
@@ -240,7 +240,7 @@ _convertKind(kind: Option[Type], tokens: Array[Token]) Option[Kind]:
 ## variant row when we see one of the marker traits later, or default the kind
 ## as `*` if not.
 _collectTvs(
-    ty: Type,
+    ty: CType,
     tvs: OrderedHashMap[Str, Option[Kind]],
     tokens: Array[Token],
 ):
@@ -254,7 +254,7 @@ _collectTvs(
             ()
 
         Type.Record(RecordType(fields, extension, ..)):
-            for field: Named[Type] in fields.iter():
+            for field: Named[CType] in fields.iter():
                 _collectTvs(field.node, tvs, tokens)
 
             if extension is Option.Some(ext):
@@ -271,7 +271,7 @@ _collectTvs(
                     other: _collectTvs(other, tvs, tokens)
 
         Type.Variant(VariantType(alts, extension, ..)):
-            for alt: NamedType in alts.iter():
+            for alt: CNamedType in alts.iter():
                 _collectNamedTyTvs(alt, tvs, tokens)
 
             if extension is Option.Some(ext):
@@ -288,7 +288,7 @@ _collectTvs(
                     other: _collectTvs(other, tvs, tokens)
 
         Type.Fn_(FnType(args, ret, exceptions, ..)):
-            for arg: Type in args.iter():
+            for arg: CType in args.iter():
                 _collectTvs(arg, tvs, tokens)
 
             if ret is Option.Some(ret):
@@ -302,12 +302,12 @@ _collectTvs(
 
 
 _collectNamedTyTvs(
-    namedTy: NamedType,
+    namedTy: CNamedType,
     tvs: OrderedHashMap[Str, Option[Kind]],
     tokens: Array[Token],
 ):
     if namedTy.args is Option.Some(args):
-        for arg: Type in args.args.iter():
+        for arg: CType in args.args.iter():
             _collectTvs(arg, tvs, tokens)
 
 

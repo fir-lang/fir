@@ -1,12 +1,12 @@
 import [
-    Compiler/Ast,
+    Compiler/CompilerAst,
     Compiler/TypeCheck/Error,
     Compiler/TypeCheck/Ty,
 ]
 
 
 ## Convert an AST type to type checking type.
-convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeError:
+convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: CType) Ty / TypeError:
     let loc = module.loc(astTy)
     match astTy:
         Type.Named(namedTy): convertNamedTy(module, vars, namedTy, loc)
@@ -25,7 +25,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                 fields.len()
             )
 
-            for namedField: Named[Type] in fields.iter():
+            for namedField: Named[CType] in fields.iter():
                 let name = module.idText(
                     namedField.name.unwrapOrElse(
                         \():
@@ -60,7 +60,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                 alts.len(),
             )
 
-            for alt: NamedType in alts.iter():
+            for alt: CNamedType in alts.iter():
                 let ty = convertNamedTy(module, vars, alt, loc)
 
                 match ty:
@@ -71,7 +71,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                                 TypeError(
                                     loc,
                                     msg =
-                                        "Type `alt.name.name` used multiple times in variant type",
+                                        "Type `module.tokenText(alt.name.token)` used multiple times in variant type",
                                 ),
                             )
 
@@ -82,7 +82,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
                                 TypeError(
                                     loc,
                                     msg =
-                                        "Type `alt.name.name` used multiple times in variant type",
+                                        "Type `module.tokenText(alt.name.token)` used multiple times in variant type",
                                 ),
                             )
 
@@ -105,7 +105,7 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
             let args = FunArgs.Positional(
                 Vec.fromIter(
                     args.iter().map(
-                        \(ty: Type) Ty: convertAstTy(module, vars, ty),
+                        \(ty: CType) Ty: convertAstTy(module, vars, ty),
                     ),
                 ),
             )
@@ -134,10 +134,10 @@ convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: Type) Ty / TypeErro
 convertNamedTy(
     module: Module,
     vars: ScopeMap[Str, Ty],
-    namedTy: NamedType,
+    namedTy: CNamedType,
     loc: Loc,
 ) Ty / TypeError:
-    let tyName = namedTy.name.name
+    let tyName = module.tokenText(namedTy.name.token)
     let tyArgs = namedTy.args
     let numTyArgs = namedTy.numTyArgs()
 
@@ -176,14 +176,14 @@ convertNamedTy(
 
     let convertedArgs: Vec[Ty] = Vec.fromIter(
         tyArgs.unwrap().args.iter().map(
-            \(astTy: Type) Ty: convertAstTy(module, vars, astTy),
+            \(astTy: CType) Ty: convertAstTy(module, vars, astTy),
         ),
     )
 
     Ty.App(conId = tyDefIdx, args = convertedArgs)
 
 
-convertFields(module: Module, vars: ScopeMap[Str, Ty], fields: ConFields) Option[FunArgs] / TypeError:
+convertFields(module: Module, vars: ScopeMap[Str, Ty], fields: CConFields) Option[FunArgs] / TypeError:
     match fields:
         ConFields.Empty: Option.None
 
@@ -192,7 +192,7 @@ convertFields(module: Module, vars: ScopeMap[Str, Ty], fields: ConFields) Option
                 FunArgs.Named(
                     HashMap.fromIter(
                         namedFields.iter().map(
-                            \(field: NamedField) (key: LocalId, val: Ty):
+                            \(field: CNamedField) (key: LocalId, val: Ty):
                                 (
                                     key =
                                         LocalId(
@@ -210,7 +210,7 @@ convertFields(module: Module, vars: ScopeMap[Str, Ty], fields: ConFields) Option
                 FunArgs.Positional(
                     Vec.fromIter(
                         fields.iter().map(
-                            \(ty: Type) Ty: convertAstTy(module, vars, ty),
+                            \(ty: CType) Ty: convertAstTy(module, vars, ty),
                         ),
                     ),
                 ),
@@ -228,7 +228,7 @@ convertAndBindContext(
     module: Module,
     vars: ScopeMap[Str, Ty],
     typeParams: Vec[TypeParam],
-    preds: Vec[Pred_],
+    preds: Vec[CPred_],
     conversion: TyVarConversion,
 ) Vec[Pred] / TypeError:
     let predsConverted: Vec[Pred] = Vec.withCapacity(preds.len())
@@ -243,7 +243,7 @@ convertAndBindContext(
         vars.insert(tyParam.name.name, var_)
 
     # Convert preds.
-    for pred: Pred_ in preds.iter():
+    for pred: CPred_ in preds.iter():
         let loc = module.loc(pred)
 
     #|

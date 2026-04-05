@@ -12,152 +12,143 @@ Use sites should always override the top-level declaration visitors if they use
 `visitModule`.
 |#
 
-import [Compiler/Ast]
+import [Compiler/CompilerAst]
 
 
 trait Visitor[v]:
     # ----------------------------------------------------------------
     # Declarations
 
-    visitModule(self: v, d: Vec[TopDecl]):
+    visitModule(self: v, d: Vec[CTopDecl]):
         defaultVisitModule(self, d)
 
-    visitTopDecl(self: v, d: TopDecl):
+    visitTopDecl(self: v, d: CTopDecl):
         defaultVisitTopDecl(self, d)
 
-    visitTypeDecl(self: v, d: TypeDecl):
+    visitTypeDecl(self: v, d: CTypeDecl):
         ()
 
-    visitTypeDeclRhs(self: v, d: TypeDeclRhs):
+    visitTypeDeclRhs(self: v, d: CTypeDeclRhs):
         ()
 
-    visitConFields(self: v, d: ConFields):
+    visitConFields(self: v, d: CConFields):
         defaultVisitConFields(self, d)
 
-    visitFunDecl(self: v, d: FunDecl):
+    visitFunDecl(self: v, d: CFunDecl):
         ()
 
     visitImportDecl(self: v, d: ImportDecl):
         ()
 
-    visitTraitDecl(self: v, d: TraitDecl):
+    visitTraitDecl(self: v, d: CTraitDecl):
         ()
 
-    visitImplDecl(self: v, d: ImplDecl):
+    visitImplDecl(self: v, d: CImplDecl):
         ()
 
-    visitFunSig(self: v, d: FunSig):
+    visitFunSig(self: v, d: CFunSig):
         defaultVisitFunSig(self, d)
 
-    visitTypeParam(self: v, d: TypeParam):
-        ()
-
-    visitContext(self: v, d: Context):
+    visitContext(self: v, d: CContext):
         defaultVisitContext(self, d)
 
-    visitSelfParam(self: v, d: SelfParam):
+    visitSelfParam(self: v, d: CSelfParam):
         ()
 
-    visitFunArg(self: v, d: FunArg):
+    visitFunArg(self: v, d: CFunArg):
         defaultVisitFunArg(self, d)
 
     # ----------------------------------------------------------------
     # Exprs
 
-    visitExpr(self: v, e: Expr):
+    visitExpr(self: v, e: CExpr):
         defaultVisitExpr(self, e)
 
-    visitVarExpr(self: v, e: VarExpr):
+    visitVarExpr(self: v, e: CVarExpr):
         defaultVisitVarExpr(self, e)
 
-    visitConSelExpr(self: v, e: Con):
+    visitConSelExpr(self: v, e: CCon):
         self.visitCon(e)
 
-    visitFieldSelExpr(self: v, e: FieldSelExpr):
+    visitFieldSelExpr(self: v, e: CFieldSelExpr):
         defaultVisitFieldSelExpr(self, e)
 
-    visitMethodSelExpr(self: v, e: MethodSelExpr):
-        defaultVisitMethodSelExpr(self, e)
-
-    visitAssocFnSelExpr(self: v, e: AssocFnSelExpr):
+    visitAssocFnSelExpr(self: v, e: CAssocFnSelExpr):
         defaultVisitAssocFnSelExpr(self, e)
 
-    visitCallExpr(self: v, e: CallExpr):
+    visitCallExpr(self: v, e: CCallExpr):
         defaultVisitCallExpr(self, e)
 
     visitIntExpr(self: v, e: IntExpr):
         ()
 
-    visitStrExpr(self: v, e: StrExpr):
+    visitStrExpr(self: v, e: CStrExpr):
         ()
 
     visitCharExpr(self: v, e: CharExpr):
         ()
 
-    visitSelfExpr(self: v, e: TokenIdx):
-        ()
-
-    visitBinOpExpr(self: v, e: BinOpExpr):
+    visitBinOpExpr(self: v, e: CBinOpExpr):
         defaultVisitBinOp(self, e)
 
-    visitUnOpExpr(self: v, e: UnOpExpr):
+    visitUnOpExpr(self: v, e: CUnOpExpr):
         defaultVisitUnOp(self, e)
 
-    visitRecordExpr(self: v, e: RecordExpr):
+    visitRecordExpr(self: v, e: CRecordExpr):
         defaultVisitRecord(self, e)
 
-    visitReturnExpr(self: v, e: ReturnExpr):
+    visitReturnExpr(self: v, e: CReturnExpr):
         defaultVisitReturn(self, e)
 
-    visitMatchExpr(self: v, e: MatchExpr):
+    visitMatchExpr(self: v, e: CMatchExpr):
         defaultVisitMatch(self, e)
 
-    visitAlt(self: v, e: Alt):
+    visitAlt(self: v, e: CAlt):
         defaultVisitAlt(self, e)
 
-    visitIfExpr(self: v, e: IfExpr):
+    visitIfExpr(self: v, e: CIfExpr):
         defaultVisitIf(self, e)
 
-    visitFnExpr(self: v, e: FnExpr):
+    visitFnExpr(self: v, e: CFnExpr):
         defaultVisitFn(self, e)
 
-    visitIsExpr(self: v, e: IsExpr):
+    visitIsExpr(self: v, e: CIsExpr):
         defaultVisitIs(self, e)
 
-    visitDoExpr(self: v, e: DoExpr):
+    visitDoExpr(self: v, e: CDoExpr):
         defaultVisitDo(self, e)
 
-    visitSeqExpr(self: v, e: SeqExpr):
+    visitSeqExpr(self: v, e: CSeqExpr):
         defaultVisitSeq(self, e)
 
-    visitParenExpr(self: v, e: ParenExpr):
+    visitParenExpr(self: v, e: CParenExpr):
         defaultVisitParen(self, e)
 
-    visitVariantExpr(self: v, e: VariantExpr):
+    visitVariantExpr(self: v, e: CVariantExpr):
         defaultVisitVariant(self, e)
 
     # ----------------------------------------------------------------
     # Stmts
 
-    visitStmt(self: v, e: Stmt):
+    visitStmt(self: v, e: CStmt):
         defaultVisitStmt(self, e)
 
-    visitLetStmt(self: v, e: LetStmt):
+    visitLetStmt(self: v, e: CLetStmt):
         defaultVisitLetStmt(self, e)
 
-    visitAssignStmt(self: v, e: AssignStmt):
+    visitAssignStmt(self: v, e: CAssignStmt):
         defaultVisitAssignStmt(self, e)
 
-    visitExprStmt(self: v, e: Expr):
+    visitExprStmt(self: v, e: CExpr):
         defaultVisitExprStmt(self, e)
 
-    visitForStmt(self: v, e: ForStmt):
+    visitForStmt(self: v, e: CForStmt):
         defaultVisitForStmt(self, e)
 
-    visitWhileStmt(self: v, e: WhileStmt):
+    visitWhileStmt(self: v, e: CWhileStmt):
         defaultVisitWhileStmt(self, e)
 
-    visitLoopStmt(self: v, e: LoopStmt):
+    visitLoopStmt(self: v, e: CLoopStmt):
         defaultVisitLoopStmt(self, e)
 
     visitBreakStmt(self: v, e: BreakStmt):
@@ -169,16 +160,16 @@ trait Visitor[v]:
     # ----------------------------------------------------------------
     # Patterns
 
-    visitPat(self: v, p: Pat):
+    visitPat(self: v, p: CPat):
         defaultVisitPat(self, p)
 
     visitVarPat(self: v, p: VarPat):
         ()
 
-    visitConPat(self: v, p: ConPat):
+    visitConPat(self: v, p: CConPat):
         defaultVisitConPat(self, p)
 
-    visitRecordPat(self: v, p: RecordPat):
+    visitRecordPat(self: v, p: CRecordPat):
         defaultVisitRecordPat(self, p)
 
     visitIgnorePat(self: v, t: TokenIdx):
@@ -190,40 +181,40 @@ trait Visitor[v]:
     visitCharPat(self: v, c: Char, t: TokenIdx):
         ()
 
-    visitOrPat(self: v, ps: Vec[Pat]):
+    visitOrPat(self: v, ps: Vec[CPat]):
         defaultVisitOrPat(self, ps)
 
-    visitVariantPat(self: v, p: VariantPat):
+    visitVariantPat(self: v, p: CVariantPat):
         defaultVisitVariantPat(self, p)
 
     # ----------------------------------------------------------------
     # Types
 
-    visitType(self: v, t: Type):
+    visitType(self: v, t: CType):
         defaultVisitType(self, t)
 
-    visitNamedType(self: v, t: NamedType):
+    visitNamedType(self: v, t: CNamedType):
         defaultVisitNamedType(self, t)
 
     visitTypeVarType(self: v, t: Id):
         ()
 
-    visitRecordType(self: v, t: RecordType):
+    visitRecordType(self: v, t: CRecordType):
         defaultVisitRecordType(self, t)
 
-    visitVariantType(self: v, t: VariantType):
+    visitVariantType(self: v, t: CVariantType):
         defaultVisitVariantType(self, t)
 
-    visitFnType(self: v, t: FnType):
+    visitFnType(self: v, t: CFnType):
         defaultVisitFnType(self, t)
 
-    visitAssocTySelectType(self: v, t: AssocTySelectType):
+    visitAssocTySelectType(self: v, t: CAssocTySelectType):
         defaultVisitAssocTySelectType(self, t)
 
-    visitTyArgs(self: v, t: TyArgs):
+    visitTyArgs(self: v, t: CTyArgs):
         defaultVisitTyArgs(self, t)
 
-    visitPred(self: v, p: Pred_):
+    visitPred(self: v, p: CPred_):
         defaultVisitPred(self, p)
 
     # ----------------------------------------------------------------
@@ -241,16 +232,16 @@ trait Visitor[v]:
     # ----------------------------------------------------------------
     # Shared things
 
-    visitCon(self: v, c: Con):
+    visitCon(self: v, c: CCon):
         defaultVisitCon(self, c)
 
 
-defaultVisitModule[Visitor[v]](v: v, module: Vec[TopDecl]):
+defaultVisitModule[Visitor[v]](v: v, module: Vec[CTopDecl]):
     for topDecl in module.iter():
         v.visitTopDecl(topDecl)
 
 
-defaultVisitTopDecl[Visitor[v]](v: v, topDecl: TopDecl):
+defaultVisitTopDecl[Visitor[v]](v: v, topDecl: CTopDecl):
     match topDecl:
         TopDecl.Type(d): v.visitTypeDecl(d)
         TopDecl.Fun(d): v.visitFunDecl(d)
@@ -259,16 +250,13 @@ defaultVisitTopDecl[Visitor[v]](v: v, topDecl: TopDecl):
         TopDecl.Impl(d): v.visitImplDecl(d)
 
 
-defaultVisitFunSig[Visitor[v]](v: v, sig: FunSig):
-    for typeParam: TypeParam in sig.typeParams.iter():
-        v.visitTypeParam(typeParam)
-
+defaultVisitFunSig[Visitor[v]](v: v, sig: CFunSig):
     if sig.context is Option.Some(context):
         v.visitContext(context)
 
     v.visitSelfParam(sig.self_)
 
-    for param: FunArg in sig.params.iter():
+    for param: CFunArg in sig.params.iter():
         v.visitFunArg(param)
 
     if sig.returnTy is Option.Some(ty):
@@ -278,35 +266,34 @@ defaultVisitFunSig[Visitor[v]](v: v, sig: FunSig):
         v.visitType(ty)
 
 
-defaultVisitFunArg[Visitor[v]](v: v, arg: FunArg):
+defaultVisitFunArg[Visitor[v]](v: v, arg: CFunArg):
     if arg.ty is Option.Some(ty):
         v.visitType(ty)
 
 
-defaultVisitContext[Visitor[v]](v: v, ctx: Context):
-    for pred: Pred_ in ctx.preds.iter():
+defaultVisitContext[Visitor[v]](v: v, ctx: CContext):
+    for pred: CPred_ in ctx.preds.iter():
         v.visitPred(pred)
 
 
-defaultVisitConFields[Visitor[v]](v: v, fields: ConFields):
+defaultVisitConFields[Visitor[v]](v: v, fields: CConFields):
     match fields:
         ConFields.Empty: ()
 
         ConFields.Named(fields, ..):
-            for field: NamedField in fields.iter():
+            for field: CNamedField in fields.iter():
                 v.visitType(field.ty)
 
         ConFields.Unnamed(fields):
-            for ty: Type in fields.iter():
+            for ty: CType in fields.iter():
                 v.visitType(ty)
 
 
-defaultVisitExpr[Visitor[v]](v: v, expr: Expr):
+defaultVisitExpr[Visitor[v]](v: v, expr: CExpr):
     match expr:
         Expr.Var(e): v.visitVarExpr(e)
         Expr.ConSel(e): v.visitConSelExpr(e)
         Expr.FieldSel(e): v.visitFieldSelExpr(e)
-        Expr.MethodSel(e): v.visitMethodSelExpr(e)
         Expr.AssocFnSel(e): v.visitAssocFnSelExpr(e)
         Expr.Call(e): v.visitCallExpr(e)
         Expr.Int(e): v.visitIntExpr(e)
@@ -326,7 +313,7 @@ defaultVisitExpr[Visitor[v]](v: v, expr: Expr):
         Expr.Variant(e): v.visitVariantExpr(e)
 
 
-defaultVisitStmt[Visitor[v]](v: v, stmt: Stmt):
+defaultVisitStmt[Visitor[v]](v: v, stmt: CStmt):
     match stmt:
         Stmt.Let(s): v.visitLetStmt(s)
         Stmt.Assign(s): v.visitAssignStmt(s)
@@ -338,7 +325,7 @@ defaultVisitStmt[Visitor[v]](v: v, stmt: Stmt):
         Stmt.Continue(s): v.visitContinueStmt(s)
 
 
-defaultVisitPat[Visitor[v]](v: v, pat: Pat):
+defaultVisitPat[Visitor[v]](v: v, pat: CPat):
     match pat:
         Pat.Var(p): v.visitVarPat(p)
         Pat.Con(p): v.visitConPat(p)
@@ -350,7 +337,7 @@ defaultVisitPat[Visitor[v]](v: v, pat: Pat):
         Pat.Variant(p): v.visitVariantPat(p)
 
 
-defaultVisitType[Visitor[v]](v: v, ty: Type):
+defaultVisitType[Visitor[v]](v: v, ty: CType):
     match ty:
         Type.Named(t): v.visitNamedType(t)
         Type.Var(t): v.visitTypeVarType(t)
@@ -360,152 +347,146 @@ defaultVisitType[Visitor[v]](v: v, ty: Type):
         Type.AssocTySelect(t): v.visitAssocTySelectType(t)
 
 
-defaultVisitVarExpr[Visitor[v]](v: v, e: VarExpr):
+defaultVisitVarExpr[Visitor[v]](v: v, e: CVarExpr):
     v.visitVarId(e.id)
     if e.userTyArgs is Option.Some(args):
         v.visitTyArgs(args)
 
 
-defaultVisitFieldSelExpr[Visitor[v]](v: v, e: FieldSelExpr):
+defaultVisitFieldSelExpr[Visitor[v]](v: v, e: CFieldSelExpr):
     # TODO: `field` field
     v.visitExpr(e.object)
     if e.userTyArgs is Option.Some(args):
         v.visitTyArgs(args)
 
 
-defaultVisitMethodSelExpr[Visitor[v]](v: v, e: MethodSelExpr):
-    v.visitExpr(e.object)
-    v.visitTyId(e.methodTyId)
-    v.visitAssocVarId(e.method)
-
-
-defaultVisitAssocFnSelExpr[Visitor[v]](v: v, e: AssocFnSelExpr):
+defaultVisitAssocFnSelExpr[Visitor[v]](v: v, e: CAssocFnSelExpr):
     v.visitTyId(e.ty)
     v.visitAssocVarId(e.member)
     if e.userTyArgs is Option.Some(args):
         v.visitTyArgs(args)
 
 
-defaultVisitCallExpr[Visitor[v]](v: v, e: CallExpr):
+defaultVisitCallExpr[Visitor[v]](v: v, e: CCallExpr):
     v.visitExpr(e.fun)
-    for arg: Named[Expr] in e.args.iter():
+    for arg: Named[CExpr] in e.args.iter():
         v.visitExpr(arg.node)
     if e.splice is Option.Some(splice):
         v.visitExpr(splice)
 
 
-defaultVisitBinOp[Visitor[v]](v: v, e: BinOpExpr):
+defaultVisitBinOp[Visitor[v]](v: v, e: CBinOpExpr):
     v.visitExpr(e.left)
     v.visitExpr(e.right)
 
 
-defaultVisitUnOp[Visitor[v]](v: v, e: UnOpExpr):
+defaultVisitUnOp[Visitor[v]](v: v, e: CUnOpExpr):
     v.visitExpr(e.expr)
 
 
-defaultVisitRecord[Visitor[v]](v: v, e: RecordExpr):
-    for field: Named[Expr] in e.fields.iter():
+defaultVisitRecord[Visitor[v]](v: v, e: CRecordExpr):
+    for field: Named[CExpr] in e.fields.iter():
         v.visitExpr(field.node)
     if e.splice is Option.Some(splice):
         v.visitExpr(splice)
 
 
-defaultVisitReturn[Visitor[v]](v: v, e: ReturnExpr):
+defaultVisitReturn[Visitor[v]](v: v, e: CReturnExpr):
     if e.expr is Option.Some(e):
         v.visitExpr(e)
 
 
-defaultVisitMatch[Visitor[v]](v: v, e: MatchExpr):
+defaultVisitMatch[Visitor[v]](v: v, e: CMatchExpr):
     v.visitExpr(e.scrutinee)
-    for alt: Alt in e.alts.iter():
+    for alt: CAlt in e.alts.iter():
         v.visitAlt(alt)
 
 
-defaultVisitAlt[Visitor[v]](v: v, e: Alt):
+defaultVisitAlt[Visitor[v]](v: v, e: CAlt):
     v.visitPat(e.pat)
     if e.guard is Option.Some(e):
         v.visitExpr(e)
-    for stmt: Stmt in e.rhs.iter():
+    for stmt: CStmt in e.rhs.iter():
         v.visitStmt(stmt)
 
 
-defaultVisitIf[Visitor[v]](v: v, e: IfExpr):
-    for branch: IfBranch in e.branches.iter():
+defaultVisitIf[Visitor[v]](v: v, e: CIfExpr):
+    for branch: CIfBranch in e.branches.iter():
         v.visitExpr(branch.guard)
     if e.elseBranch is Option.Some(stmts):
-        for stmt: Stmt in stmts.iter():
+        for stmt: CStmt in stmts.iter():
             v.visitStmt(stmt)
 
 
-defaultVisitFn[Visitor[v]](v: v, e: FnExpr):
-    for stmt: Stmt in e.body.iter():
+defaultVisitFn[Visitor[v]](v: v, e: CFnExpr):
+    for stmt: CStmt in e.body.iter():
         v.visitStmt(stmt)
 
 
-defaultVisitIs[Visitor[v]](v: v, e: IsExpr):
+defaultVisitIs[Visitor[v]](v: v, e: CIsExpr):
     v.visitExpr(e.expr)
     v.visitPat(e.pat)
 
 
-defaultVisitDo[Visitor[v]](v: v, e: DoExpr):
-    for stmt: Stmt in e.body.iter():
+defaultVisitDo[Visitor[v]](v: v, e: CDoExpr):
+    for stmt: CStmt in e.body.iter():
         v.visitStmt(stmt)
 
 
-defaultVisitSeq[Visitor[v]](v: v, e: SeqExpr):
-    for elem: SeqElem in e.elems.iter():
+defaultVisitSeq[Visitor[v]](v: v, e: CSeqExpr):
+    for elem: CSeqElem in e.elems.iter():
         if elem.key is Option.Some(e):
             v.visitExpr(e)
         v.visitExpr(elem.val)
 
 
-defaultVisitParen[Visitor[v]](v: v, e: ParenExpr):
+defaultVisitParen[Visitor[v]](v: v, e: CParenExpr):
     v.visitExpr(e.expr)
 
 
-defaultVisitVariant[Visitor[v]](v: v, e: VariantExpr):
+defaultVisitVariant[Visitor[v]](v: v, e: CVariantExpr):
     v.visitExpr(e.expr)
 
 
-defaultVisitCon[Visitor[v]](v: v, c: Con):
+defaultVisitCon[Visitor[v]](v: v, c: CCon):
     v.visitTyId(c.ty)
     if c.userTyArgs is Option.Some(args):
         v.visitTyArgs(args)
 
 
-defaultVisitLetStmt[Visitor[v]](v: v, s: LetStmt):
+defaultVisitLetStmt[Visitor[v]](v: v, s: CLetStmt):
     v.visitPat(s.lhs)
     if s.ty is Option.Some(ty):
         v.visitType(ty)
     v.visitExpr(s.rhs)
 
 
-defaultVisitAssignStmt[Visitor[v]](v: v, s: AssignStmt):
+defaultVisitAssignStmt[Visitor[v]](v: v, s: CAssignStmt):
     v.visitExpr(s.lhs)
     v.visitExpr(s.rhs)
 
 
-defaultVisitExprStmt[Visitor[v]](v: v, s: Expr):
+defaultVisitExprStmt[Visitor[v]](v: v, s: CExpr):
     v.visitExpr(s)
 
 
-defaultVisitForStmt[Visitor[v]](v: v, s: ForStmt):
+defaultVisitForStmt[Visitor[v]](v: v, s: CForStmt):
     v.visitPat(s.pat)
     if s.astTy is Option.Some(ty):
         v.visitType(ty)
     v.visitExpr(s.expr)
-    for stmt: Stmt in s.body.iter():
+    for stmt: CStmt in s.body.iter():
         v.visitStmt(stmt)
 
 
-defaultVisitWhileStmt[Visitor[v]](v: v, s: WhileStmt):
+defaultVisitWhileStmt[Visitor[v]](v: v, s: CWhileStmt):
     v.visitExpr(s.cond)
-    for stmt: Stmt in s.body.iter():
+    for stmt: CStmt in s.body.iter():
         v.visitStmt(stmt)
 
 
-defaultVisitLoopStmt[Visitor[v]](v: v, s: LoopStmt):
-    for stmt: Stmt in s.body.iter():
+defaultVisitLoopStmt[Visitor[v]](v: v, s: CLoopStmt):
+    for stmt: CStmt in s.body.iter():
         v.visitStmt(stmt)
 
 
@@ -517,50 +498,50 @@ defaultVisitContinueStmt[Visitor[v]](v: v, s: ContinueStmt):
     ()
 
 
-defaultVisitConPat[Visitor[v]](v: v, s: ConPat):
+defaultVisitConPat[Visitor[v]](v: v, s: CConPat):
     v.visitCon(s.con)
-    for field: Named[Pat] in s.fields.iter():
+    for field: Named[CPat] in s.fields.iter():
         v.visitPat(field.node)
     match s.rest:
         RestPat.Bind(varPat): v.visitVarPat(varPat)
         _: ()
 
 
-defaultVisitRecordPat[Visitor[v]](v: v, s: RecordPat):
-    for field: Named[Pat] in s.fields.iter():
+defaultVisitRecordPat[Visitor[v]](v: v, s: CRecordPat):
+    for field: Named[CPat] in s.fields.iter():
         v.visitPat(field.node)
     match s.rest:
         RestPat.Bind(varPat): v.visitVarPat(varPat)
         _: ()
 
 
-defaultVisitOrPat[Visitor[v]](v: v, ps: Vec[Pat]):
-    for p: Pat in ps.iter():
+defaultVisitOrPat[Visitor[v]](v: v, ps: Vec[CPat]):
+    for p: CPat in ps.iter():
         v.visitPat(p)
 
 
-defaultVisitVariantPat[Visitor[v]](v: v, p: VariantPat):
+defaultVisitVariantPat[Visitor[v]](v: v, p: CVariantPat):
     v.visitPat(p.pat)
 
 
-defaultVisitNamedType[Visitor[v]](v: v, t: NamedType):
+defaultVisitNamedType[Visitor[v]](v: v, t: CNamedType):
     v.visitTyId(t.name)
     if t.args is Option.Some(args):
         v.visitTyArgs(args)
 
 
-defaultVisitRecordType[Visitor[v]](v: v, t: RecordType):
-    for field: Named[Type] in t.fields.iter():
+defaultVisitRecordType[Visitor[v]](v: v, t: CRecordType):
+    for field: Named[CType] in t.fields.iter():
         v.visitType(field.node)
 
 
-defaultVisitVariantType[Visitor[v]](v: v, t: VariantType):
-    for alt: NamedType in t.alts.iter():
+defaultVisitVariantType[Visitor[v]](v: v, t: CVariantType):
+    for alt: CNamedType in t.alts.iter():
         v.visitNamedType(alt)
 
 
-defaultVisitFnType[Visitor[v]](v: v, t: FnType):
-    for arg: Type in t.args.iter():
+defaultVisitFnType[Visitor[v]](v: v, t: CFnType):
+    for arg: CType in t.args.iter():
         v.visitType(arg)
 
     if t.ret is Option.Some(ret):
@@ -570,16 +551,16 @@ defaultVisitFnType[Visitor[v]](v: v, t: FnType):
         v.visitType(exn)
 
 
-defaultVisitAssocTySelectType[Visitor[v]](v: v, t: AssocTySelectType):
+defaultVisitAssocTySelectType[Visitor[v]](v: v, t: CAssocTySelectType):
     v.visitType(t.ty)
 
 
-defaultVisitTyArgs[Visitor[v]](v: v, t: TyArgs):
-    for arg: Type in t.args.iter():
+defaultVisitTyArgs[Visitor[v]](v: v, t: CTyArgs):
+    for arg: CType in t.args.iter():
         v.visitType(arg)
 
 
-defaultVisitPred[Visitor[v]](v: v, p: Pred_):
+defaultVisitPred[Visitor[v]](v: v, p: CPred_):
     match p:
         Pred_.Kind(name = _, kind):
             if kind is Option.Some(kind):

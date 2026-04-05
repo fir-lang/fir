@@ -2,10 +2,10 @@
 
 
 import [
-    Compiler/Ast,
+    Compiler/CompilerAst,
     Compiler/Defs,
     Compiler/Error,
-    Compiler/Grammar,
+    Compiler/Grammar2,
     Compiler/Module,
     Compiler/Scanner,
     Compiler/TypeCheck,
@@ -65,13 +65,13 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
     # Add the module to the program first to handle recursive imports.
     let moduleIdx = ModuleIdx(_idx = self._modules.len())
 
-    let funItems: HashMap[Str, FunDecl] = HashMap.withCapacity(100)
-    let assocItems: HashMap[Str, HashMap[Str, FunDecl]] = HashMap.withCapacity(
+    let funItems: HashMap[Str, CFunDecl] = HashMap.withCapacity(100)
+    let assocItems: HashMap[Str, HashMap[Str, CFunDecl]] = HashMap.withCapacity(
         10,
     )
-    let tyItems: HashMap[Str, TypeDecl] = HashMap.withCapacity(100)
-    let traitItems: HashMap[Str, TraitDecl] = HashMap.withCapacity(10)
-    let impls: Vec[ImplDecl] = Vec.empty()
+    let tyItems: HashMap[Str, CTypeDecl] = HashMap.withCapacity(100)
+    let traitItems: HashMap[Str, CTraitDecl] = HashMap.withCapacity(10)
+    let impls: Vec[CImplDecl] = Vec.empty()
     let imports: Vec[Vec[Str]] = Vec.empty()
 
     # Implicitly import `Fir/Prelude` in all modules.
@@ -80,7 +80,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
     if path != firPreludePath:
         imports.push(Vec.["Fir", "Prelude"])
 
-    for decl: TopDecl in moduleDecls.iter():
+    for decl: CTopDecl in moduleDecls.iter():
         match decl:
             TopDecl.Type(typeDecl):
                 let name = tokens.get(typeDecl.name.token.idx).text
@@ -164,7 +164,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
 # ------------------------------------------------------------------------------
 
 
-_parseFile(path: Str) (decls: Vec[TopDecl], tokens: Array[Token]):
+_parseFile(path: Str) (decls: Vec[CTopDecl], tokens: Array[Token]):
     let fileContents = readFileUtf8(path)
 
     let (tokens, error) = tokenize(path, fileContents)
@@ -177,7 +177,10 @@ _parseFile(path: Str) (decls: Vec[TopDecl], tokens: Array[Token]):
             panic("`path`:`line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens.takeArray()
 
-    match try(\(): module(ParserState.new(tokens, ()))):
+    let result: Result[U32, Vec[CTopDecl]] = try(
+        \(): module(ParserState.new(tokens, ()))
+    )
+    match result:
         Result.Err(cursor):
             match tokens.getOpt(cursor):
                 Option.None: panic("`path`: unexpected end of input")
