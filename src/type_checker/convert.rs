@@ -187,7 +187,6 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
     }
 
     if let TyConDetails::Synonym(syn_ty) = &ty_con.details {
-        assert_eq!(args.len(), ty_con.ty_params.len());
         let converted_args: Vec<Ty> = args
             .iter()
             .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))

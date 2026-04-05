@@ -138,30 +138,19 @@ convertNamedTy(
     loc: Loc,
 ) Ty / TypeError:
     let tyName = module.tokenText(namedTy.name.token)
-    let tyArgs = namedTy.args
+    let tyArgs = namedTy.args.map(\(tyArgs): tyArgs.args).unwrapOr(Vec.empty())
     let numTyArgs = namedTy.numTyArgs()
 
     let tyDefIdx = namedTy.name.def()
     let tyDefName = tyDefIdx._name
 
-    let synTy: Option[Ty] = match vars.get(tyDefName):
-        Option.Some(ty): Option.Some(ty)
-        Option.None: module._tcEnv.unwrap()._synonyms.get(tyDefName)
-
-    if synTy is Option.Some(synTy):
-        if numTyArgs != 0:
-            throw(
-                TypeError(
-                    loc,
-                    msg = "Type synonym `tyName` does not take type arguments",
-                ),
-            )
-        return synTy
-
-    let tyCon = module._tcEnv.unwrap()._cons.get(tyDefName).unwrap()
+    let tyCon = module._tcEnv.unwrapOrElse(
+        \(): panic("Type checking environment not initialized")
+    )._cons.get(tyDefName).unwrapOrElse(
+        \(): panic("Type constructor `tyDefName` not in scope")
+    )
 
     if tyCon.info.arity() != numTyArgs:
-        print(tyCon.toDoc().render(80))
         throw(
             TypeError(
                 loc,
@@ -171,13 +160,24 @@ convertNamedTy(
             ),
         )
 
+    if tyCon.info.details is TyConDetails.Synonym(synTy):
+        let convertedArgs: Vec[Ty] = Vec.fromIter(
+            tyArgs.iter().map(
+                \(astTy: CType) Ty: convertAstTy(module, vars, astTy),
+            ),
+        )
+        let substMap: HashMap[LocalId, Ty] = HashMap.withCapacity(numTyArgs)
+        for i: U32 in range(u32(0), numTyArgs):
+            substMap.insert(
+                tyCon.info.tyParams.get(i).name, convertedArgs.get(i)
+            )
+        return synTy.substQVars(substMap)
+
     if numTyArgs == 0:
         return Ty.Con(id = tyDefIdx)
 
     let convertedArgs: Vec[Ty] = Vec.fromIter(
-        tyArgs.unwrap().args.iter().map(
-            \(astTy: CType) Ty: convertAstTy(module, vars, astTy),
-        ),
+        tyArgs.iter().map(\(astTy: CType) Ty: convertAstTy(module, vars, astTy)),
     )
 
     Ty.App(conId = tyDefIdx, args = convertedArgs)
