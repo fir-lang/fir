@@ -114,11 +114,6 @@ type DefaultIds
 impl AstIds[DefaultIds]
 
 
-impl ToDoc[DefaultAstExts]:
-    toDoc(self: DefaultAstExts) Doc:
-        panic("unreachable")
-
-
 trait Tokens[t]:
     firstToken(self: t, tokens: Array[Token]) TokenIdx
 

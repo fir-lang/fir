@@ -1,8 +1,6 @@
 ## Compiler-specific AST type extensions and type synonyms.
 ##
-## This defines the concrete AST types used by the self-hosted compiler passes
-## (name resolution, kind inference, etc.), with extension fields for data
-## filled in by later passes.
+## This defines the concrete AST types used by the compiler.
 
 
 import [
@@ -10,10 +8,6 @@ import [
     Compiler/Defs,
     Compiler/TypeCheck/Ty,
 ]
-
-
-# ------------------------------------------------------------------------------
-# Type parameters (filled in by kind inference)
 
 
 ## A type parameter with its inferred kind.
@@ -27,16 +21,7 @@ type TypeParam(
 )
 
 
-# ------------------------------------------------------------------------------
-# Compiler AST extensions
-
-
 type CompilerAstExts
-
-
-impl ToDoc[CompilerAstExts]:
-    toDoc(self: CompilerAstExts) Doc:
-        panic("unreachable")
 
 
 type CompilerIds
@@ -105,10 +90,6 @@ impl AstIds[CompilerIds]:
 
     astAssocVarIdFromToken(token: TokenIdx) AstAssocVarId:
         AssocVarId(token, name = "", _resolved = Option.None)
-
-
-# ------------------------------------------------------------------------------
-# Type synonyms
 
 
 type CTopDecl = TopDecl[CompilerAstExts]
