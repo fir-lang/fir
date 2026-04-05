@@ -7,28 +7,31 @@ import [
 ## Associated types for identifiers in the ASTs.
 trait AstIds[t]:
     ## Identifiers that refer to terms.
-    type AstVarId
+    type AstVarId = Id
 
     ## Identifiers that refer to types.
-    type AstTyId
+    type AstTyId = Id
 
     ## Identifiers that refer to associated variables.
-    type AstAssocVarId
+    type AstAssocVarId = Id
 
     ## For parsing: create an `AstVarId` from a token.
-    astVarIdFromToken(token: TokenIdx) AstVarId
+    astVarIdFromToken(token: TokenIdx) AstVarId:
+        Id(token)
 
     ## For parsing: create an `AstTyId` from a token.
-    astTyIdFromToken(token: TokenIdx) AstTyId
+    astTyIdFromToken(token: TokenIdx) AstTyId:
+        Id(token)
 
     ## For parsing: create an `AstAssocVarId` from a token.
-    astAssocVarIdFromToken(token: TokenIdx) AstAssocVarId
+    astAssocVarIdFromToken(token: TokenIdx) AstAssocVarId:
+        Id(token)
 
 
 trait AstExts[t]:
     ## Identifier types used in the AST. This should be an implementation of
     ## `AstIds`.
-    type Ids
+    type Ids = DefaultIds
 
     ## Extensions for type declarations. (`TypeDecl`)
     type TypeDeclExts: Row[Rec] = row()
@@ -102,33 +105,18 @@ type AstAssocVarId[exts] = AstIds[AstExts[exts].Ids].AstAssocVarId
 type DefaultAstExts
 
 
-impl ToDoc[DefaultAstExts]:
-    toDoc(self: DefaultAstExts) Doc:
-        panic("unreachable")
+impl AstExts[DefaultAstExts]
 
 
 type DefaultIds
 
 
-impl AstExts[DefaultAstExts]:
-    type Ids = DefaultIds
+impl AstIds[DefaultIds]
 
 
-impl AstIds[DefaultIds]:
-    type AstVarId = Id
-
-    type AstTyId = Id
-
-    type AstAssocVarId = Id
-
-    astVarIdFromToken(token: TokenIdx) AstVarId:
-        Id(token)
-
-    astTyIdFromToken(token: TokenIdx) AstTyId:
-        Id(token)
-
-    astAssocVarIdFromToken(token: TokenIdx) AstAssocVarId:
-        Id(token)
+impl ToDoc[DefaultAstExts]:
+    toDoc(self: DefaultAstExts) Doc:
+        panic("unreachable")
 
 
 trait Tokens[t]:
