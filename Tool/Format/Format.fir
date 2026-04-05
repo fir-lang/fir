@@ -277,6 +277,15 @@ ConFields.format(self, tokens: Array[Token]) Doc:
                 if trailingComma:
                     doc += Doc.hardLine()
                     trailingComma = Bool.False
+
+                # Similar to non-extension fields, allow one empty line between
+                # the last field and extension.
+                let prevFieldLine = tokens.get(lastToken.idx).line
+                let currentFieldLine = tokens.get(ext.firstToken(tokens).idx)
+                    .line
+                if currentFieldLine - prevFieldLine > 1:
+                    doc += Doc.hardLine()
+
                 let dotdot = prevNonTrivia(ext.firstToken(tokens), tokens)
                     .unwrap()
                 assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
