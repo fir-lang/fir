@@ -1643,6 +1643,29 @@ type_(state: ParserState[Token, ()]) ParseTree[Token, NonTerminal] / U32:
         \():
             let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
             nodes.push(namedType(state))
+            let optionalCursor0 = state._cursor
+            let nodesLen0 = nodes.len()
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Dot, ..):
+                        nodes.push(ParseTree.Terminal(sym))
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.UpperId, ..):
+                        nodes.push(ParseTree.Terminal(sym))
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    (),
+            )
+            match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    nodes.truncate(nodesLen0)
+                Result.Ok(ok): ()
             let val = do:
                 ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes)
             val,

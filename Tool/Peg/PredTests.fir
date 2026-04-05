@@ -36,6 +36,8 @@ trait ItemExts[t]:
 
     type B: Row[Rec]
 
+    type Dummy
+
     defaultA() (..A)
 
     defaultB() (..B)
@@ -48,6 +50,8 @@ impl ItemExts[Defaults1]:
     type A = row(def1Ext1: U32)
 
     type B = row(def1Ext2: Bool)
+
+    type Dummy = Str
 
     defaultA() (..A):
         (def1Ext1 = u32(1))
@@ -63,6 +67,8 @@ impl ItemExts[Defaults2]:
     type A = row(def2Ext1: Str)
 
     type B = row(def2Ext2: Option[U32])
+
+    type Dummy = U32
 
     defaultA() (..A):
         (def2Ext1 = "hi")

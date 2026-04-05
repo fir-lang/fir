@@ -11,7 +11,7 @@ Terminals:
     "a" = Token(kind = TokenKind.LowerId, text = "a", ..)
     "b" = Token(kind = TokenKind.LowerId, text = "b", ..)
 
-items[ItemExts[t]] Vec[Item[t]]:
+items[ItemExts[t], ToStr[ItemExts[t].Dummy]] Vec[Item[t]]:
     items=item+:
         items
 
