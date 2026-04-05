@@ -5,6 +5,7 @@ import [
     Compiler/Scanner,
 ]
 
+
 main():
     let args = getArgs()
 
@@ -30,7 +31,11 @@ main():
             panic("`path`:`line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens): tokens.takeArray()
 
-    match try(\(): justTesting(ParserState.new(tokens, ()))):
+    let result: Result[U32, Expr[DefaultAstExts]] = try(
+        \(): justTesting(ParserState.new(tokens, ()))
+    )
+
+    match result:
         Result.Err(cursor):
             match tokens.getOpt(cursor):
                 Option.None: panic("`path`: unexpected end of input")
@@ -38,5 +43,4 @@ main():
                     panic(
                         "`path`:`token.line + 1`:`token.col + 1`: unexpected token `token`",
                     )
-        Result.Ok(parsed):
-            print(parsed.toDoc().render(80))
+        Result.Ok(parsed): print(parsed.toDoc().render(80))

@@ -95,6 +95,38 @@ type AstVarId[exts] = AstIds[AstExts[exts].Ids].AstVarId
 type AstAssocVarId[exts] = AstIds[AstExts[exts].Ids].AstAssocVarId
 
 
+type DefaultAstExts
+
+
+impl ToDoc[DefaultAstExts]:
+    toDoc(self: DefaultAstExts) Doc:
+        panic("unreachable")
+
+
+type DefaultIds
+
+
+impl AstExts[DefaultAstExts]:
+    type Ids = DefaultIds
+
+
+impl AstIds[DefaultIds]:
+    type AstVarId = Id
+
+    type AstTyId = Id
+
+    type AstAssocVarId = Id
+
+    astVarIdFromToken(token: TokenIdx) AstVarId:
+        Id(token)
+
+    astTyIdFromToken(token: TokenIdx) AstTyId:
+        Id(token)
+
+    astAssocVarIdFromToken(token: TokenIdx) AstAssocVarId:
+        Id(token)
+
+
 trait Tokens[t]:
     firstToken(self: t, tokens: Array[Token]) TokenIdx
 
