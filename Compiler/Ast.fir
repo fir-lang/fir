@@ -182,6 +182,7 @@ type TypeDecl[exts](
 
     ## Type parameters of the type. `[t]` in the example.
     typeParams: Vec[DeclTypeParam[exts]],
+
     ..AstExts[exts].TypeDeclExts
 )
 
@@ -292,6 +293,7 @@ type FunSig[exts](
     ## list, and without return or exception types) won't have any other AST
     ## nodes.
     lparen: TokenIdx,
+
     ..AstExts[exts].FunSigExts
 )
 
@@ -359,6 +361,7 @@ type TraitDecl[exts](
 
     ## Method and associated types of the trait.
     items: Vec[TraitDeclItem[exts]],
+
     ..AstExts[exts].TraitDeclExts
 )
 
@@ -406,6 +409,7 @@ type ImplDecl[exts](
 
     # The `impl` token.
     _firstToken: TokenIdx,
+
     ..AstExts[exts].ImplDeclExts
 )
 
