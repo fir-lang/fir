@@ -1,4 +1,5 @@
 import [
+    Compiler/CompilerAst,
     Compiler/Error,
     Compiler/Grammar,
     Compiler/Scanner,
@@ -42,7 +43,7 @@ main():
         Result.Ok(mod): mod
 
     if printAst:
-        for decl: TopDecl in mod.iter():
+        for decl: CTopDecl in mod.iter():
             print(decl.toDoc().render(80))
             print("")
 
