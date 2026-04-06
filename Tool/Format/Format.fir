@@ -49,7 +49,7 @@ showUsageAndExit() a:
     panic("USAGE: fir format <file>")
 
 
-formatModule(mod: Vec[TopDecl], tokens: Array[Token]) Doc:
+formatModule(mod: Vec[FmtTopDecl], tokens: Array[Token]) Doc:
     let doc = Doc.empty()
     let declIdx: U32 = 0
 
@@ -84,7 +84,7 @@ formatModule(mod: Vec[TopDecl], tokens: Array[Token]) Doc:
 # Declarations
 
 
-TopDecl.format(self, tokens: Array[Token]) Doc:
+TopDecl.format(self: FmtTopDecl, tokens: Array[Token]) Doc:
     match self:
         TopDecl.Type(d): d.format(tokens)
         TopDecl.Fun(d): d.format(tokens)
@@ -93,7 +93,7 @@ TopDecl.format(self, tokens: Array[Token]) Doc:
         TopDecl.Impl(d): d.format(tokens)
 
 
-TypeDecl.format(self, tokens: Array[Token]) Doc:
+TypeDecl.format(self: FmtTypeDecl, tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
     if self.attr is Option.Some(attr):
@@ -126,7 +126,7 @@ TypeDecl.format(self, tokens: Array[Token]) Doc:
         doc += formatToken(lbracket, tokens)
 
         let trailingComma = Bool.False
-        for typeParam: DeclTypeParam in self.typeParams.iter():
+        for typeParam: FmtDeclTypeParam in self.typeParams.iter():
             if trailingComma:
                 doc += Doc.blank(1)
                 trailingComma = Bool.False
@@ -159,7 +159,7 @@ TypeDecl.format(self, tokens: Array[Token]) Doc:
     doc
 
 
-TypeDeclRhs.format(self, tokens: Array[Token]) Doc:
+TypeDeclRhs.format(self: FmtTypeDeclRhs, tokens: Array[Token]) Doc:
     match self:
         TypeDeclRhs.Sum(cons, extension):
             assert(not (cons.isEmpty() and extension is Option.None))
@@ -178,7 +178,7 @@ TypeDeclRhs.format(self, tokens: Array[Token]) Doc:
 
             let doc = Doc.empty()
             let conIdx: U32 = 0
-            for con: ConDecl in cons.iter():
+            for con: FmtConDecl in cons.iter():
                 if conIdx != 0:
                     doc += Doc.hardLine()
 
@@ -213,11 +213,11 @@ TypeDeclRhs.format(self, tokens: Array[Token]) Doc:
                 + ty.format(tokens)
 
 
-ConDecl.format(self, tokens: Array[Token]) Doc:
+ConDecl.format(self: FmtConDecl, tokens: Array[Token]) Doc:
     formatToken(self.name.token, tokens) + self.fields.format(tokens)
 
 
-ConFields.format(self, tokens: Array[Token]) Doc:
+ConFields.format(self: FmtConFields, tokens: Array[Token]) Doc:
     match self:
         ConFields.Empty: Doc.empty()
 
@@ -241,7 +241,7 @@ ConFields.format(self, tokens: Array[Token]) Doc:
             let lastToken = lparen
             let trailingComma = Bool.False
             let fieldIdx: U32 = 0
-            for field: NamedField in fields.iter():
+            for field: FmtNamedField in fields.iter():
                 if trailingComma:
                     doc += Doc.hardLine()
                     trailingComma = Bool.False
@@ -311,7 +311,7 @@ ConFields.format(self, tokens: Array[Token]) Doc:
 
             let lastToken = lparen
             let trailingComma = Bool.False
-            for field: Type in fields.iter():
+            for field: FmtType in fields.iter():
                 if trailingComma:
                     doc += Doc.break_(1)
                     trailingComma = Bool.False
@@ -336,7 +336,7 @@ ConFields.format(self, tokens: Array[Token]) Doc:
             )
 
 
-FunDecl.format(self, tokens: Array[Token]) Doc:
+FunDecl.format(self: FmtFunDecl, tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
     if self.prim_ is Option.Some(prim_):
@@ -396,13 +396,13 @@ FunDecl.format(self, tokens: Array[Token]) Doc:
     doc
 
 
-_formatOptContext(context: Option[Context], tokens: Array[Token]) Doc:
+_formatOptContext(context: Option[FmtContext], tokens: Array[Token]) Doc:
     match context:
         Option.None: Doc.empty()
         Option.Some(context): _formatContext(context, tokens)
 
 
-_formatContext(context: Context, tokens: Array[Token]) Doc:
+_formatContext(context: FmtContext, tokens: Array[Token]) Doc:
     let lbracket = context.firstToken(tokens)
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
@@ -413,7 +413,7 @@ _formatContext(context: Context, tokens: Array[Token]) Doc:
 
     let lastToken = lbracket
     let trailingComma = Bool.False
-    for pred: Pred_ in context.preds.iter():
+    for pred: FmtPred_ in context.preds.iter():
         if trailingComma:
             doc += Doc.break_(1)
             trailingComma = Bool.False
@@ -459,12 +459,16 @@ _formatContext(context: Context, tokens: Array[Token]) Doc:
     Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rbracket, tokens))
 
 
-_formatSigArgList(lparen: TokenIdx, params: Vec[FunArg], tokens: Array[Token]) (doc: Doc, rparen: TokenIdx):
+_formatSigArgList(
+    lparen: TokenIdx,
+    params: Vec[FmtFunArg],
+    tokens: Array[Token],
+) (doc: Doc, rparen: TokenIdx):
     let argList = formatToken(lparen, tokens) + Doc.break_(0)
 
     let trailingComma = Bool.False
     let lastToken = lparen
-    for arg: FunArg in params.iter():
+    for arg: FmtFunArg in params.iter():
         if trailingComma:
             argList += Doc.break_(1)
             trailingComma = Bool.False
@@ -552,7 +556,7 @@ ImportDecl.format(self, tokens: Array[Token]) Doc:
         doc + docRest.nest(4) + Doc.hardLine() + formatToken(rbracket, tokens)
 
 
-TraitDecl.format(self, tokens: Array[Token]) Doc:
+TraitDecl.format(self: FmtTraitDecl, tokens: Array[Token]) Doc:
     let trait_ = prevNonTrivia(self.name.token, tokens).unwrap()
     assert(tokens.get(trait_.idx).kind is TokenKind.Trait)
 
@@ -567,7 +571,7 @@ TraitDecl.format(self, tokens: Array[Token]) Doc:
     let docRest = formatToken(lbracket, tokens)
     let lastToken = lbracket
     let trailingComma = Bool.False
-    for typeParam: DeclTypeParam in self.typeParams.iter():
+    for typeParam: FmtDeclTypeParam in self.typeParams.iter():
         if trailingComma:
             docRest += Doc.blank(1)
             trailingComma = Bool.False
@@ -608,14 +612,14 @@ TraitDecl.format(self, tokens: Array[Token]) Doc:
                 + Doc.hardLine()
                 + join(
                     self.items.iter().map(
-                        \(item: TraitDeclItem): item.format(tokens),
+                        \(item: FmtTraitDeclItem): item.format(tokens),
                     ),
                     Doc.hardLine() + Doc.hardLine(),
                 ),
         )
 
 
-TraitDeclItem.format(self, tokens: Array[Token]) Doc:
+TraitDeclItem.format(self: FmtTraitDeclItem, tokens: Array[Token]) Doc:
     match self:
         TraitDeclItem.Type(name, kind, default):
             let typeToken = prevNonTrivia(name.token, tokens).unwrap()
@@ -646,7 +650,7 @@ TraitDeclItem.format(self, tokens: Array[Token]) Doc:
         TraitDeclItem.Fun(fun): fun.format(tokens)
 
 
-ImplDecl.format(self, tokens: Array[Token]) Doc:
+ImplDecl.format(self: FmtImplDecl, tokens: Array[Token]) Doc:
     let impl_ = self._firstToken
     assert(tokens.get(impl_.idx).kind is TokenKind.Impl)
 
@@ -662,7 +666,7 @@ ImplDecl.format(self, tokens: Array[Token]) Doc:
 
     let lastToken = lbracket
     let trailingComma = Bool.False
-    for ty: Type in self.tys.iter():
+    for ty: FmtType in self.tys.iter():
         if trailingComma:
             docRest += Doc.blank(1)
             trailingComma = Bool.False
@@ -690,14 +694,14 @@ ImplDecl.format(self, tokens: Array[Token]) Doc:
     docRest += formatToken(colon, tokens) + Doc.hardLine()
 
     docRest += join(
-        self.items.iter().map(\(item: ImplDeclItem): item.format(tokens)),
+        self.items.iter().map(\(item: FmtImplDeclItem): item.format(tokens)),
         Doc.hardLine() + Doc.hardLine(),
     )
 
     doc0 + docRest.nest(4)
 
 
-ImplDeclItem.format(self, tokens: Array[Token]) Doc:
+ImplDeclItem.format(self: FmtImplDeclItem, tokens: Array[Token]) Doc:
     match self:
         ImplDeclItem.Type(assocTy, rhs):
             let typeToken = prevNonTrivia(assocTy.token, tokens).unwrap()
@@ -721,7 +725,7 @@ ImplDeclItem.format(self, tokens: Array[Token]) Doc:
 # Expressions
 
 
-Expr.format(self, tokens: Array[Token]) Doc:
+Expr.format(self: FmtExpr, tokens: Array[Token]) Doc:
     Doc.group(
         match self:
             Expr.Var(e): e.format(tokens)
@@ -743,19 +747,15 @@ Expr.format(self, tokens: Array[Token]) Doc:
             Expr.Do(e): e.format(tokens)
             Expr.Seq(e): e.format(tokens)
             Expr.Paren(e): e.format(tokens)
-            Expr.Variant(e): e.format(tokens)
-            Expr.MethodSel(e):
-                # These expressions are intoruduced by the type checker, which we don't run when
-                # formatting.
-                panic("Expr.MethodSel"),
+            Expr.Variant(e): e.format(tokens),
     )
 
 
-VarExpr.format(self, tokens: Array[Token]) Doc:
+VarExpr.format(self: FmtVarExpr, tokens: Array[Token]) Doc:
     formatToken(self.id.token, tokens) + formatTyArgs(self.userTyArgs, tokens)
 
 
-Con.format(self, tokens: Array[Token]) Doc:
+Con.format(self: FmtCon, tokens: Array[Token]) Doc:
     let doc = formatToken(self.ty.token, tokens)
 
     if self.con is Option.Some(con):
@@ -767,7 +767,7 @@ Con.format(self, tokens: Array[Token]) Doc:
     doc + formatTyArgs(self.userTyArgs, tokens)
 
 
-FieldSelExpr.format(self, tokens: Array[Token]) Doc:
+FieldSelExpr.format(self: FmtFieldSelExpr, tokens: Array[Token]) Doc:
     #|
     Group sequence of selections so that we will format like one of the following:
 
@@ -785,7 +785,9 @@ FieldSelExpr.format(self, tokens: Array[Token]) Doc:
     |#
 
     let selection = self
-    let fields: Vec[(field: Id, tyArgs: Option[TyArgs])] = Vec.withCapacity(1)
+    let fields: Vec[(field: Id, tyArgs: Option[FmtTyArgs])] = Vec.withCapacity(
+        1
+    )
     loop:
         fields.push((field = selection.field, tyArgs = selection.userTyArgs))
         if selection.object is Expr.FieldSel(e):
@@ -809,7 +811,7 @@ FieldSelExpr.format(self, tokens: Array[Token]) Doc:
     doc.group()
 
 
-AssocFnSelExpr.format(self, tokens: Array[Token]) Doc:
+AssocFnSelExpr.format(self: FmtAssocFnSelExpr, tokens: Array[Token]) Doc:
     let dot = nextNonTrivia(self.ty.token, tokens).unwrap()
     assert(tokens.get(dot.idx).kind is TokenKind.Dot)
 
@@ -823,7 +825,7 @@ AssocFnSelExpr.format(self, tokens: Array[Token]) Doc:
     )
 
 
-CallExpr.format(self, tokens: Array[Token]) Doc:
+CallExpr.format(self: FmtCallExpr, tokens: Array[Token]) Doc:
     #|
     Single line:
 
@@ -856,9 +858,9 @@ IntExpr.format(self, tokens: Array[Token]) Doc:
     formatToken(self.token, tokens)
 
 
-StrExpr.format(self, tokens: Array[Token]) Doc:
+StrExpr.format(self: FmtStrExpr, tokens: Array[Token]) Doc:
     let doc = formatToken(self.first, tokens)
-    for part: StrPart in self.parts.iter():
+    for part: FmtStrPart in self.parts.iter():
         match part:
             StrPart.Str(str): doc += Doc.str(str)
             StrPart.Expr(expr):
@@ -870,7 +872,7 @@ CharExpr.format(self, tokens: Array[Token]) Doc:
     formatToken(self.token, tokens)
 
 
-BinOpExpr.format(self, tokens: Array[Token]) Doc:
+BinOpExpr.format(self: FmtBinOpExpr, tokens: Array[Token]) Doc:
     # Binary operators are all left-associative, so the right-hand side can never be a `BinOp`
     # unless it's wrapped with a `Paren`.
     #
@@ -878,7 +880,7 @@ BinOpExpr.format(self, tokens: Array[Token]) Doc:
 
     let rhs = self.right
 
-    let exprs: Vec[Expr] = Vec.withCapacity(1)
+    let exprs: Vec[FmtExpr] = Vec.withCapacity(1)
 
     let left = self.left
     while left is Expr.BinOp(binop) and binop.op == self.op:
@@ -906,12 +908,12 @@ BinOpExpr.format(self, tokens: Array[Token]) Doc:
     Doc.grouped(doc0.group() + docRest.nest(4).group())
 
 
-UnOpExpr.format(self, tokens: Array[Token]) Doc:
+UnOpExpr.format(self: FmtUnOpExpr, tokens: Array[Token]) Doc:
     let op = self.firstToken(tokens)
     formatToken(op, tokens) + Doc.blank(1) + self.expr.format(tokens)
 
 
-RecordExpr.format(self, tokens: Array[Token]) Doc:
+RecordExpr.format(self: FmtRecordExpr, tokens: Array[Token]) Doc:
     let lparen = self.firstToken(tokens)
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
@@ -922,8 +924,8 @@ RecordExpr.format(self, tokens: Array[Token]) Doc:
 
 
 _formatArgList(
-    args: Vec[Named[Expr]],
-    splice: Option[Expr],
+    args: Vec[Named[FmtExpr]],
+    splice: Option[FmtExpr],
     lparen: TokenIdx,
     rparen: TokenIdx,
     tokens: Array[Token],
@@ -935,7 +937,7 @@ _formatArgList(
     let fieldIdx: U32 = 0
     let trailingComma = Bool.False
 
-    for arg: Named[Expr] in args.iter():
+    for arg: Named[FmtExpr] in args.iter():
         if trailingComma:
             doc += Doc.break_(1)
             trailingComma = Bool.False
@@ -965,7 +967,7 @@ _formatArgList(
         )
 
 
-ReturnExpr.format(self, tokens: Array[Token]) Doc:
+ReturnExpr.format(self: FmtReturnExpr, tokens: Array[Token]) Doc:
     let ret = self.firstToken(tokens)
     assert(tokens.get(ret.idx).kind is TokenKind.Return)
 
@@ -979,7 +981,7 @@ ReturnExpr.format(self, tokens: Array[Token]) Doc:
             doc + Doc.blank(1) + expr.format(tokens)
 
 
-MatchExpr.format(self, tokens: Array[Token]) Doc:
+MatchExpr.format(self: FmtMatchExpr, tokens: Array[Token]) Doc:
     let match_ = self.firstToken(tokens)
     assert(tokens.get(match_.idx).kind is TokenKind.Match)
 
@@ -991,7 +993,7 @@ MatchExpr.format(self, tokens: Array[Token]) Doc:
         + formatToken(colon, tokens)
 
     let altIdx: U32 = 0
-    for alt: Alt in self.alts.iter():
+    for alt: FmtAlt in self.alts.iter():
         docRest += Doc.hardLine() + alt.format(tokens)
 
         if self.alts.getOpt(altIdx + 1) is Option.Some(nextAlt):
@@ -1004,7 +1006,7 @@ MatchExpr.format(self, tokens: Array[Token]) Doc:
     doc0 + docRest.nest(4)
 
 
-Alt.format(self, tokens: Array[Token]) Doc:
+Alt.format(self: FmtAlt, tokens: Array[Token]) Doc:
     let doc0 = self.pat.format(tokens)
     let docRest = Doc.empty()
 
@@ -1029,7 +1031,7 @@ Alt.format(self, tokens: Array[Token]) Doc:
         ).group()
 
 
-IfExpr.format(self, tokens: Array[Token]) Doc:
+IfExpr.format(self: FmtIfExpr, tokens: Array[Token]) Doc:
     let firstBranch = self.branches.get(0)
 
     let colon = nextNonTrivia(firstBranch.guard.lastToken(tokens), tokens)
@@ -1046,7 +1048,7 @@ IfExpr.format(self, tokens: Array[Token]) Doc:
                 + formatStmts(firstBranch.body, tokens),
         )
 
-    for branch: IfBranch in self.branches.iter().skip(1):
+    for branch: FmtIfBranch in self.branches.iter().skip(1):
         let elif_ = prevNonTrivia(branch.guard.firstToken(tokens), tokens)
             .unwrap()
         assert(tokens.get(elif_.idx).kind is TokenKind.Elif)
@@ -1084,7 +1086,7 @@ IfExpr.format(self, tokens: Array[Token]) Doc:
     doc
 
 
-FnExpr.format(self, tokens: Array[Token]) Doc:
+FnExpr.format(self: FmtFnExpr, tokens: Array[Token]) Doc:
     # assert(self.sig.context.typeParams.isEmpty)
     # assert(self.sig.context.preds.isEmpty)
     # assert(self.sig.self_ is SelfParam.No)
@@ -1098,7 +1100,7 @@ FnExpr.format(self, tokens: Array[Token]) Doc:
     let lastToken = lparen
 
     let trailingComma = Bool.False
-    for param: FunArg in self.sig.params.iter():
+    for param: FmtFunArg in self.sig.params.iter():
         if trailingComma:
             docRest += Doc.blank(1)
             trailingComma = Bool.False
@@ -1156,7 +1158,7 @@ FnExpr.format(self, tokens: Array[Token]) Doc:
     doc0 + docRest.nest(4)
 
 
-IsExpr.format(self, tokens: Array[Token]) Doc:
+IsExpr.format(self: FmtIsExpr, tokens: Array[Token]) Doc:
     let is_ = nextNonTrivia(self.expr.lastToken(tokens), tokens).unwrap()
     assert(tokens.get(is_.idx).kind is TokenKind.Is)
 
@@ -1172,7 +1174,7 @@ IsExpr.format(self, tokens: Array[Token]) Doc:
     )
 
 
-DoExpr.format(self, tokens: Array[Token]) Doc:
+DoExpr.format(self: FmtDoExpr, tokens: Array[Token]) Doc:
     let do_ = self.firstToken(tokens)
 
     let colon = nextNonTrivia(do_, tokens).unwrap()
@@ -1187,7 +1189,7 @@ DoExpr.format(self, tokens: Array[Token]) Doc:
         )
 
 
-SeqExpr.format(self, tokens: Array[Token]) Doc:
+SeqExpr.format(self: FmtSeqExpr, tokens: Array[Token]) Doc:
     let doc0 = Doc.empty()
     let docRest = Doc.empty()
 
@@ -1208,7 +1210,7 @@ SeqExpr.format(self, tokens: Array[Token]) Doc:
     docRest += Doc.break_(0)
 
     let trailingComma = Bool.False
-    for elem: SeqElem in self.elems.iter():
+    for elem: FmtSeqElem in self.elems.iter():
         if trailingComma:
             docRest += Doc.break_(1)
             trailingComma = Bool.False
@@ -1243,13 +1245,13 @@ SeqExpr.format(self, tokens: Array[Token]) Doc:
     )
 
 
-ParenExpr.format(self, tokens: Array[Token]) Doc:
+ParenExpr.format(self: FmtParenExpr, tokens: Array[Token]) Doc:
     formatToken(self.firstToken(tokens), tokens)
         + self.expr.format(tokens)
         + formatToken(self.lastToken(tokens), tokens)
 
 
-VariantExpr.format(self, tokens: Array[Token]) Doc:
+VariantExpr.format(self: FmtVariantExpr, tokens: Array[Token]) Doc:
     formatToken(self.firstToken(tokens), tokens) + self.expr.format(tokens)
 
 
@@ -1257,14 +1259,14 @@ VariantExpr.format(self, tokens: Array[Token]) Doc:
 # Statements
 
 
-formatStmts(stmts: Vec[Stmt], tokens: Array[Token]) Doc:
+formatStmts(stmts: Vec[FmtStmt], tokens: Array[Token]) Doc:
     if stmts.isEmpty():
         Doc.empty()
 
     let lastStmt = stmts.get(0)
     let doc = lastStmt.format(tokens)
 
-    for stmt: Stmt in stmts.iter().skip(1):
+    for stmt: FmtStmt in stmts.iter().skip(1):
         doc += Doc.hardLine()
 
         # When we have empty lines between the statements, leave one empty line between the
@@ -1280,7 +1282,7 @@ formatStmts(stmts: Vec[Stmt], tokens: Array[Token]) Doc:
     doc
 
 
-Stmt.format(self, tokens: Array[Token]) Doc:
+Stmt.format(self: FmtStmt, tokens: Array[Token]) Doc:
     Doc.group(
         match self:
             Stmt.Let(s): s.format(tokens)
@@ -1294,7 +1296,7 @@ Stmt.format(self, tokens: Array[Token]) Doc:
     )
 
 
-LetStmt.format(self, tokens: Array[Token]) Doc:
+LetStmt.format(self: FmtLetStmt, tokens: Array[Token]) Doc:
     let let_ = prevNonTrivia(self.lhs.firstToken(tokens), tokens).unwrap()
     assert(tokens.get(let_.idx).kind is TokenKind.Let)
 
@@ -1316,7 +1318,7 @@ LetStmt.format(self, tokens: Array[Token]) Doc:
         + self.rhs.format(tokens)
 
 
-AssignStmt.format(self, tokens: Array[Token]) Doc:
+AssignStmt.format(self: FmtAssignStmt, tokens: Array[Token]) Doc:
     let op = nextNonTrivia(self.lhs.lastToken(tokens), tokens).unwrap()
 
     self.lhs.format(tokens)
@@ -1326,7 +1328,7 @@ AssignStmt.format(self, tokens: Array[Token]) Doc:
         + self.rhs.format(tokens)
 
 
-ForStmt.format(self, tokens: Array[Token]) Doc:
+ForStmt.format(self: FmtForStmt, tokens: Array[Token]) Doc:
     let doc0 = Doc.empty()
     let for_ = self.firstToken(tokens)
 
@@ -1375,7 +1377,7 @@ ForStmt.format(self, tokens: Array[Token]) Doc:
         )
 
 
-WhileStmt.format(self, tokens: Array[Token]) Doc:
+WhileStmt.format(self: FmtWhileStmt, tokens: Array[Token]) Doc:
     let doc0 = Doc.empty()
     let while_ = self.firstToken(tokens)
 
@@ -1400,7 +1402,7 @@ WhileStmt.format(self, tokens: Array[Token]) Doc:
         )
 
 
-LoopStmt.format(self, tokens: Array[Token]) Doc:
+LoopStmt.format(self: FmtLoopStmt, tokens: Array[Token]) Doc:
     let loop_ = self.firstToken(tokens)
 
     let colon = nextNonTrivia(loop_, tokens).unwrap()
@@ -1445,7 +1447,7 @@ ContinueStmt.format(self, tokens: Array[Token]) Doc:
 # Types
 
 
-Type.format(self, tokens: Array[Token]) Doc:
+Type.format(self: FmtType, tokens: Array[Token]) Doc:
     match self:
         Type.Named(t): t.format(tokens)
         Type.Var(id): formatToken(id.token, tokens)
@@ -1455,11 +1457,11 @@ Type.format(self, tokens: Array[Token]) Doc:
         Type.AssocTySelect(t): t.format(tokens)
 
 
-NamedType.format(self, tokens: Array[Token]) Doc:
+NamedType.format(self: FmtNamedType, tokens: Array[Token]) Doc:
     formatToken(self.name.token, tokens) + formatTyArgs(self.args, tokens)
 
 
-RecordType.format(self, tokens: Array[Token]) Doc:
+RecordType.format(self: FmtRecordType, tokens: Array[Token]) Doc:
     let lparen = self.firstToken(tokens)
     assert(
         tokens.get(lparen.idx).kind is TokenKind.LParen | TokenKind.LParenRow
@@ -1470,7 +1472,7 @@ RecordType.format(self, tokens: Array[Token]) Doc:
 
     let trailingComma = Bool.False
     let lastToken = lparen
-    for field: Named[Type] in self.fields.iter():
+    for field: Named[FmtType] in self.fields.iter():
         if trailingComma:
             docRest += Doc.blank(1)
             trailingComma = Bool.False
@@ -1499,7 +1501,7 @@ RecordType.format(self, tokens: Array[Token]) Doc:
     doc0 + Doc.grouped(docRest + formatToken(rparen, tokens))
 
 
-VariantType.format(self, tokens: Array[Token]) Doc:
+VariantType.format(self: FmtVariantType, tokens: Array[Token]) Doc:
     let lbracket = self.firstToken(tokens)
     assert(
         tokens.get(lbracket.idx).kind
@@ -1514,7 +1516,7 @@ VariantType.format(self, tokens: Array[Token]) Doc:
 
     let trailingComma = Bool.False
     let lastToken = lbracket
-    for alt: NamedType in self.alts.iter():
+    for alt: FmtNamedType in self.alts.iter():
         if trailingComma:
             docRest += Doc.blank(1)
             trailingComma = Bool.False
@@ -1539,7 +1541,7 @@ VariantType.format(self, tokens: Array[Token]) Doc:
     doc0 + docRest + formatToken(rbracket, tokens)
 
 
-FnType.format(self, tokens: Array[Token]) Doc:
+FnType.format(self: FmtFnType, tokens: Array[Token]) Doc:
     let fn_ = self.firstToken(tokens)
 
     let lparen = nextNonTrivia(fn_, tokens).unwrap()
@@ -1549,7 +1551,7 @@ FnType.format(self, tokens: Array[Token]) Doc:
 
     let lastToken = lparen
     let trailingComma = Bool.False
-    for arg: Type in self.args.iter():
+    for arg: FmtType in self.args.iter():
         if trailingComma:
             doc += Doc.blank(1)
             trailingComma = Bool.False
@@ -1586,7 +1588,7 @@ FnType.format(self, tokens: Array[Token]) Doc:
     doc
 
 
-AssocTySelectType.format(self, tokens: Array[Token]) Doc:
+AssocTySelectType.format(self: FmtAssocTySelectType, tokens: Array[Token]) Doc:
     let doc = self.ty.format(tokens)
     let dot = nextNonTrivia(self.ty.lastToken(tokens), tokens).unwrap()
     assert(tokens.get(dot.idx).kind is TokenKind.Dot)
@@ -1597,7 +1599,7 @@ AssocTySelectType.format(self, tokens: Array[Token]) Doc:
 # Patterns
 
 
-Pat.format(self, tokens: Array[Token]) Doc:
+Pat.format(self: FmtPat, tokens: Array[Token]) Doc:
     match self:
         Pat.Var(p): p.format(tokens)
 
@@ -1615,7 +1617,7 @@ Pat.format(self, tokens: Array[Token]) Doc:
             let doc0 = ps.get(0).format(tokens)
 
             let docRest = Doc.empty()
-            for p: Pat in ps.iter().skip(1):
+            for p: FmtPat in ps.iter().skip(1):
                 let pipe = prevNonTrivia(p.firstToken(tokens), tokens).unwrap()
                 assert(tokens.get(pipe.idx).kind is TokenKind.Pipe)
 
@@ -1633,7 +1635,7 @@ VarPat.format(self, tokens: Array[Token]) Doc:
     formatToken(self.var_.token, tokens)
 
 
-ConPat.format(self, tokens: Array[Token]) Doc:
+ConPat.format(self: FmtConPat, tokens: Array[Token]) Doc:
     let con = self.con.format(tokens)
 
     if self.fields.isEmpty() and self.rest is RestPat.No:
@@ -1646,7 +1648,7 @@ ConPat.format(self, tokens: Array[Token]) Doc:
 
     let trailingComma = Bool.False
     let lastToken = lparen
-    for field: Named[Pat] in self.fields.iter():
+    for field: Named[FmtPat] in self.fields.iter():
         if trailingComma:
             args += Doc.break_(1)
             trailingComma = Bool.False
@@ -1695,13 +1697,13 @@ ConPat.format(self, tokens: Array[Token]) Doc:
     )
 
 
-RecordPat.format(self, tokens: Array[Token]) Doc:
+RecordPat.format(self: FmtRecordPat, tokens: Array[Token]) Doc:
     let lparen = self.firstToken(tokens)
     let doc = formatToken(lparen, tokens) + Doc.break_(0)
 
     let trailingComma = Bool.False
     let lastToken = lparen
-    for field: Named[Pat] in self.fields.iter():
+    for field: Named[FmtPat] in self.fields.iter():
         if trailingComma:
             doc += Doc.break_(1)
             trailingComma = Bool.False
@@ -1743,13 +1745,13 @@ RecordPat.format(self, tokens: Array[Token]) Doc:
     Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rparen, tokens))
 
 
-VariantPat.format(self, tokens: Array[Token]) Doc:
+VariantPat.format(self: FmtVariantPat, tokens: Array[Token]) Doc:
     let tilde = prevNonTrivia(self.pat.firstToken(tokens), tokens).unwrap()
     assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
     formatToken(tilde, tokens) + self.pat.format(tokens)
 
 
-Attribute.format(self, tokens: Array[Token]) Doc:
+Attribute.format(self: FmtAttribute, tokens: Array[Token]) Doc:
     formatToken(self.open, tokens)
         + self.expr.format(tokens)
         + formatToken(self.close, tokens)
@@ -1864,7 +1866,7 @@ formatTrailingComments(tokenIdx: TokenIdx, tokens: Array[Token]) Doc:
     doc
 
 
-formatTyArgs(tyArgs: Option[TyArgs], tokens: Array[Token]) Doc:
+formatTyArgs(tyArgs: Option[FmtTyArgs], tokens: Array[Token]) Doc:
     match tyArgs:
         Option.None: Doc.empty()
 
@@ -1878,7 +1880,7 @@ formatTyArgs(tyArgs: Option[TyArgs], tokens: Array[Token]) Doc:
             let doc = formatToken(lbracket, tokens)
 
             let trailingComma = Bool.False
-            for tyArg: Type in tyArgs.args.iter():
+            for tyArg: FmtType in tyArgs.args.iter():
                 if trailingComma:
                     doc += Doc.blank(1)
                     trailingComma = Bool.False
@@ -1994,3 +1996,174 @@ commentAtStart(tokenIdx: TokenIdx, tokens: Array[Token]) Bool:
         return Bool.True
 
     tokens.get(idx).line != tokens.get(tokenIdx.idx).line
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+type FmtTopDecl = TopDecl[DefaultAstExts]
+
+
+type FmtTypeDecl = TypeDecl[DefaultAstExts]
+
+
+type FmtTypeDeclRhs = TypeDeclRhs[DefaultAstExts]
+
+
+type FmtConDecl = ConDecl[DefaultAstExts]
+
+
+type FmtConFields = ConFields[DefaultAstExts]
+
+
+type FmtNamedField = NamedField[DefaultAstExts]
+
+
+type FmtFunDecl = FunDecl[DefaultAstExts]
+
+
+type FmtFunArg = FunArg[DefaultAstExts]
+
+
+type FmtTraitDecl = TraitDecl[DefaultAstExts]
+
+
+type FmtTraitDeclItem = TraitDeclItem[DefaultAstExts]
+
+
+type FmtImplDecl = ImplDecl[DefaultAstExts]
+
+
+type FmtImplDeclItem = ImplDeclItem[DefaultAstExts]
+
+
+type FmtType = Type[DefaultAstExts]
+
+
+type FmtNamedType = NamedType[DefaultAstExts]
+
+
+type FmtRecordType = RecordType[DefaultAstExts]
+
+
+type FmtVariantType = VariantType[DefaultAstExts]
+
+
+type FmtFnType = FnType[DefaultAstExts]
+
+
+type FmtAssocTySelectType = AssocTySelectType[DefaultAstExts]
+
+
+type FmtContext = Context[DefaultAstExts]
+
+
+type FmtPred_ = Pred_[DefaultAstExts]
+
+
+type FmtDeclTypeParam = DeclTypeParam[DefaultAstExts]
+
+
+type FmtStmt = Stmt[DefaultAstExts]
+
+
+type FmtLetStmt = LetStmt[DefaultAstExts]
+
+
+type FmtAssignStmt = AssignStmt[DefaultAstExts]
+
+
+type FmtForStmt = ForStmt[DefaultAstExts]
+
+
+type FmtWhileStmt = WhileStmt[DefaultAstExts]
+
+
+type FmtLoopStmt = LoopStmt[DefaultAstExts]
+
+
+type FmtPat = Pat[DefaultAstExts]
+
+
+type FmtConPat = ConPat[DefaultAstExts]
+
+
+type FmtRecordPat = RecordPat[DefaultAstExts]
+
+
+type FmtVariantPat = VariantPat[DefaultAstExts]
+
+
+type FmtCon = Con[DefaultAstExts]
+
+
+type FmtExpr = Expr[DefaultAstExts]
+
+
+type FmtVarExpr = VarExpr[DefaultAstExts]
+
+
+type FmtFieldSelExpr = FieldSelExpr[DefaultAstExts]
+
+
+type FmtAssocFnSelExpr = AssocFnSelExpr[DefaultAstExts]
+
+
+type FmtCallExpr = CallExpr[DefaultAstExts]
+
+
+type FmtStrExpr = StrExpr[DefaultAstExts]
+
+
+type FmtStrPart = StrPart[DefaultAstExts]
+
+
+type FmtBinOpExpr = BinOpExpr[DefaultAstExts]
+
+
+type FmtUnOpExpr = UnOpExpr[DefaultAstExts]
+
+
+type FmtRecordExpr = RecordExpr[DefaultAstExts]
+
+
+type FmtVariantExpr = VariantExpr[DefaultAstExts]
+
+
+type FmtReturnExpr = ReturnExpr[DefaultAstExts]
+
+
+type FmtMatchExpr = MatchExpr[DefaultAstExts]
+
+
+type FmtAlt = Alt[DefaultAstExts]
+
+
+type FmtIfExpr = IfExpr[DefaultAstExts]
+
+
+type FmtIfBranch = IfBranch[DefaultAstExts]
+
+
+type FmtFnExpr = FnExpr[DefaultAstExts]
+
+
+type FmtIsExpr = IsExpr[DefaultAstExts]
+
+
+type FmtDoExpr = DoExpr[DefaultAstExts]
+
+
+type FmtSeqExpr = SeqExpr[DefaultAstExts]
+
+
+type FmtSeqElem = SeqElem[DefaultAstExts]
+
+
+type FmtParenExpr = ParenExpr[DefaultAstExts]
+
+
+type FmtAttribute = Attribute[DefaultAstExts]
+
+
+type FmtTyArgs = TyArgs[DefaultAstExts]

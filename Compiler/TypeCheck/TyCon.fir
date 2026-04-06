@@ -1,4 +1,7 @@
-import [Compiler/TypeCheck/Ty]
+import [
+    Compiler/CompilerAst,
+    Compiler/TypeCheck/Ty,
+]
 
 
 #[derive(ToDoc)]
@@ -60,7 +63,7 @@ type TraitMethod(
     #
     # TODO: This will refer to the declaration's module in tokens but we won't
     # have its module at the use sites.
-    funDecl: FunDecl,
+    funDecl: CFunDecl,
 )
 
 

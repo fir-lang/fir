@@ -1,10 +1,7 @@
 ## Defines identifiers, packages, modules, module-level items.
 
 
-import [
-    Compiler/Ast,
-    Compiler/Module,
-]
+import [Compiler/Module]
 
 
 # ------------------------------------------------------------------------------
@@ -50,7 +47,7 @@ VarId.resolve(self, def: VarDefIdx):
 
 VarId.def(self) VarDefIdx:
     self._resolved.unwrapOrElse(
-        \(): panic("Term id (\``self.name`\`) is not resolved yet"),
+        \(): panic("Term id (token `self.token.idx`) is not resolved yet"),
     )
 
 
@@ -88,7 +85,7 @@ TyId.resolve(self, def: TyDefIdx):
 
 TyId.def(self) TyDefIdx:
     self._resolved.unwrapOrElse(
-        \(): panic("Type id (\``self.name`\`) is not resolved yet"),
+        \(): panic("Type id (token `self.token.idx`) is not resolved yet"),
     )
 
 

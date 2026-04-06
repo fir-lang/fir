@@ -93,7 +93,7 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
             ._cons
         let modTokens = mod._tokens
 
-        for tyDecl: TypeDecl in mod._tyItems.values():
+        for tyDecl: CTypeDecl in mod._tyItems.values():
             let tyDeclName = mod.idText(tyDecl.name)
             let old = modCons.insert(
                 tyDeclName,
@@ -128,7 +128,7 @@ initSccTyCons(pgm: Program, sccModules: HashSet[ModuleIdx]):
             )
             assert(old is Option.None)
 
-        for traitDecl: TraitDecl in mod._traitItems.values():
+        for traitDecl: CTraitDecl in mod._traitItems.values():
             let tyDeclName = mod.idText(traitDecl.name)
             let old = modCons.insert(
                 tyDeclName,
@@ -221,7 +221,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
     let mod = pgm._modules.get(modIdx._idx)
     let tcEnv = mod._tcEnv.unwrap()
 
-    for tyDecl: TypeDecl in mod._tyItems.values():
+    for tyDecl: CTypeDecl in mod._tyItems.values():
         if tyDecl.rhs is Option.Some(TypeDeclRhs.Synonym(synRhsTy)):
             let tyDeclName = mod.idText(tyDecl.name)
             let tyCon = tcEnv._cons.get(tyDeclName).unwrap()
@@ -295,7 +295,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
         match tyDecl.rhs:
             Option.Some(TypeDeclRhs.Sum(cons, ..)):
-                for con: ConDecl in cons.iter():
+                for con: CConDecl in cons.iter():
                     let conName = mod.idText(con.name)
                     let ty = match convertFields(mod, varMap, con.fields):
                         Option.None: ret
@@ -329,7 +329,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             ),
         )
 
-    for traitDecl: TraitDecl in mod._traitItems.values():
+    for traitDecl: CTraitDecl in mod._traitItems.values():
         let tyDeclName = mod.idText(traitDecl.name)
         let tyCon = tcEnv._cons.get(tyDeclName).unwrap()
         let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
@@ -382,7 +382,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             )
             Ty.App(conId = tyCon.idx, args = tyArgs)
 
-        for item: TraitDeclItem in traitDecl.items.iter():
+        for item: CTraitDeclItem in traitDecl.items.iter():
             if item
                     is TraitDeclItem.Type(
                         name = assocTyId,
@@ -412,7 +412,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
         let methods: HashMap[Str, TraitMethod] = HashMap.empty()
 
-        for item: TraitDeclItem in traitDecl.items.iter():
+        for item: CTraitDeclItem in traitDecl.items.iter():
             match item:
                 TraitDeclItem.Type(..): continue
                 TraitDeclItem.Fun(method):
@@ -476,7 +476,7 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
                     let argTys: Vec[Ty] = Vec.fromIter(
                         method.sig.params.iter().map(
-                            \(param: FunArg) Ty:
+                            \(param: CFunArg) Ty:
                                 let ty = param.ty.unwrap()
                                 convertAstTy(mod, varMap, ty),
                         ),
@@ -528,14 +528,14 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
     let mod = pgm._modules.get(modIdx._idx)
     let tcEnv = mod._tcEnv.unwrap()
 
-    for topFun: FunDecl in mod._funItems.values():
+    for topFun: CFunDecl in mod._funItems.values():
         let varMap: ScopeMap[Str, Ty] = ScopeMap.empty()
 
         let funPreds: Vec[Pred] = convertAndBindContext(
             mod,
             varMap,
             topFun.sig.typeParams,
-            topFun.sig.context.map(\(ctx: Context): ctx.preds).unwrapOr(
+            topFun.sig.context.map(\(ctx: CContext): ctx.preds).unwrapOr(
                 Vec.empty(),
             ),
             TyVarConversion.ToQVar,
@@ -563,7 +563,7 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
         let argTys: Vec[Ty] = Vec.fromIter(
             topFun.sig.params.iter().map(
-                \(param: FunArg) Ty:
+                \(param: CFunArg) Ty:
                     let ty = param.ty.unwrap()
                     convertAstTy(mod, varMap, ty),
             ),
@@ -626,7 +626,7 @@ addModSchemes(pgm: Program, modIdx: ModuleIdx) / TypeError:
 
         match topFun.parentTy:
             Option.Some(parentTy):
-                let parentTyName = parentTy.name
+                let parentTyName = mod.tokenText(parentTy.token)
 
                 let assocFunMap = match tcEnv._assocFnSchemes.get(parentTyName):
                     Option.Some(methods): methods

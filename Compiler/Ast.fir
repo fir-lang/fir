@@ -1,7 +1,117 @@
 import [
-    Compiler/Defs,
+    Compiler/Assert,
     Compiler/Token,
 ]
+
+
+## Associated types for identifiers in the ASTs.
+trait AstIds[t]:
+    ## Identifiers that refer to terms.
+    type AstVarId = Id
+
+    ## Identifiers that refer to types.
+    type AstTyId = Id
+
+    ## Identifiers that refer to associated variables.
+    type AstAssocVarId = Id
+
+    ## For parsing: create an `AstVarId` from a token.
+    astVarIdFromToken(token: TokenIdx) AstVarId:
+        Id(token)
+
+    ## For parsing: create an `AstTyId` from a token.
+    astTyIdFromToken(token: TokenIdx) AstTyId:
+        Id(token)
+
+    ## For parsing: create an `AstAssocVarId` from a token.
+    astAssocVarIdFromToken(token: TokenIdx) AstAssocVarId:
+        Id(token)
+
+
+trait AstExts[t]:
+    ## Identifier types used in the AST. This should be an implementation of
+    ## `AstIds`.
+    type Ids = DefaultIds
+
+    ## Extensions for type declarations. (`TypeDecl`)
+    type TypeDeclExts: Row[Rec] = row()
+
+    ## Extensions for trait declarations. (`TraitDecl`)
+    type TraitDeclExts: Row[Rec] = row()
+
+    ## Extensions for impl declarations. (`ImplDecl`)
+    type ImplDeclExts: Row[Rec] = row()
+
+    ## Extensions for function signatures. (`FunSig`)
+    type FunSigExts: Row[Rec] = row()
+
+    ## Extensions for record patterns. (`RecordPat`)
+    type RecordPatExts: Row[Rec] = row()
+
+    ## Extensions for variant patterns. (`VariantPat`)
+    type VariantPatExts: Row[Rec] = row()
+
+    ## Extensions for type argument lists. (`TyArgs`)
+    type TyArgsExts: Row[Rec] = row()
+
+    ## Used in expressions with non-trivial types: inferred type fields.
+    type InferredTyExts: Row[Rec] = row()
+
+    ## For constructing an AST: default values for the `TypeDeclExts` extension.
+    defaultTypeDeclExts() (..TypeDeclExts):
+        ()
+
+    ## For constructing an AST: default values for the `TraitDeclExts` extension.
+    defaultTraitDeclExts() (..TraitDeclExts):
+        ()
+
+    ## For constructing an AST: default values for the `ImplDeclExts` extension.
+    defaultImplDeclExts() (..ImplDeclExts):
+        ()
+
+    ## For constructing an AST: default values for the `FunSigExts` extension.
+    defaultFunSigExts() (..FunSigExts):
+        ()
+
+    ## For constructing an AST: default values for the `RecordPatExts` extension.
+    defaultRecordPatExts() (..RecordPatExts):
+        ()
+
+    ## For constructing an AST: default values for the `VariantPatExts` extension.
+    defaultVariantPatExts() (..VariantPatExts):
+        ()
+
+    ## For constructing an AST: default values for the `TyArgsExts` extension.
+    defaultTyArgsExts() (..TyArgsExts):
+        ()
+
+    ## For constructing an AST: default values for the `InferredTyExts` extension.
+    defaultInferredTyExts() (..InferredTyExts):
+        ()
+
+
+## Type synonym to make it easy to access `AstIds.AstTyId` from an `AstExts`.
+type AstTyId[exts] = AstIds[AstExts[exts].Ids].AstTyId
+
+
+## Type synonym to make it easy to access `AstIds.AstVarId` from an `AstExts`.
+type AstVarId[exts] = AstIds[AstExts[exts].Ids].AstVarId
+
+
+## Type synonym to make it easy to access `AstIds.AstAssocVarId` from an `AstExts`.
+type AstAssocVarId[exts] = AstIds[AstExts[exts].Ids].AstAssocVarId
+
+
+type DefaultAstExts
+
+
+impl AstExts[DefaultAstExts]
+
+
+type DefaultIds
+
+
+impl AstIds[DefaultIds]
 
 
 trait Tokens[t]:
@@ -26,28 +136,28 @@ impl Tokens[Id]:
 
 ## A top-level declaration.
 #[derive(ToDoc)]
-type TopDecl:
+type TopDecl[exts]:
     ## A type declaration: `type T: ...`.
-    Type(TypeDecl)
+    Type(TypeDecl[exts])
 
     ## A function declaration: `f(...) = ...`.
-    Fun(FunDecl)
+    Fun(FunDecl[exts])
 
     ## An import declaration.
     Import(ImportDecl)
 
     ## A trait declaration.
-    Trait(TraitDecl)
+    Trait(TraitDecl[exts])
 
     ## An `impl` block, implementing a trait or associated methods for a type.
-    Impl(ImplDecl)
+    Impl(ImplDecl[exts])
 
 
 ## A type declaration: `type Vec[t](...)`, `value type Bool: ...`.
 #[derive(ToDoc)]
-type TypeDecl(
+type TypeDecl[exts](
     ## Attributes of the type: e.g. `#[derive(ToDoc, Eq)]`.
-    attr: Option[Attribute],
+    attr: Option[Attribute[exts]],
 
     ## The `value` token in value type declarations: `value type Bool: ...`.
     ##
@@ -62,137 +172,135 @@ type TypeDecl(
     ## The type name. `Vec` in the example.
     name: Id,
 
-    ## Type parameters of the type. `[t]` in the example.
-    typeParams: Vec[DeclTypeParam],
-
-    ## Kinds of `type_params`. Filled in by kind inference.
-    typeParamKinds: Vec[Kind],
-
     ## Constructors of the type.
-    rhs: Option[TypeDeclRhs],
+    rhs: Option[TypeDeclRhs[exts]],
+
+    ## Type parameters of the type. `[t]` in the example.
+    typeParams: Vec[DeclTypeParam[exts]],
+
+    ..AstExts[exts].TypeDeclExts
 )
 
 
-impl Tokens[TypeDecl]:
-    firstToken(self: TypeDecl, tokens: Array[Token]) TokenIdx:
+impl Tokens[TypeDecl[exts]]:
+    firstToken(self: TypeDecl[exts], tokens: Array[Token]) TokenIdx:
         self.value_.or_(self.prim_).unwrapOr(self.name.token)
 
-    lastToken(self: TypeDecl, tokens: Array[Token]) TokenIdx:
+    lastToken(self: TypeDecl[exts], tokens: Array[Token]) TokenIdx:
         panic("TOOD")
 
 
 ## Constructors of a type declaration.
 #[derive(ToDoc)]
-type TypeDeclRhs:
+type TypeDeclRhs[exts]:
     ## A sum type, with more than one constructor.
     Sum(
-        cons: Vec[ConDecl],
-        extension: Option[Type],
+        cons: Vec[ConDecl[exts]],
+        extension: Option[Type[exts]],
     )
 
     ## A product type uses the type name as the constructor and only has fields.
-    Product(ConFields)
+    Product(ConFields[exts])
 
     ## A type synonym: `type Foo = U32`
-    Synonym(Type)
+    Synonym(Type[exts])
 
 
 ## A sum type constructor.
 #[derive(ToDoc)]
-type ConDecl(
+type ConDecl[exts](
     name: Id,
-    fields: ConFields,
+    fields: ConFields[exts],
     _lastToken: TokenIdx,
 )
 
 
-impl Tokens[ConDecl]:
-    firstToken(self: ConDecl, tokens: Array[Token]) TokenIdx:
+impl Tokens[ConDecl[exts]]:
+    firstToken(self: ConDecl[exts], tokens: Array[Token]) TokenIdx:
         self.name.token
 
-    lastToken(self: ConDecl, tokens: Array[Token]) TokenIdx:
+    lastToken(self: ConDecl[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
 #[derive(ToDoc)]
-type ConFields:
+type ConFields[exts]:
     Empty
     Named(
-        fields: Vec[NamedField],
-        extension: Option[Type],
+        fields: Vec[NamedField[exts]],
+        extension: Option[Type[exts]],
     )
-    Unnamed(Vec[Type])
+    Unnamed(Vec[Type[exts]])
 
 
 #[derive(ToDoc)]
-type NamedField(
+type NamedField[exts](
     name: Id,
-    ty: Type,
+    ty: Type[exts],
 )
 
 
 #[derive(ToDoc)]
-type FunDecl(
+type FunDecl[exts](
     ## When the function is a primitive, the `prim` token.
     prim_: Option[TokenIdx],
 
     ## Only in associated functions: the parent type. E.g. `Vec` in `Vec.push(...): ...`.
-    parentTy: Option[TyId],
+    parentTy: Option[AstTyId[exts]],
 
     ## Name of the function.
     name: Id,
 
     ## Type signature of the function.
-    sig: FunSig,
+    sig: FunSig[exts],
 
     ## Body (code) of the function. Not available in `prim` functions.
-    body: Option[Vec[Stmt]],
+    body: Option[Vec[Stmt[exts]]],
 )
 
 
-impl Tokens[FunDecl]:
-    firstToken(self: FunDecl, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[FunDecl[exts]]:
+    firstToken(self: FunDecl[exts], tokens: Array[Token]) TokenIdx:
         if self.prim_ is Option.Some(t):
             return t
 
         if self.parentTy is Option.Some(tyId):
-            return tyId.token
+            return tyId.firstToken(tokens)
 
         self.name.token
 
-    lastToken(self: FunDecl, tokens: Array[Token]) TokenIdx:
+    lastToken(self: FunDecl[exts], tokens: Array[Token]) TokenIdx:
         match self.body:
             Option.Some(stmts): stmts.last().unwrap().lastToken(tokens)
             Option.None: self.sig.lastToken(tokens)
 
 
 #[derive(ToDoc)]
-type FunSig(
-    ## Type parameters, generated by the type checker.
-    typeParams: Vec[TypeParam],
-
-    context: Option[Context],
-    self_: SelfParam,
-    params: Vec[FunArg],
-    returnTy: Option[Type],
-    exceptions: Option[Type],
+type FunSig[exts](
+    context: Option[Context[exts]],
+    self_: SelfParam[exts],
+    params: Vec[FunArg[exts]],
+    returnTy: Option[Type[exts]],
+    exceptions: Option[Type[exts]],
 
     ## The '(' token of the argument list. We need to store at least one token
     ## in this node as the minimal node (without context, with empty argument
     ## list, and without return or exception types) won't have any other AST
     ## nodes.
     lparen: TokenIdx,
+
+    ..AstExts[exts].FunSigExts
 )
 
 
-impl Tokens[FunSig]:
-    firstToken(self: FunSig, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]]] Tokens[FunSig[exts]]:
+    firstToken(self: FunSig[exts], tokens: Array[Token]) TokenIdx:
         if self.context is Option.Some(context):
             return context.firstToken(tokens)
 
         self.lparen
 
-    lastToken(self: FunSig, tokens: Array[Token]) TokenIdx:
+    lastToken(self: FunSig[exts], tokens: Array[Token]) TokenIdx:
         if self.exceptions is Option.Some(exceptions):
             return exceptions.lastToken(tokens)
 
@@ -210,25 +318,25 @@ impl Tokens[FunSig]:
 
 
 #[derive(ToDoc)]
-type FunArg(
+type FunArg[exts](
     name: Id,
-    ty: Option[Type],
+    ty: Option[Type[exts]],
 )
 
 
-impl Tokens[FunArg]:
-    firstToken(self: FunArg, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]]] Tokens[FunArg[exts]]:
+    firstToken(self: FunArg[exts], tokens: Array[Token]) TokenIdx:
         self.name.token
 
-    lastToken(self: FunArg, tokens: Array[Token]) TokenIdx:
+    lastToken(self: FunArg[exts], tokens: Array[Token]) TokenIdx:
         self.ty.map(\(ty): ty.lastToken(tokens)).unwrapOr(self.name.token)
 
 
 #[derive(ToDoc)]
-type SelfParam:
+type SelfParam[exts]:
     No
     Implicit
-    Explicit(Type)
+    Explicit(Type[exts])
 
 
 #[derive(ToDoc)]
@@ -239,30 +347,29 @@ type ImportDecl(
 
 
 #[derive(ToDoc)]
-type TraitDecl(
+type TraitDecl[exts](
     ## Trait name.
     name: Id,
 
     ## Type parameters of the trait.
-    typeParams: Vec[DeclTypeParam],
-
-    ## Kinds of `type_params`. Filled in by kind inference.
-    typeParamKinds: Vec[Kind],
+    typeParams: Vec[DeclTypeParam[exts]],
 
     ## Method and associated types of the trait.
-    items: Vec[TraitDeclItem],
+    items: Vec[TraitDeclItem[exts]],
+
+    ..AstExts[exts].TraitDeclExts
 )
 
 
 #[derive(ToDoc)]
-type TraitDeclItem:
+type TraitDeclItem[exts]:
     ## An associated type declaration, with optional kind.
     Type(
         name: Id,
-        kind: Option[Type],
-        default: Option[Type],
+        kind: Option[Type[exts]],
+        default: Option[Type[exts]],
     )
-    Fun(FunDecl)
+    Fun(FunDecl[exts])
 
 
 ## An `impl` block, implementing a trait for a type.
@@ -276,47 +383,46 @@ type TraitDeclItem:
 ##   next(self) Option[a]: ...
 ## ```
 #[derive(ToDoc)]
-type ImplDecl(
-    ## Type parameters, generated by the type checker.
-    typeParams: Vec[TypeParam],
-
+type ImplDecl[exts](
     ## Predicates of the `impl` block.
     ##
     ## In the example: `[ToStr[a]]`.
-    context: Option[Context],
+    context: Option[Context[exts]],
 
     ## The trait name.
     ##
     ## In the example: `ToStr`.
-    trait_: TyId,
+    trait_: AstTyId[exts],
 
-    ## Type parameters of the trait.
+    ## Type[exts] parameters of the trait.
     ##
     ## In the example: `[Vec[a]]`.
-    tys: Vec[Type],
+    tys: Vec[Type[exts]],
 
     ## Method and associated type implementations.
-    items: Vec[ImplDeclItem],
+    items: Vec[ImplDeclItem[exts]],
 
     # The `impl` token.
     _firstToken: TokenIdx,
+
+    ..AstExts[exts].ImplDeclExts
 )
 
 
 #[derive(ToDoc)]
-type ImplDeclItem:
+type ImplDeclItem[exts]:
     Type(
         assocTy: Id,
-        rhs: Type,
+        rhs: Type[exts],
     )
-    Fun(FunDecl)
+    Fun(FunDecl[exts])
 
 
 #[derive(ToDoc)]
-type Type:
+type Type[exts]:
     ## A type constructor, potentially applied some number of arguments. E.g.
     ## `I32`, `Vec[a]`.
-    Named(NamedType)
+    Named(NamedType[exts])
 
     ## A type variable.
     ##
@@ -325,20 +431,20 @@ type Type:
     Var(Id)
 
     ## An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..r)`.
-    Record(RecordType)
+    Record(RecordType[exts])
 
     ## An anonymous variant type, e.g. `[Str, Option[U32], ..r]`.
-    Variant(VariantType)
+    Variant(VariantType[exts])
 
     ## A function type: `Fn(I32) Bool / exn`.
-    Fn_(FnType)
+    Fn_(FnType[exts])
 
     ## Associated type selection: `Iterator[iter, exn].Item`.
-    AssocTySelect(AssocTySelectType)
+    AssocTySelect(AssocTySelectType[exts])
 
 
-impl Tokens[Type]:
-    firstToken(self: Type, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]]] Tokens[Type[exts]]:
+    firstToken(self: Type[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Type.Named(ty): ty.firstToken(tokens)
             Type.Var(id): id.token
@@ -347,7 +453,7 @@ impl Tokens[Type]:
             Type.Fn_(ty): ty.firstToken(tokens)
             Type.AssocTySelect(ty): ty.firstToken(tokens)
 
-    lastToken(self: Type, tokens: Array[Token]) TokenIdx:
+    lastToken(self: Type[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Type.Named(ty): ty.lastToken(tokens)
             Type.Var(id): id.token
@@ -358,9 +464,9 @@ impl Tokens[Type]:
 
 
 #[derive(ToDoc)]
-type RecordType(
-    fields: Vec[Named[Type]],
-    extension: Option[Type],
+type RecordType[exts](
+    fields: Vec[Named[Type[exts]]],
+    extension: Option[Type[exts]],
     isRow: Bool,
 
     # Left paren.
@@ -371,18 +477,18 @@ type RecordType(
 )
 
 
-impl Tokens[RecordType]:
-    firstToken(self: RecordType, tokens: Array[Token]) TokenIdx:
+impl Tokens[RecordType[exts]]:
+    firstToken(self: RecordType[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: RecordType, tokens: Array[Token]) TokenIdx:
+    lastToken(self: RecordType[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
 #[derive(ToDoc)]
-type VariantType(
-    alts: Vec[NamedType],
-    extension: Option[Type],
+type VariantType[exts](
+    alts: Vec[NamedType[exts]],
+    extension: Option[Type[exts]],
     isRow: Bool,
 
     # Left bracket.
@@ -393,23 +499,23 @@ type VariantType(
 )
 
 
-impl Tokens[VariantType]:
-    firstToken(self: VariantType, tokens: Array[Token]) TokenIdx:
+impl Tokens[VariantType[exts]]:
+    firstToken(self: VariantType[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: VariantType, tokens: Array[Token]) TokenIdx:
+    lastToken(self: VariantType[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
 #[derive(ToDoc)]
-type FnType(
-    args: Vec[Type],
+type FnType[exts](
+    args: Vec[Type[exts]],
 
     ## Optional return type of the function.
-    ret: Option[Type],
+    ret: Option[Type[exts]],
 
     ## Same as `FunSig.exceptions`.
-    exceptions: Option[Type],
+    exceptions: Option[Type[exts]],
 
     # The 'Fn' token.
     _firstToken: TokenIdx,
@@ -420,11 +526,11 @@ type FnType(
 )
 
 
-impl Tokens[FnType]:
-    firstToken(self: FnType, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]]] Tokens[FnType[exts]]:
+    firstToken(self: FnType[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: FnType, tokens: Array[Token]) TokenIdx:
+    lastToken(self: FnType[exts], tokens: Array[Token]) TokenIdx:
         if self.exceptions is Option.Some(ty):
             return ty.lastToken(tokens)
 
@@ -435,17 +541,17 @@ impl Tokens[FnType]:
 
 
 #[derive(ToDoc)]
-type AssocTySelectType(
-    ty: Type,
+type AssocTySelectType[exts](
+    ty: Type[exts],
     assocTy: Id,
 )
 
 
-impl Tokens[AssocTySelectType]:
-    firstToken(self: AssocTySelectType, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]]] Tokens[AssocTySelectType[exts]]:
+    firstToken(self: AssocTySelectType[exts], tokens: Array[Token]) TokenIdx:
         self.ty.firstToken(tokens)
 
-    lastToken(self: AssocTySelectType, tokens: Array[Token]) TokenIdx:
+    lastToken(self: AssocTySelectType[exts], tokens: Array[Token]) TokenIdx:
         self.assocTy.token
 
 
@@ -453,9 +559,9 @@ impl Tokens[AssocTySelectType]:
 ##
 ## E.g. `[Iterator[iter, exn], Debug[item]]`.
 #[derive(ToDoc)]
-type Context(
+type Context[exts](
     ## Predicates: `Iterator[iter, exn]` and `Debug[item]` in the example.
-    preds: Vec[Pred_],
+    preds: Vec[Pred_[exts]],
 
     # Left bracket.
     _firstToken: TokenIdx,
@@ -478,32 +584,32 @@ type Context(
 ## - `Debug[item]`                      (`Pred.App`)
 ##
 #[derive(ToDoc)]
-type Pred_:
+type Pred_[exts]:
     ## A kind annotation: `ext: Row[Rec]`.
     Kind(
         name: Id,
-        kind: Option[Type],
+        kind: Option[Type[exts]],
     )
 
     ## A trait application: `Iterator[iter, exn]`.
-    App(NamedType)
+    App(NamedType[exts])
 
     ## An associated type equality: `Iterator[iter, exn].Item = U32`.
     AssocTyEq(
-        ty: NamedType,
+        ty: NamedType[exts],
         assocTy: Id,
-        eq: Type,
+        eq: Type[exts],
     )
 
 
-impl Tokens[Pred_]:
-    firstToken(self: Pred_, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]]] Tokens[Pred_[exts]]:
+    firstToken(self: Pred_[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Pred_.Kind(name = kindVar, ..): kindVar.firstToken(tokens)
             Pred_.App(app): app.firstToken(tokens)
             Pred_.AssocTyEq(ty, ..): ty.firstToken(tokens)
 
-    lastToken(self: Pred_, tokens: Array[Token]) TokenIdx:
+    lastToken(self: Pred_[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Pred_.Kind(name = _, kind):
                 match kind:
@@ -513,69 +619,62 @@ impl Tokens[Pred_]:
             Pred_.AssocTyEq(eq, ..): eq.lastToken(tokens)
 
 
-#[derive(ToDoc)]
-type TypeParam(
-    name: LocalId,
-    kind: Kind,
-)
-
-
 ## A type parameter in a type or trait declaration, with optional kind annotation.
 ##
 ## E.g. `t` in `type Vec[t]`, `r: Row[Rec]` in `trait Foo[r: Row[Rec]]`.
 #[derive(ToDoc)]
-type DeclTypeParam(
+type DeclTypeParam[exts](
     ## Name of the type parameter.
     name: Id,
 
     ## Optional kind annotation.
-    kind: Option[Type],
+    kind: Option[Type[exts]],
 )
 
 
-impl Tokens[DeclTypeParam]:
-    firstToken(self: DeclTypeParam, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]]] Tokens[DeclTypeParam[exts]]:
+    firstToken(self: DeclTypeParam[exts], tokens: Array[Token]) TokenIdx:
         self.name.token
 
-    lastToken(self: DeclTypeParam, tokens: Array[Token]) TokenIdx:
+    lastToken(self: DeclTypeParam[exts], tokens: Array[Token]) TokenIdx:
         match self.kind:
             Option.Some(kind): kind.lastToken(tokens)
             Option.None: self.name.token
 
 
-impl Tokens[Context]:
-    firstToken(self: Context, tokens: Array[Token]) TokenIdx:
+impl Tokens[Context[exts]]:
+    firstToken(self: Context[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: Context, tokens: Array[Token]) TokenIdx:
+    lastToken(self: Context[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
 ## A named type, e.g. `I32`, `Vec[I32]`, `Iterator[iter, exn]`.
 #[derive(ToDoc)]
-type NamedType(
+type NamedType[exts](
     ## Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
-    name: TyId,
+    name: AstTyId[exts],
 
     ## Arguments of the type constructor.
-    args: Option[TyArgs],
+    args: Option[TyArgs[exts]],
 )
 
 
-NamedType.numTyArgs(self) U32:
+NamedType.numTyArgs(self: NamedType[exts]) U32:
     match self.args:
         Option.None: 0
         Option.Some(args): args.args.len()
 
 
-impl Tokens[NamedType]:
-    firstToken(self: NamedType, tokens: Array[Token]) TokenIdx:
-        self.name.token
+impl[Tokens[AstTyId[exts]]] Tokens[NamedType[exts]]:
+    firstToken(self: NamedType[exts], tokens: Array[Token]) TokenIdx:
+        self.name.firstToken(tokens)
 
-    lastToken(self: NamedType, tokens: Array[Token]) TokenIdx:
+    lastToken(self: NamedType[exts], tokens: Array[Token]) TokenIdx:
         match self.args:
             Option.Some(args): args.lastToken(tokens)
-            Option.None: self.name.token
+            Option.None: self.name.lastToken(tokens)
 
 
 #[derive(ToDoc)]
@@ -596,19 +695,19 @@ impl[Tokens[t]] Tokens[Named[t]]:
 
 
 #[derive(ToDoc)]
-type Stmt:
-    Let(LetStmt)
-    Assign(AssignStmt)
-    Expr(Expr)
-    For(ForStmt)
-    While(WhileStmt)
-    Loop(LoopStmt)
+type Stmt[exts]:
+    Let(LetStmt[exts])
+    Assign(AssignStmt[exts])
+    Expr(Expr[exts])
+    For(ForStmt[exts])
+    While(WhileStmt[exts])
+    Loop(LoopStmt[exts])
     Break(BreakStmt)
     Continue(ContinueStmt)
 
 
-impl Tokens[Stmt]:
-    firstToken(self: Stmt, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[Stmt[exts]]:
+    firstToken(self: Stmt[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Stmt.Let(e): e.firstToken(tokens)
             Stmt.Assign(e): e.firstToken(tokens)
@@ -619,7 +718,7 @@ impl Tokens[Stmt]:
             Stmt.Break(e): e.firstToken(tokens)
             Stmt.Continue(e): e.firstToken(tokens)
 
-    lastToken(self: Stmt, tokens: Array[Token]) TokenIdx:
+    lastToken(self: Stmt[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Stmt.Let(e): e.lastToken(tokens)
             Stmt.Assign(e): e.lastToken(tokens)
@@ -633,35 +732,35 @@ impl Tokens[Stmt]:
 
 ## A let statement: `let x: T = expr`.
 #[derive(ToDoc)]
-type LetStmt(
-    lhs: Pat,
-    ty: Option[Type],
-    rhs: Expr,
+type LetStmt[exts](
+    lhs: Pat[exts],
+    ty: Option[Type[exts]],
+    rhs: Expr[exts],
     _firstToken: TokenIdx,
 )
 
 
-impl Tokens[LetStmt]:
-    firstToken(self: LetStmt, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[LetStmt[exts]]:
+    firstToken(self: LetStmt[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: LetStmt, tokens: Array[Token]) TokenIdx:
+    lastToken(self: LetStmt[exts], tokens: Array[Token]) TokenIdx:
         self.rhs.lastToken(tokens)
 
 
 #[derive(ToDoc)]
-type AssignStmt(
-    lhs: Expr,
-    rhs: Expr,
+type AssignStmt[exts](
+    lhs: Expr[exts],
+    rhs: Expr[exts],
     op: AssignOp,
 )
 
 
-impl Tokens[AssignStmt]:
-    firstToken(self: AssignStmt, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[AssignStmt[exts]]:
+    firstToken(self: AssignStmt[exts], tokens: Array[Token]) TokenIdx:
         self.lhs.firstToken(tokens)
 
-    lastToken(self: AssignStmt, tokens: Array[Token]) TokenIdx:
+    lastToken(self: AssignStmt[exts], tokens: Array[Token]) TokenIdx:
         self.rhs.lastToken(tokens)
 
 
@@ -675,64 +774,58 @@ type AssignOp:
 
 
 #[derive(ToDoc)]
-type ForStmt(
+type ForStmt[exts](
     label: Option[Id],
-    pat: Pat,
+    pat: Pat[exts],
 
     ## Type annotation on the loop variable, the `Item` associated type in `Iterator[iter, exn]`.
-    astTy: Option[Type],
+    astTy: Option[Type[exts]],
 
-    ## `ast_ty`, converted to type checking types by the type checker.
-    tcTy: Option[Ty],
+    expr: Expr[exts],
 
-    expr: Expr,
-
-    ## Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, exn]`.
-    exprTy: Option[Ty],
-
-    body: Vec[Stmt],
+    body: Vec[Stmt[exts]],
 
     _firstToken: TokenIdx,
 )
 
 
-impl Tokens[ForStmt]:
-    firstToken(self: ForStmt, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[ForStmt[exts]]:
+    firstToken(self: ForStmt[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: ForStmt, tokens: Array[Token]) TokenIdx:
+    lastToken(self: ForStmt[exts], tokens: Array[Token]) TokenIdx:
         self.body.last().unwrap().lastToken(tokens)
 
 
 #[derive(ToDoc)]
-type WhileStmt(
+type WhileStmt[exts](
     label: Option[Id],
-    cond: Expr,
-    body: Vec[Stmt],
+    cond: Expr[exts],
+    body: Vec[Stmt[exts]],
     _firstToken: TokenIdx,
 )
 
 
-impl Tokens[WhileStmt]:
-    firstToken(self: WhileStmt, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[WhileStmt[exts]]:
+    firstToken(self: WhileStmt[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: WhileStmt, tokens: Array[Token]) TokenIdx:
+    lastToken(self: WhileStmt[exts], tokens: Array[Token]) TokenIdx:
         self.body.last().unwrap().lastToken(tokens)
 
 
 #[derive(ToDoc)]
-type LoopStmt(
-    body: Vec[Stmt],
+type LoopStmt[exts](
+    body: Vec[Stmt[exts]],
     _firstToken: TokenIdx,
 )
 
 
-impl Tokens[LoopStmt]:
-    firstToken(self: LoopStmt, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[LoopStmt[exts]]:
+    firstToken(self: LoopStmt[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: LoopStmt, tokens: Array[Token]) TokenIdx:
+    lastToken(self: LoopStmt[exts], tokens: Array[Token]) TokenIdx:
         self.body.last().unwrap().lastToken(tokens)
 
 
@@ -780,12 +873,12 @@ impl Tokens[ContinueStmt]:
 
 
 #[derive(ToDoc)]
-type Pat:
+type Pat[exts]:
     ## Matches anything, binds it to variable.
     Var(VarPat)
 
     ## Matches a constructor.
-    Con(ConPat)
+    Con(ConPat[exts])
 
     ## Underscore, aka. wildcard.
     Ignore(TokenIdx)
@@ -797,16 +890,16 @@ type Pat:
     Char(Char, TokenIdx)
 
     ## Or pattern: `<pat1> | <pat2> | ...`. At least two patterns.
-    Or(Vec[Pat])
+    Or(Vec[Pat[exts]])
 
-    Record(RecordPat)
+    Record(RecordPat[exts])
 
     ## Variant pattern: `~"hi"`, `~Option.Some(_)`.
-    Variant(VariantPat)
+    Variant(VariantPat[exts])
 
 
-impl Tokens[Pat]:
-    firstToken(self: Pat, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]]] Tokens[Pat[exts]]:
+    firstToken(self: Pat[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Pat.Var(pat): pat.firstToken(tokens)
 
@@ -820,7 +913,7 @@ impl Tokens[Pat]:
 
             Pat.Variant(pat): pat.firstToken(tokens)
 
-    lastToken(self: Pat, tokens: Array[Token]) TokenIdx:
+    lastToken(self: Pat[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Pat.Var(pat): pat.lastToken(tokens)
 
@@ -842,9 +935,6 @@ impl Tokens[Pat]:
 #[derive(ToDoc)]
 type VarPat(
     var_: Id,
-
-    ## Inferred type of the binder. Filled in by the type checker.
-    ty: Option[Ty],
 )
 
 
@@ -864,63 +954,62 @@ type RestPat:
 
 
 #[derive(ToDoc)]
-type ConPat(
-    con: Con,
-    fields: Vec[Named[Pat]],
+type ConPat[exts](
+    con: Con[exts],
+    fields: Vec[Named[Pat[exts]]],
     rest: RestPat,
     _lastToken: TokenIdx,
 )
 
 
-impl Tokens[ConPat]:
-    firstToken(self: ConPat, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]]] Tokens[ConPat[exts]]:
+    firstToken(self: ConPat[exts], tokens: Array[Token]) TokenIdx:
         self.con.firstToken(tokens)
 
-    lastToken(self: ConPat, tokens: Array[Token]) TokenIdx:
+    lastToken(self: ConPat[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
 #[derive(ToDoc)]
-type RecordPat(
-    fields: Vec[Named[Pat]],
+type RecordPat[exts](
+    fields: Vec[Named[Pat[exts]]],
     rest: RestPat,
-    inferredTy: Option[Ty],
     _firstToken: TokenIdx,
     _lastToken: TokenIdx,
+    ..AstExts[exts].RecordPatExts
 )
 
 
-impl Tokens[RecordPat]:
-    firstToken(self: RecordPat, tokens: Array[Token]) TokenIdx:
+impl Tokens[RecordPat[exts]]:
+    firstToken(self: RecordPat[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: RecordPat, tokens: Array[Token]) TokenIdx:
+    lastToken(self: RecordPat[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
 #[derive(ToDoc)]
-type VariantPat(
-    pat: Pat,
-    inferredTy: Option[Ty],
-    inferredPatTy: Option[Ty],
+type VariantPat[exts](
+    pat: Pat[exts],
+    ..AstExts[exts].VariantPatExts
 )
 
 
-impl Tokens[VariantPat]:
-    firstToken(self: VariantPat, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]]] Tokens[VariantPat[exts]]:
+    firstToken(self: VariantPat[exts], tokens: Array[Token]) TokenIdx:
         let tilde = prevNonTrivia(self.pat.firstToken(tokens), tokens).unwrap()
         assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
         tilde
 
-    lastToken(self: VariantPat, tokens: Array[Token]) TokenIdx:
+    lastToken(self: VariantPat[exts], tokens: Array[Token]) TokenIdx:
         self.pat.lastToken(tokens)
 
 
 ## A sum or product constructor, in patterns and expressions.
 #[derive(ToDoc)]
-type Con(
+type Con[exts](
     ## Type of the constructor.
-    ty: TyId,
+    ty: AstTyId[exts],
 
     ## Name of the constructor. Only in sum types.
     con: Option[Id],
@@ -928,62 +1017,54 @@ type Con(
     ## Type arguments explicitly passed to the variable.
     ##
     ## Always `Option.None` in patterns.
-    userTyArgs: Option[TyArgs],
-
-    ## Inferred type arguments of the constructor's type. Filled in by the type checker.
-    tyArgs: Vec[Type],
+    userTyArgs: Option[TyArgs[exts]],
 
     # In variant constructors we'll see a '~' before `ty`, so we can't use `ty` as the first token.
     _firstToken: TokenIdx,
 )
 
 
-impl Tokens[Con]:
-    firstToken(self: Con, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]]] Tokens[Con[exts]]:
+    firstToken(self: Con[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: Con, tokens: Array[Token]) TokenIdx:
+    lastToken(self: Con[exts], tokens: Array[Token]) TokenIdx:
         match self.userTyArgs:
             Option.Some(tyArgs): tyArgs.lastToken(tokens)
             Option.None:
                 match self.con:
                     Option.Some(con): con.token
-                    Option.None: self.ty.token
+                    Option.None: self.ty.lastToken(tokens)
 
 
 #[derive(ToDoc)]
-type Expr:
+type Expr[exts]:
     ## A variable: `x`.
-    Var(VarExpr)
+    Var(VarExpr[exts])
 
     ## A constructor: `Option.None`, `Result.Ok`, `Bool.True`, `Vec`.
-    ConSel(Con)
+    ConSel(Con[exts])
 
     ## A field selection: `<expr>.x` where `x` is a field.
     ##
     ## Parser generates this node for all expression of form `<expr>.<id>`, type checker converts
     ## method selection expressions to `MethodSel`.
-    FieldSel(FieldSelExpr)
-
-    ## A method selection: `<expr>.x` where `x` is a method.
-    ##
-    ## This node is generated by the type checker.
-    MethodSel(MethodSelExpr)
+    FieldSel(FieldSelExpr[exts])
 
     ## An associated function or method selection:
     ##
     ## - Associated function: `Vec.withCapacity`.
     ## - Method: `Vec.push`.
-    AssocFnSel(AssocFnSelExpr)
+    AssocFnSel(AssocFnSelExpr[exts])
 
     ## A function call: `f(a)`.
-    Call(CallExpr)
+    Call(CallExpr[exts])
 
     ## An integer literal.
     Int(IntExpr)
 
     ## A string literal.
-    Str(StrExpr)
+    Str(StrExpr[exts])
 
     ## A character literal.
     Char(CharExpr)
@@ -991,45 +1072,44 @@ type Expr:
     ## A binary operator: `x + y`, `i >> 2`.
     ##
     ## Some of the binary operators are desugared to method calls by the type checker.
-    BinOp(BinOpExpr)
+    BinOp(BinOpExpr[exts])
 
     ## A unary operator: `-x`, `not b`.
     ##
     ## Some of the unary operators are desugared to method calls by the type checker.
-    UnOp(UnOpExpr)
+    UnOp(UnOpExpr[exts])
 
-    Return(ReturnExpr)
+    Return(ReturnExpr[exts])
 
-    Match(MatchExpr)
+    Match(MatchExpr[exts])
 
-    If(IfExpr)
+    If(IfExpr[exts])
 
-    Fn_(FnExpr)
+    Fn_(FnExpr[exts])
 
-    Is(IsExpr)
+    Is(IsExpr[exts])
 
-    Do(DoExpr)
+    Do(DoExpr[exts])
 
     ## A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
-    Seq(SeqExpr)
+    Seq(SeqExpr[exts])
 
     ## A parenthesized expression.
-    Paren(ParenExpr)
+    Paren(ParenExpr[exts])
 
     ## A record: `(1, 2)`, `(x = 123, msg = "hi")`.
-    Record(RecordExpr)
+    Record(RecordExpr[exts])
 
     ## A variant: `~"hi"`, `Option.Some(123)`.
-    Variant(VariantExpr)
+    Variant(VariantExpr[exts])
 
 
-impl Tokens[Expr]:
-    firstToken(self: Expr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[Expr[exts]]:
+    firstToken(self: Expr[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Expr.Var(e): e.firstToken(tokens)
             Expr.ConSel(e): e.firstToken(tokens)
             Expr.FieldSel(e): e.firstToken(tokens)
-            Expr.MethodSel(e): e.firstToken(tokens)
             Expr.AssocFnSel(e): e.firstToken(tokens)
             Expr.Call(e): e.firstToken(tokens)
             Expr.Int(e): e.firstToken(tokens)
@@ -1048,12 +1128,11 @@ impl Tokens[Expr]:
             Expr.Paren(e): e.firstToken(tokens)
             Expr.Variant(e): e.firstToken(tokens)
 
-    lastToken(self: Expr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: Expr[exts], tokens: Array[Token]) TokenIdx:
         match self:
             Expr.Var(e): e.lastToken(tokens)
             Expr.ConSel(e): e.lastToken(tokens)
             Expr.FieldSel(e): e.lastToken(tokens)
-            Expr.MethodSel(e): e.lastToken(tokens)
             Expr.AssocFnSel(e): e.lastToken(tokens)
             Expr.Call(e): e.lastToken(tokens)
             Expr.Int(e): e.lastToken(tokens)
@@ -1074,30 +1153,27 @@ impl Tokens[Expr]:
 
 
 #[derive(ToDoc)]
-type VarExpr(
-    id: VarId,
+type VarExpr[exts](
+    id: AstVarId[exts],
 
-    # Type arguments explicitly passed to the variable.
-    userTyArgs: Option[TyArgs],
-
-    ## Inferred type arguments of the variable. Filled in by the type checker.
-    tyArgs: Vec[Type],
+    ## Type arguments explicitly passed to the variable.
+    userTyArgs: Option[TyArgs[exts]],
 )
 
 
-impl Tokens[VarExpr]:
-    firstToken(self: VarExpr, tokens: Array[Token]) TokenIdx:
-        self.id.token
+impl[Tokens[AstVarId[exts]]] Tokens[VarExpr[exts]]:
+    firstToken(self: VarExpr[exts], tokens: Array[Token]) TokenIdx:
+        self.id.firstToken(tokens)
 
-    lastToken(self: VarExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: VarExpr[exts], tokens: Array[Token]) TokenIdx:
         match self.userTyArgs:
             Option.Some(tyArgs): tyArgs.lastToken(tokens)
-            Option.None: self.id.token
+            Option.None: self.id.lastToken(tokens)
 
 
 #[derive(ToDoc)]
-type TyArgs(
-    args: Vec[Type],
+type TyArgs[exts](
+    args: Vec[Type[exts]],
 
     # Left bracket.
     _firstToken: TokenIdx,
@@ -1107,94 +1183,36 @@ type TyArgs(
 )
 
 
-impl Tokens[TyArgs]:
-    firstToken(self: TyArgs, tokens: Array[Token]) TokenIdx:
+impl Tokens[TyArgs[exts]]:
+    firstToken(self: TyArgs[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: TyArgs, tokens: Array[Token]) TokenIdx:
+    lastToken(self: TyArgs[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
 #[derive(ToDoc)]
-type FieldSelExpr(
-    object: Expr,
+type FieldSelExpr[exts](
+    object: Expr[exts],
 
     field: Id,
 
     ## Type arguments explicitly passed to the variable.
     ##
     ## Since fields can't have `forall` quantifiers, this will only be valid when the field is a
-    ## method, in which case the type checker will convert this node into `MethodSelExpr`.
-    userTyArgs: Option[TyArgs],
+    ## method, in which case the type checker will convert this node into `MethodSelExpr[exts]`.
+    userTyArgs: Option[TyArgs[exts]],
 )
 
 
-impl Tokens[FieldSelExpr]:
-    firstToken(self: FieldSelExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[FieldSelExpr[exts]]:
+    firstToken(self: FieldSelExpr[exts], tokens: Array[Token]) TokenIdx:
         self.object.firstToken(tokens)
 
-    lastToken(self: FieldSelExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: FieldSelExpr[exts], tokens: Array[Token]) TokenIdx:
         match self.userTyArgs:
             Option.Some(tyArgs): tyArgs.lastToken(tokens)
             Option.None: self.field.lastToken(tokens)
-
-
-## A method selection: `<expr>.method`.
-##
-## This node is generated by the type checker, from `Expr::FieldSel`.
-##
-## Methods are always associated functions. They can be associated to a type (e.g. `Vec.push`) or
-## trait methods (e.g. `Iterator.next`).
-#[derive(ToDoc)]
-type MethodSelExpr(
-    ## The reciever, `<expr>` in `<expr>.method`.
-    object: Expr,
-
-    ## Type of `object` (receiver), filled in by the type checker.
-    ##
-    ## This type will always be a type constructor, potentially with arguments, as types without
-    ## type constructors (records etc.) don't have methods.
-    ##
-    ## The type constructor will be the type with the associated function with `method` as the name
-    ## and a `self` parameter that matches this type.
-    # TODO: We could have separate fields for the ty con and args.
-    # TODO: We could also add types to every expression if it's going to help with monomorphisation.
-    #       For efficiency though, we should only annotate inferred types and then type check from
-    #       the top-level expression every time we need to compute type of an expr.
-    objectTy: Option[Ty],
-
-    ## The type or trait id that defines the method.
-    ##
-    ## E.g. `Vec`, `Iterator`.
-    ##
-    ## Note: when calling trait methods, this will be the trait type rather than the receiver type.
-    methodTyId: TyId,
-
-    ## The method id.
-    ##
-    ## E.g. `push`, `next`.
-    method: AssocVarId,
-
-    ## Type arguments of `method_ty_id`.
-    ##
-    ## If the method is for a trait, the first arguments here will be for the
-    ## trait type parameters. E.g. in `Iterator.next`, the first two argumetns
-    ## will be the `iter` and `exn` parameters of `trait Iterator[iter, exn]`.
-    ##
-    ## (If the method is not a trait method, then we don't care about the type
-    ## parameter order.. I think?)
-    tyArgs: Vec[Ty],
-
-    _lastToken: TokenIdx,
-)
-
-
-impl Tokens[MethodSelExpr]:
-    firstToken(self: MethodSelExpr, tokens: Array[Token]) TokenIdx:
-        self.object.firstToken(tokens)
-
-    lastToken(self: MethodSelExpr, tokens: Array[Token]) TokenIdx:
-        self._lastToken
 
 
 ## An associated function or method selection:
@@ -1202,47 +1220,43 @@ impl Tokens[MethodSelExpr]:
 ## - Associated function: `Vec.withCapacity`.
 ## - Method: `Vec.push`.
 #[derive(ToDoc)]
-type AssocFnSelExpr(
+type AssocFnSelExpr[exts](
     # The type of the associated function: `Vec` in the examples above.
-    ty: TyId,
+    ty: AstTyId[exts],
 
     # The associated function name: `withCapacity` and `push` in the examples
     # above.
-    member: AssocVarId,
+    member: AstAssocVarId[exts],
 
     ## Type arguments explicitly passed to the variable.
-    userTyArgs: Option[TyArgs],
-
-    ## Inferred type arguments of the type and associated function. Filled in by
-    ## the type checker.
-    tyArgs: Vec[Ty],
+    userTyArgs: Option[TyArgs[exts]],
 
     _lastToken: TokenIdx,
 )
 
 
-impl Tokens[AssocFnSelExpr]:
-    firstToken(self: AssocFnSelExpr, tokens: Array[Token]) TokenIdx:
-        self.ty.token
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[AssocFnSelExpr[exts]]:
+    firstToken(self: AssocFnSelExpr[exts], tokens: Array[Token]) TokenIdx:
+        self.ty.firstToken(tokens)
 
-    lastToken(self: AssocFnSelExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: AssocFnSelExpr[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
 #[derive(ToDoc)]
-type CallExpr(
-    fun: Expr,
-    args: Vec[Named[Expr]],
-    splice: Option[Expr],
+type CallExpr[exts](
+    fun: Expr[exts],
+    args: Vec[Named[Expr[exts]]],
+    splice: Option[Expr[exts]],
     _lastToken: TokenIdx,
 )
 
 
-impl Tokens[CallExpr]:
-    firstToken(self: CallExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[CallExpr[exts]]:
+    firstToken(self: CallExpr[exts], tokens: Array[Token]) TokenIdx:
         self.fun.firstToken(tokens)
 
-    lastToken(self: CallExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: CallExpr[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
@@ -1278,25 +1292,25 @@ impl Tokens[IntExpr]:
 
 
 #[derive(ToDoc)]
-type StrExpr(
-    parts: Vec[StrPart],
+type StrExpr[exts](
+    parts: Vec[StrPart[exts]],
     first: TokenIdx,
     last: TokenIdx,
 )
 
 
-impl Tokens[StrExpr]:
-    firstToken(self: StrExpr, tokens: Array[Token]) TokenIdx:
+impl Tokens[StrExpr[exts]]:
+    firstToken(self: StrExpr[exts], tokens: Array[Token]) TokenIdx:
         self.first
 
-    lastToken(self: StrExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: StrExpr[exts], tokens: Array[Token]) TokenIdx:
         self.last
 
 
 #[derive(ToDoc)]
-type StrPart:
+type StrPart[exts]:
     Str(Str)
-    Expr(Expr)
+    Expr(Expr[exts])
 
 
 #[derive(ToDoc)]
@@ -1315,18 +1329,18 @@ impl Tokens[CharExpr]:
 
 
 #[derive(ToDoc)]
-type BinOpExpr(
-    left: Expr,
-    right: Expr,
+type BinOpExpr[exts](
+    left: Expr[exts],
+    right: Expr[exts],
     op: BinOp,
 )
 
 
-impl Tokens[BinOpExpr]:
-    firstToken(self: BinOpExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[BinOpExpr[exts]]:
+    firstToken(self: BinOpExpr[exts], tokens: Array[Token]) TokenIdx:
         self.left.firstToken(tokens)
 
-    lastToken(self: BinOpExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: BinOpExpr[exts], tokens: Array[Token]) TokenIdx:
         self.right.lastToken(tokens)
 
 
@@ -1351,125 +1365,125 @@ type BinOp:
 
 
 #[derive(ToDoc)]
-type UnOpExpr(
+type UnOpExpr[exts](
     op: UnOp,
-    expr: Expr,
+    expr: Expr[exts],
     _firstToken: TokenIdx,
 )
 
 
-impl Tokens[UnOpExpr]:
-    firstToken(self: UnOpExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[UnOpExpr[exts]]:
+    firstToken(self: UnOpExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: UnOpExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: UnOpExpr[exts], tokens: Array[Token]) TokenIdx:
         self.expr.lastToken(tokens)
 
 
 #[derive(ToDoc)]
-type RecordExpr(
-    fields: Vec[Named[Expr]],
-    splice: Option[Expr],
+type RecordExpr[exts](
+    fields: Vec[Named[Expr[exts]]],
+    splice: Option[Expr[exts]],
     _firstToken: TokenIdx,
     _lastToken: TokenIdx,
 )
 
 
-impl Tokens[RecordExpr]:
-    firstToken(self: RecordExpr, tokens: Array[Token]) TokenIdx:
+impl Tokens[RecordExpr[exts]]:
+    firstToken(self: RecordExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: RecordExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: RecordExpr[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken
 
 
 #[derive(ToDoc)]
-type VariantExpr(
-    expr: Expr,
-    inferredTy: Option[Ty],
+type VariantExpr[exts](
+    expr: Expr[exts],
+    ..AstExts[exts].InferredTyExts
 )
 
 
-impl Tokens[VariantExpr]:
-    firstToken(self: VariantExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[VariantExpr[exts]]:
+    firstToken(self: VariantExpr[exts], tokens: Array[Token]) TokenIdx:
         let tilde = prevNonTrivia(self.expr.firstToken(tokens), tokens).unwrap()
         assert(tokens.get(tilde.idx).kind is TokenKind.Tilde)
         tilde
 
-    lastToken(self: VariantExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: VariantExpr[exts], tokens: Array[Token]) TokenIdx:
         self.expr.lastToken(tokens)
 
 
 #[derive(ToDoc)]
-type ReturnExpr(
-    expr: Option[Expr],
+type ReturnExpr[exts](
+    expr: Option[Expr[exts]],
     _firstToken: TokenIdx,
 )
 
 
-impl Tokens[ReturnExpr]:
-    firstToken(self: ReturnExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[ReturnExpr[exts]]:
+    firstToken(self: ReturnExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: ReturnExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: ReturnExpr[exts], tokens: Array[Token]) TokenIdx:
         match self.expr:
             Option.Some(expr): expr.lastToken(tokens)
             Option.None: self._firstToken
 
 
 #[derive(ToDoc)]
-type MatchExpr(
-    scrutinee: Expr,
-    alts: Vec[Alt],
+type MatchExpr[exts](
+    scrutinee: Expr[exts],
+    alts: Vec[Alt[exts]],
     _firstToken: TokenIdx,
 )
 
 
-impl Tokens[MatchExpr]:
-    firstToken(self: MatchExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[MatchExpr[exts]]:
+    firstToken(self: MatchExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: MatchExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: MatchExpr[exts], tokens: Array[Token]) TokenIdx:
         self.alts.last().unwrap().lastToken(tokens)
 
 
 #[derive(ToDoc)]
-type Alt(
-    pat: Pat,
-    guard: Option[Expr],
-    rhs: Vec[Stmt],
+type Alt[exts](
+    pat: Pat[exts],
+    guard: Option[Expr[exts]],
+    rhs: Vec[Stmt[exts]],
 )
 
 
-impl Tokens[Alt]:
-    firstToken(self: Alt, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[Alt[exts]]:
+    firstToken(self: Alt[exts], tokens: Array[Token]) TokenIdx:
         self.pat.firstToken(tokens)
 
-    lastToken(self: Alt, tokens: Array[Token]) TokenIdx:
+    lastToken(self: Alt[exts], tokens: Array[Token]) TokenIdx:
         self.rhs.last().unwrap().lastToken(tokens)
 
 
 #[derive(ToDoc)]
-type IfExpr(
+type IfExpr[exts](
     # At least one element
-    branches: Vec[IfBranch],
-    elseBranch: Option[Vec[Stmt]],
+    branches: Vec[IfBranch[exts]],
+    elseBranch: Option[Vec[Stmt[exts]]],
     _firstToken: TokenIdx,
 )
 
 
 #[derive(ToDoc)]
-type IfBranch(
-    guard: Expr,
-    body: Vec[Stmt],
+type IfBranch[exts](
+    guard: Expr[exts],
+    body: Vec[Stmt[exts]],
 )
 
 
-impl Tokens[IfExpr]:
-    firstToken(self: IfExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[IfExpr[exts]]:
+    firstToken(self: IfExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: IfExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: IfExpr[exts], tokens: Array[Token]) TokenIdx:
         if self.elseBranch is Option.Some(block):
             return block.last().unwrap().lastToken(tokens)
 
@@ -1477,50 +1491,50 @@ impl Tokens[IfExpr]:
 
 
 #[derive(ToDoc)]
-type FnExpr(
-    sig: FunSig,
-    body: Vec[Stmt],
+type FnExpr[exts](
+    sig: FunSig[exts],
+    body: Vec[Stmt[exts]],
     idx: U32,
     _firstToken: TokenIdx,
 )
 
 
-impl Tokens[FnExpr]:
-    firstToken(self: FnExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[FnExpr[exts]]:
+    firstToken(self: FnExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: FnExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: FnExpr[exts], tokens: Array[Token]) TokenIdx:
         self.body.last().unwrap().lastToken(tokens)
 
 
 # <expr> is <pat>
 #[derive(ToDoc)]
-type IsExpr(
-    expr: Expr,
-    pat: Pat,
+type IsExpr[exts](
+    expr: Expr[exts],
+    pat: Pat[exts],
 )
 
 
-impl Tokens[IsExpr]:
-    firstToken(self: IsExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[IsExpr[exts]]:
+    firstToken(self: IsExpr[exts], tokens: Array[Token]) TokenIdx:
         self.expr.firstToken(tokens)
 
-    lastToken(self: IsExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: IsExpr[exts], tokens: Array[Token]) TokenIdx:
         self.pat.lastToken(tokens)
 
 
 #[derive(ToDoc)]
-type DoExpr(
-    body: Vec[Stmt],
+type DoExpr[exts](
+    body: Vec[Stmt[exts]],
     _firstToken: TokenIdx,
 )
 
 
-impl Tokens[DoExpr]:
-    firstToken(self: DoExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[DoExpr[exts]]:
+    firstToken(self: DoExpr[exts], tokens: Array[Token]) TokenIdx:
         self._firstToken
 
-    lastToken(self: DoExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: DoExpr[exts], tokens: Array[Token]) TokenIdx:
         self.body.last().unwrap().lastToken(tokens)
 
 
@@ -1531,44 +1545,44 @@ type UnOp:
 
 
 #[derive(ToDoc)]
-type SeqExpr(
-    ty: Option[Type],
-    elems: Vec[SeqElem],
+type SeqExpr[exts](
+    ty: Option[Type[exts]],
+    elems: Vec[SeqElem[exts]],
     _lbracket: TokenIdx,
     _rbracket: TokenIdx,
 )
 
 
 #[derive(ToDoc)]
-type SeqElem(
-    key: Option[Expr],
-    val: Expr,
+type SeqElem[exts](
+    key: Option[Expr[exts]],
+    val: Expr[exts],
 )
 
 
-impl Tokens[SeqExpr]:
-    firstToken(self: SeqExpr, tokens: Array[Token]) TokenIdx:
+impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[SeqExpr[exts]]:
+    firstToken(self: SeqExpr[exts], tokens: Array[Token]) TokenIdx:
         match self.ty:
             Option.Some(ty): ty.firstToken(tokens)
             Option.None: self._lbracket
 
-    lastToken(self: SeqExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: SeqExpr[exts], tokens: Array[Token]) TokenIdx:
         self._rbracket
 
 
 #[derive(ToDoc)]
-type ParenExpr(
-    expr: Expr,
+type ParenExpr[exts](
+    expr: Expr[exts],
     _lparen: TokenIdx,
     _rparen: TokenIdx,
 )
 
 
-impl Tokens[ParenExpr]:
-    firstToken(self: ParenExpr, tokens: Array[Token]) TokenIdx:
+impl Tokens[ParenExpr[exts]]:
+    firstToken(self: ParenExpr[exts], tokens: Array[Token]) TokenIdx:
         self._lparen
 
-    lastToken(self: ParenExpr, tokens: Array[Token]) TokenIdx:
+    lastToken(self: ParenExpr[exts], tokens: Array[Token]) TokenIdx:
         self._rparen
 
 
@@ -1577,8 +1591,8 @@ impl Tokens[ParenExpr]:
 ## This just uses expression syntax as expression syntax should be rich enough
 ## to cover most attributes. We may revise this as needed.
 #[derive(ToDoc)]
-type Attribute(
-    expr: Expr,
+type Attribute[exts](
+    expr: Expr[exts],
 
     # "#["
     open: TokenIdx,
