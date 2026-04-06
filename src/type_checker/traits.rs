@@ -196,14 +196,14 @@ impl TraitImpl {
             .qvars
             .iter()
             .map(|(qvar, kind)| {
-                let instantiated_var = var_gen.new_var(0, *kind, loc.clone());
+                let instantiated_var = var_gen.new_var(*kind, loc.clone());
                 (qvar.clone(), Ty::UVar(instantiated_var.clone()))
             })
             .collect();
 
         for (impl_arg, ty_arg) in self.trait_args.iter().zip(args.iter()) {
             let instantiated_impl_arg = impl_arg.subst_qvars(&var_map);
-            if !try_unify_one_way(&instantiated_impl_arg, ty_arg, cons, var_gen, 0, loc) {
+            if !try_unify_one_way(&instantiated_impl_arg, ty_arg, cons, var_gen, loc) {
                 return None;
             }
         }

@@ -12,7 +12,6 @@ pub(super) fn check_stmts(
     tc_state: &mut TcFunState,
     stmts: &mut [ast::L<ast::Stmt>],
     expected_ty: Option<&Ty>,
-    level: u32,
     loop_stack: &mut Vec<Option<Id>>,
 ) -> Ty {
     let num_stmts = stmts.len();
@@ -23,7 +22,6 @@ pub(super) fn check_stmts(
             tc_state,
             stmt,
             if last { expected_ty } else { None },
-            level,
             loop_stack,
         );
         if last {
@@ -33,12 +31,10 @@ pub(super) fn check_stmts(
     panic!()
 }
 
-// TODO: Level is the same as the length of `env`, maybe remove the parameter?
 fn check_stmt(
     tc_state: &mut TcFunState,
     stmt: &mut ast::L<ast::Stmt>,
     expected_ty: Option<&Ty>,
-    level: u32,
     loop_stack: &mut Vec<Option<Id>>,
 ) -> Ty {
     match &mut stmt.node {
@@ -75,22 +71,16 @@ fn check_stmt(
                 }
             }
 
-            expected_ty.cloned().unwrap_or_else(|| {
-                Ty::UVar(
-                    tc_state
-                        .var_gen
-                        .new_var(level, Kind::Star, stmt.loc.clone()),
-                )
-            })
+            expected_ty
+                .cloned()
+                .unwrap_or_else(|| Ty::UVar(tc_state.var_gen.new_var(Kind::Star, stmt.loc.clone())))
         }
 
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
             let pat_expected_ty = ty
                 .as_ref()
                 .map(|ast_ty| convert_ast_ty(&tc_state.tys.tys, &ast_ty.node, &ast_ty.loc))
-                .unwrap_or_else(|| {
-                    Ty::UVar(tc_state.var_gen.new_var(level, Kind::Star, lhs.loc.clone()))
-                });
+                .unwrap_or_else(|| Ty::UVar(tc_state.var_gen.new_var(Kind::Star, lhs.loc.clone())));
 
             tc_state.env.enter();
             let (rhs_ty, _) = check_expr(
@@ -98,12 +88,11 @@ fn check_stmt(
                 &mut rhs.node,
                 &rhs.loc,
                 Some(&pat_expected_ty),
-                level + 1,
                 loop_stack,
             );
             tc_state.env.exit();
 
-            let pat_ty = check_pat(tc_state, lhs, level);
+            let pat_ty = check_pat(tc_state, lhs);
 
             unify(
                 &pat_ty,
@@ -111,7 +100,6 @@ fn check_stmt(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 &lhs.loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -123,7 +111,6 @@ fn check_stmt(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 &stmt.loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -182,14 +169,7 @@ fn check_stmt(
                         panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
                     });
                     *inferred_ty = Some(var_ty.clone());
-                    check_expr(
-                        tc_state,
-                        &mut rhs.node,
-                        &rhs.loc,
-                        Some(&var_ty),
-                        level,
-                        loop_stack,
-                    );
+                    check_expr(tc_state, &mut rhs.node, &rhs.loc, Some(&var_ty), loop_stack);
                     return Ty::unit();
                 }
 
@@ -202,14 +182,8 @@ fn check_stmt(
                     assert!(user_ty_args.is_empty());
                     assert!(inferred_ty.is_none());
 
-                    let (object_ty, _) = check_expr(
-                        tc_state,
-                        &mut object.node,
-                        &object.loc,
-                        None,
-                        level,
-                        loop_stack,
-                    );
+                    let (object_ty, _) =
+                        check_expr(tc_state, &mut object.node, &object.loc, None, loop_stack);
 
                     let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                     let lhs_ty: Ty = match &lhs_ty_normalized {
@@ -257,14 +231,8 @@ fn check_stmt(
                         ),
                     };
 
-                    let (rhs_ty, _) = check_expr(
-                        tc_state,
-                        &mut rhs.node,
-                        &rhs.loc,
-                        Some(&lhs_ty),
-                        level,
-                        loop_stack,
-                    );
+                    let (rhs_ty, _) =
+                        check_expr(tc_state, &mut rhs.node, &rhs.loc, Some(&lhs_ty), loop_stack);
                     *inferred_ty = Some(rhs_ty);
                 }
 
@@ -277,7 +245,6 @@ fn check_stmt(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 &stmt.loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -286,21 +253,19 @@ fn check_stmt(
 
         ast::Stmt::Expr(ast::Expr::Match(match_expr)) if expected_ty.is_none() => {
             crate::type_checker::expr::check_match_expr(
-                tc_state, match_expr, &stmt.loc, None, level, loop_stack,
+                tc_state, match_expr, &stmt.loc, None, loop_stack,
             );
             match_expr.inferred_ty = Some(Ty::unit());
             Ty::unit()
         }
 
         ast::Stmt::Expr(ast::Expr::If(if_expr)) if expected_ty.is_none() => {
-            crate::type_checker::expr::check_if_expr(tc_state, if_expr, None, level, loop_stack);
+            crate::type_checker::expr::check_if_expr(tc_state, if_expr, None, loop_stack);
             if_expr.inferred_ty = Some(Ty::unit());
             Ty::unit()
         }
 
-        ast::Stmt::Expr(expr) => {
-            check_expr(tc_state, expr, &stmt.loc, expected_ty, level, loop_stack).0
-        }
+        ast::Stmt::Expr(expr) => check_expr(tc_state, expr, &stmt.loc, expected_ty, loop_stack).0,
 
         ast::Stmt::For(ast::ForStmt {
             label,
@@ -329,8 +294,7 @@ fn check_stmt(
             the inferred types of nodes).
             */
 
-            let iter_ty =
-                check_expr(tc_state, &mut expr.node, &expr.loc, None, level, loop_stack).0;
+            let iter_ty = check_expr(tc_state, &mut expr.node, &expr.loc, None, loop_stack).0;
 
             // The type `item` for the predicate `Iterator[iter, item, exn]`. This will the the
             // pattern type (when available) or a fresh type variable.
@@ -338,11 +302,7 @@ fn check_stmt(
                 .as_ref()
                 .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
                 .unwrap_or_else(|| {
-                    Ty::UVar(
-                        tc_state
-                            .var_gen
-                            .new_var(level, Kind::Star, expr.loc.clone()),
-                    )
+                    Ty::UVar(tc_state.var_gen.new_var(Kind::Star, expr.loc.clone()))
                 });
 
             // Try to eagerly resolve the item type via local assumptions. This is
@@ -371,7 +331,6 @@ fn check_stmt(
                         tc_state.tys.tys.cons(),
                         tc_state.trait_env,
                         tc_state.var_gen,
-                        level,
                         &expr.loc,
                         tc_state.assumps,
                         tc_state.preds,
@@ -390,21 +349,20 @@ fn check_stmt(
 
             tc_state.env.enter();
 
-            let pat_ty = check_pat(tc_state, pat, level);
+            let pat_ty = check_pat(tc_state, pat);
             unify(
                 &pat_ty,
                 &item_ty,
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 &pat.loc,
                 tc_state.assumps,
                 tc_state.preds,
             );
 
             loop_stack.push(label.clone());
-            check_stmts(tc_state, body, None, level, loop_stack);
+            check_stmts(tc_state, body, None, loop_stack);
             loop_stack.pop();
 
             tc_state.env.exit();
@@ -415,7 +373,6 @@ fn check_stmt(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 &stmt.loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -536,7 +493,6 @@ fn check_stmt(
                 &mut cond.node,
                 &cond.loc,
                 Some(&Ty::bool()),
-                level,
                 loop_stack,
             );
             loop_stack.push(label.clone());
@@ -544,7 +500,7 @@ fn check_stmt(
             cond_binders.into_iter().for_each(|(k, v)| {
                 tc_state.env.insert(k, v);
             });
-            check_stmts(tc_state, body, None, level, loop_stack);
+            check_stmts(tc_state, body, None, loop_stack);
             tc_state.env.exit();
             loop_stack.pop();
             unify_expected_ty(
@@ -553,7 +509,6 @@ fn check_stmt(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 &stmt.loc,
                 tc_state.assumps,
                 tc_state.preds,

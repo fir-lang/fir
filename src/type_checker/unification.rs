@@ -11,7 +11,6 @@ pub(super) fn unify(
     cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
-    level: u32,
     loc: &ast::Loc,
     assumps: &[Pred],
     preds: &mut Vec<Pred>,
@@ -67,9 +66,7 @@ pub(super) fn unify(
                 )
             }
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                unify(
-                    arg1, arg2, cons, trait_env, var_gen, level, loc, assumps, preds,
-                );
+                unify(arg1, arg2, cons, trait_env, var_gen, loc, assumps, preds);
             }
         }
 
@@ -97,9 +94,7 @@ pub(super) fn unify(
             match (args1, args2) {
                 (FunArgs::Positional { args: args1 }, FunArgs::Positional { args: args2 }) => {
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                        unify(
-                            arg1, arg2, cons, trait_env, var_gen, level, loc, assumps, preds,
-                        );
+                        unify(arg1, arg2, cons, trait_env, var_gen, loc, assumps, preds);
                     }
                 }
 
@@ -124,7 +119,6 @@ pub(super) fn unify(
                         cons,
                         trait_env,
                         var_gen,
-                        level,
                         loc,
                         assumps,
                         preds,
@@ -154,7 +148,6 @@ pub(super) fn unify(
                         cons,
                         trait_env,
                         var_gen,
-                        level,
                         loc,
                         assumps,
                         preds,
@@ -162,9 +155,7 @@ pub(super) fn unify(
                 }
             }
 
-            unify(
-                ret1, ret2, cons, trait_env, var_gen, level, loc, assumps, preds,
-            );
+            unify(ret1, ret2, cons, trait_env, var_gen, loc, assumps, preds);
         }
 
         (Ty::QVar(var, _kind), _) | (_, Ty::QVar(var, _kind)) => {
@@ -176,16 +167,12 @@ pub(super) fn unify(
                 return;
             }
 
-            let var1_level = var1.level();
-            let var2_level = var2.level();
-
             // We've normalized the types, so the links must be followed to the end.
             debug_assert!(var1.link().is_none());
             debug_assert!(var2.link().is_none());
 
-            // Links must increase in level so that we can follow them to find the level of the
-            // group.
-            if var1_level < var2_level {
+            // Arbitrary but deterministic linking direction.
+            if var1.id() < var2.id() {
                 link_var(var1, &ty2);
             } else {
                 link_var(var2, &ty1);
@@ -221,7 +208,6 @@ pub(super) fn unify(
                 cons,
                 trait_env,
                 var_gen,
-                level,
                 loc,
                 assumps,
                 preds,
@@ -248,9 +234,7 @@ pub(super) fn unify(
                 ..
             },
         ) if labels.is_empty() => {
-            unify(
-                ext, other, cons, trait_env, var_gen, level, loc, assumps, preds,
-            );
+            unify(ext, other, cons, trait_env, var_gen, loc, assumps, preds);
         }
 
         (
@@ -274,7 +258,7 @@ pub(super) fn unify(
                 );
             }
             unify(
-                ty1_inner, ty2_inner, cons, trait_env, var_gen, level, loc, assumps, preds,
+                ty1_inner, ty2_inner, cons, trait_env, var_gen, loc, assumps, preds,
             );
         }
 
@@ -339,7 +323,6 @@ fn unify_labels(
     cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
-    level: u32,
     loc: &ast::Loc,
     assumps: &[Pred],
     preds: &mut Vec<Pred>,
@@ -376,22 +359,18 @@ fn unify_labels(
     for key in keys1.intersection(&keys2) {
         let ty1 = labels1.get(*key).unwrap();
         let ty2 = labels2.get(*key).unwrap();
-        unify(
-            ty1, ty2, cons, trait_env, var_gen, level, loc, assumps, preds,
-        );
+        unify(ty1, ty2, cons, trait_env, var_gen, loc, assumps, preds);
     }
 
     if !extras1.is_empty() {
         match &extension2 {
             Some(Ty::UVar(var)) => {
-                // TODO: Not sure about level
                 extension2 = Some(Ty::UVar(link_extension(
                     record_or_variant,
                     &extras1,
                     &labels1,
                     var,
                     var_gen,
-                    level,
                     loc,
                 )));
             }
@@ -404,14 +383,12 @@ fn unify_labels(
     if !extras2.is_empty() {
         match &extension1 {
             Some(Ty::UVar(var)) => {
-                // TODO: Not sure about level
                 extension1 = Some(Ty::UVar(link_extension(
                     record_or_variant,
                     &extras2,
                     &labels2,
                     var,
                     var_gen,
-                    level,
                     loc,
                 )));
             }
@@ -439,7 +416,6 @@ fn unify_labels(
                 cons,
                 trait_env,
                 var_gen,
-                level,
                 loc,
                 assumps,
                 preds,
@@ -452,16 +428,13 @@ fn unify_labels(
                 cons,
                 trait_env,
                 var_gen,
-                level,
                 loc,
                 assumps,
                 preds,
             );
         }
         (Some(ext1), Some(ext2)) => {
-            unify(
-                &ext1, &ext2, cons, trait_env, var_gen, level, loc, assumps, preds,
-            );
+            unify(&ext1, &ext2, cons, trait_env, var_gen, loc, assumps, preds);
         }
     }
 }
@@ -474,7 +447,6 @@ pub(super) fn try_unify_one_way(
     ty2: &Ty,
     cons: &ScopeMap<Id, TyCon>,
     var_gen: &UVarGen,
-    level: u32,
     loc: &ast::Loc,
 ) -> bool {
     let ty1 = ty1.normalize(cons);
@@ -494,7 +466,7 @@ pub(super) fn try_unify_one_way(
                 return false;
             }
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                if !try_unify_one_way(arg1, arg2, cons, var_gen, level, loc) {
+                if !try_unify_one_way(arg1, arg2, cons, var_gen, loc) {
                     return false;
                 }
             }
@@ -520,7 +492,7 @@ pub(super) fn try_unify_one_way(
             match (args1, args2) {
                 (FunArgs::Positional { args: args1 }, FunArgs::Positional { args: args2 }) => {
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                        if !try_unify_one_way(arg1, arg2, cons, var_gen, level, loc) {
+                        if !try_unify_one_way(arg1, arg2, cons, var_gen, loc) {
                             return false;
                         }
                     }
@@ -546,7 +518,6 @@ pub(super) fn try_unify_one_way(
                         RecordOrVariant::Record,
                         cons,
                         var_gen,
-                        level,
                         loc,
                     ) {
                         return false;
@@ -565,13 +536,13 @@ pub(super) fn try_unify_one_way(
                 }
 
                 (Some(exceptions1), Some(exceptions2)) => {
-                    if !try_unify_one_way(exceptions1, exceptions2, cons, var_gen, level, loc) {
+                    if !try_unify_one_way(exceptions1, exceptions2, cons, var_gen, loc) {
                         return false;
                     }
                 }
             }
 
-            try_unify_one_way(ret1, ret2, cons, var_gen, level, loc)
+            try_unify_one_way(ret1, ret2, cons, var_gen, loc)
         }
 
         (Ty::QVar(var, _kind), _) | (_, Ty::QVar(var, _kind)) => {
@@ -582,7 +553,8 @@ pub(super) fn try_unify_one_way(
             if var1 == var2 {
                 return true;
             }
-            if var1.level() > var2.level() {
+            // Arbitrary but deterministic linking direction.
+            if var1.id() < var2.id() {
                 var1.set_link(ty2);
             } else {
                 var2.set_link(ty1);
@@ -618,7 +590,6 @@ pub(super) fn try_unify_one_way(
             *record_or_variant_1,
             cons,
             var_gen,
-            level,
             loc,
         ),
 
@@ -637,7 +608,7 @@ pub(super) fn try_unify_one_way(
             if assoc1 != assoc2 {
                 return false;
             }
-            try_unify_one_way(ty1_inner, ty2_inner, cons, var_gen, level, loc)
+            try_unify_one_way(ty1_inner, ty2_inner, cons, var_gen, loc)
         }
 
         (_, _) => false,
@@ -654,7 +625,6 @@ fn try_unify_labels_one_way(
     record_or_variant: RecordOrVariant,
     cons: &ScopeMap<Id, TyCon>,
     var_gen: &UVarGen,
-    level: u32,
     loc: &ast::Loc,
 ) -> bool {
     let (labels1, mut extension1) = collect_rows(
@@ -689,7 +659,7 @@ fn try_unify_labels_one_way(
     for key in keys1.intersection(&keys2) {
         let ty1 = labels1.get(*key).unwrap();
         let ty2 = labels2.get(*key).unwrap();
-        if !try_unify_one_way(ty1, ty2, cons, var_gen, level, loc) {
+        if !try_unify_one_way(ty1, ty2, cons, var_gen, loc) {
             return false;
         }
     }
@@ -701,14 +671,12 @@ fn try_unify_labels_one_way(
     if !extras2.is_empty() {
         match &extension1 {
             Some(Ty::UVar(var)) => {
-                // TODO: Not sure about level
                 extension1 = Some(Ty::UVar(link_extension(
                     record_or_variant,
                     &extras2,
                     &labels2,
                     var,
                     var_gen,
-                    level,
                     loc,
                 )));
             }
@@ -729,16 +697,11 @@ fn try_unify_labels_one_way(
 
     match (extension1, extension2) {
         (None, None) => true,
-        (Some(ext1), None) => try_unify_one_way(
-            &ext1,
-            &unit_row(record_or_variant),
-            cons,
-            var_gen,
-            level,
-            loc,
-        ),
+        (Some(ext1), None) => {
+            try_unify_one_way(&ext1, &unit_row(record_or_variant), cons, var_gen, loc)
+        }
         (None, Some(_)) => false,
-        (Some(ext1), Some(ext2)) => try_unify_one_way(&ext1, &ext2, cons, var_gen, level, loc),
+        (Some(ext1), Some(ext2)) => try_unify_one_way(&ext1, &ext2, cons, var_gen, loc),
     }
 }
 
@@ -748,7 +711,6 @@ fn link_extension(
     label_values: &OrdMap<Id, Ty>,
     var: &UVarRef,
     var_gen: &UVarGen,
-    level: u32,
     loc: &ast::Loc,
 ) -> UVarRef {
     let extension_labels: OrdMap<Id, Ty> = extra_labels
@@ -760,8 +722,7 @@ fn link_extension(
             )
         })
         .collect();
-    // TODO: Not sure about the level.
-    let new_extension_var = var_gen.new_var(level, Kind::Row(record_or_variant), loc.clone());
+    let new_extension_var = var_gen.new_var(Kind::Row(record_or_variant), loc.clone());
     let new_extension_ty = Ty::Anonymous {
         labels: extension_labels,
         extension: Some(Box::new(Ty::UVar(new_extension_var.clone()))),
@@ -780,7 +741,6 @@ pub(super) fn unify_expected_ty(
     cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
-    level: u32,
     loc: &ast::Loc,
     local_assoc_tys: &[Pred],
     preds: &mut Vec<Pred>,
@@ -792,7 +752,6 @@ pub(super) fn unify_expected_ty(
             cons,
             trait_env,
             var_gen,
-            level,
             loc,
             local_assoc_tys,
             preds,
@@ -803,63 +762,5 @@ pub(super) fn unify_expected_ty(
 
 fn link_var(var: &UVarRef, ty: &Ty) {
     // TODO: Occurs check.
-    prune_level(ty, var.level());
     var.set_link(ty.clone());
-}
-
-fn prune_level(ty: &Ty, max_level: u32) {
-    match ty {
-        Ty::Con(_, _) | Ty::RVar(_, _) => {}
-
-        Ty::UVar(var) => {
-            // Assertion disabled for now, see #22.
-            // assert!(var.link().is_none());
-            var.prune_level(max_level);
-        }
-
-        Ty::App(_, tys, _) => tys.iter().for_each(|ty| prune_level(ty, max_level)),
-
-        Ty::Anonymous {
-            labels, extension, ..
-        } => {
-            for label_ty in labels.values() {
-                prune_level(label_ty, max_level);
-            }
-            if let Some(ext) = extension {
-                prune_level(ext, max_level);
-            }
-        }
-
-        Ty::QVar(_, _) => panic!("QVar in prune_level"),
-
-        Ty::Fun {
-            args,
-            ret,
-            exceptions,
-        } => {
-            match args {
-                FunArgs::Positional { args } => {
-                    args.iter().for_each(|arg| prune_level(arg, max_level));
-                }
-                FunArgs::Named { args, extension } => {
-                    args.values().for_each(|arg| prune_level(arg, max_level));
-                    if let Some(ext) = extension {
-                        prune_level(ext, max_level);
-                    }
-                }
-            }
-            prune_level(ret, max_level);
-            if let Some(exn) = exceptions {
-                prune_level(exn, max_level);
-            }
-        }
-
-        Ty::AssocTySelect {
-            ty,
-            assoc_ty: _,
-            kind: _,
-        } => {
-            prune_level(ty, max_level);
-        }
-    }
 }

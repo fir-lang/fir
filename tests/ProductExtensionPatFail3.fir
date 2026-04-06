@@ -15,6 +15,6 @@ foo[r: Row[Rec]](rec: Foo[r]):
 #              row(y: Str, .._1) and
 #              r
 #              (
-#                 Anonymous { labels: {"y": Con("Str", Star)}, extension: Some(UVar(UVarRef(UVar { id: 1, kind: Row(Record), level: 0, link: None, loc: tests/ProductExtensionPatFail3.fir:8:9-8:41 }))), record_or_variant: Record, is_row: true }
+#                 Anonymous { labels: {"y": Con("Str", Star)}, extension: Some(UVar(UVarRef(UVar { id: 1, kind: Row(Record), link: None, loc: tests/ProductExtensionPatFail3.fir:8:9-8:41 }))), record_or_variant: Record, is_row: true }
 #                 RVar("r", Row(Record))
 #              )

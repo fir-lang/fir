@@ -16,7 +16,6 @@ pub(crate) fn apply_con_ty(
     args: &Vec<ast::Named<Ty>>,
     // The `..binder` part of the pattern.
     rest: &mut ast::RestPat,
-    level: u32,
     loc: &ast::Loc,
 ) -> Ty {
     match con_ty {
@@ -54,7 +53,6 @@ pub(crate) fn apply_con_ty(
                             tc_state.tys.tys.cons(),
                             tc_state.trait_env,
                             tc_state.var_gen,
-                            level,
                             loc,
                             tc_state.assumps,
                             tc_state.preds,
@@ -96,7 +94,6 @@ pub(crate) fn apply_con_ty(
                                 tc_state.tys.tys.cons(),
                                 tc_state.trait_env,
                                 tc_state.var_gen,
-                                level,
                                 loc,
                                 tc_state.assumps,
                                 tc_state.preds,
@@ -187,21 +184,19 @@ pub(crate) fn apply_con_ty(
                             // `Fn(x: U32, y: U32, ..r) Ret[r]`. In this case the pattern can have
                             // extra fields, they go into the extension.
                             let row_extension: Option<Box<Ty>> = match rest {
-                                ast::RestPat::Ignore => {
-                                    Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
-                                        level,
-                                        Kind::Row(RecordOrVariant::Record),
-                                        loc.clone(),
-                                    ))))
-                                }
+                                ast::RestPat::Ignore => Some(Box::new(Ty::UVar(
+                                    tc_state
+                                        .var_gen
+                                        .new_var(Kind::Row(RecordOrVariant::Record), loc.clone()),
+                                ))),
                                 ast::RestPat::Bind(ast::VarPat { var, ty, refined }) => {
                                     assert!(ty.is_none());
                                     assert!(refined.is_none());
-                                    let row_ty = Ty::UVar(tc_state.var_gen.new_var(
-                                        level,
-                                        Kind::Row(RecordOrVariant::Record),
-                                        loc.clone(),
-                                    ));
+                                    let row_ty =
+                                        Ty::UVar(tc_state.var_gen.new_var(
+                                            Kind::Row(RecordOrVariant::Record),
+                                            loc.clone(),
+                                        ));
 
                                     // Collect unmatched fixed fields for the rest binder.
                                     let con_ty_arg_names: HashSet<&Id> =
@@ -240,7 +235,6 @@ pub(crate) fn apply_con_ty(
                                 tc_state.tys.tys.cons(),
                                 tc_state.trait_env,
                                 tc_state.var_gen,
-                                level,
                                 loc,
                                 tc_state.assumps,
                                 tc_state.preds,

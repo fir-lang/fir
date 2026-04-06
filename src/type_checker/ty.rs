@@ -166,9 +166,6 @@ pub struct UVar {
     /// Kind of the variable.
     kind: Kind,
 
-    /// Binding level: depth of the scope the unification variable was created in.
-    level: Cell<u32>,
-
     /// When unified with a type, this holds the type.
     link: RefCell<Option<Ty>>,
 
@@ -299,7 +296,6 @@ impl Scheme {
     /// instantiated type and instantiated type variables of the scheme.
     pub(super) fn instantiate(
         &self,
-        level: u32,
         var_gen: &UVarGen,
         preds: &mut Vec<Pred>,
         loc: &ast::Loc,
@@ -315,7 +311,7 @@ impl Scheme {
 
         // Instantiate quantified variables of the scheme.
         for (qvar, kind) in &self.quantified_vars {
-            let instantiated_var = var_gen.new_var(level, *kind, self.loc.clone());
+            let instantiated_var = var_gen.new_var(*kind, self.loc.clone());
             var_map.insert(qvar.clone(), Ty::UVar(instantiated_var.clone()));
             instantiations.push(instantiated_var);
         }
@@ -349,7 +345,7 @@ impl Scheme {
     ) -> Ty {
         // Note: we could call `instantiate` and unify the returned variables with `arg_tys`.
         // However that requires creating fresh unification varibles, which requires more state to
-        // be passed (level, variable generator). This function is easier to call.
+        // be passed (variable generator). This function is easier to call.
         //
         // The downside is that we have to do kind check below, which `unify` would do for is if we
         // call `instantiate` and then unify the returned variables with arguments.
@@ -1146,7 +1142,6 @@ impl Ty {
                                     &c,
                                     cons,
                                     var_gen,
-                                    0,
                                     &ast::Loc::dummy(),
                                 )
                             },
@@ -1221,10 +1216,6 @@ impl UVarRef {
         self.0.id
     }
 
-    pub(super) fn level(&self) -> u32 {
-        self.0.level.get()
-    }
-
     pub fn kind(&self) -> Kind {
         self.0.kind
     }
@@ -1235,11 +1226,6 @@ impl UVarRef {
 
     pub(super) fn set_link(&self, ty: Ty) {
         *self.0.link.borrow_mut() = Some(ty);
-    }
-
-    pub(super) fn prune_level(&self, level: u32) {
-        let self_level = self.level();
-        self.0.level.set(std::cmp::min(level, self_level));
     }
 
     pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
@@ -1253,12 +1239,11 @@ impl UVarRef {
 }
 
 impl UVarGen {
-    pub(super) fn new_var(&self, level: u32, kind: Kind, loc: ast::Loc) -> UVarRef {
+    pub(super) fn new_var(&self, kind: Kind, loc: ast::Loc) -> UVarRef {
         let id = self.next_id.get();
         self.next_id.update(|c| c + 1);
         UVarRef(Rc::new(UVar {
             id,
-            level: Cell::new(level),
             link: RefCell::new(None),
             loc,
             kind,
@@ -1489,7 +1474,6 @@ impl fmt::Debug for UVar {
         f.debug_struct("UVar")
             .field("id", &self.id)
             .field("kind", &self.kind)
-            .field("level", &self.level.get()) // don't show `Cell` part
             .field("link", &self.link.try_borrow().unwrap()) // don't show `RefCell` part
             .field("loc", &self.loc)
             .finish()

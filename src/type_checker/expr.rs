@@ -30,7 +30,6 @@ pub(super) fn check_expr(
     expr: &mut ast::Expr,
     loc: &ast::Loc,
     expected_ty: Option<&Ty>,
-    level: u32,
     loop_stack: &mut Vec<Option<Id>>,
 ) -> (Ty, HashMap<Id, Ty>) {
     match expr {
@@ -60,7 +59,6 @@ pub(super) fn check_expr(
                         tc_state.tys.tys.cons(),
                         tc_state.trait_env,
                         tc_state.var_gen,
-                        level,
                         loc,
                         tc_state.assumps,
                         tc_state.preds,
@@ -75,8 +73,7 @@ pub(super) fn check_expr(
             };
 
             let ty = if user_ty_args.is_empty() {
-                let (ty, ty_args) =
-                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+                let (ty, ty_args) = scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
 
                 *expr = ast::Expr::Var(ast::VarExpr {
                     id: var.clone(),
@@ -121,7 +118,6 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
                     tc_state.var_gen,
-                    level,
                     loc,
                     tc_state.assumps,
                     tc_state.preds,
@@ -141,14 +137,8 @@ pub(super) fn check_expr(
             assert!(inferred_ty.is_none());
 
             let ty = {
-                let (object_ty, _) = check_expr(
-                    tc_state,
-                    &mut object.node,
-                    &object.loc,
-                    None,
-                    level,
-                    loop_stack,
-                );
+                let (object_ty, _) =
+                    check_expr(tc_state, &mut object.node, &object.loc, None, loop_stack);
 
                 let ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                 match &ty_normalized {
@@ -185,7 +175,6 @@ pub(super) fn check_expr(
                                     user_ty_args,
                                     &ty_normalized,
                                     loc,
-                                    level,
                                 );
                                 *expr = new_expr;
                                 ty
@@ -194,15 +183,8 @@ pub(super) fn check_expr(
                     }
 
                     other => {
-                        let (ty, new_expr) = check_field_sel(
-                            tc_state,
-                            object,
-                            field,
-                            user_ty_args,
-                            other,
-                            loc,
-                            level,
-                        );
+                        let (ty, new_expr) =
+                            check_field_sel(tc_state, object, field, user_ty_args, other, loc);
                         *expr = new_expr;
                         ty
                     }
@@ -215,7 +197,6 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
                     tc_state.var_gen,
-                    level,
                     loc,
                     tc_state.assumps,
                     tc_state.preds,
@@ -285,7 +266,7 @@ pub(super) fn check_expr(
 
             let con_ty = if user_ty_args.is_empty() {
                 let (con_ty, con_ty_args) =
-                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+                    scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
 
                 *expr = ast::Expr::ConSel(ast::Con {
                     ty: ty.clone(),
@@ -335,7 +316,6 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
                     tc_state.var_gen,
-                    level,
                     loc,
                     tc_state.assumps,
                     tc_state.preds,
@@ -408,7 +388,6 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
                     tc_state.var_gen,
-                    level,
                     loc,
                     tc_state.assumps,
                     tc_state.preds,
@@ -417,7 +396,7 @@ pub(super) fn check_expr(
 
             let method_ty = if user_ty_args_converted.is_empty() {
                 let (method_ty, method_ty_args) =
-                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+                    scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
 
                 for (ty_ty_arg, method_ty_arg) in
                     ty_user_ty_args_converted.iter().zip(method_ty_args.iter())
@@ -428,7 +407,6 @@ pub(super) fn check_expr(
                         tc_state.tys.tys.cons(),
                         tc_state.trait_env,
                         tc_state.var_gen,
-                        level,
                         loc,
                         tc_state.assumps,
                         tc_state.preds,
@@ -478,7 +456,6 @@ pub(super) fn check_expr(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -495,8 +472,7 @@ pub(super) fn check_expr(
         }) => {
             assert!(inferred_ty.is_none());
 
-            let (fun_ty, _) =
-                check_expr(tc_state, &mut fun.node, &fun.loc, None, level, loop_stack);
+            let (fun_ty, _) = check_expr(tc_state, &mut fun.node, &fun.loc, None, loop_stack);
 
             let fun_ty = fun_ty.normalize(tc_state.tys.tys.cons());
 
@@ -512,7 +488,6 @@ pub(super) fn check_expr(
                         tc_state.tys.tys.cons(),
                         tc_state.trait_env,
                         tc_state.var_gen,
-                        level,
                         loc,
                         tc_state.assumps,
                         tc_state.preds,
@@ -552,7 +527,6 @@ pub(super) fn check_expr(
                                     &mut arg.expr.node,
                                     &arg.expr.loc,
                                     Some(param_ty),
-                                    level,
                                     loop_stack,
                                 );
                                 arg_tys.push(arg_ty);
@@ -622,7 +596,6 @@ pub(super) fn check_expr(
                                 splice,
                                 loc,
                                 Some(&expected_ty),
-                                level,
                                 loop_stack,
                             );
 
@@ -632,7 +605,6 @@ pub(super) fn check_expr(
                                 tc_state.tys.tys.cons(),
                                 tc_state.trait_env,
                                 tc_state.var_gen,
-                                level,
                                 loc,
                                 tc_state.assumps,
                                 tc_state.preds,
@@ -652,7 +624,6 @@ pub(super) fn check_expr(
                             tc_state.tys.tys.cons(),
                             tc_state.trait_env,
                             tc_state.var_gen,
-                            level,
                             loc,
                             tc_state.assumps,
                             tc_state.preds,
@@ -758,7 +729,6 @@ pub(super) fn check_expr(
                         tc_state.tys.tys.cons(),
                         tc_state.trait_env,
                         tc_state.var_gen,
-                        level,
                         loc,
                         tc_state.assumps,
                         tc_state.preds,
@@ -907,7 +877,6 @@ pub(super) fn check_expr(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -1036,10 +1005,7 @@ pub(super) fn check_expr(
                         tc_state.exceptions.clone(),
                     )),
                     StrPart::Expr(mut expr) => {
-                        let expr_var =
-                            tc_state
-                                .var_gen
-                                .new_var(level, Kind::Star, expr.loc.clone());
+                        let expr_var = tc_state.var_gen.new_var(Kind::Star, expr.loc.clone());
                         tc_state.preds.push(Pred {
                             trait_: Ty::to_str_id(),
                             params: vec![Ty::UVar(expr_var.clone())],
@@ -1051,7 +1017,6 @@ pub(super) fn check_expr(
                             &mut expr.node,
                             &expr.loc,
                             Some(&Ty::UVar(expr_var)),
-                            level,
                             loop_stack,
                         );
                         let expr_node = replace(&mut expr.node, ast::Expr::Char('a'));
@@ -1145,7 +1110,6 @@ pub(super) fn check_expr(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -1162,7 +1126,6 @@ pub(super) fn check_expr(
                         &mut left.node,
                         &left.loc,
                         Some(&bool_ty),
-                        level,
                         loop_stack,
                     );
                     tc_state.env.enter();
@@ -1174,7 +1137,6 @@ pub(super) fn check_expr(
                         &mut right.node,
                         &right.loc,
                         Some(&bool_ty),
-                        level,
                         loop_stack,
                     );
                     tc_state.env.exit();
@@ -1201,7 +1163,6 @@ pub(super) fn check_expr(
                             tc_state.tys.tys.cons(),
                             tc_state.trait_env,
                             tc_state.var_gen,
-                            level,
                             loc,
                             tc_state.assumps,
                             tc_state.preds,
@@ -1217,7 +1178,6 @@ pub(super) fn check_expr(
                         &mut left.node,
                         &left.loc,
                         Some(&bool_ty),
-                        level,
                         loop_stack,
                     );
                     check_expr(
@@ -1225,7 +1185,6 @@ pub(super) fn check_expr(
                         &mut right.node,
                         &right.loc,
                         Some(&bool_ty),
-                        level,
                         loop_stack,
                     );
                     return (
@@ -1235,7 +1194,6 @@ pub(super) fn check_expr(
                             tc_state.tys.tys.cons(),
                             tc_state.trait_env,
                             tc_state.var_gen,
-                            level,
                             loc,
                             tc_state.assumps,
                             tc_state.preds,
@@ -1278,7 +1236,7 @@ pub(super) fn check_expr(
                 inferred_ty: None,
             });
 
-            check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
+            check_expr(tc_state, expr, loc, expected_ty, loop_stack)
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr: arg }) => match op {
@@ -1288,7 +1246,6 @@ pub(super) fn check_expr(
                     &mut arg.node,
                     &arg.loc,
                     Some(&Ty::bool()),
-                    level,
                     loop_stack,
                 );
                 *expr = ast::Expr::Call(ast::CallExpr {
@@ -1323,7 +1280,6 @@ pub(super) fn check_expr(
                         tc_state.tys.tys.cons(),
                         tc_state.trait_env,
                         tc_state.var_gen,
-                        level,
                         loc,
                         tc_state.assumps,
                         tc_state.preds,
@@ -1347,35 +1303,23 @@ pub(super) fn check_expr(
                     splice: None,
                     inferred_ty: None,
                 });
-                check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
+                check_expr(tc_state, expr, loc, expected_ty, loop_stack)
             }
         },
 
         ast::Expr::Return(ast::ReturnExpr { expr, inferred_ty }) => {
             assert!(inferred_ty.is_none());
             let return_ty = tc_state.return_ty.clone();
-            check_expr(
-                tc_state,
-                &mut expr.node,
-                loc,
-                Some(&return_ty),
-                level,
-                loop_stack,
-            );
+            check_expr(tc_state, &mut expr.node, loc, Some(&return_ty), loop_stack);
             let expr_ty = expected_ty.cloned().unwrap_or_else(|| {
-                Ty::UVar(
-                    tc_state
-                        .var_gen
-                        .new_var(level, Kind::Star, expr.loc.clone()),
-                )
+                Ty::UVar(tc_state.var_gen.new_var(Kind::Star, expr.loc.clone()))
             });
             *inferred_ty = Some(expr_ty.clone());
             (expr_ty, Default::default())
         }
 
         ast::Expr::Match(match_expr) => {
-            let mut rhs_tys =
-                check_match_expr(tc_state, match_expr, loc, expected_ty, level, loop_stack);
+            let mut rhs_tys = check_match_expr(tc_state, match_expr, loc, expected_ty, loop_stack);
 
             // Unify RHS types. When the `expected_ty` is available this doesn't do anything.
             // Otherwise this checks that all branches return the same type.
@@ -1388,7 +1332,6 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
                     tc_state.var_gen,
-                    level,
                     loc,
                     tc_state.assumps,
                     tc_state.preds,
@@ -1402,7 +1345,6 @@ pub(super) fn check_expr(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -1412,8 +1354,7 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::If(if_expr) => {
-            let mut branch_tys: Vec<Ty> =
-                check_if_expr(tc_state, if_expr, expected_ty, level, loop_stack);
+            let mut branch_tys: Vec<Ty> = check_if_expr(tc_state, if_expr, expected_ty, loop_stack);
 
             // When expected type is available, unify with it for better errors.
             match expected_ty {
@@ -1425,7 +1366,6 @@ pub(super) fn check_expr(
                             tc_state.tys.tys.cons(),
                             tc_state.trait_env,
                             tc_state.var_gen,
-                            level,
                             loc,
                             tc_state.assumps,
                             tc_state.preds,
@@ -1440,7 +1380,6 @@ pub(super) fn check_expr(
                             tc_state.tys.tys.cons(),
                             tc_state.trait_env,
                             tc_state.var_gen,
-                            level,
                             loc,
                             tc_state.assumps,
                             tc_state.preds,
@@ -1489,7 +1428,7 @@ pub(super) fn check_expr(
                 Some(ty) => convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc),
                 None => match expected_ret {
                     Some(ret) => (*ret).clone(),
-                    None => Ty::UVar(tc_state.var_gen.new_var(level + 1, Kind::Star, loc.clone())),
+                    None => Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
                 },
             };
 
@@ -1497,7 +1436,7 @@ pub(super) fn check_expr(
                 Some(exc) => convert_ast_ty(&tc_state.tys.tys, &exc.node, &exc.loc),
                 None => match expected_exceptions {
                     Some(Some(exn)) => (*exn).clone(),
-                    _ => Ty::UVar(tc_state.var_gen.new_var(level + 1, Kind::Star, loc.clone())),
+                    _ => Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
                 },
             };
 
@@ -1533,7 +1472,7 @@ pub(super) fn check_expr(
             let old_ret_ty = replace(&mut tc_state.return_ty, ret_ty.clone());
             let old_exceptions = replace(&mut tc_state.exceptions, exceptions.clone());
 
-            check_stmts(tc_state, body, Some(&ret_ty), level + 1, &mut Vec::new());
+            check_stmts(tc_state, body, Some(&ret_ty), &mut Vec::new());
 
             let exceptions = replace(&mut tc_state.exceptions, old_exceptions);
             let ret_ty = replace(&mut tc_state.return_ty, old_ret_ty);
@@ -1552,7 +1491,6 @@ pub(super) fn check_expr(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -1562,10 +1500,9 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::Is(ast::IsExpr { expr, pat }) => {
-            let (expr_ty, _) =
-                check_expr(tc_state, &mut expr.node, &expr.loc, None, level, loop_stack);
+            let (expr_ty, _) = check_expr(tc_state, &mut expr.node, &expr.loc, None, loop_stack);
             tc_state.env.enter();
-            let pat_ty = check_pat(tc_state, pat, level);
+            let pat_ty = check_pat(tc_state, pat);
             let pat_binders: HashMap<Id, Ty> = tc_state.env.exit();
             unify(
                 &pat_ty,
@@ -1573,7 +1510,6 @@ pub(super) fn check_expr(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 &pat.loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -1584,7 +1520,6 @@ pub(super) fn check_expr(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -1595,7 +1530,7 @@ pub(super) fn check_expr(
         ast::Expr::Do(ast::DoExpr { stmts, inferred_ty }) => {
             assert!(inferred_ty.is_none());
             tc_state.env.enter();
-            let ty = check_stmts(tc_state, stmts, expected_ty, level, loop_stack);
+            let ty = check_stmts(tc_state, stmts, expected_ty, loop_stack);
             tc_state.env.exit();
             *inferred_ty = Some(ty.clone());
             (ty, Default::default())
@@ -1772,7 +1707,7 @@ pub(super) fn check_expr(
 
             *expr = desugared;
 
-            check_expr(tc_state, expr, loc, expected_ty, level, loop_stack)
+            check_expr(tc_state, expr, loc, expected_ty, loop_stack)
         }
 
         ast::Expr::Record(ast::RecordExpr {
@@ -1781,15 +1716,7 @@ pub(super) fn check_expr(
             inferred_ty,
         }) => {
             assert!(inferred_ty.is_none());
-            let ty = check_record_expr(
-                tc_state,
-                fields,
-                splice,
-                loc,
-                expected_ty,
-                level,
-                loop_stack,
-            );
+            let ty = check_record_expr(tc_state, fields, splice, loc, expected_ty, loop_stack);
             *inferred_ty = Some(ty.clone());
             (
                 unify_expected_ty(
@@ -1798,7 +1725,6 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
                     tc_state.var_gen,
-                    level,
                     loc,
                     tc_state.assumps,
                     tc_state.preds,
@@ -1810,8 +1736,8 @@ pub(super) fn check_expr(
         ast::Expr::Variant(ast::VariantExpr { expr, inferred_ty }) => {
             assert!(inferred_ty.is_none());
             let (expr_ty, binders) =
-                check_expr(tc_state, &mut expr.node, &expr.loc, None, level, loop_stack);
-            let variant_ty = make_variant(tc_state, expr_ty, level, loc);
+                check_expr(tc_state, &mut expr.node, &expr.loc, None, loop_stack);
+            let variant_ty = make_variant(tc_state, expr_ty, loc);
             *inferred_ty = Some(variant_ty.clone());
             (
                 unify_expected_ty(
@@ -1820,7 +1746,6 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
                     tc_state.var_gen,
-                    level,
                     loc,
                     tc_state.assumps,
                     tc_state.preds,
@@ -1836,7 +1761,6 @@ pub(super) fn check_match_expr(
     expr: &mut ast::MatchExpr,
     loc: &ast::Loc,
     expected_ty: Option<&Ty>,
-    level: u32,
     loop_stack: &mut Vec<Option<Id>>,
 ) -> Vec<Ty> {
     use crate::type_checker::pat_coverage::*;
@@ -1854,7 +1778,6 @@ pub(super) fn check_match_expr(
         &mut scrutinee.node,
         &scrutinee.loc,
         None,
-        level,
         loop_stack,
     );
 
@@ -1871,14 +1794,13 @@ pub(super) fn check_match_expr(
     {
         tc_state.env.enter();
 
-        let pat_ty = check_pat(tc_state, pat, level);
+        let pat_ty = check_pat(tc_state, pat);
         unify(
             &pat_ty,
             &scrut_ty,
             tc_state.tys.tys.cons(),
             tc_state.trait_env,
             tc_state.var_gen,
-            level,
             &pat.loc,
             tc_state.assumps,
             tc_state.preds,
@@ -1930,7 +1852,6 @@ pub(super) fn check_match_expr(
                 &mut guard.node,
                 &guard.loc,
                 Some(&Ty::bool()),
-                level,
                 loop_stack,
             );
             guard_binders.into_iter().for_each(|(k, v)| {
@@ -1938,7 +1859,7 @@ pub(super) fn check_match_expr(
             });
         }
 
-        rhs_tys.push(check_stmts(tc_state, rhs, expected_ty, level, loop_stack));
+        rhs_tys.push(check_stmts(tc_state, rhs, expected_ty, loop_stack));
 
         tc_state.env.exit();
     }
@@ -1950,7 +1871,6 @@ pub(super) fn check_if_expr(
     tc_state: &mut TcFunState,
     expr: &mut ast::IfExpr,
     expected_ty: Option<&Ty>,
-    level: u32,
     loop_stack: &mut Vec<Option<Id>>,
 ) -> Vec<Ty> {
     let ast::IfExpr {
@@ -1969,7 +1889,6 @@ pub(super) fn check_if_expr(
             &mut cond.node,
             &cond.loc,
             Some(&Ty::bool()),
-            level,
             loop_stack,
         );
         unify(
@@ -1978,7 +1897,6 @@ pub(super) fn check_if_expr(
             tc_state.tys.tys.cons(),
             tc_state.trait_env,
             tc_state.var_gen,
-            level,
             &cond.loc,
             tc_state.assumps,
             tc_state.preds,
@@ -1987,14 +1905,14 @@ pub(super) fn check_if_expr(
         cond_binders.into_iter().for_each(|(k, v)| {
             tc_state.env.insert(k, v);
         });
-        let body_ty = check_stmts(tc_state, body, expected_ty, level, loop_stack);
+        let body_ty = check_stmts(tc_state, body, expected_ty, loop_stack);
         tc_state.env.exit();
         branch_tys.push(body_ty);
     }
 
     match else_branch {
         Some(else_body) => {
-            let body_ty = check_stmts(tc_state, else_body, expected_ty, level, loop_stack);
+            let body_ty = check_stmts(tc_state, else_body, expected_ty, loop_stack);
             branch_tys.push(body_ty);
         }
         None => {
@@ -2016,7 +1934,6 @@ fn check_field_sel(
     user_ty_args: &[ast::L<ast::Type>],
     object_ty: &Ty,
     loc: &ast::Loc,
-    level: u32,
 ) -> (Ty, ast::Expr) {
     // TODO: What if we have a method and a field with the same name?
     match object_ty {
@@ -2057,8 +1974,8 @@ fn check_field_sel(
         _ => {}
     }
 
-    let (method_ty_id, scheme) = select_method(tc_state, object_ty, field, loc, level)
-        .unwrap_or_else(|| {
+    let (method_ty_id, scheme) =
+        select_method(tc_state, object_ty, field, loc).unwrap_or_else(|| {
             panic!(
                 "{}: Type {} does not have field or method {}",
                 loc_display(loc),
@@ -2068,7 +1985,7 @@ fn check_field_sel(
         });
 
     let (method_ty, method_ty_args) = if user_ty_args.is_empty() {
-        let (ty, args) = scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+        let (ty, args) = scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
         (ty, args.into_iter().map(Ty::UVar).collect())
     } else {
         if scheme.quantified_vars.len() != user_ty_args.len() {
@@ -2115,7 +2032,6 @@ fn check_field_sel(
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -2208,14 +2124,13 @@ fn select_method(
     receiver: &Ty,
     method: &Id,
     loc: &ast::Loc,
-    level: u32,
 ) -> Option<(Id, Scheme)> {
     let mut candidates: Vec<(Id, Scheme)> = vec![];
 
     for (ty_id, candidate) in tc_state.tys.method_schemes.get(method)? {
         // Don't add predicates to the current predicate set. We will instantiate the scheme again
         // in the call site and use predicates generated from that.
-        let (ty, _) = candidate.instantiate(level, tc_state.var_gen, &mut Default::default(), loc);
+        let (ty, _) = candidate.instantiate(tc_state.var_gen, &mut Default::default(), loc);
         let candidate_self_ty = match &ty {
             Ty::Fun {
                 args: FunArgs::Positional { args },
@@ -2235,7 +2150,6 @@ fn select_method(
             receiver,
             tc_state.tys.tys.cons(),
             tc_state.var_gen,
-            level,
             loc,
         ) {
             candidates.push((ty_id.clone(), candidate.clone()));
@@ -2273,7 +2187,7 @@ fn select_method(
     candidates.pop()
 }
 
-pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &ast::Loc) -> Ty {
+pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) -> Ty {
     let con = match ty.normalize(tc_state.tys.tys.cons()) {
         Ty::Con(con, _) | Ty::App(con, _, _) => con,
 
@@ -2301,7 +2215,7 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
 
     let row_ext = tc_state
         .var_gen
-        .new_var(level, Kind::Row(RecordOrVariant::Variant), loc.clone());
+        .new_var(Kind::Row(RecordOrVariant::Variant), loc.clone());
 
     Ty::Anonymous {
         labels: [(con, ty)].into_iter().collect(),
@@ -2487,7 +2401,6 @@ fn check_record_expr(
     splice: &mut Option<Box<ast::L<ast::Expr>>>,
     loc: &ast::Loc,
     expected_ty: Option<&Ty>,
-    level: u32,
     loop_stack: &mut Vec<Option<Id>>,
 ) -> Ty {
     let mut field_names: HashSet<&Id> = Default::default();
@@ -2523,7 +2436,6 @@ fn check_record_expr(
             &mut field_expr.node,
             &field_expr.loc,
             expected_fields.get(field_name),
-            level,
             loop_stack,
         );
         record_fields.insert(field_name.clone(), field_ty);
@@ -2532,19 +2444,12 @@ fn check_record_expr(
     let extension: Option<Box<Ty>> = splice.as_mut().map(|splice| {
         // Spliced expression is type checked as `(..r)` (where `r` is fresh), and `r` is
         // then used as the extension of the record including the splice.
-        let (splice_ty, _) = check_expr(
-            tc_state,
-            &mut splice.node,
-            &splice.loc,
-            None,
-            level,
-            loop_stack,
-        );
-        let extension = Box::new(Ty::UVar(tc_state.var_gen.new_var(
-            level,
-            Kind::Row(RecordOrVariant::Record),
-            splice.loc.clone(),
-        )));
+        let (splice_ty, _) = check_expr(tc_state, &mut splice.node, &splice.loc, None, loop_stack);
+        let extension = Box::new(Ty::UVar(
+            tc_state
+                .var_gen
+                .new_var(Kind::Row(RecordOrVariant::Record), splice.loc.clone()),
+        ));
         unify(
             &splice_ty,
             &Ty::Anonymous {
@@ -2556,7 +2461,6 @@ fn check_record_expr(
             tc_state.tys.tys.cons(),
             tc_state.trait_env,
             tc_state.var_gen,
-            level,
             &splice.loc,
             tc_state.assumps,
             tc_state.preds,

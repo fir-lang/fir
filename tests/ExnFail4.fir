@@ -11,6 +11,6 @@ f1():
 #              [A, .._2] and
 #              ?exn
 #              (
-#                 Anonymous { labels: {"A": Con("A", Star)}, extension: Some(UVar(UVarRef(UVar { id: 2, kind: Row(Variant), level: 0, link: None, loc: tests/ExnFail4.fir:5:11-5:15 }))), record_or_variant: Variant, is_row: false }
+#                 Anonymous { labels: {"A": Con("A", Star)}, extension: Some(UVar(UVarRef(UVar { id: 2, kind: Row(Variant), link: None, loc: tests/ExnFail4.fir:5:11-5:15 }))), record_or_variant: Variant, is_row: false }
 #                 RVar("?exn", Star)
 #              )

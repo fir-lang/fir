@@ -109,7 +109,6 @@ pub(crate) fn check_main_type(tys: &PgmTypes, trait_env: &TraitEnv, main: &str) 
         tys.tys.cons(),
         trait_env,
         &UVarGen::default(),
-        0,
         &main_scheme.loc,
         &[],
         &mut vec![],
@@ -1684,7 +1683,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
     };
 
     if let Some(body) = &mut fun.node.body.as_mut() {
-        check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
+        check_stmts(&mut tc_state, body, Some(&ret_ty), &mut Vec::new());
     }
 
     resolve_preds(trait_env, assumps, tys.tys.cons(), preds, &var_gen);
@@ -1833,7 +1832,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 local_gen: 0,
             };
 
-            check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
+            check_stmts(&mut tc_state, body, Some(&ret_ty), &mut Vec::new());
 
             resolve_preds(trait_env, assumps, tys.tys.cons(), preds, &var_gen);
 
@@ -1971,7 +1970,6 @@ fn resolve_preds(
                                 cons,
                                 trait_env,
                                 var_gen,
-                                0,
                                 &pred.loc,
                                 &[],
                                 &mut next_goals,
@@ -2016,7 +2014,6 @@ fn resolve_preds(
                             cons,
                             trait_env,
                             var_gen,
-                            0,
                             &pred.loc,
                             &[],
                             &mut next_goals,
@@ -2088,7 +2085,6 @@ fn resolve_row_to_list(
             cons,
             trait_env,
             var_gen,
-            0,
             &pred.loc,
             &[],
             next_goals,

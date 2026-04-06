@@ -8,7 +8,7 @@ use crate::type_checker::{TcFunState, loc_display};
 /// Infer type of the pattern, add variables bound by the pattern to `env`.
 ///
 /// `pat` is `mut` to be able to add types of variables and type arguments of constructors.
-pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, level: u32) -> Ty {
+pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -> Ty {
     match &mut pat.node {
         ast::Pat::Var(ast::VarPat {
             var,
@@ -16,13 +16,13 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             refined: _,
         }) => {
             assert!(ty.is_none());
-            let fresh_ty = Ty::UVar(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone()));
+            let fresh_ty = Ty::UVar(tc_state.var_gen.new_var(Kind::Star, pat.loc.clone()));
             *ty = Some(fresh_ty.clone());
             tc_state.env.insert(var.clone(), fresh_ty.clone());
             fresh_ty
         }
 
-        ast::Pat::Ignore => Ty::UVar(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone())),
+        ast::Pat::Ignore => Ty::UVar(tc_state.var_gen.new_var(Kind::Star, pat.loc.clone())),
 
         ast::Pat::Con(ast::ConPat {
             con:
@@ -91,7 +91,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             // We don't need to instantiate based on pattern types. If we don't have a term with
             // the type the pattern will never match.
             let (con_ty, con_ty_args) =
-                con_scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &pat.loc);
+                con_scheme.instantiate(tc_state.var_gen, tc_state.preds, &pat.loc);
 
             *ty_args = con_ty_args.into_iter().map(Ty::UVar).collect();
 
@@ -121,11 +121,11 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 .iter_mut()
                 .map(|ast::Named { name, node }| ast::Named {
                     name: name.clone(),
-                    node: check_pat(tc_state, node, level),
+                    node: check_pat(tc_state, node),
                 })
                 .collect();
 
-            let ty = apply_con_ty(tc_state, &con_ty, &pat_field_tys, rest, level, &pat.loc);
+            let ty = apply_con_ty(tc_state, &con_ty, &pat_field_tys, rest, &pat.loc);
             *inferred_ty = Some(ty.clone());
             ty
         }
@@ -137,11 +137,11 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
         ast::Pat::Or(pat1, pat2) => {
             // Collect binders for `pat1` and `pat2` in separate envs.
             tc_state.env.enter();
-            let pat1_ty = check_pat(tc_state, pat1, level);
+            let pat1_ty = check_pat(tc_state, pat1);
             let pat1_binders = tc_state.env.exit();
 
             tc_state.env.enter();
-            let pat2_ty = check_pat(tc_state, pat2, level);
+            let pat2_ty = check_pat(tc_state, pat2);
             let pat2_binders = tc_state.env.exit();
 
             // Check that patterns bind the same variables.
@@ -175,7 +175,6 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
                     tc_state.var_gen,
-                    level,
                     &pat.loc,
                     tc_state.assumps,
                     tc_state.preds,
@@ -193,7 +192,6 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 tc_state.tys.tys.cons(),
                 tc_state.trait_env,
                 tc_state.var_gen,
-                level,
                 &pat.loc,
                 tc_state.assumps,
                 tc_state.preds,
@@ -210,19 +208,19 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             assert!(inferred_ty.is_none());
 
             let extension: Option<Box<Ty>> = match rest {
-                ast::RestPat::Ignore => Some(Box::new(Ty::UVar(tc_state.var_gen.new_var(
-                    level,
-                    Kind::Row(RecordOrVariant::Record),
-                    pat.loc.clone(),
-                )))),
+                ast::RestPat::Ignore => Some(Box::new(Ty::UVar(
+                    tc_state
+                        .var_gen
+                        .new_var(Kind::Row(RecordOrVariant::Record), pat.loc.clone()),
+                ))),
                 ast::RestPat::Bind(ast::VarPat { var, ty, refined }) => {
                     assert!(ty.is_none());
                     assert!(refined.is_none());
-                    let row_ty = Ty::UVar(tc_state.var_gen.new_var(
-                        level,
-                        Kind::Row(RecordOrVariant::Record),
-                        pat.loc.clone(),
-                    ));
+                    let row_ty = Ty::UVar(
+                        tc_state
+                            .var_gen
+                            .new_var(Kind::Row(RecordOrVariant::Record), pat.loc.clone()),
+                    );
                     let binder_ty = Ty::Anonymous {
                         labels: Default::default(),
                         extension: Some(Box::new(row_ty.clone())),
@@ -259,7 +257,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     .map(|named| {
                         (
                             named.name.as_ref().unwrap().clone(),
-                            check_pat(tc_state, &mut named.node, level),
+                            check_pat(tc_state, &mut named.node),
                         )
                     })
                     .collect(),
@@ -279,11 +277,10 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             assert!(inferred_ty.is_none());
             assert!(inferred_pat_ty.is_none());
 
-            let pat_ty = check_pat(tc_state, pat, level);
+            let pat_ty = check_pat(tc_state, pat);
             *inferred_pat_ty = Some(pat_ty.clone());
 
-            let variant_ty =
-                crate::type_checker::expr::make_variant(tc_state, pat_ty, level, &pat.loc);
+            let variant_ty = crate::type_checker::expr::make_variant(tc_state, pat_ty, &pat.loc);
             *inferred_ty = Some(variant_ty.clone());
 
             variant_ty
