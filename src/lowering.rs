@@ -265,12 +265,14 @@ pub enum BuiltinFunDecl {
     U8Eq,
     I32Eq,
     U32Eq,
+    U64Eq,
     U32Mod,
     I8Rem,
     U8Rem,
     I32Rem,
     U32Rem,
     I32AsU32,
+    U64AsU32,
     I32Abs,
     I8Neg,
     I32Neg,
@@ -1273,6 +1275,11 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 BuiltinFunDecl::U32AsU64
                             }
 
+                            ("U64", "asU32") => {
+                                assert_eq!(fun_ty_args.len(), 1); // exception
+                                BuiltinFunDecl::U64AsU32
+                            }
+
                             ("U32", "mod") => {
                                 assert_eq!(fun_ty_args.len(), 1); // exception
                                 BuiltinFunDecl::U32Mod
@@ -1415,6 +1422,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                             "U8" => BuiltinFunDecl::U8Eq,
                                             "I32" => BuiltinFunDecl::I32Eq,
                                             "U32" => BuiltinFunDecl::U32Eq,
+                                            "U64" => BuiltinFunDecl::U64Eq,
                                             _ => panic!(),
                                         }
                                     }

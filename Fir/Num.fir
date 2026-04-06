@@ -37,6 +37,10 @@ impl Mul[U64]:
     prim __mul(self: U64, other: U64) U64
 
 
+impl Eq[U64]:
+    prim __eq(self: U64, other: U64) Bool
+
+
 impl Ord[U64]:
     prim cmp(self: U64, other: U64) Ordering
 
@@ -441,6 +445,9 @@ prim U32.asI32(self: U32) I32
 
 
 prim U32.asU64(self: U32) U64
+
+
+prim U64.asU32(self: U64) U32
 
 
 prim I32.asI8(self: I32) I8

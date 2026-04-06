@@ -1034,6 +1034,8 @@ fn builtin_fun_to_c(
 
         BuiltinFunDecl::U32AsU64 => wln!(p, "static U64 _fun_{idx}(U32 a) {{ return (U64)a; }}"),
 
+        BuiltinFunDecl::U64AsU32 => wln!(p, "static U32 _fun_{idx}(U64 a) {{ return (U32)a; }}"),
+
         BuiltinFunDecl::I8Shl => wln!(p, "static I8 _fun_{idx}(I8 a, I8 b) {{ return a << b; }}"),
 
         BuiltinFunDecl::U8Shl => wln!(p, "static U8 _fun_{idx}(U8 a, U8 b) {{ return a << b; }}"),
@@ -1113,12 +1115,14 @@ fn builtin_fun_to_c(
         BuiltinFunDecl::I8Eq
         | BuiltinFunDecl::U8Eq
         | BuiltinFunDecl::I32Eq
-        | BuiltinFunDecl::U32Eq => {
+        | BuiltinFunDecl::U32Eq
+        | BuiltinFunDecl::U64Eq => {
             let ty = match fun {
                 BuiltinFunDecl::I8Eq => "I8",
                 BuiltinFunDecl::U8Eq => "U8",
                 BuiltinFunDecl::I32Eq => "I32",
                 BuiltinFunDecl::U32Eq => "U32",
+                BuiltinFunDecl::U64Eq => "U64",
                 _ => unreachable!(),
             };
             let true_val = heap_obj_singleton_name(pgm, pgm.true_con_idx);

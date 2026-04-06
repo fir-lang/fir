@@ -1027,6 +1027,11 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(val_as_u32(args[0]) as u64)
         }
 
+        BuiltinFunDecl::U64AsU32 => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(u32_as_val(args[0] as u32))
+        }
+
         BuiltinFunDecl::I8Shl => {
             debug_assert_eq!(args.len(), 2);
             let i1 = args[0];
@@ -1287,7 +1292,8 @@ fn call_builtin_fun<W: Write>(
         BuiltinFunDecl::I8Eq
         | BuiltinFunDecl::U8Eq
         | BuiltinFunDecl::I32Eq
-        | BuiltinFunDecl::U32Eq => {
+        | BuiltinFunDecl::U32Eq
+        | BuiltinFunDecl::U64Eq => {
             debug_assert_eq!(args.len(), 2);
             let u1 = args[0];
             let u2 = args[1];
