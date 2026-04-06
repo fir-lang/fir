@@ -1057,6 +1057,16 @@ impl Con {
     }
 }
 
+impl Kind {
+    pub fn print(&self, buf: &mut String) {
+        match self {
+            Kind::Star => buf.push('*'),
+            Kind::Row(RecordOrVariant::Record) => buf.push_str("Row[Rec]"),
+            Kind::Row(RecordOrVariant::Variant) => buf.push_str("Row[Var]"),
+        }
+    }
+}
+
 fn print_context(context: &Context, buf: &mut String) {
     if context.type_params.is_empty() && context.preds.is_empty() {
         return;
@@ -1070,12 +1080,7 @@ fn print_context(context: &Context, buf: &mut String) {
         }
         buf.push_str(ty_param);
         buf.push_str(": ");
-        let kind_str = match kind {
-            Kind::Star => "*",
-            Kind::Row(RecordOrVariant::Record) => "row(rec)",
-            Kind::Row(RecordOrVariant::Variant) => "row(var)",
-        };
-        buf.push_str(kind_str);
+        kind.print(buf);
     }
 
     for (i, ty) in context.preds.iter().enumerate() {

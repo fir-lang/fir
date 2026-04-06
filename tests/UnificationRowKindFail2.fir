@@ -8,4 +8,4 @@ main():
 # args: --typecheck
 # expected exit status: 101
 # expected stderr:
-# tests/UnificationRowKindFail2.fir:6:29: Unable to unify types _0 and (a: U32) (kind mismatch, row(record) ~ *)
+# tests/UnificationRowKindFail2.fir:6:29: Unable to unify types _0 and (a: U32) (kind mismatch, Row[Rec] ~ *)

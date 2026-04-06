@@ -6,4 +6,4 @@ impl Foo[U32]:
 
 # expected exit status: 101
 # expected stderr:
-# tests/AssocTyKindsFail.fir:5:10: Associated type RecRow is expected to have kind row(record), but has kind *
+# tests/AssocTyKindsFail.fir:5:10: Associated type RecRow is expected to have kind Row[Rec], but has kind *

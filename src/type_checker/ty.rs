@@ -347,7 +347,26 @@ impl Scheme {
         preds: &mut Vec<Pred>,
         loc: &ast::Loc,
     ) -> Ty {
+        // Note: we could call `instantiate` and unify the returned variables with `arg_tys`.
+        // However that requires creating fresh unification varibles, which requires more state to
+        // be passed (level, variable generator). This function is easier to call.
+        //
+        // The downside is that we have to do kind check below, which `unify` would do for is if we
+        // call `instantiate` and then unify the returned variables with arguments.
+
         assert!(self.quantified_vars.len() == arg_tys.len());
+
+        // Kind check type arguments.
+        for ((_, qvar_kind), arg) in self.quantified_vars.iter().zip(arg_tys.iter()) {
+            if arg.kind() != *qvar_kind {
+                panic!(
+                    "{}: Unable to pass type argument {} as {} (kind mismatch)",
+                    loc_display(loc),
+                    arg,
+                    qvar_kind
+                );
+            }
+        }
 
         let mut var_map: HashMap<Id, Ty> =
             HashMap::with_capacity_and_hasher(self.quantified_vars.len(), Default::default());
@@ -1439,8 +1458,8 @@ impl fmt::Display for Kind {
         let str = match self {
             Kind::Star => "*",
             Kind::Row(kind) => match kind {
-                RecordOrVariant::Record => "row(record)",
-                RecordOrVariant::Variant => "row(variant)",
+                RecordOrVariant::Record => "Row[Rec]",
+                RecordOrVariant::Variant => "Row[Var]",
             },
         };
         f.write_str(str)

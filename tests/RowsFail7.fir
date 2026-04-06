@@ -5,4 +5,4 @@ test() (x: U32, ..Foo):
 
 # args: --typecheck
 # expected exit status: 101
-# expected stderr: tests/RowsFail7.fir:3:19: Record extension type Foo has kind row(variant)
+# expected stderr: tests/RowsFail7.fir:3:19: Record extension type Foo has kind Row[Var]
