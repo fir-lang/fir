@@ -21,14 +21,7 @@ main():
 
     let path = path.substr(0, path.len() - ".fir".len())
 
-    let parts: Vec[Str] = Vec.withCapacity(5)
-    let startIdx: U32 = 0
-    for i: U32 in range(u32(0), path.len()):
-        if path.charAt(i) == '/':
-            parts.push(path.substr(startIdx, i))
-            startIdx = i + 1
-
-    parts.push(path.substr(startIdx, path.len()))
+    let parts: Vec[Str] = Vec.fromIter(path.splitChar('/'))
 
     let pgm = Program.new()
     pgm.loadCachedModule(parts)
