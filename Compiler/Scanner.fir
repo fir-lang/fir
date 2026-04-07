@@ -30,9 +30,7 @@ scan(tokens: Vec[Token]) Vec[Token] / [ScannerError, ..exn]:
     # TODO: Make this a debug assertion.
     sanityCheckTokens(newTokens)
 
-    if tokenIter
-            .next[Peekable[VecIter[Token], Token, [ScannerError, ..exn]], [ScannerError, ..exn]]()
-            is Option.Some(tNext):
+    if tokenIter.next() is Option.Some(tNext):
         panic("Scanner did not consume all of the tokens, stopped at `tNext`")
 
     newTokens
@@ -87,8 +85,7 @@ scanIndented[
         generateNewline = Bool.True
 
         # Consume the peeked token.
-        tokens
-            .next[Peekable[iter, Token, [ScannerError, ..exn]], [ScannerError, ..exn]]()
+        tokens.next()
         newTokens.push(t)
 
         match t.kind:
@@ -291,8 +288,7 @@ peek[
     while tokens.peek() is Option.Some(t):
         if t.isTrivia():
             newTokens.push(t)
-            tokens
-                .next[Peekable[iter, Token, [ScannerError, ..exn]], [ScannerError, ..exn]]()
+            tokens.next()
         else:
             return Option.Some(t)
 

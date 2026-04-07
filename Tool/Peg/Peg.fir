@@ -127,7 +127,7 @@ capitalize(s: Str) Str / exn:
     let buf = StrBuf.withCapacity(s.len())
     let chars = s.chars()
 
-    if chars.next[CharIter, exn]() is Option.Some(char):
+    if chars.next() is Option.Some(char):
         buf.push(char.toAsciiUppercase())
 
     while chars.next() is Option.Some(char):

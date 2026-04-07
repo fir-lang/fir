@@ -1052,7 +1052,7 @@ Lexer._tryInt(self) Option[Token] / exn:
         self._col += 2
         input = input.substr(2, input.len())
         let chars = input.chars()
-        while chars.next[CharIter, exn]() is Option.Some(char)
+        while chars.next() is Option.Some(char)
                 and (char.isAsciiHexDigit() or char == '_'):
             self._byteIdx += 1
             self._col += 1
@@ -1071,7 +1071,7 @@ Lexer._tryInt(self) Option[Token] / exn:
         self._col += 2
         input = input.substr(2, input.len())
         let chars = input.chars()
-        while chars.next[CharIter, exn]() is Option.Some(char)
+        while chars.next() is Option.Some(char)
                 and (char.isAsciiBinDigit() or char == '_'):
             self._byteIdx += 1
             self._col += 1
@@ -1085,10 +1085,9 @@ Lexer._tryInt(self) Option[Token] / exn:
             ),
         )
 
-    if input.chars().next[CharIter, exn]() is Option.Some(char)
-            and char.isAsciiDigit():
+    if input.chars().next() is Option.Some(char) and char.isAsciiDigit():
         let chars = input.chars()
-        while chars.next[CharIter, exn]() is Option.Some(char)
+        while chars.next() is Option.Some(char)
                 and (char.isAsciiDigit() or char == '_'):
             self._byteIdx += 1
             self._col += 1
