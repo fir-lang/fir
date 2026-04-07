@@ -1,27 +1,27 @@
 pub mod printer;
 
-pub use crate::ast::{Id, IntExpr, L, Loc, Named};
+pub use crate::ast::{IntExpr, L, Loc, Name, Named};
 use crate::collections::*;
 use crate::token::IntKind;
 
 #[derive(Debug, Default)]
 pub struct MonoPgm {
     // Fun name -> type args -> decl
-    pub funs: HashMap<Id, HashMap<Vec<Type>, FunDecl>>,
+    pub funs: HashMap<Name, HashMap<Vec<Type>, FunDecl>>,
 
     // Type name -> method name -> type args -> decl
     // For now, this also includes trait and normal methods. This means we don't allow having an
     // associated function and a method with the same name on the same type with same type
     // arguments.
-    pub associated: HashMap<Id, HashMap<Id, HashMap<Vec<Type>, FunDecl>>>,
+    pub associated: HashMap<Name, HashMap<Name, HashMap<Vec<Type>, FunDecl>>>,
 
     // Type name -> type args -> decl
-    pub ty: HashMap<Id, HashMap<Vec<Type>, TypeDecl>>,
+    pub ty: HashMap<Name, HashMap<Vec<Type>, TypeDecl>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TypeDecl {
-    pub name: Id,
+    pub name: Name,
     pub rhs: Option<TypeDeclRhs>,
     pub value: bool,
 }
@@ -34,14 +34,14 @@ pub enum TypeDeclRhs {
 
 #[derive(Debug, Clone)]
 pub struct ConDecl {
-    pub name: Id,
+    pub name: Name,
     pub fields: ConFields,
 }
 
 #[derive(Debug, Clone)]
 pub enum ConFields {
     Empty,
-    Named(OrdMap<Id, Type>),
+    Named(OrdMap<Name, Type>),
     Unnamed(Vec<Type>),
 }
 
@@ -52,7 +52,7 @@ pub enum Type {
     Named(NamedType),
 
     Record {
-        fields: OrdMap<Id, Type>,
+        fields: OrdMap<Name, Type>,
     },
 
     Variant {
@@ -60,7 +60,7 @@ pub enum Type {
         //
         // TODO: This was a map instead of set to avoid making `Type` `Ord` or `Hash`, but `Type` is
         // now all of those things, so we can now refactor this.
-        alts: OrdMap<Id, NamedType>,
+        alts: OrdMap<Name, NamedType>,
     },
 
     Fn(FnType),
@@ -81,42 +81,42 @@ impl Type {
 
     pub(crate) fn bool() -> Type {
         Type::Named(NamedType {
-            name: crate::SmolStr::new_static("Bool"),
+            name: Name::new_static("Bool"),
             args: vec![],
         })
     }
 
     pub(crate) fn u32() -> Type {
         Type::Named(NamedType {
-            name: crate::SmolStr::new_static("U32"),
+            name: Name::new_static("U32"),
             args: vec![],
         })
     }
 
     pub(crate) fn u64() -> Type {
         Type::Named(NamedType {
-            name: crate::SmolStr::new_static("U64"),
+            name: Name::new_static("U64"),
             args: vec![],
         })
     }
 
     pub(crate) fn str() -> Type {
         Type::Named(NamedType {
-            name: Id::new_static("Str"),
+            name: Name::new_static("Str"),
             args: vec![],
         })
     }
 
     pub(crate) fn char() -> Type {
         Type::Named(NamedType {
-            name: Id::new_static("Char"),
+            name: Name::new_static("Char"),
             args: vec![],
         })
     }
 
     pub(crate) fn u8() -> Type {
         Type::Named(NamedType {
-            name: Id::new_static("U8"),
+            name: Name::new_static("U8"),
             args: vec![],
         })
     }
@@ -131,7 +131,7 @@ impl Type {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NamedType {
-    pub name: Id,
+    pub name: Name,
     pub args: Vec<Type>,
 }
 
@@ -145,12 +145,12 @@ pub struct FnType {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FunArgs {
     Positional(Vec<Type>),
-    Named(OrdMap<Id, Type>),
+    Named(OrdMap<Name, Type>),
 }
 
 #[derive(Debug, Clone)]
 pub struct FunSig {
-    pub params: Vec<(Id, L<Type>)>,
+    pub params: Vec<(Name, L<Type>)>,
     pub return_ty: Option<L<Type>>,
     pub exceptions: Option<L<Type>>,
 }
@@ -182,8 +182,8 @@ impl FunSig {
 
 #[derive(Debug, Clone)]
 pub struct FunDecl {
-    pub parent_ty: Option<L<Id>>,
-    pub name: L<Id>,
+    pub parent_ty: Option<L<Name>>,
+    pub name: L<Name>,
     pub sig: FunSig,
     pub body: Option<Vec<L<Stmt>>>,
 }
@@ -194,8 +194,8 @@ pub enum Stmt {
     Assign(AssignStmt),
     Expr(Expr),
     While(WhileStmt),
-    Break { label: Option<Id>, level: u32 },
-    Continue { label: Option<Id>, level: u32 },
+    Break { label: Option<Name>, level: u32 },
+    Continue { label: Option<Name>, level: u32 },
 }
 
 #[derive(Debug, Clone)]
@@ -232,7 +232,7 @@ pub enum Pat {
 
 #[derive(Debug, Clone)]
 pub struct VarPat {
-    pub var: Id,
+    pub var: Name,
     pub ty: Type,
     pub refined: Option<Type>,
 }
@@ -249,8 +249,8 @@ pub struct ConPat {
 
 #[derive(Debug, Clone)]
 pub struct Con {
-    pub ty_id: Id,
-    pub con: Option<Id>,
+    pub ty_id: Name,
+    pub con: Option<Name>,
     pub ty_args: Vec<Type>,
     pub ty: Type,
 }
@@ -264,7 +264,7 @@ pub struct RecordPat {
     /// Type of the record this pattern matches. Note that this type can have more fields than the
     /// pattern. When this has extra fields, `rest` field will be `RestPat::Bind` or
     /// `RestPat::Ignore`, to handle the extra fields.
-    pub ty: OrdMap<Id, Type>,
+    pub ty: OrdMap<Name, Type>,
 
     pub rest: RestPat,
 }
@@ -279,7 +279,7 @@ pub enum RestPat {
 #[derive(Debug, Clone)]
 pub struct VariantPat {
     pub pat: Box<L<Pat>>,
-    pub variant_ty: OrdMap<Id, NamedType>,
+    pub variant_ty: OrdMap<Name, NamedType>,
     pub pat_ty: Type,
 }
 
@@ -298,14 +298,14 @@ pub struct AssignStmt {
 
 #[derive(Debug, Clone)]
 pub struct WhileStmt {
-    pub label: Option<Id>,
+    pub label: Option<Name>,
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,
 }
 
 #[derive(Debug, Clone)]
 pub enum Expr {
-    LocalVar(Id, Type),         // a local variable
+    LocalVar(Name, Type),       // a local variable
     TopVar(VarExpr),            // a top-level function reference
     ConSel(Con),                // a product or sum constructor
     FieldSel(FieldSelExpr),     // <expr>.<id>
@@ -350,7 +350,7 @@ impl Expr {
                     IntKind::U64(_) => "U64",
                 };
                 Type::Named(NamedType {
-                    name: Id::new_static(con),
+                    name: Name::new_static(con),
                     args: vec![],
                 })
             }
@@ -372,7 +372,7 @@ impl Expr {
 
 #[derive(Debug, Clone)]
 pub struct VarExpr {
-    pub id: Id,
+    pub id: Name,
     pub ty_args: Vec<Type>,
     pub ty: Type,
 }
@@ -387,36 +387,36 @@ pub struct CallExpr {
 
 #[derive(Debug, Clone)]
 pub struct CallArg {
-    pub name: Option<Id>,
+    pub name: Option<Name>,
     pub expr: L<Expr>,
 }
 
 #[derive(Debug, Clone)]
 pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
-    pub field: Id,
+    pub field: Name,
     pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
 pub struct AssocFnSelExpr {
-    pub ty_id: Id,
-    pub member: Id,
+    pub ty_id: Name,
+    pub member: Name,
     pub ty_args: Vec<Type>,
     pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
 pub struct RecordExpr {
-    pub fields: Vec<(Id, L<Expr>)>,
+    pub fields: Vec<(Name, L<Expr>)>,
     pub splice: Option<Box<L<Expr>>>,
-    pub ty: OrdMap<Id, Type>, // the record type
+    pub ty: OrdMap<Name, Type>, // the record type
 }
 
 #[derive(Debug, Clone)]
 pub struct VariantExpr {
     pub expr: Box<L<Expr>>,
-    pub ty: OrdMap<Id, NamedType>, // the variant type
+    pub ty: OrdMap<Name, NamedType>, // the variant type
 }
 
 #[derive(Debug, Clone)]

@@ -1,4 +1,4 @@
-use crate::ast::{self, Id};
+use crate::ast::{self, Name};
 use crate::collections::OrdMap;
 use crate::type_checker::unification::unify;
 use crate::type_checker::*;
@@ -65,10 +65,10 @@ pub(crate) fn apply_con_ty(
                     extension: con_ty_extension,
                 } => {
                     // Names of fields in the pattern.
-                    let mut arg_names: HashSet<&Id> = Default::default();
+                    let mut arg_names: HashSet<&Name> = Default::default();
 
                     // Names in the patterns that are not in the function's type.
-                    let mut extra_pat_fields: OrdMap<Id, Ty> = OrdMap::new();
+                    let mut extra_pat_fields: OrdMap<Name, Ty> = OrdMap::new();
 
                     for arg in args {
                         let name = match arg.name.as_ref() {
@@ -112,10 +112,10 @@ pub(crate) fn apply_con_ty(
                     // Check that all known args are provided (unless we bind/ignore extra fields).
                     if matches!(rest, ast::RestPat::No) {
                         // Constructor's parameter names.
-                        let con_ty_arg_names: HashSet<&Id> = con_ty_args.keys().collect();
+                        let con_ty_arg_names: HashSet<&Name> = con_ty_args.keys().collect();
 
                         // Names of arguments being passed.
-                        let passed_arg_names: HashSet<&Id> = arg_names
+                        let passed_arg_names: HashSet<&Name> = arg_names
                             .iter()
                             .filter(|n| con_ty_args.contains_key(**n))
                             .copied()
@@ -155,9 +155,9 @@ pub(crate) fn apply_con_ty(
                                 // types.
 
                                 // Constructor's parameter names.
-                                let con_ty_arg_names: HashSet<&Id> = con_ty_args.keys().collect();
+                                let con_ty_arg_names: HashSet<&Name> = con_ty_args.keys().collect();
 
-                                let unmatched_field_names: HashSet<&&Id> =
+                                let unmatched_field_names: HashSet<&&Name> =
                                     con_ty_arg_names.difference(&arg_names).collect();
 
                                 let rest_ty = Ty::Anonymous {
@@ -199,9 +199,9 @@ pub(crate) fn apply_con_ty(
                                         ));
 
                                     // Collect unmatched fixed fields for the rest binder.
-                                    let con_ty_arg_names: HashSet<&Id> =
+                                    let con_ty_arg_names: HashSet<&Name> =
                                         con_ty_args.keys().collect();
-                                    let unmatched_labels: OrdMap<Id, Ty> = con_ty_arg_names
+                                    let unmatched_labels: OrdMap<Name, Ty> = con_ty_arg_names
                                         .difference(&arg_names)
                                         .map(|field_name| {
                                             (

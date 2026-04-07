@@ -8,7 +8,7 @@ TODOs:
   (`checkedAdd`, `uncheckedAdd` etc.)
 */
 
-use crate::ast::{Id, Loc};
+use crate::ast::{Loc, Name};
 use crate::collections::*;
 use crate::lowering::*;
 use crate::mono_ast as mono;
@@ -525,7 +525,7 @@ fn source_decl_to_c(
         mono::TypeDeclRhs::Sum(cons) => {
             assert_eq!(cons.len(), con_indices.len());
             for (con, &con_idx) in cons.iter().zip(con_indices.iter()) {
-                let con_name: Id = format!("{}_{}", ty.name, con.name).into();
+                let con_name: Name = format!("{}_{}", ty.name, con.name).into();
                 gen_source_con_struct(&con_name, &ty.ty_args, &con.fields, con_idx, false, pgm, p);
             }
             if ty.value {
@@ -540,7 +540,7 @@ fn source_decl_to_c(
 }
 
 fn gen_source_con_struct(
-    name: &Id,
+    name: &Name,
     ty_args: &[mono::Type],
     fields: &mono::ConFields,
     idx: HeapObjIdx,
@@ -679,7 +679,7 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, pgm: &LoweredPgm, p
     }
 }
 
-fn source_con_tag_name(name: &Id, ty_args: &[mono::Type]) -> String {
+fn source_con_tag_name(name: &Name, ty_args: &[mono::Type]) -> String {
     let mut tag_name = String::from("TAG_");
     tag_name.push_str(name);
     for ty_arg in ty_args.iter() {
@@ -689,7 +689,7 @@ fn source_con_tag_name(name: &Id, ty_args: &[mono::Type]) -> String {
     tag_name
 }
 
-fn source_con_struct_name(name: &Id, ty_args: &[mono::Type]) -> String {
+fn source_con_struct_name(name: &Name, ty_args: &[mono::Type]) -> String {
     let mut name = name.to_string();
     for ty_arg in ty_args.iter() {
         name.push('_');
@@ -698,7 +698,7 @@ fn source_con_struct_name(name: &Id, ty_args: &[mono::Type]) -> String {
     name
 }
 
-fn named_type_struct_name(name: &Id, ty_args: &[mono::Type]) -> String {
+fn named_type_struct_name(name: &Name, ty_args: &[mono::Type]) -> String {
     let mut name = name.to_string();
     for ty_arg in ty_args {
         name.push('_');
@@ -1249,7 +1249,7 @@ fn builtin_fun_to_c(
             ty_to_c(t, &mut t_ty_name);
             let array_ty = c_ty(
                 &mono::Type::Named(mono::NamedType {
-                    name: Id::new_static("Array"),
+                    name: Name::new_static("Array"),
                     args: vec![t.clone()],
                 }),
                 pgm,
@@ -1269,7 +1269,7 @@ fn builtin_fun_to_c(
         BuiltinFunDecl::ArrayLen { t } => {
             let array_ty = c_ty(
                 &mono::Type::Named(mono::NamedType {
-                    name: Id::new_static("Array"),
+                    name: Name::new_static("Array"),
                     args: vec![t.clone()],
                 }),
                 pgm,
@@ -1288,7 +1288,7 @@ fn builtin_fun_to_c(
             let t_ty = c_ty(t, pgm);
             let array_ty = c_ty(
                 &mono::Type::Named(mono::NamedType {
-                    name: Id::new_static("Array"),
+                    name: Name::new_static("Array"),
                     args: vec![t.clone()],
                 }),
                 pgm,
@@ -1307,7 +1307,7 @@ fn builtin_fun_to_c(
             let t_ty = c_ty(t, pgm);
             let array_ty = c_ty(
                 &mono::Type::Named(mono::NamedType {
-                    name: Id::new_static("Array"),
+                    name: Name::new_static("Array"),
                     args: vec![t.clone()],
                 }),
                 pgm,
@@ -1341,7 +1341,7 @@ fn builtin_fun_to_c(
             let t_ty = c_ty(t, pgm);
             let array_ty = c_ty(
                 &mono::Type::Named(mono::NamedType {
-                    name: Id::new_static("Array"),
+                    name: Name::new_static("Array"),
                     args: vec![t.clone()],
                 }),
                 pgm,
@@ -2259,7 +2259,10 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
 
 /// Given a pattern type inside a variant pattern, find which alternative in the variant it matches.
 /// Returns the index of the alternative.
-fn find_variant_alt_index(pat_ty: &mono::Type, variant_ty: &OrdMap<Id, mono::NamedType>) -> usize {
+fn find_variant_alt_index(
+    pat_ty: &mono::Type,
+    variant_ty: &OrdMap<Name, mono::NamedType>,
+) -> usize {
     let type_name = match pat_ty {
         mono::Type::Named(named_ty) => named_ty.name.as_str(),
         _ => panic!("Non-named type in variant pattern: {:?}", pat_ty),
@@ -2638,7 +2641,7 @@ impl Write for Printer {
 /// - `type_objs`: Maps named types (both products and sums) to their heap object indices.
 /// - `record_objs`: Same as `type_objs`, but for records.
 fn top_sort(
-    named_tys: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    named_tys: &HashMap<Name, HashMap<Vec<mono::Type>, TypeIdx>>,
     record_tys: &HashMap<RecordType, TypeIdx>,
     variant_tys: &HashMap<VariantType, TypeIdx>,
     types: &[TypeDecl],
@@ -2701,7 +2704,7 @@ impl SccIdxGen {
 }
 
 fn _scc(
-    type_objs: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    type_objs: &HashMap<Name, HashMap<Vec<mono::Type>, TypeIdx>>,
     record_objs: &HashMap<RecordType, TypeIdx>,
     variant_objs: &HashMap<VariantType, TypeIdx>,
     types: &[TypeDecl],
@@ -2763,7 +2766,7 @@ fn _scc(
 }
 
 fn type_decl_deps(
-    named_tys: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    named_tys: &HashMap<Name, HashMap<Vec<mono::Type>, TypeIdx>>,
     record_tys: &HashMap<RecordType, TypeIdx>,
     variant_tys: &HashMap<VariantType, TypeIdx>,
     types: &[TypeDecl],
@@ -2782,7 +2785,7 @@ fn type_decl_deps(
 }
 
 fn type_decl_deps_(
-    named_tys: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    named_tys: &HashMap<Name, HashMap<Vec<mono::Type>, TypeIdx>>,
     record_tys: &HashMap<RecordType, TypeIdx>,
     variant_tys: &HashMap<VariantType, TypeIdx>,
     types: &[TypeDecl],
@@ -2859,7 +2862,7 @@ fn type_decl_deps_(
 }
 
 fn type_deps(
-    named_tys: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    named_tys: &HashMap<Name, HashMap<Vec<mono::Type>, TypeIdx>>,
     record_tys: &HashMap<RecordType, TypeIdx>,
     variant_tys: &HashMap<VariantType, TypeIdx>,
     types: &[TypeDecl],
@@ -2912,7 +2915,7 @@ fn type_deps(
 }
 
 fn named_type_deps(
-    named_tys: &HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    named_tys: &HashMap<Name, HashMap<Vec<mono::Type>, TypeIdx>>,
     record_tys: &HashMap<RecordType, TypeIdx>,
     variant_tys: &HashMap<VariantType, TypeIdx>,
     types: &[TypeDecl],

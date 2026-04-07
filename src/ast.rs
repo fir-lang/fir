@@ -4,14 +4,13 @@ pub mod printer;
 
 use crate::collections::HashMap;
 use crate::interpolation::StrPart;
+pub use crate::name::Name;
 pub use crate::token::IntKind;
 use crate::type_checker::{Kind, Ty};
 
 use std::rc::Rc;
 
 use smol_str::SmolStr;
-
-pub type Id = SmolStr;
 
 /// Things with location information.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -149,7 +148,7 @@ pub struct TypeDecl {
     pub value: bool,
 
     /// The type name. `Vec` in the example.
-    pub name: Id,
+    pub name: Name,
 
     /// Type parameters of the type. `[t]` in the example.
     pub type_params: Vec<TypeParam>,
@@ -170,7 +169,7 @@ pub struct TypeDecl {
 #[derive(Debug, Clone)]
 pub struct TypeParam {
     /// Name of the type parameter. `r`, `x`, `y` in the example.
-    pub name: L<Id>,
+    pub name: L<Name>,
 
     /// Optional kind of the type parameter. `Row[Rec]` for `r` in the example. `x` doesn't have a
     /// kind annotation.
@@ -196,7 +195,7 @@ pub enum TypeDeclRhs {
 /// A sum type constructor.
 #[derive(Debug, Clone)]
 pub struct ConDecl {
-    pub name: Id,
+    pub name: Name,
     pub fields: ConFields,
 }
 
@@ -204,7 +203,7 @@ pub struct ConDecl {
 pub enum ConFields {
     Empty,
     Named {
-        fields: Vec<(Id, L<Type>)>,
+        fields: Vec<(Name, L<Type>)>,
         extension: Option<Box<L<Type>>>,
     },
     Unnamed {
@@ -220,11 +219,11 @@ pub enum Type {
     /// A type variable.
     ///
     /// We don't have higher-kinded types for now, so type variables cannot be applied.
-    Var(Id),
+    Var(Name),
 
     /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..r)`.
     Record {
-        fields: Vec<(Id, Type)>,
+        fields: Vec<(Name, Type)>,
         extension: Option<Box<L<Type>>>,
         is_row: bool,
     },
@@ -240,14 +239,14 @@ pub enum Type {
     Fn(FnType),
 
     /// An associated type selection: `Iterator[iter, exn].Item`.
-    AssocTySelect { ty: L<Box<Type>>, assoc_ty: Id },
+    AssocTySelect { ty: L<Box<Type>>, assoc_ty: Name },
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
 #[derive(Debug, Clone)]
 pub struct NamedType {
     /// Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
-    pub name: Id,
+    pub name: Name,
 
     /// Arguments of the type constructor.
     pub args: Vec<L<Type>>,
@@ -266,7 +265,7 @@ pub struct FnType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Named<T> {
-    pub name: Option<Id>,
+    pub name: Option<Name>,
     pub node: T,
 }
 
@@ -306,7 +305,7 @@ pub struct FunSig {
     ///
     /// Type is optional for `fn` expressions, where we can sometimes use the type information from
     /// the `fn` use site to give types to arguments.
-    pub params: Vec<(Id, Option<L<Type>>)>,
+    pub params: Vec<(Name, Option<L<Type>>)>,
 
     /// Optional return type.
     ///
@@ -333,10 +332,10 @@ pub enum SelfParam {
 #[derive(Debug, Clone)]
 pub struct FunDecl {
     /// Only in associated functions: the parent type. E.g. `Vec` in `Vec.push(...) = ...`.
-    pub parent_ty: Option<L<Id>>,
+    pub parent_ty: Option<L<Name>>,
 
     /// Name of the function.
-    pub name: L<Id>,
+    pub name: L<Name>,
 
     /// Type signature of the function.
     pub sig: FunSig,
@@ -362,14 +361,14 @@ pub enum Stmt {
     For(ForStmt),
     While(WhileStmt),
     Break {
-        label: Option<Id>,
+        label: Option<Name>,
 
         /// How many levels of loops to break. Parser initializes this as 0, type checker updates
         /// based on the labels of enclosing loops.
         level: u32,
     },
     Continue {
-        label: Option<Id>,
+        label: Option<Name>,
 
         /// Same as `Break.level`.
         level: u32,
@@ -427,7 +426,7 @@ pub enum Pat {
 
 #[derive(Debug, Clone)]
 pub struct VarPat {
-    pub var: Id,
+    pub var: Name,
 
     /// Inferred type of the binder. Filled in by the type checker.
     pub ty: Option<Ty>,
@@ -478,8 +477,8 @@ pub struct VariantPat {
 
 #[derive(Debug, Clone)]
 pub struct Con {
-    pub ty: Id,
-    pub con: Option<Id>,
+    pub ty: Name,
+    pub con: Option<Name>,
 
     /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
     /// there will be always one element.
@@ -520,7 +519,7 @@ pub enum AssignOp {
 /// `for <pat>: <item_ast_ty> in <expr>: <body>`
 #[derive(Debug, Clone)]
 pub struct ForStmt {
-    pub label: Option<Id>,
+    pub label: Option<Name>,
 
     pub pat: L<Pat>,
 
@@ -534,7 +533,7 @@ pub struct ForStmt {
 
 #[derive(Debug, Clone)]
 pub struct WhileStmt {
-    pub label: Option<Id>,
+    pub label: Option<Name>,
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,
 }
@@ -601,7 +600,7 @@ pub enum Expr {
     /// A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
     Seq {
         /// The type name: `Vec` in the third example above. `None` in the other examples.
-        ty: Option<Id>,
+        ty: Option<Name>,
 
         /// Elements, with optional key part for `<expr> = <expr>` syntax.
         elems: Vec<(Option<L<Expr>>, L<Expr>)>,
@@ -616,7 +615,7 @@ pub enum Expr {
 
 #[derive(Debug, Clone)]
 pub struct VarExpr {
-    pub id: Id,
+    pub id: Name,
 
     /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
     /// there will be always one element.
@@ -638,7 +637,7 @@ pub struct CallExpr {
 
 #[derive(Debug, Clone)]
 pub struct CallArg {
-    pub name: Option<Id>,
+    pub name: Option<Name>,
     pub expr: L<Expr>,
 }
 
@@ -647,7 +646,7 @@ pub struct CallArg {
 pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
 
-    pub field: Id,
+    pub field: Name,
 
     /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
     /// there will be always one element.
@@ -681,12 +680,12 @@ pub struct MethodSelExpr {
     /// E.g. `Vec`, `Iterator`.
     ///
     /// Note: when calling trait methods, this will be the trait type rather than the receiver type.
-    pub method_ty_id: Id,
+    pub method_ty_id: Name,
 
     /// The method id.
     ///
     /// E.g. `push`, `next`.
-    pub method: Id,
+    pub method: Name,
 
     /// Type arguments of `method_ty_id`.
     ///
@@ -708,7 +707,7 @@ pub struct MethodSelExpr {
 #[derive(Debug, Clone)]
 pub struct AssocFnSelExpr {
     /// The type: `Vec` in the examples.
-    pub ty: Id,
+    pub ty: Name,
 
     /// Type arguments explicitly passed to the constructor. `[U32]` in the first example above.
     ///
@@ -716,7 +715,7 @@ pub struct AssocFnSelExpr {
     pub ty_user_ty_args: Vec<L<Type>>,
 
     /// The associated function being selected: `withCapacity` and `push` in the examples.
-    pub member: Id,
+    pub member: Name,
 
     /// Type arguments explicitly passed to the variable.
     ///
@@ -833,7 +832,7 @@ pub struct DoExpr {
 #[derive(Debug, Clone)]
 pub struct RecordExpr {
     /// Named fields of the reocrd, before any splicing.
-    pub fields: Vec<(Id, L<Expr>)>,
+    pub fields: Vec<(Name, L<Expr>)>,
 
     /// Record splice: `(msg = "hi", ..<expr>)`.
     pub splice: Option<Box<L<Expr>>>,
@@ -901,7 +900,7 @@ pub struct ImportName {
 #[derive(Debug, Clone)]
 pub struct TraitDecl {
     /// Trait name.
-    pub name: L<Id>,
+    pub name: L<Name>,
 
     /// Type parameters of the trait.
     pub type_params: Vec<TypeParam>,
@@ -919,7 +918,7 @@ pub enum TraitDeclItem {
     /// - `type Foo`: no kind annotation, defaults to `*`
     /// - `type Ext: Row[Rec]`: (with kind annotation)
     Type {
-        name: L<Id>,
+        name: L<Name>,
         kind: Option<L<Type>>,
         default: Option<L<Type>>,
     },
@@ -933,7 +932,7 @@ pub enum TraitDeclItem {
 #[derive(Debug, Clone, Default)]
 pub struct Context {
     /// Type parameters, generated by the type checker.
-    pub type_params: Vec<(Id, Kind)>,
+    pub type_params: Vec<(Name, Kind)>,
 
     /// Predicates: `Iterator[iter, item]` and `Debug[item]` in the example.
     pub preds: Vec<L<Pred>>,
@@ -955,7 +954,7 @@ pub enum Pred {
     /// A kind annotation: `ext: Row[Rec]` in the example.
     ///
     /// The kind part is optional, kinds defaulted as `*`.
-    Kind { var: Id, kind: Option<L<Type>> },
+    Kind { var: Name, kind: Option<L<Type>> },
 
     /// A trait application: `Iterator[iter, exn]` in the example.
     App(NamedType),
@@ -963,7 +962,7 @@ pub enum Pred {
     /// An associated type equality: `Iterator[iter, exn].Item = U32` in the example.
     AssocTyEq {
         ty: NamedType,
-        assoc_ty: Id,
+        assoc_ty: Name,
         eq: L<Type>,
     },
 }
@@ -987,7 +986,7 @@ pub struct ImplDecl {
     /// The trait name.
     ///
     /// In the example: `ToStr`.
-    pub trait_: L<Id>,
+    pub trait_: L<Name>,
 
     /// Type parameters of the trait.
     ///
@@ -1000,7 +999,7 @@ pub struct ImplDecl {
 
 #[derive(Debug, Clone)]
 pub enum ImplDeclItem {
-    Type { assoc_ty: L<Id>, rhs: L<Type> },
+    Type { assoc_ty: L<Name>, rhs: L<Type> },
     Fun(L<FunDecl>),
 }
 
@@ -1015,11 +1014,11 @@ pub struct Attribute {
 
 impl Type {
     /// Substitute star-kinded `ty` for `var` in `self`.
-    pub fn subst_id(&self, var: &Id, ty: &Type) -> Type {
+    pub fn subst_id(&self, var: &Name, ty: &Type) -> Type {
         self.subst_ids(&[(var.clone(), ty.clone())].into_iter().collect())
     }
 
-    pub fn subst_ids(&self, substs: &HashMap<Id, Type>) -> Type {
+    pub fn subst_ids(&self, substs: &HashMap<Name, Type>) -> Type {
         match self {
             Type::Named(NamedType { name, args }) => Type::Named(NamedType {
                 name: match substs.get(name) {
@@ -1048,7 +1047,7 @@ impl Type {
                 extension,
                 is_row,
             } => {
-                let fields: Vec<(Id, Type)> = fields
+                let fields: Vec<(Name, Type)> = fields
                     .iter()
                     .map(|(name, ty)| (name.clone(), ty.subst_ids(substs)))
                     .collect();
@@ -1127,7 +1126,7 @@ impl Type {
 }
 
 impl Stmt {
-    pub fn subst_ty_ids(&mut self, substs: &HashMap<Id, Type>) {
+    pub fn subst_ty_ids(&mut self, substs: &HashMap<Name, Type>) {
         match self {
             Stmt::Let(LetStmt { lhs: _, ty, rhs }) => {
                 if let Some(ty) = ty {
@@ -1178,7 +1177,7 @@ impl Stmt {
 }
 
 impl Expr {
-    pub fn subst_ty_ids(&mut self, substs: &HashMap<Id, Type>) {
+    pub fn subst_ty_ids(&mut self, substs: &HashMap<Name, Type>) {
         match self {
             Expr::ConSel(_) | Expr::Int(_) | Expr::Char(_) => {}
 
@@ -1391,18 +1390,18 @@ impl Expr {
                     IntKind::I64(_) => "I64",
                     IntKind::U64(_) => "U64",
                 };
-                Some(Ty::Con(SmolStr::new_static(name), Kind::Star))
+                Some(Ty::Con(Name::new(name), Kind::Star))
             }
 
-            Expr::Str(_) => Some(Ty::Con(SmolStr::new_static("Str"), Kind::Star)),
+            Expr::Str(_) => Some(Ty::Con(Name::new_static("Str"), Kind::Star)),
 
-            Expr::Char(_) => Some(Ty::Con(SmolStr::new_static("Char"), Kind::Star)),
+            Expr::Char(_) => Some(Ty::Con(Name::new_static("Char"), Kind::Star)),
 
             Expr::Is(_)
             | Expr::BinOp(BinOpExpr {
                 op: BinOp::And | BinOp::Or,
                 ..
-            }) => Some(Ty::Con(SmolStr::new_static("Bool"), Kind::Star)),
+            }) => Some(Ty::Con(Name::new_static("Bool"), Kind::Star)),
 
             // Rest of the expressions will be desugared by the type checker.
             Expr::BinOp(_) | Expr::UnOp(_) | Expr::Seq { .. } => None,
@@ -1411,7 +1410,7 @@ impl Expr {
 }
 
 impl FunSig {
-    pub fn subst_ty_ids(&mut self, substs: &HashMap<Id, Type>) {
+    pub fn subst_ty_ids(&mut self, substs: &HashMap<Name, Type>) {
         match &mut self.self_ {
             SelfParam::No => {}
             SelfParam::Implicit => {

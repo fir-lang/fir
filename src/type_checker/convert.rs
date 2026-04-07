@@ -1,4 +1,4 @@
-use crate::ast::{self, Id};
+use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::type_checker::loc_display;
 use crate::type_checker::ty::*;
@@ -19,7 +19,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             extension,
             is_row,
         } => {
-            let mut labels: OrdMap<Id, Ty> = OrdMap::new();
+            let mut labels: OrdMap<Name, Ty> = OrdMap::new();
 
             for (field_name, field_ty) in fields {
                 let ty = convert_ast_ty(tys, field_ty, loc);
@@ -62,7 +62,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             extension,
             is_row,
         } => {
-            let mut labels: OrdMap<Id, Ty> = OrdMap::new();
+            let mut labels: OrdMap<Name, Ty> = OrdMap::new();
 
             for alt in alts {
                 let ty = convert_named_ty(tys, alt, loc);
@@ -191,7 +191,7 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
             .iter()
             .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
             .collect();
-        let subst_map: HashMap<Id, Ty> = ty_con
+        let subst_map: HashMap<Name, Ty> = ty_con
             .ty_params
             .iter()
             .map(|(name, _)| name.clone())

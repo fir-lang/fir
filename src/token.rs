@@ -1,3 +1,5 @@
+use crate::ast::Name;
+
 use smol_str::SmolStr;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -9,6 +11,10 @@ pub struct Token {
 impl Token {
     pub fn smol_str(&self) -> SmolStr {
         self.text.clone()
+    }
+
+    pub fn name(&self) -> Name {
+        Name::new(self.text.clone())
     }
 }
 

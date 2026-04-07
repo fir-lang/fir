@@ -56,7 +56,7 @@ When type checking the `next` call, we find the `Iterator.next`:
     - The impl doesn't have predicates, so we're done.
 */
 
-use crate::ast::{self, Id};
+use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::type_checker::convert::*;
 use crate::type_checker::ty::*;
@@ -65,7 +65,7 @@ use crate::type_checker::unification::try_unify_one_way;
 use crate::utils::loc_display;
 
 /// Maps trait ids to implementations.
-pub type TraitEnv = HashMap<Id, Vec<TraitImpl>>;
+pub type TraitEnv = HashMap<Name, Vec<TraitImpl>>;
 
 /// Example:
 /// ```text
@@ -78,7 +78,7 @@ pub struct TraitImpl {
     /// Free variables of the `impl`.
     ///
     /// In the example: `iter`, `exn`, `a`, `b`.
-    pub qvars: Vec<(Id, Kind)>,
+    pub qvars: Vec<(Name, Kind)>,
 
     /// Arguments of the trait.
     ///
@@ -102,7 +102,7 @@ pub struct TraitImpl {
     ///
     /// Similar to `preds`, these types should be instantiated together with `trait_args`.
     /// pub eqs:
-    pub assoc_tys: HashMap<Id, Ty>,
+    pub assoc_tys: HashMap<Name, Ty>,
 }
 
 pub(crate) fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
@@ -181,9 +181,9 @@ impl TraitImpl {
         &self,
         args: &[Ty],
         var_gen: &UVarGen,
-        cons: &ScopeMap<Id, TyCon>,
+        cons: &ScopeMap<Name, TyCon>,
         loc: &ast::Loc,
-    ) -> Option<(Vec<Pred>, HashMap<Id, Ty>)> {
+    ) -> Option<(Vec<Pred>, HashMap<Name, Ty>)> {
         if args.len() != self.trait_args.len() {
             panic!(
                 "{}: BUG: Number of arguments applied to the trait don't match the arity",
@@ -192,7 +192,7 @@ impl TraitImpl {
         }
 
         // Maps `QVar`s to instantiations.
-        let var_map: HashMap<Id, Ty> = self
+        let var_map: HashMap<Name, Ty> = self
             .qvars
             .iter()
             .map(|(qvar, kind)| {
@@ -208,7 +208,7 @@ impl TraitImpl {
             }
         }
 
-        let assoc_tys: HashMap<Id, Ty> = self
+        let assoc_tys: HashMap<Name, Ty> = self
             .assoc_tys
             .iter()
             .map(|(assoc_ty, rhs)| (assoc_ty.clone(), rhs.subst_qvars(&var_map)))

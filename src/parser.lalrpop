@@ -5,10 +5,11 @@ use crate::interpolation::{str_parts, copy_update_escapes};
 use crate::parser_utils::*;
 use crate::token::*;
 
+use smol_str::SmolStr;
+
 use std::convert::Infallible;
 use std::rc::Rc;
 
-use smol_str::SmolStr;
 
 use lexgen_util::{LexerError, Loc};
 
@@ -126,16 +127,16 @@ Sep1<T, S>: Vec<T> = {
     }
 };
 
-LUpperId: L<Id> = {
-    <l:@L> <id:UpperId> <r:@R> => L::new(module, l, r, id.smol_str()),
+LUpperId: L<Name> = {
+    <l:@L> <id:UpperId> <r:@R> => L::new(module, l, r, id.name()),
 }
 
-LUpperIdLBracket: L<Id> = {
-    <l:@L> <id:UpperIdLBracket> <r:@R> => L::new(module, l, r, id.smol_str()),
+LUpperIdLBracket: L<Name> = {
+    <l:@L> <id:UpperIdLBracket> <r:@R> => L::new(module, l, r, id.name()),
 }
 
-LLowerId: L<Id> = {
-    <l:@L> <id:LowerId> <r:@R> => L::new(module, l, r, id.smol_str()),
+LLowerId: L<Name> = {
+    <l:@L> <id:LowerId> <r:@R> => L::new(module, l, r, id.name()),
 }
 
 Attribute: Attribute = {
@@ -155,7 +156,7 @@ TypeDecl: L<TypeDecl> = {
         L::new(module, l, r, TypeDecl {
             attr,
             value: value.is_some(),
-            name: type_name.smol_str(),
+            name: type_name.name(),
             type_params: vec![],
             type_param_kinds: vec![],
             rhs: Some(rhs),
@@ -165,7 +166,7 @@ TypeDecl: L<TypeDecl> = {
         L::new(module, l, r, TypeDecl {
             attr,
             value: value.is_some(),
-            name: type_name.smol_str(),
+            name: type_name.name(),
             type_params,
             type_param_kinds: vec![],
             rhs: Some(rhs),
@@ -175,7 +176,7 @@ TypeDecl: L<TypeDecl> = {
         L::new(module, l, r, TypeDecl {
             attr: None,
             value: false,
-            name: type_name.smol_str(),
+            name: type_name.name(),
             type_params,
             type_param_kinds: vec![],
             rhs: Some(TypeDeclRhs::Synonym(L::new(module, tl, tr, ty))),
@@ -185,7 +186,7 @@ TypeDecl: L<TypeDecl> = {
         L::new(module, l, r, TypeDecl {
             attr: None,
             value: false,
-            name: type_name.smol_str(),
+            name: type_name.name(),
             type_params: vec![],
             type_param_kinds: vec![],
             rhs: Some(TypeDeclRhs::Synonym(L::new(module, tl, tr, ty))),
@@ -195,7 +196,7 @@ TypeDecl: L<TypeDecl> = {
         L::new(module, l, r, TypeDecl {
             attr: None,
             value: false,
-            name: type_name.smol_str(),
+            name: type_name.name(),
             type_params: vec![],
             type_param_kinds: vec![],
             rhs: None,
@@ -205,7 +206,7 @@ TypeDecl: L<TypeDecl> = {
         L::new(module, l, r, TypeDecl {
             attr: None,
             value: false,
-            name: type_name.smol_str(),
+            name: type_name.name(),
             type_params,
             type_param_kinds: vec![],
             rhs: None,
@@ -242,22 +243,22 @@ SumExtension: Box<L<Type>> = {
 ConDecl: ConDecl = {
     <name:UpperId> NEWLINE =>
         ConDecl {
-            name: name.smol_str(),
+            name: name.name(),
             fields: ConFields::Empty,
         },
 
     <l:@L> <name:UpperId> "(" <fields:Sep<Field, ",">> <extension:RowExtension> ")" NEWLINE => {
         let fields = process_fields(fields, extension, module, &l);
         ConDecl {
-            name: name.smol_str(),
+            name: name.name(),
             fields,
         }
     },
 }
 
-Field: (Option<Id>, L<Type>) = {
+Field: (Option<Name>, L<Type>) = {
     <name:(<LowerId> ":")?> <type_:LType> =>
-        (name.map(|n| n.smol_str()), type_),
+        (name.map(|n| n.name()), type_),
 }
 
 LType: L<Type> = {
@@ -274,7 +275,7 @@ Type: Type = {
     <ty:TypeNamed> => ty,
 
     <var:LowerId> =>
-        Type::Var(var.smol_str()),
+        Type::Var(var.name()),
 
     #[precedence(level = "1")]
     #[assoc(side = "right")]
@@ -300,7 +301,7 @@ Type: Type = {
     <ty:LTypeNamed> "." <assoc_ty:UpperId> => {
         Type::AssocTySelect {
             ty: ty.map(Box::new),
-            assoc_ty: assoc_ty.smol_str(),
+            assoc_ty: assoc_ty.name(),
         }
     },
 }
@@ -310,7 +311,7 @@ TypeNoFn: Type = {
     <ty:TypeNamed> => ty,
 
     <var:LowerId> =>
-        Type::Var(var.smol_str()),
+        Type::Var(var.name()),
 
     "(" <ty:Type> ")" => {
         ty
@@ -332,7 +333,7 @@ TypeNoFn: Type = {
     <ty:LTypeNamed> "." <assoc_ty:UpperId> => {
         Type::AssocTySelect {
             ty: ty.map(Box::new),
-            assoc_ty: assoc_ty.smol_str(),
+            assoc_ty: assoc_ty.name(),
         }
     },
 }
@@ -343,18 +344,18 @@ LTypeNoFn: L<Type> = {
 
 TypeNamed: Type = {
     <name:UpperId> =>
-        Type::Named(NamedType { name: name.smol_str(), args: vec![] }),
+        Type::Named(NamedType { name: name.name(), args: vec![] }),
 
     <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
-        Type::Named(NamedType { name: name.smol_str(), args }),
+        Type::Named(NamedType { name: name.name(), args }),
 }
 
 NamedType: NamedType = {
     <name:UpperId> =>
-        NamedType { name: name.smol_str(), args: vec![] },
+        NamedType { name: name.name(), args: vec![] },
 
     <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
-        NamedType { name: name.smol_str(), args },
+        NamedType { name: name.name(), args },
 }
 
 RowExtension: Option<Box<L<Type>>> = {
@@ -363,9 +364,9 @@ RowExtension: Option<Box<L<Type>>> = {
     ".." <ty:LTypeNoFn> => Some(Box::new(ty)),
 }
 
-TypeArg: L<(Option<Id>, L<Type>)> = {
+TypeArg: L<(Option<Name>, L<Type>)> = {
     <l:@L> <name:UpperId> "=" <ty:LType> <r:@R> =>
-        L::new(module, l, r, (Some(name.smol_str()), ty)),
+        L::new(module, l, r, (Some(name.name()), ty)),
 
     <ty:LType> => {
         let loc = ty.loc.clone();
@@ -373,8 +374,8 @@ TypeArg: L<(Option<Id>, L<Type>)> = {
     },
 }
 
-RecordTypeField: (Id, Type) = {
-    <name:LowerId> ":" <ty:Type> => (name.smol_str(), ty),
+RecordTypeField: (Name, Type) = {
+    <name:LowerId> ":" <ty:Type> => (name.name(), ty),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -416,7 +417,7 @@ FunDecl: L<FunDecl> = {
     },
 }
 
-FunSig: (L<Id>, FunSig) = {
+FunSig: (L<Name>, FunSig) = {
     <name:LLowerId>
             <context:Context>
             <param_list:ParamList>
@@ -435,7 +436,7 @@ FunSig: (L<Id>, FunSig) = {
 
 TopFunDecl: L<FunDecl> = {
     <l:@L> <sig:TopFunSig> ":" NEWLINE INDENT <body:LStmts> DEDENT <r:@R> => {
-        let (parent_ty, name, sig): (Option<L<Id>>, L<Id>, FunSig) = sig;
+        let (parent_ty, name, sig): (Option<L<Name>>, L<Name>, FunSig) = sig;
         L::new(module, l, r, FunDecl {
             parent_ty,
             name,
@@ -466,7 +467,7 @@ TopFunDecl: L<FunDecl> = {
     },
 }
 
-TopFunSig: (Option<L<Id>>, L<Id>, FunSig) = {
+TopFunSig: (Option<L<Name>>, L<Name>, FunSig) = {
     <parent_ty:ParentTy?> <name:LLowerId>
             <context:Context>
             <param_list:ParamList>
@@ -486,15 +487,15 @@ TopFunSig: (Option<L<Id>>, L<Id>, FunSig) = {
     },
 }
 
-ParamList: (SelfParam, Vec<(Id, Option<L<Type>>)>) = {
+ParamList: (SelfParam, Vec<(Name, Option<L<Type>>)>) = {
     <l:@L> "(" <params:Sep<Param, ",">> ")" => {
         process_param_list(params, module, &l)
     },
 }
 
-Param: (SmolStr, Option<L<Type>>) = {
+Param: (Name, Option<L<Type>>) = {
     <id:LowerId> <ty:(":" <LType>)?> => {
-        (id.smol_str(), ty)
+        (id.name(), ty)
     },
 }
 
@@ -506,7 +507,7 @@ ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
     "/" <exn:LTypeNoFn> => (Some(exn), None),
 }
 
-ParentTy: L<Id> = {
+ParentTy: L<Name> = {
     <ty:LUpperId> "." => ty,
 }
 
@@ -526,9 +527,9 @@ pub LStmt: L<Stmt> = {
 }
 
 Stmt: Stmt = {
-    "break" <label:Label?> NEWLINE => Stmt::Break { label: label.map(|l| SmolStr::new(&l.smol_str()[1..])), level: 0 },
+    "break" <label:Label?> NEWLINE => Stmt::Break { label: label.map(|l| Name::new(&l.smol_str()[1..])), level: 0 },
 
-    "continue" <label:Label?> NEWLINE => Stmt::Continue { label: label.map(|l| SmolStr::new(&l.smol_str()[1..])), level: 0 },
+    "continue" <label:Label?> NEWLINE => Stmt::Continue { label: label.map(|l| Name::new(&l.smol_str()[1..])), level: 0 },
 
     "let" <lhs:LPat> <ty:(":" <LType>)?> "=" <rhs:LInlineExpr> NEWLINE =>
         Stmt::Let(LetStmt { lhs, ty, rhs }),
@@ -557,7 +558,7 @@ Stmt: Stmt = {
         Stmt::Expr(expr),
 
     <label:Label?> "for" <pat:LPat> <item_ast_ty:(":" <LType>)?> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT => {
-        let label = label.map(|l| SmolStr::new(&l.smol_str()[1..]));
+        let label = label.map(|l| Name::new(&l.smol_str()[1..]));
         Stmt::For(ForStmt {
             label,
             pat,
@@ -568,7 +569,7 @@ Stmt: Stmt = {
     },
 
     <label:Label?> "while" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT => {
-        let label = label.map(|l| SmolStr::new(&l.smol_str()[1..]));
+        let label = label.map(|l| Name::new(&l.smol_str()[1..]));
         Stmt::While(WhileStmt {
             label,
             cond,
@@ -577,12 +578,12 @@ Stmt: Stmt = {
     },
 
     <label:Label?> <l:@L> "loop" <r:@R> ":" NEWLINE INDENT <body:LStmts> DEDENT => {
-        let label = label.map(|l| SmolStr::new(&l.smol_str()[1..]));
+        let label = label.map(|l| Name::new(&l.smol_str()[1..]));
         Stmt::While(WhileStmt {
             label,
             cond: L::new(module, l, r, Expr::ConSel(Con {
-                ty: SmolStr::new_static("Bool"),
-                con: Some(SmolStr::new_static("True")),
+                ty: Name::new_static("Bool"),
+                con: Some(Name::new_static("True")),
                 user_ty_args: vec![],
                 ty_args: vec![],
                 inferred_ty: None,
@@ -684,7 +685,7 @@ BlockExpr: Expr = {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
                 self_: SelfParam::No,
-                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                params: params.into_iter().map(|(name, ty)| (name.name(), ty)).collect(),
                 exceptions: ret.0,
                 return_ty: ret.1,
             },
@@ -702,15 +703,15 @@ LInlineExpr: L<Expr> = {
 InlineExpr: Expr = {
     #[precedence(level = "0")]
     <id:LowerId> <user_ty_args:UserTyArgs> => {
-        let str = id.smol_str();
+        let str = id.name();
         Expr::Var(VarExpr { id: str, user_ty_args, ty_args: vec![], inferred_ty: None })
     },
 
     <id:UpperId> =>
-        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None }),
+        Expr::ConSel(Con { ty: id.name(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None }),
 
     <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
-        Expr::ConSel(Con { ty: id.smol_str(), con: None, user_ty_args, ty_args: vec![], inferred_ty: None }),
+        Expr::ConSel(Con { ty: id.name(), con: None, user_ty_args, ty_args: vec![], inferred_ty: None }),
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
@@ -787,7 +788,7 @@ InlineExpr: Expr = {
                 Expr::AssocFnSel(AssocFnSelExpr {
                     ty: id,
                     ty_user_ty_args,
-                    member: field.smol_str(),
+                    member: field.name(),
                     user_ty_args,
                     ty_args: vec![],
                     inferred_ty: None,
@@ -795,7 +796,7 @@ InlineExpr: Expr = {
 
             _ => Expr::FieldSel(FieldSelExpr {
                 object: Box::new(L::new(module, l, r, expr)),
-                field: field.smol_str(),
+                field: field.name(),
                 user_ty_args,
                 inferred_ty: None,
             }),
@@ -805,8 +806,8 @@ InlineExpr: Expr = {
         Expr::Seq { ty: None, elems },
 
     <ty:UpperIdDotLBracket> <elems:Sep<SeqElem, ",">> "]" => {
-        let ty_str = ty.smol_str();
-        let ty_str = SmolStr::new(&ty_str[0..ty_str.len() - 2]);
+        let ty_str = ty.name();
+        let ty_str = Name::new(&ty_str[0..ty_str.len() - 2]);
         Expr::Seq { ty: Some(ty_str), elems }
     },
 
@@ -971,7 +972,7 @@ InlineExpr: Expr = {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
                 self_: SelfParam::No,
-                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                params: params.into_iter().map(|(name, ty)| (name.name(), ty)).collect(),
                 exceptions: ret.0,
                 return_ty: ret.1,
             },
@@ -980,15 +981,15 @@ InlineExpr: Expr = {
         }),
 }
 
-ParenExpr: (Id, L<Expr>) = {
+ParenExpr: (Name, L<Expr>) = {
     <id:LowerId> "=" <expr:LExpr> =>
-        (id.smol_str(), expr),
+        (id.name(), expr),
 }
 
 CallArg: CallArg = {
     <name:LowerId> "=" <expr:LExpr> =>
         CallArg {
-            name: Some(name.smol_str()),
+            name: Some(name.name()),
             expr,
         },
 
@@ -1027,7 +1028,7 @@ LPat: L<Pat> = {
 
 Pat: Pat = {
     #[precedence(level = "0")]
-    <id:LowerId> => Pat::Var(VarPat { var: id.smol_str(), ty: None, refined: None }),
+    <id:LowerId> => Pat::Var(VarPat { var: id.name(), ty: None, refined: None }),
 
     <con:ConPat> => Pat::Con(con),
 
@@ -1064,7 +1065,7 @@ Pat: Pat = {
 
 Con: Con = {
     <ty:UpperId> =>
-        Con { ty: ty.smol_str(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None },
+        Con { ty: ty.name(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None },
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
@@ -1089,18 +1090,18 @@ ConPat: ConPat = {
 FieldPats: (Vec<Named<L<Pat>>>, RestPat) = {
     ".." => (vec![], RestPat::Ignore),
     
-    ".." <binder:LowerId> => (vec![], RestPat::Bind(VarPat { var: binder.smol_str(), ty: None, refined: None })),
+    ".." <binder:LowerId> => (vec![], RestPat::Bind(VarPat { var: binder.name(), ty: None, refined: None })),
 
     <fields:Sep<FieldPat, ",">> => (fields, RestPat::No),
 
     <fields:(<FieldPat> ",")+> ".." => (fields, RestPat::Ignore),
     
-    <fields:(<FieldPat> ",")+> ".." <binder:LowerId> => (fields, RestPat::Bind(VarPat { var: binder.smol_str(), ty: None, refined: None })),
+    <fields:(<FieldPat> ",")+> ".." <binder:LowerId> => (fields, RestPat::Bind(VarPat { var: binder.name(), ty: None, refined: None })),
 }
 
 FieldPat: Named<L<Pat>> = {
     <id:LowerId> "=" <pat:LPat> =>
-        Named { name: Some(id.smol_str()), node: pat },
+        Named { name: Some(id.name()), node: pat },
 
     <pat:LPat> =>
         Named { name: None, node: pat },
@@ -1160,14 +1161,14 @@ ImportPath: (Vec<SmolStr>, Option<ImportSpec>) = {
 ImportName: ImportName = {
     <id:LowerId> =>
         ImportName { original_name: id.smol_str(), local_name: id.smol_str() },
-    
+
     <id:UpperId> =>
         ImportName { original_name: id.smol_str(), local_name: id.smol_str() },
-        
-    <orig:LowerId> "as" <local:LowerId> => 
+
+    <orig:LowerId> "as" <local:LowerId> =>
         ImportName { original_name: orig.smol_str(), local_name: local.smol_str() },
-        
-    <orig:UpperId> "as" <local:UpperId> => 
+
+    <orig:UpperId> "as" <local:UpperId> =>
         ImportName { original_name: orig.smol_str(), local_name: local.smol_str() },
 }
 
@@ -1272,13 +1273,13 @@ LPred: L<Pred> = {
 
 Pred: Pred = {
     <var:LowerId> <kind:(":" <LType>)?> =>
-        Pred::Kind { var: var.smol_str(), kind },
+        Pred::Kind { var: var.name(), kind },
 
     <ty:NamedType> =>
         Pred::App(ty),
 
     <ty:NamedType> "." <assoc_ty:UpperId> "=" <eq:LType> =>
-        Pred::AssocTyEq { ty, assoc_ty: assoc_ty.smol_str(), eq },
+        Pred::AssocTyEq { ty, assoc_ty: assoc_ty.name(), eq },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

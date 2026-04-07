@@ -6,7 +6,7 @@ is inferred. Otherwise it's defaulted as `*`.
 
 use crate::ast;
 use crate::collections::*;
-use crate::type_checker::{Id, Kind, RecordOrVariant};
+use crate::type_checker::{Kind, Name, RecordOrVariant};
 use crate::utils::loc_display;
 
 pub fn add_missing_type_params(pgm: &mut ast::Module) {
@@ -36,13 +36,13 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
 // calling this function.
 fn add_missing_type_params_fun(
     sig: &mut ast::FunSig,
-    tvs: &mut OrderMap<Id, Option<Kind>>,
+    tvs: &mut OrderMap<Name, Option<Kind>>,
     _loc: &ast::Loc,
 ) {
     assert!(sig.context.type_params.is_empty());
 
     // Variables bound in the enclosing `trait` or `impl` context.
-    let bound_vars: HashSet<Id> = tvs.keys().cloned().collect();
+    let bound_vars: HashSet<Name> = tvs.keys().cloned().collect();
 
     for pred in &sig.context.preds {
         collect_pred_tvs(&pred.node, &pred.loc, tvs);
@@ -79,7 +79,7 @@ fn add_missing_type_params_fun(
 fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
     assert!(decl.context.type_params.is_empty()); // first time visiting this impl
 
-    let mut impl_context_var_kinds: OrderMap<Id, Option<Kind>> = Default::default();
+    let mut impl_context_var_kinds: OrderMap<Name, Option<Kind>> = Default::default();
 
     for pred in &decl.context.preds {
         collect_pred_tvs(&pred.node, &pred.loc, &mut impl_context_var_kinds);
@@ -89,7 +89,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
         collect_tvs(&ty.node, &ty.loc, &mut impl_context_var_kinds);
     }
 
-    let impl_context_vars: OrderSet<Id> = impl_context_var_kinds.keys().cloned().collect();
+    let impl_context_vars: OrderSet<Name> = impl_context_var_kinds.keys().cloned().collect();
 
     for item in &mut decl.items {
         match item {
@@ -119,8 +119,8 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
 fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
     assert!(decl.type_param_kinds.is_empty());
 
-    let mut trait_context_var_kinds: OrderMap<Id, Option<Kind>> = Default::default();
-    let mut trait_context_vars: HashSet<Id> = Default::default();
+    let mut trait_context_var_kinds: OrderMap<Name, Option<Kind>> = Default::default();
+    let mut trait_context_vars: HashSet<Name> = Default::default();
 
     for param in &decl.type_params {
         let kind = convert_kind(&param.kind);
@@ -165,7 +165,7 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
 fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     assert!(ty.type_param_kinds.is_empty());
 
-    let mut type_param_kinds: OrderMap<Id, Option<Kind>> = Default::default();
+    let mut type_param_kinds: OrderMap<Name, Option<Kind>> = Default::default();
     for param in &ty.type_params {
         type_param_kinds.insert(param.name.node.clone(), convert_kind(&param.kind));
     }
@@ -200,7 +200,7 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
 /// variant row in `tvs`. Otherwise we don't specify the kind of the variable so that we can update
 /// it as record or variant row when we see one of the marker traits later, or default the kind as
 /// `*` if not.
-pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option<Kind>>) {
+pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Name, Option<Kind>>) {
     match ty {
         ast::Type::Named(named_ty) => collect_named_ty_tvs(named_ty, loc, tvs),
 
@@ -255,7 +255,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
 fn collect_named_ty_tvs(
     named_ty: &ast::NamedType,
     _loc: &ast::Loc,
-    tvs: &mut OrderMap<Id, Option<Kind>>,
+    tvs: &mut OrderMap<Name, Option<Kind>>,
 ) {
     let ast::NamedType { name: _, args } = named_ty;
     for arg in args {
@@ -263,7 +263,7 @@ fn collect_named_ty_tvs(
     }
 }
 
-fn collect_pred_tvs(pred: &ast::Pred, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option<Kind>>) {
+fn collect_pred_tvs(pred: &ast::Pred, loc: &ast::Loc, tvs: &mut OrderMap<Name, Option<Kind>>) {
     match pred {
         ast::Pred::Kind { var, kind } => {
             let old = tvs.insert(var.clone(), convert_kind(kind));
@@ -281,7 +281,7 @@ fn collect_pred_tvs(pred: &ast::Pred, loc: &ast::Loc, tvs: &mut OrderMap<Id, Opt
     }
 }
 
-fn collect_fields_tvs(fields: &ast::ConFields, tvs: &mut OrderMap<Id, Option<Kind>>) {
+fn collect_fields_tvs(fields: &ast::ConFields, tvs: &mut OrderMap<Name, Option<Kind>>) {
     match fields {
         ast::ConFields::Empty => {}
         ast::ConFields::Named { fields, extension } => {
@@ -300,7 +300,7 @@ fn collect_fields_tvs(fields: &ast::ConFields, tvs: &mut OrderMap<Id, Option<Kin
 
 fn collect_extension_tvs(
     extension: &Option<Box<ast::L<ast::Type>>>,
-    tvs: &mut OrderMap<Id, Option<Kind>>,
+    tvs: &mut OrderMap<Name, Option<Kind>>,
     record_or_variant: RecordOrVariant,
 ) {
     if let Some(ext) = extension {

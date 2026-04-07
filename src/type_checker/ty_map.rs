@@ -1,12 +1,12 @@
-use crate::ast::Id;
+use crate::ast::Name;
 use crate::collections::ScopeMap;
 use crate::type_checker::{Ty, TyCon};
 
 /// A map of type constructors, variables, and synonyms in scope.
 #[derive(Debug, Default)]
 pub struct TyMap {
-    cons: ScopeMap<Id, TyCon>,
-    vars: ScopeMap<Id, Ty>,
+    cons: ScopeMap<Name, TyCon>,
+    vars: ScopeMap<Name, Ty>,
 }
 
 impl TyMap {
@@ -14,7 +14,7 @@ impl TyMap {
         self.cons.len_scopes()
     }
 
-    pub fn cons(&self) -> &ScopeMap<Id, TyCon> {
+    pub fn cons(&self) -> &ScopeMap<Name, TyCon> {
         &self.cons
     }
 
@@ -28,27 +28,27 @@ impl TyMap {
         self.vars.exit();
     }
 
-    pub fn get_con(&self, id: &Id) -> Option<&TyCon> {
+    pub fn get_con(&self, id: &Name) -> Option<&TyCon> {
         self.cons.get(id)
     }
 
-    pub fn get_con_mut(&mut self, id: &Id) -> Option<&mut TyCon> {
+    pub fn get_con_mut(&mut self, id: &Name) -> Option<&mut TyCon> {
         self.cons.get_mut(id)
     }
 
-    pub fn get_var(&self, id: &Id) -> Option<&Ty> {
+    pub fn get_var(&self, id: &Name) -> Option<&Ty> {
         self.vars.get(id)
     }
 
-    pub fn has_con(&self, id: &Id) -> bool {
+    pub fn has_con(&self, id: &Name) -> bool {
         self.get_con(id).is_some()
     }
 
-    pub fn insert_var(&mut self, id: Id, ty: Ty) {
+    pub fn insert_var(&mut self, id: Name, ty: Ty) {
         self.vars.insert(id, ty);
     }
 
-    pub fn insert_con(&mut self, id: Id, con: TyCon) {
+    pub fn insert_con(&mut self, id: Name, con: TyCon) {
         self.cons.insert(id, con);
     }
 }

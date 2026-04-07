@@ -16,6 +16,7 @@ mod lexer;
 mod lowering;
 mod mono_ast;
 mod monomorph;
+mod name;
 mod parser;
 mod parser_utils;
 mod scanner;

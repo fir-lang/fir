@@ -1,12 +1,10 @@
-use crate::ast::{self, Id};
+use crate::ast::{self, Name};
 use crate::collections::{HashMap, HashSet, OrdMap};
 use crate::type_checker::{FunArgs, Scheme, TcFunState, Ty, TypeDetails, row_utils};
 #[allow(unused)]
 use crate::utils::loc_display;
 
 use super::RecordOrVariant;
-
-use smol_str::SmolStr;
 
 // Entry point.
 pub(crate) fn check_coverage(
@@ -46,7 +44,7 @@ struct Row {
     pats: Vec<ast::L<ast::Pat>>,
 
     /// Maps variables in the row to types they're bound.
-    bound_vars: HashMap<Id, HashSet<Ty>>,
+    bound_vars: HashMap<Name, HashSet<Ty>>,
 
     guarded: bool,
 }
@@ -54,7 +52,7 @@ struct Row {
 #[derive(Debug, Clone)]
 pub(crate) struct CoverageInfo {
     /// Maps arm indices to variables bound in the arms.
-    pub(crate) bound_vars: Vec<HashMap<Id, HashSet<Ty>>>,
+    pub(crate) bound_vars: Vec<HashMap<Name, HashSet<Ty>>>,
 
     /// Maps arm indices to whether they're useful.
     pub(crate) usefulness: Vec<bool>,
@@ -68,7 +66,7 @@ impl CoverageInfo {
         }
     }
 
-    fn mark_useful(&mut self, arm_idx: ArmIndex, bound_vars: &HashMap<Id, HashSet<Ty>>) {
+    fn mark_useful(&mut self, arm_idx: ArmIndex, bound_vars: &HashMap<Name, HashSet<Ty>>) {
         for (var, tys) in bound_vars.iter() {
             self.bound_vars[arm_idx as usize]
                 .entry(var.clone())
@@ -91,7 +89,7 @@ impl Row {
         self.pats.len()
     }
 
-    fn bind(&mut self, var: Id, ty: Ty) {
+    fn bind(&mut self, var: Name, ty: Ty) {
         self.bound_vars.entry(var).or_default().insert(ty);
     }
 }
@@ -297,7 +295,7 @@ impl PatMatrix {
                     &[],
                 );
 
-                let mut labels_vec: Vec<(SmolStr, Ty)> = labels.into_iter().collect();
+                let mut labels_vec: Vec<(Name, Ty)> = labels.into_iter().collect();
                 labels_vec.sort_by_key(|(key, _)| key.clone());
 
                 let mut new_rows: Vec<Row> = vec![];
@@ -314,7 +312,7 @@ impl PatMatrix {
                             }) => {
                                 let mut fields_positional: Vec<ast::L<ast::Pat>> =
                                     if !pat_fields.is_empty() && pat_fields[0].name.is_some() {
-                                        let mut fields_vec: Vec<(Id, ast::L<ast::Pat>)> =
+                                        let mut fields_vec: Vec<(Name, ast::L<ast::Pat>)> =
                                             pat_fields
                                                 .iter()
                                                 .map(|named_field| {
@@ -327,7 +325,7 @@ impl PatMatrix {
 
                                         // The pattern may be missing some of the fields in the constructor.
                                         // Add ignore pats for those.
-                                        let field_pat_names: HashSet<&Id> = pat_fields
+                                        let field_pat_names: HashSet<&Name> = pat_fields
                                             .iter()
                                             .map(|field| field.name.as_ref().unwrap())
                                             .collect();
@@ -443,8 +441,8 @@ impl PatMatrix {
     fn focus_con_scheme(
         &self,
         ty: &Ty,
-        con_ty_id: &Id,
-        con_id: &Id,
+        con_ty_id: &Name,
+        con_id: &Name,
         con_scheme: &Scheme,
         tc_state: &TcFunState,
         #[allow(unused)] loc: &ast::Loc,
@@ -482,7 +480,7 @@ impl PatMatrix {
         // `all_named_args` includes both the known args and any extension fields (after
         // normalization). This is used to build the coverage matrix columns and to fill in missing
         // patterns with `Ignore`.
-        let mut all_named_args: OrdMap<Id, Ty> = Default::default();
+        let mut all_named_args: OrdMap<Name, Ty> = Default::default();
 
         let args_positional: Vec<Ty> = match &args {
             FunArgs::Positional { args } => {
@@ -508,7 +506,7 @@ impl PatMatrix {
                     }
                 }
                 all_named_args = merged.clone();
-                let mut args_vec: Vec<(&Id, &Ty)> = merged.iter().collect();
+                let mut args_vec: Vec<(&Name, &Ty)> = merged.iter().collect();
                 args_vec.sort_by_key(|(id, _)| *id);
                 args_vec.into_iter().map(|(_, ty)| ty.clone()).collect()
             }
@@ -537,10 +535,10 @@ impl PatMatrix {
 
                         // The pattern may be missing some of the fields in the constructor.
                         // Add ignore pats for those.
-                        let mut field_pat_names: HashSet<&Id> = Default::default();
+                        let mut field_pat_names: HashSet<&Name> = Default::default();
 
                         let mut fields_positional: Vec<ast::L<ast::Pat>> = if named_args {
-                            let mut fields_vec: Vec<(Id, ast::L<ast::Pat>)> = fields
+                            let mut fields_vec: Vec<(Name, ast::L<ast::Pat>)> = fields
                                 .iter()
                                 .map(|named_field| {
                                     let name = match &named_field.name {
@@ -753,7 +751,7 @@ impl std::fmt::Display for PatMatrix {
     }
 }
 
-struct BoundVarsDisplay<'a>(&'a HashMap<Id, HashSet<Ty>>);
+struct BoundVarsDisplay<'a>(&'a HashMap<Name, HashSet<Ty>>);
 
 impl<'a> std::fmt::Display for BoundVarsDisplay<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

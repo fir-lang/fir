@@ -1,4 +1,4 @@
-use crate::ast::{self, AssignOp, Id};
+use crate::ast::{self, AssignOp, Name};
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::expr::check_expr;
 use crate::type_checker::pat::check_pat;
@@ -6,13 +6,11 @@ use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
 use crate::type_checker::{TcFunState, loc_display};
 
-use smol_str::SmolStr;
-
 pub(super) fn check_stmts(
     tc_state: &mut TcFunState,
     stmts: &mut [ast::L<ast::Stmt>],
     expected_ty: Option<&Ty>,
-    loop_stack: &mut Vec<Option<Id>>,
+    loop_stack: &mut Vec<Option<Name>>,
 ) -> Ty {
     let num_stmts = stmts.len();
     assert!(num_stmts != 0);
@@ -35,7 +33,7 @@ fn check_stmt(
     tc_state: &mut TcFunState,
     stmt: &mut ast::L<ast::Stmt>,
     expected_ty: Option<&Ty>,
-    loop_stack: &mut Vec<Option<Id>>,
+    loop_stack: &mut Vec<Option<Name>>,
 ) -> Ty {
     match &mut stmt.node {
         ast::Stmt::Break {
@@ -137,7 +135,7 @@ fn check_stmt(
                             loc: rhs.loc.clone(),
                             node: ast::Expr::FieldSel(ast::FieldSelExpr {
                                 object: Box::new(lhs_clone),
-                                field: SmolStr::new_static(method),
+                                field: Name::new_static(method),
                                 user_ty_args: vec![],
                                 inferred_ty: None,
                             }),
@@ -309,11 +307,11 @@ fn check_stmt(
             // needed so the for-loop body can use fields/methods on the item type.
             let assoc_ty_select = Ty::AssocTySelect {
                 ty: Box::new(Ty::App(
-                    SmolStr::new_static("Iterator"),
+                    Name::new_static("Iterator"),
                     vec![iter_ty.clone(), tc_state.exceptions.clone()],
                     Kind::Star,
                 )),
-                assoc_ty: SmolStr::new_static("Item"),
+                assoc_ty: Name::new_static("Item"),
                 kind: Kind::Star,
             };
             let resolved_item_ty = assoc_ty_select.deep_normalize(
@@ -341,9 +339,9 @@ fn check_stmt(
 
             // Add predicate `Iterator[iter, exn], Iterator[iter, exn].Item = item`.
             tc_state.preds.push(Pred {
-                trait_: SmolStr::new_static("Iterator"),
+                trait_: Name::new_static("Iterator"),
                 params: vec![iter_ty.clone(), tc_state.exceptions.clone()],
-                assoc_ty: Some((SmolStr::new_static("Item"), item_ty.clone())),
+                assoc_ty: Some((Name::new_static("Item"), item_ty.clone())),
                 loc: stmt.loc.clone(),
             });
 
@@ -378,7 +376,7 @@ fn check_stmt(
                 tc_state.preds,
             );
 
-            let expr_local = SmolStr::new(format!("temp{}", tc_state.local_gen));
+            let expr_local = Name::new(format!("temp{}", tc_state.local_gen));
             tc_state.local_gen += 1;
             stmt.node = ast::Stmt::Expr(ast::Expr::Do(ast::DoExpr {
                 stmts: vec![
@@ -411,9 +409,9 @@ fn check_stmt(
                                                 loc: expr.loc.clone(),
                                                 // Iterator.next[iter, exn](self: iter) Option[Iterator[iter, exn].Item] / exn
                                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                                                    ty: SmolStr::new_static("Iterator"),
+                                                    ty: Name::new_static("Iterator"),
                                                     ty_user_ty_args: vec![],
-                                                    member: SmolStr::new_static("next"),
+                                                    member: Name::new_static("next"),
                                                     user_ty_args: vec![],
                                                     ty_args: vec![
                                                         iter_ty.clone(),
@@ -424,7 +422,7 @@ fn check_stmt(
                                                             args: vec![iter_ty.clone()],
                                                         },
                                                         ret: Box::new(Ty::App(
-                                                            SmolStr::new_static("Option"),
+                                                            Name::new_static("Option"),
                                                             vec![item_ty.clone()],
                                                             Kind::Star,
                                                         )),
@@ -448,7 +446,7 @@ fn check_stmt(
                                             }],
                                             splice: None,
                                             inferred_ty: Some(Ty::App(
-                                                SmolStr::new_static("Option"),
+                                                Name::new_static("Option"),
                                                 vec![pat_ty.clone()],
                                                 Kind::Star,
                                             )),
@@ -458,12 +456,12 @@ fn check_stmt(
                                         loc: pat.loc.clone(),
                                         node: ast::Pat::Con(ast::ConPat {
                                             con: ast::Con {
-                                                ty: SmolStr::new_static("Option"),
-                                                con: Some(SmolStr::new_static("Some")),
+                                                ty: Name::new_static("Option"),
+                                                con: Some(Name::new_static("Some")),
                                                 user_ty_args: vec![],
                                                 ty_args: vec![item_ty.clone()],
                                                 inferred_ty: Some(Ty::App(
-                                                    SmolStr::new_static("Option"),
+                                                    Name::new_static("Option"),
                                                     vec![item_ty.clone()],
                                                     Kind::Star,
                                                 )),
@@ -519,9 +517,9 @@ fn check_stmt(
 
 fn select_field_for_assignment(
     tc_state: &mut TcFunState,
-    ty_con: &Id,
+    ty_con: &Name,
     ty_args: &[Ty],
-    field: &Id,
+    field: &Name,
     loc: &ast::Loc,
 ) -> Option<Ty> {
     let ty_con = tc_state

@@ -1,4 +1,4 @@
-use crate::ast::{self, Id, L};
+use crate::ast::{self, L, Name};
 
 use smol_str::SmolStr;
 
@@ -82,12 +82,12 @@ pub(crate) fn parse_int_lit(
 }
 
 pub(crate) fn process_param_list(
-    params: Vec<(Id, Option<L<ast::Type>>)>,
+    params: Vec<(Name, Option<L<ast::Type>>)>,
     module: &std::rc::Rc<str>,
     loc: &lexgen_util::Loc,
-) -> (ast::SelfParam, Vec<(Id, Option<L<ast::Type>>)>) {
+) -> (ast::SelfParam, Vec<(Name, Option<L<ast::Type>>)>) {
     let mut self_param = ast::SelfParam::No;
-    let mut typed_params: Vec<(Id, Option<L<ast::Type>>)> = Vec::with_capacity(params.len());
+    let mut typed_params: Vec<(Name, Option<L<ast::Type>>)> = Vec::with_capacity(params.len());
 
     for (param_id, param_ty) in params {
         if param_id == "self" {
@@ -112,14 +112,14 @@ pub(crate) fn process_param_list(
     (self_param, typed_params)
 }
 
-pub(crate) fn path_parts(path: &SmolStr) -> Vec<SmolStr> {
-    let parts: Vec<SmolStr> = path.split('.').map(SmolStr::new).collect();
+pub(crate) fn path_parts(path: &SmolStr) -> Vec<Name> {
+    let parts: Vec<Name> = path.split('.').map(Name::new).collect();
     assert_eq!(parts.len(), 2);
     parts
 }
 
 pub(crate) fn process_fields(
-    fields: Vec<(Option<Id>, L<ast::Type>)>,
+    fields: Vec<(Option<Name>, L<ast::Type>)>,
     extension: Option<Box<ast::L<ast::Type>>>,
     module: &std::rc::Rc<str>,
     loc: &lexgen_util::Loc,

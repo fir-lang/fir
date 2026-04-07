@@ -1,7 +1,5 @@
 use crate::mono_ast::*;
 
-use smol_str::SmolStr;
-
 pub fn print_pgm(pgm: &MonoPgm) {
     let mut s = String::new();
     pgm.print(&mut s);
@@ -223,7 +221,13 @@ impl NamedType {
 }
 
 impl FunSig {
-    pub fn print(&self, parent_ty: &Option<L<Id>>, name: &Id, ty_args: &[Type], buf: &mut String) {
+    pub fn print(
+        &self,
+        parent_ty: &Option<L<Name>>,
+        name: &Name,
+        ty_args: &[Type],
+        buf: &mut String,
+    ) {
         if let Some(parent_ty) = parent_ty {
             buf.push_str(&parent_ty.node);
             buf.push('.');
@@ -533,7 +537,7 @@ impl Expr {
 
             Expr::Fn(FnExpr { sig, body }) => {
                 buf.push('\\');
-                sig.print(&None, &SmolStr::new_static(""), &[], buf);
+                sig.print(&None, &Name::new_static(""), &[], buf);
                 buf.push_str(" {\n");
                 for stmt in body.iter() {
                     buf.push_str(&INDENTS[..indent as usize + 4]);
@@ -789,7 +793,7 @@ impl Display for NamedType {
 impl Display for FunSig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
-        self.print(&None, &SmolStr::new(""), &[], &mut s);
+        self.print(&None, &Name::new(""), &[], &mut s);
         f.write_str(&s)
     }
 }

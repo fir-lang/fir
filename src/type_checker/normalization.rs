@@ -1,4 +1,4 @@
-use crate::ast::{self, Id};
+use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::interpolation::StrPart;
 use crate::type_checker::TyCon;
@@ -9,7 +9,7 @@ use crate::utils::loc_display;
 pub(super) fn normalize_stmt(
     stmt: &mut ast::Stmt,
     loc: &ast::Loc,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
 ) {
@@ -48,7 +48,7 @@ pub(super) fn normalize_stmt(
 fn normalize_expr(
     expr: &mut ast::Expr,
     loc: &ast::Loc,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
 ) {
@@ -312,7 +312,7 @@ fn normalize_expr(
 
 fn normalize_pat(
     pat: &mut ast::Pat,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
 ) {

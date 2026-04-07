@@ -1,4 +1,4 @@
-use crate::ast::{self, Id};
+use crate::ast;
 use crate::collections::HashSet;
 
 use std::path::PathBuf;
@@ -21,10 +21,10 @@ pub fn resolve_imports(
     module_file_path: Option<&std::path::Path>,
 ) -> ast::Module {
     let mut new_module = ast::Module { decls: vec![] };
-    let mut imported_modules: HashSet<Vec<Id>> = Default::default();
+    let mut imported_modules: HashSet<Vec<SmolStr>> = Default::default();
 
     if let Some(file_path) = module_file_path {
-        let import_path: Vec<Id> = file_path
+        let import_path: Vec<SmolStr> = file_path
             .with_extension("")
             .iter()
             .map(|c| SmolStr::new(c.to_str().unwrap()))
@@ -46,10 +46,10 @@ pub fn resolve_imports(
     new_module
 }
 
-static FIR: Id = SmolStr::new_static("Fir");
-static PRELUDE: Id = SmolStr::new_static("Prelude");
+static FIR: SmolStr = SmolStr::new_static("Fir");
+static PRELUDE: SmolStr = SmolStr::new_static("Prelude");
 
-type Path = Vec<Id>;
+type Path = Vec<SmolStr>;
 
 fn resolve_imports_(
     module: ast::Module,
@@ -81,7 +81,7 @@ fn resolve_imports_(
     }
 }
 
-fn module_path(import_path: &[Id]) -> PathBuf {
+fn module_path(import_path: &[SmolStr]) -> PathBuf {
     let mut path = PathBuf::new();
     for p in import_path.iter() {
         path.push(p.as_str());

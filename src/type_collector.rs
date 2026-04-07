@@ -1,10 +1,10 @@
-use crate::ast::Id;
+use crate::ast::Name;
 use crate::collections::*;
 use crate::mono_ast as mono;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct RecordType {
-    pub(crate) fields: OrdMap<Id, mono::Type>,
+    pub(crate) fields: OrdMap<Name, mono::Type>,
 }
 
 impl RecordType {
@@ -17,7 +17,7 @@ impl RecordType {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct VariantType {
-    pub(crate) alts: OrdMap<Id, mono::NamedType>,
+    pub(crate) alts: OrdMap<Name, mono::NamedType>,
 }
 
 pub fn collect_anonymous_types(pgm: &mono::MonoPgm) -> (HashSet<RecordType>, HashSet<VariantType>) {

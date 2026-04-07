@@ -1,4 +1,4 @@
-use crate::ast::{self, Id};
+use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::type_checker::apply::apply_con_ty;
 use crate::type_checker::ty::*;
@@ -145,14 +145,14 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
             let pat2_binders = tc_state.env.exit();
 
             // Check that patterns bind the same variables.
-            let pat1_binder_keys: HashSet<&Id> = pat1_binders.keys().collect();
-            let pat2_binder_keys: HashSet<&Id> = pat2_binders.keys().collect();
+            let pat1_binder_keys: HashSet<&Name> = pat1_binders.keys().collect();
+            let pat2_binder_keys: HashSet<&Name> = pat2_binders.keys().collect();
 
             if pat1_binder_keys != pat2_binder_keys {
-                let mut left_vars: Vec<Id> =
+                let mut left_vars: Vec<Name> =
                     pat1_binder_keys.iter().map(|id| (*id).clone()).collect();
                 left_vars.sort();
-                let mut right_vars: Vec<Id> =
+                let mut right_vars: Vec<Name> =
                     pat2_binder_keys.iter().map(|id| (*id).clone()).collect();
                 right_vars.sort();
                 panic!(

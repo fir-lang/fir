@@ -24,10 +24,8 @@ pub use ty::{FunArgs, Kind, RecordOrVariant, Ty};
 use ty_map::TyMap;
 use unification::unify;
 
-use crate::ast::{self, Id};
+use crate::ast::{self, Name};
 use crate::collections::*;
-
-use smol_str::SmolStr;
 
 /// Type constructors and types in the program.
 #[derive(Debug)]
@@ -35,12 +33,12 @@ pub struct PgmTypes {
     /// Type schemes of top-level functions.
     ///
     /// These functions don't take a `self` parameter and can't be called as methods.
-    pub top_schemes: HashMap<Id, Scheme>,
+    pub top_schemes: HashMap<Name, Scheme>,
 
     /// Type schemes of associated functions.
     ///
     /// These include methods (associated functions with a `self` parameter).
-    pub associated_fn_schemes: HashMap<Id, HashMap<Id, Scheme>>,
+    pub associated_fn_schemes: HashMap<Name, HashMap<Name, Scheme>>,
 
     /// Type schemes of methods.
     ///
@@ -53,7 +51,7 @@ pub struct PgmTypes {
     ///
     /// Because these schemes are only used in method call syntax, the keys are not type names but
     /// method names. The values are type schemes of methods with the name.
-    pub method_schemes: HashMap<Id, Vec<(Id, Scheme)>>,
+    pub method_schemes: HashMap<Name, Vec<(Name, Scheme)>>,
 
     /// Type constructor details.
     pub tys: TyMap,
@@ -191,7 +189,7 @@ fn exn_type(module: std::rc::Rc<str>, line: u16) -> ast::L<ast::Type> {
 /// Type checking state for a single function (top-level, associated, or method).
 struct TcFunState<'a> {
     /// Term environment.
-    env: &'a mut ScopeMap<Id, Ty>,
+    env: &'a mut ScopeMap<Name, Ty>,
 
     /// Whole program trait environment. Used to resolve closure predicate.s
     trait_env: &'a TraitEnv,
@@ -233,7 +231,7 @@ struct TcFunState<'a> {
     local_gen: u32,
 }
 
-const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
+const EXN_QVAR_ID: Name = Name::new_static("?exn");
 
 /// Collect type constructors (traits and data) and type schemes (top-level, associated, traits) of
 /// the program.
@@ -360,7 +358,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
     // Synonyms can reference each other in any order, so we first collect all synonym definitions,
     // then resolve each one on demand with cycle detection.
     {
-        let mut synonym_asts: HashMap<Id, (&[ast::TypeParam], &[Kind], &ast::L<ast::Type>)> =
+        let mut synonym_asts: HashMap<Name, (&[ast::TypeParam], &[Kind], &ast::L<ast::Type>)> =
             Default::default();
         for decl in module.decls.iter() {
             if let ast::TopDecl::Type(ty_decl) = &decl.node
@@ -377,8 +375,8 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             }
         }
 
-        let mut resolving: HashSet<Id> = Default::default();
-        let names: Vec<Id> = synonym_asts.keys().cloned().collect();
+        let mut resolving: HashSet<Name> = Default::default();
+        let names: Vec<Name> = synonym_asts.keys().cloned().collect();
         for name in &names {
             resolve_synonym(name, &synonym_asts, &mut resolving, &mut tys);
         }
@@ -447,12 +445,12 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 let _trait_context: Vec<Pred> =
                     convert_and_bind_context(&mut tys, &trait_context_ast, TyVarConversion::ToQVar);
 
-                let mut methods: HashMap<Id, TraitMethod> = HashMap::with_capacity_and_hasher(
+                let mut methods: HashMap<Name, TraitMethod> = HashMap::with_capacity_and_hasher(
                     trait_decl.node.items.len(),
                     Default::default(),
                 );
 
-                let mut assoc_tys: HashMap<Id, AssocTyDetails> = Default::default();
+                let mut assoc_tys: HashMap<Name, AssocTyDetails> = Default::default();
 
                 for item in &trait_decl.node.items {
                     match item {
@@ -677,7 +675,7 @@ fn add_default_impl_items(module: &mut ast::Module, tys: &mut TyMap) {
             // type parameters.
 
             // Map type parameters of the trait to the impl types.
-            let substs: HashMap<Id, ast::Type> = trait_type_params
+            let substs: HashMap<Name, ast::Type> = trait_type_params
                 .iter()
                 .map(|(param, _param_kind)| param.clone())
                 .zip(impl_decl.tys.iter().map(|ty| ty.node.clone()))
@@ -714,17 +712,17 @@ fn add_default_impl_items(module: &mut ast::Module, tys: &mut TyMap) {
 
             // Rename copied function's type parameters so that they won't be shadowed by the impl's
             // type parameters.
-            let mut new_type_params: Vec<(Id, Kind)> =
+            let mut new_type_params: Vec<(Name, Kind)> =
                 Vec::with_capacity(impl_fun_decl.node.sig.context.type_params.len());
 
-            let renaming_substs: HashMap<Id, ast::Type> = impl_fun_decl
+            let renaming_substs: HashMap<Name, ast::Type> = impl_fun_decl
                 .node
                 .sig
                 .context
                 .type_params
                 .iter()
                 .map(|(ty_param, kind)| {
-                    let new_param = SmolStr::new(format!("{}$copy", ty_param));
+                    let new_param = Name::new(format!("{}$copy", ty_param));
                     new_type_params.push((new_param.clone(), *kind));
                     (ty_param.clone(), ast::Type::Var(new_param))
                 })
@@ -734,7 +732,7 @@ fn add_default_impl_items(module: &mut ast::Module, tys: &mut TyMap) {
             impl_fun_decl.node.sig.subst_ty_ids(&renaming_substs);
 
             // Map type parameters of the trait to the impl types.
-            let substs: HashMap<Id, ast::Type> = trait_type_params
+            let substs: HashMap<Name, ast::Type> = trait_type_params
                 .iter()
                 .map(|(param, _param_kind)| param.clone())
                 .zip(impl_decl.tys.iter().map(|ty| ty.node.clone()))
@@ -762,9 +760,9 @@ fn add_default_impl_items(module: &mut ast::Module, tys: &mut TyMap) {
 /// Resolve a type synonym by converting its RHS. If the RHS references another synonym, resolve
 /// that one first (recursively). Detects cycles via the `resolving` set.
 fn resolve_synonym(
-    name: &Id,
-    synonym_asts: &HashMap<Id, (&[ast::TypeParam], &[Kind], &ast::L<ast::Type>)>,
-    resolving: &mut HashSet<Id>,
+    name: &Name,
+    synonym_asts: &HashMap<Name, (&[ast::TypeParam], &[Kind], &ast::L<ast::Type>)>,
+    resolving: &mut HashSet<Name>,
     tys: &mut TyMap,
 ) {
     // Already resolved in a previous call.
@@ -812,8 +810,8 @@ fn resolve_synonym(
 /// Recursively resolve any synonym dependencies in an AST type.
 fn resolve_synonym_deps(
     ty: &ast::Type,
-    synonym_asts: &HashMap<Id, (&[ast::TypeParam], &[Kind], &ast::L<ast::Type>)>,
-    resolving: &mut HashSet<Id>,
+    synonym_asts: &HashMap<Name, (&[ast::TypeParam], &[Kind], &ast::L<ast::Type>)>,
+    resolving: &mut HashSet<Name>,
     tys: &mut TyMap,
 ) {
     match ty {
@@ -859,13 +857,13 @@ fn resolve_synonym_deps(
     }
 }
 
-fn check_value_type_sizes(ty_cons: &ScopeMap<Id, TyCon>) {
+fn check_value_type_sizes(ty_cons: &ScopeMap<Name, TyCon>) {
     for ty_con in ty_cons.last().values() {
-        let mut visited: HashSet<Id> = Default::default();
+        let mut visited: HashSet<Name> = Default::default();
         let ty_args: Vec<Ty> = ty_con
             .ty_params
             .iter()
-            .map(|(name, kind)| Ty::Con(SmolStr::new(format!("#{}", name)), *kind))
+            .map(|(name, kind)| Ty::Con(Name::new(format!("#{}", name)), *kind))
             .collect();
         if visit_ty_con(ty_con, &ty_args, ty_cons, &mut visited) {
             panic!(
@@ -880,8 +878,8 @@ fn check_value_type_sizes(ty_cons: &ScopeMap<Id, TyCon>) {
 fn visit_ty_con(
     ty_con: &TyCon,
     ty_args: &[Ty],
-    ty_cons: &ScopeMap<Id, TyCon>,
-    visited: &mut HashSet<Id>,
+    ty_cons: &ScopeMap<Name, TyCon>,
+    visited: &mut HashSet<Name>,
 ) -> bool {
     let ty_con_details = match &ty_con.details {
         TyConDetails::Trait(_) | TyConDetails::Synonym(_) => return false,
@@ -954,13 +952,13 @@ fn collect_schemes(
     module: &ast::Module,
     tys: &mut TyMap,
 ) -> (
-    HashMap<Id, Scheme>,              // top schemes
-    HashMap<Id, HashMap<Id, Scheme>>, // associated fn schemes
-    HashMap<Id, Vec<(Id, Scheme)>>,   // method schemes (method name -> type name -> scheme)
+    HashMap<Name, Scheme>,                // top schemes
+    HashMap<Name, HashMap<Name, Scheme>>, // associated fn schemes
+    HashMap<Name, Vec<(Name, Scheme)>>,   // method schemes (method name -> type name -> scheme)
 ) {
-    let mut top_schemes: HashMap<Id, Scheme> = Default::default();
-    let mut associated_fn_schemes: HashMap<Id, HashMap<Id, Scheme>> = Default::default();
-    let mut method_schemes: HashMap<Id, Vec<(Id, Scheme)>> = Default::default();
+    let mut top_schemes: HashMap<Name, Scheme> = Default::default();
+    let mut associated_fn_schemes: HashMap<Name, HashMap<Name, Scheme>> = Default::default();
+    let mut method_schemes: HashMap<Name, Vec<(Name, Scheme)>> = Default::default();
 
     // Unique variable generator, used in substitutions to rename domain variables before
     // substitution to avoid capturing.
@@ -994,7 +992,7 @@ fn collect_schemes(
                 // Note: this needs to be a `Vec` instead of a `Map` as we need to add trait context
                 // before the function context in the method type schemes, and type parameters in
                 // the trait context need to be in the same order as the trait declaration.
-                let trait_quantified_vars: Vec<(Id, Kind)> = trait_decl
+                let trait_quantified_vars: Vec<(Name, Kind)> = trait_decl
                     .node
                     .type_params
                     .iter()
@@ -1558,7 +1556,7 @@ fn collect_schemes(
                     // Substitute trait arguments. Add free variables of the arguments to the
                     // context.
 
-                    let mut arg_fvs: OrderMap<Id, Option<Kind>> = Default::default();
+                    let mut arg_fvs: OrderMap<Name, Option<Kind>> = Default::default();
 
                     for ((ty_param, _), ty_arg) in
                         trait_ty_con.ty_params.iter().zip(impl_decl.node.tys.iter())
@@ -1601,7 +1599,7 @@ fn collect_schemes(
 /// Type check a top-level function.
 fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: &TraitEnv) {
     let var_gen = UVarGen::default();
-    let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
+    let mut env: ScopeMap<Name, Ty> = ScopeMap::default();
 
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
@@ -1633,7 +1631,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
                         );
                     }
                     env.insert(
-                        SmolStr::new_static("self"),
+                        Name::new_static("self"),
                         Ty::Con(parent_ty_con.id.clone(), Kind::Star),
                     );
                 }
@@ -1645,7 +1643,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         }
         ast::SelfParam::Explicit(ty) => {
             env.insert(
-                SmolStr::new_static("self"),
+                Name::new_static("self"),
                 convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
             );
         }
@@ -1781,7 +1779,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
             };
 
             let mut preds: Vec<Pred> = Default::default();
-            let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
+            let mut env: ScopeMap<Name, Ty> = ScopeMap::default();
             let var_gen = UVarGen::default();
 
             match &fun.node.sig.self_ {
@@ -1795,7 +1793,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 }
                 ast::SelfParam::Explicit(ty) => {
                     env.insert(
-                        SmolStr::new("self"),
+                        Name::new("self"),
                         convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
                     );
                 }
@@ -1851,9 +1849,9 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     }
 
     // Check that all methods without default implementations are implemented.
-    let trait_method_ids: HashSet<&Id> = trait_details.methods.keys().collect();
-    let mut implemented_method_ids: HashSet<&Id> = Default::default();
-    let mut implemented_assoc_tys: HashSet<Id> = Default::default();
+    let trait_method_ids: HashSet<&Name> = trait_details.methods.keys().collect();
+    let mut implemented_method_ids: HashSet<&Name> = Default::default();
+    let mut implemented_assoc_tys: HashSet<Name> = Default::default();
     for item in &impl_.node.items {
         let fun = match item {
             ast::ImplDeclItem::Type { assoc_ty, rhs: _ } => {
@@ -1894,7 +1892,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
             }
         }
     }
-    let missing_methods: Vec<&&Id> = trait_method_ids
+    let missing_methods: Vec<&&Name> = trait_method_ids
         .difference(&implemented_method_ids)
         .collect();
     if !missing_methods.is_empty() {
@@ -1905,7 +1903,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
         );
     }
 
-    let missing_assoc_tys: Vec<&Id> = trait_details
+    let missing_assoc_tys: Vec<&Name> = trait_details
         .assoc_tys
         .keys()
         .filter(|trait_assoc_ty| !implemented_assoc_tys.contains(*trait_assoc_ty))
@@ -1925,7 +1923,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 fn resolve_preds(
     trait_env: &TraitEnv,
     mut assumps: Vec<Pred>,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     mut goals: Vec<Pred>,
     var_gen: &UVarGen,
 ) {
@@ -2047,7 +2045,7 @@ fn resolve_preds(
     }
 }
 
-pub(crate) const REC_ROW_TO_LIST_TRAIT_ID: Id = Id::new_static("RecRowToList");
+pub(crate) const REC_ROW_TO_LIST_TRAIT_ID: Name = Name::new_static("RecRowToList");
 
 /*
 `RecRowToList[t]` always resolves for any `t`, but we need to check associated type selections to
@@ -2060,7 +2058,7 @@ fn resolve_row_to_list(
     trait_env: &TraitEnv,
     pred: &Pred,
     next_goals: &mut Vec<Pred>,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     var_gen: &UVarGen,
 ) {
     assert_eq!(pred.params.len(), 1);
@@ -2092,28 +2090,28 @@ fn resolve_row_to_list(
     }
 }
 
-fn row_to_list_type(labels: &OrdMap<Id, Ty>, extension: &Option<Box<Ty>>) -> Ty {
+fn row_to_list_type(labels: &OrdMap<Name, Ty>, extension: &Option<Box<Ty>>) -> Ty {
     let mut list_ty: Ty = match extension {
         None => Ty::empty_variant(),
         Some(ext) => Ty::AssocTySelect {
             ty: Box::new(Ty::App(
-                SmolStr::new_static("RecRowToList"),
+                Name::new_static("RecRowToList"),
                 vec![*ext.clone()],
                 Kind::Star,
             )),
-            assoc_ty: SmolStr::new_static("List"),
+            assoc_ty: Name::new_static("List"),
             kind: Kind::Star,
         },
     };
 
     for (_field_name, field_ty) in labels.iter().rev() {
         let record_field_ty = Ty::App(
-            SmolStr::new_static("RecordField"),
+            Name::new_static("RecordField"),
             vec![(*field_ty).clone()],
             Kind::Star,
         );
         list_ty = Ty::App(
-            SmolStr::new_static("List"),
+            Name::new_static("List"),
             vec![record_field_ty, list_ty],
             Kind::Star,
         );
@@ -2122,9 +2120,9 @@ fn row_to_list_type(labels: &OrdMap<Id, Ty>, extension: &Option<Box<Ty>>) -> Ty 
     list_ty
 }
 
-fn rename_domain_var(var: &Id, uniq: u32) -> Id {
+fn rename_domain_var(var: &Name, uniq: u32) -> Name {
     // Add the comment character '#' to make sure it won't conflict with a user variable.
-    SmolStr::new(format!("{var}#{uniq}"))
+    Name::new(format!("{var}#{uniq}"))
 }
 
 /// Expand type synonym references some of the `ast::Type` nodes in the module. This must run after
@@ -2135,12 +2133,12 @@ fn rename_domain_var(var: &Id, uniq: u32) -> Id {
 /// those.
 pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
     // Collect top-level synonyms with their type parameter names.
-    let mut synonyms: HashMap<Id, (Vec<Id>, ast::Type)> = Default::default();
+    let mut synonyms: HashMap<Name, (Vec<Name>, ast::Type)> = Default::default();
     for decl in module.decls.iter() {
         if let ast::TopDecl::Type(ty_decl) = &decl.node
             && let Some(ast::TypeDeclRhs::Synonym(rhs)) = &ty_decl.node.rhs
         {
-            let params: Vec<Id> = ty_decl
+            let params: Vec<Name> = ty_decl
                 .node
                 .type_params
                 .iter()
@@ -2234,7 +2232,7 @@ pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
 
 fn expand_synonyms_in_type_decl(
     decl: &mut ast::TypeDecl,
-    synonyms: &HashMap<Id, (Vec<Id>, ast::Type)>,
+    synonyms: &HashMap<Name, (Vec<Name>, ast::Type)>,
 ) {
     match &mut decl.rhs {
         Some(ast::TypeDeclRhs::Sum { cons, extension }) => {
@@ -2257,7 +2255,7 @@ fn expand_synonyms_in_type_decl(
 
 fn expand_synonyms_in_fields(
     fields: &mut ast::ConFields,
-    synonyms: &HashMap<Id, (Vec<Id>, ast::Type)>,
+    synonyms: &HashMap<Name, (Vec<Name>, ast::Type)>,
 ) {
     match fields {
         ast::ConFields::Empty => {}
@@ -2277,11 +2275,14 @@ fn expand_synonyms_in_fields(
     }
 }
 
-fn expand_synonyms_in_fun(fun: &mut ast::FunDecl, synonyms: &HashMap<Id, (Vec<Id>, ast::Type)>) {
+fn expand_synonyms_in_fun(
+    fun: &mut ast::FunDecl,
+    synonyms: &HashMap<Name, (Vec<Name>, ast::Type)>,
+) {
     expand_synonyms_in_sig(&mut fun.sig, synonyms);
 }
 
-fn expand_synonyms_in_sig(sig: &mut ast::FunSig, synonyms: &HashMap<Id, (Vec<Id>, ast::Type)>) {
+fn expand_synonyms_in_sig(sig: &mut ast::FunSig, synonyms: &HashMap<Name, (Vec<Name>, ast::Type)>) {
     if let ast::SelfParam::Explicit(ty) = &mut sig.self_ {
         expand_synonyms_in_ty(&mut ty.node, synonyms);
     }
@@ -2298,7 +2299,7 @@ fn expand_synonyms_in_sig(sig: &mut ast::FunSig, synonyms: &HashMap<Id, (Vec<Id>
     }
 }
 
-fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, (Vec<Id>, ast::Type)>) {
+fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Name, (Vec<Name>, ast::Type)>) {
     match ty {
         ast::Type::Named(named) => {
             if let Some((params, body)) = synonyms.get(&named.name) {
@@ -2310,7 +2311,7 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, (Vec<Id>, as
                     params.len(),
                     named.args.len(),
                 );
-                let substs: HashMap<Id, &ast::Type> = params
+                let substs: HashMap<Name, &ast::Type> = params
                     .iter()
                     .zip(named.args.iter().map(|arg| &arg.node))
                     .map(|(param, arg)| (param.clone(), arg))
@@ -2380,7 +2381,7 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Id, (Vec<Id>, as
 
 /// Same as `Ty::subst_qvars`, but for AST types. Used when expanding type synonyms in type
 /// definitions.
-fn subst_ast_ty_vars(ty: &mut ast::Type, vars: &HashMap<Id, &ast::Type>) {
+fn subst_ast_ty_vars(ty: &mut ast::Type, vars: &HashMap<Name, &ast::Type>) {
     match ty {
         ast::Type::Var(v) => {
             if let Some(replacement) = vars.get(v) {

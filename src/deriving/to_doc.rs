@@ -1,7 +1,5 @@
 use crate::ast;
 
-use smol_str::SmolStr;
-
 use super::*;
 
 /// Generate an `impl ToDoc[TypeName[...]]` for the given type declaration.
@@ -10,7 +8,7 @@ pub fn derive_to_doc(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::T
     let doc_ty = l(
         loc,
         ast::Type::Named(ast::NamedType {
-            name: SmolStr::new_static("Doc"),
+            name: ast::Name::new_static("Doc"),
             args: vec![],
         }),
     );
@@ -32,7 +30,7 @@ pub fn derive_to_doc(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::T
 /// Derive ToDoc for a product type with fields.
 fn derive_to_doc_product(
     loc: &ast::Loc,
-    type_name: &ast::Id,
+    type_name: &ast::Name,
     fields: &ast::ConFields,
 ) -> Vec<ast::L<ast::Stmt>> {
     match fields {
@@ -45,7 +43,7 @@ fn derive_to_doc_product(
             let mut stmts = vec![];
 
             let ext_expr = if extension.is_some() {
-                let names: Vec<ast::Id> =
+                let names: Vec<ast::Name> =
                     named_fields.iter().map(|(name, _)| name.clone()).collect();
                 stmts.push(let_destructure_rest(
                     loc,
@@ -100,7 +98,7 @@ fn derive_to_doc_product(
 /// Derive ToDoc for an empty product type (no fields).
 ///
 /// For empty product, just output `Doc.str("TypeName")`
-fn derive_to_doc_empty_product(loc: &ast::Loc, type_name: &ast::Id) -> Vec<ast::L<ast::Stmt>> {
+fn derive_to_doc_empty_product(loc: &ast::Loc, type_name: &ast::Name) -> Vec<ast::L<ast::Stmt>> {
     vec![l(
         loc,
         ast::Stmt::Expr(doc_str(loc, type_name.as_str()).node),
@@ -110,7 +108,7 @@ fn derive_to_doc_empty_product(loc: &ast::Loc, type_name: &ast::Id) -> Vec<ast::
 /// Derive ToDoc for a sum type.
 fn derive_to_doc_sum(
     loc: &ast::Loc,
-    type_name: &ast::Id,
+    type_name: &ast::Name,
     cons: &[ast::ConDecl],
 ) -> Vec<ast::L<ast::Stmt>> {
     let mut alts: Vec<ast::Alt> = Vec::new();
@@ -149,7 +147,7 @@ fn derive_to_doc_sum(
 
                 let rest_pat = if extension.is_some() {
                     ast::RestPat::Bind(ast::VarPat {
-                        var: SmolStr::new_static("exts"),
+                        var: ast::Name::new_static("exts"),
                         ty: None,
                         refined: None,
                     })
@@ -192,7 +190,7 @@ fn derive_to_doc_sum(
                         node: l(
                             loc,
                             ast::Pat::Var(ast::VarPat {
-                                var: SmolStr::new(format!("i{}", i)),
+                                var: ast::Name::new(format!("i{}", i)),
                                 ty: None,
                                 refined: None,
                             }),
@@ -257,8 +255,8 @@ fn derive_to_doc_sum(
 /// there are named fields).
 fn gen_named_field_args(
     loc: &ast::Loc,
-    fields: &[(ast::Id, ast::L<ast::Type>)],
-    accessor: &dyn Fn(&ast::Loc, &ast::Id) -> ast::L<ast::Expr>,
+    fields: &[(ast::Name, ast::L<ast::Type>)],
+    accessor: &dyn Fn(&ast::Loc, &ast::Name) -> ast::L<ast::Expr>,
     ext_expr: Option<ast::L<ast::Expr>>,
 ) -> Vec<ast::L<ast::Stmt>> {
     let mut stmts = vec![];

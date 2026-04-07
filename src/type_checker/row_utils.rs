@@ -1,19 +1,19 @@
-use crate::ast::Id;
+use crate::ast::Name;
 use crate::collections::*;
 use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::ty::*;
 
 pub(super) fn collect_rows(
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     ty: &Ty, // record or variant, used in errors
     ty_kind: RecordOrVariant,
-    labels: &OrdMap<Id, Ty>,
+    labels: &OrdMap<Name, Ty>,
     mut extension: Option<Box<Ty>>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     assumps: &[Pred],
-) -> (OrdMap<Id, Ty>, Option<Ty>) {
-    let mut all_labels: OrdMap<Id, Ty> = labels
+) -> (OrdMap<Name, Ty>, Option<Ty>) {
+    let mut all_labels: OrdMap<Name, Ty> = labels
         .iter()
         .map(|(id, ty)| {
             (

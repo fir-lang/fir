@@ -1,4 +1,4 @@
-use crate::ast::{self, Id, Named};
+use crate::ast::{self, Name, Named};
 use crate::collections::*;
 use crate::interpolation::StrPart;
 use crate::mono_ast as mono;
@@ -6,30 +6,28 @@ use crate::mono_ast::MonoPgm;
 use crate::type_checker::{FunArgs, Kind, RecordOrVariant, Ty};
 use crate::utils::*;
 
-use smol_str::SmolStr;
-
 /// The program in front-end syntax, converted to a graph for efficient and easy lookups.
 #[derive(Debug)]
 struct PolyPgm {
-    traits: HashMap<Id, PolyTrait>,
+    traits: HashMap<Name, PolyTrait>,
 
     /// Top-level functions, e.g. `foo(x: U32): ...`.
-    top: HashMap<Id, ast::FunDecl>,
+    top: HashMap<Name, ast::FunDecl>,
 
     /// Associated functions without `self` arguments, e.g. `Type.foo(x: U32): ...`.
-    associated: HashMap<Id, HashMap<Id, ast::FunDecl>>,
+    associated: HashMap<Name, HashMap<Name, ast::FunDecl>>,
 
     /// Associated functions with `self` arguments, e.g. `Type.bar(self, x: U32): ...`.
-    method: HashMap<Id, HashMap<Id, ast::FunDecl>>,
+    method: HashMap<Name, HashMap<Name, ast::FunDecl>>,
 
-    ty: HashMap<Id, ast::TypeDecl>,
+    ty: HashMap<Name, ast::TypeDecl>,
 }
 
 /// A trait, with implementations.
 #[derive(Debug, Default)]
 struct PolyTrait {
     /// QVars of trait.
-    ty_args: Vec<(Id, Kind)>,
+    ty_args: Vec<(Name, Kind)>,
 
     /// Implementations of the trait.
     impls: Vec<PolyTraitImpl>,
@@ -43,7 +41,7 @@ struct PolyTraitImpl {
     ///
     /// In the example above: `[iter: *, a: *, b: *]`.
     #[allow(unused)]
-    type_params: Vec<(Id, Kind)>,
+    type_params: Vec<(Name, Kind)>,
 
     /// Type arguments of the trait.
     ///
@@ -53,17 +51,17 @@ struct PolyTraitImpl {
     methods: Vec<ast::FunDecl>,
 
     /// Associated type definitions, e.g. `type Item = t`.
-    assoc_tys: Vec<(Id, ast::Type)>,
+    assoc_tys: Vec<(Name, ast::Type)>,
     // We don't care about predicates, those are for type checking.
     // If a trait use type checks, then we know there will be a match in trait env during monomorph.
 }
 
 fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
-    let mut traits: HashMap<Id, PolyTrait> = Default::default();
-    let mut top: HashMap<Id, ast::FunDecl> = Default::default();
-    let mut associated: HashMap<Id, HashMap<Id, ast::FunDecl>> = Default::default();
-    let mut method: HashMap<Id, HashMap<Id, ast::FunDecl>> = Default::default();
-    let mut ty: HashMap<Id, ast::TypeDecl> = Default::default();
+    let mut traits: HashMap<Name, PolyTrait> = Default::default();
+    let mut top: HashMap<Name, ast::FunDecl> = Default::default();
+    let mut associated: HashMap<Name, HashMap<Name, ast::FunDecl>> = Default::default();
+    let mut method: HashMap<Name, HashMap<Name, ast::FunDecl>> = Default::default();
+    let mut ty: HashMap<Name, ast::TypeDecl> = Default::default();
 
     for decl in pgm {
         match decl {
@@ -212,12 +210,12 @@ pub fn monomorphise(pgm: &ast::Module, main: &str) -> MonoPgm {
 
 fn make_tc_ty(con: &'static str, args: Vec<&'static str>) -> Ty {
     if args.is_empty() {
-        Ty::Con(Id::new_static(con), Kind::Star)
+        Ty::Con(Name::new_static(con), Kind::Star)
     } else {
         Ty::App(
-            Id::new_static(con),
+            Name::new_static(con),
             args.iter()
-                .map(|ty_arg| Ty::Con(Id::new_static(ty_arg), Kind::Star))
+                .map(|ty_arg| Ty::Con(Name::new_static(ty_arg), Kind::Star))
                 .collect(),
             Kind::Star,
         )
@@ -232,7 +230,7 @@ fn mono_top_fn(
 ) {
     assert_eq!(fun_decl.sig.context.type_params.len(), ty_args.len());
 
-    let ty_map: HashMap<Id, mono::Type> = fun_decl
+    let ty_map: HashMap<Name, mono::Type> = fun_decl
         .sig
         .context
         .type_params
@@ -241,10 +239,10 @@ fn mono_top_fn(
         .zip(ty_args.iter().cloned())
         .collect();
 
-    let mut params: Vec<(Id, ast::L<mono::Type>)> =
+    let mut params: Vec<(Name, ast::L<mono::Type>)> =
         Vec::with_capacity(fun_decl.sig.params.len() + 1);
 
-    let mut locals: ScopeSet<Id> = Default::default();
+    let mut locals: ScopeSet<Name> = Default::default();
 
     match &fun_decl.sig.self_ {
         ast::SelfParam::No => {}
@@ -262,18 +260,18 @@ fn mono_top_fn(
                     .is_empty()
             );
             params.push((
-                SmolStr::new_static("self"),
+                Name::new_static("self"),
                 ast::L::new_dummy(mono::Type::Named(mono::NamedType {
                     name: self_ty_con,
                     args: vec![],
                 })),
             ));
-            locals.insert(SmolStr::new_static("self"));
+            locals.insert(Name::new_static("self"));
         }
         ast::SelfParam::Explicit(self_ty) => {
             let self_mono_ty = mono_l_ty(self_ty, &ty_map, poly_pgm, mono_pgm);
-            params.push((SmolStr::new_static("self"), self_mono_ty));
-            locals.insert(SmolStr::new_static("self"));
+            params.push((Name::new_static("self"), self_mono_ty));
+            locals.insert(Name::new_static("self"));
         }
     }
 
@@ -381,10 +379,10 @@ fn mono_top_fn(
 
 fn mono_stmt(
     stmt: &ast::Stmt,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    locals: &mut ScopeSet<Id>,
+    locals: &mut ScopeSet<Name>,
     loc: &ast::Loc,
 ) -> mono::Stmt {
     match stmt {
@@ -444,10 +442,10 @@ fn mono_stmt(
 // ty_map: maps type variables in scope to their mono types.
 fn mono_expr(
     expr: &ast::Expr,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    locals: &mut ScopeSet<Id>,
+    locals: &mut ScopeSet<Name>,
     loc: &ast::Loc,
 ) -> mono::Expr {
     match expr {
@@ -550,13 +548,13 @@ fn mono_expr(
                 }
             };
 
-            let closure_params: Vec<(Id, mono::L<mono::Type>)> = mono_fun_args
+            let closure_params: Vec<(Name, mono::L<mono::Type>)> = mono_fun_args
                 .iter()
                 .skip(1) // skip receiver
                 .enumerate()
                 .map(|(i, arg_ty)| {
                     (
-                        SmolStr::new(format!("$arg{}$", i)),
+                        Name::new(format!("$arg{}$", i)),
                         mono::L {
                             loc: loc.clone(),
                             node: arg_ty.clone(),
@@ -565,7 +563,7 @@ fn mono_expr(
                 })
                 .collect();
 
-            let receiver_id = SmolStr::new_static("$receiver$");
+            let receiver_id = Name::new_static("$receiver$");
 
             let assoc_fn_args: Vec<mono::CallArg> =
                 std::iter::once((receiver_id.clone(), mono_object_ty.clone()))
@@ -591,7 +589,7 @@ fn mono_expr(
                             lhs: mono::L {
                                 loc: loc.clone(),
                                 node: mono::Pat::Var(mono::VarPat {
-                                    var: SmolStr::new_static("$receiver$"),
+                                    var: Name::new_static("$receiver$"),
                                     ty: mono_object_ty,
                                     refined: None,
                                 }),
@@ -995,8 +993,8 @@ fn mono_expr(
 // - method_id: `push`
 // - ty_args: `[U32, exn]`
 fn mono_method(
-    method_ty_id: &Id,      // type that the method belonds to: `trait` or `type`
-    method_id: &Id,         // method name
+    method_ty_id: &Name,    // type that the method belonds to: `trait` or `type`
+    method_id: &Name,       // method name
     ty_args: &[mono::Type], // method type arguments, including the trait or type's
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
@@ -1032,18 +1030,18 @@ fn mono_method(
                     substs.insert(ty_param.clone(), ty_arg.clone());
                 }
 
-                let mut params: Vec<(Id, ast::L<mono::Type>)> =
+                let mut params: Vec<(Name, ast::L<mono::Type>)> =
                     Vec::with_capacity(method.sig.params.len() + 1);
 
-                let mut locals: ScopeSet<Id> = Default::default();
+                let mut locals: ScopeSet<Name> = Default::default();
 
                 match &method.sig.self_ {
                     ast::SelfParam::No => {}
                     ast::SelfParam::Implicit => panic!(),
                     ast::SelfParam::Explicit(self_ty) => {
                         let self_mono_ty = mono_l_ty(self_ty, &substs, poly_pgm, mono_pgm);
-                        params.push((SmolStr::new_static("self"), self_mono_ty));
-                        locals.insert(SmolStr::new_static("self"));
+                        params.push((Name::new_static("self"), self_mono_ty));
+                        locals.insert(Name::new_static("self"));
                     }
                 }
 
@@ -1134,7 +1132,7 @@ fn mono_method(
     if let Some(method_map) = poly_pgm.method.get(method_ty_id) {
         let method: &ast::FunDecl = method_map.get(method_id).unwrap();
 
-        let ty_map: HashMap<Id, mono::Type> = method
+        let ty_map: HashMap<Name, mono::Type> = method
             .sig
             .context
             .type_params
@@ -1143,10 +1141,10 @@ fn mono_method(
             .zip(ty_args.iter().cloned())
             .collect();
 
-        let mut params: Vec<(Id, ast::L<mono::Type>)> =
+        let mut params: Vec<(Name, ast::L<mono::Type>)> =
             Vec::with_capacity(method.sig.params.len() + 1);
 
-        let mut locals: ScopeSet<Id> = Default::default();
+        let mut locals: ScopeSet<Name> = Default::default();
 
         match &method.sig.self_ {
             ast::SelfParam::No => {}
@@ -1164,18 +1162,18 @@ fn mono_method(
                         .is_empty()
                 );
                 params.push((
-                    SmolStr::new_static("self"),
+                    Name::new_static("self"),
                     ast::L::new_dummy(mono::Type::Named(mono::NamedType {
                         name: self_ty_con,
                         args: vec![],
                     })),
                 ));
-                locals.insert(SmolStr::new_static("self"));
+                locals.insert(Name::new_static("self"));
             }
             ast::SelfParam::Explicit(self_ty) => {
                 let self_mono_ty = mono_l_ty(self_ty, &ty_map, poly_pgm, mono_pgm);
-                params.push((SmolStr::new_static("self"), self_mono_ty));
-                locals.insert(SmolStr::new_static("self"));
+                params.push((Name::new_static("self"), self_mono_ty));
+                locals.insert(Name::new_static("self"));
             }
         }
 
@@ -1253,10 +1251,10 @@ fn mono_method(
 
 fn mono_l_stmts(
     lstmts: &[ast::L<ast::Stmt>],
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    locals: &mut ScopeSet<Id>,
+    locals: &mut ScopeSet<Name>,
 ) -> Vec<ast::L<mono::Stmt>> {
     lstmts
         .iter()
@@ -1268,10 +1266,10 @@ fn mono_l_stmts(
 
 fn mono_bl_expr(
     expr: &ast::L<ast::Expr>,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    locals: &mut ScopeSet<Id>,
+    locals: &mut ScopeSet<Name>,
 ) -> Box<ast::L<mono::Expr>> {
     Box::new(
         expr.map_as_ref(|expr_| mono_expr(expr_, ty_map, poly_pgm, mono_pgm, locals, &expr.loc)),
@@ -1280,20 +1278,20 @@ fn mono_bl_expr(
 
 fn mono_l_expr(
     expr: &ast::L<ast::Expr>,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    locals: &mut ScopeSet<Id>,
+    locals: &mut ScopeSet<Name>,
 ) -> ast::L<mono::Expr> {
     expr.map_as_ref(|expr_| mono_expr(expr_, ty_map, poly_pgm, mono_pgm, locals, &expr.loc))
 }
 
 fn mono_pat(
     pat: &ast::Pat,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    locals: &mut ScopeSet<Id>,
+    locals: &mut ScopeSet<Name>,
     loc: &ast::Loc,
 ) -> mono::Pat {
     match pat {
@@ -1393,10 +1391,10 @@ fn mono_pat(
 
 fn mono_var_pat(
     ast::VarPat { var, ty, refined }: &ast::VarPat,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    locals: &mut ScopeSet<Id>,
+    locals: &mut ScopeSet<Name>,
 ) -> mono::VarPat {
     let mono_ty = mono_tc_ty(ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
     let refined = refined
@@ -1412,10 +1410,10 @@ fn mono_var_pat(
 
 fn mono_rest_pat(
     rest: &ast::RestPat,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    locals: &mut ScopeSet<Id>,
+    locals: &mut ScopeSet<Name>,
 ) -> mono::RestPat {
     match rest {
         ast::RestPat::Ignore => mono::RestPat::Ignore,
@@ -1428,37 +1426,37 @@ fn mono_rest_pat(
 
 fn mono_l_pat(
     pat: &ast::L<ast::Pat>,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    locals: &mut ScopeSet<Id>,
+    locals: &mut ScopeSet<Name>,
 ) -> ast::L<mono::Pat> {
     pat.map_as_ref(|pat_| mono_pat(pat_, ty_map, poly_pgm, mono_pgm, locals, &pat.loc))
 }
 
 fn mono_bl_pat(
     pat: &ast::L<ast::Pat>,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    locals: &mut ScopeSet<Id>,
+    locals: &mut ScopeSet<Name>,
 ) -> Box<ast::L<mono::Pat>> {
     Box::new(mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals))
 }
 
 fn mono_named_l_pat(
     pat: &Named<ast::L<ast::Pat>>,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    locals: &mut ScopeSet<Id>,
+    locals: &mut ScopeSet<Name>,
 ) -> Named<ast::L<mono::Pat>> {
     pat.map_as_ref(|pat| mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals))
 }
 
 fn mono_l_ty(
     ty: &ast::L<ast::Type>,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> ast::L<mono::Type> {
@@ -1467,7 +1465,7 @@ fn mono_l_ty(
 
 fn mono_opt_l_ty(
     ty: &Option<ast::L<ast::Type>>,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> Option<ast::L<mono::Type>> {
@@ -1481,10 +1479,10 @@ fn mono_opt_l_ty(
 fn match_trait_impl(
     ty_args: &[mono::Type],
     trait_impl: &PolyTraitImpl,
-) -> Option<HashMap<Id, mono::Type>> {
+) -> Option<HashMap<Name, mono::Type>> {
     debug_assert_eq!(ty_args.len(), trait_impl.tys.len(), "{ty_args:?}");
 
-    let mut substs: HashMap<Id, mono::Type> = Default::default();
+    let mut substs: HashMap<Name, mono::Type> = Default::default();
     for (impl_ty_arg, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
         if !match_(impl_ty_arg, ty_arg, &mut substs) {
             return None;
@@ -1497,7 +1495,7 @@ fn match_trait_impl(
 fn match_(
     impl_ty_arg: &ast::Type,
     arg_ty: &mono::Type,
-    substs: &mut HashMap<Id, mono::Type>,
+    substs: &mut HashMap<Name, mono::Type>,
 ) -> bool {
     match (impl_ty_arg, arg_ty) {
         (ast::Type::Named(trait_named_ty), mono::Type::Named(arg_named_ty)) => {
@@ -1512,12 +1510,12 @@ fn match_(
             },
             mono::Type::Record { fields: fields2 },
         ) => {
-            let fields1_map: HashMap<&Id, &ast::Type> = fields1
+            let fields1_map: HashMap<&Name, &ast::Type> = fields1
                 .iter()
                 .map(|(field_name, field_ty)| (field_name, field_ty))
                 .collect();
 
-            let mut fields2_map: HashMap<&Id, &mono::Type> = fields2.iter().collect();
+            let mut fields2_map: HashMap<&Name, &mono::Type> = fields2.iter().collect();
 
             for (field_name, field1_ty) in &fields1_map {
                 let field2_ty = match fields2_map.remove(field_name) {
@@ -1562,13 +1560,13 @@ fn match_(
             },
             mono::Type::Variant { alts: alts2 },
         ) => {
-            let mut labels1_map: HashMap<Id, ast::NamedType> = Default::default();
+            let mut labels1_map: HashMap<Name, ast::NamedType> = Default::default();
             for alt1_ty in alts1 {
                 let old = labels1_map.insert(alt1_ty.name.clone(), alt1_ty.clone());
                 assert!(old.is_none());
             }
 
-            let mut labels2_map: OrdMap<Id, mono::NamedType> = Default::default();
+            let mut labels2_map: OrdMap<Name, mono::NamedType> = Default::default();
             for alt2_ty in alts2.values() {
                 let old = labels2_map.insert(alt2_ty.name.clone(), alt2_ty.clone());
                 assert!(old.is_none());
@@ -1612,7 +1610,7 @@ fn match_(
 fn match_named_ty(
     trait_ty: &ast::NamedType,
     arg_ty: &mono::NamedType,
-    substs: &mut HashMap<Id, mono::Type>,
+    substs: &mut HashMap<Name, mono::Type>,
 ) -> bool {
     if trait_ty.name != arg_ty.name {
         return false;
@@ -1633,9 +1631,9 @@ fn match_named_ty(
 /// Given a trait name, concrete type args, and an associated type name, find the matching impl and
 /// return the monomorphized associated type.
 fn resolve_assoc_ty(
-    trait_name: &Id,
+    trait_name: &Name,
     trait_args: &[mono::Type],
-    assoc_ty: &Id,
+    assoc_ty: &Name,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::Type {
@@ -1673,7 +1671,7 @@ fn resolve_assoc_ty(
 ///
 /// This is the same function as `crate::type_checker::row_to_list_type`, but works on mono types.
 fn row_to_list_type(
-    fields: &OrdMap<Id, mono::Type>,
+    fields: &OrdMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::Type {
@@ -1685,7 +1683,7 @@ fn row_to_list_type(
         let record_field_decl = poly_pgm.ty.get("RecordField").unwrap();
         mono_ty_decl(record_field_decl, &record_field_args, poly_pgm, mono_pgm);
         let record_field_ty = mono::Type::Named(mono::NamedType {
-            name: SmolStr::new_static("RecordField"),
+            name: Name::new_static("RecordField"),
             args: record_field_args,
         });
 
@@ -1694,7 +1692,7 @@ fn row_to_list_type(
         let list_cons_decl = poly_pgm.ty.get("List").unwrap();
         mono_ty_decl(list_cons_decl, &list_cons_args, poly_pgm, mono_pgm);
         list_ty = mono::Type::Named(mono::NamedType {
-            name: SmolStr::new_static("List"),
+            name: Name::new_static("List"),
             args: list_cons_args,
         });
     }
@@ -1708,7 +1706,7 @@ fn row_to_list_type(
 /// Monomorphise a type-checking type.
 fn mono_tc_ty(
     ty: &Ty,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::Type {
@@ -1769,7 +1767,7 @@ fn mono_tc_ty(
                         .collect(),
                 ),
                 FunArgs::Named { args, extension } => {
-                    let mut all_args: OrdMap<Id, mono::Type> = args
+                    let mut all_args: OrdMap<Name, mono::Type> = args
                         .iter()
                         .map(|(arg_name, arg)| {
                             (
@@ -1801,7 +1799,7 @@ fn mono_tc_ty(
             is_row: _,
         } => match record_or_variant {
             RecordOrVariant::Record => {
-                let mut all_fields: OrdMap<Id, mono::Type> = Default::default();
+                let mut all_fields: OrdMap<Name, mono::Type> = Default::default();
 
                 for (field, field_ty) in labels {
                     let field_mono_ty = mono_tc_ty(&field_ty, ty_map, poly_pgm, mono_pgm);
@@ -1816,7 +1814,7 @@ fn mono_tc_ty(
             }
 
             RecordOrVariant::Variant => {
-                let mut all_alts: OrdMap<Id, mono::NamedType> = Default::default();
+                let mut all_alts: OrdMap<Name, mono::NamedType> = Default::default();
 
                 for (id, ty) in labels.iter() {
                     let ty = mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm);
@@ -1864,7 +1862,7 @@ fn mono_tc_ty(
         } => {
             // The `ty` is a trait application like `Trait[Arg]`, not a regular type. Extract the
             // trait name and args directly, monomorphize only the args.
-            let (trait_name, trait_args): (&Id, &[Ty]) = match ty.as_ref() {
+            let (trait_name, trait_args): (&Name, &[Ty]) = match ty.as_ref() {
                 Ty::App(name, args, _kind) => (name, args.as_slice()),
                 Ty::Con(name, _kind) => (name, &[]),
                 _ => panic!("Expected trait constructor in AssocTySelect, got {:?}", ty),
@@ -1880,7 +1878,7 @@ fn mono_tc_ty(
 
 fn mono_ast_ty(
     ty: &ast::Type,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::Type {
@@ -1971,7 +1969,7 @@ fn mono_ty_decl(
     args: &[mono::Type],
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-) -> Id {
+) -> Name {
     assert_eq!(ty_decl.type_params.len(), args.len());
 
     let mono_ty_id = ty_decl.name.clone();
@@ -1996,7 +1994,7 @@ fn mono_ty_decl(
     );
 
     // Maps type parameters of the type to type arguments.
-    let ty_map: HashMap<Id, mono::Type> = ty_decl
+    let ty_map: HashMap<Name, mono::Type> = ty_decl
         .type_params
         .iter()
         .map(|type_param| type_param.name.node.clone())
@@ -2050,7 +2048,7 @@ fn mono_ty_decl(
 
 fn mono_con(
     con: &ast::ConDecl,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::ConDecl {
@@ -2062,7 +2060,7 @@ fn mono_con(
 
 fn mono_fields(
     fields: &ast::ConFields,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> mono::ConFields {
@@ -2070,7 +2068,7 @@ fn mono_fields(
         ast::ConFields::Empty => mono::ConFields::Empty,
 
         ast::ConFields::Named { fields, extension } => {
-            let mut all_fields: OrdMap<Id, mono::Type> = fields
+            let mut all_fields: OrdMap<Name, mono::Type> = fields
                 .iter()
                 .map(|(name, ty)| {
                     (
@@ -2103,7 +2101,7 @@ fn mono_fields(
     }
 }
 
-fn get_record_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::Type> {
+fn get_record_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Name, mono::Type> {
     match ty {
         mono::Type::Record { fields } => fields,
 
@@ -2117,7 +2115,7 @@ fn get_record_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::Type> {
     }
 }
 
-fn get_variant_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::NamedType> {
+fn get_variant_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Name, mono::NamedType> {
     match ty {
         mono::Type::Variant { alts } => alts,
 
@@ -2132,13 +2130,13 @@ fn get_variant_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Id, mono::NamedType>
 }
 
 fn collect_record_labels(
-    ast_fields: &[(Id, ast::Type)],
+    ast_fields: &[(Name, ast::Type)],
     extension: &Option<Box<ast::L<ast::Type>>>,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-) -> OrdMap<Id, mono::Type> {
-    let mut fields: OrdMap<Id, mono::Type> = Default::default();
+) -> OrdMap<Name, mono::Type> {
+    let mut fields: OrdMap<Name, mono::Type> = Default::default();
 
     for (field_name, field_ty) in ast_fields.iter() {
         let old = fields.insert(
@@ -2166,11 +2164,11 @@ fn collect_record_labels(
 fn collect_variant_labels(
     ast_alts: &[ast::NamedType],
     extension: &Option<Box<ast::L<ast::Type>>>,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-) -> OrdMap<Id, mono::NamedType> {
-    let mut alts: OrdMap<Id, mono::NamedType> = Default::default();
+) -> OrdMap<Name, mono::NamedType> {
+    let mut alts: OrdMap<Name, mono::NamedType> = Default::default();
 
     // Note: technically duplicate labels in variants are never a problem and we should be able to
     // relax the error checking below.
@@ -2220,10 +2218,10 @@ fn collect_variant_labels(
 
 fn resolve_extension_record(
     ext: &ast::Type,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-) -> OrdMap<Id, mono::Type> {
+) -> OrdMap<Name, mono::Type> {
     match ext {
         ast::Type::Var(id) => match ty_map.get(id) {
             Some(mono::Type::Record { fields }) => fields.clone(),
@@ -2247,10 +2245,10 @@ fn resolve_extension_record(
 
 fn resolve_extension_variant(
     ext: &ast::Type,
-    ty_map: &HashMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-) -> OrdMap<Id, mono::NamedType> {
+) -> OrdMap<Name, mono::NamedType> {
     match ext {
         ast::Type::Var(id) => match ty_map.get(id) {
             Some(mono::Type::Variant { alts }) => alts.clone(),
@@ -2274,8 +2272,8 @@ fn resolve_extension_variant(
 
 fn collect_record_rows(
     ext_ty: &Ty,
-    ty_map: &HashMap<Id, mono::Type>,
-    rows: &mut OrdMap<Id, mono::Type>,
+    ty_map: &HashMap<Name, mono::Type>,
+    rows: &mut OrdMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) {
@@ -2288,7 +2286,7 @@ fn collect_record_rows(
             assoc_ty,
             kind: _,
         } => {
-            let (trait_name, trait_args): (&Id, &[Ty]) = match ty.as_ref() {
+            let (trait_name, trait_args): (&Name, &[Ty]) = match ty.as_ref() {
                 Ty::App(name, args, _kind) => (name, args.as_slice()),
                 Ty::Con(name, _kind) => (name, &[]),
                 _ => panic!("Expected trait constructor in AssocTySelect, got {:?}", ty),
@@ -2355,40 +2353,40 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
 
     // Return type is `Option[list_ty]`.
     let option_list_ty = mono::Type::Named(mono::NamedType {
-        name: SmolStr::new_static("Option"),
+        name: Name::new_static("Option"),
         args: vec![list_ty.clone()],
     });
 
     let body_expr = if fields.is_empty() {
         // Option.None
         ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-            ty_id: SmolStr::new_static("Option"),
-            con: Some(SmolStr::new_static("None")),
+            ty_id: Name::new_static("Option"),
+            con: Some(Name::new_static("None")),
             ty_args: vec![list_ty.clone()],
             ty: option_list_ty.clone(),
         }))
     } else {
         // Start with `Option.None` for the innermost tail.
         let mut inner_expr = ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-            ty_id: SmolStr::new_static("Option"),
-            con: Some(SmolStr::new_static("None")),
+            ty_id: Name::new_static("Option"),
+            con: Some(Name::new_static("None")),
             ty_args: vec![mono::Type::empty()],
             ty: mono::Type::Named(mono::NamedType {
-                name: SmolStr::new_static("Option"),
+                name: Name::new_static("Option"),
                 args: vec![mono::Type::empty()],
             }),
         }));
 
         let mut tail_ty = mono::Type::empty();
 
-        let fields_vec: Vec<(&Id, &mono::Type)> = fields.iter().collect();
+        let fields_vec: Vec<(&Name, &mono::Type)> = fields.iter().collect();
 
         // Wrap each field in `RecordField` and `List`, from last to first.
         for (i, (field_name, field_ty)) in fields_vec.iter().copied().enumerate().rev() {
             // rec.fieldName
             let field_sel = ast::L::new_dummy(mono::Expr::FieldSel(mono::FieldSelExpr {
                 object: Box::new(ast::L::new_dummy(mono::Expr::LocalVar(
-                    SmolStr::new_static("rec"),
+                    Name::new_static("rec"),
                     rec_ty.clone(),
                 ))),
                 field: field_name.clone(),
@@ -2397,14 +2395,14 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
 
             // RecordField[field_ty]
             let record_field_con_ty = mono::Type::Named(mono::NamedType {
-                name: SmolStr::new_static("RecordField"),
+                name: Name::new_static("RecordField"),
                 args: vec![field_ty.clone()],
             });
             let record_field_fn_ty = mono::Type::Fn(mono::FnType {
                 args: mono::FunArgs::Named(
                     [
-                        (SmolStr::new_static("label"), mono::Type::str()),
-                        (SmolStr::new_static("value_"), field_ty.clone()),
+                        (Name::new_static("label"), mono::Type::str()),
+                        (Name::new_static("value_"), field_ty.clone()),
                     ]
                     .into_iter()
                     .collect(),
@@ -2414,18 +2412,18 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
             });
             let record_field_expr = ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
                 fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-                    ty_id: SmolStr::new_static("RecordField"),
+                    ty_id: Name::new_static("RecordField"),
                     con: None,
                     ty_args: vec![field_ty.clone()],
                     ty: record_field_fn_ty,
                 }))),
                 args: vec![
                     mono::CallArg {
-                        name: Some(SmolStr::new_static("label")),
+                        name: Some(Name::new_static("label")),
                         expr: ast::L::new_dummy(mono::Expr::Str(field_name.to_string())),
                     },
                     mono::CallArg {
-                        name: Some(SmolStr::new_static("value_")),
+                        name: Some(Name::new_static("value_")),
                         expr: field_sel,
                     },
                 ],
@@ -2435,20 +2433,20 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
 
             // Option[tail_ty], the type of the `tail` field
             let option_tail_ty = mono::Type::Named(mono::NamedType {
-                name: SmolStr::new_static("Option"),
+                name: Name::new_static("Option"),
                 args: vec![tail_ty.clone()],
             });
 
             // List[RecordField[field_ty], tail_ty]
             let list_cons_ty = mono::Type::Named(mono::NamedType {
-                name: SmolStr::new_static("List"),
+                name: Name::new_static("List"),
                 args: vec![record_field_con_ty.clone(), tail_ty.clone()],
             });
             let list_cons_fn_ty = mono::Type::Fn(mono::FnType {
                 args: mono::FunArgs::Named(
                     [
-                        (SmolStr::new_static("head"), record_field_con_ty),
-                        (SmolStr::new_static("tail"), option_tail_ty),
+                        (Name::new_static("head"), record_field_con_ty),
+                        (Name::new_static("tail"), option_tail_ty),
                     ]
                     .into_iter()
                     .collect(),
@@ -2458,11 +2456,11 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
             });
             inner_expr = ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
                 fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-                    ty_id: SmolStr::new_static("List"),
+                    ty_id: Name::new_static("List"),
                     con: None,
                     ty_args: vec![
                         mono::Type::Named(mono::NamedType {
-                            name: SmolStr::new_static("RecordField"),
+                            name: Name::new_static("RecordField"),
                             args: vec![field_ty.clone()],
                         }),
                         tail_ty,
@@ -2471,11 +2469,11 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
                 }))),
                 args: vec![
                     mono::CallArg {
-                        name: Some(SmolStr::new_static("head")),
+                        name: Some(Name::new_static("head")),
                         expr: record_field_expr,
                     },
                     mono::CallArg {
-                        name: Some(SmolStr::new_static("tail")),
+                        name: Some(Name::new_static("tail")),
                         expr: inner_expr,
                     },
                 ],
@@ -2486,7 +2484,7 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
             // If not the outermost element, wrap in `Option.Some` for the next iteration.
             if i > 0 {
                 let option_cons_ty = mono::Type::Named(mono::NamedType {
-                    name: SmolStr::new_static("Option"),
+                    name: Name::new_static("Option"),
                     args: vec![list_cons_ty.clone()],
                 });
                 let some_fn_ty = mono::Type::Fn(mono::FnType {
@@ -2496,8 +2494,8 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
                 });
                 inner_expr = ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
                     fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-                        ty_id: SmolStr::new_static("Option"),
-                        con: Some(SmolStr::new_static("Some")),
+                        ty_id: Name::new_static("Option"),
+                        con: Some(Name::new_static("Some")),
                         ty_args: vec![list_cons_ty.clone()],
                         ty: some_fn_ty,
                     }))),
@@ -2520,8 +2518,8 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
         });
         ast::L::new_dummy(mono::Expr::Call(mono::CallExpr {
             fun: Box::new(ast::L::new_dummy(mono::Expr::ConSel(mono::Con {
-                ty_id: SmolStr::new_static("Option"),
-                con: Some(SmolStr::new_static("Some")),
+                ty_id: Name::new_static("Option"),
+                con: Some(Name::new_static("Some")),
                 ty_args: vec![list_ty.clone()],
                 ty: some_fn_ty,
             }))),
@@ -2535,10 +2533,10 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
     };
 
     let fun_decl = mono::FunDecl {
-        parent_ty: Some(ast::L::new_dummy(SmolStr::new_static("RecRowToList"))),
-        name: ast::L::new_dummy(SmolStr::new_static("rowToList")),
+        parent_ty: Some(ast::L::new_dummy(Name::new_static("RecRowToList"))),
+        name: ast::L::new_dummy(Name::new_static("rowToList")),
         sig: mono::FunSig {
-            params: vec![(SmolStr::new_static("rec"), ast::L::new_dummy(rec_ty))],
+            params: vec![(Name::new_static("rec"), ast::L::new_dummy(rec_ty))],
             return_ty: Some(ast::L::new_dummy(option_list_ty)),
             exceptions: None,
         },
@@ -2547,9 +2545,9 @@ fn synthesize_row_to_list(ty_args: &[mono::Type], poly_pgm: &PolyPgm, mono_pgm: 
 
     mono_pgm
         .associated
-        .entry(SmolStr::new_static("RecRowToList"))
+        .entry(Name::new_static("RecRowToList"))
         .or_default()
-        .entry(SmolStr::new_static("rowToList"))
+        .entry(Name::new_static("rowToList"))
         .or_default()
         .insert(ty_args.to_vec(), fun_decl);
 }

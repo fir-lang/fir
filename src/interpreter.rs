@@ -6,7 +6,7 @@ mod heap;
 
 use heap::Heap;
 
-use crate::ast::{self, Id, L, Loc};
+use crate::ast::{self, L, Loc, Name};
 use crate::lowering::*;
 use crate::utils::loc_display;
 
@@ -47,7 +47,7 @@ struct Frame {
 }
 
 enum FrameKind {
-    Fun(Id),
+    Fun(Name),
     Closure(Loc),
 }
 

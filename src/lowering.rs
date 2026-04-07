@@ -5,7 +5,7 @@ pub mod printer;
 
 use crate::ast;
 use crate::collections::*;
-use crate::mono_ast::{self as mono, Id, L, Loc};
+use crate::mono_ast::{self as mono, L, Loc, Name};
 use crate::type_collector::collect_anonymous_types;
 pub(crate) use crate::type_collector::{RecordType, VariantType};
 use crate::utils::loc_display;
@@ -18,7 +18,7 @@ pub struct LoweredPgm {
     pub funs: Vec<Fun>,
     pub closures: Vec<Closure>,
 
-    pub named_tys: HashMap<Id, HashMap<Vec<mono::Type>, TypeIdx>>,
+    pub named_tys: HashMap<Name, HashMap<Vec<mono::Type>, TypeIdx>>,
     pub record_tys: HashMap<RecordType, TypeIdx>,
     pub variant_tys: HashMap<VariantType, TypeIdx>,
 
@@ -86,7 +86,7 @@ pub enum TypeDecl {
 
 #[derive(Debug)]
 pub struct NamedTypeDecl {
-    pub name: Id,
+    pub name: Name,
     pub ty_args: Vec<mono::Type>,
     pub rhs: NamedTypeRhs,
     pub con_indices: Vec<HeapObjIdx>,
@@ -190,8 +190,8 @@ impl Repr {
 
 #[derive(Debug)]
 pub struct Fun {
-    pub parent_ty: Option<L<Id>>,
-    pub name: L<Id>,
+    pub parent_ty: Option<L<Name>>,
+    pub name: L<Name>,
     pub idx: FunIdx,
     pub ty_args: Vec<mono::Type>,
     pub params: Vec<mono::Type>,
@@ -330,7 +330,7 @@ pub struct SourceFunDecl {
 
 #[derive(Debug)]
 pub struct LocalInfo {
-    pub name: Id,
+    pub name: Name,
     pub ty: mono::Type,
 }
 
@@ -380,7 +380,7 @@ pub enum BuiltinConDecl {
 
 #[derive(Debug)]
 pub struct SourceConDecl {
-    pub name: Id,
+    pub name: Name,
     pub idx: HeapObjIdx,
     pub ty_args: Vec<mono::Type>,
     pub fields: Vec<mono::Type>,
@@ -394,8 +394,8 @@ pub enum Stmt {
     Assign(AssignStmt),
     Expr(Expr),
     While(WhileStmt),
-    Break { label: Option<Id>, level: u32 },
-    Continue { label: Option<Id>, level: u32 },
+    Break { label: Option<Name>, level: u32 },
+    Continue { label: Option<Name>, level: u32 },
 }
 
 #[derive(Debug, Clone)]
@@ -413,7 +413,7 @@ pub struct AssignStmt {
 
 #[derive(Debug, Clone)]
 pub struct WhileStmt {
-    pub label: Option<Id>,
+    pub label: Option<Name>,
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,
 }
@@ -483,7 +483,7 @@ pub enum Expr {
     Variant {
         expr: Box<L<Expr>>,
         expr_ty: mono::Type,
-        variant_ty: OrdMap<Id, mono::NamedType>,
+        variant_ty: OrdMap<Name, mono::NamedType>,
     },
 }
 
@@ -492,7 +492,7 @@ pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
 
     /// For debugging: name of the field.
-    pub field: Id,
+    pub field: Name,
 
     /// Index of the field in the object's payload.
     ///
@@ -549,7 +549,7 @@ pub enum Pat {
     Or(Box<L<Pat>>, Box<L<Pat>>),
     Variant {
         pat: Box<L<Pat>>,
-        variant_ty: OrdMap<Id, mono::NamedType>,
+        variant_ty: OrdMap<Name, mono::NamedType>,
         pat_ty: mono::Type,
     },
 }
@@ -609,7 +609,7 @@ pub struct Closure {
 #[derive(Debug, Clone)]
 pub struct ClosureFv {
     /// Id of the free variable, for debugging.
-    pub id: Id,
+    pub id: Name,
 
     /// Index of the local in the closure allocation site.
     pub alloc_idx: LocalIdx,
@@ -622,10 +622,10 @@ pub struct ClosureFv {
 
 #[derive(Debug)]
 struct Indices {
-    product_cons: HashMap<Id, HashMap<Vec<mono::Type>, HeapObjIdx>>,
-    sum_cons: HashMap<Id, HashMap<Id, HashMap<Vec<mono::Type>, HeapObjIdx>>>,
-    funs: HashMap<Id, HashMap<Vec<mono::Type>, FunIdx>>,
-    assoc_funs: HashMap<Id, HashMap<Id, HashMap<Vec<mono::Type>, FunIdx>>>,
+    product_cons: HashMap<Name, HashMap<Vec<mono::Type>, HeapObjIdx>>,
+    sum_cons: HashMap<Name, HashMap<Name, HashMap<Vec<mono::Type>, HeapObjIdx>>>,
+    funs: HashMap<Name, HashMap<Vec<mono::Type>, FunIdx>>,
+    assoc_funs: HashMap<Name, HashMap<Name, HashMap<Vec<mono::Type>, FunIdx>>>,
     records: HashMap<RecordType, HeapObjIdx>,
 }
 
@@ -641,14 +641,14 @@ pub struct FunScope {
     ///
     /// When seeing a free variable, check this map first to see if we've assigned an index to the
     /// free variable before.
-    captured_vars: HashMap<Id, ClosureFv>,
+    captured_vars: HashMap<Name, ClosureFv>,
 
     /// Variables bound in the current function.
     ///
     /// This does not include captured (free) variables.
     ///
     /// Any variable that's not here should be captured (free).
-    bounds: ScopeMap<Id, LocalIdx>,
+    bounds: ScopeMap<Name, LocalIdx>,
 
     /// When the current function is a closure in another function, this holds the parent function's
     /// scope.
@@ -658,7 +658,7 @@ pub struct FunScope {
 }
 
 impl FunScope {
-    fn use_var(&mut self, var: &Id, _loc: &Loc) -> LocalIdx {
+    fn use_var(&mut self, var: &Name, _loc: &Loc) -> LocalIdx {
         // Check if bound.
         if let Some(idx) = self.bounds.get(var) {
             return *idx;
@@ -699,12 +699,12 @@ impl FunScope {
 
 pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     // Number all declarations first, then lower the program.
-    let mut product_con_nums: HashMap<Id, HashMap<Vec<mono::Type>, HeapObjIdx>> =
+    let mut product_con_nums: HashMap<Name, HashMap<Vec<mono::Type>, HeapObjIdx>> =
         Default::default();
-    let mut sum_con_nums: HashMap<Id, HashMap<Id, HashMap<Vec<mono::Type>, HeapObjIdx>>> =
+    let mut sum_con_nums: HashMap<Name, HashMap<Name, HashMap<Vec<mono::Type>, HeapObjIdx>>> =
         Default::default();
-    let mut fun_nums: HashMap<Id, HashMap<Vec<mono::Type>, FunIdx>> = Default::default();
-    let mut assoc_fun_nums: HashMap<Id, HashMap<Id, HashMap<Vec<mono::Type>, FunIdx>>> =
+    let mut fun_nums: HashMap<Name, HashMap<Vec<mono::Type>, FunIdx>> = Default::default();
+    let mut assoc_fun_nums: HashMap<Name, HashMap<Name, HashMap<Vec<mono::Type>, FunIdx>>> =
         Default::default();
 
     // Number type declarations. Start with `FIRST_FREE_CON_IDX`: we have a few constructors that
@@ -868,7 +868,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             // get the type details during code generation.
                             for mono::ConDecl { name, fields } in cons {
                                 let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                                let name = SmolStr::new(format!("{con_id}_{name}"));
+                                let name = Name::new(format!("{con_id}_{name}"));
                                 lowered_pgm.heap_objs.push(lower_source_con(
                                     idx,
                                     &name,
@@ -1548,7 +1548,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
 
 fn lower_source_con(
     idx: HeapObjIdx,
-    con_id: &SmolStr,
+    con_id: &Name,
     con_ty_args: &[mono::Type],
     fields: &mono::ConFields,
     sum: bool,
@@ -1646,7 +1646,7 @@ fn lower_expr(
     indices: &Indices,
     scope: &mut FunScope,
     mono_pgm: &mono::MonoPgm,
-) -> (Expr, HashMap<Id, LocalIdx>) {
+) -> (Expr, HashMap<Name, LocalIdx>) {
     match expr {
         mono::Expr::LocalVar(var, _) => {
             let local_idx: LocalIdx = scope.use_var(var, loc);
@@ -1871,7 +1871,7 @@ fn lower_expr(
 
                 mono::FunArgs::Named(named_args) => {
                     // Evaluate args in program order, pass in the order expected by the function.
-                    let mut arg_locals: HashMap<Id, LocalIdx> = Default::default();
+                    let mut arg_locals: HashMap<Name, LocalIdx> = Default::default();
 
                     for (arg_name, arg_ty) in named_args.iter() {
                         let local_idx = LocalIdx(scope.locals.len() as u32);
@@ -2013,7 +2013,7 @@ fn lower_expr(
                 .unwrap();
 
             // Evaluate args in program order, pass in the order expected by the constructor.
-            let mut arg_locals: HashMap<Id, LocalIdx> = Default::default();
+            let mut arg_locals: HashMap<Name, LocalIdx> = Default::default();
 
             for (field_name, field_ty) in field_tys.iter() {
                 let local_idx = LocalIdx(scope.locals.len() as u32);
@@ -2166,7 +2166,7 @@ fn lower_expr(
             let parent_fun_scope: FunScope = std::mem::take(scope);
 
             let mut locals: Vec<LocalInfo> = vec![];
-            let mut bounds: ScopeMap<Id, LocalIdx> = Default::default();
+            let mut bounds: ScopeMap<Name, LocalIdx> = Default::default();
 
             for (param_name, param_ty) in &sig.params {
                 let idx = LocalIdx(locals.len() as u32);
@@ -2184,7 +2184,7 @@ fn lower_expr(
                 parent_fun_scope: Some(Box::new(parent_fun_scope)),
             };
 
-            let mut fn_local_vars: ScopeSet<Id> = Default::default();
+            let mut fn_local_vars: ScopeSet<Name> = Default::default();
             for (param, _) in &sig.params {
                 fn_local_vars.insert(param.clone());
             }
@@ -2269,7 +2269,7 @@ fn lower_l_expr(
     indices: &Indices,
     scope: &mut FunScope,
     mono_pgm: &mono::MonoPgm,
-) -> (L<Expr>, HashMap<Id, LocalIdx>) {
+) -> (L<Expr>, HashMap<Name, LocalIdx>) {
     let (expr, pat_vars) = lower_expr(
         &l_expr.node,
         &l_expr.loc,
@@ -2293,7 +2293,7 @@ fn lower_bl_expr(
     indices: &Indices,
     scope: &mut FunScope,
     mono_pgm: &mono::MonoPgm,
-) -> (Box<L<Expr>>, HashMap<Id, LocalIdx>) {
+) -> (Box<L<Expr>>, HashMap<Name, LocalIdx>) {
     let (expr, pat_vars) = lower_l_expr(bl_expr, closures, indices, scope, mono_pgm);
     (Box::new(expr), pat_vars)
 }
@@ -2309,7 +2309,7 @@ fn lower_pat(
     //
     // Only in or-pattern alternatives we allow same binders, so if we see a binder for the second
     // time, we must be checking another alternative of an or-pattern.
-    mapped_binders: &mut HashMap<Id, LocalIdx>,
+    mapped_binders: &mut HashMap<Name, LocalIdx>,
 ) -> Pat {
     match pat {
         mono::Pat::Var(mono::VarPat { var, ty, refined }) => match mapped_binders.get(var) {
@@ -2512,7 +2512,7 @@ fn lower_bl_pat(
     indices: &Indices,
     scope: &mut FunScope,
     mono_pgm: &mono::MonoPgm,
-    mapped_binders: &mut HashMap<Id, LocalIdx>,
+    mapped_binders: &mut HashMap<Name, LocalIdx>,
 ) -> Box<L<Pat>> {
     Box::new(lower_l_pat(pat, indices, scope, mono_pgm, mapped_binders))
 }
@@ -2522,7 +2522,7 @@ fn lower_l_pat(
     indices: &Indices,
     scope: &mut FunScope,
     mono_pgm: &mono::MonoPgm,
-    mapped_binders: &mut HashMap<Id, LocalIdx>,
+    mapped_binders: &mut HashMap<Name, LocalIdx>,
 ) -> L<Pat> {
     pat.map_as_ref(|pat_| lower_pat(pat_, indices, scope, mono_pgm, &pat.loc, mapped_binders))
 }
@@ -2537,7 +2537,7 @@ fn lower_rest_pat(
     all_fields: &mono::ConFields,
     indices: &Indices,
     scope: &mut FunScope,
-    mapped_binders: &mut HashMap<Id, LocalIdx>,
+    mapped_binders: &mut HashMap<Name, LocalIdx>,
 ) -> RestPat {
     match rest {
         mono::RestPat::No => RestPat::No,
@@ -2548,7 +2548,7 @@ fn lower_rest_pat(
             };
 
             // Compute which field indices are "rest" (not explicitly matched).
-            let matched_names: HashSet<&Id> =
+            let matched_names: HashSet<&Name> =
                 pat_fields.iter().filter_map(|f| f.name.as_ref()).collect();
 
             let mut rest_field_indices: Vec<u32> = Vec::new();
@@ -2599,7 +2599,7 @@ fn lower_source_fun(
     mono_pgm: &mono::MonoPgm,
 ) -> SourceFunDecl {
     let mut locals: Vec<LocalInfo> = vec![];
-    let mut bounds: ScopeMap<Id, LocalIdx> = Default::default();
+    let mut bounds: ScopeMap<Name, LocalIdx> = Default::default();
 
     for (param, ty) in &sig.params {
         bounds.insert(param.clone(), LocalIdx(locals.len() as u32));
@@ -2632,7 +2632,7 @@ fn lower_source_fun(
 /// call arguments.
 fn lower_splice(
     splice: &L<mono::Expr>,
-    arg_locals: &HashMap<Id, LocalIdx>,
+    arg_locals: &HashMap<Name, LocalIdx>,
     stmts: &mut Vec<L<Stmt>>,
     closures: &mut Vec<Closure>,
     indices: &Indices,
@@ -2640,7 +2640,7 @@ fn lower_splice(
     mono_pgm: &mono::MonoPgm,
 ) {
     let splice_ty: mono::Type = splice.node.ty();
-    let splice_field_tys: OrdMap<Id, mono::Type> = match &splice_ty {
+    let splice_field_tys: OrdMap<Name, mono::Type> = match &splice_ty {
         mono::Type::Record { fields } => fields.clone(),
         mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_) => {
             panic!(
@@ -2651,7 +2651,7 @@ fn lower_splice(
     };
     let splice_local_idx = LocalIdx(scope.locals.len() as u32);
     scope.locals.push(LocalInfo {
-        name: Id::new_static("splice"),
+        name: Name::new_static("splice"),
         ty: mono::Type::Record {
             fields: splice_field_tys.clone(),
         },

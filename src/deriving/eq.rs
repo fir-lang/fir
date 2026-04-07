@@ -1,7 +1,5 @@
 use crate::ast;
 
-use smol_str::SmolStr;
-
 use super::*;
 
 /// Generate an `impl Eq[TypeName[...]]` for the given type declaration.
@@ -11,7 +9,7 @@ pub fn derive_eq(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::TopDe
     let bool_ty = l(
         loc,
         ast::Type::Named(ast::NamedType {
-            name: SmolStr::new_static("Bool"),
+            name: ast::Name::new_static("Bool"),
             args: vec![],
         }),
     );
@@ -36,7 +34,7 @@ pub fn derive_eq(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::TopDe
         loc,
         "__eq",
         self_ty.clone(),
-        vec![(SmolStr::new_static("other"), self_ty)],
+        vec![(ast::Name::new_static("other"), self_ty)],
         bool_ty,
         body,
     );
@@ -51,7 +49,7 @@ pub fn derive_eq(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::TopDe
 /// For empty: `Bool.True`
 fn derive_eq_product(
     loc: &ast::Loc,
-    type_name: &ast::Id,
+    type_name: &ast::Name,
     fields: &ast::ConFields,
 ) -> Vec<ast::L<ast::Stmt>> {
     match fields {
@@ -63,10 +61,10 @@ fn derive_eq_product(
         }
 
         ast::ConFields::Named { fields, extension } => {
-            let field_names: Vec<&ast::Id> = fields.iter().map(|(name, _)| name).collect();
+            let field_names: Vec<&ast::Name> = fields.iter().map(|(name, _)| name).collect();
 
             if extension.is_some() {
-                let names: Vec<ast::Id> = fields.iter().map(|(name, _)| name.clone()).collect();
+                let names: Vec<ast::Name> = fields.iter().map(|(name, _)| name.clone()).collect();
                 let mut stmts = vec![
                     let_destructure_rest(loc, type_name, &names, "selfExts", var(loc, "self")),
                     let_destructure_rest(loc, type_name, &names, "otherExts", var(loc, "other")),
@@ -92,10 +90,10 @@ fn derive_eq_product(
         }
 
         ast::ConFields::Unnamed { fields } => {
-            let field_names: Vec<ast::Id> = (0..fields.len())
-                .map(|i| SmolStr::new(format!("_{}", i)))
+            let field_names: Vec<ast::Name> = (0..fields.len())
+                .map(|i| ast::Name::new(format!("_{}", i)))
                 .collect();
-            let field_refs: Vec<&ast::Id> = field_names.iter().collect();
+            let field_refs: Vec<&ast::Name> = field_names.iter().collect();
             let expr = chain_eq_fields(loc, &field_refs, FieldAccess::SelfOther);
             vec![l(loc, ast::Stmt::Expr(expr.node))]
         }
@@ -115,7 +113,7 @@ fn derive_eq_product(
 /// ```
 fn derive_eq_sum(
     loc: &ast::Loc,
-    type_name: &ast::Id,
+    type_name: &ast::Name,
     cons: &[ast::ConDecl],
 ) -> Vec<ast::L<ast::Stmt>> {
     let scrutinee = record(loc, vec![("l", var(loc, "self")), ("r", var(loc, "other"))]);
@@ -135,7 +133,7 @@ fn derive_eq_sum(
                         node: l(
                             loc,
                             ast::Pat::Var(ast::VarPat {
-                                var: SmolStr::new(format!("l{}", i)),
+                                var: ast::Name::new(format!("l{}", i)),
                                 ty: None,
                                 refined: None,
                             }),
@@ -151,7 +149,7 @@ fn derive_eq_sum(
                         node: l(
                             loc,
                             ast::Pat::Var(ast::VarPat {
-                                var: SmolStr::new(format!("r{}", i)),
+                                var: ast::Name::new(format!("r{}", i)),
                                 ty: None,
                                 refined: None,
                             }),
@@ -169,7 +167,7 @@ fn derive_eq_sum(
                         node: l(
                             loc,
                             ast::Pat::Var(ast::VarPat {
-                                var: SmolStr::new(format!("l{}", i)),
+                                var: ast::Name::new(format!("l{}", i)),
                                 ty: None,
                                 refined: None,
                             }),
@@ -183,7 +181,7 @@ fn derive_eq_sum(
                         node: l(
                             loc,
                             ast::Pat::Var(ast::VarPat {
-                                var: SmolStr::new(format!("r{}", i)),
+                                var: ast::Name::new(format!("r{}", i)),
                                 ty: None,
                                 refined: None,
                             }),
@@ -197,7 +195,7 @@ fn derive_eq_sum(
 
         let l_rest = if has_extension {
             ast::RestPat::Bind(ast::VarPat {
-                var: SmolStr::new_static("lExts"),
+                var: ast::Name::new_static("lExts"),
                 ty: None,
                 refined: None,
             })
@@ -207,7 +205,7 @@ fn derive_eq_sum(
 
         let r_rest = if has_extension {
             ast::RestPat::Bind(ast::VarPat {
-                var: SmolStr::new_static("rExts"),
+                var: ast::Name::new_static("rExts"),
                 ty: None,
                 refined: None,
             })
@@ -248,11 +246,11 @@ fn derive_eq_sum(
             ast::Pat::Record(ast::RecordPat {
                 fields: vec![
                     ast::Named {
-                        name: Some(SmolStr::new_static("l")),
+                        name: Some(ast::Name::new_static("l")),
                         node: l_pat,
                     },
                     ast::Named {
-                        name: Some(SmolStr::new_static("r")),
+                        name: Some(ast::Name::new_static("r")),
                         node: r_pat,
                     },
                 ],
@@ -268,10 +266,10 @@ fn derive_eq_sum(
             )]
         } else {
             let mut eq_expr = if num_fields > 0 {
-                let field_names: Vec<ast::Id> = (0..num_fields)
-                    .map(|i| SmolStr::new(format!("{}", i)))
+                let field_names: Vec<ast::Name> = (0..num_fields)
+                    .map(|i| ast::Name::new(format!("{}", i)))
                     .collect();
-                let field_refs: Vec<&ast::Id> = field_names.iter().collect();
+                let field_refs: Vec<&ast::Name> = field_names.iter().collect();
                 Some(chain_eq_fields(loc, &field_refs, FieldAccess::BoundVars))
             } else {
                 None
@@ -325,7 +323,7 @@ enum FieldAccess {
 /// Chain `field1 == field2 && field3 == field4 && ...` for a list of field names.
 fn chain_eq_fields(
     loc: &ast::Loc,
-    field_names: &[&ast::Id],
+    field_names: &[&ast::Name],
     access: FieldAccess,
 ) -> ast::L<ast::Expr> {
     if field_names.is_empty() {

@@ -438,7 +438,7 @@ impl Pred {
 }
 
 impl FunSig {
-    pub fn print(&self, parent_ty: &Option<L<Id>>, name: &Id, buf: &mut String) {
+    pub fn print(&self, parent_ty: &Option<L<Name>>, name: &Name, buf: &mut String) {
         if let Some(parent_ty) = parent_ty {
             buf.push_str(&parent_ty.node);
             buf.push('.');
@@ -887,7 +887,7 @@ impl Expr {
                 inferred_ty,
             }) => {
                 buf.push('\\');
-                sig.print(&None, &SmolStr::new_static(""), buf);
+                sig.print(&None, &Name::new_static(""), buf);
                 if let Some(inferred_ty) = inferred_ty {
                     write!(buf, " #| inferred type = {inferred_ty} |#").unwrap();
                 }
@@ -1243,7 +1243,7 @@ impl Display for Type {
 impl Display for FunSig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
-        self.print(&None, &SmolStr::new(""), &mut s);
+        self.print(&None, &Name::new(""), &mut s);
         f.write_str(&s)
     }
 }

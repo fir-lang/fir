@@ -1,4 +1,4 @@
-use crate::ast::{self, Id};
+use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::type_checker::loc_display;
 use crate::type_checker::row_utils::*;
@@ -8,7 +8,7 @@ use crate::type_checker::ty::*;
 pub(super) fn unify(
     ty1: &Ty,
     ty2: &Ty,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     loc: &ast::Loc,
@@ -278,7 +278,7 @@ pub(super) fn unify(
                 kind: _,
             },
         ) => {
-            let (trait_name, trait_args): (&Id, &[Ty]) = match inner_ty.as_ref() {
+            let (trait_name, trait_args): (&Name, &[Ty]) = match inner_ty.as_ref() {
                 Ty::App(con, args, _) => (con, args.as_slice()),
                 Ty::Con(con, _) => (con, &[]),
                 _ => panic!(
@@ -314,13 +314,13 @@ pub(super) fn unify(
 
 fn unify_labels(
     ty1: &Ty,
-    labels1: &OrdMap<Id, Ty>,
+    labels1: &OrdMap<Name, Ty>,
     extension1: &Option<Box<Ty>>,
     ty2: &Ty,
-    labels2: &OrdMap<Id, Ty>,
+    labels2: &OrdMap<Name, Ty>,
     extension2: &Option<Box<Ty>>,
     record_or_variant: RecordOrVariant,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     loc: &ast::Loc,
@@ -348,12 +348,12 @@ fn unify_labels(
         assumps,
     );
 
-    let keys1: HashSet<&Id> = labels1.keys().collect();
-    let keys2: HashSet<&Id> = labels2.keys().collect();
+    let keys1: HashSet<&Name> = labels1.keys().collect();
+    let keys2: HashSet<&Name> = labels2.keys().collect();
 
     // Extra labels in one type will be added to the extension of the other.
-    let extras1: HashSet<&&Id> = keys1.difference(&keys2).collect();
-    let extras2: HashSet<&&Id> = keys2.difference(&keys1).collect();
+    let extras1: HashSet<&&Name> = keys1.difference(&keys2).collect();
+    let extras2: HashSet<&&Name> = keys2.difference(&keys1).collect();
 
     // Unify common labels.
     for key in keys1.intersection(&keys2) {
@@ -445,7 +445,7 @@ fn unify_labels(
 pub(super) fn try_unify_one_way(
     ty1: &Ty,
     ty2: &Ty,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     var_gen: &UVarGen,
     loc: &ast::Loc,
 ) -> bool {
@@ -617,13 +617,13 @@ pub(super) fn try_unify_one_way(
 
 fn try_unify_labels_one_way(
     ty1: &Ty,
-    labels1: &OrdMap<Id, Ty>,
+    labels1: &OrdMap<Name, Ty>,
     extension1: &Option<Box<Ty>>,
     ty2: &Ty,
-    labels2: &OrdMap<Id, Ty>,
+    labels2: &OrdMap<Name, Ty>,
     extension2: &Option<Box<Ty>>,
     record_or_variant: RecordOrVariant,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     var_gen: &UVarGen,
     loc: &ast::Loc,
 ) -> bool {
@@ -648,12 +648,12 @@ fn try_unify_labels_one_way(
         &[],
     );
 
-    let keys1: HashSet<&Id> = labels1.keys().collect();
-    let keys2: HashSet<&Id> = labels2.keys().collect();
+    let keys1: HashSet<&Name> = labels1.keys().collect();
+    let keys2: HashSet<&Name> = labels2.keys().collect();
 
     // Extra labels in one type will be added to the extension of the other.
-    let extras1: HashSet<&&Id> = keys1.difference(&keys2).collect();
-    let extras2: HashSet<&&Id> = keys2.difference(&keys1).collect();
+    let extras1: HashSet<&&Name> = keys1.difference(&keys2).collect();
+    let extras2: HashSet<&&Name> = keys2.difference(&keys1).collect();
 
     // Unify common labels.
     for key in keys1.intersection(&keys2) {
@@ -707,13 +707,13 @@ fn try_unify_labels_one_way(
 
 fn link_extension(
     record_or_variant: RecordOrVariant,
-    extra_labels: &HashSet<&&Id>,
-    label_values: &OrdMap<Id, Ty>,
+    extra_labels: &HashSet<&&Name>,
+    label_values: &OrdMap<Name, Ty>,
     var: &UVarRef,
     var_gen: &UVarGen,
     loc: &ast::Loc,
 ) -> UVarRef {
-    let extension_labels: OrdMap<Id, Ty> = extra_labels
+    let extension_labels: OrdMap<Name, Ty> = extra_labels
         .iter()
         .map(|extra_field| {
             (
@@ -738,7 +738,7 @@ fn link_extension(
 pub(super) fn unify_expected_ty(
     ty: Ty,
     expected_ty: Option<&Ty>,
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     loc: &ast::Loc,

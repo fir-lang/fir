@@ -1,14 +1,12 @@
 //! Syntax for type checking types.
 
-use crate::ast::{self, Id};
+use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::{loc_display, rename_domain_var};
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
-
-use smol_str::SmolStr;
 
 /// A type scheme.
 #[derive(Debug, Clone)]
@@ -17,7 +15,7 @@ pub struct Scheme {
     ///
     /// When the scheme is for a trait method, the first type parameters will be the type parameters
     /// for the trait, in the right order.
-    pub(super) quantified_vars: Vec<(Id, Kind)>,
+    pub(super) quantified_vars: Vec<(Name, Kind)>,
 
     /// Predicates.
     pub(super) preds: Vec<Pred>,
@@ -35,14 +33,14 @@ pub struct Scheme {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
-    Con(Id, Kind),
+    Con(Name, Kind),
 
     /// A type application, e.g. `Vec[U32]`, `Result[E, T]`.
     ///
     /// Because type variables have kind `*`, the constructor can only be a type constructor.
     ///
     /// Invariant: the vector is not empty.
-    App(Id, Vec<Ty>, Kind),
+    App(Name, Vec<Ty>, Kind),
 
     /// A unification variable, created from a type scheme's quantified variables when instantiated.
     UVar(UVarRef),
@@ -50,11 +48,11 @@ pub enum Ty {
     /// Only in type schemes: a quantified type variable.
     ///
     /// Instantiation converts these into unification variables (`Ty::Var`).
-    QVar(Id, Kind),
+    QVar(Name, Kind),
 
     /// A rigid type variable. Created from a type scheme's quantified variables when type checking
     /// the scheme's function's body.
-    RVar(Id, Kind),
+    RVar(Name, Kind),
 
     /// A function type, e.g. `Fn(U32) Str`, `Fn(x: U32, y: U32) T / Err`.
     Fun {
@@ -71,7 +69,7 @@ pub enum Ty {
 
     /// An anonymous record or variant type or row type. E.g. `(a: Str, ..r)`, `[Err1(Str), ..r]`.
     Anonymous {
-        labels: OrdMap<Id, Ty>,
+        labels: OrdMap<Name, Ty>,
 
         /// Row extension.
         extension: Option<Box<Ty>>,
@@ -85,7 +83,7 @@ pub enum Ty {
 
     AssocTySelect {
         ty: Box<Ty>,
-        assoc_ty: Id,
+        assoc_ty: Name,
         kind: Kind,
     },
 }
@@ -102,7 +100,7 @@ pub enum FunArgs {
         args: Vec<Ty>,
     },
     Named {
-        args: OrdMap<Id, Ty>,
+        args: OrdMap<Name, Ty>,
         extension: Option<Box<Ty>>,
     },
 }
@@ -116,7 +114,7 @@ impl FunArgs {
         matches!(self, FunArgs::Named { .. })
     }
 
-    pub fn as_named(&self) -> &OrdMap<Id, Ty> {
+    pub fn as_named(&self) -> &OrdMap<Name, Ty> {
         match self {
             FunArgs::Positional { .. } => panic!(),
             FunArgs::Named { args, .. } => args,
@@ -192,10 +190,10 @@ pub(super) struct UVarGen {
 #[derive(Debug, Clone)]
 pub struct TyCon {
     /// Name of the type.
-    pub id: Id,
+    pub id: Name,
 
     /// Type parameters with kinds.
-    pub(super) ty_params: Vec<(Id, Kind)>,
+    pub(super) ty_params: Vec<(Name, Kind)>,
 
     /// Methods for traits, constructor for sums, fields for products.
     ///
@@ -231,10 +229,10 @@ impl TyConDetails {
 #[derive(Debug, Clone)]
 pub(super) struct TraitDetails {
     /// Methods of the trait, with optional default implementations.
-    pub(super) methods: HashMap<Id, TraitMethod>,
+    pub(super) methods: HashMap<Name, TraitMethod>,
 
     /// Associated types of the trait.
-    pub(super) assoc_tys: HashMap<Id, AssocTyDetails>,
+    pub(super) assoc_tys: HashMap<Name, AssocTyDetails>,
 }
 
 #[derive(Debug, Clone)]
@@ -261,7 +259,7 @@ pub(super) struct TypeDetails {
     pub(super) value: bool,
 
     /// Value constructors of the type.
-    pub(super) cons: HashMap<Id, Scheme>,
+    pub(super) cons: HashMap<Name, Scheme>,
 
     /// Whether the type is a sum type.
     ///
@@ -277,7 +275,7 @@ pub struct Pred {
     /// Trait of the predicate.
     ///
     /// `Iterator` in the example.
-    pub trait_: Id,
+    pub trait_: Name,
 
     /// The type parameters. `[iter, exn]` in the example.
     pub params: Vec<Ty>,
@@ -285,7 +283,7 @@ pub struct Pred {
     /// If the predicate is an associated type equality, the right-hand side of the equality.
     ///
     /// E.g. in `Iterator[iter, exn].Item = U32`, this is `(Item, U32)`.
-    pub assoc_ty: Option<(Id, Ty)>,
+    pub assoc_ty: Option<(Name, Ty)>,
 
     /// Location of the expression that created this predicate.
     pub loc: ast::Loc,
@@ -304,7 +302,7 @@ impl Scheme {
         // handle shadowing here.
 
         // Maps `QVar`s to instantiations.
-        let mut var_map: HashMap<Id, Ty> = Default::default();
+        let mut var_map: HashMap<Name, Ty> = Default::default();
 
         // Instantiated type parameters, in the same order as `self.quantified_vars`.
         let mut instantiations: Vec<UVarRef> = Vec::with_capacity(self.quantified_vars.len());
@@ -364,7 +362,7 @@ impl Scheme {
             }
         }
 
-        let mut var_map: HashMap<Id, Ty> =
+        let mut var_map: HashMap<Name, Ty> =
             HashMap::with_capacity_and_hasher(self.quantified_vars.len(), Default::default());
 
         for ((qvar, _), arg) in self.quantified_vars.iter().zip(arg_tys.iter()) {
@@ -397,7 +395,7 @@ impl Scheme {
     }
 
     /// Substitute `ty` for quantified `var` in `self`.
-    pub(super) fn subst(&self, var: &Id, ty: &Ty) -> Scheme {
+    pub(super) fn subst(&self, var: &Name, ty: &Ty) -> Scheme {
         // TODO: This is a bit hacky.. In top-level functions `var` should be in `quantified_vars`,
         // but in associated functions and trait methods it can also be a type parameter of the
         // trait/type. For now we use the same subst method for both.
@@ -443,7 +441,7 @@ impl Scheme {
     /// places.
     pub(super) fn eq_modulo_alpha(
         &self,
-        cons: &ScopeMap<Id, TyCon>,
+        cons: &ScopeMap<Name, TyCon>,
         other: &Scheme,
         loc: &ast::Loc,
     ) -> bool {
@@ -452,7 +450,7 @@ impl Scheme {
         }
 
         // Map quantified variables to their indices.
-        let left_vars: HashMap<Id, u32> = self
+        let left_vars: HashMap<Name, u32> = self
             .quantified_vars
             .iter()
             .enumerate()
@@ -467,7 +465,7 @@ impl Scheme {
             self.quantified_vars,
         );
 
-        let right_vars: HashMap<Id, u32> = other
+        let right_vars: HashMap<Name, u32> = other
             .quantified_vars
             .iter()
             .enumerate()
@@ -509,9 +507,9 @@ impl Scheme {
 
     /// Rename the quantified variables in the scheme, adding the unique number to the names.
     pub(super) fn rename_qvars(&self, uniq: u32) -> Scheme {
-        let mut subst_map: HashMap<Id, Ty> = Default::default();
+        let mut subst_map: HashMap<Name, Ty> = Default::default();
 
-        let new_quantified_vars: Vec<(Id, Kind)> = self
+        let new_quantified_vars: Vec<(Name, Kind)> = self
             .quantified_vars
             .iter()
             .map(|(qvar, kind)| {
@@ -549,11 +547,11 @@ impl Scheme {
 }
 
 fn ty_eq_modulo_alpha(
-    cons: &ScopeMap<Id, TyCon>,
+    cons: &ScopeMap<Name, TyCon>,
     ty1: &Ty,
     ty2: &Ty,
-    ty1_qvars: &HashMap<Id, u32>,
-    ty2_qvars: &HashMap<Id, u32>,
+    ty1_qvars: &HashMap<Name, u32>,
+    ty2_qvars: &HashMap<Name, u32>,
     loc: &ast::Loc,
 ) -> bool {
     let ty1_normalized = ty1.normalize(cons);
@@ -701,8 +699,8 @@ fn ty_eq_modulo_alpha(
                         extension: ext2,
                     },
                 ) => {
-                    let names1: HashSet<&Id> = args1.keys().collect();
-                    let names2: HashSet<&Id> = args2.keys().collect();
+                    let names1: HashSet<&Name> = args1.keys().collect();
+                    let names2: HashSet<&Name> = args2.keys().collect();
 
                     if names1 != names2 {
                         return false;
@@ -791,19 +789,19 @@ impl Ty {
     }
 
     pub(super) fn bool() -> Ty {
-        Ty::Con(SmolStr::new_static("Bool"), Kind::Star)
+        Ty::Con(Name::new_static("Bool"), Kind::Star)
     }
 
-    pub(super) fn to_str_id() -> Id {
-        SmolStr::new_static("ToStr")
+    pub(super) fn to_str_id() -> Name {
+        Name::new_static("ToStr")
     }
 
     pub(super) fn str() -> Ty {
-        Ty::Con(SmolStr::new_static("Str"), Kind::Star)
+        Ty::Con(Name::new_static("Str"), Kind::Star)
     }
 
     pub(super) fn char() -> Ty {
-        Ty::Con(SmolStr::new_static("Char"), Kind::Star)
+        Ty::Con(Name::new_static("Char"), Kind::Star)
     }
 
     pub fn kind(&self) -> Kind {
@@ -835,7 +833,7 @@ impl Ty {
     }
 
     /// Substitute `ty` for quantified `var` in `self`.
-    pub(super) fn subst(&self, var: &Id, ty: &Ty) -> Ty {
+    pub(super) fn subst(&self, var: &Name, ty: &Ty) -> Ty {
         match self {
             Ty::Con(id, kind) => Ty::Con(id.clone(), *kind),
 
@@ -905,7 +903,7 @@ impl Ty {
         }
     }
 
-    pub(super) fn subst_qvars(&self, vars: &HashMap<Id, Ty>) -> Ty {
+    pub(super) fn subst_qvars(&self, vars: &HashMap<Name, Ty>) -> Ty {
         match self {
             Ty::Con(con, kind) => Ty::Con(con.clone(), *kind),
 
@@ -977,7 +975,7 @@ impl Ty {
     /// If the type is a unification variable, follow the links.
     ///
     /// Otherwise returns the original type.
-    pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
+    pub(super) fn normalize(&self, cons: &ScopeMap<Name, TyCon>) -> Ty {
         match self {
             Ty::UVar(var_ref) => var_ref.normalize(cons),
             _ => self.clone(),
@@ -986,7 +984,7 @@ impl Ty {
 
     pub(super) fn deep_normalize(
         &self,
-        cons: &ScopeMap<Id, TyCon>,
+        cons: &ScopeMap<Name, TyCon>,
         trait_env: &TraitEnv,
         var_gen: &UVarGen,
         assumps: &[Pred],
@@ -1079,7 +1077,7 @@ impl Ty {
             } => {
                 let inner_ty = inner_ty.deep_normalize(cons, trait_env, var_gen, assumps);
 
-                let (trait_name, trait_args): (&Id, &[Ty]) = match &inner_ty {
+                let (trait_name, trait_args): (&Name, &[Ty]) = match &inner_ty {
                     Ty::App(con, args, _) => (con, args.as_slice()),
                     Ty::Con(con, _) => (con, &[]),
                     _ => {
@@ -1162,7 +1160,7 @@ impl Ty {
     }
 
     /// Get the type constructor of the type and the type arguments.
-    pub fn con(&self, cons: &ScopeMap<Id, TyCon>) -> Option<(Id, Vec<Ty>)> {
+    pub fn con(&self, cons: &ScopeMap<Name, TyCon>) -> Option<(Name, Vec<Ty>)> {
         match self.normalize(cons) {
             Ty::Con(con, _) => Some((con.clone(), vec![])),
 
@@ -1179,7 +1177,7 @@ impl Ty {
 
     pub(super) fn is_void(&self) -> bool {
         match self {
-            Ty::Con(con, _) => con == &SmolStr::new_static("Void"),
+            Ty::Con(con, _) => con == &Name::new_static("Void"),
             _ => false,
         }
     }
@@ -1228,7 +1226,7 @@ impl UVarRef {
         *self.0.link.borrow_mut() = Some(ty);
     }
 
-    pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
+    pub(super) fn normalize(&self, cons: &ScopeMap<Name, TyCon>) -> Ty {
         let link = match &*self.0.link.borrow() {
             Some(link) => link.normalize(cons),
             None => return Ty::UVar(self.clone()),
