@@ -4702,11 +4702,11 @@ importDecl(state: ParserState[Token, ()]) ImportDecl / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let p0 = path(state)
+            let item0 = importItem(state)
             let zeroOrMoreCursor0 = state._cursor
-            let ps = Vec.empty()
+            let items = Vec.empty()
             loop:
-                let psLen0 = ps.len()
+                let itemsLen0 = items.len()
                 let symResult = try(
                     \():
                         if state.peek() is Option.Some(sym)
@@ -4714,12 +4714,12 @@ importDecl(state: ParserState[Token, ()]) ImportDecl / U32:
                             state._cursor += 1
                         else:
                             throw(state.updateErrorCursor(state._cursor))
-                        ps.push(path(state)),
+                        items.push(importItem(state)),
                 )
                 match symResult:
                     Result.Err(err):
                         state._cursor = zeroOrMoreCursor0
-                        ps.truncate(psLen0)
+                        items.truncate(itemsLen0)
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let optionalCursor0 = state._cursor
@@ -4746,8 +4746,218 @@ importDecl(state: ParserState[Token, ()]) ImportDecl / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                ps.insert(0, p0)
-                ImportDecl(paths = ps)
+                items.insert(0, item0)
+                ImportDecl(items = items)
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+importItem(state: ParserState[Token, ()]) ImportItem / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let p = path(state)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Slash, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Star, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                ImportItem(path = p, importSpec = ImportSpec.Wildcard)
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let p = path(state)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Slash, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let name0 = importName(state)
+            let zeroOrMoreCursor0 = state._cursor
+            let names = Vec.empty()
+            loop:
+                let namesLen0 = names.len()
+                let symResult = try(
+                    \():
+                        if state.peek() is Option.Some(sym)
+                                and sym is Token(kind = TokenKind.Comma, ..):
+                            state._cursor += 1
+                        else:
+                            throw(state.updateErrorCursor(state._cursor))
+                        names.push(importName(state)),
+                )
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        names.truncate(namesLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Comma, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    (),
+            )
+            match symResult:
+                Result.Err(err): state._cursor = optionalCursor0
+                Result.Ok(ok): ()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                names.insert(0, name0)
+                ImportItem(
+                    path = p, importSpec = ImportSpec.Selective(names = names)
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let p = path(state)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.As, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let prefix = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                ImportItem(
+                    path = p,
+                    importSpec = ImportSpec.Prefixed(prefix = newId(prefix)),
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let p = path(state)
+            let val = do:
+                let lastId = p.last().unwrap()
+                ImportItem(
+                    path = p, importSpec = ImportSpec.Prefixed(prefix = lastId)
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+importName(state: ParserState[Token, ()]) ImportName / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let orig = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LowerId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.As, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let local = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LowerId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                ImportName(originalName = newId(orig), localName = newId(local))
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let orig = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.As, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let local = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                ImportName(originalName = newId(orig), localName = newId(local))
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let id = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LowerId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                ImportName(originalName = newId(id), localName = newId(id))
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let id = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                ImportName(originalName = newId(id), localName = newId(id))
             val,
     )
     match altResult:

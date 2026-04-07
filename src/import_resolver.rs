@@ -20,7 +20,7 @@ pub fn resolve_imports(
     import_prelude: bool,
     module_file_path: Option<&std::path::Path>,
 ) -> ast::Module {
-    let mut new_module: Vec<ast::L<ast::TopDecl>> = vec![];
+    let mut new_module = ast::Module { decls: vec![] };
     let mut imported_modules: HashSet<Vec<Id>> = Default::default();
 
     if let Some(file_path) = module_file_path {
@@ -56,24 +56,24 @@ fn resolve_imports_(
     new_module: &mut ast::Module,
     imported_modules: &mut HashSet<Path>,
 ) {
-    for decl in module {
+    for decl in module.decls {
         match &decl.node {
             ast::TopDecl::Type(_)
             | ast::TopDecl::Fun(_)
             | ast::TopDecl::Trait(_)
-            | ast::TopDecl::Impl(_) => new_module.push(decl),
+            | ast::TopDecl::Impl(_) => new_module.decls.push(decl),
 
-            ast::TopDecl::Import(paths) => {
-                for path in paths.node.paths.iter() {
-                    if imported_modules.contains(path) {
+            ast::TopDecl::Import(decl) => {
+                for item in decl.node.items.iter() {
+                    if imported_modules.contains(&item.path) {
                         continue;
                     }
 
-                    imported_modules.insert(path.clone());
+                    imported_modules.insert(item.path.clone());
 
-                    let imported_module_path = module_path(path);
+                    let imported_module_path = module_path(&item.path);
                     let imported_module =
-                        crate::parse_file(&imported_module_path, path.last().unwrap());
+                        crate::parse_file(&imported_module_path, item.path.last().unwrap());
                     resolve_imports_(imported_module, new_module, imported_modules);
                 }
             }

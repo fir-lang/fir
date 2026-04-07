@@ -70,7 +70,7 @@ pub(crate) fn check_module(module: &mut ast::Module, main: &str) -> PgmTypes {
     kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
     let trait_env = collect_trait_env(module, &mut tys.tys);
-    for decl in module {
+    for decl in &mut module.decls {
         match &mut decl.node {
             ast::TopDecl::Import(_) => panic!(
                 "{}: Import declaration in check_module",
@@ -117,7 +117,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, trait_env: &TraitEnv, main: &str) 
 
 /// Add exception types to functions without one.
 fn add_exception_types(module: &mut ast::Module, main: &str) {
-    for decl in module {
+    for decl in &mut module.decls {
         match &mut decl.node {
             ast::TopDecl::Fun(ast::L { node: fun, loc }) => {
                 if fun.sig.exceptions.is_none() {
@@ -256,7 +256,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
     let mut tys: TyMap = Default::default();
 
     // Collect all type constructors first, then add fields and methods.
-    for decl in module.iter() {
+    for decl in module.decls.iter() {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 // Type synonyms are handled separately after this pass.
@@ -362,7 +362,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
     {
         let mut synonym_asts: HashMap<Id, (&[ast::TypeParam], &[Kind], &ast::L<ast::Type>)> =
             Default::default();
-        for decl in module.iter() {
+        for decl in module.decls.iter() {
             if let ast::TopDecl::Type(ty_decl) = &decl.node
                 && let Some(ast::TypeDeclRhs::Synonym(rhs_ty)) = &ty_decl.node.rhs
             {
@@ -387,7 +387,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
     // Add fields, methods, associated types.
     // This is where we start converting AST types to type checking types, so the ty con map should
     // be populated at this point.
-    for decl in module.iter() {
+    for decl in module.decls.iter() {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 // Type synonyms already handled above.
@@ -604,7 +604,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 //
 // We don't need to type check default methods copied to impls, but for now we do.
 fn add_default_impl_items(module: &mut ast::Module, tys: &mut TyMap) {
-    for decl in module.iter_mut() {
+    for decl in module.decls.iter_mut() {
         let impl_decl = match &mut decl.node {
             ast::TopDecl::Impl(impl_decl) => &mut impl_decl.node,
             _ => continue,
@@ -967,7 +967,7 @@ fn collect_schemes(
     // TODO: This should be generalized and used in all substitutions.
     let mut uniq_gen: u32 = 0;
 
-    for decl in module {
+    for decl in &module.decls {
         // New scope for type and function contexts.
         assert_eq!(tys.len_scopes(), 1);
         tys.enter_scope();
@@ -2136,7 +2136,7 @@ fn rename_domain_var(var: &Id, uniq: u32) -> Id {
 pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
     // Collect top-level synonyms with their type parameter names.
     let mut synonyms: HashMap<Id, (Vec<Id>, ast::Type)> = Default::default();
-    for decl in module.iter() {
+    for decl in module.decls.iter() {
         if let ast::TopDecl::Type(ty_decl) = &decl.node
             && let Some(ast::TypeDeclRhs::Synonym(rhs)) = &ty_decl.node.rhs
         {
@@ -2150,7 +2150,7 @@ pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
         }
     }
 
-    for decl in module.iter_mut() {
+    for decl in module.decls.iter_mut() {
         match &mut decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 expand_synonyms_in_type_decl(&mut ty_decl.node, &synonyms);

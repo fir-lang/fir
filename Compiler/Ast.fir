@@ -341,8 +341,65 @@ type SelfParam[exts]:
 
 #[derive(ToDoc)]
 type ImportDecl(
-    ## Import paths, e.g. `[Fir/Prelude, Compiler/Parser]`.
-    paths: Vec[Vec[Id]],
+    ## Imported items, e.g. `[Fir/Prelude, Compiler/Parser/[parse]]`.
+    items: Vec[ImportItem],
+)
+
+
+## A single import item in an `import [...]` list. Examples:
+##
+## - `A/B/C` imports `A/B/C` as module. Imported definitions used with `C/...`
+##   prefix.
+##
+## - `A/B/C/*` imports `A/B/C`. Imported definitions used directly, without any
+##   prefix.
+##
+## - `A/B/C as D` imports `A/B/C` as module, with name `D`. Imported definitions
+##   used with `D/...` prefix.
+##
+## - `A/B/C/[f1, Type1]` imports listed things from `A/B/C`. Imported
+##   definitions used directly.
+##
+## - `A/B/C/[f1 as _f1, Type1 as Type2]` imports listed things with different
+##   names.
+#[derive(ToDoc)]
+type ImportItem(
+    ## `A/B/C` in the examples.
+    path: Vec[Id],
+
+    ## What to import, and how, from the `path`.
+    importSpec: ImportSpec,
+)
+
+
+#[derive(ToDoc)]
+type ImportSpec:
+    ## `*`: import everything.
+    Wildcard
+
+    ## Import the module with a prefix. E.g.
+    ## - `A/B/C`: prefix = `C`.
+    ## - `A/B/C as D`: prefix = `D`.
+    Prefixed(
+        prefix: Id,
+    )
+
+    ## Import given list of things, potentially with new names.
+    Selective(
+        names: Vec[ImportName],
+    )
+
+
+## An imported name. E.g. in `A/B/C/[foo, bar as _bar]`, we have
+## - `foo`: originalName = `foo`, localName = `foo`
+## - `bar as _bar`: originalName = `bar`, localName = `_bar`
+#[derive(ToDoc)]
+type ImportName(
+    ## The name of the imported thing, in the module being imported.
+    originalName: Id,
+
+    ## The name of the imported thing, in the importing module.
+    localName: Id,
 )
 
 

@@ -66,7 +66,7 @@ fn parse_module(module: &SmolStr, contents: &str) -> ast::Module {
     ));
     // dbg!(tokens.iter().map(|(_, t, _)| t.clone()).collect::<Vec<_>>());
 
-    let parser = parser::TopDeclsParser::new();
+    let parser = parser::ModuleParser::new();
     match parser.parse(&(module.as_str().into()), tokens) {
         Ok(ast) => ast,
         Err(err) => report_parse_error(module, err),
@@ -460,7 +460,7 @@ mod tests {
                 q
         "};
         let tokens = scan(lex(pgm, "test").into_iter(), "test");
-        let ast = crate::parser::TopDeclsParser::new()
+        let ast = crate::parser::ModuleParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
         dbg!(ast);
@@ -474,9 +474,85 @@ mod tests {
                 q
         "};
         let tokens = scan(lex(pgm, "test").into_iter(), "test");
-        let ast = crate::parser::TopDeclsParser::new()
+        let ast = crate::parser::ModuleParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
         dbg!(ast);
+    }
+
+    #[test]
+    fn parse_imports() {
+        use crate::ast::{ImportSpec, TopDecl};
+
+        let pgm = indoc::indoc! {"
+            import [
+                A/B/C/*,
+                A/B/D,
+                A/B/D as E,
+                A/B/D/[f1, f2, Type1, Type2],
+                A/B/D/[f1 as g1, f2, Type1 as MyType, Type2],
+                A/B/D/[f1 as _f1, Type1 as _Type1],
+            ]
+        "};
+        let tokens = scan(lex(pgm, "test").into_iter(), "test");
+        let module = crate::parser::ModuleParser::new()
+            .parse(&"test".into(), tokens)
+            .unwrap();
+        assert_eq!(module.decls.len(), 1);
+        let import = match &module.decls[0].node {
+            TopDecl::Import(i) => &i.node,
+            other => panic!("expected import, got {:?}", other),
+        };
+        assert_eq!(import.items.len(), 6);
+
+        // 1: A/B/C/*
+        assert_eq!(import.items[0].path, vec!["A", "B", "C"]);
+        assert!(matches!(import.items[0].import_spec, ImportSpec::Wildcard));
+
+        // 2: A/B/D (default prefix D)
+        assert_eq!(import.items[1].path, vec!["A", "B", "D"]);
+        match &import.items[1].import_spec {
+            ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "D"),
+            other => panic!("expected Prefixed, got {:?}", other),
+        }
+
+        // 3: A/B/D as E
+        match &import.items[2].import_spec {
+            ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "E"),
+            other => panic!("expected Prefixed, got {:?}", other),
+        }
+
+        // 4: A/B/D/[f1, f2, Type1, Type2]
+        match &import.items[3].import_spec {
+            ImportSpec::Selective { names } => {
+                assert_eq!(names.len(), 4);
+                assert_eq!(names[0].original_name, "f1");
+                assert_eq!(names[0].local_name, "f1");
+                assert_eq!(names[2].original_name, "Type1");
+            }
+            other => panic!("expected Selective, got {:?}", other),
+        }
+
+        // 5: A/B/D/[f1 as g1, f2, Type1 as MyType, Type2]
+        match &import.items[4].import_spec {
+            ImportSpec::Selective { names } => {
+                assert_eq!(names[0].original_name, "f1");
+                assert_eq!(names[0].local_name, "g1");
+                assert_eq!(names[1].original_name, "f2");
+                assert_eq!(names[1].local_name, "f2");
+                assert_eq!(names[2].original_name, "Type1");
+                assert_eq!(names[2].local_name, "MyType");
+            }
+            other => panic!("expected Selective, got {:?}", other),
+        }
+
+        // 6: A/B/D/[f1 as _f1, Type1 as _Type1]
+        match &import.items[5].import_spec {
+            ImportSpec::Selective { names } => {
+                assert_eq!(names[0].local_name, "_f1");
+                assert_eq!(names[1].local_name, "_Type1");
+            }
+            other => panic!("expected Selective, got {:?}", other),
+        }
     }
 }

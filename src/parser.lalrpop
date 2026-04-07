@@ -1113,20 +1113,62 @@ FieldPat: Named<L<Pat>> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImportDecl: L<ImportDecl> = {
-    <l:@L> "import" "[" <path0:ImportPath> <paths:("," <ImportPath>)*> ","? "]" NEWLINE <r:@R> =>
+    <l:@L> "import" "[" <items:Sep<ImportItem, ",">> "]" NEWLINE <r:@R> =>
         L::new(
             module,
             l,
             r,
-            ImportDecl {
-                paths: std::iter::once(path0).chain(paths.into_iter()).collect(),
-            }
+            ImportDecl { items }
         ),
 }
 
-ImportPath: Vec<Id> = {
-    <path:Sep1<UpperId, "/">> =>
-        path.into_iter().map(|t| t.smol_str()).collect(),
+ImportItem: ImportItem = {
+    <path:ImportPath> => {
+        let (path, spec) = path;
+        let spec = spec.unwrap_or_else(|| ImportSpec::Prefixed {
+            prefix: path.last().unwrap().clone(),
+        });
+        ImportItem { path, import_spec: spec }
+    },
+
+    <path:ImportPath> "as" <id:UpperId> => {
+        let (path, _) = path;
+        ImportItem {
+            path,
+            import_spec: ImportSpec::Prefixed { prefix: id.smol_str() },
+        }
+    },
+}
+
+ImportPath: (Vec<SmolStr>, Option<ImportSpec>) = {
+    <id:UpperId> =>
+        (vec![id.smol_str()], None),
+
+    <id:UpperId> "/" "*" =>
+        (vec![id.smol_str()], Some(ImportSpec::Wildcard)),
+
+    <id:UpperId> "/" "[" <names:Sep<ImportName, ",">> "]" =>
+        (vec![id.smol_str()], Some(ImportSpec::Selective { names })),
+
+    <id:UpperId> "/" <rest:ImportPath> => {
+        let (mut rest_path, rest_spec) = rest;
+        rest_path.insert(0, id.smol_str());
+        (rest_path, rest_spec)
+    },
+}
+
+ImportName: ImportName = {
+    <id:LowerId> =>
+        ImportName { original_name: id.smol_str(), local_name: id.smol_str() },
+    
+    <id:UpperId> =>
+        ImportName { original_name: id.smol_str(), local_name: id.smol_str() },
+        
+    <orig:LowerId> "as" <local:LowerId> => 
+        ImportName { original_name: orig.smol_str(), local_name: local.smol_str() },
+        
+    <orig:UpperId> "as" <local:UpperId> => 
+        ImportName { original_name: orig.smol_str(), local_name: local.smol_str() },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1241,11 +1283,17 @@ Pred: Pred = {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// Top-level declarations
+// Modules
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub TopDecls: Vec<L<TopDecl>> = {
+pub Module: Module = {
+    <decls:TopDecls> => {
+        Module { decls }
+    },
+}
+
+TopDecls: Vec<L<TopDecl>> = {
     TopDecl*
 }
 

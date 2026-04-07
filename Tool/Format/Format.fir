@@ -501,35 +501,39 @@ _formatSigArgList(
 
 
 ImportDecl.format(self, tokens: Array[Token]) Doc:
-    assert(not self.paths.isEmpty())
+    assert(not self.items.isEmpty())
 
-    let lbracket = prevNonTrivia(self.paths.get(0).get(0).token, tokens).unwrap()
+    let firstItemFirstToken = self.items.get(0).path.get(0).token
+    let lbracket = prevNonTrivia(firstItemFirstToken, tokens).unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
     let import_ = prevNonTrivia(lbracket, tokens).unwrap()
     assert(tokens.get(import_.idx).kind is TokenKind.Import)
 
-    let doc = formatToken(import_, tokens)
+    # Leading comments of `import` contain hard line breaks; keep them outside
+    # the group so they don't force the group to break.
+    let leading = formatLeadingComments(import_, tokens)
+    let header = Doc.str(tokens.get(import_.idx).text)
+        + formatTrailingComments(import_, tokens)
         + Doc.blank(1)
         + formatToken(lbracket, tokens)
 
-    let docRest = if self.paths.len() == 1:
-        Doc.empty()
+    # Single-item imports stay on one line if they fit (using `break_(0)` so the
+    # group can still break when the item is too long). Multi-item imports are
+    # forced to break with `hardLine`.
+    let docRest = if self.items.len() == 1:
+        Doc.break_(0)
     else:
         Doc.hardLine()
 
     let lastToken = lbracket
 
-    let pathIdx: U32 = 0
+    let itemIdx: U32 = 0
     let trailingComma = Bool.False
-    for path: Vec[Id] in self.paths.iter():
-        for id: Id in path.iter():
-            lastToken = id.token
-            docRest += formatToken(id.token, tokens)
-            if nextNonTrivia(id.token, tokens) is Option.Some(next)
-                    and tokens.get(next.idx).kind is TokenKind.Slash:
-                lastToken = next
-                docRest += formatToken(next, tokens)
+    for item: ImportItem in self.items.iter():
+        let itemRet = item.format(tokens)
+        docRest += itemRet.doc
+        lastToken = itemRet.lastToken
 
         if nextNonTrivia(lastToken, tokens) is Option.Some(next)
                 and tokens.get(next.idx).kind is TokenKind.Comma:
@@ -537,23 +541,113 @@ ImportDecl.format(self, tokens: Array[Token]) Doc:
             lastToken = next
             docRest += formatToken(next, tokens)
 
-        if pathIdx == self.paths.len() - 1:
-            if self.paths.len() > 1 and not trailingComma:
+        if itemIdx == self.items.len() - 1:
+            if self.items.len() > 1 and not trailingComma:
                 docRest += Doc.whenNotFlat(Doc.char(','))
         else:
             docRest += Doc.hardLine()
 
         trailingComma = Bool.False
 
-        pathIdx += 1
+        itemIdx += 1
 
     let rbracket = nextNonTrivia(lastToken, tokens).unwrap()
     assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
-    if self.paths.len() == 1:
-        doc + docRest.nest(4) + formatToken(rbracket, tokens)
+    if self.items.len() == 1:
+        leading
+            + Doc.grouped(
+                header
+                    + docRest.nest(4)
+                    + Doc.break_(0)
+                    + formatToken(rbracket, tokens),
+            )
     else:
-        doc + docRest.nest(4) + Doc.hardLine() + formatToken(rbracket, tokens)
+        leading
+            + header
+            + docRest.nest(4)
+            + Doc.hardLine()
+            + formatToken(rbracket, tokens)
+
+
+ImportItem.format(self, tokens: Array[Token]) (doc: Doc, lastToken: TokenIdx):
+    let doc = Doc.empty()
+    let lastToken = self.path.get(0).token
+
+    # Format the path tokens (`A/B/C`). For wildcard and selective specs the
+    # path is followed by a `/` which is consumed here as the trailing slash
+    # of the last `UpperId`.
+    for id: Id in self.path.iter():
+        lastToken = id.token
+        doc += formatToken(id.token, tokens)
+        if nextNonTrivia(id.token, tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Slash:
+            lastToken = next
+            doc += formatToken(next, tokens)
+
+    match self.importSpec:
+        ImportSpec.Wildcard:
+            let star = nextNonTrivia(lastToken, tokens).unwrap()
+            assert(tokens.get(star.idx).kind is TokenKind.Star)
+            doc += formatToken(star, tokens)
+            lastToken = star
+
+        ImportSpec.Prefixed(prefix):
+            # When the prefix is the default (last segment of the path) the
+            # parser stores the same token, so there's no `as` clause to print.
+            let lastPathToken = self.path.last().unwrap().token
+            if prefix.token.idx != lastPathToken.idx:
+                let asKw = nextNonTrivia(lastToken, tokens).unwrap()
+                assert(tokens.get(asKw.idx).kind is TokenKind.As)
+                doc += Doc.blank(1)
+                    + formatToken(asKw, tokens)
+                    + Doc.blank(1)
+                    + formatToken(prefix.token, tokens)
+                lastToken = prefix.token
+
+        ImportSpec.Selective(names):
+            let lbracket = nextNonTrivia(lastToken, tokens).unwrap()
+            assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
+
+            let listDoc = formatToken(lbracket, tokens) + Doc.break_(0)
+            let listLastToken = lbracket
+            let listTrailingComma = Bool.False
+
+            for name: ImportName in names.iter():
+                if listTrailingComma:
+                    listDoc += Doc.break_(1)
+                    listTrailingComma = Bool.False
+
+                listDoc += formatToken(name.originalName.token, tokens)
+                listLastToken = name.originalName.token
+
+                if name.originalName.token.idx != name.localName.token.idx:
+                    let asKw = nextNonTrivia(listLastToken, tokens).unwrap()
+                    assert(tokens.get(asKw.idx).kind is TokenKind.As)
+                    listDoc += Doc.blank(1)
+                        + formatToken(asKw, tokens)
+                        + Doc.blank(1)
+                        + formatToken(name.localName.token, tokens)
+                    listLastToken = name.localName.token
+
+                if nextNonTrivia(listLastToken, tokens) is Option.Some(next)
+                        and tokens.get(next.idx).kind is TokenKind.Comma:
+                    listTrailingComma = Bool.True
+                    listDoc += formatToken(next, tokens)
+                    listLastToken = next
+
+            if not names.isEmpty() and not listTrailingComma:
+                listDoc += Doc.whenNotFlat(Doc.char(','))
+
+            let rbracket = nextNonTrivia(listLastToken, tokens).unwrap()
+            assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
+
+            doc += Doc.grouped(
+                listDoc.nest(4) + Doc.break_(0) + formatToken(rbracket, tokens),
+            )
+            lastToken = rbracket
+
+    (doc = doc, lastToken = lastToken)
 
 
 TraitDecl.format(self: FmtTraitDecl, tokens: Array[Token]) Doc:

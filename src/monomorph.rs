@@ -176,8 +176,8 @@ fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
     }
 }
 
-pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> MonoPgm {
-    let poly_pgm = pgm_to_poly_pgm(pgm.iter().map(|decl| decl.node.clone()).collect());
+pub fn monomorphise(pgm: &ast::Module, main: &str) -> MonoPgm {
+    let poly_pgm = pgm_to_poly_pgm(pgm.decls.iter().map(|decl| decl.node.clone()).collect());
     let mut mono_pgm = MonoPgm::default();
 
     // Copy types used by the interpreter built-ins.

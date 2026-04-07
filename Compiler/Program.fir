@@ -124,10 +124,10 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
             TopDecl.Impl(implDecl): impls.push(implDecl)
 
             TopDecl.Import(importDecl):
-                for path: Vec[Id] in importDecl.paths.iter():
+                for item: ImportItem in importDecl.items.iter():
                     imports.push(
                         Vec.fromIter(
-                            path.iter().map(
+                            item.path.iter().map(
                                 \(id: Id) Str: tokens.get(id.token.idx).text,
                             ),
                         ),

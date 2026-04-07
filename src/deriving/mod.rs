@@ -10,7 +10,7 @@ use smol_str::SmolStr;
 pub(crate) fn expand_derives(module: &mut ast::Module) {
     let mut new_impls: Vec<ast::L<ast::TopDecl>> = vec![];
 
-    for decl in module.iter() {
+    for decl in module.decls.iter() {
         if let ast::TopDecl::Type(type_decl) = &decl.node {
             let Some(attr) = &type_decl.node.attr else {
                 continue;
@@ -47,7 +47,7 @@ pub(crate) fn expand_derives(module: &mut ast::Module) {
         }
     }
 
-    module.extend(new_impls);
+    module.decls.extend(new_impls);
 }
 
 /// Extract trait names from a `#[derive(Trait1, Trait2)]` attribute.

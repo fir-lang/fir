@@ -16,6 +16,7 @@ Terminals:
     "LowerId" = Token(kind = TokenKind.LowerId, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
     "and" = Token(kind = TokenKind.And, ..)
+    "as" = Token(kind = TokenKind.As, ..)
     "break" = Token(kind = TokenKind.Break, ..)
     "continue" = Token(kind = TokenKind.Continue, ..)
     "do" = Token(kind = TokenKind.Do, ..)
@@ -961,9 +962,39 @@ conFieldPat[AstExts[exts], AstIds[AstExts[exts].Ids]] Named[Pat[exts]]:
 
 
 importDecl ImportDecl:
-    "import" "[" p0=path ps=(_"," path)* ","? "]" "NEWLINE":
-        ps.insert(0, p0)
-        ImportDecl(paths = ps)
+    "import" "[" item0=importItem items=(_"," importItem)* ","? "]" "NEWLINE":
+        items.insert(0, item0)
+        ImportDecl(items = items)
+
+
+importItem ImportItem:
+    p=path "/" "*":
+        ImportItem(path = p, importSpec = ImportSpec.Wildcard)
+
+    p=path "/" "[" name0=importName names=(_"," importName)* ","? "]":
+        names.insert(0, name0)
+        ImportItem(path = p, importSpec = ImportSpec.Selective(names = names))
+
+    p=path "as" prefix=^ "UpperId":
+        ImportItem(path = p, importSpec = ImportSpec.Prefixed(prefix = newId(prefix)))
+
+    p=path:
+        let lastId = p.last().unwrap()
+        ImportItem(path = p, importSpec = ImportSpec.Prefixed(prefix = lastId))
+
+
+importName ImportName:
+    orig=^ "LowerId" "as" local=^ "LowerId":
+        ImportName(originalName = newId(orig), localName = newId(local))
+
+    orig=^ "UpperId" "as" local=^ "UpperId":
+        ImportName(originalName = newId(orig), localName = newId(local))
+
+    id=^ "LowerId":
+        ImportName(originalName = newId(id), localName = newId(id))
+
+    id=^ "UpperId":
+        ImportName(originalName = newId(id), localName = newId(id))
 
 
 path Vec[Id]:

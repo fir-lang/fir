@@ -108,7 +108,7 @@ pub struct TraitImpl {
 pub(crate) fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
     let mut env: TraitEnv = Default::default();
 
-    for item in pgm {
+    for item in &pgm.decls {
         let impl_ = match &item.node {
             ast::TopDecl::Impl(impl_) => impl_,
             _ => continue,
@@ -165,7 +165,7 @@ pub(crate) fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv 
     }
 
     // Ensure all declared traits have entries, even those with no impls (e.g. RecRowToList).
-    for item in pgm {
+    for item in &pgm.decls {
         if let ast::TopDecl::Trait(trait_decl) = &item.node {
             env.entry(trait_decl.node.name.node.clone()).or_default();
         }

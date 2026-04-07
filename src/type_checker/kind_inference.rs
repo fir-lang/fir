@@ -10,7 +10,7 @@ use crate::type_checker::{Id, Kind, RecordOrVariant};
 use crate::utils::loc_display;
 
 pub fn add_missing_type_params(pgm: &mut ast::Module) {
-    for decl in pgm {
+    for decl in &mut pgm.decls {
         match &mut decl.node {
             ast::TopDecl::Fun(decl) => {
                 add_missing_type_params_fun(&mut decl.node.sig, &mut Default::default(), &decl.loc)

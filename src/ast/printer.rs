@@ -2,9 +2,9 @@ use crate::{ast::*, type_checker::RecordOrVariant};
 
 use std::fmt::Write;
 
-pub fn print_module(module: &[L<TopDecl>]) {
+pub fn print_module(module: &Module) {
     let mut buf = String::new();
-    for (i, top_decl) in module.iter().enumerate() {
+    for (i, top_decl) in module.decls.iter().enumerate() {
         if i != 0 {
             println!();
         }
@@ -153,11 +153,42 @@ impl FunDecl {
 impl ImportDecl {
     pub fn print(&self, buf: &mut String) {
         buf.push_str("import [\n");
-        for path in self.paths.iter() {
-            let parts: Vec<&str> = path.iter().map(|s| s.as_str()).collect();
-            buf.push_str(&parts.join("/"));
+        for item in self.items.iter() {
+            buf.push_str(&INDENTS[..4]);
+            for (i, segment) in item.path.iter().enumerate() {
+                if i != 0 {
+                    buf.push('/');
+                }
+                buf.push_str(segment);
+            }
+            match &item.import_spec {
+                ImportSpec::Wildcard => {
+                    buf.push_str("/*");
+                }
+                ImportSpec::Prefixed { prefix } => {
+                    if Some(prefix) != item.path.last() {
+                        buf.push_str(" as ");
+                        buf.push_str(prefix);
+                    }
+                }
+                ImportSpec::Selective { names } => {
+                    buf.push_str("/[");
+                    for (i, name) in names.iter().enumerate() {
+                        if i != 0 {
+                            buf.push_str(", ");
+                        }
+                        buf.push_str(&name.original_name);
+                        if name.original_name != name.local_name {
+                            buf.push_str(" as ");
+                            buf.push_str(&name.local_name);
+                        }
+                    }
+                    buf.push(']');
+                }
+            }
             buf.push_str(",\n");
         }
+        buf.push(']');
     }
 }
 
