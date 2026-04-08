@@ -1,6 +1,7 @@
 use crate::ast;
 use crate::collections::*;
 use crate::module::ModulePath;
+use crate::utils::loc_display;
 
 use std::path::Path;
 
@@ -13,28 +14,27 @@ pub struct LoadedProgram {
     pub entry: ModulePath,
 }
 
-pub fn load(entry_file: &Path, import_prelude: bool) -> LoadedProgram {
+pub fn load(entry_file: &Path) -> LoadedProgram {
     let entry = ModulePath::from_file_path(entry_file);
     let mut work: Vec<ModulePath> = vec![entry.clone()];
     let mut modules: HashMap<ModulePath, ast::Module> = HashMap::default();
     modules.insert(entry.clone(), ast::Module::empty());
 
-    if import_prelude {
-        let prelude_path = ModulePath::new(vec![
-            SmolStr::new_static("Fir"),
-            SmolStr::new_static("Prelude"),
-        ]);
-        work.push(prelude_path.clone());
-        modules.insert(prelude_path.clone(), ast::Module::empty());
-    }
+    let prelude_path = ModulePath::new(vec![
+        SmolStr::new_static("Fir"),
+        SmolStr::new_static("Prelude"),
+    ]);
 
     while let Some(module_path) = work.pop() {
         let file_path = module_path.to_file_path();
         let display_name = module_path.to_string();
         let module = crate::parse_file(&file_path, &display_name);
 
+        let mut implicit_prelude = true;
+
         for decl in &module.decls {
             if let ast::TopDecl::Import(import) = &decl.node {
+                implicit_prelude &= !no_implicit_prelude(import);
                 for item in &import.node.items {
                     if !modules.contains_key(&item.path) {
                         modules.insert(item.path.clone(), ast::Module::empty());
@@ -42,6 +42,11 @@ pub fn load(entry_file: &Path, import_prelude: bool) -> LoadedProgram {
                     }
                 }
             }
+        }
+
+        if implicit_prelude && !modules.contains_key(&prelude_path) {
+            modules.insert(prelude_path.clone(), ast::Module::empty());
+            work.push(prelude_path.clone());
         }
 
         let old = modules.insert(module_path, module);
@@ -70,4 +75,28 @@ impl LoadedProgram {
 
         merged_module
     }
+}
+
+fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
+    let attr = match &import.node.attr {
+        Some(attr) => &attr.expr.node,
+        None => return false,
+    };
+    if let ast::Expr::ConSel(ast::Con {
+        ty,
+        con,
+        user_ty_args,
+        ..
+    }) = attr
+        && ty == &ast::Name::new_static("NoImplicitPrelude")
+        && con.is_none()
+        && user_ty_args.is_empty()
+    {
+        return true;
+    }
+    panic!(
+        "{}: Weird `import` attribute: {}",
+        loc_display(&import.loc),
+        attr
+    );
 }

@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 prim type Str
 prim type I32
 
@@ -9,8 +12,8 @@ trait ToStr[a]:
 f(a: a):
     printStr(a.toStr())
 
-# args: --typecheck --no-prelude
+# args: --typecheck
 # expected exit status: 101
 # expected stderr:
 # Unable to resolve predicates:
-# tests/TraitsFail1.fir:10:14: ToStr[a]
+# tests/TraitsFail1.fir:13:14: ToStr[a]

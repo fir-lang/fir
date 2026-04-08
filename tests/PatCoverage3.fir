@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 type Option[t]:
     None
     Some(t)
@@ -33,9 +36,9 @@ main():
         (right = Option.Some(..), ..): ()
         (right = Option.None, ..): ()
 
-# args: --no-prelude --typecheck
+# args: --typecheck
 # expected stderr:
-# tests/PatCoverage3.fir:11:5: Unexhaustive pattern match
-# tests/PatCoverage3.fir:15:5: Unexhaustive pattern match
-# tests/PatCoverage3.fir:26:5: Unexhaustive pattern match
+# tests/PatCoverage3.fir:14:5: Unexhaustive pattern match
+# tests/PatCoverage3.fir:18:5: Unexhaustive pattern match
 # tests/PatCoverage3.fir:29:5: Unexhaustive pattern match
+# tests/PatCoverage3.fir:32:5: Unexhaustive pattern match

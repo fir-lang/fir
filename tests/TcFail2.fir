@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 prim type Str
 prim type I32
 
@@ -8,5 +11,6 @@ type Bool:
 Bool.toStr(self) Str:
     Bool.False
 
-# args: --typecheck --no-prelude
-# expected stderr: tests/TcFail2.fir:9:5: Unable to unify types Bool and Str
+# args: --typecheck
+# expected exit status: 101
+# expected stderr: tests/TcFail2.fir:12:5: Unable to unify types Bool and Str

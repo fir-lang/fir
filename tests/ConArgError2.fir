@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 type Option[t]:
     None
     Some(t)
@@ -10,7 +13,7 @@ main():
         Option.None(_): ()
         Option.Some(_): ()
 
-# args: --typecheck --no-prelude
+# args: --typecheck
 # expected exit status: 101
 # expected stderr:
-# tests/ConArgError2.fir:10:9: Type Option[_1] doesn't take arguments, but applied 1 arguments
+# tests/ConArgError2.fir:13:9: Type Option[_1] doesn't take arguments, but applied 1 arguments

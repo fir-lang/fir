@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 prim type U32
 prim type U64
 prim type Str
@@ -26,4 +29,4 @@ impl Foo[U64]:
     getRecord(self: U64) (..MyRow):
         (msg = "hi")
 
-# args: --typecheck --no-prelude
+# args: --typecheck

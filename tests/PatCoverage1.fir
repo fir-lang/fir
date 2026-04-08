@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 type Bool:
     False
     True
@@ -23,7 +26,7 @@ main():
         Bool.False: ()
         Bool.True: ()
 
-# args: --no-prelude --typecheck
+# args: --typecheck
 # expected stderr:
-# tests/PatCoverage1.fir:6:5: Unexhaustive pattern match
 # tests/PatCoverage1.fir:9:5: Unexhaustive pattern match
+# tests/PatCoverage1.fir:12:5: Unexhaustive pattern match

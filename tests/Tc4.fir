@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 prim type I32
 
 prim printI32(i: I32)
@@ -12,4 +15,4 @@ test():
         Option.Some(a): printI32(a)
         Option.None: ()
 
-# args: --typecheck --no-prelude
+# args: --typecheck

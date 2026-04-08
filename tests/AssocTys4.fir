@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 trait Foo[t]:
     type A
 
@@ -19,4 +22,4 @@ main():
     let x: U64 = Foo.getA[U32, []]()
     ()
 
-# args: --typecheck --no-prelude
+# args: --typecheck

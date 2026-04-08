@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 type Option[t]:
     None
     Some(t)
@@ -12,4 +15,4 @@ main():
     match (l = Option.None, r = Option.None):
         (l = _, r = _): ()
 
-# args: --no-prelude --typecheck
+# args: --typecheck

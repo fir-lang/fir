@@ -75,7 +75,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
     let imports: Vec[Vec[Str]] = Vec.empty()
 
     # Implicitly import `Fir/Prelude` in all modules.
-    # TODO: Implement flag `--no-prelude`.
+    # TODO: Support `#[NoImplicitPrelude]` attribute.
     # TODO: What happens if the module explicitly imports `Fir/Prelude`?
     if path != firPreludePath:
         imports.push(Vec.["Fir", "Prelude"])

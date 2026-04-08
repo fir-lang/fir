@@ -1,6 +1,9 @@
 # `type Void` is an empty type. A function that returns it is considered as diverging.
 # `type Empty = Empty` is a type with just one term: `Empty`.
 
+#[NoImplicitPrelude]
+import []
+
 type Void
 
 type Empty:
@@ -18,4 +21,4 @@ expectsEmpty(val: Empty) ():
 test():
     expectsEmpty(diverges())
 
-# args: --typecheck --no-prelude
+# args: --typecheck

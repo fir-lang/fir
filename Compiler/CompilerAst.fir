@@ -113,6 +113,9 @@ type CNamedField = NamedField[CompilerAstExts]
 type CFunDecl = FunDecl[CompilerAstExts]
 
 
+type CImportDecl = ImportDecl[CompilerAstExts]
+
+
 type CFunSig = FunSig[CompilerAstExts]
 
 

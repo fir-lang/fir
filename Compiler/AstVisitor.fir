@@ -37,7 +37,7 @@ trait Visitor[v]:
     visitFunDecl(self: v, d: CFunDecl):
         ()
 
-    visitImportDecl(self: v, d: ImportDecl):
+    visitImportDecl(self: v, d: CImportDecl):
         ()
 
     visitTraitDecl(self: v, d: CTraitDecl):

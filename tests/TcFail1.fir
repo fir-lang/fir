@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 prim type Str
 prim type I32
 
@@ -8,9 +11,9 @@ impl T[Str]:
     toStr(self: Str) I32:
         123
 
-# args: --typecheck --no-prelude
+# args: --typecheck
 # expected exit status: 101
 # expected stderr:
-# tests/TcFail1.fir:8:5: Trait method implementation of toStr does not match the trait method type
+# tests/TcFail1.fir:11:5: Trait method implementation of toStr does not match the trait method type
 #                                 Trait method type:          [?exn#0: *] Fn(Str) Str / ?exn#0
 #                                 Implementation method type: [?exn: *] Fn(Str) I32 / ?exn

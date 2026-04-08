@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 prim type I32
 
 type Bool:
@@ -10,4 +13,4 @@ test() I32:
 
     456
 
-# args: --typecheck --no-prelude
+# args: --typecheck

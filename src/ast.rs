@@ -148,7 +148,7 @@ pub enum TopDecl {
 /// A type declaration: `type Vec[t](...)`, `value type Bool: ...`.
 #[derive(Debug, Clone)]
 pub struct TypeDecl {
-    /// Attributes of the type: e.g. `#[derive(ToDoc, Eq)]`.
+    /// Attributes of the type. E.g. `#[derive(ToDoc, Eq)]`.
     pub attr: Option<Attribute>,
 
     /// Whether this is a value type.
@@ -854,8 +854,10 @@ pub struct VariantExpr {
     pub inferred_ty: Option<Ty>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct ImportDecl {
+    /// Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`.
+    pub attr: Option<Attribute>,
     pub items: Vec<ImportItem>,
 }
 

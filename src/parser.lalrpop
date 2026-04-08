@@ -1115,13 +1115,8 @@ FieldPat: Named<L<Pat>> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImportDecl: L<ImportDecl> = {
-    <l:@L> "import" "[" <items:Sep<ImportItem, ",">> "]" NEWLINE <r:@R> =>
-        L::new(
-            module,
-            l,
-            r,
-            ImportDecl { items }
-        ),
+    <l:@L> <attr:Attribute?> "import" "[" <items:Sep<ImportItem, ",">> "]" NEWLINE <r:@R> =>
+        L::new(module, l, r, ImportDecl { attr, items }),
 }
 
 ImportItem: ImportItem = {

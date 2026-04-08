@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 trait Foo[t]:
     type A
 
@@ -19,6 +22,6 @@ main():
     let x: U32 = Foo.getA[U32, []]()
     ()
 
-# args: --typecheck --no-prelude
+# args: --typecheck
 # expected exit status: 101
-# expected stderr: tests/AssocTysFail5.fir:19:18: Unable to unify types U64 and U32
+# expected stderr: tests/AssocTysFail5.fir:22:18: Unable to unify types U64 and U32

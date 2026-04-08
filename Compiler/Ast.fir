@@ -144,7 +144,7 @@ type TopDecl[exts]:
     Fun(FunDecl[exts])
 
     ## An import declaration.
-    Import(ImportDecl)
+    Import(ImportDecl[exts])
 
     ## A trait declaration.
     Trait(TraitDecl[exts])
@@ -340,7 +340,10 @@ type SelfParam[exts]:
 
 
 #[derive(ToDoc)]
-type ImportDecl(
+type ImportDecl[exts](
+    ## Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`.
+    attr: Option[Attribute[exts]],
+
     ## Imported items, e.g. `[Fir/Prelude, Compiler/Parser/[parse]]`.
     items: Vec[ImportItem],
 )

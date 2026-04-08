@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 trait ToStr[a]:
     toStr(self: a) Str
 
@@ -13,8 +16,8 @@ prim type I32
 prim type U32
 prim printStr(s: Str) ()
 
-# args: --typecheck --no-prelude
+# args: --typecheck
 # expected exit status: 101
 # expected stderr:
 # Unable to resolve predicates:
-# tests/TraitsFail2.fir:7:6: ToStr[U32]
+# tests/TraitsFail2.fir:10:6: ToStr[U32]

@@ -1,7 +1,10 @@
+#[NoImplicitPrelude]
+import []
+
 trait Foo[t]:
     type A
     type A
 
-# args: --typecheck --no-prelude
+# args: --typecheck
 # expected exit status: 101
-# expected stderr: tests/AssocTysFail1.fir:3:10: Associated type A declared multiple times
+# expected stderr: tests/AssocTysFail1.fir:6:10: Associated type A declared multiple times

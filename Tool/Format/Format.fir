@@ -500,7 +500,7 @@ _formatSigArgList(
     (doc = argList, rparen = rparen)
 
 
-ImportDecl.format(self, tokens: Array[Token]) Doc:
+ImportDecl.format(self: FmtImportDecl, tokens: Array[Token]) Doc:
     assert(not self.items.isEmpty())
 
     let firstItemFirstToken = self.items.get(0).path.get(0).token
@@ -2114,6 +2114,9 @@ type FmtNamedField = NamedField[DefaultAstExts]
 
 
 type FmtFunDecl = FunDecl[DefaultAstExts]
+
+
+type FmtImportDecl = ImportDecl[DefaultAstExts]
 
 
 type FmtFunArg = FunArg[DefaultAstExts]

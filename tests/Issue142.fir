@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 trait Trait1[a]:
     t1(self: a)
 
@@ -10,9 +13,9 @@ impl Trait1[Type[x]]:
     t1[Trait2[x]](self: Type[x])
         ()
 
-# args: --typecheck --no-prelude
+# args: --typecheck
 # expected exit status: 101
 # expected stderr:
-# tests/Issue142.fir:10:5: Trait method implementation of t1 does not match the trait method type
+# tests/Issue142.fir:13:5: Trait method implementation of t1 does not match the trait method type
 #                                 Trait method type:          [?exn#0: *] Fn(Type[x]) () / ?exn#0
 #                                 Implementation method type: [?exn: *] [Trait2[x]] Fn(Type[x]) () / ?exn

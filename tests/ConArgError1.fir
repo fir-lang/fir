@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 type T:
     T1
 
@@ -5,7 +8,7 @@ main():
     match T.T1:
         T.T1(_): ()
 
-# args: --typecheck --no-prelude
+# args: --typecheck
 # expected exit status: 101
 # expected stderr:
-# tests/ConArgError1.fir:6:9: Type T doesn't take arguments, but applied 1 arguments
+# tests/ConArgError1.fir:9:9: Type T doesn't take arguments, but applied 1 arguments

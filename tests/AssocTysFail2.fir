@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 trait Foo[t]:
     type A
 
@@ -9,6 +12,6 @@ impl Foo[U32]:
     type A = U64
     type A = U32
 
-# args: --typecheck --no-prelude
+# args: --typecheck
 # expected exit status: 101
-# expected stderr: tests/AssocTysFail2.fir:10:10: Associated type A implemented mutiple times
+# expected stderr: tests/AssocTysFail2.fir:13:10: Associated type A implemented mutiple times

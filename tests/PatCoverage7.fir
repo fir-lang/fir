@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 type Option[t]:
     None
     Some(t)
@@ -8,4 +11,4 @@ main():
         (l = Option.Some(a), r = Option.Some(b)): ()
         _: ()
 
-# args: --no-prelude --typecheck
+# args: --typecheck

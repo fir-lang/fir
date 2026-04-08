@@ -29,12 +29,6 @@ pub fn get_fir_args(mode: Mode) -> FirArgs {
                 .help("Stop after type checking"),
         )
         .arg(
-            clap::Arg::new(NO_PRELUDE)
-                .long(NO_PRELUDE)
-                .num_args(0)
-                .help("Don't implicitly import Fir.Prelude."),
-        )
-        .arg(
             clap::Arg::new(BACKTRACE)
                 .long(BACKTRACE)
                 .num_args(0)
@@ -114,7 +108,6 @@ pub fn get_fir_args(mode: Mode) -> FirArgs {
     let mut opts = CompilerOpts {
         parse: matches.get_flag(PARSE),
         typecheck: matches.get_flag(TYPECHECK),
-        no_prelude: matches.get_flag(NO_PRELUDE),
         backtrace: matches.get_flag(BACKTRACE),
         tokenize: matches.get_flag(TOKENIZE),
         scan: matches.get_flag(SCAN),
@@ -148,7 +141,6 @@ pub fn get_fir_args(mode: Mode) -> FirArgs {
 
 const PARSE: &str = "parse";
 const TYPECHECK: &str = "typecheck";
-const NO_PRELUDE: &str = "no-prelude";
 const BACKTRACE: &str = "backtrace";
 const TOKENIZE: &str = "tokenize";
 const SCAN: &str = "scan";

@@ -36,6 +36,10 @@ And when checking `B`, we want:
 But the second row causes looping.
 |#
 
+#[NoImplicitPrelude]
+import []
+
+
 type Recursive:
     A
     B(Recursive)
@@ -45,4 +49,4 @@ main():
     match Recursive.A:
         _: ()
 
-# args: --no-prelude --typecheck
+# args: --typecheck

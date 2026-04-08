@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 trait Test[t]:
     test(self: t)
 
@@ -13,4 +16,4 @@ prim type Str
 prim type U32
 prim printStr(s: Str)
 
-# args: --typecheck --no-prelude
+# args: --typecheck

@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 trait Foo[t]:
     type A
 
@@ -14,4 +17,4 @@ test[Foo[t].A = U64]():
 main():
     test[U32, []]()
 
-# args: --typecheck --no-prelude
+# args: --typecheck

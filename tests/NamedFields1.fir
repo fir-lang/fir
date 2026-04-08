@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 type Result[t, e]:
     Ok(val: t)
     Err(val: e)
@@ -19,4 +22,4 @@ resultToString(result: Result[I32, I32]) Str:
         Result.Err(val = v):
             "Err(`v`)"
 
-# args: --typecheck --no-prelude
+# args: --typecheck

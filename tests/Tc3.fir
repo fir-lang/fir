@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 prim type I32
 
 trait T[a]:
@@ -13,4 +16,4 @@ impl T[A]:
         self.getI32()
         ()
 
-# args: --typecheck --no-prelude
+# args: --typecheck

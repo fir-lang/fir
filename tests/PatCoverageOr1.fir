@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 type Bool:
     False
     True
@@ -19,5 +22,5 @@ main():
     match Option.None:
         Option.Some(Bool.True | Bool.False) | Option.None: ()
 
-# args: --no-prelude --typecheck
-# expected stderr: tests/PatCoverageOr1.fir:16:5: Unexhaustive pattern match
+# args: --typecheck
+# expected stderr: tests/PatCoverageOr1.fir:19:5: Unexhaustive pattern match

@@ -39,7 +39,6 @@ pub struct CompilerOpts {
     /// Stop after type checking.
     pub typecheck: bool,
 
-    pub no_prelude: bool,
     pub backtrace: bool,
 
     /// Print tokens and stop.
@@ -159,7 +158,7 @@ mod native {
         }
 
         let file_path = Path::new(&program); // "examples/Foo.fir"
-        let loaded_program = module_loader::load(file_path, !opts.no_prelude);
+        let loaded_program = module_loader::load(file_path);
         let mut module = loaded_program.merge();
 
         deriving::expand_derives(&mut module);
@@ -382,7 +381,7 @@ mod wasm {
         // NB. This path handled specially in the web page, it returns the program input field
         // contents.
         let file_path = Path::new("Main.fir");
-        let loaded_program = module_loader::load(file_path, true);
+        let loaded_program = module_loader::load(file_path);
         let mut module = loaded_program.merge();
 
         deriving::expand_derives(&mut module);

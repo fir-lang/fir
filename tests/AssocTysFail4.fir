@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 trait Foo[t]:
     type A
 
@@ -17,6 +20,6 @@ test[Foo[t].A = U64]():
 main():
     test[U64, []]()
 
-# args: --typecheck --no-prelude
+# args: --typecheck
 # expected exit status: 101
-# expected stderr: tests/AssocTysFail4.fir:18:5: Unable to unify types U64 and U32
+# expected stderr: tests/AssocTysFail4.fir:21:5: Unable to unify types U64 and U32

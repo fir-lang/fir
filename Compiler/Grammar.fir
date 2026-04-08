@@ -4688,10 +4688,67 @@ conFieldPat[AstExts[exts], AstIds[AstExts[exts].Ids],](
     throw(state.updateErrorCursor(state._cursor))
 
 
-importDecl(state: ParserState[Token, ()]) ImportDecl / U32:
+importDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) ImportDecl[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let attr = attr(state)
+                    attr,
+            )
+            let attr = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Import, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Newline, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                ImportDecl(attr, items = Vec.empty())
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let attr = attr(state)
+                    attr,
+            )
+            let attr = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Import, ..):
                 state._cursor += 1
@@ -4747,7 +4804,7 @@ importDecl(state: ParserState[Token, ()]) ImportDecl / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 items.insert(0, item0)
-                ImportDecl(items = items)
+                ImportDecl(attr, items = items)
             val,
     )
     match altResult:

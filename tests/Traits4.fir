@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 trait ToStr[a]:
     toStr(self: a) Str
 
@@ -10,4 +13,4 @@ prim type Str
 prim type I32
 prim printStr(s: Str) ()
 
-# args: --typecheck --no-prelude
+# args: --typecheck

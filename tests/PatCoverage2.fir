@@ -1,3 +1,6 @@
+#[NoImplicitPrelude]
+import []
+
 type Option[t]:
     None
     Some(t)
@@ -45,10 +48,10 @@ main():
         Option.None: ()
         Option.Some(Bool.False): ()
 
-# args: --no-prelude --typecheck
+# args: --typecheck
 # expected stderr:
-# tests/PatCoverage2.fir:13:5: Unexhaustive pattern match
 # tests/PatCoverage2.fir:16:5: Unexhaustive pattern match
 # tests/PatCoverage2.fir:19:5: Unexhaustive pattern match
-# tests/PatCoverage2.fir:30:5: Unexhaustive pattern match
-# tests/PatCoverage2.fir:34:5: Unexhaustive pattern match
+# tests/PatCoverage2.fir:22:5: Unexhaustive pattern match
+# tests/PatCoverage2.fir:33:5: Unexhaustive pattern match
+# tests/PatCoverage2.fir:37:5: Unexhaustive pattern match
