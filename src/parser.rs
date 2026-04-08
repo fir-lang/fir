@@ -1,8 +1,9 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: d10250c63ea401b2324c9807cd2f72ef0703e2a1b2c7724e6b471d0b32de887a
+// sha3: 19bb4e54d5381b2e6d2c4d93c4e98518a1f31a6c03d987c0aefddebe2ea7c412
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
+use crate::module::ModulePath;
 use crate::parser_utils::*;
 use crate::token::*;
 use lexgen_util::{LexerError, Loc};
@@ -22,6 +23,7 @@ mod __parse__LExpr {
 
     use crate::ast::*;
     use crate::interpolation::{str_parts, copy_update_escapes};
+    use crate::module::ModulePath;
     use crate::parser_utils::*;
     use crate::token::*;
     use smol_str::SmolStr;
@@ -16985,6 +16987,7 @@ mod __parse__LStmt {
 
     use crate::ast::*;
     use crate::interpolation::{str_parts, copy_update_escapes};
+    use crate::module::ModulePath;
     use crate::parser_utils::*;
     use crate::token::*;
     use smol_str::SmolStr;
@@ -33948,6 +33951,7 @@ mod __parse__Module {
 
     use crate::ast::*;
     use crate::interpolation::{str_parts, copy_update_escapes};
+    use crate::module::ModulePath;
     use crate::parser_utils::*;
     use crate::token::*;
     use smol_str::SmolStr;
@@ -55377,10 +55381,12 @@ fn __action178<'a>(
     (_, path, _): (Loc, (Vec<SmolStr>, Option<ImportSpec>), Loc),
 ) -> ImportItem {
     {
-        let (path, spec) = path;
+        let (mut path, spec) = path;
+        path.reverse();
         let spec = spec.unwrap_or_else(|| ImportSpec::Prefixed {
             prefix: path.last().unwrap().clone(),
         });
+        let path = ModulePath::new(path);
         ImportItem {
             path,
             import_spec: spec,
@@ -55401,7 +55407,9 @@ fn __action179<'a>(
     (_, id, _): (Loc, Token, Loc),
 ) -> ImportItem {
     {
-        let (path, _) = path;
+        let (mut path, _) = path;
+        path.reverse();
+        let path = ModulePath::new(path);
         ImportItem {
             path,
             import_spec: ImportSpec::Prefixed {
@@ -55470,7 +55478,7 @@ fn __action183<'a>(
 ) -> (Vec<SmolStr>, Option<ImportSpec>) {
     {
         let (mut rest_path, rest_spec) = rest;
-        rest_path.insert(0, id.smol_str());
+        rest_path.push(id.smol_str());
         (rest_path, rest_spec)
     }
 }

@@ -155,18 +155,13 @@ impl ImportDecl {
         buf.push_str("import [\n");
         for item in self.items.iter() {
             buf.push_str(&INDENTS[..4]);
-            for (i, segment) in item.path.iter().enumerate() {
-                if i != 0 {
-                    buf.push('/');
-                }
-                buf.push_str(segment);
-            }
+            buf.push_str(&item.path.to_string());
             match &item.import_spec {
                 ImportSpec::Wildcard => {
                     buf.push_str("/*");
                 }
                 ImportSpec::Prefixed { prefix } => {
-                    if Some(prefix) != item.path.last() {
+                    if Some(prefix) != item.path.segments().last() {
                         buf.push_str(" as ");
                         buf.push_str(prefix);
                     }

@@ -4,6 +4,7 @@ pub mod printer;
 
 use crate::collections::HashMap;
 use crate::interpolation::StrPart;
+use crate::module::ModulePath;
 pub use crate::name::Name;
 pub use crate::token::IntKind;
 use crate::type_checker::{Kind, Ty};
@@ -117,6 +118,12 @@ impl Loc {
 #[derive(Debug, Clone)]
 pub struct Module {
     pub decls: Vec<L<TopDecl>>,
+}
+
+impl Module {
+    pub fn empty() -> Module {
+        Module { decls: vec![] }
+    }
 }
 
 /// A top-level declaration.
@@ -865,7 +872,7 @@ pub struct ImportDecl {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportItem {
     /// `A/B/C` in the examples.
-    pub path: Vec<SmolStr>,
+    pub path: ModulePath,
 
     /// Specifies that to import, and how, from the `path`.
     pub import_spec: ImportSpec,

@@ -9,11 +9,12 @@ mod ast;
 pub mod cli;
 mod collections;
 mod deriving;
-mod import_resolver;
 mod interpolation;
 mod interpreter;
 mod lexer;
 mod lowering;
+mod module;
+mod module_loader;
 mod mono_ast;
 mod monomorph;
 mod name;
@@ -158,14 +159,8 @@ mod native {
         }
 
         let file_path = Path::new(&program); // "examples/Foo.fir"
-        let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
-
-        let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
-        let mut module = import_resolver::resolve_imports(
-            module,
-            !opts.no_prelude, // import_prelude
-            Some(file_path),
-        );
+        let loaded_program = module_loader::load(file_path, !opts.no_prelude);
+        let mut module = loaded_program.merge();
 
         deriving::expand_derives(&mut module);
 
@@ -261,7 +256,7 @@ mod native {
         }
     }
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
+    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &str) -> ast::Module {
         let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
             panic!(
                 "Unable to read file {} for module {}: {}",
@@ -337,10 +332,11 @@ mod wasm {
     use smol_str::SmolStr;
     use wasm_bindgen::prelude::wasm_bindgen;
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
+    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &str) -> ast::Module {
         let path = path.as_ref().to_string_lossy();
         let contents = read_file_utf8(&path);
-        parse_module(&module, &contents)
+        let module_path: SmolStr = path.into();
+        parse_module(&module_path, &contents)
     }
 
     #[wasm_bindgen]
@@ -383,9 +379,11 @@ mod wasm {
     pub fn run_wasm(pgm: &str, mut args: Vec<String>) {
         args.insert(0, pgm.to_string());
 
-        let module_name = SmolStr::new_static("FirWeb");
-        let module = parse_module(&module_name, pgm);
-        let mut module = import_resolver::resolve_imports(module, true, None);
+        // NB. This path handled specially in the web page, it returns the program input field
+        // contents.
+        let file_path = Path::new("Main.fir");
+        let loaded_program = module_loader::load(file_path, true);
+        let mut module = loaded_program.merge();
 
         deriving::expand_derives(&mut module);
 
@@ -484,6 +482,9 @@ mod tests {
     #[test]
     fn parse_imports() {
         use crate::ast::{ImportSpec, TopDecl};
+        use crate::module::ModulePath;
+
+        use smol_str::SmolStr;
 
         let pgm = indoc::indoc! {"
             import [
@@ -507,11 +508,25 @@ mod tests {
         assert_eq!(import.items.len(), 6);
 
         // 1: A/B/C/*
-        assert_eq!(import.items[0].path, vec!["A", "B", "C"]);
+        assert_eq!(
+            import.items[0].path,
+            ModulePath::new(vec![
+                SmolStr::new_static("A"),
+                SmolStr::new_static("B"),
+                SmolStr::new_static("C")
+            ])
+        );
         assert!(matches!(import.items[0].import_spec, ImportSpec::Wildcard));
 
         // 2: A/B/D (default prefix D)
-        assert_eq!(import.items[1].path, vec!["A", "B", "D"]);
+        assert_eq!(
+            import.items[1].path,
+            ModulePath::new(vec![
+                SmolStr::new_static("A"),
+                SmolStr::new_static("B"),
+                SmolStr::new_static("D")
+            ])
+        );
         match &import.items[1].import_spec {
             ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "D"),
             other => panic!("expected Prefixed, got {:?}", other),
