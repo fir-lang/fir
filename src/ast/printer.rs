@@ -28,8 +28,21 @@ impl TopDecl {
     }
 }
 
+impl Attribute {
+    pub fn print(&self, buf: &mut String, indent: u32) {
+        buf.push_str("#[");
+        self.expr.node.print(buf, indent);
+        buf.push_str("]\n");
+    }
+}
+
 impl TypeDecl {
     pub fn print(&self, buf: &mut String, indent: u32) {
+        if let Some(attr) = &self.attr {
+            attr.print(buf, indent);
+            buf.push_str(&INDENTS[..indent as usize]);
+        }
+
         if !self.type_param_kinds.is_empty() {
             buf.push_str("# inferred kinds = ");
             for (i, (type_param, kind)) in self
@@ -154,6 +167,9 @@ impl FunDecl {
 
 impl ImportDecl {
     pub fn print(&self, buf: &mut String) {
+        if let Some(attr) = &self.attr {
+            attr.print(buf, 0);
+        }
         buf.push_str("import [\n");
         for item in self.items.iter() {
             buf.push_str(&INDENTS[..4]);
