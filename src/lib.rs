@@ -158,7 +158,7 @@ mod native {
         }
 
         let file_path = Path::new(&program); // "examples/Foo.fir"
-        let loaded_program = module_loader::load(file_path);
+        let mut loaded_program = module_loader::load(file_path);
 
         if opts.print_parsed_ast {
             loaded_program.print();
@@ -168,9 +168,9 @@ mod native {
             return;
         }
 
-        let mut module = loaded_program.merge();
+        deriving::expand_derives(&mut loaded_program);
 
-        deriving::expand_derives(&mut module);
+        let mut module = loaded_program.merge();
 
         let tys = type_checker::check_module(&mut module, &opts.main);
 
@@ -382,10 +382,9 @@ mod wasm {
         // NB. This path handled specially in the web page, it returns the program input field
         // contents.
         let file_path = Path::new("Main.fir");
-        let loaded_program = module_loader::load(file_path);
+        let mut loaded_program = module_loader::load(file_path);
+        deriving::expand_derives(&mut loaded_program);
         let mut module = loaded_program.merge();
-
-        deriving::expand_derives(&mut module);
 
         type_checker::check_module(&mut module, "main");
 

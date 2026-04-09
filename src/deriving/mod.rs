@@ -2,12 +2,19 @@ pub mod eq;
 pub mod to_doc;
 
 use crate::ast;
+use crate::module_loader::LoadedProgram;
 use crate::utils::loc_display;
 
 use smol_str::SmolStr;
 
-/// Expand all `#[derive(...)]` attributes in the module, generating `ImplDecl` nodes.
-pub(crate) fn expand_derives(module: &mut ast::Module) {
+/// Expand all `#[derive(...)]` attributes in the program, generating `ImplDecl` nodes.
+pub(crate) fn expand_derives(pgm: &mut LoadedProgram) {
+    for module in pgm.modules.values_mut() {
+        expand_derives_module(module);
+    }
+}
+
+fn expand_derives_module(module: &mut ast::Module) {
     let mut new_impls: Vec<ast::L<ast::TopDecl>> = vec![];
 
     for decl in module.decls.iter() {
