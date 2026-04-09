@@ -26,7 +26,7 @@ pub struct SccGraph {
     pub nodes: Vec<SccNode>,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SccIdx(usize);
 
 impl SccIdx {
@@ -306,22 +306,26 @@ impl fmt::Display for SccGraph {
 
             write!(f, "SCC {}: ", i)?;
 
-            if node.modules.len() == 1 {
-                write!(f, "{}", node.modules[0])?;
-            } else {
-                write!(f, "{{")?;
-                for (j, m) in node.modules.iter().enumerate() {
-                    if j != 0 {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "{}", m)?;
+            write!(f, "{{")?;
+            for (j, m) in node.modules.iter().enumerate() {
+                if j != 0 {
+                    write!(f, ", ")?;
                 }
-                write!(f, "}}")?;
+                write!(f, "{}", m)?;
             }
+            write!(f, "}}")?;
 
-            if !node.dependents.is_empty() {
-                write!(f, " -> {:?}", node.dependents)?;
-            }
+            let mut dependents = node.dependents.clone();
+            dependents.sort();
+
+            let mut dependencies = node.dependencies.clone();
+            dependencies.sort();
+
+            write!(
+                f,
+                " dependents={:?} dependencies={:?}",
+                dependents, dependencies
+            )?;
         }
         Ok(())
     }

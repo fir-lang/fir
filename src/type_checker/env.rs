@@ -9,26 +9,24 @@ use crate::name::Name;
 /// used in the module to their definitions.
 #[allow(unused)]
 pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name, Id>> {
-    let mut envs: HashMap<ModulePath, HashMap<Name, Id>> = pgm
-        .modules
-        .keys()
-        .map(|module_path| (module_path.clone(), Default::default()))
-        .collect();
+    let mut envs: HashMap<ModulePath, HashMap<Name, Id>> = Default::default();
 
-    // TODO: We currently allow importing the same name from multiple modules. We should raise an
-    // error *at the use site* when a name can be resolved to multiple definitions.
+    // For each of the modules in the SCC, initialize envs with
+    // (1) defined things
+    // (2) imported things
+    // We add defined things first, and don't allow imported things to shadow defined things.
+    // (imported things silently ignored)
+
+    // TODO: We currently allow importing the same name (with different definitions) from multiple
+    // modules. We should raise an error *at the use site* when a name can be resolved to multiple
+    // definitions.
 
     // NB. SCC graph is topologically sorted.
     for SccNode { modules, .. } in pgm.scc_graph.nodes.iter() {
-        // For each of the modules in the SCC, initialize envs with
-        // (1) defined things
-        // (2) imported things
-        // We add defined things first, and don't allow imported things to shadow defined things.
-        // (imported things silently ignored)
         for module_path in modules.iter() {
             // (1) Locally defined things.
             {
-                let mut env: HashMap<Name, Id> = envs.remove(module_path).unwrap();
+                let mut env: HashMap<Name, Id> = Default::default();
                 let module = pgm.modules.get(module_path).unwrap();
                 for decl in module.decls.iter() {
                     match &decl.node {
@@ -56,28 +54,12 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
                         ast::TopDecl::Import(_) | ast::TopDecl::Impl(_) => {}
                     }
                 }
-                envs.insert(module_path.clone(), env);
-            }
-
-            // (2) Imported things. We don't support selective imports yet, so everything public in
-            // an imported module will be available to the importing module.
-            for imported_module in pgm.dep_graph.get(module_path).unwrap() {
-                // It's a bit strange for a module to import itself, but it's also harmless. We may
-                // want to consider generating a warning maybe.
-                if imported_module == module_path {
-                    continue;
-                }
-                let imported_module_env = envs
-                    .remove(imported_module)
-                    .unwrap_or_else(|| panic!("Imported module {imported_module} not in envs"));
-                let mut importing_module_env = envs.remove(module_path).unwrap();
-                import(&mut importing_module_env, &imported_module_env);
-                envs.insert(imported_module.clone(), imported_module_env);
-                envs.insert(module_path.clone(), importing_module_env);
+                let old = envs.insert(module_path.clone(), env);
+                assert!(old.is_none());
             }
         }
 
-        // Propagate imports.
+        // (2) Add and propagate imports.
         let mut updated = true;
         while updated {
             updated = false;
