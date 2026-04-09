@@ -10,7 +10,7 @@ use smol_str::SmolStr;
 ///
 /// Note that module paths are not canonicalized. There can be multiple `ModulePath` objects with
 /// the same segments.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ModulePath {
     segments: Rc<[SmolStr]>,
 }
@@ -44,6 +44,12 @@ impl ModulePath {
         }
         path.set_extension("fir");
         path
+    }
+}
+
+impl std::fmt::Debug for ModulePath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as std::fmt::Display>::fmt(self, f)
     }
 }
 

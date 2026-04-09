@@ -2,15 +2,17 @@ use crate::{ast::*, type_checker::RecordOrVariant};
 
 use std::fmt::Write;
 
-pub fn print_module(module: &Module) {
-    let mut buf = String::new();
-    for (i, top_decl) in module.decls.iter().enumerate() {
-        if i != 0 {
-            println!();
+impl Module {
+    pub fn print(&self) {
+        let mut buf = String::new();
+        for (i, top_decl) in self.decls.iter().enumerate() {
+            if i != 0 {
+                println!();
+            }
+            top_decl.node.print(&mut buf, 0);
+            println!("{buf}");
+            buf.clear();
         }
-        top_decl.node.print(&mut buf, 0);
-        println!("{buf}");
-        buf.clear();
     }
 }
 

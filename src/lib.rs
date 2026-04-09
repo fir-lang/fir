@@ -159,22 +159,23 @@ mod native {
 
         let file_path = Path::new(&program); // "examples/Foo.fir"
         let loaded_program = module_loader::load(file_path);
-        let mut module = loaded_program.merge();
-
-        deriving::expand_derives(&mut module);
 
         if opts.print_parsed_ast {
-            ast::printer::print_module(&module);
+            loaded_program.print();
         }
 
         if opts.parse {
             return;
         }
 
+        let mut module = loaded_program.merge();
+
+        deriving::expand_derives(&mut module);
+
         let tys = type_checker::check_module(&mut module, &opts.main);
 
         if opts.print_checked_ast {
-            ast::printer::print_module(&module);
+            module.print();
         }
 
         if opts.typecheck {

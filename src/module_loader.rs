@@ -75,6 +75,17 @@ impl LoadedProgram {
 
         merged_module
     }
+
+    pub fn print(&self) {
+        for (i, (module_path, module)) in self.modules.iter().enumerate() {
+            if i != 0 {
+                println!();
+            }
+            println!("mod {} {{\n", module_path);
+            module.print();
+            println!("\n}} # {}", module_path);
+        }
+    }
 }
 
 fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
