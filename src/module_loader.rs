@@ -7,14 +7,14 @@ use std::path::Path;
 
 use smol_str::SmolStr;
 
-pub struct LoadedProgram {
+pub struct LoadedPgm {
     pub modules: HashMap<ModulePath, ast::Module>,
 
     #[allow(dead_code)]
     pub entry: ModulePath,
 }
 
-pub fn load(entry_file: &Path) -> LoadedProgram {
+pub fn load(entry_file: &Path) -> LoadedPgm {
     let entry = ModulePath::from_file_path(entry_file);
     let mut work: Vec<ModulePath> = vec![entry.clone()];
     let mut modules: HashMap<ModulePath, ast::Module> = HashMap::default();
@@ -53,10 +53,10 @@ pub fn load(entry_file: &Path) -> LoadedProgram {
         debug_assert!(old.unwrap().decls.is_empty());
     }
 
-    LoadedProgram { modules, entry }
+    LoadedPgm { modules, entry }
 }
 
-impl LoadedProgram {
+impl LoadedPgm {
     pub fn merge(self) -> ast::Module {
         let mut merged_module: ast::Module = ast::Module::empty();
 
