@@ -101,7 +101,7 @@ pub fn load(entry_file: &Path) -> LoadedPgm {
     }
 
     let scc_graph = build_scc_graph(&dep_graph);
-    println!("{scc_graph}");
+    // println!("{scc_graph}");
 
     LoadedPgm {
         modules,

@@ -29,7 +29,7 @@ impl std::fmt::Display for Name {
 
 impl std::fmt::Debug for Name {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(&self.0, f)
+        std::fmt::Debug::fmt(&self.0, f)
     }
 }
 

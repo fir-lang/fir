@@ -7,6 +7,7 @@ use crate::name::Name;
 
 /// For each module in the program, generate the module environment that maps the names that can be
 /// used in the module to their definitions.
+#[allow(unused)]
 pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name, Id>> {
     let mut envs: HashMap<ModulePath, HashMap<Name, Id>> = pgm
         .modules
