@@ -2,13 +2,13 @@ pub mod eq;
 pub mod to_doc;
 
 use crate::ast;
-use crate::module_loader::LoadedProgram;
+use crate::module_loader::LoadedPgm;
 use crate::utils::loc_display;
 
 use smol_str::SmolStr;
 
 /// Expand all `#[derive(...)]` attributes in the program, generating `ImplDecl` nodes.
-pub(crate) fn expand_derives(pgm: &mut LoadedProgram) {
+pub(crate) fn expand_derives(pgm: &mut LoadedPgm) {
     for module in pgm.modules.values_mut() {
         expand_derives_module(module);
     }

@@ -9,6 +9,7 @@ mod ast;
 pub mod cli;
 mod collections;
 mod deriving;
+mod id;
 mod interpolation;
 mod interpreter;
 mod lexer;
@@ -160,6 +161,9 @@ mod native {
 
         let file_path = Path::new(&program); // "examples/Foo.fir"
         let mut loaded_program = module_loader::load(file_path);
+
+        let envs = type_checker::env::generate_module_envs(&loaded_program);
+        println!("{:#?}", envs);
 
         if opts.print_parsed_ast {
             loaded_program.print();

@@ -2,6 +2,7 @@
 
 mod apply;
 mod convert;
+pub(crate) mod env;
 mod expr;
 pub(crate) mod kind_inference;
 mod normalization;
@@ -347,7 +348,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 );
             }
 
-            ast::TopDecl::Import(_) | ast::TopDecl::Fun(_) | ast::TopDecl::Impl(_) => continue,
+            ast::TopDecl::Import(_) | ast::TopDecl::Fun(_) | ast::TopDecl::Impl(_) => {}
         }
     }
 
