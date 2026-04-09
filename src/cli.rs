@@ -53,6 +53,12 @@ pub fn get_fir_args(mode: Mode) -> FirArgs {
                 .help("Print AST after parsing."),
         )
         .arg(
+            clap::Arg::new(PRINT_EXPANDED_AST)
+                .long(PRINT_EXPANDED_AST)
+                .num_args(0)
+                .help("Print AST after macro expansion."),
+        )
+        .arg(
             clap::Arg::new(PRINT_CHECKED_AST)
                 .long(PRINT_CHECKED_AST)
                 .num_args(0)
@@ -112,6 +118,7 @@ pub fn get_fir_args(mode: Mode) -> FirArgs {
         tokenize: matches.get_flag(TOKENIZE),
         scan: matches.get_flag(SCAN),
         print_parsed_ast: matches.get_flag(PRINT_PARSED_AST),
+        print_expanded_ast: matches.get_flag(PRINT_EXPANDED_AST),
         print_checked_ast: matches.get_flag(PRINT_CHECKED_AST),
         print_mono_ast: matches.get_flag(PRINT_MONO_AST),
         print_lowered_ast: matches.get_flag(PRINT_LOWERED_AST),
@@ -145,6 +152,7 @@ const BACKTRACE: &str = "backtrace";
 const TOKENIZE: &str = "tokenize";
 const SCAN: &str = "scan";
 const PRINT_PARSED_AST: &str = "print-parsed-ast";
+const PRINT_EXPANDED_AST: &str = "print-expanded-ast";
 const PRINT_CHECKED_AST: &str = "print-checked-ast";
 const PRINT_MONO_AST: &str = "print-mono-ast";
 const PRINT_LOWERED_AST: &str = "print-lowered-ast";

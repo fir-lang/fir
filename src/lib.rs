@@ -48,6 +48,7 @@ pub struct CompilerOpts {
     pub scan: bool,
 
     pub print_parsed_ast: bool,
+    pub print_expanded_ast: bool,
     pub print_checked_ast: bool,
     pub print_mono_ast: bool,
     pub print_lowered_ast: bool,
@@ -169,6 +170,10 @@ mod native {
         }
 
         deriving::expand_derives(&mut loaded_program);
+
+        if opts.print_expanded_ast {
+            loaded_program.print();
+        }
 
         let mut module = loaded_program.merge();
 
