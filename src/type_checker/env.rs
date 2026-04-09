@@ -61,6 +61,11 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
             // (2) Imported things. We don't support selective imports yet, so everything public in
             // an imported module will be available to the importing module.
             for imported_module in pgm.dep_graph.get(module_path).unwrap() {
+                // It's a bit strange for a module to import itself, but it's also harmless. We may
+                // want to consider generating a warning maybe.
+                if imported_module == module_path {
+                    continue;
+                }
                 let imported_module_env = envs
                     .remove(imported_module)
                     .unwrap_or_else(|| panic!("Imported module {imported_module} not in envs"));
@@ -77,6 +82,10 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
             updated = false;
             for module_path in modules.iter() {
                 for imported_module in pgm.dep_graph.get(module_path).unwrap() {
+                    // Same as above: handle the harmless case of a module importing itself.
+                    if imported_module == module_path {
+                        continue;
+                    }
                     let imported_module_env = envs.remove(imported_module).unwrap();
                     let mut importing_module_env = envs.remove(module_path).unwrap();
                     updated |= import(&mut importing_module_env, &imported_module_env);
