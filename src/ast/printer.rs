@@ -1185,7 +1185,7 @@ fn expr_parens(expr: &Expr) -> bool {
     )
 }
 
-const INDENTS: &str = "                                                  ";
+const INDENTS: &str = "                                                                                                    ";
 
 use std::fmt::Display;
 

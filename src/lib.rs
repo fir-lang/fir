@@ -181,15 +181,15 @@ mod native {
 
         let tys = type_checker::check_pgm(&mut loaded_pgm, &opts.main);
 
-        let mut module = loaded_pgm.merge();
-
         if opts.print_checked_ast {
-            module.print();
+            loaded_pgm.print();
         }
 
         if opts.typecheck {
             return;
         }
+
+        let mut module = loaded_pgm.merge();
 
         type_checker::check_main_type(&tys, &Default::default(), &opts.main);
 
