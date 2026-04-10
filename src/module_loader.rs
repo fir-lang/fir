@@ -3,6 +3,7 @@ use crate::collections::*;
 use crate::module::ModulePath;
 use crate::utils::loc_display;
 
+use std::fmt;
 use std::path::Path;
 
 use smol_str::SmolStr;
@@ -12,6 +13,40 @@ pub struct LoadedPgm {
 
     #[allow(dead_code)]
     pub entry: ModulePath,
+
+    /// Maps modules to modules they import.
+    pub dep_graph: HashMap<ModulePath, HashSet<ModulePath>>,
+
+    pub scc_graph: SccGraph,
+}
+
+/// DAG of strongly connected components.
+pub struct SccGraph {
+    /// SCCs, topologically sorted.
+    pub nodes: Vec<SccNode>,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct SccIdx(usize);
+
+impl SccIdx {
+    #[allow(unused)]
+    pub fn as_usize(self) -> usize {
+        self.0
+    }
+}
+
+/// A strongly connected component of modules.
+pub struct SccNode {
+    /// Modules in this SCC.
+    pub modules: Vec<ModulePath>,
+
+    /// Indices into `SccGraph::nodes` of SCCs that depend on this one.
+    pub dependents: Vec<SccIdx>,
+
+    /// Indices into `SccGraph::nodes` of SCCs that this one depends on.
+    #[allow(unused)]
+    pub dependencies: Vec<SccIdx>,
 }
 
 pub fn load(entry_file: &Path) -> LoadedPgm {
@@ -19,6 +54,8 @@ pub fn load(entry_file: &Path) -> LoadedPgm {
     let mut work: Vec<ModulePath> = vec![entry.clone()];
     let mut modules: HashMap<ModulePath, ast::Module> = HashMap::default();
     modules.insert(entry.clone(), ast::Module::empty());
+
+    let mut dep_graph: HashMap<ModulePath, HashSet<ModulePath>> = Default::default();
 
     let prelude_path = ModulePath::new(vec![
         SmolStr::new_static("Fir"),
@@ -40,20 +77,38 @@ pub fn load(entry_file: &Path) -> LoadedPgm {
                         modules.insert(item.path.clone(), ast::Module::empty());
                         work.push(item.path.clone());
                     }
+                    dep_graph
+                        .entry(module_path.clone())
+                        .or_default()
+                        .insert(item.path.clone());
                 }
             }
         }
 
-        if implicit_prelude && !modules.contains_key(&prelude_path) {
-            modules.insert(prelude_path.clone(), ast::Module::empty());
-            work.push(prelude_path.clone());
+        if module_path != prelude_path && implicit_prelude {
+            if !modules.contains_key(&prelude_path) {
+                modules.insert(prelude_path.clone(), ast::Module::empty());
+                work.push(prelude_path.clone());
+            }
+            dep_graph
+                .entry(module_path.clone())
+                .or_default()
+                .insert(prelude_path.clone());
         }
 
         let old = modules.insert(module_path, module);
         debug_assert!(old.unwrap().decls.is_empty());
     }
 
-    LoadedPgm { modules, entry }
+    let scc_graph = build_scc_graph(&dep_graph);
+    // println!("{scc_graph}");
+
+    LoadedPgm {
+        modules,
+        entry,
+        dep_graph,
+        scc_graph,
+    }
 }
 
 impl LoadedPgm {
@@ -102,6 +157,124 @@ impl LoadedPgm {
     }
 }
 
+fn build_scc_graph(graph: &HashMap<ModulePath, HashSet<ModulePath>>) -> SccGraph {
+    let sccs = scc(graph);
+
+    // Map each module to its SCC index.
+    let mut module_to_scc: HashMap<ModulePath, SccIdx> = HashMap::default();
+    for (scc_idx, scc) in sccs.iter().enumerate() {
+        for module in scc {
+            module_to_scc.insert(module.clone(), SccIdx(scc_idx));
+        }
+    }
+
+    let num_sccs = sccs.len();
+    let mut dependents: Vec<HashSet<SccIdx>> = vec![HashSet::default(); num_sccs];
+    let mut dependencies: Vec<HashSet<SccIdx>> = vec![HashSet::default(); num_sccs];
+
+    for (u, deps) in graph {
+        let u_scc = module_to_scc[u];
+        for v in deps {
+            let v_scc = module_to_scc[v];
+            if u_scc != v_scc {
+                // SCC u depends on SCC v
+                dependents[v_scc.0].insert(u_scc);
+                dependencies[u_scc.0].insert(v_scc);
+            }
+        }
+    }
+
+    let nodes = sccs
+        .into_iter()
+        .enumerate()
+        .map(|(i, modules)| SccNode {
+            modules,
+            dependents: dependents[i].iter().copied().collect(),
+            dependencies: dependencies[i].iter().copied().collect(),
+        })
+        .collect();
+
+    SccGraph { nodes }
+}
+
+fn scc(graph: &HashMap<ModulePath, HashSet<ModulePath>>) -> Vec<Vec<ModulePath>> {
+    let mut all_nodes: HashSet<ModulePath> = HashSet::default();
+    for (node, deps) in graph {
+        all_nodes.insert(node.clone());
+        for dep in deps {
+            all_nodes.insert(dep.clone());
+        }
+    }
+
+    struct State {
+        index_counter: u32,
+        stack: Vec<ModulePath>,
+        on_stack: HashSet<ModulePath>,
+        index: HashMap<ModulePath, u32>,
+        lowlink: HashMap<ModulePath, u32>,
+        result: Vec<Vec<ModulePath>>,
+    }
+
+    fn strongconnect(
+        v: &ModulePath,
+        graph: &HashMap<ModulePath, HashSet<ModulePath>>,
+        state: &mut State,
+    ) {
+        let idx = state.index_counter;
+        state.index_counter += 1;
+        state.index.insert(v.clone(), idx);
+        state.lowlink.insert(v.clone(), idx);
+        state.stack.push(v.clone());
+        state.on_stack.insert(v.clone());
+
+        if let Some(deps) = graph.get(v) {
+            for w in deps {
+                if !state.index.contains_key(w) {
+                    strongconnect(w, graph, state);
+                    let w_lowlink = state.lowlink[w];
+                    let v_lowlink = state.lowlink.get_mut(v).unwrap();
+                    *v_lowlink = (*v_lowlink).min(w_lowlink);
+                } else if state.on_stack.contains(w) {
+                    let w_index = state.index[w];
+                    let v_lowlink = state.lowlink.get_mut(v).unwrap();
+                    *v_lowlink = (*v_lowlink).min(w_index);
+                }
+            }
+        }
+
+        if state.lowlink[v] == state.index[v] {
+            let mut scc = Vec::new();
+            loop {
+                let w = state.stack.pop().unwrap();
+                state.on_stack.remove(&w);
+                let done = w == *v;
+                scc.push(w);
+                if done {
+                    break;
+                }
+            }
+            state.result.push(scc);
+        }
+    }
+
+    let mut state = State {
+        index_counter: 0,
+        stack: Vec::new(),
+        on_stack: HashSet::default(),
+        index: HashMap::default(),
+        lowlink: HashMap::default(),
+        result: Vec::new(),
+    };
+
+    for node in &all_nodes {
+        if !state.index.contains_key(node) {
+            strongconnect(node, graph, &mut state);
+        }
+    }
+
+    state.result
+}
+
 fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
     let attr = match &import.node.attr {
         Some(attr) => &attr.expr.node,
@@ -124,4 +297,50 @@ fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
         loc_display(&import.loc),
         attr
     );
+}
+
+impl fmt::Display for SccIdx {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl fmt::Debug for SccIdx {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl fmt::Display for SccGraph {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for (i, node) in self.nodes.iter().enumerate() {
+            if i != 0 {
+                writeln!(f)?;
+            }
+
+            write!(f, "SCC {}: ", i)?;
+
+            write!(f, "{{")?;
+            for (j, m) in node.modules.iter().enumerate() {
+                if j != 0 {
+                    write!(f, ", ")?;
+                }
+                write!(f, "{}", m)?;
+            }
+            write!(f, "}}")?;
+
+            let mut dependents = node.dependents.clone();
+            dependents.sort();
+
+            let mut dependencies = node.dependencies.clone();
+            dependencies.sort();
+
+            write!(
+                f,
+                " dependents={:?} dependencies={:?}",
+                dependents, dependencies
+            )?;
+        }
+        Ok(())
+    }
 }
