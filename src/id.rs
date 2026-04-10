@@ -2,7 +2,7 @@ use crate::module::ModulePath;
 use crate::name::Name;
 
 /// Reference to a definition in a module.
-#[derive(Clone, Hash, PartialEq, Eq)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Id {
     /// Module of the type definition.
     module: ModulePath,

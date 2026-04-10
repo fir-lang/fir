@@ -160,28 +160,28 @@ mod native {
         }
 
         let file_path = Path::new(&program); // "examples/Foo.fir"
-        let mut loaded_program = module_loader::load(file_path);
+        let mut loaded_pgm = module_loader::load(file_path);
 
         // let envs = type_checker::env::generate_module_envs(&loaded_program);
         // println!("{:#?}", envs);
 
         if opts.print_parsed_ast {
-            loaded_program.print();
+            loaded_pgm.print();
         }
 
         if opts.parse {
             return;
         }
 
-        deriving::expand_derives(&mut loaded_program);
+        deriving::expand_derives(&mut loaded_pgm);
 
         if opts.print_expanded_ast {
-            loaded_program.print();
+            loaded_pgm.print();
         }
 
-        let mut module = loaded_program.merge();
+        let tys = type_checker::check_pgm(&mut loaded_pgm, &opts.main);
 
-        let tys = type_checker::check_module(&mut module, &opts.main);
+        let mut module = loaded_pgm.merge();
 
         if opts.print_checked_ast {
             module.print();
@@ -393,9 +393,10 @@ mod wasm {
         let file_path = Path::new("Main.fir");
         let mut loaded_program = module_loader::load(file_path);
         deriving::expand_derives(&mut loaded_program);
-        let mut module = loaded_program.merge();
 
-        type_checker::check_module(&mut module, "main");
+        let _tys = type_checker::check_pgm(&mut loaded_program, "main");
+
+        let mut module = loaded_program.merge();
 
         type_checker::expand_type_synonyms(&mut module);
         let mut mono_pgm = monomorph::monomorphise(&module, "main");

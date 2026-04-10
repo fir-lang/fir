@@ -6,11 +6,12 @@ is inferred. Otherwise it's defaulted as `*`.
 
 use crate::ast;
 use crate::collections::*;
+use crate::module_loader::LoadedPgm;
 use crate::type_checker::{Kind, Name, RecordOrVariant};
 use crate::utils::loc_display;
 
-pub fn add_missing_type_params(pgm: &mut ast::Module) {
-    for decl in &mut pgm.decls {
+pub fn add_missing_type_params(pgm: &mut LoadedPgm) {
+    for (_, decl) in pgm.iter_decls_mut() {
         match &mut decl.node {
             ast::TopDecl::Fun(decl) => {
                 add_missing_type_params_fun(&mut decl.node.sig, &mut Default::default(), &decl.loc)

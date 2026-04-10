@@ -58,6 +58,7 @@ When type checking the `next` call, we find the `Iterator.next`:
 
 use crate::ast::{self, Name};
 use crate::collections::*;
+use crate::module_loader::LoadedPgm;
 use crate::type_checker::convert::*;
 use crate::type_checker::ty::*;
 use crate::type_checker::ty_map::TyMap;
@@ -105,10 +106,10 @@ pub struct TraitImpl {
     pub assoc_tys: HashMap<Name, Ty>,
 }
 
-pub(crate) fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
+pub(crate) fn collect_trait_env(pgm: &LoadedPgm, tys: &mut TyMap) -> TraitEnv {
     let mut env: TraitEnv = Default::default();
 
-    for item in &pgm.decls {
+    for (_, item) in pgm.iter_decls() {
         let impl_ = match &item.node {
             ast::TopDecl::Impl(impl_) => impl_,
             _ => continue,
@@ -165,7 +166,7 @@ pub(crate) fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv 
     }
 
     // Ensure all declared traits have entries, even those with no impls (e.g. RecRowToList).
-    for item in &pgm.decls {
+    for (_, item) in pgm.iter_decls() {
         if let ast::TopDecl::Trait(trait_decl) = &item.node {
             env.entry(trait_decl.node.name.node.clone()).or_default();
         }

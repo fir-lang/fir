@@ -9,6 +9,7 @@ mod normalization;
 mod pat;
 mod pat_coverage;
 pub(crate) mod row_utils;
+use crate::module_loader::LoadedPgm;
 mod stmt;
 mod traits;
 mod ty;
@@ -64,17 +65,14 @@ pub struct PgmTypes {
 ///
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
-pub(crate) fn check_module(module: &mut ast::Module, main: &str) -> PgmTypes {
-    add_exception_types(module, main);
-    kind_inference::add_missing_type_params(module);
-    let mut tys = collect_types(module);
-    let trait_env = collect_trait_env(module, &mut tys.tys);
-    for decl in &mut module.decls {
+pub(crate) fn check_pgm(pgm: &mut LoadedPgm, main: &str) -> PgmTypes {
+    add_exception_types(pgm, main);
+    kind_inference::add_missing_type_params(pgm);
+    let mut tys = collect_types(pgm);
+    let trait_env = collect_trait_env(pgm, &mut tys.tys);
+    for (_, decl) in pgm.iter_decls_mut() {
         match &mut decl.node {
-            ast::TopDecl::Import(_) => panic!(
-                "{}: Import declaration in check_module",
-                loc_display(&decl.loc)
-            ),
+            ast::TopDecl::Import(_) => {}
 
             // Types and schemes added to `PgmTypes` by `collect_types`.
             ast::TopDecl::Type(_) | ast::TopDecl::Trait(_) => {}
@@ -115,8 +113,8 @@ pub(crate) fn check_main_type(tys: &PgmTypes, trait_env: &TraitEnv, main: &str) 
 }
 
 /// Add exception types to functions without one.
-fn add_exception_types(module: &mut ast::Module, main: &str) {
-    for decl in &mut module.decls {
+fn add_exception_types(pgm: &mut LoadedPgm, main: &str) {
+    for (_, decl) in pgm.iter_decls_mut() {
         match &mut decl.node {
             ast::TopDecl::Fun(ast::L { node: fun, loc }) => {
                 if fun.sig.exceptions.is_none() {
@@ -238,10 +236,10 @@ const EXN_QVAR_ID: Name = Name::new_static("?exn");
 /// the program.
 ///
 /// Does not type check the code, only collects types and type schemes.
-fn collect_types(module: &mut ast::Module) -> PgmTypes {
-    let mut tys = collect_cons(module);
-    add_default_impl_items(module, &mut tys);
-    let (top_schemes, associated_fn_schemes, method_schemes) = collect_schemes(module, &mut tys);
+fn collect_types(pgm: &mut LoadedPgm) -> PgmTypes {
+    let mut tys = collect_cons(pgm);
+    add_default_impl_items(pgm, &mut tys);
+    let (top_schemes, associated_fn_schemes, method_schemes) = collect_schemes(pgm, &mut tys);
     check_value_type_sizes(tys.cons());
     PgmTypes {
         top_schemes,
@@ -251,11 +249,11 @@ fn collect_types(module: &mut ast::Module) -> PgmTypes {
     }
 }
 
-fn collect_cons(module: &mut ast::Module) -> TyMap {
+fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
     let mut tys: TyMap = Default::default();
 
     // Collect all type constructors first, then add fields and methods.
-    for decl in module.decls.iter() {
+    for (_, decl) in pgm.iter_decls() {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 // Type synonyms are handled separately after this pass.
@@ -361,7 +359,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
     {
         let mut synonym_asts: HashMap<Name, (&[ast::TypeParam], &[Kind], &ast::L<ast::Type>)> =
             Default::default();
-        for decl in module.decls.iter() {
+        for (_, decl) in pgm.iter_decls() {
             if let ast::TopDecl::Type(ty_decl) = &decl.node
                 && let Some(ast::TypeDeclRhs::Synonym(rhs_ty)) = &ty_decl.node.rhs
             {
@@ -386,7 +384,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
     // Add fields, methods, associated types.
     // This is where we start converting AST types to type checking types, so the ty con map should
     // be populated at this point.
-    for decl in module.decls.iter() {
+    for (_, decl) in pgm.iter_decls() {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 // Type synonyms already handled above.
@@ -602,8 +600,8 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 // Add default methods to impls.
 //
 // We don't need to type check default methods copied to impls, but for now we do.
-fn add_default_impl_items(module: &mut ast::Module, tys: &mut TyMap) {
-    for decl in module.decls.iter_mut() {
+fn add_default_impl_items(pgm: &mut LoadedPgm, tys: &mut TyMap) {
+    for (_, decl) in pgm.iter_decls_mut() {
         let impl_decl = match &mut decl.node {
             ast::TopDecl::Impl(impl_decl) => &mut impl_decl.node,
             _ => continue,
@@ -950,7 +948,7 @@ fn visit_ty_con(
 
 // `tys` is `mut` to be able to update it with associated types when checking traits.
 fn collect_schemes(
-    module: &ast::Module,
+    pgm: &LoadedPgm,
     tys: &mut TyMap,
 ) -> (
     HashMap<Name, Scheme>,                // top schemes
@@ -966,7 +964,7 @@ fn collect_schemes(
     // TODO: This should be generalized and used in all substitutions.
     let mut uniq_gen: u32 = 0;
 
-    for decl in &module.decls {
+    for (_, decl) in pgm.iter_decls() {
         // New scope for type and function contexts.
         assert_eq!(tys.len_scopes(), 1);
         tys.enter_scope();
