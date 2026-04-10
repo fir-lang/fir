@@ -76,6 +76,20 @@ impl LoadedPgm {
         merged_module
     }
 
+    pub fn iter_decls(&self) -> impl Iterator<Item = (&ModulePath, &ast::L<ast::TopDecl>)> {
+        self.modules
+            .iter()
+            .flat_map(|(path, module)| module.decls.iter().map(move |decl| (path, decl)))
+    }
+
+    pub fn iter_decls_mut(
+        &mut self,
+    ) -> impl Iterator<Item = (&ModulePath, &mut ast::L<ast::TopDecl>)> {
+        self.modules
+            .iter_mut()
+            .flat_map(|(path, module)| module.decls.iter_mut().map(move |decl| (path, decl)))
+    }
+
     pub fn print(&self) {
         for (i, (module_path, module)) in self.modules.iter().enumerate() {
             if i != 0 {

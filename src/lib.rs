@@ -159,28 +159,26 @@ mod native {
         }
 
         let file_path = Path::new(&program); // "examples/Foo.fir"
-        let mut loaded_program = module_loader::load(file_path);
+        let mut loaded_pgm = module_loader::load(file_path);
 
         if opts.print_parsed_ast {
-            loaded_program.print();
+            loaded_pgm.print();
         }
 
         if opts.parse {
             return;
         }
 
-        deriving::expand_derives(&mut loaded_program);
+        deriving::expand_derives(&mut loaded_pgm);
 
         if opts.print_expanded_ast {
-            loaded_program.print();
+            loaded_pgm.print();
         }
 
-        let mut module = loaded_program.merge();
-
-        let tys = type_checker::check_module(&mut module, &opts.main);
+        let tys = type_checker::check_pgm(&mut loaded_pgm, &opts.main);
 
         if opts.print_checked_ast {
-            module.print();
+            loaded_pgm.print();
         }
 
         if opts.typecheck {
@@ -189,7 +187,9 @@ mod native {
 
         type_checker::check_main_type(&tys, &Default::default(), &opts.main);
 
-        type_checker::expand_type_synonyms(&mut module);
+        type_checker::expand_type_synonyms(&mut loaded_pgm);
+
+        let module = loaded_pgm.merge();
         let mut mono_pgm = monomorph::monomorphise(&module, &opts.main);
 
         if opts.print_mono_ast {
@@ -389,11 +389,11 @@ mod wasm {
         let file_path = Path::new("Main.fir");
         let mut loaded_program = module_loader::load(file_path);
         deriving::expand_derives(&mut loaded_program);
-        let mut module = loaded_program.merge();
 
-        type_checker::check_module(&mut module, "main");
+        let _tys = type_checker::check_pgm(&mut loaded_program, "main");
 
-        type_checker::expand_type_synonyms(&mut module);
+        type_checker::expand_type_synonyms(&mut loaded_program);
+        let module = loaded_program.merge();
         let mut mono_pgm = monomorph::monomorphise(&module, "main");
         let lowered_pgm = lowering::lower(&mut mono_pgm);
 
