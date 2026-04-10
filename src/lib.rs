@@ -189,11 +189,11 @@ mod native {
             return;
         }
 
-        let mut module = loaded_pgm.merge();
-
         type_checker::check_main_type(&tys, &Default::default(), &opts.main);
 
-        type_checker::expand_type_synonyms(&mut module);
+        type_checker::expand_type_synonyms(&mut loaded_pgm);
+
+        let module = loaded_pgm.merge();
         let mut mono_pgm = monomorph::monomorphise(&module, &opts.main);
 
         if opts.print_mono_ast {
@@ -396,9 +396,8 @@ mod wasm {
 
         let _tys = type_checker::check_pgm(&mut loaded_program, "main");
 
-        let mut module = loaded_program.merge();
-
-        type_checker::expand_type_synonyms(&mut module);
+        type_checker::expand_type_synonyms(&mut loaded_program);
+        let module = loaded_program.merge();
         let mut mono_pgm = monomorph::monomorphise(&module, "main");
         let lowered_pgm = lowering::lower(&mut mono_pgm);
 

@@ -2130,10 +2130,10 @@ fn rename_domain_var(var: &Name, uniq: u32) -> Name {
 /// This only expands type synonyms in the `ast::Type`s in the AST that the monomorphiser uses. E.g.
 /// it doesn't expand synonyms in `let` binding type annotations because monomorphiser doesn't use
 /// those.
-pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
+pub(crate) fn expand_type_synonyms(pgm: &mut LoadedPgm) {
     // Collect top-level synonyms with their type parameter names.
     let mut synonyms: HashMap<Name, (Vec<Name>, ast::Type)> = Default::default();
-    for decl in module.decls.iter() {
+    for (_, decl) in pgm.iter_decls() {
         if let ast::TopDecl::Type(ty_decl) = &decl.node
             && let Some(ast::TypeDeclRhs::Synonym(rhs)) = &ty_decl.node.rhs
         {
@@ -2147,7 +2147,7 @@ pub(crate) fn expand_type_synonyms(module: &mut ast::Module) {
         }
     }
 
-    for decl in module.decls.iter_mut() {
+    for (_, decl) in pgm.iter_decls_mut() {
         match &mut decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 expand_synonyms_in_type_decl(&mut ty_decl.node, &synonyms);
