@@ -2,9 +2,10 @@
 
 mod apply;
 mod convert;
-pub(crate) mod env;
 mod expr;
+mod id;
 pub(crate) mod kind_inference;
+mod module_env;
 mod normalization;
 mod pat;
 mod pat_coverage;

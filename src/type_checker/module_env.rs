@@ -1,9 +1,9 @@
 use crate::ast;
 use crate::collections::*;
-use crate::id::Id;
 use crate::module::ModulePath;
 use crate::module_loader::*;
 use crate::name::Name;
+use crate::type_checker::id::Id;
 
 /// For each module in the program, generate the module environment that maps the names that can be
 /// used in the module to their definitions.
