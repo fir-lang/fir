@@ -40,7 +40,8 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
             assert!(ty_args.is_empty());
             assert!(user_ty_args.is_empty());
 
-            let ty_con: &TyCon = tc_state.tys.tys.get_con(pat_ty_name).unwrap_or_else(|| {
+            let pat_ty_id = tc_state.resolve(pat_ty_name);
+            let ty_con: &TyCon = tc_state.tys.tys.get_con(&pat_ty_id).unwrap_or_else(|| {
                 panic!("{}: Undefined type {}", loc_display(&pat.loc), pat_ty_name)
             });
 

@@ -2,6 +2,7 @@
 
 use crate::ast::{self, Name};
 use crate::collections::*;
+use crate::type_checker::id::Id;
 use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::{loc_display, rename_domain_var};
 
@@ -33,14 +34,14 @@ pub struct Scheme {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
-    Con(Name, Kind),
+    Con(Id, Kind),
 
     /// A type application, e.g. `Vec[U32]`, `Result[E, T]`.
     ///
     /// Because type variables have kind `*`, the constructor can only be a type constructor.
     ///
     /// Invariant: the vector is not empty.
-    App(Name, Vec<Ty>, Kind),
+    App(Id, Vec<Ty>, Kind),
 
     /// A unification variable, created from a type scheme's quantified variables when instantiated.
     UVar(UVarRef),
@@ -189,8 +190,8 @@ pub(super) struct UVarGen {
 /// A type constructor.
 #[derive(Debug, Clone)]
 pub struct TyCon {
-    /// Name of the type.
-    pub id: Name,
+    /// Id of the type.
+    pub id: Id,
 
     /// Type parameters with kinds.
     pub(super) ty_params: Vec<(Name, Kind)>,
@@ -275,7 +276,7 @@ pub struct Pred {
     /// Trait of the predicate.
     ///
     /// `Iterator` in the example.
-    pub trait_: Name,
+    pub trait_: Id,
 
     /// The type parameters. `[iter, exn]` in the example.
     pub params: Vec<Ty>,
@@ -441,7 +442,7 @@ impl Scheme {
     /// places.
     pub(super) fn eq_modulo_alpha(
         &self,
-        cons: &ScopeMap<Name, TyCon>,
+        cons: &ScopeMap<Id, TyCon>,
         other: &Scheme,
         loc: &ast::Loc,
     ) -> bool {
@@ -547,7 +548,7 @@ impl Scheme {
 }
 
 fn ty_eq_modulo_alpha(
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     ty1: &Ty,
     ty2: &Ty,
     ty1_qvars: &HashMap<Name, u32>,
@@ -557,9 +558,9 @@ fn ty_eq_modulo_alpha(
     let ty1_normalized = ty1.normalize(cons);
     let ty2_normalized = ty2.normalize(cons);
     match (&ty1_normalized, &ty2_normalized) {
-        (Ty::Con(con1, _), Ty::Con(con2, _)) | (Ty::RVar(con1, _), Ty::RVar(con2, _)) => {
-            con1 == con2
-        }
+        (Ty::Con(con1, _), Ty::Con(con2, _)) => con1 == con2,
+
+        (Ty::RVar(con1, _), Ty::RVar(con2, _)) => con1 == con2,
 
         (Ty::UVar(_), _) | (_, Ty::UVar(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
 
@@ -788,20 +789,20 @@ impl Ty {
         }
     }
 
-    pub(super) fn bool() -> Ty {
-        Ty::Con(Name::new_static("Bool"), Kind::Star)
+    pub fn bool() -> Ty {
+        Ty::Con(super::id::builtins::BOOL(), Kind::Star)
     }
 
-    pub(super) fn to_str_id() -> Name {
-        Name::new_static("ToStr")
+    pub(super) fn to_str_id() -> Id {
+        super::id::builtins::TO_STR()
     }
 
-    pub(super) fn str() -> Ty {
-        Ty::Con(Name::new_static("Str"), Kind::Star)
+    pub fn str() -> Ty {
+        Ty::Con(super::id::builtins::STR(), Kind::Star)
     }
 
-    pub(super) fn char() -> Ty {
-        Ty::Con(Name::new_static("Char"), Kind::Star)
+    pub fn char() -> Ty {
+        Ty::Con(super::id::builtins::CHAR(), Kind::Star)
     }
 
     pub fn kind(&self) -> Kind {
@@ -975,7 +976,7 @@ impl Ty {
     /// If the type is a unification variable, follow the links.
     ///
     /// Otherwise returns the original type.
-    pub(super) fn normalize(&self, cons: &ScopeMap<Name, TyCon>) -> Ty {
+    pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         match self {
             Ty::UVar(var_ref) => var_ref.normalize(cons),
             _ => self.clone(),
@@ -984,7 +985,7 @@ impl Ty {
 
     pub(super) fn deep_normalize(
         &self,
-        cons: &ScopeMap<Name, TyCon>,
+        cons: &ScopeMap<Id, TyCon>,
         trait_env: &TraitEnv,
         var_gen: &UVarGen,
         assumps: &[Pred],
@@ -1077,7 +1078,7 @@ impl Ty {
             } => {
                 let inner_ty = inner_ty.deep_normalize(cons, trait_env, var_gen, assumps);
 
-                let (trait_name, trait_args): (&Name, &[Ty]) = match &inner_ty {
+                let (trait_name, trait_args): (&Id, &[Ty]) = match &inner_ty {
                     Ty::App(con, args, _) => (con, args.as_slice()),
                     Ty::Con(con, _) => (con, &[]),
                     _ => {
@@ -1104,7 +1105,7 @@ impl Ty {
                 }
 
                 // `RecRowToList[row].List`: compute the List type from the row's fields.
-                if *trait_name == super::REC_ROW_TO_LIST_TRAIT_ID {
+                if *trait_name == super::id::builtins::REC_ROW_TO_LIST() {
                     assert_eq!(assoc_ty, "List");
 
                     let row_ty = trait_args[0].deep_normalize(cons, trait_env, var_gen, assumps);
@@ -1160,7 +1161,7 @@ impl Ty {
     }
 
     /// Get the type constructor of the type and the type arguments.
-    pub fn con(&self, cons: &ScopeMap<Name, TyCon>) -> Option<(Name, Vec<Ty>)> {
+    pub fn con(&self, cons: &ScopeMap<Id, TyCon>) -> Option<(Id, Vec<Ty>)> {
         match self.normalize(cons) {
             Ty::Con(con, _) => Some((con.clone(), vec![])),
 
@@ -1177,7 +1178,7 @@ impl Ty {
 
     pub(super) fn is_void(&self) -> bool {
         match self {
-            Ty::Con(con, _) => con == &Name::new_static("Void"),
+            Ty::Con(con, _) => con.name() == &Name::new_static("Void"),
             _ => false,
         }
     }
@@ -1226,7 +1227,7 @@ impl UVarRef {
         *self.0.link.borrow_mut() = Some(ty);
     }
 
-    pub(super) fn normalize(&self, cons: &ScopeMap<Name, TyCon>) -> Ty {
+    pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         let link = match &*self.0.link.borrow() {
             Some(link) => link.normalize(cons),
             None => return Ty::UVar(self.clone()),
@@ -1292,12 +1293,13 @@ use std::fmt;
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.normalize(&Default::default()) {
-            Ty::Con(id, _) | Ty::RVar(id, _) => write!(f, "{id}"),
+            Ty::Con(id, _) => write!(f, "{}", id.name()),
+            Ty::RVar(id, _) => write!(f, "{id}"),
 
             Ty::UVar(var_ref) => write!(f, "_{}", var_ref.id()),
 
             Ty::App(id, args, _) => {
-                write!(f, "{id}[")?;
+                write!(f, "{}[", id.name())?;
                 for (i, ty) in args.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
@@ -1451,7 +1453,7 @@ impl fmt::Display for Kind {
 
 impl fmt::Display for Pred {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.trait_)?;
+        write!(f, "{}", self.trait_.name())?;
         write!(f, "[")?;
         for (i, ty) in self.params.iter().enumerate() {
             if i > 0 {

@@ -1,10 +1,11 @@
 use crate::ast::Name;
 use crate::collections::*;
+use crate::type_checker::id::Id;
 use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::ty::*;
 
 pub(super) fn collect_rows(
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     ty: &Ty, // record or variant, used in errors
     ty_kind: RecordOrVariant,
     labels: &OrdMap<Name, Ty>,

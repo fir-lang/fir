@@ -1,5 +1,6 @@
 use crate::ast::{self, Name};
 use crate::collections::{HashMap, HashSet, OrdMap};
+use crate::type_checker::id::Id;
 use crate::type_checker::{FunArgs, Scheme, TcFunState, Ty, TypeDetails, row_utils};
 #[allow(unused)]
 use crate::utils::loc_display;
@@ -190,7 +191,7 @@ impl PatMatrix {
                         tc_state,
                         loc,
                     );
-                    let s = format!("{}.{}", field_ty_con_id, con_name);
+                    let s = format!("{}.{}", field_ty_con_id.name(), con_name);
                     match matrix {
                         Some(matrix) => {
                             if !with_trace(trace, s, |trace| {
@@ -441,7 +442,7 @@ impl PatMatrix {
     fn focus_con_scheme(
         &self,
         ty: &Ty,
-        con_ty_id: &Name,
+        con_ty_id: &Id,
         con_id: &Name,
         con_scheme: &Scheme,
         tc_state: &TcFunState,
@@ -529,7 +530,7 @@ impl PatMatrix {
 
                         // Note: `ty` may not be the same as `con_ty_id` when checking variant
                         // patterns. We need to compare both type and constructor names.
-                        if !(ty == *con_ty_id && con_id == con.as_ref()) {
+                        if !(*con_ty_id.name() == ty && con_id == con.as_ref()) {
                             continue;
                         }
 

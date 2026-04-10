@@ -1,5 +1,6 @@
 use crate::ast::{self, Name};
 use crate::collections::*;
+use crate::type_checker::id::Id;
 use crate::type_checker::loc_display;
 use crate::type_checker::row_utils::*;
 use crate::type_checker::traits::TraitEnv;
@@ -8,7 +9,7 @@ use crate::type_checker::ty::*;
 pub(super) fn unify(
     ty1: &Ty,
     ty2: &Ty,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     loc: &ast::Loc,
@@ -37,8 +38,18 @@ pub(super) fn unify(
     }
 
     match (&ty1, &ty2) {
-        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2))
-        | (Ty::RVar(con1, _kind1), Ty::RVar(con2, _kind2)) => {
+        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2)) => {
+            if con1 != con2 {
+                panic!(
+                    "{}: Unable to unify types {} and {}",
+                    loc_display(loc),
+                    con1.name(),
+                    con2.name(),
+                )
+            }
+        }
+
+        (Ty::RVar(con1, _kind1), Ty::RVar(con2, _kind2)) => {
             if con1 != con2 {
                 panic!(
                     "{}: Unable to unify types {} and {}",
@@ -54,15 +65,15 @@ pub(super) fn unify(
                 panic!(
                     "{}: Unable to unify types {} and {}",
                     loc_display(loc),
-                    con1,
-                    con2,
+                    con1.name(),
+                    con2.name(),
                 )
             }
             if args1.len() != args2.len() {
                 panic!(
                     "{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify",
                     loc_display(loc),
-                    con1
+                    con1.name()
                 )
             }
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
@@ -278,7 +289,7 @@ pub(super) fn unify(
                 kind: _,
             },
         ) => {
-            let (trait_name, trait_args): (&Name, &[Ty]) = match inner_ty.as_ref() {
+            let (trait_id, trait_args): (&Id, &[Ty]) = match inner_ty.as_ref() {
                 Ty::App(con, args, _) => (con, args.as_slice()),
                 Ty::Con(con, _) => (con, &[]),
                 _ => panic!(
@@ -288,7 +299,7 @@ pub(super) fn unify(
                 ),
             };
             preds.push(Pred {
-                trait_: trait_name.clone(),
+                trait_: trait_id.clone(),
                 params: trait_args.to_vec(),
                 assoc_ty: Some((assoc_ty.clone(), other.clone())),
                 loc: loc.clone(),
@@ -320,7 +331,7 @@ fn unify_labels(
     labels2: &OrdMap<Name, Ty>,
     extension2: &Option<Box<Ty>>,
     record_or_variant: RecordOrVariant,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     loc: &ast::Loc,
@@ -445,7 +456,7 @@ fn unify_labels(
 pub(super) fn try_unify_one_way(
     ty1: &Ty,
     ty2: &Ty,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     var_gen: &UVarGen,
     loc: &ast::Loc,
 ) -> bool {
@@ -455,8 +466,9 @@ pub(super) fn try_unify_one_way(
         return false;
     }
     match (&ty1, &ty2) {
-        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2))
-        | (Ty::RVar(con1, _kind1), Ty::RVar(con2, _kind2)) => con1 == con2,
+        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2)) => con1 == con2,
+
+        (Ty::RVar(con1, _kind1), Ty::RVar(con2, _kind2)) => con1 == con2,
 
         (Ty::App(con1, args1, _kind1), Ty::App(con2, args2, _kind2)) => {
             if con1 != con2 {
@@ -623,7 +635,7 @@ fn try_unify_labels_one_way(
     labels2: &OrdMap<Name, Ty>,
     extension2: &Option<Box<Ty>>,
     record_or_variant: RecordOrVariant,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     var_gen: &UVarGen,
     loc: &ast::Loc,
 ) -> bool {
@@ -738,7 +750,7 @@ fn link_extension(
 pub(super) fn unify_expected_ty(
     ty: Ty,
     expected_ty: Option<&Ty>,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     loc: &ast::Loc,

@@ -630,7 +630,7 @@ impl Expr {
             }) => {
                 object.node.print(buf, indent);
                 buf.push_str(".{");
-                buf.push_str(method_ty_id);
+                buf.push_str(method_ty_id.name());
                 buf.push_str(".}");
                 buf.push_str(method);
                 print_ty_args(ty_args, buf);

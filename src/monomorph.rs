@@ -3,7 +3,8 @@ use crate::collections::*;
 use crate::interpolation::StrPart;
 use crate::mono_ast as mono;
 use crate::mono_ast::MonoPgm;
-use crate::type_checker::{FunArgs, Kind, RecordOrVariant, Ty};
+use crate::type_checker::id::builtins;
+use crate::type_checker::{FunArgs, Id, Kind, RecordOrVariant, Ty};
 use crate::utils::*;
 
 /// The program in front-end syntax, converted to a graph for efficient and easy lookups.
@@ -210,15 +211,32 @@ pub fn monomorphise(pgm: &ast::Module, main: &str) -> MonoPgm {
 
 fn make_tc_ty(con: &'static str, args: Vec<&'static str>) -> Ty {
     if args.is_empty() {
-        Ty::Con(Name::new_static(con), Kind::Star)
+        Ty::Con(builtin_id(con), Kind::Star)
     } else {
         Ty::App(
-            Name::new_static(con),
+            builtin_id(con),
             args.iter()
-                .map(|ty_arg| Ty::Con(Name::new_static(ty_arg), Kind::Star))
+                .map(|ty_arg| Ty::Con(builtin_id(ty_arg), Kind::Star))
                 .collect(),
             Kind::Star,
         )
+    }
+}
+
+fn builtin_id(name: &str) -> Id {
+    match name {
+        "Bool" => builtins::BOOL(),
+        "Char" => builtins::CHAR(),
+        "Str" => builtins::STR(),
+        "Ordering" => builtins::ORDERING(),
+        "I8" => builtins::I8(),
+        "U8" => builtins::U8(),
+        "I32" => builtins::I32(),
+        "U32" => builtins::U32(),
+        "I64" => builtins::I64(),
+        "U64" => builtins::U64(),
+        "Array" => builtins::ARRAY(),
+        _ => panic!("Unknown builtin type: {}", name),
     }
 }
 
@@ -508,7 +526,14 @@ fn mono_expr(
                 .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
                 .collect();
 
-            mono_method(method_ty_id, method, &mono_ty_args, poly_pgm, mono_pgm, loc);
+            mono_method(
+                method_ty_id.name(),
+                method,
+                &mono_ty_args,
+                poly_pgm,
+                mono_pgm,
+                loc,
+            );
 
             let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals);
 
@@ -531,7 +556,7 @@ fn mono_expr(
 
             let mono_fun = mono_pgm
                 .associated
-                .get(method_ty_id)
+                .get(method_ty_id.name())
                 .unwrap()
                 .get(method)
                 .unwrap()
@@ -611,7 +636,7 @@ fn mono_expr(
                                     fun: Box::new(ast::L {
                                         loc: loc.clone(),
                                         node: mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
-                                            ty_id: method_ty_id.clone(),
+                                            ty_id: method_ty_id.name().clone(),
                                             member: method.clone(),
                                             ty_args: mono_ty_args,
                                             ty: mono::Type::Fn(mono_fun.sig.ty()),
@@ -1724,8 +1749,8 @@ fn mono_tc_ty(
         Ty::Con(con, _kind) => {
             let ty_decl = poly_pgm
                 .ty
-                .get(&con)
-                .unwrap_or_else(|| panic!("Unknown type constructor {con}"));
+                .get(con.name())
+                .unwrap_or_else(|| panic!("Unknown type constructor {}", con.name()));
 
             mono::Type::Named(mono::NamedType {
                 name: mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm),
@@ -1738,8 +1763,8 @@ fn mono_tc_ty(
             .unwrap_or_else(|| panic!("Unmapped rigid type variable {var}"))
             .clone(),
 
-        Ty::App(con, args, _kind) => {
-            let ty_decl = poly_pgm.ty.get(&con).unwrap();
+        Ty::App(id, args, _kind) => {
+            let ty_decl = poly_pgm.ty.get(id.name()).unwrap();
             let mono_args: Vec<mono::Type> = args
                 .iter()
                 .map(|arg| mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm))
@@ -1863,8 +1888,8 @@ fn mono_tc_ty(
             // The `ty` is a trait application like `Trait[Arg]`, not a regular type. Extract the
             // trait name and args directly, monomorphize only the args.
             let (trait_name, trait_args): (&Name, &[Ty]) = match ty.as_ref() {
-                Ty::App(name, args, _kind) => (name, args.as_slice()),
-                Ty::Con(name, _kind) => (name, &[]),
+                Ty::App(id, args, _kind) => (id.name(), args.as_slice()),
+                Ty::Con(id, _kind) => (id.name(), &[]),
                 _ => panic!("Expected trait constructor in AssocTySelect, got {:?}", ty),
             };
             let mono_args: Vec<mono::Type> = trait_args
@@ -2287,8 +2312,8 @@ fn collect_record_rows(
             kind: _,
         } => {
             let (trait_name, trait_args): (&Name, &[Ty]) = match ty.as_ref() {
-                Ty::App(name, args, _kind) => (name, args.as_slice()),
-                Ty::Con(name, _kind) => (name, &[]),
+                Ty::App(id, args, _kind) => (id.name(), args.as_slice()),
+                Ty::Con(id, _kind) => (id.name(), &[]),
                 _ => panic!("Expected trait constructor in AssocTySelect, got {:?}", ty),
             };
             let mono_args: Vec<mono::Type> = trait_args

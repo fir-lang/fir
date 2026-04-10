@@ -2,6 +2,7 @@ use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::interpolation::StrPart;
 use crate::type_checker::convert::convert_ast_ty;
+use crate::type_checker::id::{self, Id};
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::traits::TraitEnv;
@@ -94,7 +95,9 @@ pub(super) fn check_expr(
 
                 let user_ty_args_converted: Vec<Ty> = user_ty_args
                     .iter()
-                    .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                    .map(|ty| {
+                        convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc)
+                    })
                     .collect();
 
                 let ty = scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
@@ -215,11 +218,11 @@ pub(super) fn check_expr(
             assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
+            let ty_id = tc_state.resolve(ty);
             let ty_con: &TyCon = tc_state
                 .tys
                 .tys
-                .cons()
-                .get(ty)
+                .get_con(&ty_id)
                 .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
 
             let ty_details: &TypeDetails = ty_con.type_details().unwrap_or_else(|| {
@@ -290,7 +293,9 @@ pub(super) fn check_expr(
 
                 let user_ty_args_converted: Vec<Ty> = user_ty_args
                     .iter()
-                    .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                    .map(|ty| {
+                        convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc)
+                    })
                     .collect();
 
                 let con_ty =
@@ -334,10 +339,11 @@ pub(super) fn check_expr(
             assert!(ty_args.is_empty());
 
             if !ty_user_ty_args.is_empty() {
+                let ty_id = tc_state.resolve(ty);
                 let con = tc_state
                     .tys
                     .tys
-                    .get_con(ty)
+                    .get_con(&ty_id)
                     .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
 
                 if con.ty_params.len() != ty_user_ty_args.len() {
@@ -368,12 +374,12 @@ pub(super) fn check_expr(
 
             let ty_user_ty_args_converted: Vec<Ty> = ty_user_ty_args
                 .iter()
-                .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                .map(|ty| convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc))
                 .collect();
 
             let user_ty_args_converted: Vec<Ty> = user_ty_args
                 .iter()
-                .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                .map(|ty| convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc))
                 .collect();
 
             for (ty_ty_arg, method_ty_arg) in ty_user_ty_args_converted
@@ -683,7 +689,7 @@ pub(super) fn check_expr(
                 };
 
                 fun.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                    ty: method_ty_id.clone(),
+                    ty: method_ty_id.name().clone(),
                     ty_user_ty_args: vec![], // unused after type checking
                     member: method.clone(),
                     user_ty_args: vec![], // unused after type checking
@@ -715,7 +721,7 @@ pub(super) fn check_expr(
             });
 
             let con = match &expected_ty {
-                Some(Ty::Con(con, _kind)) => con.as_str(),
+                Some(Ty::Con(con, _kind)) => con.name().as_str(),
 
                 Some(Ty::UVar(var)) => {
                     // Default as I32.
@@ -723,7 +729,7 @@ pub(super) fn check_expr(
                     // error (i.e. integer too large/small) here vs. in the rest of the cases.
                     unify(
                         &Ty::UVar(var.clone()),
-                        &Ty::Con(Name::new_static("I32"), Kind::Star),
+                        &Ty::Con(id::builtins::I32(), Kind::Star),
                         tc_state.tys.tys.cons(),
                         tc_state.trait_env,
                         tc_state.var_gen,
@@ -865,7 +871,10 @@ pub(super) fn check_expr(
                 ),
             }
 
-            (Ty::Con(Name::new(con), Kind::Star), Default::default())
+            (
+                Ty::Con(id::builtins::num_id(con), Kind::Star),
+                Default::default(),
+            )
         }
 
         ast::Expr::Str(og_parts) => {
@@ -905,7 +914,7 @@ pub(super) fn check_expr(
 
             let buf_id = Name::new_static("$buf$");
 
-            let str_buf_ty = Ty::Con(Name::new_static("StrBuf"), Kind::Star);
+            let str_buf_ty = Ty::Con(id::builtins::STR_BUF(), Kind::Star);
 
             let mut desugared_stmts: Vec<ast::L<ast::Stmt>> = vec![ast::L {
                 loc: loc.clone(),
@@ -959,10 +968,7 @@ pub(super) fn check_expr(
                                 ty_args: vec![exn.clone()],
                                 inferred_ty: Some(Ty::Fun {
                                     args: FunArgs::Positional {
-                                        args: vec![
-                                            str_buf_ty.clone(),
-                                            Ty::Con(Name::new_static("Str"), Kind::Star),
-                                        ],
+                                        args: vec![str_buf_ty.clone(), Ty::str()],
                                     },
                                     ret: Box::new(Ty::unit()),
                                     exceptions: Some(Box::new(exn)),
@@ -1031,7 +1037,7 @@ pub(super) fn check_expr(
                                         args: FunArgs::Positional {
                                             args: vec![part_ty],
                                         },
-                                        ret: Box::new(Ty::Con(Name::new_static("Str"), Kind::Star)),
+                                        ret: Box::new(Ty::str()),
                                         exceptions: Some(Box::new(tc_state.exceptions.clone())),
                                     }),
                                 }),
@@ -1045,7 +1051,7 @@ pub(super) fn check_expr(
                                 },
                             }],
                             splice: None,
-                            inferred_ty: Some(Ty::Con(Name::new_static("Str"), Kind::Star)),
+                            inferred_ty: Some(Ty::str()),
                         });
                         desugared_stmts.push(make_push(expr, tc_state.exceptions.clone()));
                     }
@@ -1067,7 +1073,7 @@ pub(super) fn check_expr(
                                 args: FunArgs::Positional {
                                     args: vec![str_buf_ty.clone()],
                                 },
-                                ret: Box::new(Ty::Con(Name::new_static("Str"), Kind::Star)),
+                                ret: Box::new(Ty::str()),
                                 exceptions: Some(Box::new(tc_state.exceptions.clone())),
                             }),
                         }),
@@ -1086,7 +1092,7 @@ pub(super) fn check_expr(
                         },
                     }],
                     splice: None,
-                    inferred_ty: Some(Ty::Con(Name::new_static("Str"), Kind::Star)),
+                    inferred_ty: Some(Ty::str()),
                 })),
             });
 
@@ -1115,7 +1121,7 @@ pub(super) fn check_expr(
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
             let method = match op {
                 ast::BinOp::And => {
-                    let bool_ty = Ty::Con("Bool".into(), Kind::Star);
+                    let bool_ty = Ty::bool();
                     let (_, mut left_binders) = check_expr(
                         tc_state,
                         &mut left.node,
@@ -1167,7 +1173,7 @@ pub(super) fn check_expr(
                 }
 
                 ast::BinOp::Or => {
-                    let bool_ty = Ty::Con("Bool".into(), Kind::Star);
+                    let bool_ty = Ty::bool();
                     check_expr(
                         tc_state,
                         &mut left.node,
@@ -1254,9 +1260,9 @@ pub(super) fn check_expr(
                             ty_args: vec![tc_state.exceptions.clone()],
                             inferred_ty: Some(Ty::Fun {
                                 args: FunArgs::Positional {
-                                    args: vec![Ty::Con(Name::new("Bool"), Kind::Star)],
+                                    args: vec![Ty::bool()],
                                 },
-                                ret: Box::new(Ty::Con(Name::new("Bool"), Kind::Star)),
+                                ret: Box::new(Ty::bool()),
                                 exceptions: Some(Box::new(tc_state.exceptions.clone())),
                             }),
                         }),
@@ -1420,7 +1426,9 @@ pub(super) fn check_expr(
             tc_state.env.enter(); // for term params
 
             let ret_ty = match &sig.return_ty {
-                Some(ty) => convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc),
+                Some(ty) => {
+                    convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc)
+                }
                 None => match expected_ret {
                     Some(ret) => (*ret).clone(),
                     None => Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
@@ -1428,7 +1436,9 @@ pub(super) fn check_expr(
             };
 
             let exceptions = match &sig.exceptions {
-                Some(exc) => convert_ast_ty(&tc_state.tys.tys, &exc.node, &exc.loc),
+                Some(exc) => {
+                    convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &exc.node, &exc.loc)
+                }
                 None => match expected_exceptions {
                     Some(Some(exn)) => (*exn).clone(),
                     _ => Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
@@ -1437,9 +1447,9 @@ pub(super) fn check_expr(
 
             let mut param_tys: Vec<Ty> = Vec::with_capacity(sig.params.len());
             for (param_idx, (param_name, param_ty)) in sig.params.iter().enumerate() {
-                let param_ty_converted: Option<Ty> = param_ty
-                    .as_ref()
-                    .map(|param_ty| convert_ast_ty(&tc_state.tys.tys, &param_ty.node, loc));
+                let param_ty_converted: Option<Ty> = param_ty.as_ref().map(|param_ty| {
+                    convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &param_ty.node, loc)
+                });
 
                 let param_ty_converted: Ty = param_ty_converted.unwrap_or_else(|| {
                     expected_args
@@ -1674,7 +1684,7 @@ pub(super) fn check_expr(
                                 let field_select_expr = ast::L {
                                     loc: loc.clone(),
                                     node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                                        ty: con,
+                                        ty: con.name().clone(),
                                         ty_user_ty_args: vec![],
                                         member: Name::new_static("fromIter"),
                                         user_ty_args: vec![],
@@ -1994,7 +2004,7 @@ fn check_field_sel(
 
         let user_ty_args_converted: Vec<Ty> = user_ty_args
             .iter()
-            .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+            .map(|ty| convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc))
             .collect();
 
         let ty = scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
@@ -2064,7 +2074,7 @@ fn check_field_sel(
 
 fn select_field(
     tc_state: &mut TcFunState,
-    ty_con: &Name,
+    ty_con_id: &Id,
     ty_args: &[Ty],
     field: &Name,
     loc: &ast::Loc,
@@ -2072,8 +2082,8 @@ fn select_field(
     let ty_con = tc_state
         .tys
         .tys
-        .get_con(ty_con)
-        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con));
+        .get_con(ty_con_id)
+        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con_id));
 
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
@@ -2119,8 +2129,8 @@ fn select_method(
     receiver: &Ty,
     method: &Name,
     loc: &ast::Loc,
-) -> Option<(Name, Scheme)> {
-    let mut candidates: Vec<(Name, Scheme)> = vec![];
+) -> Option<(Id, Scheme)> {
+    let mut candidates: Vec<(Id, Scheme)> = vec![];
 
     for (ty_id, candidate) in tc_state.tys.method_schemes.get(method)? {
         // Don't add predicates to the current predicate set. We will instantiate the scheme again
@@ -2155,14 +2165,7 @@ fn select_method(
         // If there's an associated function among the candidates, pick it. Otherwise fail with an
         // ambiguity error.
         for (i, candidate) in candidates.iter().enumerate() {
-            if !tc_state
-                .tys
-                .tys
-                .cons()
-                .get(&candidate.0)
-                .unwrap()
-                .is_trait()
-            {
+            if !tc_state.tys.tys.get_con(&candidate.0).unwrap().is_trait() {
                 return Some(candidates.remove(i));
             }
         }
@@ -2184,7 +2187,7 @@ fn select_method(
 
 pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) -> Ty {
     let con = match ty.normalize(tc_state.tys.tys.cons()) {
-        Ty::Con(con, _) | Ty::App(con, _, _) => con,
+        Ty::Con(con, _) | Ty::App(con, _, _) => con.name().clone(),
 
         ty => panic!(
             "{}: Type in variant is not a constructor: {}",
@@ -2237,7 +2240,12 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
 
             for ty in tys.iter() {
                 match ty {
-                    Ty::Con(con, _) | Ty::RVar(con, _) | Ty::App(con, _, _) => {
+                    Ty::Con(con, _) | Ty::App(con, _, _) => {
+                        let old = labels.insert(con.name().clone(), ty.clone());
+                        assert_eq!(old, None);
+                    }
+
+                    Ty::RVar(con, _) => {
                         let old = labels.insert(con.clone(), ty.clone());
                         assert_eq!(old, None);
                     }
@@ -2289,7 +2297,7 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
 fn add_coercions(
     pat: &mut ast::Pat,
     refined_binders: &HashMap<Name, Ty>,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     _loc: &ast::Loc,

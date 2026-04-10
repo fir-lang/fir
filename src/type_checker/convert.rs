@@ -1,13 +1,19 @@
 use crate::ast::{self, Name};
 use crate::collections::*;
+use crate::type_checker::ModuleEnv;
 use crate::type_checker::loc_display;
 use crate::type_checker::ty::*;
 use crate::type_checker::ty_map::TyMap;
 
 /// Convert an AST type to type checking type.
-pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) -> Ty {
+pub(super) fn convert_ast_ty(
+    tys: &TyMap,
+    module_env: &ModuleEnv,
+    ast_ty: &ast::Type,
+    loc: &ast::Loc,
+) -> Ty {
     match ast_ty {
-        ast::Type::Named(named_ty) => convert_named_ty(tys, named_ty, loc),
+        ast::Type::Named(named_ty) => convert_named_ty(tys, module_env, named_ty, loc),
 
         ast::Type::Var(var) => tys
             .get_var(var)
@@ -22,7 +28,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             let mut labels: OrdMap<Name, Ty> = OrdMap::new();
 
             for (field_name, field_ty) in fields {
-                let ty = convert_ast_ty(tys, field_ty, loc);
+                let ty = convert_ast_ty(tys, module_env, field_ty, loc);
                 let old = labels.insert(field_name.clone(), ty);
                 if old.is_some() {
                     panic!(
@@ -35,7 +41,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
 
             let extension = match extension {
                 Some(ext) => {
-                    let ext_converted = convert_ast_ty(tys, &ext.node, &ext.loc);
+                    let ext_converted = convert_ast_ty(tys, module_env, &ext.node, &ext.loc);
                     if ext_converted.kind() != Kind::Row(RecordOrVariant::Record) {
                         panic!(
                             "{}: Record extension type {} has kind {}",
@@ -65,7 +71,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             let mut labels: OrdMap<Name, Ty> = OrdMap::new();
 
             for alt in alts {
-                let ty = convert_named_ty(tys, alt, loc);
+                let ty = convert_named_ty(tys, module_env, alt, loc);
                 let old = labels.insert(alt.name.clone(), ty);
                 if old.is_some() {
                     panic!(
@@ -78,7 +84,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
 
             let extension = match extension {
                 Some(ext) => {
-                    let ext_converted = convert_ast_ty(tys, &ext.node, &ext.loc);
+                    let ext_converted = convert_ast_ty(tys, module_env, &ext.node, &ext.loc);
                     if ext_converted.kind() != Kind::Row(RecordOrVariant::Variant) {
                         panic!(
                             "{}: Variant extension type {} has kind {}",
@@ -108,12 +114,12 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             let args = FunArgs::Positional {
                 args: args
                     .iter()
-                    .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
+                    .map(|ty| convert_ast_ty(tys, module_env, &ty.node, &ty.loc))
                     .collect(),
             };
 
             let ret = Box::new(match ret {
-                Some(ret) => convert_ast_ty(tys, &ret.node, &ret.loc),
+                Some(ret) => convert_ast_ty(tys, module_env, &ret.node, &ret.loc),
                 None => Ty::unit(),
             });
 
@@ -121,7 +127,12 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 panic!("{}: Function type without exception type", loc_display(loc))
             });
 
-            let exceptions = Box::new(convert_ast_ty(tys, &exceptions.node, &exceptions.loc));
+            let exceptions = Box::new(convert_ast_ty(
+                tys,
+                module_env,
+                &exceptions.node,
+                &exceptions.loc,
+            ));
 
             Ty::Fun {
                 args,
@@ -131,17 +142,22 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
         }
 
         ast::Type::AssocTySelect { ty, assoc_ty } => {
-            let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
+            let ty = convert_ast_ty(tys, module_env, &ty.node, &ty.loc);
             if let Ty::App(trait_, _trait_args, kind) = &ty {
                 assert_eq!(*kind, Kind::Star);
                 let kind = tys
-                    .cons()
-                    .get(trait_)
-                    .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), trait_))
+                    .get_con(trait_)
+                    .unwrap_or_else(|| {
+                        panic!("{}: Unknown type {}", loc_display(loc), trait_.name())
+                    })
                     .details
                     .trait_details()
                     .unwrap_or_else(|| {
-                        panic!("{}: Type {} is not a trait", loc_display(loc), trait_)
+                        panic!(
+                            "{}: Type {} is not a trait",
+                            loc_display(loc),
+                            trait_.name()
+                        )
                     })
                     .assoc_tys
                     .get(assoc_ty)
@@ -149,7 +165,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                         panic!(
                             "{}: Trait {} does not have an associated type named {}",
                             loc_display(loc),
-                            trait_,
+                            trait_.name(),
                             assoc_ty
                         )
                     })
@@ -169,11 +185,16 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
     }
 }
 
-fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> Ty {
+fn convert_named_ty(
+    tys: &TyMap,
+    module_env: &ModuleEnv,
+    named_ty: &ast::NamedType,
+    loc: &ast::Loc,
+) -> Ty {
     let ast::NamedType { name, args } = named_ty;
 
     let ty_con = tys
-        .get_con(name)
+        .resolve(module_env, name)
         .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), name));
 
     if ty_con.arity() as usize != args.len() {
@@ -189,7 +210,7 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
     if let TyConDetails::Synonym(syn_ty) = &ty_con.details {
         let converted_args: Vec<Ty> = args
             .iter()
-            .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+            .map(|arg| convert_ast_ty(tys, module_env, &arg.node, &arg.loc))
             .collect();
         let subst_map: HashMap<Name, Ty> = ty_con
             .ty_params
@@ -206,28 +227,37 @@ fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> T
 
     let converted_args: Vec<Ty> = args
         .iter()
-        .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+        .map(|arg| convert_ast_ty(tys, module_env, &arg.node, &arg.loc))
         .collect();
 
     Ty::App(ty_con.id.clone(), converted_args, Kind::Star)
 }
 
-pub(super) fn convert_fields(tys: &TyMap, fields: &ast::ConFields) -> Option<FunArgs> {
+pub(super) fn convert_fields(
+    tys: &TyMap,
+    module_env: &ModuleEnv,
+    fields: &ast::ConFields,
+) -> Option<FunArgs> {
     match fields {
         ast::ConFields::Empty => None,
         ast::ConFields::Named { fields, extension } => Some(FunArgs::Named {
             args: fields
                 .iter()
-                .map(|(name, ty)| (name.clone(), convert_ast_ty(tys, &ty.node, &ty.loc)))
+                .map(|(name, ty)| {
+                    (
+                        name.clone(),
+                        convert_ast_ty(tys, module_env, &ty.node, &ty.loc),
+                    )
+                })
                 .collect(),
             extension: extension
                 .as_ref()
-                .map(|ext_ty| Box::new(convert_ast_ty(tys, &ext_ty.node, &ext_ty.loc))),
+                .map(|ext_ty| Box::new(convert_ast_ty(tys, module_env, &ext_ty.node, &ext_ty.loc))),
         }),
         ast::ConFields::Unnamed { fields } => Some(FunArgs::Positional {
             args: fields
                 .iter()
-                .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
+                .map(|ty| convert_ast_ty(tys, module_env, &ty.node, &ty.loc))
                 .collect(),
         }),
     }
@@ -243,6 +273,7 @@ pub(super) enum TyVarConversion {
 /// context types.
 pub(super) fn convert_and_bind_context(
     tys: &mut TyMap,
+    module_env: &ModuleEnv,
     context_ast: &ast::Context,
     conversion: TyVarConversion,
 ) -> Vec<Pred> {
@@ -262,7 +293,7 @@ pub(super) fn convert_and_bind_context(
 
     // Convert preds.
     for ty in &context_ast.preds {
-        if let Some(pred) = convert_pred(tys, &ty.node, &ty.loc) {
+        if let Some(pred) = convert_pred(tys, module_env, &ty.node, &ty.loc) {
             preds_converted.push(pred);
         }
     }
@@ -270,7 +301,12 @@ pub(super) fn convert_and_bind_context(
     preds_converted
 }
 
-fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Option<Pred> {
+fn convert_pred(
+    tys: &mut TyMap,
+    module_env: &ModuleEnv,
+    pred_ast: &ast::Pred,
+    loc: &ast::Loc,
+) -> Option<Pred> {
     match pred_ast {
         ast::Pred::Kind { .. } => {
             // Kind annotations are used by the kind inference. Kind inference could remove them
@@ -279,10 +315,14 @@ fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Option
         }
 
         ast::Pred::App(ast::NamedType { name, args }) => Some(Pred {
-            trait_: name.clone(),
+            trait_: tys
+                .resolve(module_env, name)
+                .unwrap_or_else(|| panic!("{}: Unknown trait {}", loc_display(loc), name))
+                .id
+                .clone(),
             params: args
                 .iter()
-                .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+                .map(|arg| convert_ast_ty(tys, module_env, &arg.node, &arg.loc))
                 .collect(),
             assoc_ty: None,
             loc: loc.clone(),
@@ -293,12 +333,19 @@ fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Option
             assoc_ty,
             eq,
         } => Some(Pred {
-            trait_: name.clone(),
+            trait_: tys
+                .resolve(module_env, name)
+                .unwrap_or_else(|| panic!("{}: Unknown trait {}", loc_display(loc), name))
+                .id
+                .clone(),
             params: args
                 .iter()
-                .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+                .map(|arg| convert_ast_ty(tys, module_env, &arg.node, &arg.loc))
                 .collect(),
-            assoc_ty: Some((assoc_ty.clone(), convert_ast_ty(tys, &eq.node, &eq.loc))),
+            assoc_ty: Some((
+                assoc_ty.clone(),
+                convert_ast_ty(tys, module_env, &eq.node, &eq.loc),
+            )),
             loc: loc.clone(),
         }),
     }
