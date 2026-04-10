@@ -96,7 +96,7 @@ impl LoweredPgm {
                     buf.push('\n');
 
                     for stmt in body {
-                        buf.push_str(&INDENTS[0..2]);
+                        push_indent(buf, 2);
                         stmt.node.print(buf, 2);
                     }
                 }
@@ -169,7 +169,7 @@ impl LoweredPgm {
             buf.push('\n');
 
             for stmt in body {
-                buf.push_str(&INDENTS[0..2]);
+                push_indent(buf, 2);
                 stmt.node.print(buf, 2);
             }
 
@@ -208,7 +208,7 @@ impl Stmt {
                 cond.node.print(buf, indent);
                 buf.push_str(":\n");
                 for stmt in body {
-                    buf.push_str(&INDENTS[0..(indent + 2) as usize]);
+                    push_indent(buf, indent + 2);
                     stmt.node.print(buf, indent + 2);
                 }
             }
@@ -319,7 +319,7 @@ impl Expr {
                     if i != 0 {
                         buf.push('\n');
                     }
-                    buf.push_str(&INDENTS[0..indent as usize + 2]);
+                    push_indent(buf, indent + 2);
                     pat.node.print(buf);
                     if let Some(guard) = guard {
                         buf.push_str(" if ");
@@ -327,7 +327,7 @@ impl Expr {
                     }
                     buf.push_str(":\n");
                     for stmt in rhs {
-                        buf.push_str(&INDENTS[0..indent as usize + 4]);
+                        push_indent(buf, indent + 4);
                         stmt.node.print(buf, indent + 4);
                     }
                 }
@@ -342,26 +342,26 @@ impl Expr {
                 branches[0].0.node.print(buf, indent);
                 buf.push_str(":\n");
                 for stmt in &branches[0].1 {
-                    buf.push_str(&INDENTS[0..indent as usize + 2]);
+                    push_indent(buf, indent + 2);
                     stmt.node.print(buf, indent + 2);
                 }
                 for branch in &branches[1..] {
                     buf.push('\n');
-                    buf.push_str(&INDENTS[0..indent as usize]);
+                    push_indent(buf, indent);
                     buf.push_str("elif ");
                     branch.0.node.print(buf, indent);
                     buf.push_str(":\n");
                     for stmt in &branch.1 {
-                        buf.push_str(&INDENTS[0..indent as usize + 2]);
+                        push_indent(buf, indent + 2);
                         stmt.node.print(buf, indent + 2);
                     }
                 }
                 if let Some(else_branch) = else_branch {
                     buf.push('\n');
-                    buf.push_str(&INDENTS[0..indent as usize]);
+                    push_indent(buf, indent);
                     buf.push_str("else:\n");
                     for stmt in else_branch {
-                        buf.push_str(&INDENTS[0..indent as usize + 2]);
+                        push_indent(buf, indent + 2);
                         stmt.node.print(buf, indent + 2);
                     }
                 }
@@ -384,7 +384,7 @@ impl Expr {
             Expr::Do(body, _) => {
                 buf.push_str("do:\n");
                 for stmt in body.iter() {
-                    buf.push_str(&INDENTS[0..indent as usize + 4]);
+                    push_indent(buf, indent + 4);
                     stmt.node.print(buf, indent + 4);
                 }
             }
@@ -493,4 +493,8 @@ fn print_ty_args(ty_args: &[mono::Type], buf: &mut String) {
     buf.push(']');
 }
 
-const INDENTS: &str = "                                                  ";
+fn push_indent(buf: &mut String, indent: u32) {
+    for _ in 0..indent {
+        buf.push(' ');
+    }
+}

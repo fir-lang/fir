@@ -40,7 +40,7 @@ impl TypeDecl {
     pub fn print(&self, buf: &mut String, indent: u32) {
         if let Some(attr) = &self.attr {
             attr.print(buf, indent);
-            buf.push_str(&INDENTS[..indent as usize]);
+            push_indent(buf, indent);
         }
 
         if !self.type_param_kinds.is_empty() {
@@ -90,13 +90,13 @@ impl TypeDeclRhs {
                     if i != 0 {
                         buf.push('\n');
                     }
-                    buf.push_str(&INDENTS[..indent as usize]);
+                    push_indent(buf, indent);
                     buf.push_str(&con.name);
                     print_con_fields(&con.fields, buf, indent);
                 }
                 if let Some(ext) = extension {
                     buf.push('\n');
-                    buf.push_str(&INDENTS[..indent as usize]);
+                    push_indent(buf, indent);
                     buf.push_str("..");
                     ext.node.print(buf);
                 }
@@ -121,14 +121,14 @@ fn print_con_fields(fields: &ConFields, buf: &mut String, indent: u32) {
         ConFields::Named { fields, extension } => {
             buf.push_str("(\n");
             for (field_name, field_ty) in fields.iter() {
-                buf.push_str(&INDENTS[..indent as usize]);
+                push_indent(buf, indent);
                 buf.push_str(field_name);
                 buf.push_str(": ");
                 field_ty.node.print(buf);
                 buf.push_str(",\n");
             }
             if let Some(ext) = extension {
-                buf.push_str(&INDENTS[..indent as usize]);
+                push_indent(buf, indent);
                 buf.push_str("..");
                 ext.node.print(buf);
                 buf.push('\n');
@@ -158,7 +158,7 @@ impl FunDecl {
                 if i != 0 {
                     buf.push('\n');
                 }
-                buf.push_str(&INDENTS[..indent as usize + 4]);
+                push_indent(buf, indent + 4);
                 stmt.node.print(buf, indent + 4);
             }
         }
@@ -172,7 +172,7 @@ impl ImportDecl {
         }
         buf.push_str("import [\n");
         for item in self.items.iter() {
-            buf.push_str(&INDENTS[..4]);
+            push_indent(buf, 4);
             buf.push_str(&item.path.to_string());
             match &item.import_spec {
                 ImportSpec::Wildcard => {
@@ -207,7 +207,7 @@ impl ImportDecl {
 
 impl TraitDecl {
     pub fn print(&self, buf: &mut String, indent: u32) {
-        buf.push_str(&INDENTS[..indent as usize]);
+        push_indent(buf, indent);
         buf.push_str("trait ");
         buf.push_str(&self.name.node);
         buf.push('[');
@@ -222,7 +222,7 @@ impl TraitDecl {
             if i != 0 {
                 buf.push('\n');
             }
-            buf.push_str(&INDENTS[..indent as usize + 4]);
+            push_indent(buf, indent + 4);
             item.print(buf, indent + 4);
         }
     }
@@ -283,7 +283,7 @@ impl ImplDecl {
                 buf.push('\n');
                 buf.push('\n');
             }
-            buf.push_str(&INDENTS[..indent as usize + 4]);
+            push_indent(buf, indent + 4);
             item.print(buf, indent + 4);
         }
     }
@@ -569,7 +569,7 @@ impl Stmt {
                     if i != 0 {
                         buf.push('\n');
                     }
-                    buf.push_str(&INDENTS[..indent as usize + 4]);
+                    push_indent(buf, indent + 4);
                     stmt.node.print(buf, indent + 4);
                 }
             }
@@ -587,7 +587,7 @@ impl Stmt {
                     if i != 0 {
                         buf.push('\n');
                     }
-                    buf.push_str(&INDENTS[..indent as usize + 4]);
+                    push_indent(buf, indent + 4);
                     stmt.node.print(buf, indent + 4);
                 }
             }
@@ -834,7 +834,7 @@ impl Expr {
                     if i != 0 {
                         buf.push('\n');
                     }
-                    buf.push_str(&INDENTS[..indent as usize + 4]);
+                    push_indent(buf, indent + 4);
                     pat.node.print(buf);
                     if let Some(guard) = guard {
                         buf.push_str(" if ");
@@ -845,7 +845,7 @@ impl Expr {
                         if j != 0 {
                             buf.push('\n');
                         }
-                        buf.push_str(&INDENTS[..indent as usize + 8]);
+                        push_indent(buf, indent + 8);
                         stmt.node.print(buf, indent + 8);
                     }
                 }
@@ -863,12 +863,12 @@ impl Expr {
                     if i != 0 {
                         buf.push('\n');
                     }
-                    buf.push_str(&INDENTS[..indent as usize + 4]);
+                    push_indent(buf, indent + 4);
                     stmt.node.print(buf, indent + 4);
                 }
                 for branch in &branches[1..] {
                     buf.push('\n');
-                    buf.push_str(&INDENTS[..indent as usize]);
+                    push_indent(buf, indent);
                     buf.push_str("elif ");
                     branch.0.node.print(buf, indent);
                     buf.push_str(":\n");
@@ -876,19 +876,19 @@ impl Expr {
                         if i != 0 {
                             buf.push('\n');
                         }
-                        buf.push_str(&INDENTS[..indent as usize + 4]);
+                        push_indent(buf, indent + 4);
                         stmt.node.print(buf, indent + 4);
                     }
                 }
                 if let Some(else_branch) = else_branch {
                     buf.push('\n');
-                    buf.push_str(&INDENTS[..indent as usize]);
+                    push_indent(buf, indent);
                     buf.push_str("else:\n");
                     for (i, stmt) in else_branch.iter().enumerate() {
                         if i != 0 {
                             buf.push('\n');
                         }
-                        buf.push_str(&INDENTS[..indent as usize + 4]);
+                        push_indent(buf, indent + 4);
                         stmt.node.print(buf, indent + 4);
                     }
                 }
@@ -906,11 +906,11 @@ impl Expr {
                 }
                 buf.push_str(" {\n");
                 for stmt in body.iter() {
-                    buf.push_str(&INDENTS[..indent as usize + 4]);
+                    push_indent(buf, indent + 4);
                     stmt.node.print(buf, indent + 4);
                     buf.push('\n');
                 }
-                buf.push_str(&INDENTS[..indent as usize]);
+                push_indent(buf, indent);
                 buf.push('}');
             }
 
@@ -931,7 +931,7 @@ impl Expr {
                     if i != 0 {
                         buf.push('\n');
                     }
-                    buf.push_str(&INDENTS[..indent as usize + 4]);
+                    push_indent(buf, indent + 4);
                     stmt.node.print(buf, indent + 4);
                 }
             }
@@ -1185,7 +1185,11 @@ fn expr_parens(expr: &Expr) -> bool {
     )
 }
 
-const INDENTS: &str = "                                                                                                    ";
+fn push_indent(buf: &mut String, indent: u32) {
+    for _ in 0..indent {
+        buf.push(' ');
+    }
+}
 
 use std::fmt::Display;
 
