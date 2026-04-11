@@ -282,8 +282,8 @@ fn scc(graph: &HashMap<ModulePath, HashSet<ModulePath>>) -> Vec<Vec<ModulePath>>
 
 fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
     let attr = match &import.node.attr {
-        Some(attr) => &attr.expr.node,
-        None => return false,
+        Some(attr) if attr.lhs.is_none() => &attr.expr.node,
+        _ => return false,
     };
     if let ast::Expr::ConSel(ast::Con {
         ty,

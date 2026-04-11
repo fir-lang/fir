@@ -1646,12 +1646,14 @@ impl Tokens[ParenExpr[exts]]:
         self._rparen
 
 
-## An attribute: `#[derive(Foo, Bar)]`, `#[F(x = 1, y = "hi")]`.
+## An attribute: `#[derive(Foo, Bar)]`, `#[path = Fir/Prim/U32]`.
 ##
 ## This just uses expression syntax as expression syntax should be rich enough
 ## to cover most attributes. We may revise this as needed.
 #[derive(ToDoc)]
 type Attribute[exts](
+    lhs: Option[Expr[exts]],
+
     expr: Expr[exts],
 
     # "#["

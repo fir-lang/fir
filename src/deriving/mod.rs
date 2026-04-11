@@ -59,6 +59,10 @@ fn expand_derives_module(module: &mut ast::Module) {
 
 /// Extract trait names from a `#[derive(Trait1, Trait2)]` attribute.
 fn extract_derive_traits(attr: &ast::Attribute) -> Vec<ast::Name> {
+    if attr.lhs.is_some() {
+        return vec![];
+    }
+
     let ast::Expr::Call(call) = &attr.expr.node else {
         return vec![];
     };

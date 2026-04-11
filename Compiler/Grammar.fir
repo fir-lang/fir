@@ -1111,6 +1111,19 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let attr = attr(state)
+                    attr,
+            )
+            let attr = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let val = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Type, ..):
@@ -1147,7 +1160,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
-                    attr = Option.None,
+                    attr,
                     value_ = Option.None,
                     prim_ = Option.None,
                     name = newId(name),
@@ -1162,6 +1175,19 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let attr = attr(state)
+                    attr,
+            )
+            let attr = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let val = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Type, ..):
@@ -1187,7 +1213,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
-                    attr = Option.None,
+                    attr,
                     value_ = Option.None,
                     prim_ = Option.None,
                     name = newId(name),
@@ -1202,6 +1228,19 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let attr = attr(state)
+                    attr,
+            )
+            let attr = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let prim_ = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Prim, ..):
@@ -1249,7 +1288,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
-                    attr = Option.None,
+                    attr,
                     value_ = Option.None,
                     prim_ = Option.Some(TokenIdx(idx = prim_)),
                     name = newId(name),
@@ -6137,7 +6176,25 @@ attr[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) A
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let expr = expr(state)
+            let lhs = expr(state)
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Eq, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let rhs = expr(state)
+                    rhs,
+            )
+            let rhs = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let close = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.RBracket, ..):
@@ -6150,11 +6207,21 @@ attr[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) A
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                Attribute(
-                    expr,
-                    open = TokenIdx(idx = open),
-                    close = TokenIdx(idx = close),
-                )
+                match rhs:
+                    Option.Some(rhs):
+                        Attribute(
+                            lhs = Option.Some(lhs),
+                            expr = rhs,
+                            open = TokenIdx(idx = open),
+                            close = TokenIdx(idx = close),
+                        )
+                    Option.None:
+                        Attribute(
+                            lhs = Option.None,
+                            expr = lhs,
+                            open = TokenIdx(idx = open),
+                            close = TokenIdx(idx = close),
+                        )
             val,
     )
     match altResult:
