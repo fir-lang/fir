@@ -8,7 +8,7 @@ use crate::module::ModulePath;
 pub use crate::name::Name;
 pub use crate::token::IntKind;
 use crate::type_checker::id::builtins as builtin_ids;
-use crate::type_checker::{Kind, Ty};
+use crate::type_checker::{Id, Kind, Ty};
 
 use std::rc::Rc;
 
@@ -685,10 +685,10 @@ pub struct MethodSelExpr {
 
     /// The type or trait id that defines the method.
     ///
-    /// E.g. `Vec`, `Iterator`.
+    /// E.g. `Fir/Vec/Vec`, `Fir/Iter/Iterator`.
     ///
     /// Note: when calling trait methods, this will be the trait type rather than the receiver type.
-    pub method_ty_id: crate::type_checker::Id,
+    pub method_ty_id: Id,
 
     /// The method id.
     ///
