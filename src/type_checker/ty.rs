@@ -1147,15 +1147,16 @@ impl Ty {
                             .collect(),
                     },
                     FunArgs::Named { args, extension } => {
-                        let (all_args, extension) = crate::type_checker::row_utils::collect_record_rows(
-                            cons,
-                            self,
-                            args,
-                            extension.clone(),
-                            trait_env,
-                            var_gen,
-                            assumps,
-                        );
+                        let (all_args, extension) =
+                            crate::type_checker::row_utils::collect_record_rows(
+                                cons,
+                                self,
+                                args,
+                                extension.clone(),
+                                trait_env,
+                                var_gen,
+                                assumps,
+                            );
                         FunArgs::Named {
                             args: all_args,
                             extension: extension.map(Box::new),

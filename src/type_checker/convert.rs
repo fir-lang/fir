@@ -1,7 +1,7 @@
 use crate::ast::{self, Name};
 use crate::collections::*;
-use crate::type_checker::id::Id;
 use crate::type_checker::ModuleEnv;
+use crate::type_checker::id::Id;
 use crate::type_checker::loc_display;
 use crate::type_checker::ty::*;
 use crate::type_checker::ty_map::TyMap;

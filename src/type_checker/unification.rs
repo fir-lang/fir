@@ -120,18 +120,8 @@ pub(super) fn unify(
                     },
                 ) => {
                     unify_record_labels(
-                        &ty1,
-                        args1,
-                        extension1,
-                        &ty2,
-                        args2,
-                        extension2,
-                        cons,
-                        trait_env,
-                        var_gen,
-                        loc,
-                        assumps,
-                        preds,
+                        &ty1, args1, extension1, &ty2, args2, extension2, cons, trait_env, var_gen,
+                        loc, assumps, preds,
                     );
                 }
 
@@ -206,18 +196,8 @@ pub(super) fn unify(
             },
         ) => {
             unify_record_labels(
-                &ty1,
-                labels1,
-                extension1,
-                &ty2,
-                labels2,
-                extension2,
-                cons,
-                trait_env,
-                var_gen,
-                loc,
-                assumps,
-                preds,
+                &ty1, labels1, extension1, &ty2, labels2, extension2, cons, trait_env, var_gen,
+                loc, assumps, preds,
             );
         }
 
@@ -234,18 +214,8 @@ pub(super) fn unify(
             },
         ) => {
             unify_variant_labels(
-                &ty1,
-                labels1,
-                extension1,
-                &ty2,
-                labels2,
-                extension2,
-                cons,
-                trait_env,
-                var_gen,
-                loc,
-                assumps,
-                preds,
+                &ty1, labels1, extension1, &ty2, labels2, extension2, cons, trait_env, var_gen,
+                loc, assumps, preds,
             );
         }
 
@@ -449,10 +419,28 @@ fn unify_record_labels(
     match (extension1, extension2) {
         (None, None) => {}
         (Some(ext1), None) => {
-            unify(&ext1, &unit_row(), cons, trait_env, var_gen, loc, assumps, preds);
+            unify(
+                &ext1,
+                &unit_row(),
+                cons,
+                trait_env,
+                var_gen,
+                loc,
+                assumps,
+                preds,
+            );
         }
         (None, Some(ext2)) => {
-            unify(&unit_row(), &ext2, cons, trait_env, var_gen, loc, assumps, preds);
+            unify(
+                &unit_row(),
+                &ext2,
+                cons,
+                trait_env,
+                var_gen,
+                loc,
+                assumps,
+                preds,
+            );
         }
         (Some(ext1), Some(ext2)) => {
             unify(&ext1, &ext2, cons, trait_env, var_gen, loc, assumps, preds);
@@ -543,10 +531,28 @@ fn unify_variant_labels(
     match (extension1, extension2) {
         (None, None) => {}
         (Some(ext1), None) => {
-            unify(&ext1, &unit_row(), cons, trait_env, var_gen, loc, assumps, preds);
+            unify(
+                &ext1,
+                &unit_row(),
+                cons,
+                trait_env,
+                var_gen,
+                loc,
+                assumps,
+                preds,
+            );
         }
         (None, Some(ext2)) => {
-            unify(&unit_row(), &ext2, cons, trait_env, var_gen, loc, assumps, preds);
+            unify(
+                &unit_row(),
+                &ext2,
+                cons,
+                trait_env,
+                var_gen,
+                loc,
+                assumps,
+                preds,
+            );
         }
         (Some(ext1), Some(ext2)) => {
             unify(&ext1, &ext2, cons, trait_env, var_gen, loc, assumps, preds);
@@ -625,15 +631,7 @@ pub(super) fn try_unify_one_way(
                     },
                 ) => {
                     if !try_unify_record_labels_one_way(
-                        &ty1,
-                        args1,
-                        extension1,
-                        &ty2,
-                        args2,
-                        extension2,
-                        cons,
-                        var_gen,
-                        loc,
+                        &ty1, args1, extension1, &ty2, args2, extension2, cons, var_gen, loc,
                     ) {
                         return false;
                     }
@@ -694,15 +692,7 @@ pub(super) fn try_unify_one_way(
                 is_row: _,
             },
         ) => try_unify_record_labels_one_way(
-            &ty1,
-            labels1,
-            extension1,
-            &ty2,
-            labels2,
-            extension2,
-            cons,
-            var_gen,
-            loc,
+            &ty1, labels1, extension1, &ty2, labels2, extension2, cons, var_gen, loc,
         ),
 
         (
@@ -717,15 +707,7 @@ pub(super) fn try_unify_one_way(
                 is_row: _,
             },
         ) => try_unify_variant_labels_one_way(
-            &ty1,
-            labels1,
-            extension1,
-            &ty2,
-            labels2,
-            extension2,
-            cons,
-            var_gen,
-            loc,
+            &ty1, labels1, extension1, &ty2, labels2, extension2, cons, var_gen, loc,
         ),
 
         (
