@@ -78,40 +78,6 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
         }
     }
 
-    // Ensure all modules have an env entry, even those not in the SCC graph
-    // (e.g. NoImplicitPrelude tests with no imports).
-    for module_path in pgm.modules.keys() {
-        if envs.contains_key(module_path) {
-            continue;
-        }
-        let mut env: HashMap<Name, Id> = Default::default();
-        let module = pgm.modules.get(module_path).unwrap();
-        for decl in module.decls.iter() {
-            match &decl.node {
-                ast::TopDecl::Type(ty_decl) => {
-                    env.insert(
-                        ty_decl.node.name.clone(),
-                        Id::new(module_path, &ty_decl.node.name),
-                    );
-                }
-                ast::TopDecl::Trait(trait_decl) => {
-                    env.insert(
-                        trait_decl.node.name.node.clone(),
-                        Id::new(module_path, &trait_decl.node.name.node),
-                    );
-                }
-                ast::TopDecl::Fun(fun_decl) => {
-                    env.insert(
-                        fun_decl.node.name.node.clone(),
-                        Id::new(module_path, &fun_decl.node.name.node),
-                    );
-                }
-                ast::TopDecl::Import(_) | ast::TopDecl::Impl(_) => {}
-            }
-        }
-        envs.insert(module_path.clone(), env);
-    }
-
     envs
 }
 
