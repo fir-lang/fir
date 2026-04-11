@@ -4,7 +4,7 @@ use crate::interpolation::StrPart;
 use crate::mono_ast as mono;
 use crate::mono_ast::MonoPgm;
 use crate::type_checker::id::builtins;
-use crate::type_checker::{FunArgs, Id, Kind, RecordOrVariant, Ty};
+use crate::type_checker::{FunArgs, Kind, RecordOrVariant, Ty};
 use crate::utils::*;
 
 /// The program in front-end syntax, converted to a graph for efficient and easy lookups.
@@ -181,20 +181,44 @@ pub fn monomorphise(pgm: &ast::Module, main: &str) -> MonoPgm {
 
     // Copy types used by the interpreter built-ins.
     for ty in [
-        make_tc_ty("Bool", vec![]),
-        make_tc_ty("Char", vec![]),
-        make_tc_ty("Str", vec![]),
-        make_tc_ty("Ordering", vec![]),
-        make_tc_ty("I8", vec![]),
-        make_tc_ty("U8", vec![]),
-        make_tc_ty("I32", vec![]),
-        make_tc_ty("U32", vec![]),
-        make_tc_ty("Array", vec!["I8"]),
-        make_tc_ty("Array", vec!["U8"]),
-        make_tc_ty("Array", vec!["I32"]),
-        make_tc_ty("Array", vec!["U32"]),
-        make_tc_ty("Array", vec!["I64"]),
-        make_tc_ty("Array", vec!["U64"]),
+        Ty::Con(builtins::BOOL(), Kind::Star),
+        Ty::Con(builtins::CHAR(), Kind::Star),
+        Ty::Con(builtins::STR(), Kind::Star),
+        Ty::Con(builtins::ORDERING(), Kind::Star),
+        Ty::Con(builtins::I8(), Kind::Star),
+        Ty::Con(builtins::U8(), Kind::Star),
+        Ty::Con(builtins::I32(), Kind::Star),
+        Ty::Con(builtins::U32(), Kind::Star),
+        Ty::App(
+            builtins::ARRAY(),
+            vec![Ty::Con(builtins::I8(), Kind::Star)],
+            Kind::Star,
+        ),
+        Ty::App(
+            builtins::ARRAY(),
+            vec![Ty::Con(builtins::U8(), Kind::Star)],
+            Kind::Star,
+        ),
+        Ty::App(
+            builtins::ARRAY(),
+            vec![Ty::Con(builtins::I32(), Kind::Star)],
+            Kind::Star,
+        ),
+        Ty::App(
+            builtins::ARRAY(),
+            vec![Ty::Con(builtins::U32(), Kind::Star)],
+            Kind::Star,
+        ),
+        Ty::App(
+            builtins::ARRAY(),
+            vec![Ty::Con(builtins::I64(), Kind::Star)],
+            Kind::Star,
+        ),
+        Ty::App(
+            builtins::ARRAY(),
+            vec![Ty::Con(builtins::U64(), Kind::Star)],
+            Kind::Star,
+        ),
     ] {
         mono_tc_ty(&ty, &Default::default(), &poly_pgm, &mut mono_pgm);
     }
@@ -207,37 +231,6 @@ pub fn monomorphise(pgm: &ast::Module, main: &str) -> MonoPgm {
     mono_top_fn(main, &[], &poly_pgm, &mut mono_pgm);
 
     mono_pgm
-}
-
-fn make_tc_ty(con: &'static str, args: Vec<&'static str>) -> Ty {
-    if args.is_empty() {
-        Ty::Con(builtin_id(con), Kind::Star)
-    } else {
-        Ty::App(
-            builtin_id(con),
-            args.iter()
-                .map(|ty_arg| Ty::Con(builtin_id(ty_arg), Kind::Star))
-                .collect(),
-            Kind::Star,
-        )
-    }
-}
-
-fn builtin_id(name: &str) -> Id {
-    match name {
-        "Bool" => builtins::BOOL(),
-        "Char" => builtins::CHAR(),
-        "Str" => builtins::STR(),
-        "Ordering" => builtins::ORDERING(),
-        "I8" => builtins::I8(),
-        "U8" => builtins::U8(),
-        "I32" => builtins::I32(),
-        "U32" => builtins::U32(),
-        "I64" => builtins::I64(),
-        "U64" => builtins::U64(),
-        "Array" => builtins::ARRAY(),
-        _ => panic!("Unknown builtin type: {}", name),
-    }
 }
 
 fn mono_top_fn(
@@ -1763,8 +1756,8 @@ fn mono_tc_ty(
             .unwrap_or_else(|| panic!("Unmapped rigid type variable {var}"))
             .clone(),
 
-        Ty::App(id, args, _kind) => {
-            let ty_decl = poly_pgm.ty.get(id.name()).unwrap();
+        Ty::App(con, args, _kind) => {
+            let ty_decl = poly_pgm.ty.get(con.name()).unwrap();
             let mono_args: Vec<mono::Type> = args
                 .iter()
                 .map(|arg| mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm))
