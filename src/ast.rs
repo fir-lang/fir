@@ -1392,15 +1392,15 @@ impl Expr {
             | Expr::Variant(VariantExpr { inferred_ty, .. }) => inferred_ty.clone(),
 
             Expr::Int(IntExpr { kind, .. }) => {
-                let name = match kind.as_ref()? {
-                    IntKind::I8(_) => "I8",
-                    IntKind::U8(_) => "U8",
-                    IntKind::I32(_) => "I32",
-                    IntKind::U32(_) => "U32",
-                    IntKind::I64(_) => "I64",
-                    IntKind::U64(_) => "U64",
+                let id = match kind.as_ref()? {
+                    IntKind::I8(_) => builtin_ids::I8(),
+                    IntKind::U8(_) => builtin_ids::U8(),
+                    IntKind::I32(_) => builtin_ids::I32(),
+                    IntKind::U32(_) => builtin_ids::U32(),
+                    IntKind::I64(_) => builtin_ids::I64(),
+                    IntKind::U64(_) => builtin_ids::U64(),
                 };
-                Some(Ty::Con(builtin_ids::num_id(name), Kind::Star))
+                Some(Ty::Con(id, Kind::Star))
             }
 
             Expr::Str(_) => Some(Ty::str()),

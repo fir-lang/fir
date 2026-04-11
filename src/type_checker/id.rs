@@ -208,17 +208,4 @@ pub mod builtins {
     pub fn LIST() -> Id {
         fir_id("List", "List")
     }
-
-    /// Get the `Id` for a numeric type by name (e.g. "I32", "U8").
-    pub fn num_id(name: &str) -> Id {
-        match name {
-            "I8" => I8(),
-            "U8" => U8(),
-            "I32" => I32(),
-            "U32" => U32(),
-            "I64" => I64(),
-            "U64" => U64(),
-            _ => panic!("Unknown numeric type: {}", name),
-        }
-    }
 }

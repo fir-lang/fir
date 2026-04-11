@@ -2,6 +2,7 @@ use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::interpolation::StrPart;
 use crate::type_checker::convert::convert_ast_ty;
+use crate::type_checker::id::builtins as builtin_ids;
 use crate::type_checker::id::{self, Id};
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::stmt::check_stmts;
@@ -754,7 +755,7 @@ pub(super) fn check_expr(
                 }
             };
 
-            match con {
+            let id = match con {
                 "U8" => {
                     if negate {
                         panic!(
@@ -772,6 +773,7 @@ pub(super) fn check_expr(
                             )
                         },
                     )));
+                    builtin_ids::U8()
                 }
 
                 "I8" => {
@@ -794,6 +796,7 @@ pub(super) fn check_expr(
                         bits = !bits.wrapping_sub(1);
                     }
                     *kind = Some(ast::IntKind::I8(bits as i8));
+                    builtin_ids::I8()
                 }
 
                 "U32" => {
@@ -813,6 +816,7 @@ pub(super) fn check_expr(
                             )
                         },
                     )));
+                    builtin_ids::U32()
                 }
 
                 "I32" => {
@@ -835,6 +839,7 @@ pub(super) fn check_expr(
                         bits = !bits.wrapping_sub(1);
                     }
                     *kind = Some(ast::IntKind::I32(bits as i32));
+                    builtin_ids::I32()
                 }
 
                 "U64" => {
@@ -846,6 +851,7 @@ pub(super) fn check_expr(
                         );
                     }
                     *kind = Some(ast::IntKind::U64(*parsed));
+                    builtin_ids::U32()
                 }
 
                 "I64" => {
@@ -862,6 +868,7 @@ pub(super) fn check_expr(
                         bits = !bits.wrapping_sub(1);
                     }
                     *kind = Some(ast::IntKind::I64(bits as i64));
+                    builtin_ids::I32()
                 }
 
                 other => panic!(
@@ -869,12 +876,9 @@ pub(super) fn check_expr(
                     loc_display(loc),
                     other,
                 ),
-            }
+            };
 
-            (
-                Ty::Con(id::builtins::num_id(con), Kind::Star),
-                Default::default(),
-            )
+            (Ty::Con(id, Kind::Star), Default::default())
         }
 
         ast::Expr::Str(og_parts) => {
