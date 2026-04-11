@@ -144,19 +144,17 @@ pub(super) fn check_expr(
 
                 let ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                 match &ty_normalized {
-                    Ty::Anonymous {
+                    Ty::Record {
                         labels,
                         extension,
-                        record_or_variant: RecordOrVariant::Record,
-                        ..
+                        is_row: _,
                     } => {
                         if !user_ty_args.is_empty() {
                             panic!("{}: Record field with type arguments", loc_display(loc));
                         }
-                        let (labels, _) = crate::type_checker::row_utils::collect_rows(
+                        let (labels, _) = crate::type_checker::row_utils::collect_record_rows(
                             tc_state.tys.tys.cons(),
                             &ty_normalized,
-                            RecordOrVariant::Record,
                             labels,
                             extension.clone(),
                             tc_state.trait_env,
@@ -588,10 +586,9 @@ pub(super) fn check_expr(
                                 })
                                 .collect();
 
-                            let expected_ty = Ty::Anonymous {
+                            let expected_ty = Ty::Record {
                                 labels: param_tys.clone(),
                                 extension: extension.clone(),
-                                record_or_variant: RecordOrVariant::Record,
                                 is_row: false,
                             };
 
@@ -1421,7 +1418,8 @@ pub(super) fn check_expr(
                     | Ty::UVar(_)
                     | Ty::App(_, _, _)
                     | Ty::QVar(_, _)
-                    | Ty::Anonymous { .. }
+                    | Ty::Record { .. }
+                    | Ty::Variant { .. }
                     | Ty::AssocTySelect { .. } => (None, None, None),
                 },
                 None => (None, None, None),
@@ -2190,8 +2188,8 @@ fn select_method(
 }
 
 pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) -> Ty {
-    let con = match ty.normalize(tc_state.tys.tys.cons()) {
-        Ty::Con(con, _) | Ty::App(con, _, _) => con.name().clone(),
+    let con_id = match ty.normalize(tc_state.tys.tys.cons()) {
+        Ty::Con(con, _) | Ty::App(con, _, _) => con.clone(),
 
         ty => panic!(
             "{}: Type in variant is not a constructor: {}",
@@ -2200,14 +2198,14 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) ->
         ),
     };
 
-    if con == "I8"
-        || con == "U8"
-        || con == "I16"
-        || con == "U16"
-        || con == "I32"
-        || con == "U32"
-        || con == "I64"
-        || con == "U64"
+    if con_id.name() == "I8"
+        || con_id.name() == "U8"
+        || con_id.name() == "I16"
+        || con_id.name() == "U16"
+        || con_id.name() == "I32"
+        || con_id.name() == "U32"
+        || con_id.name() == "I64"
+        || con_id.name() == "U64"
     {
         panic!(
             "{}: Integers can't be made variants in the interpreter",
@@ -2219,10 +2217,9 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) ->
         .var_gen
         .new_var(Kind::Row(RecordOrVariant::Variant), loc.clone());
 
-    Ty::Anonymous {
-        labels: [(con, ty)].into_iter().collect(),
+    Ty::Variant {
+        labels: [(con_id, ty)].into_iter().collect(),
         extension: Some(Box::new(Ty::UVar(row_ext))),
-        record_or_variant: RecordOrVariant::Variant,
         is_row: false,
     }
 }
@@ -2239,18 +2236,21 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
             let old = refined_binders.insert(var.clone(), tys.iter().next().unwrap().clone());
             assert_eq!(old, None);
         } else {
-            let mut labels: OrdMap<Name, Ty> = Default::default();
+            let mut labels: OrdMap<Id, Ty> = Default::default();
             let mut extension: Option<Box<Ty>> = None;
 
             for ty in tys.iter() {
                 match ty {
                     Ty::Con(con, _) | Ty::App(con, _, _) => {
-                        let old = labels.insert(con.name().clone(), ty.clone());
+                        let old = labels.insert(con.clone(), ty.clone());
                         assert_eq!(old, None);
                     }
 
                     Ty::RVar(con, _) => {
-                        let old = labels.insert(con.clone(), ty.clone());
+                        let old = labels.insert(
+                            Id::new(&crate::module::ModulePath::new(vec![]), con),
+                            ty.clone(),
+                        );
                         assert_eq!(old, None);
                     }
 
@@ -2259,10 +2259,9 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
                         extension = Some(Box::new(ty.clone()));
                     }
 
-                    Ty::Anonymous {
+                    Ty::Variant {
                         labels,
                         extension: new_extension,
-                        record_or_variant: RecordOrVariant::Variant,
                         is_row,
                     } => {
                         // This part is quite hacky and possibly wrong: because we only refine
@@ -2275,16 +2274,15 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
                         extension = new_extension.clone();
                     }
 
-                    Ty::Fun { .. } | Ty::Anonymous { .. } | Ty::AssocTySelect { .. } => {
+                    Ty::Fun { .. } | Ty::Record { .. } | Ty::AssocTySelect { .. } => {
                         panic!("{}: {}", loc_display(loc), ty)
                     }
                 }
             }
 
-            let new_ty = Ty::Anonymous {
+            let new_ty = Ty::Variant {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Variant,
                 is_row: false,
             };
 
@@ -2427,10 +2425,9 @@ fn check_record_expr(
         .as_ref()
         .map(|ty| ty.normalize(tc_state.tys.tys.cons()))
     {
-        Some(Ty::Anonymous {
+        Some(Ty::Record {
             labels: expected_fields,
             extension: _,
-            record_or_variant: RecordOrVariant::Record,
             is_row: _,
         }) => expected_fields,
         _ => Default::default(),
@@ -2459,10 +2456,9 @@ fn check_record_expr(
         ));
         unify(
             &splice_ty,
-            &Ty::Anonymous {
+            &Ty::Record {
                 labels: Default::default(),
                 extension: Some(extension.clone()),
-                record_or_variant: RecordOrVariant::Record,
                 is_row: false,
             },
             tc_state.tys.tys.cons(),
@@ -2475,10 +2471,9 @@ fn check_record_expr(
         extension
     });
 
-    Ty::Anonymous {
+    Ty::Record {
         labels: record_fields,
         extension,
-        record_or_variant: RecordOrVariant::Record,
         is_row: false,
     }
 }

@@ -1,5 +1,6 @@
 use crate::ast::{self, Name};
 use crate::collections::*;
+use crate::type_checker::id::Id;
 use crate::type_checker::ModuleEnv;
 use crate::type_checker::loc_display;
 use crate::type_checker::ty::*;
@@ -55,10 +56,9 @@ pub(super) fn convert_ast_ty(
                 None => None,
             };
 
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Record,
                 is_row: *is_row,
             }
         }
@@ -68,11 +68,12 @@ pub(super) fn convert_ast_ty(
             extension,
             is_row,
         } => {
-            let mut labels: OrdMap<Name, Ty> = OrdMap::new();
+            let mut labels: OrdMap<Id, Ty> = OrdMap::new();
 
             for alt in alts {
                 let ty = convert_named_ty(tys, module_env, alt, loc);
-                let old = labels.insert(alt.name.clone(), ty);
+                let alt_id = super::resolve_name(module_env, &alt.name);
+                let old = labels.insert(alt_id, ty);
                 if old.is_some() {
                     panic!(
                         "{}: Type {} used multiple times in variant type",
@@ -98,10 +99,9 @@ pub(super) fn convert_ast_ty(
                 None => None,
             };
 
-            Ty::Anonymous {
+            Ty::Variant {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Variant,
                 is_row: *is_row,
             }
         }

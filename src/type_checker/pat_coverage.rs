@@ -5,8 +5,6 @@ use crate::type_checker::{FunArgs, Scheme, TcFunState, Ty, TypeDetails, row_util
 #[allow(unused)]
 use crate::utils::loc_display;
 
-use super::RecordOrVariant;
-
 // Entry point.
 pub(crate) fn check_coverage(
     arms: &[ast::Alt],
@@ -211,18 +209,16 @@ impl PatMatrix {
                 exhaustive
             }
 
-            Ty::Anonymous {
+            Ty::Variant {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Variant,
                 is_row,
             } => {
                 assert!(!is_row);
 
-                let (labels, extension) = row_utils::collect_rows(
+                let (labels, extension) = row_utils::collect_variant_rows(
                     tc_state.tys.tys.cons(),
                     &next_ty,
-                    RecordOrVariant::Variant,
                     labels,
                     extension.clone(),
                     tc_state.trait_env,
@@ -250,10 +246,9 @@ impl PatMatrix {
 
                 // If variant can have more things, we need a wildcard at this position.
                 if let Some(extension) = &extension {
-                    match self.skip_wildcards(&Ty::Anonymous {
+                    match self.skip_wildcards(&Ty::Variant {
                         labels: Default::default(),
                         extension: Some(Box::new(extension.clone())),
-                        record_or_variant: RecordOrVariant::Variant,
                         is_row: false,
                     }) {
                         Some(skipped) => {
@@ -270,10 +265,9 @@ impl PatMatrix {
                 exhaustive
             }
 
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Record,
                 is_row,
             } => {
                 // Note: the code below is basically `focus_record`. We should probably move it to
@@ -285,10 +279,9 @@ impl PatMatrix {
                 assert!(!is_row);
 
                 // Row extensions don't matter for exhaustiveness as extra fields are not matched.
-                let (labels, _extension) = row_utils::collect_rows(
+                let (labels, _extension) = row_utils::collect_record_rows(
                     tc_state.tys.tys.cons(),
                     &next_ty,
-                    RecordOrVariant::Record,
                     labels,
                     extension.clone(),
                     tc_state.trait_env,
@@ -492,10 +485,9 @@ impl PatMatrix {
                 named_args = true;
                 let mut merged = args.clone();
                 if let Some(ext_ty) = extension {
-                    let (ext_labels, _) = row_utils::collect_rows(
+                    let (ext_labels, _) = row_utils::collect_record_rows(
                         tc_state.tys.tys.cons(),
                         ext_ty,
-                        RecordOrVariant::Record,
                         &OrdMap::new(),
                         Some(Box::new(ext_ty.as_ref().clone())),
                         tc_state.trait_env,

@@ -160,7 +160,7 @@ pub(crate) fn apply_con_ty(
                                 let unmatched_field_names: HashSet<&&Name> =
                                     con_ty_arg_names.difference(&arg_names).collect();
 
-                                let rest_ty = Ty::Anonymous {
+                                let rest_ty = Ty::Record {
                                     labels: unmatched_field_names
                                         .iter()
                                         .map(|field_name| {
@@ -171,7 +171,6 @@ pub(crate) fn apply_con_ty(
                                         })
                                         .collect(),
                                     extension: None,
-                                    record_or_variant: RecordOrVariant::Record,
                                     is_row: false,
                                 };
 
@@ -211,10 +210,9 @@ pub(crate) fn apply_con_ty(
                                         })
                                         .collect();
 
-                                    let binder_ty = Ty::Anonymous {
+                                    let binder_ty = Ty::Record {
                                         labels: unmatched_labels,
                                         extension: Some(Box::new(row_ty.clone())),
-                                        record_or_variant: RecordOrVariant::Record,
                                         is_row: false,
                                     };
                                     tc_state.env.insert(var.clone(), binder_ty.clone());
@@ -223,10 +221,9 @@ pub(crate) fn apply_con_ty(
                                 }
                                 ast::RestPat::No => None,
                             };
-                            let extra_row = Ty::Anonymous {
+                            let extra_row = Ty::Record {
                                 labels: extra_pat_fields,
                                 extension: row_extension,
-                                record_or_variant: RecordOrVariant::Record,
                                 is_row: true,
                             };
                             unify(
@@ -251,7 +248,8 @@ pub(crate) fn apply_con_ty(
         | Ty::Con(_, _)
         | Ty::RVar(_, _)
         | Ty::App(_, _, _)
-        | Ty::Anonymous { .. }
+        | Ty::Record { .. }
+        | Ty::Variant { .. }
         | Ty::QVar(_, _)
         | Ty::AssocTySelect { .. } => {
             if args.is_empty() {

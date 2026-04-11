@@ -979,12 +979,13 @@ fn visit_ty_con(
                     }
                 }
 
-                Ty::Anonymous {
-                    labels,
-                    extension: _,
-                    record_or_variant: _,
-                    is_row: _,
-                } => {
+                Ty::Record { labels, .. } => {
+                    for label_ty in labels.values() {
+                        tys.push(label_ty);
+                    }
+                }
+
+                Ty::Variant { labels, .. } => {
                     for label_ty in labels.values() {
                         tys.push(label_ty);
                     }
@@ -2168,15 +2169,13 @@ fn resolve_row_to_list(
 ) {
     assert_eq!(pred.params.len(), 1);
     let param = &pred.params[0];
-    if let Ty::Anonymous {
+    if let Ty::Record {
         labels,
         extension,
-        record_or_variant,
         is_row,
     } = param
         && let Some((assoc_ty_name, assoc_ty_rhs)) = &pred.assoc_ty
     {
-        assert_eq!(*record_or_variant, RecordOrVariant::Record);
         assert_eq!(assoc_ty_name, "List");
         assert!(is_row);
         // Note: we don't generate `RecRowToList[ext]` here (when `extension` is `Some(...)`). I'm
