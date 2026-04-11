@@ -1012,12 +1012,13 @@ pub enum ImplDeclItem {
     Fun(L<FunDecl>),
 }
 
-/// An attribute: `#[derive(Foo, Bar)]`, `#[F(x = 1, y = "hi")]`.
+/// An attribute: `#[derive(Foo, Bar)]`, `#[path = Fir/Prim/U32]`.
 ///
 /// This just uses expression syntax as expression syntax should be rich enough to cover most
 /// attributes. We may revise this as needed.
 #[derive(Debug, Clone)]
 pub struct Attribute {
+    pub lhs: Option<L<Expr>>,
     pub expr: L<Expr>,
 }
 

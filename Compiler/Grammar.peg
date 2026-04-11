@@ -314,9 +314,9 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
         )
 
     # Type synonym with type params
-    val=^ "type" name=^ "UpperId" "[" params=typeParams "]" "=" rhs=type_ "NEWLINE":
+    attr=attr? val=^ "type" name=^ "UpperId" "[" params=typeParams "]" "=" rhs=type_ "NEWLINE":
         TypeDecl(
-            attr = Option.None,
+            attr,
             value_ = Option.None,
             prim_ = Option.None,
             name = newId(name),
@@ -326,9 +326,9 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
         )
 
     # Type synonym
-    val=^ "type" name=^ "UpperId" "=" rhs=type_ "NEWLINE":
+    attr=attr? val=^ "type" name=^ "UpperId" "=" rhs=type_ "NEWLINE":
         TypeDecl(
-            attr = Option.None,
+            attr,
             value_ = Option.None,
             prim_ = Option.None,
             name = newId(name),
@@ -337,9 +337,9 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
             ..AstExts[exts].defaultTypeDeclExts()
         )
 
-    prim_=^ "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
+    attr=attr? prim_=^ "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
         TypeDecl(
-            attr = Option.None,
+            attr,
             value_ = Option.None,
             prim_ = Option.Some(TokenIdx(idx = prim_)),
             name = newId(name),
@@ -1206,5 +1206,19 @@ funSig[AstExts[exts], AstIds[AstExts[exts].Ids]] (id: Id, sig: FunSig[exts]):
 
 
 attr[AstExts[exts], AstIds[AstExts[exts].Ids]] Attribute[exts]:
-    open=^ "#[" expr=expr close=^ "]" "NEWLINE":
-        Attribute(expr, open = TokenIdx(idx = open), close = TokenIdx(idx = close))
+    open=^ "#[" lhs=expr rhs=(_"=" expr)? close=^ "]" "NEWLINE":
+        match rhs:
+            Option.Some(rhs):
+                Attribute(
+                    lhs = Option.Some(lhs),
+                    expr = rhs,
+                    open = TokenIdx(idx = open),
+                    close = TokenIdx(idx = close),
+                )
+            Option.None:
+                Attribute(
+                    lhs = Option.None,
+                    expr = lhs,
+                    open = TokenIdx(idx = open),
+                    close = TokenIdx(idx = close),
+                )

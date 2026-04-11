@@ -31,6 +31,10 @@ impl TopDecl {
 impl Attribute {
     pub fn print(&self, buf: &mut String, indent: u32) {
         buf.push_str("#[");
+        if let Some(rhs) = &self.lhs {
+            rhs.node.print(buf, indent);
+            buf.push_str(" = ");
+        }
         self.expr.node.print(buf, indent);
         buf.push_str("]\n");
     }
