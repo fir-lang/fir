@@ -2246,15 +2246,7 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
                         assert_eq!(old, None);
                     }
 
-                    Ty::RVar(con, _) => {
-                        let old = labels.insert(
-                            Id::new(&crate::module::ModulePath::new(vec![]), con),
-                            ty.clone(),
-                        );
-                        assert_eq!(old, None);
-                    }
-
-                    Ty::UVar(_) | Ty::QVar(_, _) => {
+                    Ty::UVar(_) => {
                         // Get the row type from the non-refined binding.
                         extension = Some(Box::new(ty.clone()));
                     }
@@ -2274,7 +2266,11 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
                         extension = new_extension.clone();
                     }
 
-                    Ty::Fun { .. } | Ty::Record { .. } | Ty::AssocTySelect { .. } => {
+                    Ty::QVar(_, _)
+                    | Ty::RVar(_, _)
+                    | Ty::Fun { .. }
+                    | Ty::Record { .. }
+                    | Ty::AssocTySelect { .. } => {
                         panic!("{}: {}", loc_display(loc), ty)
                     }
                 }
