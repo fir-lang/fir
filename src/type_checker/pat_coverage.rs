@@ -210,10 +210,9 @@ impl PatMatrix {
                 exhaustive
             }
 
-            Ty::Anonymous {
+            Ty::Variant {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Variant,
                 is_row,
             } => {
                 assert!(!is_row);
@@ -249,10 +248,9 @@ impl PatMatrix {
 
                 // If variant can have more things, we need a wildcard at this position.
                 if let Some(extension) = &extension {
-                    match self.skip_wildcards(&Ty::Anonymous {
+                    match self.skip_wildcards(&Ty::Variant {
                         labels: Default::default(),
                         extension: Some(Box::new(extension.clone())),
-                        record_or_variant: RecordOrVariant::Variant,
                         is_row: false,
                     }) {
                         Some(skipped) => {
@@ -269,10 +267,9 @@ impl PatMatrix {
                 exhaustive
             }
 
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Record,
                 is_row,
             } => {
                 // Note: the code below is basically `focus_record`. We should probably move it to

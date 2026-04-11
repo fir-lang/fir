@@ -140,11 +140,8 @@ pub(super) fn check_expr(
 
                 let ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                 match &ty_normalized {
-                    Ty::Anonymous {
-                        labels,
-                        extension,
-                        record_or_variant: RecordOrVariant::Record,
-                        ..
+                    Ty::Record {
+                        labels, extension, ..
                     } => {
                         if !user_ty_args.is_empty() {
                             panic!("{}: Record field with type arguments", loc_display(loc));
@@ -581,10 +578,9 @@ pub(super) fn check_expr(
                                 })
                                 .collect();
 
-                            let expected_ty = Ty::Anonymous {
+                            let expected_ty = Ty::Record {
                                 labels: param_tys.clone(),
                                 extension: extension.clone(),
-                                record_or_variant: RecordOrVariant::Record,
                                 is_row: false,
                             };
 
@@ -1411,7 +1407,8 @@ pub(super) fn check_expr(
                     | Ty::UVar(_)
                     | Ty::App(_, _, _)
                     | Ty::QVar(_, _)
-                    | Ty::Anonymous { .. }
+                    | Ty::Record { .. }
+                    | Ty::Variant { .. }
                     | Ty::AssocTySelect { .. } => (None, None, None),
                 },
                 None => (None, None, None),
@@ -2212,10 +2209,9 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) ->
         .var_gen
         .new_var(Kind::Row(RecordOrVariant::Variant), loc.clone());
 
-    Ty::Anonymous {
+    Ty::Variant {
         labels: [(con, ty)].into_iter().collect(),
         extension: Some(Box::new(Ty::UVar(row_ext))),
-        record_or_variant: RecordOrVariant::Variant,
         is_row: false,
     }
 }
@@ -2247,10 +2243,9 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
                         extension = Some(Box::new(ty.clone()));
                     }
 
-                    Ty::Anonymous {
+                    Ty::Variant {
                         labels,
                         extension: new_extension,
-                        record_or_variant: RecordOrVariant::Variant,
                         is_row,
                     } => {
                         // This part is quite hacky and possibly wrong: because we only refine
@@ -2263,16 +2258,15 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
                         extension = new_extension.clone();
                     }
 
-                    Ty::Fun { .. } | Ty::Anonymous { .. } | Ty::AssocTySelect { .. } => {
+                    Ty::Fun { .. } | Ty::Record { .. } | Ty::AssocTySelect { .. } => {
                         panic!("{}: {}", loc_display(loc), ty)
                     }
                 }
             }
 
-            let new_ty = Ty::Anonymous {
+            let new_ty = Ty::Variant {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Variant,
                 is_row: false,
             };
 
@@ -2415,10 +2409,9 @@ fn check_record_expr(
         .as_ref()
         .map(|ty| ty.normalize(tc_state.tys.tys.cons()))
     {
-        Some(Ty::Anonymous {
+        Some(Ty::Record {
             labels: expected_fields,
             extension: _,
-            record_or_variant: RecordOrVariant::Record,
             is_row: _,
         }) => expected_fields,
         _ => Default::default(),
@@ -2447,10 +2440,9 @@ fn check_record_expr(
         ));
         unify(
             &splice_ty,
-            &Ty::Anonymous {
+            &Ty::Record {
                 labels: Default::default(),
                 extension: Some(extension.clone()),
-                record_or_variant: RecordOrVariant::Record,
                 is_row: false,
             },
             tc_state.tys.tys.cons(),
@@ -2463,10 +2455,9 @@ fn check_record_expr(
         extension
     });
 
-    Ty::Anonymous {
+    Ty::Record {
         labels: record_fields,
         extension,
-        record_or_variant: RecordOrVariant::Record,
         is_row: false,
     }
 }

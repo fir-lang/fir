@@ -221,10 +221,9 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
                             .var_gen
                             .new_var(Kind::Row(RecordOrVariant::Record), pat.loc.clone()),
                     );
-                    let binder_ty = Ty::Anonymous {
+                    let binder_ty = Ty::Record {
                         labels: Default::default(),
                         extension: Some(Box::new(row_ty.clone())),
-                        record_or_variant: RecordOrVariant::Record,
                         is_row: false,
                     };
                     tc_state.env.insert(var.clone(), binder_ty.clone());
@@ -251,7 +250,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
                 }
             }
 
-            let ty = Ty::Anonymous {
+            let ty = Ty::Record {
                 labels: fields
                     .iter_mut()
                     .map(|named| {
@@ -262,7 +261,6 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
                     })
                     .collect(),
                 extension,
-                record_or_variant: RecordOrVariant::Record,
                 is_row: false,
             };
             *inferred_ty = Some(ty.clone());

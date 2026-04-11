@@ -184,19 +184,17 @@ pub(super) fn unify(
         (ty1, Ty::UVar(var)) => link_var(var, ty1),
 
         (
-            Ty::Anonymous {
+            Ty::Record {
                 labels: labels1,
                 extension: extension1,
-                record_or_variant: record_or_variant_1,
                 is_row: _,
             },
-            Ty::Anonymous {
+            Ty::Record {
                 labels: labels2,
                 extension: extension2,
-                record_or_variant: record_or_variant_2,
                 is_row: _,
             },
-        ) if record_or_variant_1 == record_or_variant_2 => {
+        ) => {
             unify_labels(
                 &ty1,
                 labels1,
@@ -204,7 +202,36 @@ pub(super) fn unify(
                 &ty2,
                 labels2,
                 extension2,
-                *record_or_variant_1,
+                RecordOrVariant::Record,
+                cons,
+                trait_env,
+                var_gen,
+                loc,
+                assumps,
+                preds,
+            );
+        }
+
+        (
+            Ty::Variant {
+                labels: labels1,
+                extension: extension1,
+                is_row: _,
+            },
+            Ty::Variant {
+                labels: labels2,
+                extension: extension2,
+                is_row: _,
+            },
+        ) => {
+            unify_labels(
+                &ty1,
+                labels1,
+                extension1,
+                &ty2,
+                labels2,
+                extension2,
+                RecordOrVariant::Variant,
                 cons,
                 trait_env,
                 var_gen,
@@ -217,21 +244,29 @@ pub(super) fn unify(
         // Unify an empty anonymous row with another type. `row(..ext)` with no labels is just
         // `ext`, which should unify with anything as long as kinds match.
         (
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension: Some(ext),
                 is_row: true,
-                ..
+            }
+            | Ty::Variant {
+                labels,
+                extension: Some(ext),
+                is_row: true,
             },
             other,
         )
         | (
             other,
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension: Some(ext),
                 is_row: true,
-                ..
+            }
+            | Ty::Variant {
+                labels,
+                extension: Some(ext),
+                is_row: true,
             },
         ) if labels.is_empty() => {
             unify(ext, other, cons, trait_env, var_gen, loc, assumps, preds);
@@ -399,12 +434,7 @@ fn unify_labels(
     }
 
     fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
-        Ty::Anonymous {
-            labels: Default::default(),
-            extension: None,
-            record_or_variant,
-            is_row: true,
-        }
+        Ty::anonymous(record_or_variant, Default::default(), None, true)
     }
 
     match (extension1, extension2) {
@@ -568,26 +598,48 @@ pub(super) fn try_unify_one_way(
         }
 
         (
-            Ty::Anonymous {
+            Ty::Record {
                 labels: labels1,
                 extension: extension1,
-                record_or_variant: record_or_variant_1,
                 is_row: _,
             },
-            Ty::Anonymous {
+            Ty::Record {
                 labels: labels2,
                 extension: extension2,
-                record_or_variant: record_or_variant_2,
                 is_row: _,
             },
-        ) if record_or_variant_1 == record_or_variant_2 => try_unify_labels_one_way(
+        ) => try_unify_labels_one_way(
             &ty1,
             labels1,
             extension1,
             &ty2,
             labels2,
             extension2,
-            *record_or_variant_1,
+            RecordOrVariant::Record,
+            cons,
+            var_gen,
+            loc,
+        ),
+
+        (
+            Ty::Variant {
+                labels: labels1,
+                extension: extension1,
+                is_row: _,
+            },
+            Ty::Variant {
+                labels: labels2,
+                extension: extension2,
+                is_row: _,
+            },
+        ) => try_unify_labels_one_way(
+            &ty1,
+            labels1,
+            extension1,
+            &ty2,
+            labels2,
+            extension2,
+            RecordOrVariant::Variant,
             cons,
             var_gen,
             loc,
@@ -687,12 +739,7 @@ fn try_unify_labels_one_way(
     }
 
     fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
-        Ty::Anonymous {
-            labels: Default::default(),
-            extension: None,
-            record_or_variant,
-            is_row: true,
-        }
+        Ty::anonymous(record_or_variant, Default::default(), None, true)
     }
 
     match (extension1, extension2) {
@@ -723,12 +770,12 @@ fn link_extension(
         })
         .collect();
     let new_extension_var = var_gen.new_var(Kind::Row(record_or_variant), loc.clone());
-    let new_extension_ty = Ty::Anonymous {
-        labels: extension_labels,
-        extension: Some(Box::new(Ty::UVar(new_extension_var.clone()))),
+    let new_extension_ty = Ty::anonymous(
         record_or_variant,
-        is_row: true,
-    };
+        extension_labels,
+        Some(Box::new(Ty::UVar(new_extension_var.clone()))),
+        true,
+    );
     var.set_link(new_extension_ty);
     new_extension_var
 }

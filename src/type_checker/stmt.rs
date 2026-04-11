@@ -209,12 +209,7 @@ fn check_stmt(
                                 })
                         }
 
-                        Ty::Anonymous {
-                            labels: _,
-                            extension: _,
-                            record_or_variant: RecordOrVariant::Record,
-                            is_row,
-                        } => {
+                        Ty::Record { is_row, .. } => {
                             assert!(!(*is_row));
                             panic!(
                                 "{}: Records are value types and can't be updated",

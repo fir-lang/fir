@@ -1792,68 +1792,68 @@ fn mono_tc_ty(
             ),
         }),
 
-        Ty::Anonymous {
+        Ty::Record {
             labels,
             extension,
-            record_or_variant,
             is_row: _,
-        } => match record_or_variant {
-            RecordOrVariant::Record => {
-                let mut all_fields: OrdMap<Name, mono::Type> = Default::default();
+        } => {
+            let mut all_fields: OrdMap<Name, mono::Type> = Default::default();
 
-                for (field, field_ty) in labels {
-                    let field_mono_ty = mono_tc_ty(&field_ty, ty_map, poly_pgm, mono_pgm);
-                    all_fields.insert(field, field_mono_ty);
-                }
-
-                if let Some(ty) = extension {
-                    collect_record_rows(&ty, ty_map, &mut all_fields, poly_pgm, mono_pgm);
-                }
-
-                mono::Type::Record { fields: all_fields }
+            for (field, field_ty) in labels {
+                let field_mono_ty = mono_tc_ty(&field_ty, ty_map, poly_pgm, mono_pgm);
+                all_fields.insert(field, field_mono_ty);
             }
 
-            RecordOrVariant::Variant => {
-                let mut all_alts: OrdMap<Name, mono::NamedType> = Default::default();
+            if let Some(ty) = extension {
+                collect_record_rows(&ty, ty_map, &mut all_fields, poly_pgm, mono_pgm);
+            }
 
-                for (id, ty) in labels.iter() {
-                    let ty = mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm);
-                    match ty {
-                        mono::Type::Named(named_ty) => {
-                            let old = all_alts.insert(id.clone(), named_ty.clone());
-                            assert!(match old {
-                                Some(old) => old == named_ty,
-                                None => true,
-                            });
-                        }
-                        _ => panic!(),
+            mono::Type::Record { fields: all_fields }
+        }
+
+        Ty::Variant {
+            labels,
+            extension,
+            is_row: _,
+        } => {
+            let mut all_alts: OrdMap<Name, mono::NamedType> = Default::default();
+
+            for (id, ty) in labels.iter() {
+                let ty = mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm);
+                match ty {
+                    mono::Type::Named(named_ty) => {
+                        let old = all_alts.insert(id.clone(), named_ty.clone());
+                        assert!(match old {
+                            Some(old) => old == named_ty,
+                            None => true,
+                        });
                     }
+                    _ => panic!(),
                 }
+            }
 
-                if let Some(ty) = extension {
-                    match &*ty {
-                        Ty::RVar(var, _kind) => {
-                            let ext = ty_map.get(var).unwrap();
-                            match ext {
-                                mono::Type::Variant { alts } => {
-                                    all_alts
-                                        .extend(alts.iter().map(|(k, v)| (k.clone(), v.clone())));
-                                }
-                                _ => panic!(),
+            if let Some(ty) = extension {
+                match &*ty {
+                    Ty::RVar(var, _kind) => {
+                        let ext = ty_map.get(var).unwrap();
+                        match ext {
+                            mono::Type::Variant { alts } => {
+                                all_alts.extend(alts.iter().map(|(k, v)| (k.clone(), v.clone())));
                             }
+                            _ => panic!(),
                         }
-
-                        Ty::UVar(var) => {
-                            assert!(var.link().is_none());
-                        }
-
-                        other => todo!("Weird row extension {other} ({other:?})"),
                     }
-                }
 
-                mono::Type::Variant { alts: all_alts }
+                    Ty::UVar(var) => {
+                        assert!(var.link().is_none());
+                    }
+
+                    other => todo!("Weird row extension {other} ({other:?})"),
+                }
             }
-        },
+
+            mono::Type::Variant { alts: all_alts }
+        }
 
         Ty::AssocTySelect {
             ty,

@@ -24,22 +24,19 @@ pub(super) fn collect_rows(
         .collect();
 
     while let Some(ext) = extension {
-        match ext.deep_normalize(cons, trait_env, var_gen, assumps) {
-            Ty::Anonymous {
+        let normalized = ext.deep_normalize(cons, trait_env, var_gen, assumps);
+        let (labels, next_ext, kind, is_row) = match normalized {
+            Ty::Record {
                 labels,
                 extension: next_ext,
-                record_or_variant,
                 is_row,
-            } => {
-                assert_eq!(record_or_variant, ty_kind);
-                assert!(is_row);
-                for (label_id, label_ty) in labels {
-                    if all_labels.insert(label_id, label_ty).is_some() {
-                        panic!("BUG: Duplicate label in anonymous type {ty}");
-                    }
-                }
-                extension = next_ext;
-            }
+            } => (labels, next_ext, RecordOrVariant::Record, is_row),
+
+            Ty::Variant {
+                labels,
+                extension: next_ext,
+                is_row,
+            } => (labels, next_ext, RecordOrVariant::Variant, is_row),
 
             Ty::UVar(var) => {
                 assert!(
@@ -49,31 +46,34 @@ pub(super) fn collect_rows(
                     var.kind()
                 );
                 match var.normalize(cons) {
-                    Ty::Anonymous {
+                    Ty::Record {
                         labels,
                         extension: next_ext,
-                        record_or_variant,
                         is_row,
-                    } => {
-                        assert!(
-                            is_row,
-                            "Extension variable in anonymous type is not a row: {ty:#?}"
-                        );
-                        assert_eq!(record_or_variant, ty_kind);
-                        for (label_id, label_ty) in labels {
-                            if all_labels.insert(label_id, label_ty).is_some() {
-                                panic!("BUG: Duplicate field in anonymous type {ty}");
-                            }
-                        }
-                        extension = next_ext;
-                    }
-
+                    } => (labels, next_ext, RecordOrVariant::Record, is_row),
+                    Ty::Variant {
+                        labels,
+                        extension: next_ext,
+                        is_row,
+                    } => (labels, next_ext, RecordOrVariant::Variant, is_row),
                     other => return (all_labels, Some(other)),
                 }
             }
 
             other => return (all_labels, Some(other)),
+        };
+
+        assert!(
+            is_row,
+            "Extension variable in anonymous type is not a row: {ty:#?}"
+        );
+        assert_eq!(kind, ty_kind);
+        for (label_id, label_ty) in labels {
+            if all_labels.insert(label_id, label_ty).is_some() {
+                panic!("BUG: Duplicate label in anonymous type {ty}");
+            }
         }
+        extension = next_ext;
     }
 
     (all_labels, None)

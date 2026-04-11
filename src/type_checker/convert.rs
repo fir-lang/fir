@@ -49,10 +49,9 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 None => None,
             };
 
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Record,
                 is_row: *is_row,
             }
         }
@@ -92,10 +91,9 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 None => None,
             };
 
-            Ty::Anonymous {
+            Ty::Variant {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Variant,
                 is_row: *is_row,
             }
         }

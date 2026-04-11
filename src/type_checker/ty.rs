@@ -67,14 +67,24 @@ pub enum Ty {
         exceptions: Option<Box<Ty>>,
     },
 
-    /// An anonymous record or variant type or row type. E.g. `(a: Str, ..r)`, `[Err1(Str), ..r]`.
-    Anonymous {
+    /// A record: `(msg: Str, ..r)`, `[Err1(Str), ..r]`.
+    Record {
         labels: OrdMap<Name, Ty>,
 
         /// Row extension.
         extension: Option<Box<Ty>>,
 
-        record_or_variant: RecordOrVariant,
+        /// Whether this is a row type. A row type has its own kind `row`. When not a row, the type
+        /// has kind `*`.
+        is_row: bool,
+    },
+
+    /// A variant: `[Str, Option[U32], ..r]`.
+    Variant {
+        labels: OrdMap<Name, Ty>,
+
+        /// Row extension.
+        extension: Option<Box<Ty>>,
 
         /// Whether this is a row type. A row type has its own kind `row`. When not a row, the type
         /// has kind `*`.
@@ -575,29 +585,46 @@ fn ty_eq_modulo_alpha(
         }
 
         (
-            Ty::Anonymous {
-                labels: labels1,
-                extension: extension1,
-                record_or_variant: record_or_variant_1,
-                is_row: is_row1,
-            },
-            Ty::Anonymous {
-                labels: labels2,
-                extension: extension2,
-                record_or_variant: record_or_variant_2,
-                is_row: is_row2,
-            },
+            t1 @ (Ty::Record { .. } | Ty::Variant { .. }),
+            t2 @ (Ty::Record { .. } | Ty::Variant { .. }),
         ) => {
+            let (kind1, labels1, extension1, is_row1) = match t1 {
+                Ty::Record {
+                    labels,
+                    extension,
+                    is_row,
+                } => (RecordOrVariant::Record, labels, extension, *is_row),
+                Ty::Variant {
+                    labels,
+                    extension,
+                    is_row,
+                } => (RecordOrVariant::Variant, labels, extension, *is_row),
+                _ => unreachable!(),
+            };
+            let (kind2, labels2, extension2, is_row2) = match t2 {
+                Ty::Record {
+                    labels,
+                    extension,
+                    is_row,
+                } => (RecordOrVariant::Record, labels, extension, *is_row),
+                Ty::Variant {
+                    labels,
+                    extension,
+                    is_row,
+                } => (RecordOrVariant::Variant, labels, extension, *is_row),
+                _ => unreachable!(),
+            };
+
             assert_eq!(is_row1, is_row2);
 
-            if record_or_variant_1 != record_or_variant_2 {
+            if kind1 != kind2 {
                 return false;
             }
 
             let (labels1, extension1) = crate::type_checker::row_utils::collect_rows(
                 cons,
                 ty1,
-                *record_or_variant_1,
+                kind1,
                 labels1,
                 extension1.clone(),
                 &Default::default(),
@@ -608,7 +635,7 @@ fn ty_eq_modulo_alpha(
             let (labels2, extension2) = crate::type_checker::row_utils::collect_rows(
                 cons,
                 ty2,
-                *record_or_variant_2,
+                kind2,
                 labels2,
                 extension2.clone(),
                 &Default::default(),
@@ -770,20 +797,39 @@ fn ty_eq_modulo_alpha(
 }
 
 impl Ty {
+    /// Construct an anonymous record or variant type based on `record_or_variant`.
+    pub(super) fn anonymous(
+        record_or_variant: RecordOrVariant,
+        labels: OrdMap<Name, Ty>,
+        extension: Option<Box<Ty>>,
+        is_row: bool,
+    ) -> Ty {
+        match record_or_variant {
+            RecordOrVariant::Record => Ty::Record {
+                labels,
+                extension,
+                is_row,
+            },
+            RecordOrVariant::Variant => Ty::Variant {
+                labels,
+                extension,
+                is_row,
+            },
+        }
+    }
+
     pub(super) fn unit() -> Ty {
-        Ty::Anonymous {
+        Ty::Record {
             labels: Default::default(),
             extension: None,
-            record_or_variant: RecordOrVariant::Record,
             is_row: false,
         }
     }
 
     pub(super) fn empty_variant() -> Ty {
-        Ty::Anonymous {
+        Ty::Variant {
             labels: Default::default(),
             extension: None,
-            record_or_variant: RecordOrVariant::Variant,
             is_row: false,
         }
     }
@@ -816,13 +862,17 @@ impl Ty {
 
             Ty::Fun { .. } => Kind::Star,
 
-            Ty::Anonymous {
-                is_row,
-                record_or_variant,
-                ..
-            } => {
+            Ty::Record { is_row, .. } => {
                 if *is_row {
-                    Kind::Row(*record_or_variant)
+                    Kind::Row(RecordOrVariant::Record)
+                } else {
+                    Kind::Star
+                }
+            }
+
+            Ty::Variant { is_row, .. } => {
+                if *is_row {
+                    Kind::Row(RecordOrVariant::Variant)
                 } else {
                     Kind::Star
                 }
@@ -847,18 +897,29 @@ impl Ty {
                 *kind,
             ),
 
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension,
-                record_or_variant,
                 is_row,
-            } => Ty::Anonymous {
+            } => Ty::Record {
                 labels: labels
                     .iter()
                     .map(|(field, field_ty)| (field.clone(), field_ty.subst(var, ty)))
                     .collect(),
                 extension: extension.as_ref().map(|ext| Box::new(ext.subst(var, ty))),
-                record_or_variant: *record_or_variant,
+                is_row: *is_row,
+            },
+
+            Ty::Variant {
+                labels,
+                extension,
+                is_row,
+            } => Ty::Variant {
+                labels: labels
+                    .iter()
+                    .map(|(field, field_ty)| (field.clone(), field_ty.subst(var, ty)))
+                    .collect(),
+                extension: extension.as_ref().map(|ext| Box::new(ext.subst(var, ty))),
                 is_row: *is_row,
             },
 
@@ -917,12 +978,11 @@ impl Ty {
                 *kind,
             ),
 
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension,
-                record_or_variant,
                 is_row,
-            } => Ty::Anonymous {
+            } => Ty::Record {
                 labels: labels
                     .iter()
                     .map(|(label_id, label_ty)| (label_id.clone(), label_ty.subst_qvars(vars)))
@@ -930,7 +990,21 @@ impl Ty {
                 extension: extension
                     .as_ref()
                     .map(|ext| Box::new(ext.subst_qvars(vars))),
-                record_or_variant: *record_or_variant,
+                is_row: *is_row,
+            },
+
+            Ty::Variant {
+                labels,
+                extension,
+                is_row,
+            } => Ty::Variant {
+                labels: labels
+                    .iter()
+                    .map(|(label_id, label_ty)| (label_id.clone(), label_ty.subst_qvars(vars)))
+                    .collect(),
+                extension: extension
+                    .as_ref()
+                    .map(|ext| Box::new(ext.subst_qvars(vars))),
                 is_row: *is_row,
             },
 
@@ -1009,26 +1083,46 @@ impl Ty {
                 *kind,
             ),
 
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension,
-                record_or_variant,
                 is_row,
             } => {
                 let (labels, extension) = crate::type_checker::row_utils::collect_rows(
                     cons,
                     self,
-                    *record_or_variant,
+                    RecordOrVariant::Record,
                     labels,
                     extension.clone(),
                     trait_env,
                     var_gen,
                     assumps,
                 );
-                Ty::Anonymous {
+                Ty::Record {
                     labels,
                     extension: extension.map(Box::new),
-                    record_or_variant: *record_or_variant,
+                    is_row: *is_row,
+                }
+            }
+
+            Ty::Variant {
+                labels,
+                extension,
+                is_row,
+            } => {
+                let (labels, extension) = crate::type_checker::row_utils::collect_rows(
+                    cons,
+                    self,
+                    RecordOrVariant::Variant,
+                    labels,
+                    extension.clone(),
+                    trait_env,
+                    var_gen,
+                    assumps,
+                );
+                Ty::Variant {
+                    labels,
+                    extension: extension.map(Box::new),
                     is_row: *is_row,
                 }
             }
@@ -1108,14 +1202,12 @@ impl Ty {
                     assert_eq!(assoc_ty, "List");
 
                     let row_ty = trait_args[0].deep_normalize(cons, trait_env, var_gen, assumps);
-                    if let Ty::Anonymous {
+                    if let Ty::Record {
                         labels,
                         extension,
-                        record_or_variant,
                         is_row,
                     } = &row_ty
                     {
-                        assert_eq!(*record_or_variant, RecordOrVariant::Record);
                         assert!(is_row);
                         let list_ty = super::row_to_list_type(labels, extension);
                         return list_ty.deep_normalize(cons, trait_env, var_gen, assumps);
@@ -1167,7 +1259,8 @@ impl Ty {
             Ty::App(con, args, _) => Some((con.clone(), args.clone())),
 
             Ty::UVar(_)
-            | Ty::Anonymous { .. }
+            | Ty::Record { .. }
+            | Ty::Variant { .. }
             | Ty::QVar(_, _)
             | Ty::RVar(_, _)
             | Ty::Fun { .. }
@@ -1307,10 +1400,9 @@ impl fmt::Display for Ty {
                 write!(f, "]")
             }
 
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Record,
                 is_row,
             } => {
                 if is_row {
@@ -1333,10 +1425,9 @@ impl fmt::Display for Ty {
                 write!(f, ")")
             }
 
-            Ty::Anonymous {
+            Ty::Variant {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Variant,
                 is_row,
             } => {
                 if is_row {
