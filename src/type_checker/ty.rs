@@ -797,27 +797,6 @@ fn ty_eq_modulo_alpha(
 }
 
 impl Ty {
-    /// Construct an anonymous record or variant type based on `record_or_variant`.
-    pub(super) fn anonymous(
-        record_or_variant: RecordOrVariant,
-        labels: OrdMap<Name, Ty>,
-        extension: Option<Box<Ty>>,
-        is_row: bool,
-    ) -> Ty {
-        match record_or_variant {
-            RecordOrVariant::Record => Ty::Record {
-                labels,
-                extension,
-                is_row,
-            },
-            RecordOrVariant::Variant => Ty::Variant {
-                labels,
-                extension,
-                is_row,
-            },
-        }
-    }
-
     pub(super) fn unit() -> Ty {
         Ty::Record {
             labels: Default::default(),

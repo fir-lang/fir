@@ -433,10 +433,6 @@ fn unify_labels(
         }
     }
 
-    fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
-        Ty::anonymous(record_or_variant, Default::default(), None, true)
-    }
-
     match (extension1, extension2) {
         (None, None) => {}
         (Some(ext1), None) => {
@@ -738,10 +734,6 @@ fn try_unify_labels_one_way(
         }
     }
 
-    fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
-        Ty::anonymous(record_or_variant, Default::default(), None, true)
-    }
-
     match (extension1, extension2) {
         (None, None) => true,
         (Some(ext1), None) => {
@@ -810,4 +802,19 @@ pub(super) fn unify_expected_ty(
 fn link_var(var: &UVarRef, ty: &Ty) {
     // TODO: Occurs check.
     var.set_link(ty.clone());
+}
+
+fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
+    match record_or_variant {
+        RecordOrVariant::Record => Ty::Record {
+            labels: Default::default(),
+            extension: None,
+            is_row: true,
+        },
+        RecordOrVariant::Variant => Ty::Variant {
+            labels: Default::default(),
+            extension: None,
+            is_row: true,
+        },
+    }
 }
