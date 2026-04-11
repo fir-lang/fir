@@ -8,6 +8,7 @@ use std::path::Path;
 
 use smol_str::SmolStr;
 
+#[derive(Debug)]
 pub struct LoadedPgm {
     pub modules: HashMap<ModulePath, ast::Module>,
 
@@ -21,6 +22,7 @@ pub struct LoadedPgm {
 }
 
 /// DAG of strongly connected components.
+#[derive(Debug)]
 pub struct SccGraph {
     /// SCCs, topologically sorted.
     pub nodes: Vec<SccNode>,
@@ -37,6 +39,7 @@ impl SccIdx {
 }
 
 /// A strongly connected component of modules.
+#[derive(Debug)]
 pub struct SccNode {
     /// Modules in this SCC.
     pub modules: Vec<ModulePath>,
@@ -67,6 +70,8 @@ pub fn load(entry_file: &Path) -> LoadedPgm {
         let display_name = module_path.to_string();
         let module = crate::parse_file(&file_path, &display_name);
 
+        dep_graph.entry(module_path.clone()).or_default();
+
         let mut implicit_prelude = true;
 
         for decl in &module.decls {
@@ -78,8 +83,8 @@ pub fn load(entry_file: &Path) -> LoadedPgm {
                         work.push(item.path.clone());
                     }
                     dep_graph
-                        .entry(module_path.clone())
-                        .or_default()
+                        .get_mut(&module_path)
+                        .unwrap()
                         .insert(item.path.clone());
                 }
             }
@@ -91,8 +96,8 @@ pub fn load(entry_file: &Path) -> LoadedPgm {
                 work.push(prelude_path.clone());
             }
             dep_graph
-                .entry(module_path.clone())
-                .or_default()
+                .get_mut(&module_path)
+                .unwrap()
                 .insert(prelude_path.clone());
         }
 
