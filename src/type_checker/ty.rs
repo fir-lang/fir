@@ -67,7 +67,7 @@ pub enum Ty {
         exceptions: Option<Box<Ty>>,
     },
 
-    /// A record: `(msg: Str, ..r)`, `[Err1(Str), ..r]`.
+    /// A record: `(x: U32, y: U32)`, `(msg: Str, ..r)`.
     Record {
         labels: OrdMap<Name, Ty>,
 
@@ -81,6 +81,14 @@ pub enum Ty {
 
     /// A variant: `[Str, Option[U32], ..r]`.
     Variant {
+        /// Variant labels are type constructors mapped to their the full types. E.g. in
+        /// `[Str, Option[U32], ..r]`, the label map has these entries:
+        ///
+        /// - `Str` => `Str`
+        /// - `Option` => `Option[U32]`
+        ///
+        /// This means we don't allow the type type constructor with different type arguments in the
+        /// same variant.
         labels: OrdMap<Name, Ty>,
 
         /// Row extension.
