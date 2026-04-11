@@ -8,5 +8,5 @@ main() U32:
 #              ()
 #              (
 #                 Con("U32", Star)
-#                 Anonymous { labels: {}, extension: None, record_or_variant: Record, is_row: false }
+#                 Record { labels: {}, extension: None, is_row: false }
 #              )

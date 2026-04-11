@@ -11,6 +11,6 @@ main():
 #              List[RecordField[Str], []] and
 #              U32
 #              (
-#                 App("List", [App("RecordField", [Con("Str", Star)], Star), Anonymous { labels: {}, extension: None, record_or_variant: Variant, is_row: false }], Star)
+#                 App("List", [App("RecordField", [Con("Str", Star)], Star), Variant { labels: {}, extension: None, is_row: false }], Star)
 #                 Con("U32", Star)
 #              )
