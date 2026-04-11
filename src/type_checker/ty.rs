@@ -1289,13 +1289,10 @@ use std::fmt;
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.normalize(&Default::default()) {
-            Ty::Con(id, _) => write!(f, "{}", id.name()),
-            Ty::RVar(id, _) => write!(f, "{id}"),
-
-            Ty::UVar(var_ref) => write!(f, "_{}", var_ref.id()),
+            Ty::Con(id, _) => write!(f, "{id}"),
 
             Ty::App(id, args, _) => {
-                write!(f, "{}[", id.name())?;
+                write!(f, "{id}[")?;
                 for (i, ty) in args.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
@@ -1303,6 +1300,50 @@ impl fmt::Display for Ty {
                     write!(f, "{ty}")?;
                 }
                 write!(f, "]")
+            }
+
+            Ty::UVar(var_ref) => write!(f, "_{}", var_ref.id()),
+
+            Ty::QVar(id, _) => write!(f, "{id}"),
+
+            Ty::RVar(id, _) => write!(f, "{id}"),
+
+            Ty::Fun {
+                args,
+                ret,
+                exceptions,
+            } => {
+                write!(f, "Fn(")?;
+                match args {
+                    FunArgs::Positional { args } => {
+                        for (i, arg) in args.iter().enumerate() {
+                            if i > 0 {
+                                write!(f, ", ")?;
+                            }
+                            write!(f, "{arg}")?;
+                        }
+                    }
+                    FunArgs::Named { args, extension } => {
+                        for (i, (name, ty)) in args.iter().enumerate() {
+                            if i > 0 {
+                                write!(f, ", ")?;
+                            }
+                            write!(f, "{name}: {ty}")?;
+                        }
+                        if let Some(ext) = extension {
+                            if !args.is_empty() {
+                                write!(f, ", ")?;
+                            }
+                            write!(f, "..{ext}")?;
+                        }
+                    }
+                }
+                write!(f, ") ")?;
+                write!(f, "{ret}")?;
+                if let Some(exn) = exceptions {
+                    write!(f, " / {exn}")?;
+                }
+                Ok(())
             }
 
             Ty::Anonymous {
@@ -1355,46 +1396,6 @@ impl fmt::Display for Ty {
                     write!(f, "..{ext}")?;
                 }
                 write!(f, "]")
-            }
-
-            Ty::QVar(id, _) => write!(f, "{id}"),
-
-            Ty::Fun {
-                args,
-                ret,
-                exceptions,
-            } => {
-                write!(f, "Fn(")?;
-                match args {
-                    FunArgs::Positional { args } => {
-                        for (i, arg) in args.iter().enumerate() {
-                            if i > 0 {
-                                write!(f, ", ")?;
-                            }
-                            write!(f, "{arg}")?;
-                        }
-                    }
-                    FunArgs::Named { args, extension } => {
-                        for (i, (name, ty)) in args.iter().enumerate() {
-                            if i > 0 {
-                                write!(f, ", ")?;
-                            }
-                            write!(f, "{name}: {ty}")?;
-                        }
-                        if let Some(ext) = extension {
-                            if !args.is_empty() {
-                                write!(f, ", ")?;
-                            }
-                            write!(f, "..{ext}")?;
-                        }
-                    }
-                }
-                write!(f, ") ")?;
-                write!(f, "{ret}")?;
-                if let Some(exn) = exceptions {
-                    write!(f, " / {exn}")?;
-                }
-                Ok(())
             }
 
             Ty::AssocTySelect {
