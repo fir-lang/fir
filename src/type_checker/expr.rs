@@ -2233,12 +2233,12 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
 
             for ty in tys.iter() {
                 match ty {
-                    Ty::Con(con, _) | Ty::RVar(con, _) | Ty::App(con, _, _) => {
+                    Ty::Con(con, _) | Ty::App(con, _, _) => {
                         let old = labels.insert(con.clone(), ty.clone());
                         assert_eq!(old, None);
                     }
 
-                    Ty::UVar(_) | Ty::QVar(_, _) => {
+                    Ty::UVar(_) => {
                         // Get the row type from the non-refined binding.
                         extension = Some(Box::new(ty.clone()));
                     }
@@ -2258,7 +2258,11 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
                         extension = new_extension.clone();
                     }
 
-                    Ty::Fun { .. } | Ty::Record { .. } | Ty::AssocTySelect { .. } => {
+                    Ty::QVar(_, _)
+                    | Ty::RVar(_, _)
+                    | Ty::Fun { .. }
+                    | Ty::Record { .. }
+                    | Ty::AssocTySelect { .. } => {
                         panic!("{}: {}", loc_display(loc), ty)
                     }
                 }
