@@ -1449,7 +1449,7 @@ impl fmt::Display for Kind {
 
 impl fmt::Display for Pred {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.trait_.name())?;
+        write!(f, "{}", self.trait_)?;
         write!(f, "[")?;
         for (i, ty) in self.params.iter().enumerate() {
             if i > 0 {
