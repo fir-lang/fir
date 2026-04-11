@@ -283,7 +283,9 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
 
     // Collect all type constructors first, then add fields and methods.
     for (module_path, decl) in pgm.iter_decls() {
-        let module_env = module_envs.get(module_path).unwrap();
+        let module_env = module_envs
+            .get(module_path)
+            .unwrap_or_else(|| panic!("BUG: Module {module_path} is not in module envs"));
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 // Type synonyms are handled separately after this pass.
