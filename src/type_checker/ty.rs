@@ -793,10 +793,6 @@ impl Ty {
         Ty::Con(super::id::builtins::BOOL(), Kind::Star)
     }
 
-    pub(super) fn to_str_id() -> Id {
-        super::id::builtins::TO_STR()
-    }
-
     pub fn str() -> Ty {
         Ty::Con(super::id::builtins::STR(), Kind::Star)
     }

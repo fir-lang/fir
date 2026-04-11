@@ -1015,7 +1015,7 @@ pub(super) fn check_expr(
                     StrPart::Expr(mut expr) => {
                         let expr_var = tc_state.var_gen.new_var(Kind::Star, expr.loc.clone());
                         tc_state.preds.push(Pred {
-                            trait_: Ty::to_str_id(),
+                            trait_: builtin_ids::TO_STR(),
                             params: vec![Ty::UVar(expr_var.clone())],
                             assoc_ty: None,
                             loc: expr.loc.clone(),
