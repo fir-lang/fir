@@ -309,28 +309,30 @@ fn lex_underscores() {
 
 #[test]
 fn lex_paths() {
-    let input = indoc::indoc! {"
-        a
-        A A.B
-        M/a
-        M/A M/A.B
-        M1/M2/a
-        M1/M2/A M1/M2/A.B
-    "};
-    let tokens: Vec<Token> = lex(input, "test").into_iter().map(|(_, t, _)| t).collect();
-    #[rustfmt::skip]
-    assert_eq!(
-        tokens,
-        vec![
-            Token { kind: TokenKind::LowerId, text: "a".into() },
-            Token { kind: TokenKind::UpperId, text: "A".into() },
-            Token { kind: TokenKind::UpperIdPath, text: "A.B".into() },
-            Token { kind: TokenKind::LowerId, text: "M/a".into() },
-            Token { kind: TokenKind::UpperId, text: "M/A".into() },
-            Token { kind: TokenKind::UpperIdPath, text: "M/A.B".into() },
-            Token { kind: TokenKind::LowerId, text: "M1/M2/a".into() },
-            Token { kind: TokenKind::UpperId, text: "M1/M2/A".into() },
-            Token { kind: TokenKind::UpperIdPath, text: "M1/M2/A.B".into() },
-        ]
+    fn check(input: &str, expected: &[(TokenKind, &str)]) {
+        let tokens: Vec<Token> = lex(input, "test").into_iter().map(|(_, t, _)| t).collect();
+        let expected: Vec<Token> = expected
+            .iter()
+            .map(|(kind, text)| Token {
+                kind: *kind,
+                text: (*text).into(),
+            })
+            .collect();
+        assert_eq!(tokens, expected, "input: {input:?}");
+    }
+
+    use TokenKind::*;
+
+    check("a", &[(LowerId, "a")]);
+    check("A", &[(UpperId, "A")]);
+    check("A.B", &[(UpperIdPath, "A.B")]);
+    check("M/a", &[(ModulePrefix, "M/"), (LowerId, "a")]);
+    check("M/A", &[(ModulePrefix, "M/"), (UpperId, "A")]);
+    check("M/A.B", &[(ModulePrefix, "M/"), (UpperIdPath, "A.B")]);
+    check("M1/M2/a", &[(ModulePrefix, "M1/M2/"), (LowerId, "a")]);
+    check("M1/M2/A", &[(ModulePrefix, "M1/M2/"), (UpperId, "A")]);
+    check(
+        "M1/M2/A.B",
+        &[(ModulePrefix, "M1/M2/"), (UpperIdPath, "A.B")],
     );
 }

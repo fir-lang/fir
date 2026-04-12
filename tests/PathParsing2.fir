@@ -1,4 +1,4 @@
-# Test `UpperId / UpperId` parsing, with whitepace before or after `/`.
+# Test `UpperId / UpperId` parsing, with whitespace before or after `/`.
 #
 # Without whitespace this becomes a path. With whitespace it's a binary
 # expression.
@@ -8,7 +8,10 @@
 
 main():
     print(A / A)
-    print(A/ A)
+
+    # This is now a path:
+    # print(A/ A)
+
     print(A /A)
 
 
@@ -26,8 +29,6 @@ impl ToStr[A]:
         "A"
 
 # expected stdout:
-# A.__div called
-# A
 # A.__div called
 # A
 # A.__div called
