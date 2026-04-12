@@ -125,8 +125,13 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
 
             TopDecl.Import(importDecl):
                 for item: ImportItem in importDecl.items.iter():
-                    let pathText = tokens.get(item.path.token.idx).text
-                    imports.push(Vec.fromIter(pathText.splitChar('/')))
+                    imports.push(
+                        Vec.fromIter(
+                            item.path.iter().map(
+                                \(id: Id) Str: tokens.get(id.token.idx).text,
+                            ),
+                        ),
+                    )
 
     let module = Module(
         _package = _defaultPackage(),

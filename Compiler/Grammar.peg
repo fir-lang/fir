@@ -971,18 +971,19 @@ importDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] ImportDecl[exts]:
 
 
 importItem ImportItem:
-    id=^ "UpperId" "/" "*":
-        ImportItem(path = newId(id), importSpec = ImportSpec.Wildcard)
+    p=path "/" "*":
+        ImportItem(path = p, importSpec = ImportSpec.Wildcard)
 
-    id=^ "UpperId" "/" "[" name0=importName names=(_"," importName)* ","? "]":
+    p=path "/" "[" name0=importName names=(_"," importName)* ","? "]":
         names.insert(0, name0)
-        ImportItem(path = newId(id), importSpec = ImportSpec.Selective(names = names))
+        ImportItem(path = p, importSpec = ImportSpec.Selective(names = names))
 
-    id=^ "UpperId" "as" prefix=^ "UpperId":
-        ImportItem(path = newId(id), importSpec = ImportSpec.Prefixed(prefix = Option.Some(newId(prefix))))
+    p=path "as" prefix=^ "UpperId":
+        ImportItem(path = p, importSpec = ImportSpec.Prefixed(prefix = newId(prefix)))
 
-    id=^ "UpperId":
-        ImportItem(path = newId(id), importSpec = ImportSpec.Prefixed(prefix = Option.None))
+    p=path:
+        let lastId = p.last().unwrap()
+        ImportItem(path = p, importSpec = ImportSpec.Prefixed(prefix = lastId))
 
 
 importName ImportName:
@@ -997,6 +998,12 @@ importName ImportName:
 
     id=^ "UpperId":
         ImportName(originalName = newId(id), localName = newId(id))
+
+
+path Vec[Id]:
+    p0=^ "UpperId" ps=(_"/" ^ _"UpperId")*:
+        let vec: Vec[Id] = Vec.fromIter(once(newId(p0)).chain(ps.iter().map(newId)))
+        vec
 
 
 # --------------------------------------------------------------------------------------------------
