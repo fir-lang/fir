@@ -32,6 +32,7 @@ pub(super) fn check_expr(
 ) -> (Ty, HashMap<Name, Ty>) {
     match expr {
         ast::Expr::Var(ast::VarExpr {
+            mod_prefix: _,
             id: var,
             user_ty_args,
             ty_args,
@@ -74,6 +75,7 @@ pub(super) fn check_expr(
                 let (ty, ty_args) = scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
 
                 *expr = ast::Expr::Var(ast::VarExpr {
+                    mod_prefix: None,
                     id: var.clone(),
                     user_ty_args: vec![],
                     ty_args: ty_args.into_iter().map(Ty::UVar).collect(),
@@ -100,6 +102,7 @@ pub(super) fn check_expr(
                 let ty = scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
 
                 *expr = ast::Expr::Var(ast::VarExpr {
+                    mod_prefix: None,
                     id: var.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
@@ -206,6 +209,7 @@ pub(super) fn check_expr(
         ast::Expr::MethodSel(_) => panic!("MethodSel in type checker"),
 
         ast::Expr::ConSel(ast::Con {
+            mod_prefix: _,
             ty,
             con,
             user_ty_args,
@@ -267,6 +271,7 @@ pub(super) fn check_expr(
                     scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
 
                 *expr = ast::Expr::ConSel(ast::Con {
+                    mod_prefix: None,
                     ty: ty.clone(),
                     con: con.clone(),
                     user_ty_args: vec![],
@@ -297,6 +302,7 @@ pub(super) fn check_expr(
                     scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
 
                 *expr = ast::Expr::ConSel(ast::Con {
+                    mod_prefix: None,
                     ty: ty.clone(),
                     con: con.clone(),
                     user_ty_args: vec![],
@@ -540,6 +546,7 @@ pub(super) fn check_expr(
                                 if arg.name.is_none() {
                                     match &arg.expr.node {
                                         ast::Expr::Var(ast::VarExpr {
+                                            mod_prefix: _,
                                             id,
                                             user_ty_args: _,
                                             ty_args: _,
@@ -975,6 +982,7 @@ pub(super) fn check_expr(
                                 expr: ast::L {
                                     loc: loc.clone(),
                                     node: ast::Expr::Var(ast::VarExpr {
+                                        mod_prefix: None,
                                         id: buf_id.clone(),
                                         user_ty_args: vec![],
                                         ty_args: vec![],
@@ -1077,6 +1085,7 @@ pub(super) fn check_expr(
                         name: None,
                         expr: ast::L {
                             node: ast::Expr::Var(ast::VarExpr {
+                                mod_prefix: None,
                                 id: buf_id.clone(),
                                 user_ty_args: vec![],
                                 ty_args: vec![],
@@ -1550,6 +1559,7 @@ pub(super) fn check_expr(
                         fun: Box::new(ast::L {
                             loc: loc.clone(),
                             node: ast::Expr::Var(ast::VarExpr {
+                                mod_prefix: None,
                                 id: Name::new("empty"),
                                 user_ty_args: vec![],
                                 ty_args: vec![],
@@ -1601,6 +1611,7 @@ pub(super) fn check_expr(
                             fun: Box::new(ast::L {
                                 loc: loc.clone(),
                                 node: ast::Expr::Var(ast::VarExpr {
+                                    mod_prefix: None,
                                     id: Name::new_static("once"),
                                     user_ty_args: vec![],
                                     ty_args: vec![],

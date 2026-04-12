@@ -285,6 +285,7 @@ fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
         _ => return false,
     };
     if let ast::Expr::ConSel(ast::Con {
+        mod_prefix: _,
         ty,
         con,
         user_ty_args,

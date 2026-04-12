@@ -450,6 +450,7 @@ fn mono_expr(
 ) -> mono::Expr {
     match expr {
         ast::Expr::Var(ast::VarExpr {
+            mod_prefix: _,
             id: var,
             user_ty_args: _,
             ty_args,
@@ -630,6 +631,7 @@ fn mono_expr(
         }
 
         ast::Expr::ConSel(ast::Con {
+            mod_prefix: _,
             ty,
             con,
             user_ty_args: _,
@@ -1311,6 +1313,7 @@ fn mono_pat(
         ast::Pat::Con(ast::ConPat {
             con:
                 ast::Con {
+                    mod_prefix: _,
                     ty,
                     con,
                     user_ty_args: _,

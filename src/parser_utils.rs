@@ -180,7 +180,7 @@ pub(crate) fn process_module_path(path: SmolStr, append: Option<SmolStr>) -> Mod
         path[0..path.len() - 1]
             .split('/')
             .map(SmolStr::new)
-            .chain(append.into_iter())
+            .chain(append)
             .collect(),
     )
 }

@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: 370e9f9232c81b93e82b9ddede05da31cf1406eebb68bf2d40477fcd3fce8a24
+// sha3: ec5bedfbed9a6e14366c970d70aa4dbfd93385bd6a2fdefdf5987ca5b2140aac
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -54984,6 +54984,7 @@ fn __action79<'a>(
                 l,
                 r,
                 Expr::ConSel(Con {
+                    mod_prefix: None,
                     ty: Name::new_static("Bool"),
                     con: Some(Name::new_static("True")),
                     user_ty_args: vec![],
@@ -55331,8 +55332,10 @@ fn __action99<'a>(
     (_, user_ty_args, _): (Loc, Vec<L<Type>>, Loc),
 ) -> Expr {
     {
+        let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let str = id.name();
         Expr::Var(VarExpr {
+            mod_prefix,
             id: str,
             user_ty_args,
             ty_args: vec![],
@@ -55353,6 +55356,7 @@ fn __action100<'a>(
     (_, id, _): (Loc, Token, Loc),
 ) -> Expr {
     Expr::ConSel(Con {
+        mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
         ty: id.name(),
         con: None,
         user_ty_args: vec![],
@@ -55375,6 +55379,7 @@ fn __action101<'a>(
     (_, _, _): (Loc, Token, Loc),
 ) -> Expr {
     Expr::ConSel(Con {
+        mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
         ty: id.name(),
         con: None,
         user_ty_args,
@@ -55395,10 +55400,12 @@ fn __action102<'a>(
     (_, path, _): (Loc, Token, Loc),
 ) -> Expr {
     {
+        let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
         Expr::ConSel(Con {
+            mod_prefix,
             ty,
             con: Some(con),
             user_ty_args: vec![],
@@ -55422,10 +55429,12 @@ fn __action103<'a>(
     (_, _, _): (Loc, Token, Loc),
 ) -> Expr {
     {
+        let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
         Expr::ConSel(Con {
+            mod_prefix,
             ty,
             con: Some(con),
             user_ty_args,
@@ -55650,6 +55659,7 @@ fn __action114<'a>(
 ) -> Expr {
     match expr {
         Expr::ConSel(Con {
+            mod_prefix: _,
             ty: id,
             con: None,
             user_ty_args: ty_user_ty_args,
@@ -56460,11 +56470,14 @@ fn __action158<'a>(
     (_, module_prefix, _): (Loc, Option<Token>, Loc),
     (_, id, _): (Loc, Token, Loc),
 ) -> Pat {
-    Pat::Var(VarPat {
-        var: id.name(),
-        ty: None,
-        refined: None,
-    })
+    {
+        let _ = module_prefix; // TODO: use module prefix in patterns
+        Pat::Var(VarPat {
+            var: id.name(),
+            ty: None,
+            refined: None,
+        })
+    }
 }
 
 #[allow(unused_variables)]
@@ -56601,6 +56614,7 @@ fn __action167<'a>(
     (_, ty, _): (Loc, Token, Loc),
 ) -> Con {
     Con {
+        mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
         ty: ty.name(),
         con: None,
         user_ty_args: vec![],
@@ -56621,10 +56635,12 @@ fn __action168<'a>(
     (_, path, _): (Loc, Token, Loc),
 ) -> Con {
     {
+        let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
         Con {
+            mod_prefix,
             ty,
             con: Some(con),
             user_ty_args: vec![],

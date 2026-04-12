@@ -603,6 +603,7 @@ impl Expr {
     pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
             Expr::Var(VarExpr {
+                mod_prefix: _,
                 id,
                 user_ty_args,
                 ty_args,

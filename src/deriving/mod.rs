@@ -101,6 +101,7 @@ fn var(loc: &ast::Loc, name: &str) -> ast::L<ast::Expr> {
     l(
         loc,
         ast::Expr::Var(ast::VarExpr {
+            mod_prefix: None,
             id: ast::Name::new(name),
             user_ty_args: vec![],
             ty_args: vec![],
@@ -173,6 +174,7 @@ fn con_sel(loc: &ast::Loc, ty: &str, con: Option<&str>) -> ast::L<ast::Expr> {
     l(
         loc,
         ast::Expr::ConSel(ast::Con {
+            mod_prefix: None,
             ty: ast::Name::new(ty),
             con: con.map(ast::Name::new),
             user_ty_args: vec![],
@@ -284,6 +286,7 @@ fn let_destructure_rest(
                 loc,
                 ast::Pat::Con(ast::ConPat {
                     con: ast::Con {
+                        mod_prefix: None,
                         ty: type_name.clone(),
                         con: None,
                         user_ty_args: vec![],

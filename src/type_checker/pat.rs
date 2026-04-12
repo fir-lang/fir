@@ -27,6 +27,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
         ast::Pat::Con(ast::ConPat {
             con:
                 ast::Con {
+                    mod_prefix: _,
                     ty: pat_ty_name,
                     con: pat_con_name,
                     user_ty_args,

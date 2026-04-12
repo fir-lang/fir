@@ -585,6 +585,7 @@ Stmt: Stmt = {
         Stmt::While(WhileStmt {
             label,
             cond: L::new(module, l, r, Expr::ConSel(Con {
+                mod_prefix: None,
                 ty: Name::new_static("Bool"),
                 con: Some(Name::new_static("True")),
                 user_ty_args: vec![],
@@ -706,28 +707,31 @@ LInlineExpr: L<Expr> = {
 InlineExpr: Expr = {
     #[precedence(level = "0")]
     <module_prefix:ModulePrefix?> <id:LowerId> <user_ty_args:UserTyArgs> => {
+        let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let str = id.name();
-        Expr::Var(VarExpr { id: str, user_ty_args, ty_args: vec![], inferred_ty: None })
+        Expr::Var(VarExpr { mod_prefix, id: str, user_ty_args, ty_args: vec![], inferred_ty: None })
     },
 
     <module_prefix:ModulePrefix?> <id:UpperId> =>
-        Expr::ConSel(Con { ty: id.name(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None }),
+        Expr::ConSel(Con { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), ty: id.name(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None }),
 
     <module_prefix:ModulePrefix?> <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
-        Expr::ConSel(Con { ty: id.name(), con: None, user_ty_args, ty_args: vec![], inferred_ty: None }),
+        Expr::ConSel(Con { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), ty: id.name(), con: None, user_ty_args, ty_args: vec![], inferred_ty: None }),
 
     <module_prefix:ModulePrefix?> <path:UpperIdPath> => {
+        let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConSel(Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![], inferred_ty: None })
+        Expr::ConSel(Con { mod_prefix, ty, con: Some(con), user_ty_args: vec![], ty_args: vec![], inferred_ty: None })
     },
 
     <module_prefix:ModulePrefix?> <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
+        let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConSel(Con { ty, con: Some(con), user_ty_args, ty_args: vec![], inferred_ty: None })
+        Expr::ConSel(Con { mod_prefix, ty, con: Some(con), user_ty_args, ty_args: vec![], inferred_ty: None })
     },
 
     "(" <expr:Expr> ")" => {
@@ -787,7 +791,7 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>
         match expr {
-            Expr::ConSel(Con { ty: id, con: None, user_ty_args: ty_user_ty_args, ty_args: _, inferred_ty: _ }) =>
+            Expr::ConSel(Con { mod_prefix: _, ty: id, con: None, user_ty_args: ty_user_ty_args, ty_args: _, inferred_ty: _ }) =>
                 Expr::AssocFnSel(AssocFnSelExpr {
                     ty: id,
                     ty_user_ty_args,
@@ -1031,7 +1035,10 @@ LPat: L<Pat> = {
 
 Pat: Pat = {
     #[precedence(level = "0")]
-    <module_prefix:ModulePrefix?> <id:LowerId> => Pat::Var(VarPat { var: id.name(), ty: None, refined: None }),
+    <module_prefix:ModulePrefix?> <id:LowerId> => {
+        let _ = module_prefix; // TODO: use module prefix in patterns
+        Pat::Var(VarPat { var: id.name(), ty: None, refined: None })
+    },
 
     <con:ConPat> => Pat::Con(con),
 
@@ -1068,13 +1075,14 @@ Pat: Pat = {
 
 Con: Con = {
     <module_prefix:ModulePrefix?> <ty:UpperId> =>
-        Con { ty: ty.name(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None },
+        Con { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), ty: ty.name(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None },
 
     <module_prefix:ModulePrefix?> <path:UpperIdPath> => {
+        let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![], inferred_ty: None }
+        Con { mod_prefix, ty, con: Some(con), user_ty_args: vec![], ty_args: vec![], inferred_ty: None }
     },
 }
 

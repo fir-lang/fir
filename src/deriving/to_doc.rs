@@ -219,6 +219,7 @@ fn derive_to_doc_sum(
             loc,
             ast::Pat::Con(ast::ConPat {
                 con: ast::Con {
+                    mod_prefix: None,
                     ty: type_name.clone(),
                     con: Some(con.name.clone()),
                     user_ty_args: vec![],

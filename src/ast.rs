@@ -484,6 +484,7 @@ pub struct VariantPat {
 
 #[derive(Debug, Clone)]
 pub struct Con {
+    pub mod_prefix: Option<ModulePath>,
     pub ty: Name,
     pub con: Option<Name>,
 
@@ -622,6 +623,8 @@ pub enum Expr {
 
 #[derive(Debug, Clone)]
 pub struct VarExpr {
+    pub mod_prefix: Option<ModulePath>,
+
     pub id: Name,
 
     /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
@@ -1192,6 +1195,7 @@ impl Expr {
             Expr::ConSel(_) | Expr::Int(_) | Expr::Char(_) => {}
 
             Expr::Var(VarExpr {
+                mod_prefix: _,
                 id: _,
                 user_ty_args,
                 ty_args,
