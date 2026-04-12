@@ -2,6 +2,7 @@
 
 use crate::ast::*;
 use crate::interpolation::{str_parts, copy_update_escapes};
+use crate::module::ModulePath;
 use crate::parser_utils::*;
 use crate::token::*;
 
@@ -1130,6 +1131,10 @@ ImportDecl: L<ImportDecl> = {
 }
 
 ImportItem: ImportItem = {
+    <id:UpperId> => {
+        ImportItem { path: ModulePath::new(vec![id.smol_str()]), import_spec: ImportSpec::Prefixed { prefix: id.smol_str() } }
+    },
+
     <module_prefix:ModulePrefix> <id:UpperId> => {
         let path = process_module_path(module_prefix.smol_str(), Some(id.smol_str()));
         ImportItem { path, import_spec: ImportSpec::Prefixed { prefix: id.smol_str() } }
