@@ -1,4 +1,5 @@
 use crate::ast::{self, L, Name};
+use crate::module::ModulePath;
 
 use smol_str::SmolStr;
 
@@ -171,4 +172,8 @@ pub(crate) fn process_fields(
             fields: fields.into_iter().map(|(_, t)| t).collect(),
         }
     }
+}
+
+pub(crate) fn process_module_path(path: SmolStr) -> ModulePath {
+    ModulePath::new(path.split('/').map(SmolStr::new).collect())
 }

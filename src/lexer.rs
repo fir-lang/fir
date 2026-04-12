@@ -125,16 +125,17 @@ lexgen::lexer! {
         "^" = TokenKind::Caret,
 
         let upper_id = '_'* $$ascii_uppercase ($$ascii_alphanumeric | '_')*;
+        let module_prefix = ($upper_id '/')*;
 
-        $upper_id = TokenKind::UpperId,
+        $module_prefix $upper_id = TokenKind::UpperId,
 
-        $upper_id ('.' $upper_id)* = TokenKind::UpperIdPath,
+        $module_prefix $upper_id ('.' $upper_id)* = TokenKind::UpperIdPath,
 
-        '_'* $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
+        $module_prefix '_'* $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
 
         '\'' $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::Label,
 
-        $upper_id ".[" = TokenKind::UpperIdDotLBracket,
+        $module_prefix $upper_id ".[" = TokenKind::UpperIdDotLBracket,
 
         // Literals
         '"' => |lexer| {
@@ -301,6 +302,34 @@ fn lex_underscores() {
                 kind: TokenKind::Underscore,
                 text: "_".into(),
             }
+        ]
+    );
+}
+
+#[test]
+fn lex_paths() {
+    let input = indoc::indoc! {"
+        a
+        A A.B
+        M/a
+        M/A M/A.B
+        M1/M2/a
+        M1/M2/A M1/M2/A.B
+    "};
+    let tokens: Vec<Token> = lex(input, "test").into_iter().map(|(_, t, _)| t).collect();
+    #[rustfmt::skip]
+    assert_eq!(
+        tokens,
+        vec![
+            Token { kind: TokenKind::LowerId, text: "a".into() },
+            Token { kind: TokenKind::UpperId, text: "A".into() },
+            Token { kind: TokenKind::UpperIdPath, text: "A.B".into() },
+            Token { kind: TokenKind::LowerId, text: "M/a".into() },
+            Token { kind: TokenKind::UpperId, text: "M/A".into() },
+            Token { kind: TokenKind::UpperIdPath, text: "M/A.B".into() },
+            Token { kind: TokenKind::LowerId, text: "M1/M2/a".into() },
+            Token { kind: TokenKind::UpperId, text: "M1/M2/A".into() },
+            Token { kind: TokenKind::UpperIdPath, text: "M1/M2/A.B".into() },
         ]
     );
 }

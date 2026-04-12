@@ -2,7 +2,6 @@
 
 use crate::ast::*;
 use crate::interpolation::{str_parts, copy_update_escapes};
-use crate::module::ModulePath;
 use crate::parser_utils::*;
 use crate::token::*;
 
@@ -1094,13 +1093,13 @@ ConPat: ConPat = {
 
 FieldPats: (Vec<Named<L<Pat>>>, RestPat) = {
     ".." => (vec![], RestPat::Ignore),
-    
+
     ".." <binder:LowerId> => (vec![], RestPat::Bind(VarPat { var: binder.name(), ty: None, refined: None })),
 
     <fields:Sep<FieldPat, ",">> => (fields, RestPat::No),
 
     <fields:(<FieldPat> ",")+> ".." => (fields, RestPat::Ignore),
-    
+
     <fields:(<FieldPat> ",")+> ".." <binder:LowerId> => (fields, RestPat::Bind(VarPat { var: binder.name(), ty: None, refined: None })),
 }
 
@@ -1124,42 +1123,26 @@ ImportDecl: L<ImportDecl> = {
 }
 
 ImportItem: ImportItem = {
-    <path:ImportPath> => {
-        let (mut path, spec) = path;
-        path.reverse();
-        let spec = spec.unwrap_or_else(|| ImportSpec::Prefixed {
-            prefix: path.last().unwrap().clone(),
-        });
-        let path = ModulePath::new(path);
-        ImportItem { path, import_spec: spec }
+    <id:UpperId> => {
+        let path = process_module_path(id.smol_str());
+        let prefix: SmolStr = (*path.segments().last().as_ref().unwrap()).clone();
+        ImportItem { path, import_spec: ImportSpec::Prefixed { prefix } }
     },
 
-    <path:ImportPath> "as" <id:UpperId> => {
-        let (mut path, _) = path;
-        path.reverse();
-        let path = ModulePath::new(path);
-        ImportItem {
-            path,
-            import_spec: ImportSpec::Prefixed { prefix: id.smol_str() },
-        }
+    <id:UpperId> "as" <renamed:UpperId> => {
+        let path = process_module_path(id.smol_str());
+        let prefix = renamed.smol_str();
+        ImportItem { path, import_spec: ImportSpec::Prefixed { prefix } }
     },
-}
 
-// NB. Returns path segments in reverse order.
-ImportPath: (Vec<SmolStr>, Option<ImportSpec>) = {
-    <id:UpperId> =>
-        (vec![id.smol_str()], None),
+    <id:UpperId> "/" "*" => {
+        let path = process_module_path(id.smol_str());
+        ImportItem { path, import_spec: ImportSpec::Wildcard }
+    },
 
-    <id:UpperId> "/" "*" =>
-        (vec![id.smol_str()], Some(ImportSpec::Wildcard)),
-
-    <id:UpperId> "/" "[" <names:Sep<ImportName, ",">> "]" =>
-        (vec![id.smol_str()], Some(ImportSpec::Selective { names })),
-
-    <id:UpperId> "/" <rest:ImportPath> => {
-        let (mut rest_path, rest_spec) = rest;
-        rest_path.push(id.smol_str());
-        (rest_path, rest_spec)
+    <id:UpperId> "/" "[" <names:Sep<ImportName, ",">> "]" => {
+        let path = process_module_path(id.smol_str());
+        ImportItem { path, import_spec: ImportSpec::Selective { names } }
     },
 }
 
