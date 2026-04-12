@@ -4856,7 +4856,12 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
-            let p = path(state)
+            let id = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Slash, ..):
                 state._cursor += 1
@@ -4868,7 +4873,7 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                ImportItem(path = p, importSpec = ImportSpec.Wildcard)
+                ImportItem(path = newId(id), importSpec = ImportSpec.Wildcard)
             val,
     )
     match altResult:
@@ -4876,7 +4881,12 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let p = path(state)
+            let id = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Slash, ..):
                 state._cursor += 1
@@ -4928,7 +4938,8 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
             let val = do:
                 names.insert(0, name0)
                 ImportItem(
-                    path = p, importSpec = ImportSpec.Selective(names = names)
+                    path = newId(id),
+                    importSpec = ImportSpec.Selective(names = names),
                 )
             val,
     )
@@ -4937,7 +4948,12 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let p = path(state)
+            let id = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.As, ..):
                 state._cursor += 1
@@ -4951,8 +4967,9 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 ImportItem(
-                    path = p,
-                    importSpec = ImportSpec.Prefixed(prefix = newId(prefix)),
+                    path = newId(id),
+                    importSpec =
+                        ImportSpec.Prefixed(prefix = Option.Some(newId(prefix))),
                 )
             val,
     )
@@ -4961,11 +4978,16 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let p = path(state)
+            let id = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                let lastId = p.last().unwrap()
                 ImportItem(
-                    path = p, importSpec = ImportSpec.Prefixed(prefix = lastId)
+                    path = newId(id),
+                    importSpec = ImportSpec.Prefixed(prefix = Option.None),
                 )
             val,
     )
@@ -5054,53 +5076,6 @@ importName(state: ParserState[Token, ()]) ImportName / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 ImportName(originalName = newId(id), localName = newId(id))
-            val,
-    )
-    match altResult:
-        Result.Err(err): state._cursor = cursor0
-        Result.Ok(val): return val
-    throw(state.updateErrorCursor(state._cursor))
-
-
-path(state: ParserState[Token, ()]) Vec[Id] / U32:
-    let cursor0 = state._cursor
-    let altResult = try(
-        \():
-            let p0 = state.nextCursor()
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.UpperId, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
-            let zeroOrMoreCursor0 = state._cursor
-            let ps = Vec.empty()
-            loop:
-                let psLen0 = ps.len()
-                let symResult = try(
-                    \():
-                        if state.peek() is Option.Some(sym)
-                                and sym is Token(kind = TokenKind.Slash, ..):
-                            state._cursor += 1
-                        else:
-                            throw(state.updateErrorCursor(state._cursor))
-                        ps.push(state.nextCursor())
-                        if state.peek() is Option.Some(sym)
-                                and sym is Token(kind = TokenKind.UpperId, ..):
-                            state._cursor += 1
-                        else:
-                            throw(state.updateErrorCursor(state._cursor)),
-                )
-                match symResult:
-                    Result.Err(err):
-                        state._cursor = zeroOrMoreCursor0
-                        ps.truncate(psLen0)
-                        break
-                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
-            let val = do:
-                let vec: Vec[Id] = Vec.fromIter(
-                    once(newId(p0)).chain(ps.iter().map(newId))
-                )
-                vec
             val,
     )
     match altResult:

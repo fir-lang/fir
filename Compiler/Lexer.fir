@@ -829,6 +829,41 @@ Lexer._nextInit(self) Option[Token] / Error:
                 and _isIdCont(self._input.charAt(endIdx)):
             endIdx += 1
             self._col += 1
+
+        # Module prefix: an uppercase identifier followed by '/' and another
+        # identifier start is part of a module-qualified name (e.g. M/foo,
+        # M/A, M1/M2/A). Continue scanning through '/' as long as each
+        # prefix segment is uppercase.
+        if uppercaseId:
+            while self._input.len() > endIdx + 1
+                    and self._input.charAt(endIdx) == '/'
+                    and _isIdStartChar(self._input.charAt(endIdx + 1)):
+                # Include the '/'
+                endIdx += 1
+                self._col += 1
+
+                # Determine the casing of the next segment.
+                let segCaseIdx = endIdx
+                while segCaseIdx < self._input.len()
+                        and self._input.charAt(segCaseIdx) == '_':
+                    segCaseIdx += 1
+
+                if segCaseIdx < self._input.len():
+                    let segChar = self._input.charAt(segCaseIdx)
+                    uppercaseId = segChar.isAsciiUppercase()
+                    lowercaseId = segChar.isAsciiLowercase()
+
+                # Scan the next identifier segment.
+                while self._input.len() > endIdx
+                        and _isIdCont(self._input.charAt(endIdx)):
+                    endIdx += 1
+                    self._col += 1
+
+                # Only uppercase segments can be followed by more path
+                # segments.
+                if not uppercaseId:
+                    break
+
         let id = self._input.substr(self._byteIdx, endIdx)
         let kind = if uppercaseId:
             TokenKind.UpperId
@@ -1102,6 +1137,10 @@ Lexer._tryInt(self) Option[Token] / exn:
         )
 
     Option.None
+
+
+_isIdStartChar(c: Char) Bool:
+    c.isAsciiUppercase() or c.isAsciiLowercase() or c == '_'
 
 
 _isIdCont(c: Char) Bool:

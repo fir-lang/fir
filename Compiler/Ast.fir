@@ -368,7 +368,7 @@ type ImportDecl[exts](
 #[derive(ToDoc)]
 type ImportItem(
     ## `A/B/C` in the examples.
-    path: Vec[Id],
+    path: Id,
 
     ## What to import, and how, from the `path`.
     importSpec: ImportSpec,
@@ -384,7 +384,7 @@ type ImportSpec:
     ## - `A/B/C`: prefix = `C`.
     ## - `A/B/C as D`: prefix = `D`.
     Prefixed(
-        prefix: Id,
+        prefix: Option[Id],
     )
 
     ## Import given list of things, potentially with new names.
