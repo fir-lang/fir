@@ -503,8 +503,8 @@ _formatSigArgList(
 ImportDecl.format(self: FmtImportDecl, tokens: Array[Token]) Doc:
     assert(not self.items.isEmpty())
 
-    let firstItemFirstToken = self.items.get(0).path.get(0).token
-    let lbracket = prevNonTrivia(firstItemFirstToken, tokens).unwrap()
+    let pathToken = self.items.get(0).path.token
+    let lbracket = prevNonTrivia(pathToken, tokens).unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
     let import_ = prevNonTrivia(lbracket, tokens).unwrap()
@@ -572,18 +572,13 @@ ImportDecl.format(self: FmtImportDecl, tokens: Array[Token]) Doc:
 
 ImportItem.format(self, tokens: Array[Token]) (doc: Doc, lastToken: TokenIdx):
     let doc = Doc.empty()
-    let lastToken = self.path.get(0).token
+    let lastToken = self.path.token
 
-    # Format the path tokens (`A/B/C`). For wildcard and selective specs the
-    # path is followed by a `/` which is consumed here as the trailing slash
-    # of the last `UpperId`.
-    for id: Id in self.path.iter():
-        lastToken = id.token
-        doc += formatToken(id.token, tokens)
-        if nextNonTrivia(id.token, tokens) is Option.Some(next)
-                and tokens.get(next.idx).kind is TokenKind.Slash:
-            lastToken = next
-            doc += formatToken(next, tokens)
+    doc += formatToken(self.path.token, tokens)
+    if nextNonTrivia(self.path.token, tokens) is Option.Some(next)
+            and tokens.get(next.idx).kind is TokenKind.Slash:
+        lastToken = next
+        doc += formatToken(next, tokens)
 
     match self.importSpec:
         ImportSpec.Wildcard:
@@ -593,10 +588,7 @@ ImportItem.format(self, tokens: Array[Token]) (doc: Doc, lastToken: TokenIdx):
             lastToken = star
 
         ImportSpec.Prefixed(prefix):
-            # When the prefix is the default (last segment of the path) the
-            # parser stores the same token, so there's no `as` clause to print.
-            let lastPathToken = self.path.last().unwrap().token
-            if prefix.token.idx != lastPathToken.idx:
+            if prefix is Option.Some(prefix):
                 let asKw = nextNonTrivia(lastToken, tokens).unwrap()
                 assert(tokens.get(asKw.idx).kind is TokenKind.As)
                 doc += Doc.blank(1)
