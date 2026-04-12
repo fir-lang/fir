@@ -5,8 +5,6 @@ use crate::interpolation::{str_parts, copy_update_escapes};
 use crate::parser_utils::*;
 use crate::token::*;
 
-use smol_str::SmolStr;
-
 use std::convert::Infallible;
 use std::rc::Rc;
 
@@ -25,6 +23,7 @@ extern {
         UpperIdLBracket => Token { kind: TokenKind::UpperIdLBracket, .. },
         UpperIdPathLBracket => Token { kind: TokenKind::UpperIdPathLBracket, .. },
         UpperIdDotLBracket => Token { kind: TokenKind::UpperIdDotLBracket, .. },
+        ModulePrefix => Token { kind: TokenKind::ModulePrefix, .. },
 
         LowerId => Token { kind: TokenKind::LowerId, .. },
         Label => Token { kind: TokenKind::Label, .. },
@@ -706,25 +705,25 @@ LInlineExpr: L<Expr> = {
 // Inline expressions can be made statements with a NEWLINE after them.
 InlineExpr: Expr = {
     #[precedence(level = "0")]
-    <id:LowerId> <user_ty_args:UserTyArgs> => {
+    <module_prefix:ModulePrefix?> <id:LowerId> <user_ty_args:UserTyArgs> => {
         let str = id.name();
         Expr::Var(VarExpr { id: str, user_ty_args, ty_args: vec![], inferred_ty: None })
     },
 
-    <id:UpperId> =>
+    <module_prefix:ModulePrefix?> <id:UpperId> =>
         Expr::ConSel(Con { ty: id.name(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None }),
 
-    <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
+    <module_prefix:ModulePrefix?> <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
         Expr::ConSel(Con { ty: id.name(), con: None, user_ty_args, ty_args: vec![], inferred_ty: None }),
 
-    <path:UpperIdPath> => {
+    <module_prefix:ModulePrefix?> <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
         Expr::ConSel(Con { ty, con: Some(con), user_ty_args: vec![], ty_args: vec![], inferred_ty: None })
     },
 
-    <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
+    <module_prefix:ModulePrefix?> <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
@@ -1032,7 +1031,7 @@ LPat: L<Pat> = {
 
 Pat: Pat = {
     #[precedence(level = "0")]
-    <id:LowerId> => Pat::Var(VarPat { var: id.name(), ty: None, refined: None }),
+    <module_prefix:ModulePrefix?> <id:LowerId> => Pat::Var(VarPat { var: id.name(), ty: None, refined: None }),
 
     <con:ConPat> => Pat::Con(con),
 
@@ -1068,10 +1067,10 @@ Pat: Pat = {
 }
 
 Con: Con = {
-    <ty:UpperId> =>
+    <module_prefix:ModulePrefix?> <ty:UpperId> =>
         Con { ty: ty.name(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None },
 
-    <path:UpperIdPath> => {
+    <module_prefix:ModulePrefix?> <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
@@ -1123,25 +1122,24 @@ ImportDecl: L<ImportDecl> = {
 }
 
 ImportItem: ImportItem = {
-    <id:UpperId> => {
-        let path = process_module_path(id.smol_str());
-        let prefix: SmolStr = (*path.segments().last().as_ref().unwrap()).clone();
-        ImportItem { path, import_spec: ImportSpec::Prefixed { prefix } }
+    <module_prefix:ModulePrefix> <id:UpperId> => {
+        let path = process_module_path(module_prefix.smol_str(), Some(id.smol_str()));
+        ImportItem { path, import_spec: ImportSpec::Prefixed { prefix: id.smol_str() } }
     },
 
-    <id:UpperId> "as" <renamed:UpperId> => {
-        let path = process_module_path(id.smol_str());
+    <module_prefix:ModulePrefix> <id:UpperId> "as" <renamed:UpperId> => {
+        let path = process_module_path(module_prefix.smol_str(), Some(id.smol_str()));
         let prefix = renamed.smol_str();
         ImportItem { path, import_spec: ImportSpec::Prefixed { prefix } }
     },
 
-    <id:UpperId> "/" "*" => {
-        let path = process_module_path(id.smol_str());
+    <module_prefix:ModulePrefix> "*" => {
+        let path = process_module_path(module_prefix.smol_str(), None);
         ImportItem { path, import_spec: ImportSpec::Wildcard }
     },
 
-    <id:UpperId> "/" "[" <names:Sep<ImportName, ",">> "]" => {
-        let path = process_module_path(id.smol_str());
+    <module_prefix:ModulePrefix> "[" <names:Sep<ImportName, ",">> "]" => {
+        let path = process_module_path(module_prefix.smol_str(), None);
         ImportItem { path, import_spec: ImportSpec::Selective { names } }
     },
 }

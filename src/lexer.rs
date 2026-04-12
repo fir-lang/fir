@@ -125,17 +125,18 @@ lexgen::lexer! {
         "^" = TokenKind::Caret,
 
         let upper_id = '_'* $$ascii_uppercase ($$ascii_alphanumeric | '_')*;
-        let module_prefix = ($upper_id '/')*;
 
-        $module_prefix $upper_id = TokenKind::UpperId,
+        ($upper_id '/')* = TokenKind::ModulePrefix,
 
-        $module_prefix $upper_id ('.' $upper_id)* = TokenKind::UpperIdPath,
+        $upper_id = TokenKind::UpperId,
 
-        $module_prefix '_'* $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
+        $upper_id ('.' $upper_id)* = TokenKind::UpperIdPath,
+
+        '_'* $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
 
         '\'' $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::Label,
 
-        $module_prefix $upper_id ".[" = TokenKind::UpperIdDotLBracket,
+        $upper_id ".[" = TokenKind::UpperIdDotLBracket,
 
         // Literals
         '"' => |lexer| {

@@ -174,6 +174,13 @@ pub(crate) fn process_fields(
     }
 }
 
-pub(crate) fn process_module_path(path: SmolStr) -> ModulePath {
-    ModulePath::new(path.split('/').map(SmolStr::new).collect())
+pub(crate) fn process_module_path(path: SmolStr, append: Option<SmolStr>) -> ModulePath {
+    debug_assert!(path.ends_with('/')); // lexical syntax of module prefixes
+    ModulePath::new(
+        path[0..path.len() - 1]
+            .split('/')
+            .map(SmolStr::new)
+            .chain(append.into_iter())
+            .collect(),
+    )
 }
