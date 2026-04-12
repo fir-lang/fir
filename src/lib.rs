@@ -159,11 +159,7 @@ mod native {
         }
 
         let file_path = Path::new(&program); // "examples/Foo.fir"
-        let mut loaded_pgm = module_loader::load(file_path);
-
-        if opts.print_parsed_ast {
-            loaded_pgm.print();
-        }
+        let mut loaded_pgm = module_loader::load(file_path, opts.print_parsed_ast);
 
         if opts.parse {
             return;
@@ -261,7 +257,11 @@ mod native {
         }
     }
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &str) -> ast::Module {
+    pub fn parse_file<P: AsRef<Path> + Clone>(
+        path: P,
+        module: &str,
+        print_parsed_ast: bool,
+    ) -> ast::Module {
         let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
             panic!(
                 "Unable to read file {} for module {}: {}",
@@ -271,7 +271,13 @@ mod native {
             )
         });
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
-        parse_module(&module_path, &contents)
+        let parsed = parse_module(&module_path, &contents);
+        if print_parsed_ast {
+            println!("mod {} {{\n", module);
+            parsed.print();
+            println!("\n}} # {}\n", module);
+        }
+        parsed
     }
 
     /// The `readFileUtf8` primitive.
@@ -337,7 +343,11 @@ mod wasm {
     use smol_str::SmolStr;
     use wasm_bindgen::prelude::wasm_bindgen;
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &str) -> ast::Module {
+    pub fn parse_file<P: AsRef<Path> + Clone>(
+        path: P,
+        module: &str,
+        _print_parsed_ast: bool,
+    ) -> ast::Module {
         let path = path.as_ref().to_string_lossy();
         let contents = read_file_utf8(&path);
         let module_path: SmolStr = path.into();
@@ -387,7 +397,7 @@ mod wasm {
         // NB. This path handled specially in the web page, it returns the program input field
         // contents.
         let file_path = Path::new("Main.fir");
-        let mut loaded_program = module_loader::load(file_path);
+        let mut loaded_program = module_loader::load(file_path, false);
         deriving::expand_derives(&mut loaded_program);
 
         let _tys = type_checker::check_pgm(&mut loaded_program, "main");
