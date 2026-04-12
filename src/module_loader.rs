@@ -32,7 +32,6 @@ pub struct SccGraph {
 pub struct SccIdx(usize);
 
 impl SccIdx {
-    #[allow(unused)]
     pub fn as_usize(self) -> usize {
         self.0
     }
@@ -183,8 +182,8 @@ fn build_scc_graph(graph: &HashMap<ModulePath, HashSet<ModulePath>>) -> SccGraph
             let v_scc = module_to_scc[v];
             if u_scc != v_scc {
                 // SCC u depends on SCC v
-                dependents[v_scc.0].insert(u_scc);
-                dependencies[u_scc.0].insert(v_scc);
+                dependents[v_scc.as_usize()].insert(u_scc);
+                dependencies[u_scc.as_usize()].insert(v_scc);
             }
         }
     }
