@@ -725,8 +725,8 @@ pub(super) fn check_expr(
                 )
             });
 
-            let con = match &expected_ty {
-                Some(Ty::Con(con, _kind)) => con.name().as_str(),
+            let id = match &expected_ty {
+                Some(Ty::Con(con, _kind)) => con.clone(),
 
                 Some(Ty::UVar(var)) => {
                     // Default as I32.
@@ -742,7 +742,7 @@ pub(super) fn check_expr(
                         tc_state.assumps,
                         tc_state.preds,
                     );
-                    "I32"
+                    builtin_ids::I32()
                 }
 
                 Some(other) => {
@@ -755,132 +755,114 @@ pub(super) fn check_expr(
 
                 None => {
                     // Default as I32.
-                    "I32"
+                    builtin_ids::I32()
                 }
             };
 
-            let id = match con {
-                "U8" => {
-                    if negate {
-                        panic!(
-                            "{}: Cannot negate unsigned integer: {}",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    *kind = Some(ast::IntKind::U8(u8::try_from(*parsed).unwrap_or_else(
-                        |_| {
-                            panic!(
-                                "{}: Integer literal {} out of range for U8",
-                                loc_display(loc),
-                                text
-                            )
-                        },
-                    )));
-                    builtin_ids::U8()
+            if id == builtin_ids::U8() {
+                if negate {
+                    panic!(
+                        "{}: Cannot negate unsigned integer: {}",
+                        loc_display(loc),
+                        text
+                    );
                 }
-
-                "I8" => {
-                    let mut bits = u8::try_from(*parsed).unwrap_or_else(|_| {
+                *kind = Some(ast::IntKind::U8(u8::try_from(*parsed).unwrap_or_else(
+                    |_| {
                         panic!(
-                            "{}: Integer literal {} out of range for I8",
+                            "{}: Integer literal {} out of range for U8",
                             loc_display(loc),
                             text
                         )
-                    });
-                    let limit = if negate { i8::MIN } else { i8::MAX }.unsigned_abs();
-                    if bits > limit {
-                        panic!(
-                            "{}: Integer literal {} out of range for I8",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    if negate {
-                        bits = !bits.wrapping_sub(1);
-                    }
-                    *kind = Some(ast::IntKind::I8(bits as i8));
-                    builtin_ids::I8()
+                    },
+                )));
+            } else if id == builtin_ids::I8() {
+                let mut bits = u8::try_from(*parsed).unwrap_or_else(|_| {
+                    panic!(
+                        "{}: Integer literal {} out of range for I8",
+                        loc_display(loc),
+                        text
+                    )
+                });
+                let limit = if negate { i8::MIN } else { i8::MAX }.unsigned_abs();
+                if bits > limit {
+                    panic!(
+                        "{}: Integer literal {} out of range for I8",
+                        loc_display(loc),
+                        text
+                    );
                 }
-
-                "U32" => {
-                    if negate {
-                        panic!(
-                            "{}: Cannot negate unsigned integer: {}",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    *kind = Some(ast::IntKind::U32(u32::try_from(*parsed).unwrap_or_else(
-                        |_| {
-                            panic!(
-                                "{}: Integer literal {} out of range for U32",
-                                loc_display(loc),
-                                text
-                            )
-                        },
-                    )));
-                    builtin_ids::U32()
+                if negate {
+                    bits = !bits.wrapping_sub(1);
                 }
-
-                "I32" => {
-                    let mut bits = u32::try_from(*parsed).unwrap_or_else(|_| {
+                *kind = Some(ast::IntKind::I8(bits as i8));
+            } else if id == builtin_ids::U32() {
+                if negate {
+                    panic!(
+                        "{}: Cannot negate unsigned integer: {}",
+                        loc_display(loc),
+                        text
+                    );
+                }
+                *kind = Some(ast::IntKind::U32(u32::try_from(*parsed).unwrap_or_else(
+                    |_| {
                         panic!(
-                            "{}: Integer literal {} out of range for I32",
+                            "{}: Integer literal {} out of range for U32",
                             loc_display(loc),
                             text
                         )
-                    });
-                    let limit = if negate { i32::MIN } else { i32::MAX }.unsigned_abs();
-                    if bits > limit {
-                        panic!(
-                            "{}: Integer literal {} out of range for I32",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    if negate {
-                        bits = !bits.wrapping_sub(1);
-                    }
-                    *kind = Some(ast::IntKind::I32(bits as i32));
-                    builtin_ids::I32()
+                    },
+                )));
+            } else if id == builtin_ids::I32() {
+                let mut bits = u32::try_from(*parsed).unwrap_or_else(|_| {
+                    panic!(
+                        "{}: Integer literal {} out of range for I32",
+                        loc_display(loc),
+                        text
+                    )
+                });
+                let limit = if negate { i32::MIN } else { i32::MAX }.unsigned_abs();
+                if bits > limit {
+                    panic!(
+                        "{}: Integer literal {} out of range for I32",
+                        loc_display(loc),
+                        text
+                    );
                 }
-
-                "U64" => {
-                    if negate {
-                        panic!(
-                            "{}: Cannot negate unsigned integer: {}",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    *kind = Some(ast::IntKind::U64(*parsed));
-                    builtin_ids::U32()
+                if negate {
+                    bits = !bits.wrapping_sub(1);
                 }
-
-                "I64" => {
-                    let mut bits = *parsed;
-                    let limit = if negate { i64::MIN } else { i64::MAX }.unsigned_abs();
-                    if bits > limit {
-                        panic!(
-                            "{}: Integer literal {} out of range for I32",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    if negate {
-                        bits = !bits.wrapping_sub(1);
-                    }
-                    *kind = Some(ast::IntKind::I64(bits as i64));
-                    builtin_ids::I32()
+                *kind = Some(ast::IntKind::I32(bits as i32));
+            } else if id == builtin_ids::U64() {
+                if negate {
+                    panic!(
+                        "{}: Cannot negate unsigned integer: {}",
+                        loc_display(loc),
+                        text
+                    );
                 }
-
-                other => panic!(
+                *kind = Some(ast::IntKind::U64(*parsed));
+            } else if id == builtin_ids::I64() {
+                let mut bits = *parsed;
+                let limit = if negate { i64::MIN } else { i64::MAX }.unsigned_abs();
+                if bits > limit {
+                    panic!(
+                        "{}: Integer literal {} out of range for I32",
+                        loc_display(loc),
+                        text
+                    );
+                }
+                if negate {
+                    bits = !bits.wrapping_sub(1);
+                }
+                *kind = Some(ast::IntKind::I64(bits as i64));
+            } else {
+                panic!(
                     "{}: Expected {}, found integer literal",
                     loc_display(loc),
-                    other,
-                ),
-            };
+                    id.name(),
+                )
+            }
 
             (Ty::Con(id, Kind::Star), Default::default())
         }
