@@ -125,13 +125,22 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
 
             TopDecl.Import(importDecl):
                 for item: ImportItem in importDecl.items.iter():
-                    imports.push(
-                        Vec.fromIter(
-                            item.path.iter().map(
-                                \(id: Id) Str: tokens.get(id.token.idx).text,
+                    let pathSegments: Vec[Str] = Vec.empty()
+
+                    if item.path is Option.Some(path):
+                        # ModulePrefix text is like "Fir/" or "Fir/Vec/".
+                        # Split on '/' and drop the trailing empty segment.
+                        let pathText = tokens.get(path.idx).text
+                        pathSegments.extend(
+                            pathText.splitChar('/').filter(
+                                \(s: Str): not s.isEmpty(),
                             ),
-                        ),
-                    )
+                        )
+
+                    if item.module is Option.Some(module):
+                        pathSegments.push(tokens.get(module.idx).text)
+
+                    imports.push(pathSegments)
 
     let module = Module(
         _package = _defaultPackage(),

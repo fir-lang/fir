@@ -126,6 +126,8 @@ lexgen::lexer! {
 
         let upper_id = '_'* $$ascii_uppercase ($$ascii_alphanumeric | '_')*;
 
+        ($upper_id '/')* = TokenKind::ModulePrefix,
+
         $upper_id = TokenKind::UpperId,
 
         $upper_id ('.' $upper_id)* = TokenKind::UpperIdPath,
@@ -302,5 +304,35 @@ fn lex_underscores() {
                 text: "_".into(),
             }
         ]
+    );
+}
+
+#[test]
+fn lex_paths() {
+    fn check(input: &str, expected: &[(TokenKind, &str)]) {
+        let tokens: Vec<Token> = lex(input, "test").into_iter().map(|(_, t, _)| t).collect();
+        let expected: Vec<Token> = expected
+            .iter()
+            .map(|(kind, text)| Token {
+                kind: *kind,
+                text: (*text).into(),
+            })
+            .collect();
+        assert_eq!(tokens, expected, "input: {input:?}");
+    }
+
+    use TokenKind::*;
+
+    check("a", &[(LowerId, "a")]);
+    check("A", &[(UpperId, "A")]);
+    check("A.B", &[(UpperIdPath, "A.B")]);
+    check("M/a", &[(ModulePrefix, "M/"), (LowerId, "a")]);
+    check("M/A", &[(ModulePrefix, "M/"), (UpperId, "A")]);
+    check("M/A.B", &[(ModulePrefix, "M/"), (UpperIdPath, "A.B")]);
+    check("M1/M2/a", &[(ModulePrefix, "M1/M2/"), (LowerId, "a")]);
+    check("M1/M2/A", &[(ModulePrefix, "M1/M2/"), (UpperId, "A")]);
+    check(
+        "M1/M2/A.B",
+        &[(ModulePrefix, "M1/M2/"), (UpperIdPath, "A.B")],
     );
 }

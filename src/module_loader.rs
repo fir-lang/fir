@@ -32,7 +32,6 @@ pub struct SccGraph {
 pub struct SccIdx(usize);
 
 impl SccIdx {
-    #[allow(unused)]
     pub fn as_usize(self) -> usize {
         self.0
     }
@@ -52,7 +51,7 @@ pub struct SccNode {
     pub dependencies: Vec<SccIdx>,
 }
 
-pub fn load(entry_file: &Path) -> LoadedPgm {
+pub fn load(entry_file: &Path, print_parsed_ast: bool) -> LoadedPgm {
     let entry = ModulePath::from_file_path(entry_file);
     let mut work: Vec<ModulePath> = vec![entry.clone()];
     let mut modules: HashMap<ModulePath, ast::Module> = HashMap::default();
@@ -68,7 +67,7 @@ pub fn load(entry_file: &Path) -> LoadedPgm {
     while let Some(module_path) = work.pop() {
         let file_path = module_path.to_file_path();
         let display_name = module_path.to_string();
-        let module = crate::parse_file(&file_path, &display_name);
+        let module = crate::parse_file(&file_path, &display_name, print_parsed_ast);
 
         dep_graph.entry(module_path.clone()).or_default();
 
@@ -183,8 +182,8 @@ fn build_scc_graph(graph: &HashMap<ModulePath, HashSet<ModulePath>>) -> SccGraph
             let v_scc = module_to_scc[v];
             if u_scc != v_scc {
                 // SCC u depends on SCC v
-                dependents[v_scc.0].insert(u_scc);
-                dependencies[u_scc.0].insert(v_scc);
+                dependents[v_scc.as_usize()].insert(u_scc);
+                dependencies[u_scc.as_usize()].insert(v_scc);
             }
         }
     }
@@ -286,6 +285,7 @@ fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
         _ => return false,
     };
     if let ast::Expr::ConSel(ast::Con {
+        mod_prefix: _,
         ty,
         con,
         user_ty_args,

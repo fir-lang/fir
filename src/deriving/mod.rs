@@ -101,6 +101,7 @@ fn var(loc: &ast::Loc, name: &str) -> ast::L<ast::Expr> {
     l(
         loc,
         ast::Expr::Var(ast::VarExpr {
+            mod_prefix: None,
             id: ast::Name::new(name),
             user_ty_args: vec![],
             ty_args: vec![],
@@ -173,6 +174,7 @@ fn con_sel(loc: &ast::Loc, ty: &str, con: Option<&str>) -> ast::L<ast::Expr> {
     l(
         loc,
         ast::Expr::ConSel(ast::Con {
+            mod_prefix: None,
             ty: ast::Name::new(ty),
             con: con.map(ast::Name::new),
             user_ty_args: vec![],
@@ -284,6 +286,7 @@ fn let_destructure_rest(
                 loc,
                 ast::Pat::Con(ast::ConPat {
                     con: ast::Con {
+                        mod_prefix: None,
                         ty: type_name.clone(),
                         con: None,
                         user_ty_args: vec![],
@@ -336,6 +339,7 @@ fn type_with_params(
     l(
         loc,
         ast::Type::Named(ast::NamedType {
+            mod_prefix: None,
             name: name.clone(),
             args: type_params
                 .iter()
@@ -363,10 +367,12 @@ fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) ->
         l(
             loc,
             ast::Type::Named(ast::NamedType {
+                mod_prefix: None,
                 name: ast::Name::new_static("Row"),
                 args: vec![l(
                     loc,
                     ast::Type::Named(ast::NamedType {
+                        mod_prefix: None,
                         name: ast::Name::new_static("Rec"),
                         args: vec![],
                     }),
@@ -393,6 +399,7 @@ fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) ->
         preds.push(l(
             loc,
             ast::Pred::App(ast::NamedType {
+                mod_prefix: None,
                 name: ast::Name::new(trait_name),
                 args: vec![field_ty],
             }),
@@ -462,6 +469,7 @@ fn collect_polymorphic_field_types(
                 types.push(l(
                     loc,
                     ast::Type::Named(ast::NamedType {
+                        mod_prefix: None,
                         name: ast::Name::new_static("RecRowList"),
                         args: vec![l(&ext.loc, ext.node.clone())],
                     }),

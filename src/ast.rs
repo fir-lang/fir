@@ -253,6 +253,9 @@ pub enum Type {
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
 #[derive(Debug, Clone)]
 pub struct NamedType {
+    /// Module prefix of the type constructor, e.g. in `Fir/Vec/Vec` this is the `Fir/Vec/` part.
+    pub mod_prefix: Option<ModulePath>,
+
     /// Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
     pub name: Name,
 
@@ -485,6 +488,7 @@ pub struct VariantPat {
 
 #[derive(Debug, Clone)]
 pub struct Con {
+    pub mod_prefix: Option<ModulePath>,
     pub ty: Name,
     pub con: Option<Name>,
 
@@ -623,6 +627,8 @@ pub enum Expr {
 
 #[derive(Debug, Clone)]
 pub struct VarExpr {
+    pub mod_prefix: Option<ModulePath>,
+
     pub id: Name,
 
     /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
@@ -1031,7 +1037,12 @@ impl Type {
 
     pub fn subst_ids(&self, substs: &HashMap<Name, Type>) -> Type {
         match self {
-            Type::Named(NamedType { name, args }) => Type::Named(NamedType {
+            Type::Named(NamedType {
+                mod_prefix: _,
+                name,
+                args,
+            }) => Type::Named(NamedType {
+                mod_prefix: None,
                 name: match substs.get(name) {
                     Some(ty) => {
                         assert!(args.is_empty());
@@ -1081,16 +1092,23 @@ impl Type {
             } => {
                 let alts: Vec<NamedType> = alts
                     .iter()
-                    .map(|NamedType { name, args }| NamedType {
-                        name: name.clone(),
-                        args: args
-                            .iter()
-                            .map(|L { loc, node }| L {
-                                loc: loc.clone(),
-                                node: node.subst_ids(substs),
-                            })
-                            .collect(),
-                    })
+                    .map(
+                        |NamedType {
+                             mod_prefix: _,
+                             name,
+                             args,
+                         }| NamedType {
+                            mod_prefix: None,
+                            name: name.clone(),
+                            args: args
+                                .iter()
+                                .map(|L { loc, node }| L {
+                                    loc: loc.clone(),
+                                    node: node.subst_ids(substs),
+                                })
+                                .collect(),
+                        },
+                    )
                     .collect();
 
                 let extension = extension
@@ -1193,6 +1211,7 @@ impl Expr {
             Expr::ConSel(_) | Expr::Int(_) | Expr::Char(_) => {}
 
             Expr::Var(VarExpr {
+                mod_prefix: _,
                 id: _,
                 user_ty_args,
                 ty_args,

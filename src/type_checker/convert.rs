@@ -191,7 +191,11 @@ fn convert_named_ty(
     named_ty: &ast::NamedType,
     loc: &ast::Loc,
 ) -> Ty {
-    let ast::NamedType { name, args } = named_ty;
+    let ast::NamedType {
+        mod_prefix: _,
+        name,
+        args,
+    } = named_ty;
 
     let ty_con = tys
         .resolve(module_env, name)
@@ -314,7 +318,11 @@ fn convert_pred(
             None
         }
 
-        ast::Pred::App(ast::NamedType { name, args }) => Some(Pred {
+        ast::Pred::App(ast::NamedType {
+            mod_prefix: _,
+            name,
+            args,
+        }) => Some(Pred {
             trait_: tys
                 .resolve(module_env, name)
                 .unwrap_or_else(|| panic!("{}: Unknown trait {}", loc_display(loc), name))
@@ -329,7 +337,12 @@ fn convert_pred(
         }),
 
         ast::Pred::AssocTyEq {
-            ty: ast::NamedType { name, args },
+            ty:
+                ast::NamedType {
+                    mod_prefix: _,
+                    name,
+                    args,
+                },
             assoc_ty,
             eq,
         } => Some(Pred {

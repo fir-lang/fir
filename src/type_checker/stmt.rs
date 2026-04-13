@@ -163,6 +163,7 @@ fn check_stmt(
 
             match &mut lhs.node {
                 ast::Expr::Var(ast::VarExpr {
+                    mod_prefix: _,
                     id: var,
                     user_ty_args,
                     ty_args,
@@ -440,6 +441,7 @@ fn check_stmt(
                                                 expr: ast::L {
                                                     loc: expr.loc.clone(),
                                                     node: ast::Expr::Var(ast::VarExpr {
+                                                        mod_prefix: None,
                                                         id: expr_local.clone(),
                                                         user_ty_args: vec![],
                                                         ty_args: vec![],
@@ -459,6 +461,7 @@ fn check_stmt(
                                         loc: pat.loc.clone(),
                                         node: ast::Pat::Con(ast::ConPat {
                                             con: ast::Con {
+                                                mod_prefix: None,
                                                 ty: Name::new_static("Option"),
                                                 con: Some(Name::new_static("Some")),
                                                 user_ty_args: vec![],

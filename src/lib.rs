@@ -159,11 +159,7 @@ mod native {
         }
 
         let file_path = Path::new(&program); // "examples/Foo.fir"
-        let mut loaded_pgm = module_loader::load(file_path);
-
-        if opts.print_parsed_ast {
-            loaded_pgm.print();
-        }
+        let mut loaded_pgm = module_loader::load(file_path, opts.print_parsed_ast);
 
         if opts.parse {
             return;
@@ -261,7 +257,11 @@ mod native {
         }
     }
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &str) -> ast::Module {
+    pub fn parse_file<P: AsRef<Path> + Clone>(
+        path: P,
+        module: &str,
+        print_parsed_ast: bool,
+    ) -> ast::Module {
         let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
             panic!(
                 "Unable to read file {} for module {}: {}",
@@ -271,7 +271,13 @@ mod native {
             )
         });
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
-        parse_module(&module_path, &contents)
+        let parsed = parse_module(&module_path, &contents);
+        if print_parsed_ast {
+            println!("mod {} {{\n", module);
+            parsed.print();
+            println!("\n}} # {}\n", module);
+        }
+        parsed
     }
 
     /// The `readFileUtf8` primitive.
@@ -337,7 +343,11 @@ mod wasm {
     use smol_str::SmolStr;
     use wasm_bindgen::prelude::wasm_bindgen;
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &str) -> ast::Module {
+    pub fn parse_file<P: AsRef<Path> + Clone>(
+        path: P,
+        module: &str,
+        _print_parsed_ast: bool,
+    ) -> ast::Module {
         let path = path.as_ref().to_string_lossy();
         let contents = read_file_utf8(&path);
         let module_path: SmolStr = path.into();
@@ -387,7 +397,7 @@ mod wasm {
         // NB. This path handled specially in the web page, it returns the program input field
         // contents.
         let file_path = Path::new("Main.fir");
-        let mut loaded_program = module_loader::load(file_path);
+        let mut loaded_program = module_loader::load(file_path, false);
         deriving::expand_derives(&mut loaded_program);
 
         let _tys = type_checker::check_pgm(&mut loaded_program, "main");
@@ -492,6 +502,9 @@ mod tests {
 
         let pgm = indoc::indoc! {"
             import [
+                A,
+                A/*,
+                A/[f1, f2],
                 A/B/C/*,
                 A/B/D,
                 A/B/D as E,
@@ -509,41 +522,88 @@ mod tests {
             TopDecl::Import(i) => &i.node,
             other => panic!("expected import, got {:?}", other),
         };
-        assert_eq!(import.items.len(), 6);
+        assert_eq!(import.items.len(), 9);
 
-        // 1: A/B/C/*
+        // 0: A
         assert_eq!(
             import.items[0].path,
+            ModulePath::new(vec![SmolStr::new_static("A")]),
+        );
+        match &import.items[0].import_spec {
+            ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "A"),
+            other => panic!("expected Prefixed, got {:?}", other),
+        }
+
+        // 1: A/*
+        assert_eq!(
+            import.items[1].path,
+            ModulePath::new(vec![SmolStr::new_static("A")]),
+        );
+        assert!(matches!(import.items[1].import_spec, ImportSpec::Wildcard));
+
+        // 2: A/[f1, f2]
+        assert_eq!(
+            import.items[2].path,
+            ModulePath::new(vec![SmolStr::new_static("A")]),
+        );
+        match &import.items[2].import_spec {
+            ImportSpec::Selective { names } => {
+                assert_eq!(names.len(), 2);
+                assert_eq!(names[0].original_name, "f1");
+                assert_eq!(names[1].original_name, "f2");
+            }
+            other => panic!("expected Selective, got {:?}", other),
+        }
+
+        // 3: A/B/C/*
+        assert_eq!(
+            import.items[3].path,
             ModulePath::new(vec![
                 SmolStr::new_static("A"),
                 SmolStr::new_static("B"),
                 SmolStr::new_static("C")
             ])
         );
-        assert!(matches!(import.items[0].import_spec, ImportSpec::Wildcard));
+        assert!(matches!(import.items[3].import_spec, ImportSpec::Wildcard));
 
-        // 2: A/B/D (default prefix D)
+        // 4: A/B/D (default prefix D)
         assert_eq!(
-            import.items[1].path,
+            import.items[4].path,
             ModulePath::new(vec![
                 SmolStr::new_static("A"),
                 SmolStr::new_static("B"),
                 SmolStr::new_static("D")
             ])
         );
-        match &import.items[1].import_spec {
+        match &import.items[4].import_spec {
             ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "D"),
             other => panic!("expected Prefixed, got {:?}", other),
         }
 
-        // 3: A/B/D as E
-        match &import.items[2].import_spec {
+        // 5: A/B/D as E
+        assert_eq!(
+            import.items[5].path,
+            ModulePath::new(vec![
+                SmolStr::new_static("A"),
+                SmolStr::new_static("B"),
+                SmolStr::new_static("D")
+            ])
+        );
+        match &import.items[5].import_spec {
             ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "E"),
             other => panic!("expected Prefixed, got {:?}", other),
         }
 
-        // 4: A/B/D/[f1, f2, Type1, Type2]
-        match &import.items[3].import_spec {
+        // 6: A/B/D/[f1, f2, Type1, Type2]
+        assert_eq!(
+            import.items[6].path,
+            ModulePath::new(vec![
+                SmolStr::new_static("A"),
+                SmolStr::new_static("B"),
+                SmolStr::new_static("D")
+            ])
+        );
+        match &import.items[6].import_spec {
             ImportSpec::Selective { names } => {
                 assert_eq!(names.len(), 4);
                 assert_eq!(names[0].original_name, "f1");
@@ -553,8 +613,8 @@ mod tests {
             other => panic!("expected Selective, got {:?}", other),
         }
 
-        // 5: A/B/D/[f1 as g1, f2, Type1 as MyType, Type2]
-        match &import.items[4].import_spec {
+        // 7: A/B/D/[f1 as g1, f2, Type1 as MyType, Type2]
+        match &import.items[7].import_spec {
             ImportSpec::Selective { names } => {
                 assert_eq!(names[0].original_name, "f1");
                 assert_eq!(names[0].local_name, "g1");
@@ -566,8 +626,8 @@ mod tests {
             other => panic!("expected Selective, got {:?}", other),
         }
 
-        // 6: A/B/D/[f1 as _f1, Type1 as _Type1]
-        match &import.items[5].import_spec {
+        // 8: A/B/D/[f1 as _f1, Type1 as _Type1]
+        match &import.items[8].import_spec {
             ImportSpec::Selective { names } => {
                 assert_eq!(names[0].local_name, "_f1");
                 assert_eq!(names[1].local_name, "_Type1");

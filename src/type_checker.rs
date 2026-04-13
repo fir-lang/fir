@@ -871,7 +871,11 @@ fn resolve_synonym_deps(
     module_envs: &HashMap<ModulePath, ModuleEnv>,
 ) {
     match ty {
-        ast::Type::Named(ast::NamedType { name, args }) => {
+        ast::Type::Named(ast::NamedType {
+            mod_prefix: _,
+            name,
+            args,
+        }) => {
             if synonym_asts.contains_key(name) {
                 resolve_synonym(name, synonym_asts, resolving, tys, module_envs);
             }
@@ -1063,6 +1067,7 @@ fn collect_schemes(
                 let trait_pred: ast::L<ast::Pred> = ast::L {
                     loc: trait_decl.loc.clone(),
                     node: ast::Pred::App(ast::NamedType {
+                        mod_prefix: None,
                         name: trait_decl.node.name.node.clone(),
                         args: trait_decl
                             .node
@@ -2273,6 +2278,7 @@ pub(crate) fn expand_type_synonyms(pgm: &mut LoadedPgm) {
                     } = item
                     {
                         let trait_ty = ast::Type::Named(ast::NamedType {
+                            mod_prefix: None,
                             name: trait_decl.node.name.node.clone(),
                             args: trait_decl
                                 .node
