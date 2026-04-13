@@ -1,16 +1,16 @@
 #[NoImplicitPrelude]
 import []
 
-prim type I32
+type Type1
 
-test(i: I32) I32: i
+test(i: Type1) Type1: i
 
-blah() (Fn(I32) I32 / exn): test
+blah() (Fn(Type1) Type1 / exn): test
 
 f() () / exn:
-    let x: Fn(I32) I32 / exn = test
-    test(123)
+    let x: Fn(Type1) Type1 / exn = test
+    test(Type1)
 
-    let y: Fn() (Fn(I32) I32 / exn) / exn = blah
+    let y: Fn() (Fn(Type1) Type1 / exn) / exn = blah
 
 # args: --typecheck

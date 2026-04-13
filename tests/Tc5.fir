@@ -1,16 +1,12 @@
 #[NoImplicitPrelude]
-import []
+import [Fir/Prelude/[Bool]]
 
-prim type I32
+type Type1
 
-type Bool:
-    False
-    True
-
-test() I32:
+test() Type1:
     if Bool.True:
-        return 123
+        return Type1
 
-    456
+    Type1
 
 # args: --typecheck

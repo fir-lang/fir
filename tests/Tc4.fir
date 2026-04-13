@@ -1,16 +1,16 @@
 #[NoImplicitPrelude]
 import []
 
-prim type I32
+type Type1
 
-prim printI32(i: I32)
+prim printI32(i: Type1)
 
 type Option[t]:
     Some(t)
     None
 
 test():
-    let x = Option.Some(123)
+    let x = Option.Some(Type1)
     match x:
         Option.Some(a): printI32(a)
         Option.None: ()
