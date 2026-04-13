@@ -2202,14 +2202,12 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) ->
         ),
     };
 
-    if con_id.name() == "I8"
-        || con_id.name() == "U8"
-        || con_id.name() == "I16"
-        || con_id.name() == "U16"
-        || con_id.name() == "I32"
-        || con_id.name() == "U32"
-        || con_id.name() == "I64"
-        || con_id.name() == "U64"
+    if con_id == builtin_ids::I8()
+        || con_id == builtin_ids::U8()
+        || con_id == builtin_ids::I32()
+        || con_id == builtin_ids::U32()
+        || con_id == builtin_ids::I64()
+        || con_id == builtin_ids::U64()
     {
         panic!(
             "{}: Integers can't be made variants in the interpreter",
