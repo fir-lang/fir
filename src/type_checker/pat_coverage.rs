@@ -518,11 +518,12 @@ impl PatMatrix {
                         fields,
                         rest,
                     }) => {
+                        let ty_id = tc_state.resolve(&ty);
                         let con = con.unwrap_or_else(|| ty.clone());
 
                         // Note: `ty` may not be the same as `con_ty_id` when checking variant
                         // patterns. We need to compare both type and constructor names.
-                        if !(*con_ty_id.name() == ty && con_id == con.as_ref()) {
+                        if !(con_ty_id == &ty_id && con_id == con.as_ref()) {
                             continue;
                         }
 
