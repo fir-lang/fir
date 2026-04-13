@@ -3,7 +3,7 @@
 mod apply;
 mod convert;
 mod expr;
-mod id;
+pub(crate) mod id;
 pub(crate) mod kind_inference;
 mod module_env;
 mod normalization;
@@ -19,6 +19,7 @@ mod unification;
 
 pub use crate::utils::loc_display;
 use convert::*;
+pub use id::Id;
 use normalization::normalize_stmt;
 use stmt::check_stmts;
 use traits::*;
@@ -29,6 +30,10 @@ use unification::unify;
 
 use crate::ast::{self, Name};
 use crate::collections::*;
+use crate::module::ModulePath;
+
+/// Maps names visible in a module to their `Id`s.
+pub(super) type ModuleEnv = HashMap<Name, Id>;
 
 /// Type constructors and types in the program.
 #[derive(Debug)]
@@ -36,12 +41,12 @@ pub struct PgmTypes {
     /// Type schemes of top-level functions.
     ///
     /// These functions don't take a `self` parameter and can't be called as methods.
-    pub top_schemes: HashMap<Name, Scheme>,
+    pub top_schemes: HashMap<Id, Scheme>,
 
     /// Type schemes of associated functions.
     ///
     /// These include methods (associated functions with a `self` parameter).
-    pub associated_fn_schemes: HashMap<Name, HashMap<Name, Scheme>>,
+    pub associated_fn_schemes: HashMap<Id, HashMap<Name, Scheme>>,
 
     /// Type schemes of methods.
     ///
@@ -54,7 +59,7 @@ pub struct PgmTypes {
     ///
     /// Because these schemes are only used in method call syntax, the keys are not type names but
     /// method names. The values are type schemes of methods with the name.
-    pub method_schemes: HashMap<Name, Vec<(Name, Scheme)>>,
+    pub method_schemes: HashMap<Name, Vec<(Id, Scheme)>>,
 
     /// Type constructor details.
     pub tys: TyMap,
@@ -69,28 +74,36 @@ pub struct PgmTypes {
 pub(crate) fn check_pgm(pgm: &mut LoadedPgm, main: &str) -> PgmTypes {
     add_exception_types(pgm, main);
     kind_inference::add_missing_type_params(pgm);
-    let mut tys = collect_types(pgm);
-    let trait_env = collect_trait_env(pgm, &mut tys.tys);
-    for (_, decl) in pgm.iter_decls_mut() {
+    let module_envs = module_env::generate_module_envs(pgm);
+    let mut tys = collect_types(pgm, &module_envs);
+    let trait_env = collect_trait_env(pgm, &mut tys.tys, &module_envs);
+    for (module_path, decl) in pgm.iter_decls_mut() {
+        let module_env = module_envs.get(module_path).unwrap();
         match &mut decl.node {
             ast::TopDecl::Import(_) => {}
 
             // Types and schemes added to `PgmTypes` by `collect_types`.
             ast::TopDecl::Type(_) | ast::TopDecl::Trait(_) => {}
 
-            ast::TopDecl::Impl(impl_) => check_impl(impl_, &mut tys, &trait_env),
+            ast::TopDecl::Impl(impl_) => check_impl(impl_, &mut tys, &trait_env, module_env),
 
-            ast::TopDecl::Fun(fun) => check_top_fun(fun, &mut tys, &trait_env),
+            ast::TopDecl::Fun(fun) => check_top_fun(fun, &mut tys, &trait_env, module_env),
         }
     }
 
     tys
 }
 
-pub(crate) fn check_main_type(tys: &PgmTypes, trait_env: &TraitEnv, main: &str) {
+pub(crate) fn check_main_type(
+    tys: &PgmTypes,
+    trait_env: &TraitEnv,
+    main_module: &ModulePath,
+    main: &str,
+) {
+    let main_id = Id::new(main_module, &Name::from(main));
     let main_scheme = tys
         .top_schemes
-        .get(main)
+        .get(&main_id)
         .unwrap_or_else(|| panic!("Main function `{main}` is not defined."));
 
     if !main_scheme.quantified_vars.is_empty() || !main_scheme.preds.is_empty() {
@@ -194,6 +207,9 @@ struct TcFunState<'a> {
     /// Whole program trait environment. Used to resolve closure predicate.s
     trait_env: &'a TraitEnv,
 
+    /// Module environment for the current module.
+    module_env: &'a ModuleEnv,
+
     /// Type environment.
     tys: &'a mut PgmTypes,
 
@@ -231,16 +247,34 @@ struct TcFunState<'a> {
     local_gen: u32,
 }
 
+impl TcFunState<'_> {
+    /// Resolve a `Name` from the AST to an `Id` using the current module's environment.
+    fn resolve(&self, name: &Name) -> Id {
+        resolve_name(self.module_env, name)
+    }
+}
+
+/// Resolve a `Name` from the AST to an `Id` using a module environment. Only for module-level
+/// definitions (types, traits, functions). Scoped names like associated type synonyms should be
+/// looked up via `TyMap::resolve` instead.
+pub(super) fn resolve_name(module_env: &ModuleEnv, name: &Name) -> Id {
+    module_env
+        .get(name)
+        .cloned()
+        .unwrap_or_else(|| panic!("Name `{}` not found in module environment", name))
+}
+
 const EXN_QVAR_ID: Name = Name::new_static("?exn");
 
 /// Collect type constructors (traits and data) and type schemes (top-level, associated, traits) of
 /// the program.
 ///
 /// Does not type check the code, only collects types and type schemes.
-fn collect_types(pgm: &mut LoadedPgm) -> PgmTypes {
-    let mut tys = collect_cons(pgm);
-    add_default_impl_items(pgm, &mut tys);
-    let (top_schemes, associated_fn_schemes, method_schemes) = collect_schemes(pgm, &mut tys);
+fn collect_types(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv>) -> PgmTypes {
+    let mut tys = collect_cons(pgm, module_envs);
+    add_default_impl_items(pgm, &mut tys, module_envs);
+    let (top_schemes, associated_fn_schemes, method_schemes) =
+        collect_schemes(pgm, &mut tys, module_envs);
     check_value_type_sizes(tys.cons());
     PgmTypes {
         top_schemes,
@@ -250,11 +284,14 @@ fn collect_types(pgm: &mut LoadedPgm) -> PgmTypes {
     }
 }
 
-fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
+fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv>) -> TyMap {
     let mut tys: TyMap = Default::default();
 
     // Collect all type constructors first, then add fields and methods.
-    for (_, decl) in pgm.iter_decls() {
+    for (module_path, decl) in pgm.iter_decls() {
+        let module_env = module_envs
+            .get(module_path)
+            .unwrap_or_else(|| panic!("BUG: Module {module_path} is not in module envs"));
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 // Type synonyms are handled separately after this pass.
@@ -267,18 +304,18 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
                     "{}: Type parameter list and kind list don't match",
                     loc_display(&decl.loc),
                 );
-                let ty_name = ty_decl.node.name.clone();
-                if tys.has_con(&ty_name) {
+                let ty_id = resolve_name(module_env, &ty_decl.node.name);
+                if tys.has_con(&ty_id) {
                     panic!(
                         "{}: Type {} is defined multiple times",
                         loc_display(&decl.loc),
-                        ty_name
+                        ty_decl.node.name
                     );
                 }
                 tys.insert_con(
-                    ty_name.clone(),
+                    ty_id.clone(),
                     TyCon {
-                        id: ty_name.clone(),
+                        id: ty_id,
                         ty_params: ty_decl
                             .node
                             .type_params
@@ -300,19 +337,19 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
                     trait_decl.node.type_params.len(),
                     trait_decl.node.type_param_kinds.len()
                 );
-                let ty_name = trait_decl.node.name.node.clone();
-                if tys.has_con(&ty_name) {
+                let ty_id = resolve_name(module_env, &trait_decl.node.name.node);
+                if tys.has_con(&ty_id) {
                     panic!(
                         "{}: Type {} is defined multiple times",
                         loc_display(&decl.loc),
-                        ty_name
+                        trait_decl.node.name.node
                     );
                 }
 
                 tys.insert_con(
-                    ty_name.clone(),
+                    ty_id.clone(),
                     TyCon {
-                        id: ty_name.clone(),
+                        id: ty_id,
                         ty_params: trait_decl
                             .node
                             .type_params
@@ -358,15 +395,18 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
     // Synonyms can reference each other in any order, so we first collect all synonym definitions,
     // then resolve each one on demand with cycle detection.
     {
-        let mut synonym_asts: HashMap<Name, (&[ast::TypeParam], &[Kind], &ast::L<ast::Type>)> =
-            Default::default();
-        for (_, decl) in pgm.iter_decls() {
+        let mut synonym_asts: HashMap<
+            Name,
+            (&ModulePath, &[ast::TypeParam], &[Kind], &ast::L<ast::Type>),
+        > = Default::default();
+        for (module_path, decl) in pgm.iter_decls() {
             if let ast::TopDecl::Type(ty_decl) = &decl.node
                 && let Some(ast::TypeDeclRhs::Synonym(rhs_ty)) = &ty_decl.node.rhs
             {
                 synonym_asts.insert(
                     ty_decl.node.name.clone(),
                     (
+                        module_path,
                         &ty_decl.node.type_params,
                         &ty_decl.node.type_param_kinds,
                         rhs_ty,
@@ -378,14 +418,15 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
         let mut resolving: HashSet<Name> = Default::default();
         let names: Vec<Name> = synonym_asts.keys().cloned().collect();
         for name in &names {
-            resolve_synonym(name, &synonym_asts, &mut resolving, &mut tys);
+            resolve_synonym(name, &synonym_asts, &mut resolving, &mut tys, module_envs);
         }
     }
 
     // Add fields, methods, associated types.
     // This is where we start converting AST types to type checking types, so the ty con map should
     // be populated at this point.
-    for (_, decl) in pgm.iter_decls() {
+    for (module_path, decl) in pgm.iter_decls() {
+        let module_env = module_envs.get(module_path).unwrap();
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 // Type synonyms already handled above.
@@ -417,7 +458,8 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
                     }),
                 };
 
-                tys.get_con_mut(&ty_decl.node.name).unwrap().details = details;
+                let ty_id = resolve_name(module_env, &ty_decl.node.name);
+                tys.get_con_mut(&ty_id).unwrap().details = details;
             }
 
             ast::TopDecl::Trait(trait_decl) => {
@@ -442,8 +484,12 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
                     preds: vec![],
                 };
 
-                let _trait_context: Vec<Pred> =
-                    convert_and_bind_context(&mut tys, &trait_context_ast, TyVarConversion::ToQVar);
+                let _trait_context: Vec<Pred> = convert_and_bind_context(
+                    &mut tys,
+                    module_env,
+                    &trait_context_ast,
+                    TyVarConversion::ToQVar,
+                );
 
                 let mut methods: HashMap<Name, TraitMethod> = HashMap::with_capacity_and_hasher(
                     trait_decl.node.items.len(),
@@ -488,15 +534,15 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
                                     })
                                     .collect();
                                 if args.is_empty() {
-                                    Ty::Con(trait_name, Kind::Star)
+                                    Ty::Con(resolve_name(module_env, &trait_name), Kind::Star)
                                 } else {
-                                    Ty::App(trait_name, args, Kind::Star)
+                                    Ty::App(resolve_name(module_env, &trait_name), args, Kind::Star)
                                 }
                             };
-                            tys.insert_con(
+                            tys.insert_synonym(
                                 assoc_ty.node.clone(),
                                 TyCon {
-                                    id: assoc_ty.node.clone(),
+                                    id: Id::new(&ModulePath::new(vec![]), &assoc_ty.node),
                                     ty_params: vec![],
                                     details: TyConDetails::Synonym(Ty::AssocTySelect {
                                         ty: Box::new(trait_ty),
@@ -513,6 +559,7 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
 
                             let fun_preds: Vec<Pred> = convert_and_bind_context(
                                 &mut tys,
+                                module_env,
                                 &fun.node.sig.context,
                                 TyVarConversion::ToQVar,
                             );
@@ -524,7 +571,7 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
                                 .iter()
                                 .map(|(_name, ty)| {
                                     let ty = ty.as_ref().unwrap();
-                                    convert_ast_ty(&tys, &ty.node, &ty.loc)
+                                    convert_ast_ty(&tys, module_env, &ty.node, &ty.loc)
                                 })
                                 .collect();
 
@@ -537,17 +584,22 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
                                     );
                                 }
                                 ast::SelfParam::Explicit(ty) => {
-                                    arg_tys.insert(0, convert_ast_ty(&tys, &ty.node, &ty.loc));
+                                    arg_tys.insert(
+                                        0,
+                                        convert_ast_ty(&tys, module_env, &ty.node, &ty.loc),
+                                    );
                                 }
                             }
 
                             let ret_ty: Ty = match &fun.node.sig.return_ty {
-                                Some(ret_ty) => convert_ast_ty(&tys, &ret_ty.node, &ret_ty.loc),
+                                Some(ret_ty) => {
+                                    convert_ast_ty(&tys, module_env, &ret_ty.node, &ret_ty.loc)
+                                }
                                 None => Ty::unit(),
                             };
 
                             let exceptions = match &fun.node.sig.exceptions {
-                                Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
+                                Some(ty) => convert_ast_ty(&tys, module_env, &ty.node, &ty.loc),
                                 None => panic!(),
                             };
 
@@ -583,7 +635,8 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
                     }
                 }
 
-                let ty_con = tys.get_con_mut(&trait_decl.node.name.node).unwrap();
+                let trait_id = resolve_name(module_env, &trait_decl.node.name.node);
+                let ty_con = tys.get_con_mut(&trait_id).unwrap();
                 ty_con.details = TyConDetails::Trait(TraitDetails { methods, assoc_tys });
 
                 tys.exit_scope();
@@ -601,18 +654,23 @@ fn collect_cons(pgm: &mut LoadedPgm) -> TyMap {
 // Add default methods to impls.
 //
 // We don't need to type check default methods copied to impls, but for now we do.
-fn add_default_impl_items(pgm: &mut LoadedPgm, tys: &mut TyMap) {
-    for (_, decl) in pgm.iter_decls_mut() {
+fn add_default_impl_items(
+    pgm: &mut LoadedPgm,
+    tys: &mut TyMap,
+    module_envs: &HashMap<ModulePath, ModuleEnv>,
+) {
+    for (module_path, decl) in pgm.iter_decls_mut() {
+        let module_env = module_envs.get(module_path).unwrap();
         let impl_decl = match &mut decl.node {
             ast::TopDecl::Impl(impl_decl) => &mut impl_decl.node,
             _ => continue,
         };
 
-        let trait_con_id = &impl_decl.trait_.node.clone();
+        let trait_con_id = resolve_name(module_env, &impl_decl.trait_.node);
 
         // Check that the trait in the impl block is really a trait.
         if !tys
-            .get_con(trait_con_id)
+            .get_con(&trait_con_id)
             .unwrap_or_else(|| panic!("{}: Unknown trait {}", loc_display(&decl.loc), trait_con_id))
             .is_trait()
         {
@@ -626,7 +684,7 @@ fn add_default_impl_items(pgm: &mut LoadedPgm, tys: &mut TyMap) {
         // Check that the number of type parameters in the trait matches number of arguments in the
         // impl.
         // TODO: We should also check the kinds here.
-        let trait_arity = tys.get_con(trait_con_id).unwrap().arity();
+        let trait_arity = tys.get_con(&trait_con_id).unwrap().arity();
         if trait_arity as usize != impl_decl.tys.len() {
             panic!(
                 "{}: Trait {} takes {} type arguments, but impl passes {}",
@@ -642,9 +700,9 @@ fn add_default_impl_items(pgm: &mut LoadedPgm, tys: &mut TyMap) {
         tys.enter_scope();
 
         let _impl_context =
-            convert_and_bind_context(tys, &impl_decl.context, TyVarConversion::ToQVar);
+            convert_and_bind_context(tys, module_env, &impl_decl.context, TyVarConversion::ToQVar);
 
-        let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap(); // checked above
+        let trait_ty_con = tys.get_con_mut(&trait_con_id).unwrap(); // checked above
         let trait_type_params = &trait_ty_con.ty_params;
         let (trait_methods, trait_assoc_tys) = match &mut trait_ty_con.details {
             TyConDetails::Trait(TraitDetails { methods, assoc_tys }) => (methods, assoc_tys),
@@ -761,12 +819,17 @@ fn add_default_impl_items(pgm: &mut LoadedPgm, tys: &mut TyMap) {
 /// that one first (recursively). Detects cycles via the `resolving` set.
 fn resolve_synonym(
     name: &Name,
-    synonym_asts: &HashMap<Name, (&[ast::TypeParam], &[Kind], &ast::L<ast::Type>)>,
+    synonym_asts: &HashMap<Name, (&ModulePath, &[ast::TypeParam], &[Kind], &ast::L<ast::Type>)>,
     resolving: &mut HashSet<Name>,
     tys: &mut TyMap,
+    module_envs: &HashMap<ModulePath, ModuleEnv>,
 ) {
+    let (module_path, type_params, type_param_kinds, rhs_ty) = synonym_asts.get(name).unwrap();
+    let module_env = module_envs.get(*module_path).unwrap();
+    let syn_id = resolve_name(module_env, name);
+
     // Already resolved in a previous call.
-    if tys.has_con(name) {
+    if tys.has_con(&syn_id) {
         return;
     }
 
@@ -775,10 +838,8 @@ fn resolve_synonym(
         panic!("Type synonym cycle detected: {}", cycle.join(", "));
     }
 
-    let (type_params, type_param_kinds, rhs_ty) = synonym_asts.get(name).unwrap();
-
     // Resolve synonyms in the RHS.
-    resolve_synonym_deps(&rhs_ty.node, synonym_asts, resolving, tys);
+    resolve_synonym_deps(&rhs_ty.node, synonym_asts, resolving, tys, module_envs);
 
     // Bind type params as QVars so they're available when converting the RHS.
     tys.enter_scope();
@@ -788,13 +849,13 @@ fn resolve_synonym(
             Ty::QVar(param.name.node.clone(), *kind),
         );
     }
-    let converted = convert_ast_ty(tys, &rhs_ty.node, &rhs_ty.loc);
+    let converted = convert_ast_ty(tys, module_env, &rhs_ty.node, &rhs_ty.loc);
     tys.exit_scope();
 
     tys.insert_con(
-        name.clone(),
+        syn_id.clone(),
         TyCon {
-            id: name.clone(),
+            id: syn_id,
             ty_params: type_params
                 .iter()
                 .zip(type_param_kinds.iter())
@@ -810,9 +871,10 @@ fn resolve_synonym(
 /// Recursively resolve any synonym dependencies in an AST type.
 fn resolve_synonym_deps(
     ty: &ast::Type,
-    synonym_asts: &HashMap<Name, (&[ast::TypeParam], &[Kind], &ast::L<ast::Type>)>,
+    synonym_asts: &HashMap<Name, (&ModulePath, &[ast::TypeParam], &[Kind], &ast::L<ast::Type>)>,
     resolving: &mut HashSet<Name>,
     tys: &mut TyMap,
+    module_envs: &HashMap<ModulePath, ModuleEnv>,
 ) {
     match ty {
         ast::Type::Named(ast::NamedType {
@@ -821,22 +883,22 @@ fn resolve_synonym_deps(
             args,
         }) => {
             if synonym_asts.contains_key(name) {
-                resolve_synonym(name, synonym_asts, resolving, tys);
+                resolve_synonym(name, synonym_asts, resolving, tys, module_envs);
             }
             for arg in args {
-                resolve_synonym_deps(&arg.node, synonym_asts, resolving, tys);
+                resolve_synonym_deps(&arg.node, synonym_asts, resolving, tys, module_envs);
             }
         }
         ast::Type::Var(_) => {}
         ast::Type::Record { fields, .. } => {
             for (_, field_ty) in fields {
-                resolve_synonym_deps(field_ty, synonym_asts, resolving, tys);
+                resolve_synonym_deps(field_ty, synonym_asts, resolving, tys, module_envs);
             }
         }
         ast::Type::Variant { alts, .. } => {
             for alt in alts {
                 for arg in &alt.args {
-                    resolve_synonym_deps(&arg.node, synonym_asts, resolving, tys);
+                    resolve_synonym_deps(&arg.node, synonym_asts, resolving, tys, module_envs);
                 }
             }
         }
@@ -846,28 +908,28 @@ fn resolve_synonym_deps(
             exceptions,
         }) => {
             for arg in args {
-                resolve_synonym_deps(&arg.node, synonym_asts, resolving, tys);
+                resolve_synonym_deps(&arg.node, synonym_asts, resolving, tys, module_envs);
             }
             if let Some(ret) = ret {
-                resolve_synonym_deps(&ret.node, synonym_asts, resolving, tys);
+                resolve_synonym_deps(&ret.node, synonym_asts, resolving, tys, module_envs);
             }
             if let Some(exn) = exceptions {
-                resolve_synonym_deps(&exn.node, synonym_asts, resolving, tys);
+                resolve_synonym_deps(&exn.node, synonym_asts, resolving, tys, module_envs);
             }
         }
         ast::Type::AssocTySelect { ty: inner, .. } => {
-            resolve_synonym_deps(&inner.node, synonym_asts, resolving, tys);
+            resolve_synonym_deps(&inner.node, synonym_asts, resolving, tys, module_envs);
         }
     }
 }
 
-fn check_value_type_sizes(ty_cons: &ScopeMap<Name, TyCon>) {
+fn check_value_type_sizes(ty_cons: &ScopeMap<Id, TyCon>) {
     for ty_con in ty_cons.last().values() {
-        let mut visited: HashSet<Name> = Default::default();
+        let mut visited: HashSet<Id> = Default::default();
         let ty_args: Vec<Ty> = ty_con
             .ty_params
             .iter()
-            .map(|(name, kind)| Ty::Con(Name::new(format!("#{}", name)), *kind))
+            .map(|(name, kind)| Ty::RVar(Name::new(format!("#{}", name)), *kind))
             .collect();
         if visit_ty_con(ty_con, &ty_args, ty_cons, &mut visited) {
             panic!(
@@ -882,8 +944,8 @@ fn check_value_type_sizes(ty_cons: &ScopeMap<Name, TyCon>) {
 fn visit_ty_con(
     ty_con: &TyCon,
     ty_args: &[Ty],
-    ty_cons: &ScopeMap<Name, TyCon>,
-    visited: &mut HashSet<Name>,
+    ty_cons: &ScopeMap<Id, TyCon>,
+    visited: &mut HashSet<Id>,
 ) -> bool {
     let ty_con_details = match &ty_con.details {
         TyConDetails::Trait(_) | TyConDetails::Synonym(_) => return false,
@@ -927,20 +989,21 @@ fn visit_ty_con(
                     }
                 }
 
-                Ty::Anonymous {
-                    labels,
-                    extension: _,
-                    record_or_variant: _,
-                    is_row: _,
-                } => {
+                Ty::Record { labels, .. } => {
                     for label_ty in labels.values() {
                         tys.push(label_ty);
                     }
                 }
 
-                Ty::Fun { .. } => {}
+                Ty::Variant { labels, .. } => {
+                    for label_ty in labels.values() {
+                        tys.push(label_ty);
+                    }
+                }
 
-                Ty::RVar(_, _) | Ty::QVar(_, _) | Ty::UVar(_) | Ty::AssocTySelect { .. } => {
+                Ty::Fun { .. } | Ty::RVar(_, _) => {}
+
+                Ty::QVar(_, _) | Ty::UVar(_) | Ty::AssocTySelect { .. } => {
                     panic!()
                 }
             }
@@ -955,21 +1018,24 @@ fn visit_ty_con(
 fn collect_schemes(
     pgm: &LoadedPgm,
     tys: &mut TyMap,
+    module_envs: &HashMap<ModulePath, ModuleEnv>,
 ) -> (
-    HashMap<Name, Scheme>,                // top schemes
-    HashMap<Name, HashMap<Name, Scheme>>, // associated fn schemes
-    HashMap<Name, Vec<(Name, Scheme)>>,   // method schemes (method name -> type name -> scheme)
+    HashMap<Id, Scheme>,                // top schemes
+    HashMap<Id, HashMap<Name, Scheme>>, // associated fn schemes
+    HashMap<Name, Vec<(Id, Scheme)>>,   // method schemes (method name -> type id -> scheme)
 ) {
-    let mut top_schemes: HashMap<Name, Scheme> = Default::default();
-    let mut associated_fn_schemes: HashMap<Name, HashMap<Name, Scheme>> = Default::default();
-    let mut method_schemes: HashMap<Name, Vec<(Name, Scheme)>> = Default::default();
+    let mut top_schemes: HashMap<Id, Scheme> = Default::default();
+    let mut associated_fn_schemes: HashMap<Id, HashMap<Name, Scheme>> = Default::default();
+    let mut method_schemes: HashMap<Name, Vec<(Id, Scheme)>> = Default::default();
 
     // Unique variable generator, used in substitutions to rename domain variables before
     // substitution to avoid capturing.
     // TODO: This should be generalized and used in all substitutions.
     let mut uniq_gen: u32 = 0;
 
-    for (_, decl) in pgm.iter_decls() {
+    for (module_path, decl) in pgm.iter_decls() {
+        let module_env = module_envs.get(module_path).unwrap();
+
         // New scope for type and function contexts.
         assert_eq!(tys.len_scopes(), 1);
         tys.enter_scope();
@@ -1045,8 +1111,12 @@ fn collect_schemes(
 
                     // TODO: Checking is the same as top-level functions, maybe move the code into a
                     // function and reuse.
-                    let fun_preds: Vec<Pred> =
-                        convert_and_bind_context(tys, &context, TyVarConversion::ToQVar);
+                    let fun_preds: Vec<Pred> = convert_and_bind_context(
+                        tys,
+                        module_env,
+                        &context,
+                        TyVarConversion::ToQVar,
+                    );
 
                     // Add type synonyms for associated types so that e.g. `Item` resolves to
                     // `TraitName[params...].Item` within method signatures.
@@ -1070,15 +1140,15 @@ fn collect_schemes(
                                     })
                                     .collect();
                                 if args.is_empty() {
-                                    Ty::Con(trait_name, Kind::Star)
+                                    Ty::Con(resolve_name(module_env, &trait_name), Kind::Star)
                                 } else {
-                                    Ty::App(trait_name, args, Kind::Star)
+                                    Ty::App(resolve_name(module_env, &trait_name), args, Kind::Star)
                                 }
                             };
-                            tys.insert_con(
+                            tys.insert_synonym(
                                 assoc_ty.node.clone(),
                                 TyCon {
-                                    id: assoc_ty.node.clone(),
+                                    id: Id::new(&ModulePath::new(vec![]), &assoc_ty.node),
                                     ty_params: vec![],
                                     details: TyConDetails::Synonym(Ty::AssocTySelect {
                                         ty: Box::new(trait_ty),
@@ -1097,7 +1167,7 @@ fn collect_schemes(
                         .iter()
                         .map(|(_name, ty)| {
                             let ty = ty.as_ref().unwrap();
-                            convert_ast_ty(tys, &ty.node, &ty.loc)
+                            convert_ast_ty(tys, module_env, &ty.node, &ty.loc)
                         })
                         .collect();
 
@@ -1110,17 +1180,17 @@ fn collect_schemes(
                             );
                         }
                         ast::SelfParam::Explicit(ty) => {
-                            arg_tys.insert(0, convert_ast_ty(tys, &ty.node, &ty.loc));
+                            arg_tys.insert(0, convert_ast_ty(tys, module_env, &ty.node, &ty.loc));
                         }
                     }
 
                     let ret_ty: Ty = match &fun.node.sig.return_ty {
-                        Some(ret_ty) => convert_ast_ty(tys, &ret_ty.node, &ret_ty.loc),
+                        Some(ret_ty) => convert_ast_ty(tys, module_env, &ret_ty.node, &ret_ty.loc),
                         None => Ty::unit(),
                     };
 
                     let exceptions = match &fun.node.sig.exceptions {
-                        Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
+                        Some(ty) => convert_ast_ty(tys, module_env, &ty.node, &ty.loc),
                         None => panic!(),
                     };
 
@@ -1141,11 +1211,14 @@ fn collect_schemes(
                         method_schemes
                             .entry(fun.node.name.node.clone())
                             .or_default()
-                            .push((trait_decl.node.name.node.clone(), scheme.clone()));
+                            .push((
+                                resolve_name(module_env, &trait_decl.node.name.node),
+                                scheme.clone(),
+                            ));
                     }
 
                     associated_fn_schemes
-                        .entry(trait_decl.node.name.node.clone())
+                        .entry(resolve_name(module_env, &trait_decl.node.name.node))
                         .or_default()
                         .insert(fun.node.name.node.clone(), scheme);
                 }
@@ -1163,7 +1236,7 @@ fn collect_schemes(
             }) => {
                 // Check that `parent_ty` exists.
                 if let Some(parent_ty) = parent_ty
-                    && tys.get_con(&parent_ty.node).is_none()
+                    && module_env.get(&parent_ty.node).is_none()
                 {
                     panic!(
                         "{}: Unknown type {}",
@@ -1172,15 +1245,19 @@ fn collect_schemes(
                     );
                 }
 
-                let fun_preds: Vec<Pred> =
-                    convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar);
+                let fun_preds: Vec<Pred> = convert_and_bind_context(
+                    tys,
+                    module_env,
+                    &sig.context,
+                    TyVarConversion::ToQVar,
+                );
 
                 let mut arg_tys: Vec<Ty> = sig
                     .params
                     .iter()
                     .map(|(_name, ty)| {
                         let ty = ty.as_ref().unwrap();
-                        convert_ast_ty(tys, &ty.node, &ty.loc)
+                        convert_ast_ty(tys, module_env, &ty.node, &ty.loc)
                     })
                     .collect();
 
@@ -1191,7 +1268,8 @@ fn collect_schemes(
                         match parent_ty {
                             Some(parent_ty) => {
                                 // We checked above that the parent type exists.
-                                let parent_ty_con = tys.get_con(&parent_ty.node).unwrap();
+                                let parent_ty_id = resolve_name(module_env, &parent_ty.node);
+                                let parent_ty_con = tys.get_con(&parent_ty_id).unwrap();
                                 if !parent_ty_con.ty_params.is_empty() {
                                     panic!(
                                         "{}: Can't infer `self` type as the parent type {} has type parameters",
@@ -1208,17 +1286,17 @@ fn collect_schemes(
                         }
                     }
                     ast::SelfParam::Explicit(ty) => {
-                        arg_tys.insert(0, convert_ast_ty(tys, &ty.node, &ty.loc));
+                        arg_tys.insert(0, convert_ast_ty(tys, module_env, &ty.node, &ty.loc));
                     }
                 }
 
                 let ret_ty: Ty = match &sig.return_ty {
-                    Some(ret_ty) => convert_ast_ty(tys, &ret_ty.node, &ret_ty.loc),
+                    Some(ret_ty) => convert_ast_ty(tys, module_env, &ret_ty.node, &ret_ty.loc),
                     None => Ty::unit(),
                 };
 
                 let exceptions = match &sig.exceptions {
-                    Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
+                    Some(ty) => convert_ast_ty(tys, module_env, &ty.node, &ty.loc),
                     None => panic!(),
                 };
 
@@ -1240,15 +1318,15 @@ fn collect_schemes(
                         match sig.self_ {
                             ast::SelfParam::No => {}
                             ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
-                                method_schemes
-                                    .entry(name.node.clone())
-                                    .or_default()
-                                    .push((parent_ty.node.clone(), scheme.clone()));
+                                method_schemes.entry(name.node.clone()).or_default().push((
+                                    resolve_name(module_env, &parent_ty.node),
+                                    scheme.clone(),
+                                ));
                             }
                         }
 
                         let old = associated_fn_schemes
-                            .entry(parent_ty.node.clone())
+                            .entry(resolve_name(module_env, &parent_ty.node))
                             .or_default()
                             .insert(name.node.clone(), scheme);
 
@@ -1262,7 +1340,8 @@ fn collect_schemes(
                         }
                     }
                     None => {
-                        let old = top_schemes.insert(name.node.clone(), scheme);
+                        let id = resolve_name(module_env, &name.node);
+                        let old = top_schemes.insert(id, scheme);
                         if old.is_some() {
                             panic!(
                                 "{}: {} is defined multiple times",
@@ -1303,10 +1382,10 @@ fn collect_schemes(
 
                 // Return type of constructors.
                 let ret = if ty_decl.node.type_params.is_empty() {
-                    Ty::Con(ty_decl.node.name.clone(), Kind::Star)
+                    Ty::Con(resolve_name(module_env, &ty_decl.node.name), Kind::Star)
                 } else {
                     Ty::App(
-                        ty_decl.node.name.clone(),
+                        resolve_name(module_env, &ty_decl.node.name),
                         ty_decl
                             .node
                             .type_params
@@ -1328,7 +1407,7 @@ fn collect_schemes(
                         }
                         for con in cons {
                             let fields = &con.fields;
-                            let ty = match convert_fields(tys, fields) {
+                            let ty = match convert_fields(tys, module_env, fields) {
                                 None => ret.clone(),
                                 Some(args) => Ty::Fun {
                                     args,
@@ -1349,7 +1428,7 @@ fn collect_schemes(
                                 loc: ty_decl.loc.clone(), // TODO: use con loc
                             };
                             let old = tys
-                                .get_con_mut(&ty_decl.node.name)
+                                .get_con_mut(&resolve_name(module_env, &ty_decl.node.name))
                                 .unwrap()
                                 .details
                                 .as_type_mut()
@@ -1367,7 +1446,7 @@ fn collect_schemes(
                     }
 
                     ast::TypeDeclRhs::Product(fields) => {
-                        let ty = match convert_fields(tys, fields) {
+                        let ty = match convert_fields(tys, module_env, fields) {
                             None => ret,
                             Some(args) => Ty::Fun {
                                 args,
@@ -1388,7 +1467,7 @@ fn collect_schemes(
                             loc: ty_decl.loc.clone(), // TODO: use con loc
                         };
                         let old = tys
-                            .get_con_mut(&ty_decl.node.name)
+                            .get_con_mut(&resolve_name(module_env, &ty_decl.node.name))
                             .unwrap()
                             .details
                             .as_type_mut()
@@ -1413,8 +1492,12 @@ fn collect_schemes(
             ast::TopDecl::Impl(impl_decl) => {
                 // Default methods are already copied to impls. Check that impl method signatures
                 // match the trait method signatures.
-                let _impl_assumps =
-                    convert_and_bind_context(tys, &impl_decl.node.context, TyVarConversion::ToQVar);
+                let _impl_assumps = convert_and_bind_context(
+                    tys,
+                    module_env,
+                    &impl_decl.node.context,
+                    TyVarConversion::ToQVar,
+                );
 
                 // Add type synonyms for associated types, mapping to
                 // `TraitName[args...].AssocTyName` so that both trait and impl sides produce the
@@ -1425,19 +1508,19 @@ fn collect_schemes(
                         .node
                         .tys
                         .iter()
-                        .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
+                        .map(|ty| convert_ast_ty(tys, module_env, &ty.node, &ty.loc))
                         .collect();
                     if args.is_empty() {
-                        Ty::Con(trait_name.clone(), Kind::Star)
+                        Ty::Con(resolve_name(module_env, &trait_name), Kind::Star)
                     } else {
-                        Ty::App(trait_name.clone(), args, Kind::Star)
+                        Ty::App(resolve_name(module_env, &trait_name), args, Kind::Star)
                     }
                 };
                 for item in &impl_decl.node.items {
                     if let ast::ImplDeclItem::Type { assoc_ty, .. } = item {
+                        let trait_id = resolve_name(module_env, &trait_name);
                         let kind = tys
-                            .cons()
-                            .get(&trait_name)
+                            .get_con(&trait_id)
                             .unwrap()
                             .details
                             .trait_details()
@@ -1453,10 +1536,10 @@ fn collect_schemes(
                                 )
                             })
                             .kind;
-                        tys.insert_con(
+                        tys.insert_synonym(
                             assoc_ty.node.clone(),
                             TyCon {
-                                id: assoc_ty.node.clone(),
+                                id: Id::new(&ModulePath::new(vec![]), &assoc_ty.node),
                                 ty_params: vec![],
                                 details: TyConDetails::Synonym(Ty::AssocTySelect {
                                     ty: Box::new(impl_trait_ty.clone()),
@@ -1476,15 +1559,19 @@ fn collect_schemes(
 
                     let sig = &fun.node.sig;
 
-                    let fun_assumps =
-                        convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar);
+                    let fun_assumps = convert_and_bind_context(
+                        tys,
+                        module_env,
+                        &sig.context,
+                        TyVarConversion::ToQVar,
+                    );
 
                     let mut arg_tys: Vec<Ty> = sig
                         .params
                         .iter()
                         .map(|(_name, ty)| {
                             let ty = ty.as_ref().unwrap();
-                            convert_ast_ty(tys, &ty.node, &ty.loc)
+                            convert_ast_ty(tys, module_env, &ty.node, &ty.loc)
                         })
                         .collect();
 
@@ -1495,18 +1582,18 @@ fn collect_schemes(
                             loc_display(&fun.loc)
                         ),
                         ast::SelfParam::Explicit(ty) => {
-                            let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
+                            let ty = convert_ast_ty(tys, module_env, &ty.node, &ty.loc);
                             arg_tys.insert(0, ty);
                         }
                     }
 
                     let ret_ty: Ty = match &sig.return_ty {
-                        Some(ret_ty) => convert_ast_ty(tys, &ret_ty.node, &ret_ty.loc),
+                        Some(ret_ty) => convert_ast_ty(tys, module_env, &ret_ty.node, &ret_ty.loc),
                         None => Ty::unit(),
                     };
 
                     let exceptions = match &sig.exceptions {
-                        Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
+                        Some(ty) => convert_ast_ty(tys, module_env, &ty.node, &ty.loc),
                         None => panic!(),
                     };
 
@@ -1523,14 +1610,14 @@ fn collect_schemes(
                         loc: fun.loc.clone(),
                     };
 
-                    let trait_ty_con =
-                        tys.get_con(&impl_decl.node.trait_.node).unwrap_or_else(|| {
-                            panic!(
-                                "{}: Unknown trait {}",
-                                loc_display(&impl_decl.loc),
-                                &impl_decl.node.trait_.node
-                            )
-                        });
+                    let impl_trait_id = resolve_name(module_env, &impl_decl.node.trait_.node);
+                    let trait_ty_con = tys.get_con(&impl_trait_id).unwrap_or_else(|| {
+                        panic!(
+                            "{}: Unknown trait {}",
+                            loc_display(&impl_decl.loc),
+                            &impl_decl.node.trait_.node
+                        )
+                    });
 
                     let trait_fun_scheme0 = &trait_ty_con
                         .trait_details()
@@ -1568,7 +1655,7 @@ fn collect_schemes(
                     {
                         let ty_param_renamed = rename_domain_var(ty_param, uniq);
                         kind_inference::collect_tvs(&ty_arg.node, &ty_arg.loc, &mut arg_fvs);
-                        let ty_arg = convert_ast_ty(tys, &ty_arg.node, &ty_arg.loc);
+                        let ty_arg = convert_ast_ty(tys, module_env, &ty_arg.node, &ty_arg.loc);
                         trait_fun_scheme = trait_fun_scheme.subst(&ty_param_renamed, &ty_arg);
                     }
 
@@ -1602,7 +1689,12 @@ fn collect_schemes(
 }
 
 /// Type check a top-level function.
-fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: &TraitEnv) {
+fn check_top_fun(
+    fun: &mut ast::L<ast::FunDecl>,
+    tys: &mut PgmTypes,
+    trait_env: &TraitEnv,
+    module_env: &ModuleEnv,
+) {
     let var_gen = UVarGen::default();
     let mut env: ScopeMap<Name, Ty> = ScopeMap::default();
 
@@ -1610,8 +1702,12 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
     tys.tys.enter_scope();
 
     // The predicates that we assume to hold in the function body.
-    let assumps =
-        convert_and_bind_context(&mut tys.tys, &fun.node.sig.context, TyVarConversion::ToRVar);
+    let assumps = convert_and_bind_context(
+        &mut tys.tys,
+        module_env,
+        &fun.node.sig.context,
+        TyVarConversion::ToRVar,
+    );
 
     // TODO: This code is the same as collect_scheme's, maybe get arg and return types from the
     // scheme?
@@ -1621,7 +1717,8 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
             // The parent type should have no type arguments.
             match &fun.node.parent_ty {
                 Some(parent_ty) => {
-                    let parent_ty_con = tys.tys.get_con(&parent_ty.node).unwrap_or_else(|| {
+                    let parent_ty_id = resolve_name(module_env, &parent_ty.node);
+                    let parent_ty_con = tys.tys.get_con(&parent_ty_id).unwrap_or_else(|| {
                         panic!(
                             "{}: Unknown type {}",
                             loc_display(&fun.loc),
@@ -1649,7 +1746,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         ast::SelfParam::Explicit(ty) => {
             env.insert(
                 Name::new_static("self"),
-                convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
+                convert_ast_ty(&tys.tys, module_env, &ty.node, &ty.loc),
             );
         }
     }
@@ -1658,24 +1755,25 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         let param_ty = param_ty.as_ref().unwrap();
         env.insert(
             param_name.clone(),
-            convert_ast_ty(&tys.tys, &param_ty.node, &fun.loc),
+            convert_ast_ty(&tys.tys, module_env, &param_ty.node, &fun.loc),
         );
     }
 
     let ret_ty = match &fun.node.sig.return_ty {
-        Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
+        Some(ty) => convert_ast_ty(&tys.tys, module_env, &ty.node, &ty.loc),
         None => Ty::unit(),
     };
     let mut preds: Vec<Pred> = Default::default();
 
     let exceptions = match &fun.node.sig.exceptions {
-        Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
+        Some(exc) => convert_ast_ty(&tys.tys, module_env, &exc.node, &exc.loc),
         None => panic!(),
     };
 
     let mut tc_state = TcFunState {
         return_ty: ret_ty.clone(),
         trait_env,
+        module_env,
         env: &mut env,
         var_gen: &var_gen,
         tys,
@@ -1709,16 +1807,26 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
 /// Type check a trait implementation.
 ///
 /// `tys` is `mut` to be able to bind type parameters of the `impl` before checking the methods.
-fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: &TraitEnv) {
+fn check_impl(
+    impl_: &mut ast::L<ast::ImplDecl>,
+    tys: &mut PgmTypes,
+    trait_env: &TraitEnv,
+    module_env: &ModuleEnv,
+) {
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
-    let impl_assumps =
-        convert_and_bind_context(&mut tys.tys, &impl_.node.context, TyVarConversion::ToRVar);
+    let impl_assumps = convert_and_bind_context(
+        &mut tys.tys,
+        module_env,
+        &impl_.node.context,
+        TyVarConversion::ToRVar,
+    );
 
     let trait_ty_con_id = &impl_.node.trait_;
+    let trait_id = resolve_name(module_env, &trait_ty_con_id.node);
 
-    let trait_ty_con = tys.tys.get_con(&trait_ty_con_id.node).unwrap_or_else(|| {
+    let trait_ty_con = tys.tys.get_con(&trait_id).unwrap_or_else(|| {
         panic!(
             "{}: Unknown trait {}",
             loc_display(&trait_ty_con_id.loc),
@@ -1742,7 +1850,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
     for item in &impl_.node.items {
         if let ast::ImplDeclItem::Type { assoc_ty, rhs } = item {
             let assoc_ty_expected_kind = trait_details.assoc_tys.get(&assoc_ty.node).unwrap().kind;
-            let converted = convert_ast_ty(&tys.tys, &rhs.node, &rhs.loc);
+            let converted = convert_ast_ty(&tys.tys, module_env, &rhs.node, &rhs.loc);
             if converted.kind() != assoc_ty_expected_kind {
                 panic!(
                     "{}: Associated type {} is expected to have kind {}, but has kind {}",
@@ -1752,10 +1860,10 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                     converted.kind(),
                 );
             }
-            tys.tys.insert_con(
+            tys.tys.insert_synonym(
                 assoc_ty.node.clone(),
                 TyCon {
-                    id: assoc_ty.node.clone(),
+                    id: Id::new(&ModulePath::new(vec![]), &assoc_ty.node),
                     ty_params: vec![],
                     details: TyConDetails::Synonym(converted),
                 },
@@ -1773,13 +1881,17 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
         tys.tys.enter_scope();
 
         // Bind function type parameters.
-        let fun_assumps =
-            convert_and_bind_context(&mut tys.tys, &fun.node.sig.context, TyVarConversion::ToRVar);
+        let fun_assumps = convert_and_bind_context(
+            &mut tys.tys,
+            module_env,
+            &fun.node.sig.context,
+            TyVarConversion::ToRVar,
+        );
 
         // Check the body.
         if let Some(body) = &mut fun.node.body {
             let ret_ty = match &fun.node.sig.return_ty {
-                Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
+                Some(ty) => convert_ast_ty(&tys.tys, module_env, &ty.node, &ty.loc),
                 None => Ty::unit(),
             };
 
@@ -1799,7 +1911,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 ast::SelfParam::Explicit(ty) => {
                     env.insert(
                         Name::new("self"),
-                        convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
+                        convert_ast_ty(&tys.tys, module_env, &ty.node, &ty.loc),
                     );
                 }
             }
@@ -1808,7 +1920,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 let param_ty = param_ty.as_ref().unwrap();
                 env.insert(
                     param_name.clone(),
-                    convert_ast_ty(&tys.tys, &param_ty.node, &param_ty.loc),
+                    convert_ast_ty(&tys.tys, module_env, &param_ty.node, &param_ty.loc),
                 );
             }
 
@@ -1819,13 +1931,14 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 .collect();
 
             let exceptions = match &fun.node.sig.exceptions {
-                Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
+                Some(exc) => convert_ast_ty(&tys.tys, module_env, &exc.node, &exc.loc),
                 None => panic!(),
             };
 
             let mut tc_state = TcFunState {
                 return_ty: ret_ty.clone(),
                 trait_env,
+                module_env,
                 env: &mut env,
                 var_gen: &var_gen,
                 tys,
@@ -1928,7 +2041,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 fn resolve_preds(
     trait_env: &TraitEnv,
     mut assumps: Vec<Pred>,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     mut goals: Vec<Pred>,
     var_gen: &UVarGen,
 ) {
@@ -1943,7 +2056,7 @@ fn resolve_preds(
                 .iter_mut()
                 .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]));
 
-            if pred.trait_ == REC_ROW_TO_LIST_TRAIT_ID {
+            if pred.trait_ == id::builtins::REC_ROW_TO_LIST() {
                 resolve_row_to_list(trait_env, &pred, &mut next_goals, cons, var_gen);
                 progress = true;
                 continue;
@@ -2050,8 +2163,6 @@ fn resolve_preds(
     }
 }
 
-pub(crate) const REC_ROW_TO_LIST_TRAIT_ID: Name = Name::new_static("RecRowToList");
-
 /*
 `RecRowToList[t]` always resolves for any `t`, but we need to check associated type selections to
 rule out weird cases like `RecRowToList[t].List = U32`. E.g.
@@ -2063,20 +2174,18 @@ fn resolve_row_to_list(
     trait_env: &TraitEnv,
     pred: &Pred,
     next_goals: &mut Vec<Pred>,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     var_gen: &UVarGen,
 ) {
     assert_eq!(pred.params.len(), 1);
     let param = &pred.params[0];
-    if let Ty::Anonymous {
+    if let Ty::Record {
         labels,
         extension,
-        record_or_variant,
         is_row,
     } = param
         && let Some((assoc_ty_name, assoc_ty_rhs)) = &pred.assoc_ty
     {
-        assert_eq!(*record_or_variant, RecordOrVariant::Record);
         assert_eq!(assoc_ty_name, "List");
         assert!(is_row);
         // Note: we don't generate `RecRowToList[ext]` here (when `extension` is `Some(...)`). I'm
@@ -2100,7 +2209,7 @@ fn row_to_list_type(labels: &OrdMap<Name, Ty>, extension: &Option<Box<Ty>>) -> T
         None => Ty::empty_variant(),
         Some(ext) => Ty::AssocTySelect {
             ty: Box::new(Ty::App(
-                Name::new_static("RecRowToList"),
+                id::builtins::REC_ROW_TO_LIST(),
                 vec![*ext.clone()],
                 Kind::Star,
             )),
@@ -2111,12 +2220,12 @@ fn row_to_list_type(labels: &OrdMap<Name, Ty>, extension: &Option<Box<Ty>>) -> T
 
     for (_field_name, field_ty) in labels.iter().rev() {
         let record_field_ty = Ty::App(
-            Name::new_static("RecordField"),
+            id::builtins::RECORD_FIELD(),
             vec![(*field_ty).clone()],
             Kind::Star,
         );
         list_ty = Ty::App(
-            Name::new_static("List"),
+            id::builtins::LIST(),
             vec![record_field_ty, list_ty],
             Kind::Star,
         );

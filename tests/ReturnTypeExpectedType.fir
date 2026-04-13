@@ -1,7 +1,7 @@
 #[NoImplicitPrelude]
 import []
 
-prim type U32
+type Type1
 
 type Bool:
     False
@@ -11,9 +11,9 @@ type Option[t]:
     Some(t)
     None
 
-f() Option[(a: U32, b: U32)]:
+f() Option[(a: Type1, b: Type1)]:
     match Bool.False:
-        Bool.True: Option.Some((a = 1, b = 2))
+        Bool.True: Option.Some((a = Type1, b = Type1))
         Bool.False: Option.None
 
 # args: --typecheck

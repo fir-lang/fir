@@ -6,22 +6,20 @@ trait Foo[t]:
 
     getA() Foo[t].A
 
-prim type U32
+type Type1
 
-prim type U64
+type Type2
 
-impl Foo[U32]:
-    type A = U64
+impl Foo[Type1]:
+    type A = Type2
 
-    getA() Foo[U32].A:
-        u64(123)
-
-u64(x: U64) U64: x
+    getA() Foo[Type1].A:
+        Type2
 
 main():
-    let x: U32 = Foo.getA[U32, []]()
+    let x: Type1 = Foo.getA[Type1, []]()
     ()
 
 # args: --typecheck
 # expected exit status: 101
-# expected stderr: tests/AssocTysFail5.fir:22:18: Unable to unify types U64 and U32
+# expected stderr: tests/AssocTysFail5.fir:20:20: Unable to unify types Type2 and Type1

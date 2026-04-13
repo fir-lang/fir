@@ -12,7 +12,6 @@ use smol_str::SmolStr;
 pub struct LoadedPgm {
     pub modules: HashMap<ModulePath, ast::Module>,
 
-    #[allow(dead_code)]
     pub entry: ModulePath,
 
     /// Maps modules to modules they import.

@@ -1,3 +1,6 @@
+import [Compiler/Assert]
+
+
 #[derive(ToDoc)]
 type ScopeMap[k, v](
     scopes: Vec[HashMap[k, v]],

@@ -2,6 +2,8 @@ use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::interpolation::StrPart;
 use crate::type_checker::convert::convert_ast_ty;
+use crate::type_checker::id::builtins as builtin_ids;
+use crate::type_checker::id::{self, Id};
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::traits::TraitEnv;
@@ -66,8 +68,11 @@ pub(super) fn check_expr(
                 );
             }
 
-            let scheme = match tc_state.tys.top_schemes.get(var) {
-                Some(scheme) => scheme,
+            let scheme = match tc_state.module_env.get(var) {
+                Some(var_id) => match tc_state.tys.top_schemes.get(var_id) {
+                    Some(scheme) => scheme,
+                    None => panic!("{}: Unbound variable {}", loc_display(loc), var),
+                },
                 None => panic!("{}: Unbound variable {}", loc_display(loc), var),
             };
 
@@ -96,7 +101,9 @@ pub(super) fn check_expr(
 
                 let user_ty_args_converted: Vec<Ty> = user_ty_args
                     .iter()
-                    .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                    .map(|ty| {
+                        convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc)
+                    })
                     .collect();
 
                 let ty = scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
@@ -143,19 +150,17 @@ pub(super) fn check_expr(
 
                 let ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                 match &ty_normalized {
-                    Ty::Anonymous {
+                    Ty::Record {
                         labels,
                         extension,
-                        record_or_variant: RecordOrVariant::Record,
-                        ..
+                        is_row: _,
                     } => {
                         if !user_ty_args.is_empty() {
                             panic!("{}: Record field with type arguments", loc_display(loc));
                         }
-                        let (labels, _) = crate::type_checker::row_utils::collect_rows(
+                        let (labels, _) = crate::type_checker::row_utils::collect_record_rows(
                             tc_state.tys.tys.cons(),
                             &ty_normalized,
-                            RecordOrVariant::Record,
                             labels,
                             extension.clone(),
                             tc_state.trait_env,
@@ -219,11 +224,11 @@ pub(super) fn check_expr(
             assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
+            let ty_id = tc_state.resolve(ty);
             let ty_con: &TyCon = tc_state
                 .tys
                 .tys
-                .cons()
-                .get(ty)
+                .get_con(&ty_id)
                 .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
 
             let ty_details: &TypeDetails = ty_con.type_details().unwrap_or_else(|| {
@@ -295,7 +300,9 @@ pub(super) fn check_expr(
 
                 let user_ty_args_converted: Vec<Ty> = user_ty_args
                     .iter()
-                    .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                    .map(|ty| {
+                        convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc)
+                    })
                     .collect();
 
                 let con_ty =
@@ -340,11 +347,13 @@ pub(super) fn check_expr(
             assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
+            let ty_id = tc_state.resolve(ty);
+
             if !ty_user_ty_args.is_empty() {
                 let con = tc_state
                     .tys
                     .tys
-                    .get_con(ty)
+                    .get_con(&ty_id)
                     .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
 
                 if con.ty_params.len() != ty_user_ty_args.len() {
@@ -361,12 +370,12 @@ pub(super) fn check_expr(
             let scheme = tc_state
                 .tys
                 .associated_fn_schemes
-                .get(ty)
+                .get(&ty_id)
                 .and_then(|fn_map| fn_map.get(member))
                 .unwrap_or_else(|| {
                     // Types without associated functions are not in the `associated_fn_schemes`, so
                     // check whether the type exist.
-                    match tc_state.tys.tys.get_con(ty) {
+                    match tc_state.tys.tys.get_con(&ty_id) {
                         Some(_) => {
                             panic!(
                                 "{}: Type {} does not have associated function {}",
@@ -383,12 +392,12 @@ pub(super) fn check_expr(
 
             let ty_user_ty_args_converted: Vec<Ty> = ty_user_ty_args
                 .iter()
-                .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                .map(|ty| convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc))
                 .collect();
 
             let user_ty_args_converted: Vec<Ty> = user_ty_args
                 .iter()
-                .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                .map(|ty| convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc))
                 .collect();
 
             for (ty_ty_arg, method_ty_arg) in ty_user_ty_args_converted
@@ -599,10 +608,9 @@ pub(super) fn check_expr(
                                 })
                                 .collect();
 
-                            let expected_ty = Ty::Anonymous {
+                            let expected_ty = Ty::Record {
                                 labels: param_tys.clone(),
                                 extension: extension.clone(),
-                                record_or_variant: RecordOrVariant::Record,
                                 is_row: false,
                             };
 
@@ -702,7 +710,7 @@ pub(super) fn check_expr(
 
                 fun.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                     mod_prefix: None,
-                    ty: method_ty_id.clone(),
+                    ty: method_ty_id.name().clone(),
                     ty_user_ty_args: vec![], // unused after type checking
                     member: method.clone(),
                     user_ty_args: vec![], // unused after type checking
@@ -733,8 +741,8 @@ pub(super) fn check_expr(
                 )
             });
 
-            let con = match &expected_ty {
-                Some(Ty::Con(con, _kind)) => con.as_str(),
+            let id = match &expected_ty {
+                Some(Ty::Con(con, _kind)) => con.clone(),
 
                 Some(Ty::UVar(var)) => {
                     // Default as I32.
@@ -742,7 +750,7 @@ pub(super) fn check_expr(
                     // error (i.e. integer too large/small) here vs. in the rest of the cases.
                     unify(
                         &Ty::UVar(var.clone()),
-                        &Ty::Con(Name::new_static("I32"), Kind::Star),
+                        &Ty::Con(id::builtins::I32(), Kind::Star),
                         tc_state.tys.tys.cons(),
                         tc_state.trait_env,
                         tc_state.var_gen,
@@ -750,7 +758,7 @@ pub(super) fn check_expr(
                         tc_state.assumps,
                         tc_state.preds,
                     );
-                    "I32"
+                    builtin_ids::I32()
                 }
 
                 Some(other) => {
@@ -763,128 +771,116 @@ pub(super) fn check_expr(
 
                 None => {
                     // Default as I32.
-                    "I32"
+                    builtin_ids::I32()
                 }
             };
 
-            match con {
-                "U8" => {
-                    if negate {
-                        panic!(
-                            "{}: Cannot negate unsigned integer: {}",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    *kind = Some(ast::IntKind::U8(u8::try_from(*parsed).unwrap_or_else(
-                        |_| {
-                            panic!(
-                                "{}: Integer literal {} out of range for U8",
-                                loc_display(loc),
-                                text
-                            )
-                        },
-                    )));
+            if id == builtin_ids::U8() {
+                if negate {
+                    panic!(
+                        "{}: Cannot negate unsigned integer: {}",
+                        loc_display(loc),
+                        text
+                    );
                 }
-
-                "I8" => {
-                    let mut bits = u8::try_from(*parsed).unwrap_or_else(|_| {
+                *kind = Some(ast::IntKind::U8(u8::try_from(*parsed).unwrap_or_else(
+                    |_| {
                         panic!(
-                            "{}: Integer literal {} out of range for I8",
+                            "{}: Integer literal {} out of range for U8",
                             loc_display(loc),
                             text
                         )
-                    });
-                    let limit = if negate { i8::MIN } else { i8::MAX }.unsigned_abs();
-                    if bits > limit {
-                        panic!(
-                            "{}: Integer literal {} out of range for I8",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    if negate {
-                        bits = !bits.wrapping_sub(1);
-                    }
-                    *kind = Some(ast::IntKind::I8(bits as i8));
+                    },
+                )));
+            } else if id == builtin_ids::I8() {
+                let mut bits = u8::try_from(*parsed).unwrap_or_else(|_| {
+                    panic!(
+                        "{}: Integer literal {} out of range for I8",
+                        loc_display(loc),
+                        text
+                    )
+                });
+                let limit = if negate { i8::MIN } else { i8::MAX }.unsigned_abs();
+                if bits > limit {
+                    panic!(
+                        "{}: Integer literal {} out of range for I8",
+                        loc_display(loc),
+                        text
+                    );
                 }
-
-                "U32" => {
-                    if negate {
-                        panic!(
-                            "{}: Cannot negate unsigned integer: {}",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    *kind = Some(ast::IntKind::U32(u32::try_from(*parsed).unwrap_or_else(
-                        |_| {
-                            panic!(
-                                "{}: Integer literal {} out of range for U32",
-                                loc_display(loc),
-                                text
-                            )
-                        },
-                    )));
+                if negate {
+                    bits = !bits.wrapping_sub(1);
                 }
-
-                "I32" => {
-                    let mut bits = u32::try_from(*parsed).unwrap_or_else(|_| {
+                *kind = Some(ast::IntKind::I8(bits as i8));
+            } else if id == builtin_ids::U32() {
+                if negate {
+                    panic!(
+                        "{}: Cannot negate unsigned integer: {}",
+                        loc_display(loc),
+                        text
+                    );
+                }
+                *kind = Some(ast::IntKind::U32(u32::try_from(*parsed).unwrap_or_else(
+                    |_| {
                         panic!(
-                            "{}: Integer literal {} out of range for I32",
+                            "{}: Integer literal {} out of range for U32",
                             loc_display(loc),
                             text
                         )
-                    });
-                    let limit = if negate { i32::MIN } else { i32::MAX }.unsigned_abs();
-                    if bits > limit {
-                        panic!(
-                            "{}: Integer literal {} out of range for I32",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    if negate {
-                        bits = !bits.wrapping_sub(1);
-                    }
-                    *kind = Some(ast::IntKind::I32(bits as i32));
+                    },
+                )));
+            } else if id == builtin_ids::I32() {
+                let mut bits = u32::try_from(*parsed).unwrap_or_else(|_| {
+                    panic!(
+                        "{}: Integer literal {} out of range for I32",
+                        loc_display(loc),
+                        text
+                    )
+                });
+                let limit = if negate { i32::MIN } else { i32::MAX }.unsigned_abs();
+                if bits > limit {
+                    panic!(
+                        "{}: Integer literal {} out of range for I32",
+                        loc_display(loc),
+                        text
+                    );
                 }
-
-                "U64" => {
-                    if negate {
-                        panic!(
-                            "{}: Cannot negate unsigned integer: {}",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    *kind = Some(ast::IntKind::U64(*parsed));
+                if negate {
+                    bits = !bits.wrapping_sub(1);
                 }
-
-                "I64" => {
-                    let mut bits = *parsed;
-                    let limit = if negate { i64::MIN } else { i64::MAX }.unsigned_abs();
-                    if bits > limit {
-                        panic!(
-                            "{}: Integer literal {} out of range for I32",
-                            loc_display(loc),
-                            text
-                        );
-                    }
-                    if negate {
-                        bits = !bits.wrapping_sub(1);
-                    }
-                    *kind = Some(ast::IntKind::I64(bits as i64));
+                *kind = Some(ast::IntKind::I32(bits as i32));
+            } else if id == builtin_ids::U64() {
+                if negate {
+                    panic!(
+                        "{}: Cannot negate unsigned integer: {}",
+                        loc_display(loc),
+                        text
+                    );
                 }
-
-                other => panic!(
+                *kind = Some(ast::IntKind::U64(*parsed));
+            } else if id == builtin_ids::I64() {
+                let mut bits = *parsed;
+                let limit = if negate { i64::MIN } else { i64::MAX }.unsigned_abs();
+                if bits > limit {
+                    panic!(
+                        "{}: Integer literal {} out of range for I32",
+                        loc_display(loc),
+                        text
+                    );
+                }
+                if negate {
+                    bits = !bits.wrapping_sub(1);
+                }
+                *kind = Some(ast::IntKind::I64(bits as i64));
+            } else {
+                panic!(
                     "{}: Expected {}, found integer literal",
                     loc_display(loc),
-                    other,
-                ),
+                    id.name(),
+                )
             }
 
-            (Ty::Con(Name::new(con), Kind::Star), Default::default())
+            (Ty::Con(id, Kind::Star), Default::default())
         }
 
         ast::Expr::Str(og_parts) => {
@@ -924,7 +920,7 @@ pub(super) fn check_expr(
 
             let buf_id = Name::new_static("$buf$");
 
-            let str_buf_ty = Ty::Con(Name::new_static("StrBuf"), Kind::Star);
+            let str_buf_ty = Ty::Con(id::builtins::STR_BUF(), Kind::Star);
 
             let mut desugared_stmts: Vec<ast::L<ast::Stmt>> = vec![ast::L {
                 loc: loc.clone(),
@@ -980,10 +976,7 @@ pub(super) fn check_expr(
                                 ty_args: vec![exn.clone()],
                                 inferred_ty: Some(Ty::Fun {
                                     args: FunArgs::Positional {
-                                        args: vec![
-                                            str_buf_ty.clone(),
-                                            Ty::Con(Name::new_static("Str"), Kind::Star),
-                                        ],
+                                        args: vec![str_buf_ty.clone(), Ty::str()],
                                     },
                                     ret: Box::new(Ty::unit()),
                                     exceptions: Some(Box::new(exn)),
@@ -1027,7 +1020,7 @@ pub(super) fn check_expr(
                     StrPart::Expr(mut expr) => {
                         let expr_var = tc_state.var_gen.new_var(Kind::Star, expr.loc.clone());
                         tc_state.preds.push(Pred {
-                            trait_: Ty::to_str_id(),
+                            trait_: builtin_ids::TO_STR(),
                             params: vec![Ty::UVar(expr_var.clone())],
                             assoc_ty: None,
                             loc: expr.loc.clone(),
@@ -1054,7 +1047,7 @@ pub(super) fn check_expr(
                                         args: FunArgs::Positional {
                                             args: vec![part_ty],
                                         },
-                                        ret: Box::new(Ty::Con(Name::new_static("Str"), Kind::Star)),
+                                        ret: Box::new(Ty::str()),
                                         exceptions: Some(Box::new(tc_state.exceptions.clone())),
                                     }),
                                 }),
@@ -1068,7 +1061,7 @@ pub(super) fn check_expr(
                                 },
                             }],
                             splice: None,
-                            inferred_ty: Some(Ty::Con(Name::new_static("Str"), Kind::Star)),
+                            inferred_ty: Some(Ty::str()),
                         });
                         desugared_stmts.push(make_push(expr, tc_state.exceptions.clone()));
                     }
@@ -1091,7 +1084,7 @@ pub(super) fn check_expr(
                                 args: FunArgs::Positional {
                                     args: vec![str_buf_ty.clone()],
                                 },
-                                ret: Box::new(Ty::Con(Name::new_static("Str"), Kind::Star)),
+                                ret: Box::new(Ty::str()),
                                 exceptions: Some(Box::new(tc_state.exceptions.clone())),
                             }),
                         }),
@@ -1111,7 +1104,7 @@ pub(super) fn check_expr(
                         },
                     }],
                     splice: None,
-                    inferred_ty: Some(Ty::Con(Name::new_static("Str"), Kind::Star)),
+                    inferred_ty: Some(Ty::str()),
                 })),
             });
 
@@ -1140,7 +1133,7 @@ pub(super) fn check_expr(
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
             let method = match op {
                 ast::BinOp::And => {
-                    let bool_ty = Ty::Con("Bool".into(), Kind::Star);
+                    let bool_ty = Ty::bool();
                     let (_, mut left_binders) = check_expr(
                         tc_state,
                         &mut left.node,
@@ -1192,7 +1185,7 @@ pub(super) fn check_expr(
                 }
 
                 ast::BinOp::Or => {
-                    let bool_ty = Ty::Con("Bool".into(), Kind::Star);
+                    let bool_ty = Ty::bool();
                     check_expr(
                         tc_state,
                         &mut left.node,
@@ -1280,9 +1273,9 @@ pub(super) fn check_expr(
                             ty_args: vec![tc_state.exceptions.clone()],
                             inferred_ty: Some(Ty::Fun {
                                 args: FunArgs::Positional {
-                                    args: vec![Ty::Con(Name::new("Bool"), Kind::Star)],
+                                    args: vec![Ty::bool()],
                                 },
-                                ret: Box::new(Ty::Con(Name::new("Bool"), Kind::Star)),
+                                ret: Box::new(Ty::bool()),
                                 exceptions: Some(Box::new(tc_state.exceptions.clone())),
                             }),
                         }),
@@ -1437,7 +1430,8 @@ pub(super) fn check_expr(
                     | Ty::UVar(_)
                     | Ty::App(_, _, _)
                     | Ty::QVar(_, _)
-                    | Ty::Anonymous { .. }
+                    | Ty::Record { .. }
+                    | Ty::Variant { .. }
                     | Ty::AssocTySelect { .. } => (None, None, None),
                 },
                 None => (None, None, None),
@@ -1446,7 +1440,9 @@ pub(super) fn check_expr(
             tc_state.env.enter(); // for term params
 
             let ret_ty = match &sig.return_ty {
-                Some(ty) => convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc),
+                Some(ty) => {
+                    convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc)
+                }
                 None => match expected_ret {
                     Some(ret) => (*ret).clone(),
                     None => Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
@@ -1454,7 +1450,9 @@ pub(super) fn check_expr(
             };
 
             let exceptions = match &sig.exceptions {
-                Some(exc) => convert_ast_ty(&tc_state.tys.tys, &exc.node, &exc.loc),
+                Some(exc) => {
+                    convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &exc.node, &exc.loc)
+                }
                 None => match expected_exceptions {
                     Some(Some(exn)) => (*exn).clone(),
                     _ => Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
@@ -1463,9 +1461,9 @@ pub(super) fn check_expr(
 
             let mut param_tys: Vec<Ty> = Vec::with_capacity(sig.params.len());
             for (param_idx, (param_name, param_ty)) in sig.params.iter().enumerate() {
-                let param_ty_converted: Option<Ty> = param_ty
-                    .as_ref()
-                    .map(|param_ty| convert_ast_ty(&tc_state.tys.tys, &param_ty.node, loc));
+                let param_ty_converted: Option<Ty> = param_ty.as_ref().map(|param_ty| {
+                    convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &param_ty.node, loc)
+                });
 
                 let param_ty_converted: Ty = param_ty_converted.unwrap_or_else(|| {
                     expected_args
@@ -1704,7 +1702,7 @@ pub(super) fn check_expr(
                                     loc: loc.clone(),
                                     node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                                         mod_prefix: None,
-                                        ty: con,
+                                        ty: con.name().clone(),
                                         ty_user_ty_args: vec![],
                                         member: Name::new_static("fromIter"),
                                         user_ty_args: vec![],
@@ -2024,7 +2022,7 @@ fn check_field_sel(
 
         let user_ty_args_converted: Vec<Ty> = user_ty_args
             .iter()
-            .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+            .map(|ty| convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc))
             .collect();
 
         let ty = scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
@@ -2094,7 +2092,7 @@ fn check_field_sel(
 
 fn select_field(
     tc_state: &mut TcFunState,
-    ty_con: &Name,
+    ty_con_id: &Id,
     ty_args: &[Ty],
     field: &Name,
     loc: &ast::Loc,
@@ -2102,8 +2100,8 @@ fn select_field(
     let ty_con = tc_state
         .tys
         .tys
-        .get_con(ty_con)
-        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con));
+        .get_con(ty_con_id)
+        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con_id));
 
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
@@ -2149,8 +2147,8 @@ fn select_method(
     receiver: &Ty,
     method: &Name,
     loc: &ast::Loc,
-) -> Option<(Name, Scheme)> {
-    let mut candidates: Vec<(Name, Scheme)> = vec![];
+) -> Option<(Id, Scheme)> {
+    let mut candidates: Vec<(Id, Scheme)> = vec![];
 
     for (ty_id, candidate) in tc_state.tys.method_schemes.get(method)? {
         // Don't add predicates to the current predicate set. We will instantiate the scheme again
@@ -2185,14 +2183,7 @@ fn select_method(
         // If there's an associated function among the candidates, pick it. Otherwise fail with an
         // ambiguity error.
         for (i, candidate) in candidates.iter().enumerate() {
-            if !tc_state
-                .tys
-                .tys
-                .cons()
-                .get(&candidate.0)
-                .unwrap()
-                .is_trait()
-            {
+            if !tc_state.tys.tys.get_con(&candidate.0).unwrap().is_trait() {
                 return Some(candidates.remove(i));
             }
         }
@@ -2213,8 +2204,8 @@ fn select_method(
 }
 
 pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) -> Ty {
-    let con = match ty.normalize(tc_state.tys.tys.cons()) {
-        Ty::Con(con, _) | Ty::App(con, _, _) => con,
+    let con_id = match ty.normalize(tc_state.tys.tys.cons()) {
+        Ty::Con(con, _) | Ty::App(con, _, _) => con.clone(),
 
         ty => panic!(
             "{}: Type in variant is not a constructor: {}",
@@ -2223,14 +2214,12 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) ->
         ),
     };
 
-    if con == "I8"
-        || con == "U8"
-        || con == "I16"
-        || con == "U16"
-        || con == "I32"
-        || con == "U32"
-        || con == "I64"
-        || con == "U64"
+    if con_id == builtin_ids::I8()
+        || con_id == builtin_ids::U8()
+        || con_id == builtin_ids::I32()
+        || con_id == builtin_ids::U32()
+        || con_id == builtin_ids::I64()
+        || con_id == builtin_ids::U64()
     {
         panic!(
             "{}: Integers can't be made variants in the interpreter",
@@ -2242,10 +2231,9 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) ->
         .var_gen
         .new_var(Kind::Row(RecordOrVariant::Variant), loc.clone());
 
-    Ty::Anonymous {
-        labels: [(con, ty)].into_iter().collect(),
+    Ty::Variant {
+        labels: [(con_id, ty)].into_iter().collect(),
         extension: Some(Box::new(Ty::UVar(row_ext))),
-        record_or_variant: RecordOrVariant::Variant,
         is_row: false,
     }
 }
@@ -2262,7 +2250,7 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
             let old = refined_binders.insert(var.clone(), tys.iter().next().unwrap().clone());
             assert_eq!(old, None);
         } else {
-            let mut labels: OrdMap<Name, Ty> = Default::default();
+            let mut labels: OrdMap<Id, Ty> = Default::default();
             let mut extension: Option<Box<Ty>> = None;
 
             for ty in tys.iter() {
@@ -2277,10 +2265,9 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
                         extension = Some(Box::new(ty.clone()));
                     }
 
-                    Ty::Anonymous {
+                    Ty::Variant {
                         labels,
                         extension: new_extension,
-                        record_or_variant: RecordOrVariant::Variant,
                         is_row,
                     } => {
                         // This part is quite hacky and possibly wrong: because we only refine
@@ -2296,17 +2283,16 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
                     Ty::QVar(_, _)
                     | Ty::RVar(_, _)
                     | Ty::Fun { .. }
-                    | Ty::Anonymous { .. }
+                    | Ty::Record { .. }
                     | Ty::AssocTySelect { .. } => {
                         panic!("{}: {}", loc_display(loc), ty)
                     }
                 }
             }
 
-            let new_ty = Ty::Anonymous {
+            let new_ty = Ty::Variant {
                 labels,
                 extension,
-                record_or_variant: RecordOrVariant::Variant,
                 is_row: false,
             };
 
@@ -2323,7 +2309,7 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
 fn add_coercions(
     pat: &mut ast::Pat,
     refined_binders: &HashMap<Name, Ty>,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     _loc: &ast::Loc,
@@ -2449,10 +2435,9 @@ fn check_record_expr(
         .as_ref()
         .map(|ty| ty.normalize(tc_state.tys.tys.cons()))
     {
-        Some(Ty::Anonymous {
+        Some(Ty::Record {
             labels: expected_fields,
             extension: _,
-            record_or_variant: RecordOrVariant::Record,
             is_row: _,
         }) => expected_fields,
         _ => Default::default(),
@@ -2481,10 +2466,9 @@ fn check_record_expr(
         ));
         unify(
             &splice_ty,
-            &Ty::Anonymous {
+            &Ty::Record {
                 labels: Default::default(),
                 extension: Some(extension.clone()),
-                record_or_variant: RecordOrVariant::Record,
                 is_row: false,
             },
             tc_state.tys.tys.cons(),
@@ -2497,10 +2481,9 @@ fn check_record_expr(
         extension
     });
 
-    Ty::Anonymous {
+    Ty::Record {
         labels: record_fields,
         extension,
-        record_or_variant: RecordOrVariant::Record,
         is_row: false,
     }
 }

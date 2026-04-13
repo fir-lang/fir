@@ -6,4 +6,4 @@ main():
 # reject this), but as long as we reject it it should be OK for now.
 
 # expected exit status: 101
-# expected stderr: BUG: Duplicate label in anonymous type (a: U32, ..row(a: U32, b: Str, c: Bool))
+# expected stderr: BUG: Duplicate label in record type (a: U32, ..row(a: U32, b: Str, c: Bool))

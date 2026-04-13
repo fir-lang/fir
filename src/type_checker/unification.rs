@@ -1,5 +1,6 @@
 use crate::ast::{self, Name};
 use crate::collections::*;
+use crate::type_checker::id::Id;
 use crate::type_checker::loc_display;
 use crate::type_checker::row_utils::*;
 use crate::type_checker::traits::TraitEnv;
@@ -8,7 +9,7 @@ use crate::type_checker::ty::*;
 pub(super) fn unify(
     ty1: &Ty,
     ty2: &Ty,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     loc: &ast::Loc,
@@ -30,8 +31,18 @@ pub(super) fn unify(
     }
 
     match (&ty1, &ty2) {
-        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2))
-        | (Ty::RVar(con1, _kind1), Ty::RVar(con2, _kind2)) => {
+        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2)) => {
+            if con1 != con2 {
+                panic!(
+                    "{}: Unable to unify types {} and {}",
+                    loc_display(loc),
+                    con1.name(),
+                    con2.name(),
+                )
+            }
+        }
+
+        (Ty::RVar(con1, _kind1), Ty::RVar(con2, _kind2)) => {
             if con1 != con2 {
                 panic!(
                     "{}: Unable to unify types {} and {}",
@@ -47,15 +58,15 @@ pub(super) fn unify(
                 panic!(
                     "{}: Unable to unify types {} and {}",
                     loc_display(loc),
-                    con1,
-                    con2,
+                    con1.name(),
+                    con2.name(),
                 )
             }
             if args1.len() != args2.len() {
                 panic!(
                     "{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify",
                     loc_display(loc),
-                    con1
+                    con1.name()
                 )
             }
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
@@ -101,20 +112,9 @@ pub(super) fn unify(
                         extension: extension2,
                     },
                 ) => {
-                    unify_labels(
-                        &ty1,
-                        args1,
-                        extension1,
-                        &ty2,
-                        args2,
-                        extension2,
-                        RecordOrVariant::Record,
-                        cons,
-                        trait_env,
-                        var_gen,
-                        loc,
-                        assumps,
-                        preds,
+                    unify_record_labels(
+                        &ty1, args1, extension1, &ty2, args2, extension2, cons, trait_env, var_gen,
+                        loc, assumps, preds,
                     );
                 }
 
@@ -177,54 +177,76 @@ pub(super) fn unify(
         (ty1, Ty::UVar(var)) => link_var(var, ty1),
 
         (
-            Ty::Anonymous {
+            Ty::Record {
                 labels: labels1,
                 extension: extension1,
-                record_or_variant: record_or_variant_1,
                 is_row: _,
             },
-            Ty::Anonymous {
+            Ty::Record {
                 labels: labels2,
                 extension: extension2,
-                record_or_variant: record_or_variant_2,
                 is_row: _,
             },
-        ) if record_or_variant_1 == record_or_variant_2 => {
-            unify_labels(
-                &ty1,
-                labels1,
-                extension1,
-                &ty2,
-                labels2,
-                extension2,
-                *record_or_variant_1,
-                cons,
-                trait_env,
-                var_gen,
-                loc,
-                assumps,
-                preds,
+        ) => {
+            unify_record_labels(
+                &ty1, labels1, extension1, &ty2, labels2, extension2, cons, trait_env, var_gen,
+                loc, assumps, preds,
+            );
+        }
+
+        (
+            Ty::Variant {
+                labels: labels1,
+                extension: extension1,
+                is_row: _,
+            },
+            Ty::Variant {
+                labels: labels2,
+                extension: extension2,
+                is_row: _,
+            },
+        ) => {
+            unify_variant_labels(
+                &ty1, labels1, extension1, &ty2, labels2, extension2, cons, trait_env, var_gen,
+                loc, assumps, preds,
             );
         }
 
         // Unify an empty anonymous row with another type. `row(..ext)` with no labels is just
         // `ext`, which should unify with anything as long as kinds match.
         (
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension: Some(ext),
                 is_row: true,
-                ..
             },
             other,
         )
         | (
             other,
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension: Some(ext),
                 is_row: true,
-                ..
+            },
+        ) if labels.is_empty() => {
+            unify(ext, other, cons, trait_env, var_gen, loc, assumps, preds);
+        }
+
+        (
+            Ty::Variant {
+                labels,
+                extension: Some(ext),
+                is_row: true,
+            },
+            other,
+        )
+        | (
+            other,
+            Ty::Variant {
+                labels,
+                extension: Some(ext),
+                is_row: true,
             },
         ) if labels.is_empty() => {
             unify(ext, other, cons, trait_env, var_gen, loc, assumps, preds);
@@ -271,7 +293,7 @@ pub(super) fn unify(
                 kind: _,
             },
         ) => {
-            let (trait_name, trait_args): (&Name, &[Ty]) = match inner_ty.as_ref() {
+            let (trait_id, trait_args): (&Id, &[Ty]) = match inner_ty.as_ref() {
                 Ty::App(con, args, _) => (con, args.as_slice()),
                 Ty::Con(con, _) => (con, &[]),
                 _ => panic!(
@@ -281,7 +303,7 @@ pub(super) fn unify(
                 ),
             };
             preds.push(Pred {
-                trait_: trait_name.clone(),
+                trait_: trait_id.clone(),
                 params: trait_args.to_vec(),
                 assoc_ty: Some((assoc_ty.clone(), other.clone())),
                 loc: loc.clone(),
@@ -305,35 +327,33 @@ pub(super) fn unify(
     }
 }
 
-fn unify_labels(
+#[allow(clippy::too_many_arguments)]
+fn unify_record_labels(
     ty1: &Ty,
     labels1: &OrdMap<Name, Ty>,
     extension1: &Option<Box<Ty>>,
     ty2: &Ty,
     labels2: &OrdMap<Name, Ty>,
     extension2: &Option<Box<Ty>>,
-    record_or_variant: RecordOrVariant,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     loc: &ast::Loc,
     assumps: &[Pred],
     preds: &mut Vec<Pred>,
 ) {
-    let (labels1, mut extension1) = collect_rows(
+    let (labels1, mut extension1) = collect_record_rows(
         cons,
         ty1,
-        record_or_variant,
         labels1,
         extension1.clone(),
         &Default::default(),
         var_gen,
         assumps,
     );
-    let (labels2, mut extension2) = collect_rows(
+    let (labels2, mut extension2) = collect_record_rows(
         cons,
         ty2,
-        record_or_variant,
         labels2,
         extension2.clone(),
         &Default::default(),
@@ -358,13 +378,8 @@ fn unify_labels(
     if !extras1.is_empty() {
         match &extension2 {
             Some(Ty::UVar(var)) => {
-                extension2 = Some(Ty::UVar(link_extension(
-                    record_or_variant,
-                    &extras1,
-                    &labels1,
-                    var,
-                    var_gen,
-                    loc,
+                extension2 = Some(Ty::UVar(link_record_extension(
+                    &extras1, &labels1, var, var_gen, loc,
                 )));
             }
             _ => {
@@ -376,13 +391,8 @@ fn unify_labels(
     if !extras2.is_empty() {
         match &extension1 {
             Some(Ty::UVar(var)) => {
-                extension1 = Some(Ty::UVar(link_extension(
-                    record_or_variant,
-                    &extras2,
-                    &labels2,
-                    var,
-                    var_gen,
-                    loc,
+                extension1 = Some(Ty::UVar(link_record_extension(
+                    &extras2, &labels2, var, var_gen, loc,
                 )));
             }
             _ => {
@@ -391,11 +401,10 @@ fn unify_labels(
         }
     }
 
-    fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
-        Ty::Anonymous {
+    fn unit_row() -> Ty {
+        Ty::Record {
             labels: Default::default(),
             extension: None,
-            record_or_variant,
             is_row: true,
         }
     }
@@ -405,7 +414,7 @@ fn unify_labels(
         (Some(ext1), None) => {
             unify(
                 &ext1,
-                &unit_row(record_or_variant),
+                &unit_row(),
                 cons,
                 trait_env,
                 var_gen,
@@ -416,7 +425,119 @@ fn unify_labels(
         }
         (None, Some(ext2)) => {
             unify(
-                &unit_row(record_or_variant),
+                &unit_row(),
+                &ext2,
+                cons,
+                trait_env,
+                var_gen,
+                loc,
+                assumps,
+                preds,
+            );
+        }
+        (Some(ext1), Some(ext2)) => {
+            unify(&ext1, &ext2, cons, trait_env, var_gen, loc, assumps, preds);
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn unify_variant_labels(
+    ty1: &Ty,
+    labels1: &OrdMap<Id, Ty>,
+    extension1: &Option<Box<Ty>>,
+    ty2: &Ty,
+    labels2: &OrdMap<Id, Ty>,
+    extension2: &Option<Box<Ty>>,
+    cons: &ScopeMap<Id, TyCon>,
+    trait_env: &TraitEnv,
+    var_gen: &UVarGen,
+    loc: &ast::Loc,
+    assumps: &[Pred],
+    preds: &mut Vec<Pred>,
+) {
+    let (labels1, mut extension1) = collect_variant_rows(
+        cons,
+        ty1,
+        labels1,
+        extension1.clone(),
+        &Default::default(),
+        var_gen,
+        assumps,
+    );
+    let (labels2, mut extension2) = collect_variant_rows(
+        cons,
+        ty2,
+        labels2,
+        extension2.clone(),
+        &Default::default(),
+        var_gen,
+        assumps,
+    );
+
+    let keys1: HashSet<&Id> = labels1.keys().collect();
+    let keys2: HashSet<&Id> = labels2.keys().collect();
+
+    let extras1: HashSet<&&Id> = keys1.difference(&keys2).collect();
+    let extras2: HashSet<&&Id> = keys2.difference(&keys1).collect();
+
+    for key in keys1.intersection(&keys2) {
+        let ty1 = labels1.get(*key).unwrap();
+        let ty2 = labels2.get(*key).unwrap();
+        unify(ty1, ty2, cons, trait_env, var_gen, loc, assumps, preds);
+    }
+
+    if !extras1.is_empty() {
+        match &extension2 {
+            Some(Ty::UVar(var)) => {
+                extension2 = Some(Ty::UVar(link_variant_extension(
+                    &extras1, &labels1, var, var_gen, loc,
+                )));
+            }
+            _ => {
+                panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
+            }
+        }
+    }
+
+    if !extras2.is_empty() {
+        match &extension1 {
+            Some(Ty::UVar(var)) => {
+                extension1 = Some(Ty::UVar(link_variant_extension(
+                    &extras2, &labels2, var, var_gen, loc,
+                )));
+            }
+            _ => {
+                panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
+            }
+        }
+    }
+
+    fn unit_row() -> Ty {
+        Ty::Variant {
+            labels: Default::default(),
+            extension: None,
+            is_row: true,
+        }
+    }
+
+    match (extension1, extension2) {
+        (None, None) => {}
+        (Some(ext1), None) => {
+            unify(
+                &ext1,
+                &unit_row(),
+                cons,
+                trait_env,
+                var_gen,
+                loc,
+                assumps,
+                preds,
+            );
+        }
+        (None, Some(ext2)) => {
+            unify(
+                &unit_row(),
                 &ext2,
                 cons,
                 trait_env,
@@ -438,7 +559,7 @@ fn unify_labels(
 pub(super) fn try_unify_one_way(
     ty1: &Ty,
     ty2: &Ty,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     var_gen: &UVarGen,
     loc: &ast::Loc,
 ) -> bool {
@@ -448,8 +569,9 @@ pub(super) fn try_unify_one_way(
         return false;
     }
     match (&ty1, &ty2) {
-        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2))
-        | (Ty::RVar(con1, _kind1), Ty::RVar(con2, _kind2)) => con1 == con2,
+        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2)) => con1 == con2,
+
+        (Ty::RVar(con1, _kind1), Ty::RVar(con2, _kind2)) => con1 == con2,
 
         (Ty::App(con1, args1, _kind1), Ty::App(con2, args2, _kind2)) => {
             if con1 != con2 {
@@ -501,17 +623,8 @@ pub(super) fn try_unify_one_way(
                         extension: extension2,
                     },
                 ) => {
-                    if !try_unify_labels_one_way(
-                        &ty1,
-                        args1,
-                        extension1,
-                        &ty2,
-                        args2,
-                        extension2,
-                        RecordOrVariant::Record,
-                        cons,
-                        var_gen,
-                        loc,
+                    if !try_unify_record_labels_one_way(
+                        &ty1, args1, extension1, &ty2, args2, extension2, cons, var_gen, loc,
                     ) {
                         return false;
                     }
@@ -561,29 +674,33 @@ pub(super) fn try_unify_one_way(
         }
 
         (
-            Ty::Anonymous {
+            Ty::Record {
                 labels: labels1,
                 extension: extension1,
-                record_or_variant: record_or_variant_1,
                 is_row: _,
             },
-            Ty::Anonymous {
+            Ty::Record {
                 labels: labels2,
                 extension: extension2,
-                record_or_variant: record_or_variant_2,
                 is_row: _,
             },
-        ) if record_or_variant_1 == record_or_variant_2 => try_unify_labels_one_way(
-            &ty1,
-            labels1,
-            extension1,
-            &ty2,
-            labels2,
-            extension2,
-            *record_or_variant_1,
-            cons,
-            var_gen,
-            loc,
+        ) => try_unify_record_labels_one_way(
+            &ty1, labels1, extension1, &ty2, labels2, extension2, cons, var_gen, loc,
+        ),
+
+        (
+            Ty::Variant {
+                labels: labels1,
+                extension: extension1,
+                is_row: _,
+            },
+            Ty::Variant {
+                labels: labels2,
+                extension: extension2,
+                is_row: _,
+            },
+        ) => try_unify_variant_labels_one_way(
+            &ty1, labels1, extension1, &ty2, labels2, extension2, cons, var_gen, loc,
         ),
 
         (
@@ -608,32 +725,30 @@ pub(super) fn try_unify_one_way(
     }
 }
 
-fn try_unify_labels_one_way(
+#[allow(clippy::too_many_arguments)]
+fn try_unify_record_labels_one_way(
     ty1: &Ty,
     labels1: &OrdMap<Name, Ty>,
     extension1: &Option<Box<Ty>>,
     ty2: &Ty,
     labels2: &OrdMap<Name, Ty>,
     extension2: &Option<Box<Ty>>,
-    record_or_variant: RecordOrVariant,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     var_gen: &UVarGen,
     loc: &ast::Loc,
 ) -> bool {
-    let (labels1, mut extension1) = collect_rows(
+    let (labels1, mut extension1) = collect_record_rows(
         cons,
         ty1,
-        record_or_variant,
         labels1,
         extension1.clone(),
         &Default::default(),
         var_gen,
         &[],
     );
-    let (labels2, extension2) = collect_rows(
+    let (labels2, extension2) = collect_record_rows(
         cons,
         ty2,
-        record_or_variant,
         labels2,
         extension2.clone(),
         &Default::default(),
@@ -644,11 +759,9 @@ fn try_unify_labels_one_way(
     let keys1: HashSet<&Name> = labels1.keys().collect();
     let keys2: HashSet<&Name> = labels2.keys().collect();
 
-    // Extra labels in one type will be added to the extension of the other.
     let extras1: HashSet<&&Name> = keys1.difference(&keys2).collect();
     let extras2: HashSet<&&Name> = keys2.difference(&keys1).collect();
 
-    // Unify common labels.
     for key in keys1.intersection(&keys2) {
         let ty1 = labels1.get(*key).unwrap();
         let ty2 = labels2.get(*key).unwrap();
@@ -664,13 +777,8 @@ fn try_unify_labels_one_way(
     if !extras2.is_empty() {
         match &extension1 {
             Some(Ty::UVar(var)) => {
-                extension1 = Some(Ty::UVar(link_extension(
-                    record_or_variant,
-                    &extras2,
-                    &labels2,
-                    var,
-                    var_gen,
-                    loc,
+                extension1 = Some(Ty::UVar(link_record_extension(
+                    &extras2, &labels2, var, var_gen, loc,
                 )));
             }
             _ => {
@@ -679,27 +787,101 @@ fn try_unify_labels_one_way(
         }
     }
 
-    fn unit_row(record_or_variant: RecordOrVariant) -> Ty {
-        Ty::Anonymous {
+    fn unit_row() -> Ty {
+        Ty::Record {
             labels: Default::default(),
             extension: None,
-            record_or_variant,
             is_row: true,
         }
     }
 
     match (extension1, extension2) {
         (None, None) => true,
-        (Some(ext1), None) => {
-            try_unify_one_way(&ext1, &unit_row(record_or_variant), cons, var_gen, loc)
-        }
+        (Some(ext1), None) => try_unify_one_way(&ext1, &unit_row(), cons, var_gen, loc),
         (None, Some(_)) => false,
         (Some(ext1), Some(ext2)) => try_unify_one_way(&ext1, &ext2, cons, var_gen, loc),
     }
 }
 
-fn link_extension(
-    record_or_variant: RecordOrVariant,
+#[allow(clippy::too_many_arguments)]
+fn try_unify_variant_labels_one_way(
+    ty1: &Ty,
+    labels1: &OrdMap<Id, Ty>,
+    extension1: &Option<Box<Ty>>,
+    ty2: &Ty,
+    labels2: &OrdMap<Id, Ty>,
+    extension2: &Option<Box<Ty>>,
+    cons: &ScopeMap<Id, TyCon>,
+    var_gen: &UVarGen,
+    loc: &ast::Loc,
+) -> bool {
+    let (labels1, mut extension1) = collect_variant_rows(
+        cons,
+        ty1,
+        labels1,
+        extension1.clone(),
+        &Default::default(),
+        var_gen,
+        &[],
+    );
+    let (labels2, extension2) = collect_variant_rows(
+        cons,
+        ty2,
+        labels2,
+        extension2.clone(),
+        &Default::default(),
+        var_gen,
+        &[],
+    );
+
+    let keys1: HashSet<&Id> = labels1.keys().collect();
+    let keys2: HashSet<&Id> = labels2.keys().collect();
+
+    let extras1: HashSet<&&Id> = keys1.difference(&keys2).collect();
+    let extras2: HashSet<&&Id> = keys2.difference(&keys1).collect();
+
+    for key in keys1.intersection(&keys2) {
+        let ty1 = labels1.get(*key).unwrap();
+        let ty2 = labels2.get(*key).unwrap();
+        if !try_unify_one_way(ty1, ty2, cons, var_gen, loc) {
+            return false;
+        }
+    }
+
+    if !extras1.is_empty() {
+        return false;
+    }
+
+    if !extras2.is_empty() {
+        match &extension1 {
+            Some(Ty::UVar(var)) => {
+                extension1 = Some(Ty::UVar(link_variant_extension(
+                    &extras2, &labels2, var, var_gen, loc,
+                )));
+            }
+            _ => {
+                return false;
+            }
+        }
+    }
+
+    fn unit_row() -> Ty {
+        Ty::Variant {
+            labels: Default::default(),
+            extension: None,
+            is_row: true,
+        }
+    }
+
+    match (extension1, extension2) {
+        (None, None) => true,
+        (Some(ext1), None) => try_unify_one_way(&ext1, &unit_row(), cons, var_gen, loc),
+        (None, Some(_)) => false,
+        (Some(ext1), Some(ext2)) => try_unify_one_way(&ext1, &ext2, cons, var_gen, loc),
+    }
+}
+
+fn link_record_extension(
     extra_labels: &HashSet<&&Name>,
     label_values: &OrdMap<Name, Ty>,
     var: &UVarRef,
@@ -715,11 +897,36 @@ fn link_extension(
             )
         })
         .collect();
-    let new_extension_var = var_gen.new_var(Kind::Row(record_or_variant), loc.clone());
-    let new_extension_ty = Ty::Anonymous {
+    let new_extension_var = var_gen.new_var(Kind::Row(RecordOrVariant::Record), loc.clone());
+    let new_extension_ty = Ty::Record {
         labels: extension_labels,
         extension: Some(Box::new(Ty::UVar(new_extension_var.clone()))),
-        record_or_variant,
+        is_row: true,
+    };
+    var.set_link(new_extension_ty);
+    new_extension_var
+}
+
+fn link_variant_extension(
+    extra_labels: &HashSet<&&Id>,
+    label_values: &OrdMap<Id, Ty>,
+    var: &UVarRef,
+    var_gen: &UVarGen,
+    loc: &ast::Loc,
+) -> UVarRef {
+    let extension_labels: OrdMap<Id, Ty> = extra_labels
+        .iter()
+        .map(|extra_field| {
+            (
+                (**extra_field).clone(),
+                label_values.get(**extra_field).unwrap().clone(),
+            )
+        })
+        .collect();
+    let new_extension_var = var_gen.new_var(Kind::Row(RecordOrVariant::Variant), loc.clone());
+    let new_extension_ty = Ty::Variant {
+        labels: extension_labels,
+        extension: Some(Box::new(Ty::UVar(new_extension_var.clone()))),
         is_row: true,
     };
     var.set_link(new_extension_ty);
@@ -731,7 +938,7 @@ fn link_extension(
 pub(super) fn unify_expected_ty(
     ty: Ty,
     expected_ty: Option<&Ty>,
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     trait_env: &TraitEnv,
     var_gen: &UVarGen,
     loc: &ast::Loc,

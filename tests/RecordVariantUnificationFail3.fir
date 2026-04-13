@@ -17,6 +17,6 @@ main():
 #              (a: U32) and
 #              [A, B]
 #              (
-#                 Anonymous { labels: {"a": Con("U32", Star)}, extension: None, record_or_variant: Record, is_row: false }
-#                 Anonymous { labels: {"A": Con("A", Star), "B": Con("B", Star)}, extension: None, record_or_variant: Variant, is_row: false }
+#                 Record { labels: {"a": Con("U32", Star)}, extension: None, is_row: false }
+#                 Variant { labels: {"A": Con("A", Star), "B": Con("B", Star)}, extension: None, is_row: false }
 #              )

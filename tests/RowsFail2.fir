@@ -14,5 +14,5 @@ main():
 #              row()
 #              (
 #                 RVar("r", Row(Record))
-#                 Anonymous { labels: {}, extension: None, record_or_variant: Record, is_row: true }
+#                 Record { labels: {}, extension: None, is_row: true }
 #              )

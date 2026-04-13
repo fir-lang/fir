@@ -2,6 +2,7 @@
 
 use crate::ast::{self, Name};
 use crate::collections::*;
+use crate::type_checker::id::Id;
 use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::{loc_display, rename_domain_var};
 
@@ -33,14 +34,14 @@ pub struct Scheme {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
-    Con(Name, Kind),
+    Con(Id, Kind),
 
     /// A type application, e.g. `Vec[U32]`, `Result[E, T]`.
     ///
     /// Because type variables have kind `*`, the constructor can only be a type constructor.
     ///
     /// Invariant: the vector is not empty.
-    App(Name, Vec<Ty>, Kind),
+    App(Id, Vec<Ty>, Kind),
 
     /// A unification variable, created from a type scheme's quantified variables when instantiated.
     UVar(UVarRef),
@@ -67,14 +68,24 @@ pub enum Ty {
         exceptions: Option<Box<Ty>>,
     },
 
-    /// An anonymous record or variant type or row type. E.g. `(a: Str, ..r)`, `[Err1(Str), ..r]`.
-    Anonymous {
+    /// A record: `(msg: Str, ..r)`, `[Err1(Str), ..r]`.
+    Record {
         labels: OrdMap<Name, Ty>,
 
         /// Row extension.
         extension: Option<Box<Ty>>,
 
-        record_or_variant: RecordOrVariant,
+        /// Whether this is a row type. A row type has its own kind `row`. When not a row, the type
+        /// has kind `*`.
+        is_row: bool,
+    },
+
+    /// A variant: `[Str, Option[U32], ..r]`.
+    Variant {
+        labels: OrdMap<Id, Ty>,
+
+        /// Row extension.
+        extension: Option<Box<Ty>>,
 
         /// Whether this is a row type. A row type has its own kind `row`. When not a row, the type
         /// has kind `*`.
@@ -189,8 +200,8 @@ pub(super) struct UVarGen {
 /// A type constructor.
 #[derive(Debug, Clone)]
 pub struct TyCon {
-    /// Name of the type.
-    pub id: Name,
+    /// Id of the type.
+    pub id: Id,
 
     /// Type parameters with kinds.
     pub(super) ty_params: Vec<(Name, Kind)>,
@@ -275,7 +286,7 @@ pub struct Pred {
     /// Trait of the predicate.
     ///
     /// `Iterator` in the example.
-    pub trait_: Name,
+    pub trait_: Id,
 
     /// The type parameters. `[iter, exn]` in the example.
     pub params: Vec<Ty>,
@@ -441,7 +452,7 @@ impl Scheme {
     /// places.
     pub(super) fn eq_modulo_alpha(
         &self,
-        cons: &ScopeMap<Name, TyCon>,
+        cons: &ScopeMap<Id, TyCon>,
         other: &Scheme,
         loc: &ast::Loc,
     ) -> bool {
@@ -547,7 +558,7 @@ impl Scheme {
 }
 
 fn ty_eq_modulo_alpha(
-    cons: &ScopeMap<Name, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     ty1: &Ty,
     ty2: &Ty,
     ty1_qvars: &HashMap<Name, u32>,
@@ -557,9 +568,9 @@ fn ty_eq_modulo_alpha(
     let ty1_normalized = ty1.normalize(cons);
     let ty2_normalized = ty2.normalize(cons);
     match (&ty1_normalized, &ty2_normalized) {
-        (Ty::Con(con1, _), Ty::Con(con2, _)) | (Ty::RVar(con1, _), Ty::RVar(con2, _)) => {
-            con1 == con2
-        }
+        (Ty::Con(con1, _), Ty::Con(con2, _)) => con1 == con2,
+
+        (Ty::RVar(con1, _), Ty::RVar(con2, _)) => con1 == con2,
 
         (Ty::UVar(_), _) | (_, Ty::UVar(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
 
@@ -575,29 +586,22 @@ fn ty_eq_modulo_alpha(
         }
 
         (
-            Ty::Anonymous {
+            Ty::Record {
                 labels: labels1,
                 extension: extension1,
-                record_or_variant: record_or_variant_1,
                 is_row: is_row1,
             },
-            Ty::Anonymous {
+            Ty::Record {
                 labels: labels2,
                 extension: extension2,
-                record_or_variant: record_or_variant_2,
                 is_row: is_row2,
             },
         ) => {
             assert_eq!(is_row1, is_row2);
 
-            if record_or_variant_1 != record_or_variant_2 {
-                return false;
-            }
-
-            let (labels1, extension1) = crate::type_checker::row_utils::collect_rows(
+            let (labels1, extension1) = crate::type_checker::row_utils::collect_record_rows(
                 cons,
                 ty1,
-                *record_or_variant_1,
                 labels1,
                 extension1.clone(),
                 &Default::default(),
@@ -605,10 +609,67 @@ fn ty_eq_modulo_alpha(
                 &[],
             );
 
-            let (labels2, extension2) = crate::type_checker::row_utils::collect_rows(
+            let (labels2, extension2) = crate::type_checker::row_utils::collect_record_rows(
                 cons,
                 ty2,
-                *record_or_variant_2,
+                labels2,
+                extension2.clone(),
+                &Default::default(),
+                &UVarGen::default(),
+                &[],
+            );
+
+            if labels1.keys().collect::<HashSet<_>>() != labels2.keys().collect() {
+                return false;
+            }
+
+            for (label1, ty1) in labels1 {
+                let ty2 = labels2.get(&label1).unwrap();
+                if !ty_eq_modulo_alpha(cons, &ty1, ty2, ty1_qvars, ty2_qvars, loc) {
+                    return false;
+                }
+            }
+
+            match (extension1, extension2) {
+                (None, Some(_)) | (Some(_), None) => return false,
+                (None, None) => {}
+                (Some(ext1), Some(ext2)) => {
+                    if !ty_eq_modulo_alpha(cons, &ext1, &ext2, ty1_qvars, ty2_qvars, loc) {
+                        return false;
+                    }
+                }
+            }
+
+            true
+        }
+
+        (
+            Ty::Variant {
+                labels: labels1,
+                extension: extension1,
+                is_row: is_row1,
+            },
+            Ty::Variant {
+                labels: labels2,
+                extension: extension2,
+                is_row: is_row2,
+            },
+        ) => {
+            assert_eq!(is_row1, is_row2);
+
+            let (labels1, extension1) = crate::type_checker::row_utils::collect_variant_rows(
+                cons,
+                ty1,
+                labels1,
+                extension1.clone(),
+                &Default::default(),
+                &UVarGen::default(),
+                &[],
+            );
+
+            let (labels2, extension2) = crate::type_checker::row_utils::collect_variant_rows(
+                cons,
+                ty2,
                 labels2,
                 extension2.clone(),
                 &Default::default(),
@@ -771,37 +832,31 @@ fn ty_eq_modulo_alpha(
 
 impl Ty {
     pub(super) fn unit() -> Ty {
-        Ty::Anonymous {
+        Ty::Record {
             labels: Default::default(),
             extension: None,
-            record_or_variant: RecordOrVariant::Record,
             is_row: false,
         }
     }
 
     pub(super) fn empty_variant() -> Ty {
-        Ty::Anonymous {
+        Ty::Variant {
             labels: Default::default(),
             extension: None,
-            record_or_variant: RecordOrVariant::Variant,
             is_row: false,
         }
     }
 
-    pub(super) fn bool() -> Ty {
-        Ty::Con(Name::new_static("Bool"), Kind::Star)
+    pub fn bool() -> Ty {
+        Ty::Con(super::id::builtins::BOOL(), Kind::Star)
     }
 
-    pub(super) fn to_str_id() -> Name {
-        Name::new_static("ToStr")
+    pub fn str() -> Ty {
+        Ty::Con(super::id::builtins::STR(), Kind::Star)
     }
 
-    pub(super) fn str() -> Ty {
-        Ty::Con(Name::new_static("Str"), Kind::Star)
-    }
-
-    pub(super) fn char() -> Ty {
-        Ty::Con(Name::new_static("Char"), Kind::Star)
+    pub fn char() -> Ty {
+        Ty::Con(super::id::builtins::CHAR(), Kind::Star)
     }
 
     pub fn kind(&self) -> Kind {
@@ -816,13 +871,17 @@ impl Ty {
 
             Ty::Fun { .. } => Kind::Star,
 
-            Ty::Anonymous {
-                is_row,
-                record_or_variant,
-                ..
-            } => {
+            Ty::Record { is_row, .. } => {
                 if *is_row {
-                    Kind::Row(*record_or_variant)
+                    Kind::Row(RecordOrVariant::Record)
+                } else {
+                    Kind::Star
+                }
+            }
+
+            Ty::Variant { is_row, .. } => {
+                if *is_row {
+                    Kind::Row(RecordOrVariant::Variant)
                 } else {
                     Kind::Star
                 }
@@ -847,18 +906,29 @@ impl Ty {
                 *kind,
             ),
 
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension,
-                record_or_variant,
                 is_row,
-            } => Ty::Anonymous {
+            } => Ty::Record {
                 labels: labels
                     .iter()
                     .map(|(field, field_ty)| (field.clone(), field_ty.subst(var, ty)))
                     .collect(),
                 extension: extension.as_ref().map(|ext| Box::new(ext.subst(var, ty))),
-                record_or_variant: *record_or_variant,
+                is_row: *is_row,
+            },
+
+            Ty::Variant {
+                labels,
+                extension,
+                is_row,
+            } => Ty::Variant {
+                labels: labels
+                    .iter()
+                    .map(|(field, field_ty)| (field.clone(), field_ty.subst(var, ty)))
+                    .collect(),
+                extension: extension.as_ref().map(|ext| Box::new(ext.subst(var, ty))),
                 is_row: *is_row,
             },
 
@@ -917,12 +987,11 @@ impl Ty {
                 *kind,
             ),
 
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension,
-                record_or_variant,
                 is_row,
-            } => Ty::Anonymous {
+            } => Ty::Record {
                 labels: labels
                     .iter()
                     .map(|(label_id, label_ty)| (label_id.clone(), label_ty.subst_qvars(vars)))
@@ -930,7 +999,21 @@ impl Ty {
                 extension: extension
                     .as_ref()
                     .map(|ext| Box::new(ext.subst_qvars(vars))),
-                record_or_variant: *record_or_variant,
+                is_row: *is_row,
+            },
+
+            Ty::Variant {
+                labels,
+                extension,
+                is_row,
+            } => Ty::Variant {
+                labels: labels
+                    .iter()
+                    .map(|(label_id, label_ty)| (label_id.clone(), label_ty.subst_qvars(vars)))
+                    .collect(),
+                extension: extension
+                    .as_ref()
+                    .map(|ext| Box::new(ext.subst_qvars(vars))),
                 is_row: *is_row,
             },
 
@@ -975,7 +1058,7 @@ impl Ty {
     /// If the type is a unification variable, follow the links.
     ///
     /// Otherwise returns the original type.
-    pub(super) fn normalize(&self, cons: &ScopeMap<Name, TyCon>) -> Ty {
+    pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         match self {
             Ty::UVar(var_ref) => var_ref.normalize(cons),
             _ => self.clone(),
@@ -984,7 +1067,7 @@ impl Ty {
 
     pub(super) fn deep_normalize(
         &self,
-        cons: &ScopeMap<Name, TyCon>,
+        cons: &ScopeMap<Id, TyCon>,
         trait_env: &TraitEnv,
         var_gen: &UVarGen,
         assumps: &[Pred],
@@ -1009,26 +1092,44 @@ impl Ty {
                 *kind,
             ),
 
-            Ty::Anonymous {
+            Ty::Record {
                 labels,
                 extension,
-                record_or_variant,
                 is_row,
             } => {
-                let (labels, extension) = crate::type_checker::row_utils::collect_rows(
+                let (labels, extension) = crate::type_checker::row_utils::collect_record_rows(
                     cons,
                     self,
-                    *record_or_variant,
                     labels,
                     extension.clone(),
                     trait_env,
                     var_gen,
                     assumps,
                 );
-                Ty::Anonymous {
+                Ty::Record {
                     labels,
                     extension: extension.map(Box::new),
-                    record_or_variant: *record_or_variant,
+                    is_row: *is_row,
+                }
+            }
+
+            Ty::Variant {
+                labels,
+                extension,
+                is_row,
+            } => {
+                let (labels, extension) = crate::type_checker::row_utils::collect_variant_rows(
+                    cons,
+                    self,
+                    labels,
+                    extension.clone(),
+                    trait_env,
+                    var_gen,
+                    assumps,
+                );
+                Ty::Variant {
+                    labels,
+                    extension: extension.map(Box::new),
                     is_row: *is_row,
                 }
             }
@@ -1046,16 +1147,16 @@ impl Ty {
                             .collect(),
                     },
                     FunArgs::Named { args, extension } => {
-                        let (all_args, extension) = crate::type_checker::row_utils::collect_rows(
-                            cons,
-                            self,
-                            RecordOrVariant::Record,
-                            args,
-                            extension.clone(),
-                            trait_env,
-                            var_gen,
-                            assumps,
-                        );
+                        let (all_args, extension) =
+                            crate::type_checker::row_utils::collect_record_rows(
+                                cons,
+                                self,
+                                args,
+                                extension.clone(),
+                                trait_env,
+                                var_gen,
+                                assumps,
+                            );
                         FunArgs::Named {
                             args: all_args,
                             extension: extension.map(Box::new),
@@ -1077,7 +1178,7 @@ impl Ty {
             } => {
                 let inner_ty = inner_ty.deep_normalize(cons, trait_env, var_gen, assumps);
 
-                let (trait_name, trait_args): (&Name, &[Ty]) = match &inner_ty {
+                let (trait_name, trait_args): (&Id, &[Ty]) = match &inner_ty {
                     Ty::App(con, args, _) => (con, args.as_slice()),
                     Ty::Con(con, _) => (con, &[]),
                     _ => {
@@ -1104,18 +1205,16 @@ impl Ty {
                 }
 
                 // `RecRowToList[row].List`: compute the List type from the row's fields.
-                if *trait_name == super::REC_ROW_TO_LIST_TRAIT_ID {
+                if *trait_name == super::id::builtins::REC_ROW_TO_LIST() {
                     assert_eq!(assoc_ty, "List");
 
                     let row_ty = trait_args[0].deep_normalize(cons, trait_env, var_gen, assumps);
-                    if let Ty::Anonymous {
+                    if let Ty::Record {
                         labels,
                         extension,
-                        record_or_variant,
                         is_row,
                     } = &row_ty
                     {
-                        assert_eq!(*record_or_variant, RecordOrVariant::Record);
                         assert!(is_row);
                         let list_ty = super::row_to_list_type(labels, extension);
                         return list_ty.deep_normalize(cons, trait_env, var_gen, assumps);
@@ -1160,14 +1259,15 @@ impl Ty {
     }
 
     /// Get the type constructor of the type and the type arguments.
-    pub fn con(&self, cons: &ScopeMap<Name, TyCon>) -> Option<(Name, Vec<Ty>)> {
+    pub fn con(&self, cons: &ScopeMap<Id, TyCon>) -> Option<(Id, Vec<Ty>)> {
         match self.normalize(cons) {
             Ty::Con(con, _) => Some((con.clone(), vec![])),
 
             Ty::App(con, args, _) => Some((con.clone(), args.clone())),
 
             Ty::UVar(_)
-            | Ty::Anonymous { .. }
+            | Ty::Record { .. }
+            | Ty::Variant { .. }
             | Ty::QVar(_, _)
             | Ty::RVar(_, _)
             | Ty::Fun { .. }
@@ -1219,7 +1319,7 @@ impl UVarRef {
         *self.0.link.borrow_mut() = Some(ty);
     }
 
-    pub(super) fn normalize(&self, cons: &ScopeMap<Name, TyCon>) -> Ty {
+    pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         let link = match &*self.0.link.borrow() {
             Some(link) => link.normalize(cons),
             None => return Ty::UVar(self.clone()),
@@ -1285,9 +1385,7 @@ use std::fmt;
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.normalize(&Default::default()) {
-            Ty::Con(id, _) | Ty::RVar(id, _) => write!(f, "{id}"),
-
-            Ty::UVar(var_ref) => write!(f, "_{}", var_ref.id()),
+            Ty::Con(id, _) => write!(f, "{id}"),
 
             Ty::App(id, args, _) => {
                 write!(f, "{id}[")?;
@@ -1300,59 +1398,11 @@ impl fmt::Display for Ty {
                 write!(f, "]")
             }
 
-            Ty::Anonymous {
-                labels,
-                extension,
-                record_or_variant: RecordOrVariant::Record,
-                is_row,
-            } => {
-                if is_row {
-                    write!(f, "row")?;
-                }
-
-                write!(f, "(")?;
-                for (i, (label_id, label_ty)) in labels.iter().enumerate() {
-                    if i > 0 {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "{label_id}: {label_ty}")?;
-                }
-                if let Some(ext) = extension {
-                    if !labels.is_empty() {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "..{ext}")?;
-                }
-                write!(f, ")")
-            }
-
-            Ty::Anonymous {
-                labels,
-                extension,
-                record_or_variant: RecordOrVariant::Variant,
-                is_row,
-            } => {
-                if is_row {
-                    write!(f, "row")?;
-                }
-
-                write!(f, "[")?;
-                for (i, label_ty) in labels.values().enumerate() {
-                    if i > 0 {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "{label_ty}")?;
-                }
-                if let Some(ext) = extension {
-                    if !labels.is_empty() {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "..{ext}")?;
-                }
-                write!(f, "]")
-            }
+            Ty::UVar(var_ref) => write!(f, "_{}", var_ref.id()),
 
             Ty::QVar(id, _) => write!(f, "{id}"),
+
+            Ty::RVar(id, _) => write!(f, "{id}"),
 
             Ty::Fun {
                 args,
@@ -1390,6 +1440,56 @@ impl fmt::Display for Ty {
                     write!(f, " / {exn}")?;
                 }
                 Ok(())
+            }
+
+            Ty::Record {
+                labels,
+                extension,
+                is_row,
+            } => {
+                if is_row {
+                    write!(f, "row")?;
+                }
+
+                write!(f, "(")?;
+                for (i, (label_id, label_ty)) in labels.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{label_id}: {label_ty}")?;
+                }
+                if let Some(ext) = extension {
+                    if !labels.is_empty() {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "..{ext}")?;
+                }
+                write!(f, ")")
+            }
+
+            Ty::Variant {
+                labels,
+                extension,
+                is_row,
+            } => {
+                if is_row {
+                    write!(f, "row")?;
+                }
+
+                write!(f, "[")?;
+                for (i, label_ty) in labels.values().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{label_ty}")?;
+                }
+                if let Some(ext) = extension {
+                    if !labels.is_empty() {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "..{ext}")?;
+                }
+                write!(f, "]")
             }
 
             Ty::AssocTySelect {
@@ -1444,7 +1544,7 @@ impl fmt::Display for Kind {
 
 impl fmt::Display for Pred {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.trait_)?;
+        write!(f, "{}", self.trait_)?;
         write!(f, "[")?;
         for (i, ty) in self.params.iter().enumerate() {
             if i > 0 {

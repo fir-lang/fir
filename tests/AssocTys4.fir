@@ -6,20 +6,18 @@ trait Foo[t]:
 
     getA() Foo[t].A
 
-prim type U32
+type Type1
 
-prim type U64
+type Type2
 
-impl Foo[U32]:
-    type A = U64
+impl Foo[Type1]:
+    type A = Type2
 
-    getA() Foo[U32].A:
-        u64(123)
-
-u64(x: U64) U64: x
+    getA() Foo[Type1].A:
+        Type2
 
 main():
-    let x: U64 = Foo.getA[U32, []]()
+    let x: Type2 = Foo.getA[Type1, []]()
     ()
 
 # args: --typecheck

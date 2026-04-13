@@ -1,25 +1,25 @@
 #[NoImplicitPrelude]
 import []
 
-prim type Array[t]
+type Type1
 
-prim type U32
+type Type2[t]
 
 trait Ord[t]:
     cmp(self: t, other: t)
 
 type Vec[t](
-    _data: Array[t],
-    _len: U32,
+    _data: Type2[t],
+    _len: Type1,
 )
 
-Vec.len(self: Vec[t]) U32:
+Vec.len(self: Vec[t]) Type1:
     self._len
 
 Vec.sort[Ord[t]](self: Vec[t]):
-    _quicksort(self, 0, self.len())
+    _quicksort(self, Type1, self.len())
 
-_quicksort[Ord[t]](vec: Vec[t], low: U32, high: U32):
+_quicksort[Ord[t]](vec: Vec[t], low: Type1, high: Type1):
     ()
 
 # args: --typecheck

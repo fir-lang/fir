@@ -1,15 +1,15 @@
 #[NoImplicitPrelude]
 import []
 
-prim type I32
+type Type1
 
 trait T[a]:
     test(self: a) ()
 
-    getI32(self: a) I32:
-        0
+    getI32(self: a) Type1:
+        Type1
 
-type A(i: I32)
+type A(i: Type1)
 
 impl T[A]:
     test(self: A) ():

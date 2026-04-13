@@ -1,32 +1,34 @@
 #[NoImplicitPrelude]
 import []
 
-prim type U32
-prim type U64
-prim type Str
+type Type1
+
+type Type2
+
+type Type3
 
 trait Foo[t]:
-    type Item = U32
+    type Item = Type1
     type MyRow: Row[Rec] = row()
     getItem(self: t) Item
     getRecord(self: t) (..MyRow)
 
-impl Foo[U32]:
-    getItem(self: U32) Item:
+impl Foo[Type1]:
+    getItem(self: Type1) Item:
         self
 
-    getRecord(self: U32) (..MyRow):
+    getRecord(self: Type1) (..MyRow):
         ()
 
-impl Foo[U64]:
-    type Item = U64
+impl Foo[Type2]:
+    type Item = Type2
 
-    type MyRow = row(msg: Str)
+    type MyRow = row(msg: Type3)
 
-    getItem(self: U64) Item:
+    getItem(self: Type2) Item:
         self
 
-    getRecord(self: U64) (..MyRow):
-        (msg = "hi")
+    getRecord(self: Type2) (..MyRow):
+        (msg = Type3)
 
 # args: --typecheck

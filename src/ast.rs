@@ -7,7 +7,8 @@ use crate::interpolation::StrPart;
 use crate::module::ModulePath;
 pub use crate::name::Name;
 pub use crate::token::IntKind;
-use crate::type_checker::{Kind, Ty};
+use crate::type_checker::id::builtins as builtin_ids;
+use crate::type_checker::{Id, Kind, Ty};
 
 use std::rc::Rc;
 
@@ -690,10 +691,10 @@ pub struct MethodSelExpr {
 
     /// The type or trait id that defines the method.
     ///
-    /// E.g. `Vec`, `Iterator`.
+    /// E.g. `Fir/Vec/Vec`, `Fir/Iter/Iterator`.
     ///
     /// Note: when calling trait methods, this will be the trait type rather than the receiver type.
-    pub method_ty_id: Name,
+    pub method_ty_id: Id,
 
     /// The method id.
     ///
@@ -1416,26 +1417,26 @@ impl Expr {
             | Expr::Variant(VariantExpr { inferred_ty, .. }) => inferred_ty.clone(),
 
             Expr::Int(IntExpr { kind, .. }) => {
-                let name = match kind.as_ref()? {
-                    IntKind::I8(_) => "I8",
-                    IntKind::U8(_) => "U8",
-                    IntKind::I32(_) => "I32",
-                    IntKind::U32(_) => "U32",
-                    IntKind::I64(_) => "I64",
-                    IntKind::U64(_) => "U64",
+                let id = match kind.as_ref()? {
+                    IntKind::I8(_) => builtin_ids::I8(),
+                    IntKind::U8(_) => builtin_ids::U8(),
+                    IntKind::I32(_) => builtin_ids::I32(),
+                    IntKind::U32(_) => builtin_ids::U32(),
+                    IntKind::I64(_) => builtin_ids::I64(),
+                    IntKind::U64(_) => builtin_ids::U64(),
                 };
-                Some(Ty::Con(Name::new(name), Kind::Star))
+                Some(Ty::Con(id, Kind::Star))
             }
 
-            Expr::Str(_) => Some(Ty::Con(Name::new_static("Str"), Kind::Star)),
+            Expr::Str(_) => Some(Ty::str()),
 
-            Expr::Char(_) => Some(Ty::Con(Name::new_static("Char"), Kind::Star)),
+            Expr::Char(_) => Some(Ty::char()),
 
             Expr::Is(_)
             | Expr::BinOp(BinOpExpr {
                 op: BinOp::And | BinOp::Or,
                 ..
-            }) => Some(Ty::Con(Name::new_static("Bool"), Kind::Star)),
+            }) => Some(Ty::bool()),
 
             // Rest of the expressions will be desugared by the type checker.
             Expr::BinOp(_) | Expr::UnOp(_) | Expr::Seq { .. } => None,

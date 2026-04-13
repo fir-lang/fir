@@ -1,6 +1,7 @@
 use crate::ast::{self, AssignOp, Name};
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::expr::check_expr;
+use crate::type_checker::id::{self, Id};
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
@@ -77,7 +78,14 @@ fn check_stmt(
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
             let pat_expected_ty = ty
                 .as_ref()
-                .map(|ast_ty| convert_ast_ty(&tc_state.tys.tys, &ast_ty.node, &ast_ty.loc))
+                .map(|ast_ty| {
+                    convert_ast_ty(
+                        &tc_state.tys.tys,
+                        tc_state.module_env,
+                        &ast_ty.node,
+                        &ast_ty.loc,
+                    )
+                })
                 .unwrap_or_else(|| Ty::UVar(tc_state.var_gen.new_var(Kind::Star, lhs.loc.clone())));
 
             tc_state.env.enter();
@@ -192,7 +200,7 @@ fn check_stmt(
                                     panic!(
                                         "{}: Type {} does not have field {}",
                                         loc_display(&lhs.loc),
-                                        con,
+                                        con.name(),
                                         field
                                     )
                                 })
@@ -204,18 +212,13 @@ fn check_stmt(
                                     panic!(
                                         "{}: Type {} does not have field {}",
                                         loc_display(&lhs.loc),
-                                        con,
+                                        con.name(),
                                         field
                                     )
                                 })
                         }
 
-                        Ty::Anonymous {
-                            labels: _,
-                            extension: _,
-                            record_or_variant: RecordOrVariant::Record,
-                            is_row,
-                        } => {
+                        Ty::Record { is_row, .. } => {
                             assert!(!(*is_row));
                             panic!(
                                 "{}: Records are value types and can't be updated",
@@ -299,7 +302,7 @@ fn check_stmt(
             // pattern type (when available) or a fresh type variable.
             let item_ty = item_ast_ty
                 .as_ref()
-                .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                .map(|ty| convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc))
                 .unwrap_or_else(|| {
                     Ty::UVar(tc_state.var_gen.new_var(Kind::Star, expr.loc.clone()))
                 });
@@ -308,7 +311,7 @@ fn check_stmt(
             // needed so the for-loop body can use fields/methods on the item type.
             let assoc_ty_select = Ty::AssocTySelect {
                 ty: Box::new(Ty::App(
-                    Name::new_static("Iterator"),
+                    id::builtins::ITERATOR(),
                     vec![iter_ty.clone(), tc_state.exceptions.clone()],
                     Kind::Star,
                 )),
@@ -340,7 +343,7 @@ fn check_stmt(
 
             // Add predicate `Iterator[iter, exn], Iterator[iter, exn].Item = item`.
             tc_state.preds.push(Pred {
-                trait_: Name::new_static("Iterator"),
+                trait_: id::builtins::ITERATOR(),
                 params: vec![iter_ty.clone(), tc_state.exceptions.clone()],
                 assoc_ty: Some((Name::new_static("Item"), item_ty.clone())),
                 loc: stmt.loc.clone(),
@@ -424,7 +427,7 @@ fn check_stmt(
                                                             args: vec![iter_ty.clone()],
                                                         },
                                                         ret: Box::new(Ty::App(
-                                                            Name::new_static("Option"),
+                                                            id::builtins::OPTION(),
                                                             vec![item_ty.clone()],
                                                             Kind::Star,
                                                         )),
@@ -449,7 +452,7 @@ fn check_stmt(
                                             }],
                                             splice: None,
                                             inferred_ty: Some(Ty::App(
-                                                Name::new_static("Option"),
+                                                id::builtins::OPTION(),
                                                 vec![pat_ty.clone()],
                                                 Kind::Star,
                                             )),
@@ -465,7 +468,7 @@ fn check_stmt(
                                                 user_ty_args: vec![],
                                                 ty_args: vec![item_ty.clone()],
                                                 inferred_ty: Some(Ty::App(
-                                                    Name::new_static("Option"),
+                                                    id::builtins::OPTION(),
                                                     vec![item_ty.clone()],
                                                     Kind::Star,
                                                 )),
@@ -521,7 +524,7 @@ fn check_stmt(
 
 fn select_field_for_assignment(
     tc_state: &mut TcFunState,
-    ty_con: &Name,
+    ty_con_id: &Id,
     ty_args: &[Ty],
     field: &Name,
     loc: &ast::Loc,
@@ -529,8 +532,8 @@ fn select_field_for_assignment(
     let ty_con = tc_state
         .tys
         .tys
-        .get_con(ty_con)
-        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con));
+        .get_con(ty_con_id)
+        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con_id));
 
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 

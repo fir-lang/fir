@@ -1,11 +1,11 @@
 #[NoImplicitPrelude]
 import []
 
-prim type I32
+type Type1
 
 type T[a](field: a)
 
-test() T[I32]:
-    T(field = 123)
+test() T[Type1]:
+    T(field = Type1)
 
 # args: --typecheck

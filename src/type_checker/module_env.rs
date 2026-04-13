@@ -7,7 +7,6 @@ use crate::type_checker::id::Id;
 
 /// For each module in the program, generate the module environment that maps the names that can be
 /// used in the module to their definitions.
-#[allow(unused)]
 pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name, Id>> {
     let mut envs: HashMap<ModulePath, HashMap<Name, Id>> = Default::default();
 
@@ -45,10 +44,12 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
                         }
 
                         ast::TopDecl::Fun(fun_decl) => {
-                            env.insert(
-                                fun_decl.node.name.node.clone(),
-                                Id::new(module_path, &fun_decl.node.name.node),
-                            );
+                            if fun_decl.node.parent_ty.is_none() {
+                                env.insert(
+                                    fun_decl.node.name.node.clone(),
+                                    Id::new(module_path, &fun_decl.node.name.node),
+                                );
+                            }
                         }
 
                         ast::TopDecl::Import(_) | ast::TopDecl::Impl(_) => {}

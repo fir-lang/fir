@@ -4,16 +4,14 @@ import []
 trait Test[t1, t2]:
     test(self: t1) t2
 
-impl Test[U32, U32]:
-    test(self: U32) U32:
+type Type1
+
+impl Test[Type1, Type1]:
+    test(self: Type1) Type1:
         self
 
 main():
-    let x: U32 = u32(123).test()
-
-u32(i: U32) U32: i
-prim type Str
-prim type U32
-prim printStr(s: Str)
+    let t1 = Type1
+    let x: Type1 = t1.test()
 
 # args: --typecheck
