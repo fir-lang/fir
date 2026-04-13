@@ -913,12 +913,17 @@ FieldSelExpr.format(self: FmtFieldSelExpr, tokens: Array[Token]) Doc:
 
 
 AssocFnSelExpr.format(self: FmtAssocFnSelExpr, tokens: Array[Token]) Doc:
+    let prefixDoc = match self.modPrefix:
+        Option.Some(prefix): formatToken(prefix, tokens)
+        Option.None: Doc.empty()
+
     let dot = nextNonTrivia(self.ty.token, tokens).unwrap()
     assert(tokens.get(dot.idx).kind is TokenKind.Dot)
 
     Doc.nested(
         4,
-        formatToken(self.ty.token, tokens)
+        prefixDoc
+            + formatToken(self.ty.token, tokens)
             + Doc.break_(0)
             + formatToken(dot, tokens)
             + formatToken(self.member.token, tokens)

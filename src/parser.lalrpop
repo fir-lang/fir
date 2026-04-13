@@ -792,8 +792,9 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>
         match expr {
-            Expr::ConSel(Con { mod_prefix: _, ty: id, con: None, user_ty_args: ty_user_ty_args, ty_args: _, inferred_ty: _ }) =>
+            Expr::ConSel(Con { mod_prefix, ty: id, con: None, user_ty_args: ty_user_ty_args, ty_args: _, inferred_ty: _ }) =>
                 Expr::AssocFnSel(AssocFnSelExpr {
+                    mod_prefix,
                     ty: id,
                     ty_user_ty_args,
                     member: field.name(),

@@ -657,6 +657,7 @@ impl Expr {
             }
 
             Expr::AssocFnSel(AssocFnSelExpr {
+                mod_prefix,
                 ty,
                 ty_user_ty_args,
                 member,
@@ -664,6 +665,7 @@ impl Expr {
                 ty_args,
                 inferred_ty: _,
             }) => {
+                print_mod_prefix(mod_prefix, buf);
                 buf.push_str(ty);
                 print_user_ty_args(ty_user_ty_args, buf);
                 buf.push('.');
