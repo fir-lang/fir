@@ -1274,13 +1274,6 @@ impl Ty {
             | Ty::AssocTySelect { .. } => None,
         }
     }
-
-    pub(super) fn is_void(&self) -> bool {
-        match self {
-            Ty::Con(con, _) => con.name() == &Name::new_static("Void"),
-            _ => false,
-        }
-    }
 }
 
 impl PartialOrd for UVar {

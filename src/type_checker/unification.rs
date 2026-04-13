@@ -17,14 +17,7 @@ pub(super) fn unify(
     preds: &mut Vec<Pred>,
 ) {
     let ty1 = ty1.deep_normalize(cons, trait_env, var_gen, assumps);
-    if ty1.is_void() {
-        return;
-    }
-
     let ty2 = ty2.deep_normalize(cons, trait_env, var_gen, assumps);
-    if ty2.is_void() {
-        return;
-    }
 
     if ty1.kind() != ty2.kind() {
         panic!(
