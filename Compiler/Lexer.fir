@@ -829,6 +829,50 @@ Lexer._nextInit(self) Option[Token] / Error:
                 and _isIdCont(self._input.charAt(endIdx)):
             endIdx += 1
             self._col += 1
+
+        if uppercaseId:
+            # (UpperId "/")*
+            let idEnd = endIdx      # end of current tentative `UpperId`
+            let committed = endIdx  # end of confirmed prefix (initially: no prefix)
+            loop:
+                # Is the current UpperId followed by `/`?
+                if not (idEnd < self._input.len()
+                        and self._input.charAt(idEnd) == '/'):
+                    break
+
+                # Commit `UpperId/` to the prefix.
+                committed = idEnd + 1
+
+                # Check if another UpperId follows after the `/`.
+                let nextCaseIdx = committed
+                while nextCaseIdx < self._input.len()
+                        and self._input.charAt(nextCaseIdx) == '_':
+                    nextCaseIdx += 1
+                if nextCaseIdx < self._input.len()
+                        and self._input.charAt(nextCaseIdx).isAsciiUppercase():
+                    # Scan the next UpperId and loop to check if it too has `/`.
+                    idEnd = committed + 1
+                    while idEnd < self._input.len()
+                            and _isIdCont(self._input.charAt(idEnd)):
+                        idEnd += 1
+                    continue
+                else:
+                    break
+
+            if committed != endIdx:
+                let prefixText = self._input.substr(self._byteIdx, committed)
+                self._col += committed - endIdx
+                self._byteIdx = committed
+                return Option.Some(
+                    Token(
+                        kind = TokenKind.ModulePrefix,
+                        text = prefixText,
+                        byteIdx,
+                        line,
+                        col,
+                    ),
+                )
+
         let id = self._input.substr(self._byteIdx, endIdx)
         let kind = if uppercaseId:
             TokenKind.UpperId
@@ -1102,6 +1146,10 @@ Lexer._tryInt(self) Option[Token] / exn:
         )
 
     Option.None
+
+
+_isIdStartChar(c: Char) Bool:
+    c.isAsciiUppercase() or c.isAsciiLowercase() or c == '_'
 
 
 _isIdCont(c: Char) Bool:
