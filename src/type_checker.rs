@@ -41,7 +41,7 @@ pub struct PgmTypes {
     /// Type schemes of top-level functions.
     ///
     /// These functions don't take a `self` parameter and can't be called as methods.
-    pub top_schemes: HashMap<Name, Scheme>,
+    pub top_schemes: HashMap<Id, Scheme>,
 
     /// Type schemes of associated functions.
     ///
@@ -94,10 +94,16 @@ pub(crate) fn check_pgm(pgm: &mut LoadedPgm, main: &str) -> PgmTypes {
     tys
 }
 
-pub(crate) fn check_main_type(tys: &PgmTypes, trait_env: &TraitEnv, main: &str) {
+pub(crate) fn check_main_type(
+    tys: &PgmTypes,
+    trait_env: &TraitEnv,
+    main_module: &ModulePath,
+    main: &str,
+) {
+    let main_id = Id::new(main_module, &Name::from(main));
     let main_scheme = tys
         .top_schemes
-        .get(main)
+        .get(&main_id)
         .unwrap_or_else(|| panic!("Main function `{main}` is not defined."));
 
     if !main_scheme.quantified_vars.is_empty() || !main_scheme.preds.is_empty() {
@@ -1014,11 +1020,11 @@ fn collect_schemes(
     tys: &mut TyMap,
     module_envs: &HashMap<ModulePath, ModuleEnv>,
 ) -> (
-    HashMap<Name, Scheme>,              // top schemes
+    HashMap<Id, Scheme>,                // top schemes
     HashMap<Id, HashMap<Name, Scheme>>, // associated fn schemes
     HashMap<Name, Vec<(Id, Scheme)>>,   // method schemes (method name -> type id -> scheme)
 ) {
-    let mut top_schemes: HashMap<Name, Scheme> = Default::default();
+    let mut top_schemes: HashMap<Id, Scheme> = Default::default();
     let mut associated_fn_schemes: HashMap<Id, HashMap<Name, Scheme>> = Default::default();
     let mut method_schemes: HashMap<Name, Vec<(Id, Scheme)>> = Default::default();
 
@@ -1336,7 +1342,8 @@ fn collect_schemes(
                         }
                     }
                     None => {
-                        let old = top_schemes.insert(name.node.clone(), scheme);
+                        let id = resolve_name(module_env, &name.node);
+                        let old = top_schemes.insert(id, scheme);
                         if old.is_some() {
                             panic!(
                                 "{}: {} is defined multiple times",

@@ -181,7 +181,7 @@ mod native {
             return;
         }
 
-        type_checker::check_main_type(&tys, &Default::default(), &opts.main);
+        type_checker::check_main_type(&tys, &Default::default(), &loaded_pgm.entry, &opts.main);
 
         type_checker::expand_type_synonyms(&mut loaded_pgm);
 

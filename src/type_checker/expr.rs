@@ -68,8 +68,11 @@ pub(super) fn check_expr(
                 );
             }
 
-            let scheme = match tc_state.tys.top_schemes.get(var) {
-                Some(scheme) => scheme,
+            let scheme = match tc_state.module_env.get(var) {
+                Some(var_id) => match tc_state.tys.top_schemes.get(var_id) {
+                    Some(scheme) => scheme,
+                    None => panic!("{}: Unbound variable {}", loc_display(loc), var),
+                },
                 None => panic!("{}: Unbound variable {}", loc_display(loc), var),
             };
 
