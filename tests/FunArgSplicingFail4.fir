@@ -6,4 +6,4 @@ main():
     print(p.x)
 
 # expected exit status: 101
-# expected stderr: BUG: Duplicate label in anonymous type (x: U32, ..row(x: U32, y: U32))
+# expected stderr: BUG: Duplicate label in record type (x: U32, ..row(x: U32, y: U32))
