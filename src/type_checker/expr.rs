@@ -367,7 +367,7 @@ pub(super) fn check_expr(
             let scheme = tc_state
                 .tys
                 .associated_fn_schemes
-                .get(ty)
+                .get(&ty_id)
                 .and_then(|fn_map| fn_map.get(member))
                 .unwrap_or_else(|| {
                     // Types without associated functions are not in the `associated_fn_schemes`, so

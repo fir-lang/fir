@@ -46,7 +46,7 @@ pub struct PgmTypes {
     /// Type schemes of associated functions.
     ///
     /// These include methods (associated functions with a `self` parameter).
-    pub associated_fn_schemes: HashMap<Name, HashMap<Name, Scheme>>,
+    pub associated_fn_schemes: HashMap<Id, HashMap<Name, Scheme>>,
 
     /// Type schemes of methods.
     ///
@@ -1014,12 +1014,12 @@ fn collect_schemes(
     tys: &mut TyMap,
     module_envs: &HashMap<ModulePath, ModuleEnv>,
 ) -> (
-    HashMap<Name, Scheme>,                // top schemes
-    HashMap<Name, HashMap<Name, Scheme>>, // associated fn schemes
-    HashMap<Name, Vec<(Id, Scheme)>>,     // method schemes (method name -> type id -> scheme)
+    HashMap<Name, Scheme>,              // top schemes
+    HashMap<Id, HashMap<Name, Scheme>>, // associated fn schemes
+    HashMap<Name, Vec<(Id, Scheme)>>,   // method schemes (method name -> type id -> scheme)
 ) {
     let mut top_schemes: HashMap<Name, Scheme> = Default::default();
-    let mut associated_fn_schemes: HashMap<Name, HashMap<Name, Scheme>> = Default::default();
+    let mut associated_fn_schemes: HashMap<Id, HashMap<Name, Scheme>> = Default::default();
     let mut method_schemes: HashMap<Name, Vec<(Id, Scheme)>> = Default::default();
 
     // Unique variable generator, used in substitutions to rename domain variables before
@@ -1212,7 +1212,7 @@ fn collect_schemes(
                     }
 
                     associated_fn_schemes
-                        .entry(trait_decl.node.name.node.clone())
+                        .entry(resolve_name(module_env, &trait_decl.node.name.node))
                         .or_default()
                         .insert(fun.node.name.node.clone(), scheme);
                 }
@@ -1322,7 +1322,7 @@ fn collect_schemes(
                         }
 
                         let old = associated_fn_schemes
-                            .entry(parent_ty.node.clone())
+                            .entry(resolve_name(module_env, &parent_ty.node))
                             .or_default()
                             .insert(name.node.clone(), scheme);
 
