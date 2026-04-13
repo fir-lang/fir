@@ -1235,14 +1235,14 @@ fn collect_schemes(
                 loc,
             }) => {
                 // Check that `parent_ty` exists.
-                if let Some(parent_ty) = parent_ty {
-                    if module_env.get(&parent_ty.node).is_none() {
-                        panic!(
-                            "{}: Unknown type {}",
-                            loc_display(&decl.loc),
-                            &parent_ty.node
-                        );
-                    }
+                if let Some(parent_ty) = parent_ty
+                    && module_env.get(&parent_ty.node).is_none()
+                {
+                    panic!(
+                        "{}: Unknown type {}",
+                        loc_display(&decl.loc),
+                        &parent_ty.node
+                    );
                 }
 
                 let fun_preds: Vec<Pred> = convert_and_bind_context(
