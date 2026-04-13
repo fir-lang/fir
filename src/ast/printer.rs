@@ -359,7 +359,7 @@ impl Type {
                 for (
                     i,
                     NamedType {
-                        mod_prefix: _,
+                        mod_prefix,
                         name,
                         args,
                     },
@@ -368,6 +368,7 @@ impl Type {
                     if i != 0 {
                         buf.push_str(", ");
                     }
+                    print_mod_prefix(mod_prefix, buf);
                     buf.push_str(name);
                     if !args.is_empty() {
                         buf.push('(');
@@ -426,6 +427,7 @@ impl Type {
 
 impl NamedType {
     pub fn print(&self, buf: &mut String) {
+        print_mod_prefix(&self.mod_prefix, buf);
         buf.push_str(&self.name);
         if !self.args.is_empty() {
             buf.push('[');
@@ -611,12 +613,13 @@ impl Expr {
     pub fn print(&self, buf: &mut String, indent: u32) {
         match self {
             Expr::Var(VarExpr {
-                mod_prefix: _,
+                mod_prefix,
                 id,
                 user_ty_args,
                 ty_args,
                 inferred_ty: _,
             }) => {
+                print_mod_prefix(mod_prefix, buf);
                 buf.push_str(id);
                 print_user_ty_args(user_ty_args, buf);
                 print_ty_args(ty_args, buf);
@@ -1105,6 +1108,7 @@ impl Pat {
 
 impl Con {
     pub fn print(&self, buf: &mut String) {
+        print_mod_prefix(&self.mod_prefix, buf);
         buf.push_str(&self.ty);
         if let Some(con) = &self.con {
             buf.push('.');
@@ -1163,6 +1167,12 @@ fn print_user_ty_args(args: &[L<Type>], buf: &mut String) {
         ty.node.print(buf);
     }
     buf.push(']');
+}
+
+fn print_mod_prefix(mod_prefix: &Option<crate::module::ModulePath>, buf: &mut String) {
+    if let Some(path) = mod_prefix {
+        write!(buf, "{}/", path).unwrap();
+    }
 }
 
 fn print_ty_args(args: &[Ty], buf: &mut String) {
