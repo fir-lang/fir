@@ -140,7 +140,7 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
                     if item.module is Option.Some(module):
                         pathSegments.push(tokens.get(module.idx).text)
 
-                    imports.push(path)
+                    imports.push(pathSegments)
 
     let module = Module(
         _package = _defaultPackage(),
