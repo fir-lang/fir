@@ -681,6 +681,7 @@ fn mono_expr(
         }
 
         ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+            mod_prefix: _,
             ty,
             ty_user_ty_args: _,
             member,

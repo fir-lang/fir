@@ -1332,6 +1332,9 @@ impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[FieldSelExpr[exts]]:
 ## - Method: `Vec.push`.
 #[derive(ToDoc)]
 type AssocFnSelExpr[exts](
+    ## Module prefix, e.g. `Fir/Vec/` in `Fir/Vec/Vec.withCapacity`.
+    modPrefix: Option[TokenIdx],
+
     # The type of the associated function: `Vec` in the examples above.
     ty: AstTyId[exts],
 
@@ -1348,7 +1351,9 @@ type AssocFnSelExpr[exts](
 
 impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[AssocFnSelExpr[exts]]:
     firstToken(self: AssocFnSelExpr[exts], tokens: Array[Token]) TokenIdx:
-        self.ty.firstToken(tokens)
+        match self.modPrefix:
+            Option.Some(prefix): prefix
+            Option.None: self.ty.firstToken(tokens)
 
     lastToken(self: AssocFnSelExpr[exts], tokens: Array[Token]) TokenIdx:
         self._lastToken

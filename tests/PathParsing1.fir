@@ -8,6 +8,7 @@ main():
     let x = A/B/C.D     # constructor `C.D` in `A/B`
 
     let x: Fir/Vec[Fir/U32] = Vec.empty[Fir/Prim/U32]()
+    let x: Fir/Vec[Fir/U32] = Fir/Vec/Vec.empty[Fir/Prim/U32]()
 
 
 # args: --parse

@@ -329,6 +329,7 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+            mod_prefix: _,
             ty,
             ty_user_ty_args,
             member,
@@ -418,6 +419,7 @@ pub(super) fn check_expr(
                 }
 
                 *expr = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                    mod_prefix: None,
                     ty: ty.clone(),
                     ty_user_ty_args: vec![],
                     member: member.clone(),
@@ -443,6 +445,7 @@ pub(super) fn check_expr(
                     scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
 
                 *expr = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                    mod_prefix: None,
                     ty: ty.clone(),
                     ty_user_ty_args: vec![],
                     member: member.clone(),
@@ -690,6 +693,7 @@ pub(super) fn check_expr(
                 };
 
                 fun.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                    mod_prefix: None,
                     ty: method_ty_id.clone(),
                     ty_user_ty_args: vec![], // unused after type checking
                     member: method.clone(),
@@ -932,6 +936,7 @@ pub(super) fn check_expr(
                             fun: Box::new(ast::L {
                                 loc: loc.clone(),
                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                    mod_prefix: None,
                                     ty: Name::new_static("StrBuf"),
                                     ty_user_ty_args: vec![],
                                     member: Name::new_static("empty"),
@@ -959,6 +964,7 @@ pub(super) fn check_expr(
                         fun: Box::new(ast::L {
                             loc: loc.clone(),
                             node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                mod_prefix: None,
                                 ty: Name::new_static("StrBuf"),
                                 ty_user_ty_args: vec![],
                                 member: Name::new_static("pushStr"),
@@ -1030,6 +1036,7 @@ pub(super) fn check_expr(
                             fun: Box::new(ast::L {
                                 // ToStr.toStr[t, exn](self: t) Str / exn
                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                    mod_prefix: None,
                                     ty: Name::new_static("ToStr"),
                                     ty_user_ty_args: vec![],
                                     member: Name::new_static("toStr"),
@@ -1066,6 +1073,7 @@ pub(super) fn check_expr(
                     fun: Box::new(ast::L {
                         // ToStr.toStr[t, exn](self: t) Str / exn
                         node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                            mod_prefix: None,
                             ty: Name::new_static("ToStr"),
                             ty_user_ty_args: vec![],
                             member: Name::new_static("toStr"),
@@ -1256,6 +1264,7 @@ pub(super) fn check_expr(
                     fun: Box::new(ast::L {
                         loc: arg.loc.clone(),
                         node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                            mod_prefix: None,
                             ty: Name::new_static("Bool"),
                             ty_user_ty_args: vec![],
                             member: Name::new_static("__not"),
@@ -1657,6 +1666,7 @@ pub(super) fn check_expr(
                     let field_sel_expr = ast::L {
                         loc: loc.clone(),
                         node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                            mod_prefix: None,
                             ty: iter_ty,
                             ty_user_ty_args: vec![],
                             member: Name::new_static("fromIter"),
@@ -1685,6 +1695,7 @@ pub(super) fn check_expr(
                                 let field_select_expr = ast::L {
                                     loc: loc.clone(),
                                     node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                        mod_prefix: None,
                                         ty: con,
                                         ty_user_ty_args: vec![],
                                         member: Name::new_static("fromIter"),

@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: 581a7d1da0f72ff47c91ce6b43fc2558bf5cbb6da8af28dee5312534ae9173eb
+// sha3: 1e96fb6c80113a2d6e66098027cfdc30485b89f94857c636a2b9c14a1ba29229
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -56233,13 +56233,14 @@ fn __action114<'a>(
 ) -> Expr {
     match expr {
         Expr::ConSel(Con {
-            mod_prefix: _,
+            mod_prefix,
             ty: id,
             con: None,
             user_ty_args: ty_user_ty_args,
             ty_args: _,
             inferred_ty: _,
         }) => Expr::AssocFnSel(AssocFnSelExpr {
+            mod_prefix,
             ty: id,
             ty_user_ty_args,
             member: field.name(),

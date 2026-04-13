@@ -410,6 +410,7 @@ fn check_stmt(
                                                 loc: expr.loc.clone(),
                                                 // Iterator.next[iter, exn](self: iter) Option[Iterator[iter, exn].Item] / exn
                                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                                                    mod_prefix: None,
                                                     ty: Name::new_static("Iterator"),
                                                     ty_user_ty_args: vec![],
                                                     member: Name::new_static("next"),

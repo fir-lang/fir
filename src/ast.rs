@@ -719,6 +719,10 @@ pub struct MethodSelExpr {
 /// - Method: `Vec.push`.
 #[derive(Debug, Clone)]
 pub struct AssocFnSelExpr {
+    /// Module prefix of the type constructor. E.g. in `Fir/Vec/Vec[U32].withCapacity`,
+    /// `Fir/Vec/` part.
+    pub mod_prefix: Option<ModulePath>,
+
     /// The type: `Vec` in the examples.
     pub ty: Name,
 
@@ -1224,6 +1228,7 @@ impl Expr {
             }
 
             Expr::AssocFnSel(AssocFnSelExpr {
+                mod_prefix: _,
                 ty: _,
                 ty_user_ty_args,
                 member: _,
