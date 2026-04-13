@@ -1,5 +1,4 @@
-use smol_str::SmolStr;
-
+use crate::collections::*;
 use crate::module::ModulePath;
 use crate::name::Name;
 
@@ -42,6 +41,8 @@ impl Id {
 #[allow(non_snake_case, dead_code)]
 pub mod builtins {
     use super::*;
+
+    use smol_str::SmolStr;
 
     fn fir_id(module: &'static str, name: &'static str) -> Id {
         Id {
@@ -208,4 +209,66 @@ pub mod builtins {
     pub fn LIST() -> Id {
         fir_id("List", "List")
     }
+}
+
+/// Mangles `Id`s for code generation purposes.
+#[derive(Debug)]
+pub struct IdMangler {
+    // Values here are `Name`s instead of `u32`s to avoid creating a new string on every lookup.
+    // (`Name` is O(1) to clone)
+    mangled: HashMap<Name, HashMap<ModulePath, Name>>,
+}
+
+impl IdMangler {
+    pub fn new() -> IdMangler {
+        IdMangler {
+            mangled: Default::default(),
+        }
+    }
+
+    pub fn mangle(&mut self, id: &Id) -> Name {
+        let name_map = self.mangled.entry(id.name.clone()).or_default();
+        let num_names = name_map.len() as u32;
+        match name_map.entry(id.module.clone()) {
+            Entry::Occupied(entry) => entry.get().clone(),
+            Entry::Vacant(entry) => {
+                if num_names == 0 {
+                    entry.insert(id.name.clone()).clone()
+                } else {
+                    let str = Name::new(format!("{}${}", id.name, num_names));
+                    entry.insert(str.clone());
+                    str
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn mangler_test() {
+    let mut mangler = IdMangler::new();
+
+    assert_eq!(
+        mangler.mangle(&Id::new(
+            &ModulePath::new(vec!["A".into(), "B".into()]),
+            &Name::new("T")
+        )),
+        Name::new("T")
+    );
+
+    assert_eq!(
+        mangler.mangle(&Id::new(
+            &ModulePath::new(vec!["A".into(), "C".into()]),
+            &Name::new("T")
+        )),
+        Name::new("T$1")
+    );
+
+    assert_eq!(
+        mangler.mangle(&Id::new(
+            &ModulePath::new(vec!["A".into(), "B".into()]),
+            &Name::new("T")
+        )),
+        Name::new("T")
+    );
 }
