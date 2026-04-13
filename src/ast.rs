@@ -874,30 +874,26 @@ pub struct ImportDecl {
 
 /// A single import item in an `import [...]` list. Examples:
 ///
-/// - `A/B/C` imports `A/B/C` as module. Imported definitions used with `C/...` prefix.
-/// - `A/B/C/*` imports `A/B/C`. Imported definitions used directly, without any prefix.
+/// - `A/B/C` imports everything from `A/B/C`. Imported definitions used directly, without prefix.
 /// - `A/B/C as D` imports `A/B/C` as module, with name `D`. Imported definitions used with `D/...`
 ///   prefix.
 /// - `A/B/C/[f1, Type1]` imports listed things from `A/B/C`. Imported definitions used directly.
 /// - `A/B/C/[f1 as _f1, Type1 as Type2]` imports listed things with different names.
-///
-/// So an item has (1) a path (`A/B/C` in the examples), then an optional imported item list or `*`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportItem {
     /// `A/B/C` in the examples.
     pub path: ModulePath,
 
-    /// Specifies that to import, and how, from the `path`.
-    pub import_spec: ImportSpec,
+    /// Specifies what to import, and how, from the `path`.
+    ///
+    /// If not available, everything exported from the module is imported and used directly (without
+    /// prefix or renaming).
+    pub import_spec: Option<ImportSpec>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ImportSpec {
-    /// `*`: import everything.
-    Wildcard,
-
     /// Import the module with a prefix. E.g.
-    /// - `A/B/C`: prefix = `C`.
     /// - `A/B/C as D`: prefix = `D`.
     Prefixed { prefix: SmolStr },
 

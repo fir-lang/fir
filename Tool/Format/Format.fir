@@ -586,13 +586,9 @@ ImportItem.format(self, tokens: Array[Token]) (doc: Doc, lastToken: TokenIdx):
     let lastToken = lastToken.unwrap()
 
     match self.importSpec:
-        ImportSpec.Wildcard:
-            let star = nextNonTrivia(lastToken, tokens).unwrap()
-            assert(tokens.get(star.idx).kind is TokenKind.Star)
-            doc += formatToken(star, tokens)
-            lastToken = star
+        Option.None: ()
 
-        ImportSpec.Prefixed(prefix):
+        Option.Some(ImportSpec.Prefixed(prefix)):
             if prefix is Option.Some(prefix):
                 let as_ = prevNonTrivia(prefix.token, tokens).unwrap()
                 assert(tokens.get(as_.idx).kind is TokenKind.As)
@@ -602,7 +598,7 @@ ImportItem.format(self, tokens: Array[Token]) (doc: Doc, lastToken: TokenIdx):
                     + formatToken(prefix.token, tokens)
                 lastToken = prefix.token
 
-        ImportSpec.Selective(names):
+        Option.Some(ImportSpec.Selective(names)):
             let lbracket = nextNonTrivia(lastToken, tokens).unwrap()
             assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 

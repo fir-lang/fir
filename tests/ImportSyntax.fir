@@ -5,14 +5,14 @@
 import [
     Fir/Prelude,
     Fir/Prelude as P,
-    Fir/Prelude/*,
     Fir/Prelude/[min, max, Option, Result],
     Fir/Prelude/[
         min as _min,
         max as _max,
         Option as MyOption,
-        Result as MyResult
+        Result as MyResult,
     ],
 ]
+
 
 # args: --parse

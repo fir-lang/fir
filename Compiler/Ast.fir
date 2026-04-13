@@ -351,11 +351,8 @@ type ImportDecl[exts](
 
 ## A single import item in an `import [...]` list. Examples:
 ##
-## - `A/B/C` imports `A/B/C` as module. Imported definitions used with `C/...`
-##   prefix.
-##
-## - `A/B/C/*` imports `A/B/C`. Imported definitions used directly, without any
-##   prefix.
+## - `A/B/C` imports everything from `A/B/C`. Imported definitions used
+##   directly, without prefix.
 ##
 ## - `A/B/C as D` imports `A/B/C` as module, with name `D`. Imported definitions
 ##   used with `D/...` prefix.
@@ -377,7 +374,10 @@ type ImportItem(
     module: Option[TokenIdx],
 
     ## What to import, and how, from the `path`.
-    importSpec: ImportSpec,
+    ##
+    ## If not available, everything exported from the module is imported and used
+    ## directly (without prefix or renaming).
+    importSpec: Option[ImportSpec],
 )
 
 
@@ -389,19 +389,14 @@ impl Tokens[ImportItem]:
 
     lastToken(self: ImportItem, tokens: Array[Token]) TokenIdx:
         match self.importSpec:
-            ImportSpec.Wildcard:
-                let pathToken = self.path.unwrap()
-                let lbracket = nextNonTrivia(pathToken, tokens).unwrap()
-                let star = nextNonTrivia(lbracket, tokens).unwrap()
-                assert(tokens.get(star.idx).kind is TokenKind.Star)
-                star
+            Option.None: self.module.unwrap()
 
-            ImportSpec.Prefixed(prefix):
+            Option.Some(ImportSpec.Prefixed(prefix)):
                 match prefix:
                     Option.Some(prefix): prefix.token
                     Option.None: self.module.unwrap()
 
-            ImportSpec.Selective(names):
+            Option.Some(ImportSpec.Selective(names)):
                 let lastName = names.last().unwrap()
                 let rbracket = match lastName.localName:
                     Option.Some(name):
@@ -415,11 +410,7 @@ impl Tokens[ImportItem]:
 
 #[derive(ToDoc)]
 type ImportSpec:
-    ## `*`: import everything.
-    Wildcard
-
     ## Import the module with a prefix. E.g.
-    ## - `A/B/C`: prefix = `Option.None`.
     ## - `A/B/C as D`: prefix = `Option.Some(D)`.
     Prefixed(
         prefix: Option[Id],

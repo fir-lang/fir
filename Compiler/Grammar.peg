@@ -977,15 +977,6 @@ importDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] ImportDecl[exts]:
 
 
 importItem ImportItem:
-    # Fir/*
-    # Fir/Prelude/*
-    path=^ "ModulePrefix" "*":
-        ImportItem(
-            path = Option.Some(TokenIdx(idx = path)),
-            module = Option.None,
-            importSpec = ImportSpec.Wildcard
-        )
-
     # Fir/[...]
     # Fir/Prelude/[...]
     path=^ "ModulePrefix" "[" name0=importName names=(_"," importName)* ","? "]":
@@ -993,7 +984,7 @@ importItem ImportItem:
         ImportItem(
             path = Option.Some(TokenIdx(idx = path)),
             module = Option.None,
-            importSpec = ImportSpec.Selective(names),
+            importSpec = Option.Some(ImportSpec.Selective(names)),
         )
 
     # Fir as F
@@ -1002,7 +993,7 @@ importItem ImportItem:
         ImportItem(
             path = pfx.map(\(pfx): TokenIdx(idx = path)),
             module = Option.Some(TokenIdx(idx = module)),
-            importSpec = ImportSpec.Prefixed(prefix = Option.Some(newId(renamed))),
+            importSpec = Option.Some(ImportSpec.Prefixed(prefix = Option.Some(newId(renamed)))),
         )
 
     # Fir
@@ -1011,7 +1002,7 @@ importItem ImportItem:
         ImportItem(
             path = pfx.map(\(pfx): TokenIdx(idx = path)),
             module = Option.Some(TokenIdx(idx = module)),
-            importSpec = ImportSpec.Prefixed(prefix = Option.None),
+            importSpec = Option.None,
         )
 
 

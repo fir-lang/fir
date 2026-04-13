@@ -503,11 +503,10 @@ mod tests {
         let pgm = indoc::indoc! {"
             import [
                 A,
-                A/*,
                 A/[f1, f2],
-                A/B/C/*,
-                A/B/D,
+                A/B/C,
                 A/B/D as E,
+                A as B,
                 A/B/D/[f1, f2, Type1, Type2],
                 A/B/D/[f1 as g1, f2, Type1 as MyType, Type2],
                 A/B/D/[f1 as _f1, Type1 as _Type1],
@@ -522,32 +521,22 @@ mod tests {
             TopDecl::Import(i) => &i.node,
             other => panic!("expected import, got {:?}", other),
         };
-        assert_eq!(import.items.len(), 9);
+        assert_eq!(import.items.len(), 8);
 
-        // 0: A
+        // 0: A (import everything)
         assert_eq!(
             import.items[0].path,
             ModulePath::new(vec![SmolStr::new_static("A")]),
         );
-        match &import.items[0].import_spec {
-            ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "A"),
-            other => panic!("expected Prefixed, got {:?}", other),
-        }
+        assert_eq!(import.items[0].import_spec, None);
 
-        // 1: A/*
+        // 1: A/[f1, f2]
         assert_eq!(
             import.items[1].path,
             ModulePath::new(vec![SmolStr::new_static("A")]),
         );
-        assert!(matches!(import.items[1].import_spec, ImportSpec::Wildcard));
-
-        // 2: A/[f1, f2]
-        assert_eq!(
-            import.items[2].path,
-            ModulePath::new(vec![SmolStr::new_static("A")]),
-        );
-        match &import.items[2].import_spec {
-            ImportSpec::Selective { names } => {
+        match &import.items[1].import_spec {
+            Some(ImportSpec::Selective { names }) => {
                 assert_eq!(names.len(), 2);
                 assert_eq!(names[0].original_name, "f1");
                 assert_eq!(names[1].original_name, "f2");
@@ -555,32 +544,42 @@ mod tests {
             other => panic!("expected Selective, got {:?}", other),
         }
 
-        // 3: A/B/C/*
+        // 2: A/B/C (import everything)
         assert_eq!(
-            import.items[3].path,
+            import.items[2].path,
             ModulePath::new(vec![
                 SmolStr::new_static("A"),
                 SmolStr::new_static("B"),
                 SmolStr::new_static("C")
             ])
         );
-        assert!(matches!(import.items[3].import_spec, ImportSpec::Wildcard));
+        assert_eq!(import.items[2].import_spec, None);
 
-        // 4: A/B/D (default prefix D)
+        // 3: A/B/D as E
         assert_eq!(
-            import.items[4].path,
+            import.items[3].path,
             ModulePath::new(vec![
                 SmolStr::new_static("A"),
                 SmolStr::new_static("B"),
                 SmolStr::new_static("D")
             ])
         );
-        match &import.items[4].import_spec {
-            ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "D"),
+        match &import.items[3].import_spec {
+            Some(ImportSpec::Prefixed { prefix }) => assert_eq!(prefix, "E"),
             other => panic!("expected Prefixed, got {:?}", other),
         }
 
-        // 5: A/B/D as E
+        // 4: A as B
+        assert_eq!(
+            import.items[4].path,
+            ModulePath::new(vec![SmolStr::new_static("A")]),
+        );
+        match &import.items[4].import_spec {
+            Some(ImportSpec::Prefixed { prefix }) => assert_eq!(prefix, "B"),
+            other => panic!("expected Prefixed, got {:?}", other),
+        }
+
+        // 5: A/B/D/[f1, f2, Type1, Type2]
         assert_eq!(
             import.items[5].path,
             ModulePath::new(vec![
@@ -590,21 +589,7 @@ mod tests {
             ])
         );
         match &import.items[5].import_spec {
-            ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "E"),
-            other => panic!("expected Prefixed, got {:?}", other),
-        }
-
-        // 6: A/B/D/[f1, f2, Type1, Type2]
-        assert_eq!(
-            import.items[6].path,
-            ModulePath::new(vec![
-                SmolStr::new_static("A"),
-                SmolStr::new_static("B"),
-                SmolStr::new_static("D")
-            ])
-        );
-        match &import.items[6].import_spec {
-            ImportSpec::Selective { names } => {
+            Some(ImportSpec::Selective { names }) => {
                 assert_eq!(names.len(), 4);
                 assert_eq!(names[0].original_name, "f1");
                 assert_eq!(names[0].local_name, "f1");
@@ -613,9 +598,9 @@ mod tests {
             other => panic!("expected Selective, got {:?}", other),
         }
 
-        // 7: A/B/D/[f1 as g1, f2, Type1 as MyType, Type2]
-        match &import.items[7].import_spec {
-            ImportSpec::Selective { names } => {
+        // 6: A/B/D/[f1 as g1, f2, Type1 as MyType, Type2]
+        match &import.items[6].import_spec {
+            Some(ImportSpec::Selective { names }) => {
                 assert_eq!(names[0].original_name, "f1");
                 assert_eq!(names[0].local_name, "g1");
                 assert_eq!(names[1].original_name, "f2");
@@ -626,9 +611,9 @@ mod tests {
             other => panic!("expected Selective, got {:?}", other),
         }
 
-        // 8: A/B/D/[f1 as _f1, Type1 as _Type1]
-        match &import.items[8].import_spec {
-            ImportSpec::Selective { names } => {
+        // 7: A/B/D/[f1 as _f1, Type1 as _Type1]
+        match &import.items[7].import_spec {
+            Some(ImportSpec::Selective { names }) => {
                 assert_eq!(names[0].local_name, "_f1");
                 assert_eq!(names[1].local_name, "_Type1");
             }

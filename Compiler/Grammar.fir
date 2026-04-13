@@ -4963,30 +4963,6 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Star, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
-            let val = do:
-                ImportItem(
-                    path = Option.Some(TokenIdx(idx = path)),
-                    module = Option.None,
-                    importSpec = ImportSpec.Wildcard,
-                )
-            val,
-    )
-    match altResult:
-        Result.Err(err): state._cursor = cursor0
-        Result.Ok(val): return val
-    let altResult = try(
-        \():
-            let path = state.nextCursor()
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.ModulePrefix, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
-            if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.LBracket, ..):
                 state._cursor += 1
             else:
@@ -5034,7 +5010,7 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
                 ImportItem(
                     path = Option.Some(TokenIdx(idx = path)),
                     module = Option.None,
-                    importSpec = ImportSpec.Selective(names),
+                    importSpec = Option.Some(ImportSpec.Selective(names)),
                 )
             val,
     )
@@ -5084,8 +5060,10 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
                     path = pfx.map(\(pfx): TokenIdx(idx = path)),
                     module = Option.Some(TokenIdx(idx = module)),
                     importSpec =
-                        ImportSpec.Prefixed(
-                            prefix = Option.Some(newId(renamed))
+                        Option.Some(
+                            ImportSpec.Prefixed(
+                                prefix = Option.Some(newId(renamed))
+                            ),
                         ),
                 )
             val,
@@ -5124,7 +5102,7 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
                 ImportItem(
                     path = pfx.map(\(pfx): TokenIdx(idx = path)),
                     module = Option.Some(TokenIdx(idx = module)),
-                    importSpec = ImportSpec.Prefixed(prefix = Option.None),
+                    importSpec = Option.None,
                 )
             val,
     )

@@ -1,3 +1,4 @@
-import [Foo/Bar/*]
+import [Foo/Bar]
 
-# expected stdout: import [Foo/Bar/*]
+
+# expected stdout: import [Foo/Bar]

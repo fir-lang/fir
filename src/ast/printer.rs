@@ -179,16 +179,12 @@ impl ImportDecl {
             push_indent(buf, 4);
             buf.push_str(&item.path.to_string());
             match &item.import_spec {
-                ImportSpec::Wildcard => {
-                    buf.push_str("/*");
+                None => {}
+                Some(ImportSpec::Prefixed { prefix }) => {
+                    buf.push_str(" as ");
+                    buf.push_str(prefix);
                 }
-                ImportSpec::Prefixed { prefix } => {
-                    if Some(prefix) != item.path.segments().last() {
-                        buf.push_str(" as ");
-                        buf.push_str(prefix);
-                    }
-                }
-                ImportSpec::Selective { names } => {
+                Some(ImportSpec::Selective { names }) => {
                     buf.push_str("/[");
                     for (i, name) in names.iter().enumerate() {
                         if i != 0 {
