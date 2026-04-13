@@ -344,8 +344,9 @@ pub(super) fn check_expr(
             assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
+            let ty_id = tc_state.resolve(ty);
+
             if !ty_user_ty_args.is_empty() {
-                let ty_id = tc_state.resolve(ty);
                 let con = tc_state
                     .tys
                     .tys
@@ -367,15 +368,23 @@ pub(super) fn check_expr(
                 .tys
                 .associated_fn_schemes
                 .get(ty)
-                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty))
-                .get(member)
+                .and_then(|fn_map| fn_map.get(member))
                 .unwrap_or_else(|| {
-                    panic!(
-                        "{}: Type {} does not have associated function {}",
-                        loc_display(loc),
-                        ty,
-                        member
-                    )
+                    // Types without associated functions are not in the `associated_fn_schemes`, so
+                    // check whether the type exist.
+                    match tc_state.tys.tys.get_con(&ty_id) {
+                        Some(_) => {
+                            panic!(
+                                "{}: Type {} does not have associated function {}",
+                                loc_display(loc),
+                                ty,
+                                member
+                            );
+                        }
+                        None => {
+                            panic!("{}: Unknown type {}", loc_display(loc), ty);
+                        }
+                    }
                 });
 
             let ty_user_ty_args_converted: Vec<Ty> = ty_user_ty_args
