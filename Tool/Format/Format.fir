@@ -503,7 +503,7 @@ _formatSigArgList(
 ImportDecl.format(self: FmtImportDecl, tokens: Array[Token]) Doc:
     assert(not self.items.isEmpty())
 
-    let firstItemFirstToken = self.items.get(0).path.get(0).token
+    let firstItemFirstToken = self.items.get(0).firstToken(tokens)
     let lbracket = prevNonTrivia(firstItemFirstToken, tokens).unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
@@ -572,18 +572,18 @@ ImportDecl.format(self: FmtImportDecl, tokens: Array[Token]) Doc:
 
 ImportItem.format(self, tokens: Array[Token]) (doc: Doc, lastToken: TokenIdx):
     let doc = Doc.empty()
-    let lastToken = self.path.get(0).token
 
-    # Format the path tokens (`A/B/C`). For wildcard and selective specs the
-    # path is followed by a `/` which is consumed here as the trailing slash
-    # of the last `UpperId`.
-    for id: Id in self.path.iter():
-        lastToken = id.token
-        doc += formatToken(id.token, tokens)
-        if nextNonTrivia(id.token, tokens) is Option.Some(next)
-                and tokens.get(next.idx).kind is TokenKind.Slash:
-            lastToken = next
-            doc += formatToken(next, tokens)
+    let lastToken: Option[TokenIdx] = Option.None
+
+    if self.path is Option.Some(path):
+        doc += formatToken(path, tokens)
+        lastToken = Option.Some(path)
+
+    if self.module is Option.Some(module):
+        doc += formatToken(module, tokens)
+        lastToken = Option.Some(module)
+
+    let lastToken = lastToken.unwrap()
 
     match self.importSpec:
         ImportSpec.Wildcard:
@@ -593,14 +593,11 @@ ImportItem.format(self, tokens: Array[Token]) (doc: Doc, lastToken: TokenIdx):
             lastToken = star
 
         ImportSpec.Prefixed(prefix):
-            # When the prefix is the default (last segment of the path) the
-            # parser stores the same token, so there's no `as` clause to print.
-            let lastPathToken = self.path.last().unwrap().token
-            if prefix.token.idx != lastPathToken.idx:
-                let asKw = nextNonTrivia(lastToken, tokens).unwrap()
-                assert(tokens.get(asKw.idx).kind is TokenKind.As)
+            if prefix is Option.Some(prefix):
+                let as_ = prevNonTrivia(prefix.token, tokens).unwrap()
+                assert(tokens.get(as_.idx).kind is TokenKind.As)
                 doc += Doc.blank(1)
-                    + formatToken(asKw, tokens)
+                    + formatToken(as_, tokens)
                     + Doc.blank(1)
                     + formatToken(prefix.token, tokens)
                 lastToken = prefix.token
@@ -621,14 +618,14 @@ ImportItem.format(self, tokens: Array[Token]) (doc: Doc, lastToken: TokenIdx):
                 listDoc += formatToken(name.originalName.token, tokens)
                 listLastToken = name.originalName.token
 
-                if name.originalName.token.idx != name.localName.token.idx:
+                if name.localName is Option.Some(localName):
                     let asKw = nextNonTrivia(listLastToken, tokens).unwrap()
                     assert(tokens.get(asKw.idx).kind is TokenKind.As)
                     listDoc += Doc.blank(1)
                         + formatToken(asKw, tokens)
                         + Doc.blank(1)
-                        + formatToken(name.localName.token, tokens)
-                    listLastToken = name.localName.token
+                        + formatToken(localName.token, tokens)
+                    listLastToken = localName.token
 
                 if nextNonTrivia(listLastToken, tokens) is Option.Some(next)
                         and tokens.get(next.idx).kind is TokenKind.Comma:
@@ -846,11 +843,21 @@ Expr.format(self: FmtExpr, tokens: Array[Token]) Doc:
 
 
 VarExpr.format(self: FmtVarExpr, tokens: Array[Token]) Doc:
-    formatToken(self.id.token, tokens) + formatTyArgs(self.userTyArgs, tokens)
+    let doc = match self.modPrefix:
+        Option.Some(prefix): formatToken(prefix, tokens)
+        Option.None: Doc.empty()
+
+    doc
+        + formatToken(self.id.token, tokens)
+        + formatTyArgs(self.userTyArgs, tokens)
 
 
 Con.format(self: FmtCon, tokens: Array[Token]) Doc:
-    let doc = formatToken(self.ty.token, tokens)
+    let doc = match self.modPrefix:
+        Option.Some(prefix): formatToken(prefix, tokens)
+        Option.None: Doc.empty()
+
+    doc += formatToken(self.ty.token, tokens)
 
     if self.con is Option.Some(con):
         let dot = nextNonTrivia(self.ty.token, tokens).unwrap()

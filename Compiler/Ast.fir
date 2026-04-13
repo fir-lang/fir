@@ -367,12 +367,50 @@ type ImportDecl[exts](
 ##   names.
 #[derive(ToDoc)]
 type ImportItem(
-    ## `A/B/C` in the examples.
-    path: Vec[Id],
+    ## The `ModulePrefix` token, specifying the path of the module being
+    ## imported.
+    ## E.g. in `import [Fir/Prelude/Vec]`, this is the token `Fir/Prelude/`.
+    ## `Vec` is the `module`.
+    path: Option[TokenIdx],
+
+    ## The module name after the path.
+    module: Option[TokenIdx],
 
     ## What to import, and how, from the `path`.
     importSpec: ImportSpec,
 )
+
+
+impl Tokens[ImportItem]:
+    firstToken(self: ImportItem, tokens: Array[Token]) TokenIdx:
+        if self.path is Option.Some(token):
+            return token
+        self.module.unwrap()
+
+    lastToken(self: ImportItem, tokens: Array[Token]) TokenIdx:
+        match self.importSpec:
+            ImportSpec.Wildcard:
+                let pathToken = self.path.unwrap()
+                let lbracket = nextNonTrivia(pathToken, tokens).unwrap()
+                let star = nextNonTrivia(lbracket, tokens).unwrap()
+                assert(tokens.get(star.idx).kind is TokenKind.Star)
+                star
+
+            ImportSpec.Prefixed(prefix):
+                match prefix:
+                    Option.Some(prefix): prefix.token
+                    Option.None: self.module.unwrap()
+
+            ImportSpec.Selective(names):
+                let lastName = names.last().unwrap()
+                let rbracket = match lastName.localName:
+                    Option.Some(name):
+                        nextNonTrivia(name.token, tokens).unwrap()
+                    Option.None:
+                        nextNonTrivia(lastName.originalName.token, tokens)
+                            .unwrap()
+                assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
+                rbracket
 
 
 #[derive(ToDoc)]
@@ -381,10 +419,10 @@ type ImportSpec:
     Wildcard
 
     ## Import the module with a prefix. E.g.
-    ## - `A/B/C`: prefix = `C`.
-    ## - `A/B/C as D`: prefix = `D`.
+    ## - `A/B/C`: prefix = `Option.None`.
+    ## - `A/B/C as D`: prefix = `Option.Some(D)`.
     Prefixed(
-        prefix: Id,
+        prefix: Option[Id],
     )
 
     ## Import given list of things, potentially with new names.
@@ -402,7 +440,7 @@ type ImportName(
     originalName: Id,
 
     ## The name of the imported thing, in the importing module.
-    localName: Id,
+    localName: Option[Id],
 )
 
 
@@ -1068,6 +1106,9 @@ impl[Tokens[AstTyId[exts]]] Tokens[VariantPat[exts]]:
 ## A sum or product constructor, in patterns and expressions.
 #[derive(ToDoc)]
 type Con[exts](
+    ## Module prefix, e.g. `Fir/` in `Fir/Option.Some`.
+    modPrefix: Option[TokenIdx],
+
     ## Type of the constructor.
     ty: AstTyId[exts],
 
@@ -1214,6 +1255,9 @@ impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[Expr[exts]]:
 
 #[derive(ToDoc)]
 type VarExpr[exts](
+    ## Module prefix, e.g. `Fir/` in `Fir/foo`.
+    modPrefix: Option[TokenIdx],
+
     id: AstVarId[exts],
 
     ## Type arguments explicitly passed to the variable.
@@ -1223,7 +1267,9 @@ type VarExpr[exts](
 
 impl[Tokens[AstVarId[exts]]] Tokens[VarExpr[exts]]:
     firstToken(self: VarExpr[exts], tokens: Array[Token]) TokenIdx:
-        self.id.firstToken(tokens)
+        match self.modPrefix:
+            Option.Some(prefix): prefix
+            Option.None: self.id.firstToken(tokens)
 
     lastToken(self: VarExpr[exts], tokens: Array[Token]) TokenIdx:
         match self.userTyArgs:

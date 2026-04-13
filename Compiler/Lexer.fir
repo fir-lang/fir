@@ -832,8 +832,13 @@ Lexer._nextInit(self) Option[Token] / Error:
 
         if uppercaseId:
             # (UpperId "/")*
-            let idEnd = endIdx      # end of current tentative `UpperId`
-            let committed = endIdx  # end of confirmed prefix (initially: no prefix)
+
+            # End of current tentative `UpperId`.
+            let idEnd = endIdx
+
+            # End of confirmed prefix. (initially: no prefix)
+            let committed = endIdx
+
             loop:
                 # Is the current UpperId followed by `/`?
                 if not (idEnd < self._input.len()
@@ -1146,10 +1151,6 @@ Lexer._tryInt(self) Option[Token] / exn:
         )
 
     Option.None
-
-
-_isIdStartChar(c: Char) Bool:
-    c.isAsciiUppercase() or c.isAsciiLowercase() or c == '_'
 
 
 _isIdCont(c: Char) Bool:
