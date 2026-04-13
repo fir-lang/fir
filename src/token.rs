@@ -43,6 +43,10 @@ pub enum TokenKind {
     /// A label is a lowercase id that starts with a single quote.
     Label,
 
+    /// A sequence of uppercase identifiers, separated and terminated by a `/`. E.g. `Foo/`,
+    /// `Fir/Prelude/`.
+    ModulePrefix,
+
     // Keywords
     And,
     As,

@@ -9,6 +9,7 @@ pub fn derive_eq(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::TopDe
     let bool_ty = l(
         loc,
         ast::Type::Named(ast::NamedType {
+            mod_prefix: None,
             name: ast::Name::new_static("Bool"),
             args: vec![],
         }),
@@ -214,6 +215,7 @@ fn derive_eq_sum(
         };
 
         let l_con_pat = ast::Con {
+            mod_prefix: None,
             ty: type_name.clone(),
             con: Some(con.name.clone()),
             user_ty_args: vec![],

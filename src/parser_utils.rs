@@ -1,4 +1,5 @@
 use crate::ast::{self, L, Name};
+use crate::module::ModulePath;
 
 use smol_str::SmolStr;
 
@@ -171,4 +172,15 @@ pub(crate) fn process_fields(
             fields: fields.into_iter().map(|(_, t)| t).collect(),
         }
     }
+}
+
+pub(crate) fn process_module_path(path: SmolStr, append: Option<SmolStr>) -> ModulePath {
+    debug_assert!(path.ends_with('/')); // lexical syntax of module prefixes
+    ModulePath::new(
+        path[0..path.len() - 1]
+            .split('/')
+            .map(SmolStr::new)
+            .chain(append)
+            .collect(),
+    )
 }

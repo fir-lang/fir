@@ -95,6 +95,10 @@ value type TokenKind:
 
     # --------------------------------------------------------------------------
 
+    # A sequence of uppercase identifiers, separated and terminated by a `/`.
+    # E.g. `Foo/`, `Fir/Prelude/`.
+    ModulePrefix
+
     # An identifier starting with a lowercase letter.
     LowerId
 
@@ -319,6 +323,7 @@ impl ToStr[TokenKind]:
             TokenKind.Match: "Match"
             TokenKind.Minus: "Minus"
             TokenKind.MinusEq: "MinusEq"
+            TokenKind.ModulePrefix: "ModulePrefix"
             TokenKind.Newline: "Newline"
             TokenKind.Not: "Not"
             TokenKind.Or: "Or"

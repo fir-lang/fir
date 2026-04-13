@@ -170,7 +170,11 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
 }
 
 fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> Ty {
-    let ast::NamedType { name, args } = named_ty;
+    let ast::NamedType {
+        mod_prefix: _,
+        name,
+        args,
+    } = named_ty;
 
     let ty_con = tys
         .get_con(name)
@@ -278,7 +282,11 @@ fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Option
             None
         }
 
-        ast::Pred::App(ast::NamedType { name, args }) => Some(Pred {
+        ast::Pred::App(ast::NamedType {
+            mod_prefix: _,
+            name,
+            args,
+        }) => Some(Pred {
             trait_: name.clone(),
             params: args
                 .iter()
@@ -289,7 +297,12 @@ fn convert_pred(tys: &mut TyMap, pred_ast: &ast::Pred, loc: &ast::Loc) -> Option
         }),
 
         ast::Pred::AssocTyEq {
-            ty: ast::NamedType { name, args },
+            ty:
+                ast::NamedType {
+                    mod_prefix: _,
+                    name,
+                    args,
+                },
             assoc_ty,
             eq,
         } => Some(Pred {

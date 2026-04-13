@@ -190,6 +190,24 @@ namedType[AstExts[exts], AstIds[AstExts[exts].Ids],](
     let cursor0 = state._cursor
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let prefix = state.nextCursor()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.ModulePrefix, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    prefix,
+            )
+            let prefix = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let name = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.UpperId, ..):
@@ -244,6 +262,7 @@ namedType[AstExts[exts], AstIds[AstExts[exts].Ids],](
             let val = do:
                 let args = Vec.fromIter(once(arg0).chain(args.iter()))
                 NamedType(
+                    modPrefix = prefix.map(\(p: U32): TokenIdx(idx = p)),
                     name = newTyId(name),
                     args =
                         Option.Some(
@@ -261,6 +280,24 @@ namedType[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let prefix = state.nextCursor()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.ModulePrefix, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    prefix,
+            )
+            let prefix = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let name = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.UpperId, ..):
@@ -268,7 +305,11 @@ namedType[AstExts[exts], AstIds[AstExts[exts].Ids],](
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                NamedType(name = newTyId(name), args = Option.None)
+                NamedType(
+                    modPrefix = prefix.map(\(p: U32): TokenIdx(idx = p)),
+                    name = newTyId(name),
+                    args = Option.None,
+                )
             val,
     )
     match altResult:
@@ -2447,6 +2488,24 @@ simpleExpr[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let prefix = state.nextCursor()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.ModulePrefix, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    prefix,
+            )
+            let prefix = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let var_ = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.LowerId, ..):
@@ -2467,7 +2526,13 @@ simpleExpr[AstExts[exts], AstIds[AstExts[exts].Ids],](
                     ()
                     Option.Some(ok)
             let val = do:
-                Expr.Var(VarExpr(id = newVarId(var_), userTyArgs = tyArgs,))
+                Expr.Var(
+                    VarExpr(
+                        modPrefix = prefix.map(\(p: U32): TokenIdx(idx = p)),
+                        id = newVarId(var_),
+                        userTyArgs = tyArgs,
+                    ),
+                )
             val,
     )
     match altResult:
@@ -3079,6 +3144,24 @@ con[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Co
     let cursor0 = state._cursor
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let prefix = state.nextCursor()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.ModulePrefix, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    prefix,
+            )
+            let prefix = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let ty = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.UpperId, ..):
@@ -3123,10 +3206,14 @@ con[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Co
                     Option.Some(ok)
             let val = do:
                 Con(
+                    modPrefix = prefix.map(\(p: U32): TokenIdx(idx = p)),
                     ty = newTyId(ty),
                     con = con.map(\(con: U32): newId(con)),
                     userTyArgs,
-                    _firstToken = TokenIdx(idx = ty),
+                    _firstToken =
+                        match prefix:
+                            Option.Some(p): TokenIdx(idx = p)
+                            Option.None: TokenIdx(idx = ty),
                 )
             val,
     )
@@ -4349,6 +4436,19 @@ simplePat[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.ModulePrefix, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    (),
+            )
+            match symResult:
+                Result.Err(err): state._cursor = optionalCursor0
+                Result.Ok(ok): ()
             let var_ = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.LowerId, ..):
@@ -4856,9 +4956,9 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
-            let p = path(state)
+            let path = state.nextCursor()
             if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Slash, ..):
+                    and sym is Token(kind = TokenKind.ModulePrefix, ..):
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
@@ -4868,7 +4968,11 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                ImportItem(path = p, importSpec = ImportSpec.Wildcard)
+                ImportItem(
+                    path = Option.Some(TokenIdx(idx = path)),
+                    module = Option.None,
+                    importSpec = ImportSpec.Wildcard,
+                )
             val,
     )
     match altResult:
@@ -4876,9 +4980,9 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let p = path(state)
+            let path = state.nextCursor()
             if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Slash, ..):
+                    and sym is Token(kind = TokenKind.ModulePrefix, ..):
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
@@ -4928,7 +5032,9 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
             let val = do:
                 names.insert(0, name0)
                 ImportItem(
-                    path = p, importSpec = ImportSpec.Selective(names = names)
+                    path = Option.Some(TokenIdx(idx = path)),
+                    module = Option.None,
+                    importSpec = ImportSpec.Selective(names),
                 )
             val,
     )
@@ -4937,13 +5043,37 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let p = path(state)
+            let path = state.nextCursor()
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let pfx = if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.ModulePrefix, ..):
+                        state._cursor += 1
+                        sym
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    pfx,
+            )
+            let pfx = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
+            let module = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.As, ..):
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let prefix = state.nextCursor()
+            let renamed = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.UpperId, ..):
                 state._cursor += 1
@@ -4951,8 +5081,12 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 ImportItem(
-                    path = p,
-                    importSpec = ImportSpec.Prefixed(prefix = newId(prefix)),
+                    path = pfx.map(\(pfx): TokenIdx(idx = path)),
+                    module = Option.Some(TokenIdx(idx = module)),
+                    importSpec =
+                        ImportSpec.Prefixed(
+                            prefix = Option.Some(newId(renamed))
+                        ),
                 )
             val,
     )
@@ -4961,11 +5095,36 @@ importItem(state: ParserState[Token, ()]) ImportItem / U32:
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let p = path(state)
+            let path = state.nextCursor()
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let pfx = if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.ModulePrefix, ..):
+                        state._cursor += 1
+                        sym
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    pfx,
+            )
+            let pfx = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
+            let module = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                let lastId = p.last().unwrap()
                 ImportItem(
-                    path = p, importSpec = ImportSpec.Prefixed(prefix = lastId)
+                    path = pfx.map(\(pfx): TokenIdx(idx = path)),
+                    module = Option.Some(TokenIdx(idx = module)),
+                    importSpec = ImportSpec.Prefixed(prefix = Option.None),
                 )
             val,
     )
@@ -4997,7 +5156,10 @@ importName(state: ParserState[Token, ()]) ImportName / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                ImportName(originalName = newId(orig), localName = newId(local))
+                ImportName(
+                    originalName = newId(orig),
+                    localName = Option.Some(newId(local)),
+                )
             val,
     )
     match altResult:
@@ -5023,7 +5185,10 @@ importName(state: ParserState[Token, ()]) ImportName / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                ImportName(originalName = newId(orig), localName = newId(local))
+                ImportName(
+                    originalName = newId(orig),
+                    localName = Option.Some(newId(local)),
+                )
             val,
     )
     match altResult:
@@ -5038,7 +5203,7 @@ importName(state: ParserState[Token, ()]) ImportName / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                ImportName(originalName = newId(id), localName = newId(id))
+                ImportName(originalName = newId(id), localName = Option.None)
             val,
     )
     match altResult:
@@ -5053,54 +5218,7 @@ importName(state: ParserState[Token, ()]) ImportName / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                ImportName(originalName = newId(id), localName = newId(id))
-            val,
-    )
-    match altResult:
-        Result.Err(err): state._cursor = cursor0
-        Result.Ok(val): return val
-    throw(state.updateErrorCursor(state._cursor))
-
-
-path(state: ParserState[Token, ()]) Vec[Id] / U32:
-    let cursor0 = state._cursor
-    let altResult = try(
-        \():
-            let p0 = state.nextCursor()
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.UpperId, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
-            let zeroOrMoreCursor0 = state._cursor
-            let ps = Vec.empty()
-            loop:
-                let psLen0 = ps.len()
-                let symResult = try(
-                    \():
-                        if state.peek() is Option.Some(sym)
-                                and sym is Token(kind = TokenKind.Slash, ..):
-                            state._cursor += 1
-                        else:
-                            throw(state.updateErrorCursor(state._cursor))
-                        ps.push(state.nextCursor())
-                        if state.peek() is Option.Some(sym)
-                                and sym is Token(kind = TokenKind.UpperId, ..):
-                            state._cursor += 1
-                        else:
-                            throw(state.updateErrorCursor(state._cursor)),
-                )
-                match symResult:
-                    Result.Err(err):
-                        state._cursor = zeroOrMoreCursor0
-                        ps.truncate(psLen0)
-                        break
-                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
-            let val = do:
-                let vec: Vec[Id] = Vec.fromIter(
-                    once(newId(p0)).chain(ps.iter().map(newId))
-                )
-                vec
+                ImportName(originalName = newId(id), localName = Option.None)
             val,
     )
     match altResult:

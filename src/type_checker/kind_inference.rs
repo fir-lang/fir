@@ -258,7 +258,11 @@ fn collect_named_ty_tvs(
     _loc: &ast::Loc,
     tvs: &mut OrderMap<Name, Option<Kind>>,
 ) {
-    let ast::NamedType { name: _, args } = named_ty;
+    let ast::NamedType {
+        mod_prefix: _,
+        name: _,
+        args,
+    } = named_ty;
     for arg in args {
         collect_tvs(&arg.node, &arg.loc, tvs);
     }
@@ -328,10 +332,15 @@ pub(crate) fn convert_kind(kind: &Option<ast::L<ast::Type>>) -> Option<Kind> {
         Some(kind) => kind,
         None => return None,
     };
-    if let ast::Type::Named(ast::NamedType { name, args }) = &kind.node
+    if let ast::Type::Named(ast::NamedType {
+        mod_prefix: _,
+        name,
+        args,
+    }) = &kind.node
         && name == "Row"
         && args.len() == 1
         && let ast::Type::Named(ast::NamedType {
+            mod_prefix: _,
             name: kind_arg_name,
             args: kind_arg_args,
         }) = &args[0].node

@@ -450,6 +450,7 @@ fn mono_expr(
 ) -> mono::Expr {
     match expr {
         ast::Expr::Var(ast::VarExpr {
+            mod_prefix: _,
             id: var,
             user_ty_args: _,
             ty_args,
@@ -630,6 +631,7 @@ fn mono_expr(
         }
 
         ast::Expr::ConSel(ast::Con {
+            mod_prefix: _,
             ty,
             con,
             user_ty_args: _,
@@ -1311,6 +1313,7 @@ fn mono_pat(
         ast::Pat::Con(ast::ConPat {
             con:
                 ast::Con {
+                    mod_prefix: _,
                     ty,
                     con,
                     user_ty_args: _,
@@ -1883,7 +1886,11 @@ fn mono_ast_ty(
     mono_pgm: &mut MonoPgm,
 ) -> mono::Type {
     match ty {
-        ast::Type::Named(ast::NamedType { name: con, args }) => {
+        ast::Type::Named(ast::NamedType {
+            mod_prefix: _,
+            name: con,
+            args,
+        }) => {
             let ty_decl = poly_pgm.ty.get(con).unwrap_or_else(|| panic!("{}", con));
             let mono_args: Vec<mono::Type> = args
                 .iter()
@@ -1947,7 +1954,11 @@ fn mono_ast_ty(
         ast::Type::AssocTySelect { ty, assoc_ty } => {
             // Same as `Ty::AssocTySelect`.
             match &*ty.node {
-                ast::Type::Named(ast::NamedType { name, args }) => {
+                ast::Type::Named(ast::NamedType {
+                    mod_prefix: _,
+                    name,
+                    args,
+                }) => {
                     let mono_args: Vec<mono::Type> = args
                         .iter()
                         .map(|arg| mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm))
@@ -2185,7 +2196,12 @@ fn collect_variant_labels(
     // record extensions we never add fields to a record. E.g. you can't write a function with a
     // type like `Fn(arg: (..r)) (x: U32, ..r)`, but you can write `Fn(arg: [..r]) [A, ..r]`.
 
-    for ast::NamedType { name, args } in ast_alts.iter() {
+    for ast::NamedType {
+        mod_prefix: _,
+        name,
+        args,
+    } in ast_alts.iter()
+    {
         let alt_ty = mono::NamedType {
             name: name.clone(),
             args: args

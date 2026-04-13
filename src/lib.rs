@@ -502,6 +502,9 @@ mod tests {
 
         let pgm = indoc::indoc! {"
             import [
+                A,
+                A/*,
+                A/[f1, f2],
                 A/B/C/*,
                 A/B/D,
                 A/B/D as E,
@@ -519,41 +522,88 @@ mod tests {
             TopDecl::Import(i) => &i.node,
             other => panic!("expected import, got {:?}", other),
         };
-        assert_eq!(import.items.len(), 6);
+        assert_eq!(import.items.len(), 9);
 
-        // 1: A/B/C/*
+        // 0: A
         assert_eq!(
             import.items[0].path,
+            ModulePath::new(vec![SmolStr::new_static("A")]),
+        );
+        match &import.items[0].import_spec {
+            ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "A"),
+            other => panic!("expected Prefixed, got {:?}", other),
+        }
+
+        // 1: A/*
+        assert_eq!(
+            import.items[1].path,
+            ModulePath::new(vec![SmolStr::new_static("A")]),
+        );
+        assert!(matches!(import.items[1].import_spec, ImportSpec::Wildcard));
+
+        // 2: A/[f1, f2]
+        assert_eq!(
+            import.items[2].path,
+            ModulePath::new(vec![SmolStr::new_static("A")]),
+        );
+        match &import.items[2].import_spec {
+            ImportSpec::Selective { names } => {
+                assert_eq!(names.len(), 2);
+                assert_eq!(names[0].original_name, "f1");
+                assert_eq!(names[1].original_name, "f2");
+            }
+            other => panic!("expected Selective, got {:?}", other),
+        }
+
+        // 3: A/B/C/*
+        assert_eq!(
+            import.items[3].path,
             ModulePath::new(vec![
                 SmolStr::new_static("A"),
                 SmolStr::new_static("B"),
                 SmolStr::new_static("C")
             ])
         );
-        assert!(matches!(import.items[0].import_spec, ImportSpec::Wildcard));
+        assert!(matches!(import.items[3].import_spec, ImportSpec::Wildcard));
 
-        // 2: A/B/D (default prefix D)
+        // 4: A/B/D (default prefix D)
         assert_eq!(
-            import.items[1].path,
+            import.items[4].path,
             ModulePath::new(vec![
                 SmolStr::new_static("A"),
                 SmolStr::new_static("B"),
                 SmolStr::new_static("D")
             ])
         );
-        match &import.items[1].import_spec {
+        match &import.items[4].import_spec {
             ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "D"),
             other => panic!("expected Prefixed, got {:?}", other),
         }
 
-        // 3: A/B/D as E
-        match &import.items[2].import_spec {
+        // 5: A/B/D as E
+        assert_eq!(
+            import.items[5].path,
+            ModulePath::new(vec![
+                SmolStr::new_static("A"),
+                SmolStr::new_static("B"),
+                SmolStr::new_static("D")
+            ])
+        );
+        match &import.items[5].import_spec {
             ImportSpec::Prefixed { prefix } => assert_eq!(prefix, "E"),
             other => panic!("expected Prefixed, got {:?}", other),
         }
 
-        // 4: A/B/D/[f1, f2, Type1, Type2]
-        match &import.items[3].import_spec {
+        // 6: A/B/D/[f1, f2, Type1, Type2]
+        assert_eq!(
+            import.items[6].path,
+            ModulePath::new(vec![
+                SmolStr::new_static("A"),
+                SmolStr::new_static("B"),
+                SmolStr::new_static("D")
+            ])
+        );
+        match &import.items[6].import_spec {
             ImportSpec::Selective { names } => {
                 assert_eq!(names.len(), 4);
                 assert_eq!(names[0].original_name, "f1");
@@ -563,8 +613,8 @@ mod tests {
             other => panic!("expected Selective, got {:?}", other),
         }
 
-        // 5: A/B/D/[f1 as g1, f2, Type1 as MyType, Type2]
-        match &import.items[4].import_spec {
+        // 7: A/B/D/[f1 as g1, f2, Type1 as MyType, Type2]
+        match &import.items[7].import_spec {
             ImportSpec::Selective { names } => {
                 assert_eq!(names[0].original_name, "f1");
                 assert_eq!(names[0].local_name, "g1");
@@ -576,8 +626,8 @@ mod tests {
             other => panic!("expected Selective, got {:?}", other),
         }
 
-        // 6: A/B/D/[f1 as _f1, Type1 as _Type1]
-        match &import.items[5].import_spec {
+        // 8: A/B/D/[f1 as _f1, Type1 as _Type1]
+        match &import.items[8].import_spec {
             ImportSpec::Selective { names } => {
                 assert_eq!(names[0].local_name, "_f1");
                 assert_eq!(names[1].local_name, "_Type1");
