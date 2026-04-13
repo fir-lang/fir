@@ -38,8 +38,8 @@ impl Id {
 }
 
 /// Well-known `Id`s for built-in types and traits.
-#[allow(non_snake_case, dead_code)]
-pub mod builtins {
+#[allow(non_snake_case)]
+pub(crate) mod builtins {
     use super::*;
 
     use smol_str::SmolStr;
@@ -69,66 +69,6 @@ pub mod builtins {
 
     pub fn TO_STR() -> Id {
         prelude_id("ToStr")
-    }
-
-    pub fn EQ() -> Id {
-        prelude_id("Eq")
-    }
-
-    pub fn ORD() -> Id {
-        prelude_id("Ord")
-    }
-
-    pub fn HASH() -> Id {
-        prelude_id("Hash")
-    }
-
-    pub fn CLONE() -> Id {
-        prelude_id("Clone")
-    }
-
-    pub fn ADD() -> Id {
-        prelude_id("Add")
-    }
-
-    pub fn SUB() -> Id {
-        prelude_id("Sub")
-    }
-
-    pub fn MUL() -> Id {
-        prelude_id("Mul")
-    }
-
-    pub fn DIV() -> Id {
-        prelude_id("Div")
-    }
-
-    pub fn NEG() -> Id {
-        prelude_id("Neg")
-    }
-
-    pub fn REM() -> Id {
-        prelude_id("Rem")
-    }
-
-    pub fn BIT_OR() -> Id {
-        prelude_id("BitOr")
-    }
-
-    pub fn BIT_XOR() -> Id {
-        prelude_id("BitXor")
-    }
-
-    pub fn BIT_AND() -> Id {
-        prelude_id("BitAnd")
-    }
-
-    pub fn SHL() -> Id {
-        prelude_id("Shl")
-    }
-
-    pub fn SHR() -> Id {
-        prelude_id("Shr")
     }
 
     // Fir/Str
@@ -176,19 +116,9 @@ pub mod builtins {
         fir_id("Option", "Option")
     }
 
-    // Fir/Result
-    pub fn RESULT() -> Id {
-        fir_id("Result", "Result")
-    }
-
     // Fir/Array
     pub fn ARRAY() -> Id {
         fir_id("Array", "Array")
-    }
-
-    // Fir/Vec
-    pub fn VEC() -> Id {
-        fir_id("Vec", "Vec")
     }
 
     // Fir/Iter
