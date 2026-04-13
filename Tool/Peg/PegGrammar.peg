@@ -11,6 +11,7 @@ type NonTerminal = NonTerminal
 Terminals:
     "LowerId" = Token(kind = TokenKind.LowerId, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
+    "ModulePrefix" = Token(kind = TokenKind.ModulePrefix, ..)
     "Terminals" = Token(kind = TokenKind.UpperId, text = "Terminals", ..)
     "type" = Token(kind = TokenKind.Type, ..)
     "import" = Token(kind = TokenKind.Import, ..)
@@ -54,7 +55,7 @@ importDecl:
     _"import" _"[" path (_"," path)* _","? _"]" _"NEWLINE"
 
 path:
-    "UpperId" (_"/" "UpperId")*
+    "ModulePrefix" "UpperId"?
 
 typeDecls:
     typeDecl*

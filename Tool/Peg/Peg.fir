@@ -165,11 +165,12 @@ convertParseTree(tree: PegParseTree) Grammar:
         for pathTree: PegParseTree in importDeclNodes.iter():
             let pathNodes = pathTree.asNonTerminal(NonTerminal.Path)
             importStr.clear()
-            for i: U32 in range(u32(0), pathNodes.len()):
-                if i != 0:
-                    importStr.push('/')
-                importStr.pushStr(pathNodes.get(i).asTerminal().text)
-                i += 1
+
+            # Path is either:
+            # - ModulePrefix ("Compiler/") + UpperId ("Token"), or
+            # - UpperId ("Foo") alone for single-segment imports.
+            for node: PegParseTree in pathNodes.iter():
+                importStr.pushStr(node.asTerminal().text)
             imports.push(importStr.toStr())
 
     let typeDecls = grammar.get(1).asNonTerminal(NonTerminal.TypeDecls)
