@@ -751,6 +751,9 @@ impl Tokens[Context[exts]]:
 ## A named type, e.g. `I32`, `Vec[I32]`, `Iterator[iter, exn]`.
 #[derive(ToDoc)]
 type NamedType[exts](
+    ## Module prefix, e.g. `Fir/Vec/` in `Fir/Vec/Vec`.
+    modPrefix: Option[TokenIdx],
+
     ## Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
     name: AstTyId[exts],
 
@@ -767,7 +770,9 @@ NamedType.numTyArgs(self: NamedType[exts]) U32:
 
 impl[Tokens[AstTyId[exts]]] Tokens[NamedType[exts]]:
     firstToken(self: NamedType[exts], tokens: Array[Token]) TokenIdx:
-        self.name.firstToken(tokens)
+        match self.modPrefix:
+            Option.Some(prefix): prefix
+            Option.None: self.name.firstToken(tokens)
 
     lastToken(self: NamedType[exts], tokens: Array[Token]) TokenIdx:
         match self.args:

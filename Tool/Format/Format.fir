@@ -1559,7 +1559,10 @@ Type.format(self: FmtType, tokens: Array[Token]) Doc:
 
 
 NamedType.format(self: FmtNamedType, tokens: Array[Token]) Doc:
-    formatToken(self.name.token, tokens) + formatTyArgs(self.args, tokens)
+    let doc = match self.modPrefix:
+        Option.Some(prefix): formatToken(prefix, tokens)
+        Option.None: Doc.empty()
+    doc + formatToken(self.name.token, tokens) + formatTyArgs(self.args, tokens)
 
 
 RecordType.format(self: FmtRecordType, tokens: Array[Token]) Doc:

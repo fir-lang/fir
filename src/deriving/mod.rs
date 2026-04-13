@@ -339,6 +339,7 @@ fn type_with_params(
     l(
         loc,
         ast::Type::Named(ast::NamedType {
+            mod_prefix: None,
             name: name.clone(),
             args: type_params
                 .iter()
@@ -366,10 +367,12 @@ fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) ->
         l(
             loc,
             ast::Type::Named(ast::NamedType {
+                mod_prefix: None,
                 name: ast::Name::new_static("Row"),
                 args: vec![l(
                     loc,
                     ast::Type::Named(ast::NamedType {
+                        mod_prefix: None,
                         name: ast::Name::new_static("Rec"),
                         args: vec![],
                     }),
@@ -396,6 +399,7 @@ fn trait_context(loc: &ast::Loc, trait_name: &str, type_decl: &ast::TypeDecl) ->
         preds.push(l(
             loc,
             ast::Pred::App(ast::NamedType {
+                mod_prefix: None,
                 name: ast::Name::new(trait_name),
                 args: vec![field_ty],
             }),
@@ -465,6 +469,7 @@ fn collect_polymorphic_field_types(
                 types.push(l(
                     loc,
                     ast::Type::Named(ast::NamedType {
+                        mod_prefix: None,
                         name: ast::Name::new_static("RecRowList"),
                         args: vec![l(&ext.loc, ext.node.clone())],
                     }),

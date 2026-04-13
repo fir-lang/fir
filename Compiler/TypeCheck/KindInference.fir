@@ -73,10 +73,14 @@ _addMissingTypeParamsFun(
                     let varStr = tokens.get(kindVar.token.idx).text
                     let kind = _convertKind(kind, tokens)
                     tvs.insert(varStr, kind)
-                Pred_.App(NamedType(name = _, args)):
+                Pred_.App(NamedType(modPrefix = _, name = _, args)):
                     for arg: CType in args.unwrap().args.iter():
                         _collectTvs(arg, tvs, tokens)
-                Pred_.AssocTyEq(ty = NamedType(name = _, args), assocTy = _, eq):
+                Pred_.AssocTyEq(
+                    ty = NamedType(modPrefix = _, name = _, args),
+                    assocTy = _,
+                    eq,
+                ):
                     for arg: CType in args.unwrap().args.iter():
                         _collectTvs(arg, tvs, tokens)
                     _collectTvs(eq, tvs, tokens)
@@ -159,10 +163,14 @@ _addMissingTypeParamsImpl(impl_: CImplDecl, tokens: Array[Token]):
                     let varStr = tokens.get(kindVar.token.idx).text
                     let kind = _convertKind(kind, tokens)
                     implContextVarKinds.insert(varStr, kind)
-                Pred_.App(NamedType(name = _, args)):
+                Pred_.App(NamedType(modPrefix = _, name = _, args)):
                     for arg: CType in args.unwrap().args.iter():
                         _collectTvs(arg, implContextVarKinds, tokens)
-                Pred_.AssocTyEq(ty = NamedType(name = _, args), assocTy = _, eq):
+                Pred_.AssocTyEq(
+                    ty = NamedType(modPrefix = _, name = _, args),
+                    assocTy = _,
+                    eq,
+                ):
                     for arg: CType in args.unwrap().args.iter():
                         _collectTvs(arg, implContextVarKinds, tokens)
                     _collectTvs(eq, implContextVarKinds, tokens)
@@ -212,14 +220,14 @@ _addMissingTypeParamsImpl(impl_: CImplDecl, tokens: Array[Token]):
 _convertKind(kind: Option[CType], tokens: Array[Token]) Option[Kind]:
     match kind:
         Option.None: Option.None
-        Option.Some(Type.Named(NamedType(name, args))):
+        Option.Some(Type.Named(NamedType(modPrefix = _, name, args))):
             if tokens.get(name.token.idx).text != "Row":
                 panic("Kind annotation must be Row[Rec] or Row[Var]")
             let args = args.unwrap().args
             if args.len() != 1:
                 panic("Kind annotation must be Row[Rec] or Row[Var]")
             match args.get(0):
-                Type.Named(NamedType(name = argName, args = _)):
+                Type.Named(NamedType(modPrefix = _, name = argName, args = _)):
                     let argNameStr = tokens.get(argName.token.idx).text
                     if argNameStr == "Rec":
                         Option.Some(Kind.Row(RecordOrVariant.Record))

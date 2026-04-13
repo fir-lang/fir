@@ -8,6 +8,7 @@ pub fn derive_to_doc(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::T
     let doc_ty = l(
         loc,
         ast::Type::Named(ast::NamedType {
+            mod_prefix: None,
             name: ast::Name::new_static("Doc"),
             args: vec![],
         }),

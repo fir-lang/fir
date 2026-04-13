@@ -9,6 +9,7 @@ pub fn derive_eq(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::TopDe
     let bool_ty = l(
         loc,
         ast::Type::Named(ast::NamedType {
+            mod_prefix: None,
             name: ast::Name::new_static("Bool"),
             args: vec![],
         }),

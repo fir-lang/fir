@@ -356,7 +356,15 @@ impl Type {
                 } else {
                     buf.push('[');
                 }
-                for (i, NamedType { name, args }) in alts.iter().enumerate() {
+                for (
+                    i,
+                    NamedType {
+                        mod_prefix: _,
+                        name,
+                        args,
+                    },
+                ) in alts.iter().enumerate()
+                {
                     if i != 0 {
                         buf.push_str(", ");
                     }

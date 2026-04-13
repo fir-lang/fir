@@ -129,9 +129,10 @@ type_[AstExts[exts], AstIds[AstExts[exts].Ids]] Type[exts]:
 
 
  namedType[AstExts[exts], AstIds[AstExts[exts].Ids]] NamedType[exts]:
-    name=^ "UpperId" argFirst=^ "[" arg0=type_ args=(_"," type_)* ","? argLast=^ "]":
+    prefix=(^ _"ModulePrefix")? name=^ "UpperId" argFirst=^ "[" arg0=type_ args=(_"," type_)* ","? argLast=^ "]":
         let args = Vec.fromIter(once(arg0).chain(args.iter()))
         NamedType(
+            modPrefix = prefix.map(\(p: U32): TokenIdx(idx = p)),
             name = newTyId(name),
             args = Option.Some(TyArgs(
                 args,
@@ -140,8 +141,8 @@ type_[AstExts[exts], AstIds[AstExts[exts].Ids]] Type[exts]:
             ))
         )
 
-    name=^ "UpperId":
-        NamedType(name = newTyId(name), args = Option.None)
+    prefix=(^ _"ModulePrefix")? name=^ "UpperId":
+        NamedType(modPrefix = prefix.map(\(p: U32): TokenIdx(idx = p)), name = newTyId(name), args = Option.None)
 
 
 # - ()

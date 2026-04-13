@@ -190,6 +190,24 @@ namedType[AstExts[exts], AstIds[AstExts[exts].Ids],](
     let cursor0 = state._cursor
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let prefix = state.nextCursor()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.ModulePrefix, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    prefix,
+            )
+            let prefix = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let name = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.UpperId, ..):
@@ -244,6 +262,7 @@ namedType[AstExts[exts], AstIds[AstExts[exts].Ids],](
             let val = do:
                 let args = Vec.fromIter(once(arg0).chain(args.iter()))
                 NamedType(
+                    modPrefix = prefix.map(\(p: U32): TokenIdx(idx = p)),
                     name = newTyId(name),
                     args =
                         Option.Some(
@@ -261,6 +280,24 @@ namedType[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let prefix = state.nextCursor()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.ModulePrefix, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    prefix,
+            )
+            let prefix = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
             let name = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.UpperId, ..):
@@ -268,7 +305,11 @@ namedType[AstExts[exts], AstIds[AstExts[exts].Ids],](
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                NamedType(name = newTyId(name), args = Option.None)
+                NamedType(
+                    modPrefix = prefix.map(\(p: U32): TokenIdx(idx = p)),
+                    name = newTyId(name),
+                    args = Option.None,
+                )
             val,
     )
     match altResult:

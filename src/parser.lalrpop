@@ -347,19 +347,19 @@ LTypeNoFn: L<Type> = {
 }
 
 TypeNamed: Type = {
-    <name:UpperId> =>
-        Type::Named(NamedType { name: name.name(), args: vec![] }),
+    <module_prefix:ModulePrefix?> <name:UpperId> =>
+        Type::Named(NamedType { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), name: name.name(), args: vec![] }),
 
-    <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
-        Type::Named(NamedType { name: name.name(), args }),
+    <module_prefix:ModulePrefix?> <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
+        Type::Named(NamedType { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), name: name.name(), args }),
 }
 
 NamedType: NamedType = {
-    <name:UpperId> =>
-        NamedType { name: name.name(), args: vec![] },
+    <module_prefix:ModulePrefix?> <name:UpperId> =>
+        NamedType { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), name: name.name(), args: vec![] },
 
-    <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
-        NamedType { name: name.name(), args },
+    <module_prefix:ModulePrefix?> <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
+        NamedType { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), name: name.name(), args },
 }
 
 RowExtension: Option<Box<L<Type>>> = {

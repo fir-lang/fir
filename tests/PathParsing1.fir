@@ -7,5 +7,7 @@ main():
     let x = A/B.C       # constructor `B.C` in `A`
     let x = A/B/C.D     # constructor `C.D` in `A/B`
 
+    let x: Fir/Vec[Fir/U32] = Vec.empty[Fir/Prim/U32]()
+
 
 # args: --parse
