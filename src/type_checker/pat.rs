@@ -27,7 +27,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
         ast::Pat::Con(ast::ConPat {
             con:
                 ast::Con {
-                    mod_prefix: _,
+                    mod_prefix,
                     ty: pat_ty_name,
                     con: pat_con_name,
                     user_ty_args,
@@ -41,7 +41,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
             assert!(ty_args.is_empty());
             assert!(user_ty_args.is_empty());
 
-            let pat_ty_id = match tc_state.module_env.get(pat_ty_name) {
+            let pat_ty_id = match tc_state.module_env.get_with_path(pat_ty_name, mod_prefix) {
                 Some(id) => id.clone(),
                 None => panic!("{}: Undefined type {}", loc_display(&pat.loc), pat_ty_name),
             };

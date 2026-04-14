@@ -33,7 +33,48 @@ use crate::collections::*;
 use crate::module::ModulePath;
 
 /// Maps names visible in a module to their `Id`s.
-pub(super) type ModuleEnv = HashMap<Name, Id>;
+///
+/// Names can be either unprefixed (from direct/selective imports) or prefixed (from
+/// `import [Foo as P]`, accessed as `P/name`).
+#[derive(Debug, Clone, Default)]
+pub(super) struct ModuleEnv {
+    /// Unprefixed names.
+    pub names: HashMap<Name, Id>,
+
+    /// Prefixed names: prefix -> name -> id.
+    pub prefixed: HashMap<Name, HashMap<Name, Id>>,
+}
+
+impl ModuleEnv {
+    /// Look up a name, optionally under a module prefix.
+    fn get(&self, name: &Name, mod_prefix: Option<&Name>) -> Option<&Id> {
+        match mod_prefix {
+            None => self.names.get(name),
+            Some(prefix) => self.prefixed.get(prefix)?.get(name),
+        }
+    }
+
+    /// Look up a name with a module path prefix. Single-segment paths are treated as import
+    /// prefixes (e.g. `P` in `import [Foo as P]`).
+    fn get_with_path(
+        &self,
+        name: &Name,
+        mod_prefix: &Option<crate::module::ModulePath>,
+    ) -> Option<&Id> {
+        match mod_prefix {
+            None => self.names.get(name),
+            Some(path) => {
+                let segments = path.segments();
+                assert_eq!(
+                    segments.len(),
+                    1,
+                    "Multi-segment module paths not yet supported in name resolution"
+                );
+                self.prefixed.get(&Name::from(&segments[0]))?.get(name)
+            }
+        }
+    }
+}
 
 /// Type constructors and types in the program.
 #[derive(Debug)]
@@ -259,7 +300,7 @@ impl TcFunState<'_> {
 /// looked up via `TyMap::resolve` instead.
 pub(super) fn resolve_name(module_env: &ModuleEnv, name: &Name) -> Id {
     module_env
-        .get(name)
+        .get(name, None)
         .cloned()
         .unwrap_or_else(|| panic!("Name `{}` not found in module environment", name))
 }
@@ -1236,7 +1277,7 @@ fn collect_schemes(
             }) => {
                 // Check that `parent_ty` exists.
                 if let Some(parent_ty) = parent_ty
-                    && module_env.get(&parent_ty.node).is_none()
+                    && module_env.get(&parent_ty.node, None).is_none()
                 {
                     panic!(
                         "{}: Unknown type {}",

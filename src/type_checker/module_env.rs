@@ -2,13 +2,13 @@ use crate::ast;
 use crate::collections::*;
 use crate::module::ModulePath;
 use crate::module_loader::*;
-use crate::name::Name;
+use crate::type_checker::ModuleEnv;
 use crate::type_checker::id::Id;
 
 /// For each module in the program, generate the module environment that maps the names that can be
 /// used in the module to their definitions.
-pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name, Id>> {
-    let mut envs: HashMap<ModulePath, HashMap<Name, Id>> = Default::default();
+pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, ModuleEnv> {
+    let mut envs: HashMap<ModulePath, ModuleEnv> = Default::default();
 
     // For each of the modules in the SCC, initialize envs with
     // (1) defined things
@@ -25,19 +25,19 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
         for module_path in modules.iter() {
             // (1) Locally defined things.
             {
-                let mut env: HashMap<Name, Id> = Default::default();
+                let mut env = ModuleEnv::default();
                 let module = pgm.modules.get(module_path).unwrap();
                 for decl in module.decls.iter() {
                     match &decl.node {
                         ast::TopDecl::Type(ty_decl) => {
-                            env.insert(
+                            env.names.insert(
                                 ty_decl.node.name.clone(),
                                 Id::new(module_path, &ty_decl.node.name),
                             );
                         }
 
                         ast::TopDecl::Trait(trait_decl) => {
-                            env.insert(
+                            env.names.insert(
                                 trait_decl.node.name.node.clone(),
                                 Id::new(module_path, &trait_decl.node.name.node),
                             );
@@ -45,7 +45,7 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
 
                         ast::TopDecl::Fun(fun_decl) => {
                             if fun_decl.node.parent_ty.is_none() {
-                                env.insert(
+                                env.names.insert(
                                     fun_decl.node.name.node.clone(),
                                     Id::new(module_path, &fun_decl.node.name.node),
                                 );
@@ -75,7 +75,7 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
                     updated |= import(
                         &mut importing_module_env,
                         &imported_module_env,
-                        module_import.filter.as_ref(),
+                        &module_import.kind,
                     );
                     envs.insert(module_import.path.clone(), imported_module_env);
                     envs.insert(module_path.clone(), importing_module_env);
@@ -88,30 +88,40 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
 }
 
 /// Returns whether a new name was imported.
-///
-/// `filter`: `None` means import everything. `Some(map)` means import only the names in the map,
-/// using the map values as local names (supports renaming).
-fn import(
-    importing_env: &mut HashMap<Name, Id>,
-    imported_env: &HashMap<Name, Id>,
-    filter: Option<&HashMap<Name, Name>>,
-) -> bool {
+fn import(importing_env: &mut ModuleEnv, imported_env: &ModuleEnv, kind: &ImportKind) -> bool {
     let mut updated = false;
-    for (imported_name, imported_id) in imported_env.iter() {
-        if imported_name.starts_with('_') {
-            // Private definitions are not imported.
-            continue;
+    match kind {
+        ImportKind::Direct { filter } => {
+            for (imported_name, imported_id) in imported_env.names.iter() {
+                // Underscored names are not imported for direct use, but they can be used with a
+                // prefix.
+                if imported_name.starts_with('_') {
+                    continue;
+                }
+                let local_name = match filter {
+                    Some(filter) => match filter.get(imported_name) {
+                        Some(local_name) => local_name.clone(),
+                        None => continue,
+                    },
+                    None => imported_name.clone(),
+                };
+                if let std::collections::hash_map::Entry::Vacant(e) =
+                    importing_env.names.entry(local_name)
+                {
+                    e.insert(imported_id.clone());
+                    updated = true;
+                }
+            }
         }
-        let local_name = match filter {
-            Some(filter) => match filter.get(imported_name) {
-                Some(local_name) => local_name.clone(),
-                None => continue,
-            },
-            None => imported_name.clone(),
-        };
-        if let std::collections::hash_map::Entry::Vacant(entry) = importing_env.entry(local_name) {
-            entry.insert(imported_id.clone());
-            updated = true;
+
+        ImportKind::Prefixed { prefix } => {
+            let prefix_env = importing_env.prefixed.entry(prefix.clone()).or_default();
+            for (imported_name, imported_id) in imported_env.names.iter() {
+                if !prefix_env.contains_key(imported_name) {
+                    prefix_env.insert(imported_name.clone(), imported_id.clone());
+                    updated = true;
+                }
+            }
         }
     }
     updated

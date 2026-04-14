@@ -40,11 +40,19 @@ impl TyMap {
 
     /// Look up a type constructor by name. Checks scoped synonyms first, then resolves via the
     /// module env and looks up in `cons`.
-    pub fn resolve(&self, module_env: &ModuleEnv, name: &Name) -> Option<&TyCon> {
-        if let Some(syn) = self.synonyms.get(name) {
+    pub fn resolve(
+        &self,
+        module_env: &ModuleEnv,
+        name: &Name,
+        mod_prefix: &Option<crate::module::ModulePath>,
+    ) -> Option<&TyCon> {
+        // Synonyms are scoped (e.g. associated types), not module-level, so no prefix lookup.
+        if mod_prefix.is_none()
+            && let Some(syn) = self.synonyms.get(name)
+        {
             return Some(syn);
         }
-        let id = module_env.get(name)?;
+        let id = module_env.get_with_path(name, mod_prefix)?;
         self.cons.get(id)
     }
 

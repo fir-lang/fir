@@ -34,7 +34,7 @@ pub(super) fn check_expr(
 ) -> (Ty, HashMap<Name, Ty>) {
     match expr {
         ast::Expr::Var(ast::VarExpr {
-            mod_prefix: _,
+            mod_prefix,
             id: var,
             user_ty_args,
             ty_args,
@@ -44,7 +44,9 @@ pub(super) fn check_expr(
             assert!(ty_args.is_empty());
 
             // Check if local.
-            if let Some(ty) = tc_state.env.get(var) {
+            if mod_prefix.is_none()
+                && let Some(ty) = tc_state.env.get(var)
+            {
                 if !user_ty_args.is_empty() {
                     panic!(
                         "{}: Local variables can't have type parameters, but `{}` is passed type arguments",
@@ -68,7 +70,7 @@ pub(super) fn check_expr(
                 );
             }
 
-            let scheme = match tc_state.module_env.get(var) {
+            let scheme = match tc_state.module_env.get_with_path(var, mod_prefix) {
                 Some(var_id) => match tc_state.tys.top_schemes.get(var_id) {
                     Some(scheme) => scheme,
                     None => panic!("{}: Unbound variable {}", loc_display(loc), var),
@@ -214,7 +216,7 @@ pub(super) fn check_expr(
         ast::Expr::MethodSel(_) => panic!("MethodSel in type checker"),
 
         ast::Expr::ConSel(ast::Con {
-            mod_prefix: _,
+            mod_prefix,
             ty,
             con,
             user_ty_args,
@@ -224,7 +226,11 @@ pub(super) fn check_expr(
             assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
-            let ty_id = tc_state.resolve(ty);
+            let ty_id = tc_state
+                .module_env
+                .get_with_path(ty, mod_prefix)
+                .cloned()
+                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
             let ty_con: &TyCon = tc_state
                 .tys
                 .tys
@@ -336,7 +342,7 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-            mod_prefix: _,
+            mod_prefix,
             ty,
             ty_user_ty_args,
             member,
@@ -347,7 +353,11 @@ pub(super) fn check_expr(
             assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
-            let ty_id = tc_state.resolve(ty);
+            let ty_id = tc_state
+                .module_env
+                .get_with_path(ty, mod_prefix)
+                .cloned()
+                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
 
             if !ty_user_ty_args.is_empty() {
                 let con = tc_state

@@ -9,14 +9,21 @@ use std::path::Path;
 
 use smol_str::SmolStr;
 
-/// An import of a single module: the module path plus an optional filter on which names to import.
-///
-/// `None` means import everything exported. `Some(map)` means import only the listed names,
-/// potentially with renaming. Keys are original names, values are local names.
+/// An import of a single module.
 #[derive(Debug, Clone)]
 pub struct ModuleImport {
     pub path: ModulePath,
-    pub filter: Option<HashMap<Name, Name>>,
+    pub kind: ImportKind,
+}
+
+#[derive(Debug, Clone)]
+pub enum ImportKind {
+    /// Import into the flat namespace: everything (filter = `None`) or selectively with optional
+    /// renaming (filter = `Some(map)`). Keys are original names, values are local names.
+    Direct { filter: Option<HashMap<Name, Name>> },
+
+    /// Import everything under a prefix: `import [Foo as P]` makes names available as `P/name`.
+    Prefixed { prefix: Name },
 }
 
 #[derive(Debug)]
@@ -91,18 +98,25 @@ pub fn load(entry_file: &Path, print_parsed_ast: bool) -> LoadedPgm {
                         modules.insert(item.path.clone(), ast::Module::empty());
                         work.push(item.path.clone());
                     }
-                    let filter = match &item.import_spec {
-                        Some(ast::ImportSpec::Selective { names }) => Some(
-                            names
-                                .iter()
-                                .map(|n| (Name::from(&n.original_name), Name::from(&n.local_name)))
-                                .collect(),
-                        ),
-                        _ => None,
+                    let kind = match &item.import_spec {
+                        Some(ast::ImportSpec::Selective { names }) => ImportKind::Direct {
+                            filter: Some(
+                                names
+                                    .iter()
+                                    .map(|n| {
+                                        (Name::from(&n.original_name), Name::from(&n.local_name))
+                                    })
+                                    .collect(),
+                            ),
+                        },
+                        Some(ast::ImportSpec::Prefixed { prefix }) => ImportKind::Prefixed {
+                            prefix: Name::from(prefix),
+                        },
+                        None => ImportKind::Direct { filter: None },
                     };
                     dep_graph.get_mut(&module_path).unwrap().push(ModuleImport {
                         path: item.path.clone(),
-                        filter,
+                        kind,
                     });
                 }
             }
@@ -115,7 +129,7 @@ pub fn load(entry_file: &Path, print_parsed_ast: bool) -> LoadedPgm {
             }
             dep_graph.get_mut(&module_path).unwrap().push(ModuleImport {
                 path: prelude_path.clone(),
-                filter: None,
+                kind: ImportKind::Direct { filter: None },
             });
         }
 
