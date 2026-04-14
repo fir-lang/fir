@@ -1,12 +1,22 @@
 use crate::ast;
 use crate::collections::*;
 use crate::module::ModulePath;
+use crate::name::Name;
 use crate::utils::loc_display;
 
 use std::fmt;
 use std::path::Path;
 
 use smol_str::SmolStr;
+
+/// An import of a single module: the module path plus an optional filter on which names to import.
+///
+/// `None` means import everything exported. `Some(names)` means import only the listed names.
+#[derive(Debug, Clone)]
+pub struct ModuleImport {
+    pub path: ModulePath,
+    pub filter: Option<HashSet<Name>>,
+}
 
 #[derive(Debug)]
 pub struct LoadedPgm {
@@ -15,7 +25,7 @@ pub struct LoadedPgm {
     pub entry: ModulePath,
 
     /// Maps modules to modules they import.
-    pub dep_graph: HashMap<ModulePath, HashSet<ModulePath>>,
+    pub dep_graph: HashMap<ModulePath, Vec<ModuleImport>>,
 
     pub scc_graph: SccGraph,
 }
@@ -56,7 +66,7 @@ pub fn load(entry_file: &Path, print_parsed_ast: bool) -> LoadedPgm {
     let mut modules: HashMap<ModulePath, ast::Module> = HashMap::default();
     modules.insert(entry.clone(), ast::Module::empty());
 
-    let mut dep_graph: HashMap<ModulePath, HashSet<ModulePath>> = Default::default();
+    let mut dep_graph: HashMap<ModulePath, Vec<ModuleImport>> = Default::default();
 
     let prelude_path = ModulePath::new(vec![
         SmolStr::new_static("Fir"),
@@ -80,10 +90,16 @@ pub fn load(entry_file: &Path, print_parsed_ast: bool) -> LoadedPgm {
                         modules.insert(item.path.clone(), ast::Module::empty());
                         work.push(item.path.clone());
                     }
-                    dep_graph
-                        .get_mut(&module_path)
-                        .unwrap()
-                        .insert(item.path.clone());
+                    let filter = match &item.import_spec {
+                        Some(ast::ImportSpec::Selective { names }) => {
+                            Some(names.iter().map(|n| Name::from(&n.original_name)).collect())
+                        }
+                        _ => None,
+                    };
+                    dep_graph.get_mut(&module_path).unwrap().push(ModuleImport {
+                        path: item.path.clone(),
+                        filter,
+                    });
                 }
             }
         }
@@ -93,10 +109,10 @@ pub fn load(entry_file: &Path, print_parsed_ast: bool) -> LoadedPgm {
                 modules.insert(prelude_path.clone(), ast::Module::empty());
                 work.push(prelude_path.clone());
             }
-            dep_graph
-                .get_mut(&module_path)
-                .unwrap()
-                .insert(prelude_path.clone());
+            dep_graph.get_mut(&module_path).unwrap().push(ModuleImport {
+                path: prelude_path.clone(),
+                filter: None,
+            });
         }
 
         let old = modules.insert(module_path, module);
@@ -160,8 +176,13 @@ impl LoadedPgm {
     }
 }
 
-fn build_scc_graph(graph: &HashMap<ModulePath, HashSet<ModulePath>>) -> SccGraph {
-    let sccs = scc(graph);
+fn build_scc_graph(graph: &HashMap<ModulePath, Vec<ModuleImport>>) -> SccGraph {
+    let graph: HashMap<ModulePath, HashSet<ModulePath>> = graph
+        .iter()
+        .map(|(k, imports)| (k.clone(), imports.iter().map(|i| i.path.clone()).collect()))
+        .collect();
+
+    let sccs = scc(&graph);
 
     // Map each module to its SCC index.
     let mut module_to_scc: HashMap<ModulePath, SccIdx> = HashMap::default();
@@ -175,7 +196,7 @@ fn build_scc_graph(graph: &HashMap<ModulePath, HashSet<ModulePath>>) -> SccGraph
     let mut dependents: Vec<HashSet<SccIdx>> = vec![HashSet::default(); num_sccs];
     let mut dependencies: Vec<HashSet<SccIdx>> = vec![HashSet::default(); num_sccs];
 
-    for (u, deps) in graph {
+    for (u, deps) in &graph {
         let u_scc = module_to_scc[u];
         for v in deps {
             let v_scc = module_to_scc[v];

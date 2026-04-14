@@ -65,15 +65,19 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
         while updated {
             updated = false;
             for module_path in modules.iter() {
-                for imported_module in pgm.dep_graph.get(module_path).unwrap() {
+                for module_import in pgm.dep_graph.get(module_path).unwrap() {
                     // Same as above: handle the harmless case of a module importing itself.
-                    if imported_module == module_path {
+                    if &module_import.path == module_path {
                         continue;
                     }
-                    let imported_module_env = envs.remove(imported_module).unwrap();
+                    let imported_module_env = envs.remove(&module_import.path).unwrap();
                     let mut importing_module_env = envs.remove(module_path).unwrap();
-                    updated |= import(&mut importing_module_env, &imported_module_env);
-                    envs.insert(imported_module.clone(), imported_module_env);
+                    updated |= import(
+                        &mut importing_module_env,
+                        &imported_module_env,
+                        module_import.filter.as_ref(),
+                    );
+                    envs.insert(module_import.path.clone(), imported_module_env);
                     envs.insert(module_path.clone(), importing_module_env);
                 }
             }
@@ -84,11 +88,22 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
 }
 
 /// Returns whether a new name was imported.
-fn import(importing_env: &mut HashMap<Name, Id>, imported_env: &HashMap<Name, Id>) -> bool {
+///
+/// `filter`: `None` means import everything, `Some(names)` means import only the listed names.
+fn import(
+    importing_env: &mut HashMap<Name, Id>,
+    imported_env: &HashMap<Name, Id>,
+    filter: Option<&HashSet<Name>>,
+) -> bool {
     let mut updated = false;
     for (imported_name, imported_id) in imported_env.iter() {
         if imported_name.starts_with('_') {
             // Private definitions are not imported.
+            continue;
+        }
+        if let Some(filter) = filter
+            && !filter.contains(imported_name)
+        {
             continue;
         }
         if !importing_env.contains_key(imported_name) {
