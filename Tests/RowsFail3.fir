@@ -1,0 +1,10 @@
+main():
+    let x = if Bool.True:
+        (x = i32(123))
+    else:
+        (y = "hi")
+    ()
+
+# args: --typecheck
+# expected exit status: 101
+# expected stderr: Tests/RowsFail3.fir:5:9: Unable to unify (y: Str) with (x: I32)

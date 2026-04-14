@@ -25,20 +25,20 @@ interpreter_unit_test:
     cargo test
 
 interpreter_golden_test: build
-    goldentests target/debug/fir tests '# '
+    goldentests target/debug/fir Tests '# '
 
 c_golden_test: build
-    goldentests target/debug/fir2c tests '# ' --glob='!tests/interpreter/*'
+    goldentests target/debug/fir2c Tests '# ' --glob='!Tests/Interpreter/*'
 
 interpreter_update_goldens: build
     #!/usr/bin/env bash
     shopt -s globstar
 
-    goldentests target/debug/fir tests '# ' --overwrite
+    goldentests target/debug/fir Tests '# ' --overwrite
 
     # goldentests leaves two newlines at the end of the files, remove one of
     # them.
-    for f in tests/**/*.fir; do
+    for f in Tests/**/*.fir; do
         sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"
     done
 
@@ -182,7 +182,7 @@ build_site: generate_parser
     cp -r Fir $OUT_DIR/
 
     # Copy samples
-    cp tests/ErrorHandling.fir $OUT_DIR/ErrorHandling.fir
-    cp tests/ThrowingIter.fir $OUT_DIR/ThrowingIter.fir
-    cp tests/PPrintExample.fir $OUT_DIR/PPrintExample.fir
-    cp tests/NamedTypeExtensions.fir $OUT_DIR/NamedTypeExtensions.fir
+    cp Tests/ErrorHandling.fir $OUT_DIR/ErrorHandling.fir
+    cp Tests/ThrowingIter.fir $OUT_DIR/ThrowingIter.fir
+    cp Tests/PPrintExample.fir $OUT_DIR/PPrintExample.fir
+    cp Tests/NamedTypeExtensions.fir $OUT_DIR/NamedTypeExtensions.fir

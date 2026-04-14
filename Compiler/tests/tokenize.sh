@@ -17,8 +17,8 @@ exit_code=0
 # characters, and we don't have a Fir library yet to get character widths and
 # update columns properly with wide chars.
 skip_files=(
-    "tests/Char.fir"
-    "tests/StrBuf.fir"
+    "Tests/Char.fir"
+    "Tests/StrBuf.fir"
 )
 
 source "${SCRIPT_DIR}/common.sh"
