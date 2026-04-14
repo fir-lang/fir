@@ -11,11 +11,12 @@ use smol_str::SmolStr;
 
 /// An import of a single module: the module path plus an optional filter on which names to import.
 ///
-/// `None` means import everything exported. `Some(names)` means import only the listed names.
+/// `None` means import everything exported. `Some(map)` means import only the listed names,
+/// potentially with renaming. Keys are original names, values are local names.
 #[derive(Debug, Clone)]
 pub struct ModuleImport {
     pub path: ModulePath,
-    pub filter: Option<HashSet<Name>>,
+    pub filter: Option<HashMap<Name, Name>>,
 }
 
 #[derive(Debug)]
@@ -91,9 +92,12 @@ pub fn load(entry_file: &Path, print_parsed_ast: bool) -> LoadedPgm {
                         work.push(item.path.clone());
                     }
                     let filter = match &item.import_spec {
-                        Some(ast::ImportSpec::Selective { names }) => {
-                            Some(names.iter().map(|n| Name::from(&n.original_name)).collect())
-                        }
+                        Some(ast::ImportSpec::Selective { names }) => Some(
+                            names
+                                .iter()
+                                .map(|n| (Name::from(&n.original_name), Name::from(&n.local_name)))
+                                .collect(),
+                        ),
                         _ => None,
                     };
                     dep_graph.get_mut(&module_path).unwrap().push(ModuleImport {

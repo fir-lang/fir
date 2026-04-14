@@ -89,11 +89,12 @@ pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, HashMap<Name
 
 /// Returns whether a new name was imported.
 ///
-/// `filter`: `None` means import everything, `Some(names)` means import only the listed names.
+/// `filter`: `None` means import everything. `Some(map)` means import only the names in the map,
+/// using the map values as local names (supports renaming).
 fn import(
     importing_env: &mut HashMap<Name, Id>,
     imported_env: &HashMap<Name, Id>,
-    filter: Option<&HashSet<Name>>,
+    filter: Option<&HashMap<Name, Name>>,
 ) -> bool {
     let mut updated = false;
     for (imported_name, imported_id) in imported_env.iter() {
@@ -101,13 +102,15 @@ fn import(
             // Private definitions are not imported.
             continue;
         }
-        if let Some(filter) = filter
-            && !filter.contains(imported_name)
-        {
-            continue;
-        }
-        if !importing_env.contains_key(imported_name) {
-            importing_env.insert(imported_name.clone(), imported_id.clone());
+        let local_name = match filter {
+            Some(filter) => match filter.get(imported_name) {
+                Some(local_name) => local_name.clone(),
+                None => continue,
+            },
+            None => imported_name.clone(),
+        };
+        if let std::collections::hash_map::Entry::Vacant(entry) = importing_env.entry(local_name) {
+            entry.insert(imported_id.clone());
             updated = true;
         }
     }
