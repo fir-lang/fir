@@ -36,6 +36,12 @@ module_golden_test: build
         goldentests target/debug/fir "$main" '# '
     done
 
+update_module_goldens: build
+    #!/usr/bin/env bash
+    for main in Tests/Modules/*/Main.fir; do
+        goldentests target/debug/fir "$main" '# ' --overwrite
+    done
+
 interpreter_update_goldens: build
     #!/usr/bin/env bash
     shopt -s globstar
