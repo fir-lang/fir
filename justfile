@@ -19,16 +19,22 @@ check:
 watch:
     echo src/parser.lalrpop | entr -r lalrpop src/parser.lalrpop & cargo watch
 
-test: build interpreter_unit_test interpreter_golden_test compiler_unit_test compiler_golden_test formatter_golden_test
+test: build interpreter_unit_test interpreter_golden_test module_golden_test compiler_unit_test compiler_golden_test formatter_golden_test
 
 interpreter_unit_test:
     cargo test
 
 interpreter_golden_test: build
-    goldentests target/debug/fir Tests '# '
+    goldentests target/debug/fir Tests '# ' --glob='!Tests/Modules/*'
 
 c_golden_test: build
-    goldentests target/debug/fir2c Tests '# ' --glob='!Tests/Interpreter/*'
+    goldentests target/debug/fir2c Tests '# ' --glob='!Tests/Interpreter/*' --glob='!Tests/Modules/*'
+
+module_golden_test: build
+    #!/usr/bin/env bash
+    for main in Tests/Modules/*/Main.fir; do
+        goldentests target/debug/fir "$main" '# '
+    done
 
 interpreter_update_goldens: build
     #!/usr/bin/env bash
