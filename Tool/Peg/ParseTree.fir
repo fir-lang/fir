@@ -24,7 +24,10 @@ ParseError.takeAdvanced(err1: Option[ParseError], err2: ParseError) ParseError:
                 return err2
 
 
-ParseError.takeAdvancedOpt(err1: Option[ParseError], err2: Option[ParseError]) Option[ParseError]:
+ParseError.takeAdvancedOpt(
+    err1: Option[ParseError],
+    err2: Option[ParseError],
+) Option[ParseError]:
     match (left = err1, right = err2):
         (left = Option.Some(err1_), right = Option.Some(err2_)):
             if err1_.cursor > err2_.cursor:
@@ -77,7 +80,10 @@ ParseTree.asTerminal(self: ParseTree[t, nt]) t:
             panic("ParseTree.asTerminal: tree is a non-terminal")
 
 
-ParseTree.asNonTerminal[Eq[nt], ToStr[nt]](self: ParseTree[t, nt], kind_: nt) Vec[ParseTree[t, nt]]:
+ParseTree.asNonTerminal[Eq[nt], ToStr[nt]](
+    self: ParseTree[t, nt],
+    kind_: nt,
+) Vec[ParseTree[t, nt]]:
     match self:
         ParseTree.Terminal(_):
             panic("ParseTree.asNonTerminal: tree is a terminal")

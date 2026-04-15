@@ -872,7 +872,12 @@ type FunTcEnv(
 )
 
 
-FunTcEnv.new(modEnv: ModuleTcEnv, exnTy: Ty, retTy: Ty, assumps: Vec[Pred]) FunTcEnv:
+FunTcEnv.new(
+    modEnv: ModuleTcEnv,
+    exnTy: Ty,
+    retTy: Ty,
+    assumps: Vec[Pred],
+) FunTcEnv:
     FunTcEnv(
         _modEnv = modEnv,
         _termEnv = ScopeMap.empty(),

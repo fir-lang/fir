@@ -8,7 +8,9 @@ import [
 ]
 
 
-module[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Vec[TopDecl[exts]] / U32:
+module[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Vec[TopDecl[exts]] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -94,7 +96,9 @@ topDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
     throw(state.updateErrorCursor(state._cursor))
 
 
-type_[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Type[exts] / U32:
+type_[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Type[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -433,7 +437,9 @@ recordType[AstExts[exts], AstIds[AstExts[exts].Ids],](
     throw(state.updateErrorCursor(state._cursor))
 
 
-recordTypeStart(state: ParserState[Token, ()]) (start: TokenIdx, isRow: Bool) / U32:
+recordTypeStart(
+    state: ParserState[Token, ()],
+) (start: TokenIdx, isRow: Bool) / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -619,7 +625,9 @@ variantType[AstExts[exts], AstIds[AstExts[exts].Ids],](
     throw(state.updateErrorCursor(state._cursor))
 
 
-variantTypeStart(state: ParserState[Token, ()]) (start: TokenIdx, isRow: Bool) / U32:
+variantTypeStart(
+    state: ParserState[Token, ()],
+) (start: TokenIdx, isRow: Bool) / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -731,7 +739,9 @@ recordTypeField[AstExts[exts], AstIds[AstExts[exts].Ids],](
     throw(state.updateErrorCursor(state._cursor))
 
 
-fnType[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) FnType[exts] / U32:
+fnType[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) FnType[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -1661,7 +1671,9 @@ conField[AstExts[exts], AstIds[AstExts[exts].Ids],](
     throw(state.updateErrorCursor(state._cursor))
 
 
-expr[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Expr[exts] / U32:
+expr[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Expr[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2265,7 +2277,9 @@ field(state: ParserState[Token, ()]) Id / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-args[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) (args: Vec[Named[Expr[exts]]], splice: Option[Expr[exts]], cursorRight: U32) / U32:
+args[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) (args: Vec[Named[Expr[exts]]], splice: Option[Expr[exts]], cursorRight: U32) / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -2436,7 +2450,9 @@ args[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) (
     throw(state.updateErrorCursor(state._cursor))
 
 
-arg[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Named[Expr[exts]] / U32:
+arg[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Named[Expr[exts]] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -3140,7 +3156,9 @@ seqElem[AstExts[exts], AstIds[AstExts[exts].Ids],](
     throw(state.updateErrorCursor(state._cursor))
 
 
-con[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Con[exts] / U32:
+con[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Con[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -3223,7 +3241,9 @@ con[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Co
     throw(state.updateErrorCursor(state._cursor))
 
 
-tyArgs[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) TyArgs[exts] / U32:
+tyArgs[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) TyArgs[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -3719,7 +3739,9 @@ altGuard[AstExts[exts], AstIds[AstExts[exts].Ids],](
     throw(state.updateErrorCursor(state._cursor))
 
 
-fnArgs[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Vec[FunArg[exts]] / U32:
+fnArgs[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Vec[FunArg[exts]] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -3824,7 +3846,9 @@ fnArgs[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()])
     throw(state.updateErrorCursor(state._cursor))
 
 
-stmt[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Stmt[exts] / U32:
+stmt[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Stmt[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -4274,7 +4298,9 @@ loopLabel(state: ParserState[Token, ()]) Id / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-letRhs[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Expr[exts] / U32:
+letRhs[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Expr[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -4379,7 +4405,9 @@ assignOp(state: ParserState[Token, ()]) AssignOp / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-pat[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Pat[exts] / U32:
+pat[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Pat[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -5466,7 +5494,9 @@ context[AstExts[exts], AstIds[AstExts[exts].Ids],](
     throw(state.updateErrorCursor(state._cursor))
 
 
-pred[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Pred_[exts] / U32:
+pred[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Pred_[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -5632,7 +5662,9 @@ paramList[AstExts[exts], AstIds[AstExts[exts].Ids],](
     throw(state.updateErrorCursor(state._cursor))
 
 
-param[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) FunArg[exts] / U32:
+param[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) FunArg[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -6201,7 +6233,9 @@ funDeclRhs[AstExts[exts], AstIds[AstExts[exts].Ids],](
     throw(state.updateErrorCursor(state._cursor))
 
 
-funSig[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) (id: Id, sig: FunSig[exts]) / U32:
+funSig[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) (id: Id, sig: FunSig[exts]) / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():
@@ -6262,7 +6296,9 @@ funSig[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()])
     throw(state.updateErrorCursor(state._cursor))
 
 
-attr[AstExts[exts], AstIds[AstExts[exts].Ids],](state: ParserState[Token, ()]) Attribute[exts] / U32:
+attr[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Attribute[exts] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():

@@ -95,11 +95,15 @@ HashMap.iter(self: HashMap[k, v]) HashMapIter[k, v]:
     HashMapIter.new(self)
 
 
-HashMap.keys(self: HashMap[k, v]) Map[HashMapIter[k, v], HashMapEntry[k, v], k, exn] / exn:
+HashMap.keys(
+    self: HashMap[k, v],
+) Map[HashMapIter[k, v], HashMapEntry[k, v], k, exn] / exn:
     HashMapIter.new(self).map(\(entry: HashMapEntry[k, v]): entry.key)
 
 
-HashMap.values(self: HashMap[k, v]) Map[HashMapIter[k, v], HashMapEntry[k, v], v, exn] / exn:
+HashMap.values(
+    self: HashMap[k, v],
+) Map[HashMapIter[k, v], HashMapEntry[k, v], v, exn] / exn:
     HashMapIter.new(self).map(\(entry: HashMapEntry[k, v]): entry.val)
 
 
@@ -277,7 +281,9 @@ HashMapIter.new(map: HashMap[k, v]) HashMapIter[k, v]:
 impl Iterator[HashMapIter[k, v], exn]:
     type Item = HashMapEntry[k, v]
 
-    next(self: HashMapIter[k, v]) Option[Iterator[HashMapIter[k, v], exn].Item] / exn:
+    next(
+        self: HashMapIter[k, v],
+    ) Option[Iterator[HashMapIter[k, v], exn].Item] / exn:
         match self._nextElem:
             Option.Some(next):
                 let ret = HashMapEntry(key = next.key, val = next.val)

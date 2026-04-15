@@ -253,7 +253,9 @@ type SplitWhitespace(
 impl Iterator[SplitWhitespace, exn]:
     type Item = Str
 
-    next(self: SplitWhitespace) Option[Iterator[SplitWhitespace, exn].Item] / exn:
+    next(
+        self: SplitWhitespace,
+    ) Option[Iterator[SplitWhitespace, exn].Item] / exn:
         let wordStart = self._idx
         let wordEnd = wordStart
         let charIdxIter = self._str.substr(wordStart, self._str.len())

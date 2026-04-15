@@ -1,7 +1,9 @@
 import [Compiler/Ast]
 
 
-strParts(interpolations: Vec[(begin: Token, expr: Expr[exts])]) Vec[StrPart[exts]]:
+strParts(
+    interpolations: Vec[(begin: Token, expr: Expr[exts])],
+) Vec[StrPart[exts]]:
     let parts: Vec[StrPart[exts]] = Vec.withCapacity(interpolations.len() * 2)
 
     for part: (begin: Token, expr: Expr[exts]) in interpolations.iter():

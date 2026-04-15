@@ -28,7 +28,9 @@ HashSet.fromIter[
     HashSet(_map = HashMap.fromIter(iter.map(\(k): (key = k, val = ()))))
 
 
-HashSet.iter(self: HashSet[k]) Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn]:
+HashSet.iter(
+    self: HashSet[k],
+) Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn]:
     self._map.iter().map(\(kv) k: kv.key)
 
 
@@ -41,11 +43,17 @@ HashSet.contains[Hash[k], Eq[k]](self: HashSet[k], key: k) Bool:
     self._map.get(key) is Option.Some(_)
 
 
-HashSet.difference[Hash[k], Eq[k]](self: HashSet[k], other: HashSet[k]) Filter[Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn], k, exn]:
+HashSet.difference[Hash[k], Eq[k]](
+    self: HashSet[k],
+    other: HashSet[k],
+) Filter[Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn], k, exn]:
     self.iter().filter(\(k: k): not other.contains(k))
 
 
-HashSet.intersection[Hash[k], Eq[k]](self: HashSet[k], other: HashSet[k]) Filter[Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn], k, exn]:
+HashSet.intersection[Hash[k], Eq[k]](
+    self: HashSet[k],
+    other: HashSet[k],
+) Filter[Map[HashMapIter[k, ()], HashMapEntry[k, ()], k, exn], k, exn]:
     self.iter().filter(\(k: k): other.contains(k))
 
 

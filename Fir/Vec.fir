@@ -12,7 +12,9 @@ Vec.empty() Vec[t]:
     Vec.withCapacity(0)
 
 
-Vec.fromIter[Iterator[iter, exn], Iterator[iter, exn].Item = item](iter: iter) Vec[item] / exn:
+Vec.fromIter[Iterator[iter, exn], Iterator[iter, exn].Item = item](
+    iter: iter,
+) Vec[item] / exn:
     let size = iter.size[iter, exn, exn]().unwrapOr(10)
     let vec = Vec.withCapacity(size)
     for item in iter:
@@ -185,7 +187,12 @@ _quicksort(vec: Vec[t], low: U32, high: U32, cmp: Fn(t, t) Ordering / exn) / exn
     _quicksort(vec, p + 1, high, cmp)
 
 
-_partition(vec: Vec[t], low: U32, high: U32, cmp: Fn(t, t) Ordering / exn) U32 / exn:
+_partition(
+    vec: Vec[t],
+    low: U32,
+    high: U32,
+    cmp: Fn(t, t) Ordering / exn,
+) U32 / exn:
     let pivot = vec.get(high)
     let i = low
 

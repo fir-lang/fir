@@ -13,7 +13,9 @@ Deque.empty() Deque[t]:
     Deque.withCapacity(0)
 
 
-Deque.fromIter[Iterator[iter, exn], Iterator[iter, exn].Item = item](iter: iter) Deque[item] / exn:
+Deque.fromIter[Iterator[iter, exn], Iterator[iter, exn].Item = item](
+    iter: iter,
+) Deque[item] / exn:
     let size = iter.size[iter, exn, exn]().unwrapOr(10)
     let deque = Deque.withCapacity(size)
     for item in iter:

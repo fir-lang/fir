@@ -6,7 +6,11 @@ import [
 
 
 ## Convert an AST type to type checking type.
-convertAstTy(module: Module, vars: ScopeMap[Str, Ty], astTy: CType) Ty / TypeError:
+convertAstTy(
+    module: Module,
+    vars: ScopeMap[Str, Ty],
+    astTy: CType,
+) Ty / TypeError:
     let loc = module.loc(astTy)
     match astTy:
         Type.Named(namedTy): convertNamedTy(module, vars, namedTy, loc)
@@ -183,7 +187,11 @@ convertNamedTy(
     Ty.App(conId = tyDefIdx, args = convertedArgs)
 
 
-convertFields(module: Module, vars: ScopeMap[Str, Ty], fields: CConFields) Option[FunArgs] / TypeError:
+convertFields(
+    module: Module,
+    vars: ScopeMap[Str, Ty],
+    fields: CConFields,
+) Option[FunArgs] / TypeError:
     match fields:
         ConFields.Empty: Option.None
 

@@ -284,7 +284,10 @@ scanNonIndented[
 peek[
     Iterator[iter, [ScannerError, ..exn]],
     Iterator[iter, [ScannerError, ..exn]].Item = Token,
-](tokens: Peekable[iter, Token, [ScannerError, ..exn]], newTokens: Vec[Token],) Option[Token] / [ScannerError, ..exn]:
+](
+    tokens: Peekable[iter, Token, [ScannerError, ..exn]],
+    newTokens: Vec[Token],
+) Option[Token] / [ScannerError, ..exn]:
     while tokens.peek() is Option.Some(t):
         if t.isTrivia():
             newTokens.push(t)
@@ -298,7 +301,10 @@ peek[
 next[
     Iterator[iter, [ScannerError, ..exn]],
     Iterator[iter, [ScannerError, ..exn]].Item = Token,
-](tokens: Peekable[iter, Token, [ScannerError, ..exn]], newTokens: Vec[Token],) Option[Token] / [ScannerError, ..exn]:
+](
+    tokens: Peekable[iter, Token, [ScannerError, ..exn]],
+    newTokens: Vec[Token],
+) Option[Token] / [ScannerError, ..exn]:
     while tokens.next() is Option.Some(t):
         if t.isTrivia():
             newTokens.push(t)

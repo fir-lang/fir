@@ -7,7 +7,9 @@ import [
 ]
 
 
-items[ItemExts[t], ToStr[ItemExts[t].Dummy],](state: ParserState[Token, ()]) Vec[Item[t]] / U32:
+items[ItemExts[t], ToStr[ItemExts[t].Dummy],](
+    state: ParserState[Token, ()],
+) Vec[Item[t]] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         \():

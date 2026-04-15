@@ -343,11 +343,16 @@ OrderedHashMap.empty() OrderedHashMap[k, v]:
     OrderedHashMap(_map = HashMap.empty())
 
 
-OrderedHashMap.keys(self: OrderedHashMap[k, v]) Map[HashMapIter[k, InsertionOrder[v]], HashMapEntry[k, InsertionOrder[v]], k, exn] / exn:
+OrderedHashMap.keys(
+    self: OrderedHashMap[k, v],
+) Map[HashMapIter[k, InsertionOrder[v]], HashMapEntry[k, InsertionOrder[v]], k, exn] / exn:
     self._map.keys()
 
 
-OrderedHashMap.containsKey[Hash[k], Eq[k]](self: OrderedHashMap[k, v], key: k) Bool:
+OrderedHashMap.containsKey[Hash[k], Eq[k]](
+    self: OrderedHashMap[k, v],
+    key: k,
+) Bool:
     self._map.containsKey(key)
 
 
@@ -365,12 +370,17 @@ OrderedHashMap.insert[Hash[k], Eq[k]](
     self._map.insert(key, val).map(\(v): v.thing)
 
 
-OrderedHashMap.remove[Hash[k], Eq[k]](self: OrderedHashMap[k, v], key: k) Option[v]:
+OrderedHashMap.remove[Hash[k], Eq[k]](
+    self: OrderedHashMap[k, v],
+    key: k,
+) Option[v]:
     let insertionOrder = self._map.len()
     self._map.remove(key).map(\(v): v.thing)
 
 
-OrderedHashMap.orderedEntries(self: OrderedHashMap[k, v]) Vec[HashMapEntry[k, v]]:
+OrderedHashMap.orderedEntries(
+    self: OrderedHashMap[k, v],
+) Vec[HashMapEntry[k, v]]:
     let vec: Vec[HashMapEntry[k, InsertionOrder[v]]] = Vec.fromIter(
         self._map.iter(),
     )
