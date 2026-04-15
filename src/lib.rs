@@ -171,7 +171,7 @@ mod native {
             loaded_pgm.print();
         }
 
-        let tys = type_checker::check_pgm(&mut loaded_pgm, &opts.main);
+        let (tys, module_envs) = type_checker::check_pgm(&mut loaded_pgm, &opts.main);
 
         if opts.print_checked_ast {
             loaded_pgm.print();
@@ -185,8 +185,7 @@ mod native {
 
         type_checker::expand_type_synonyms(&mut loaded_pgm);
 
-        let module = loaded_pgm.merge();
-        let mut mono_pgm = monomorph::monomorphise(&module, &opts.main);
+        let mut mono_pgm = monomorph::monomorphise(&loaded_pgm, module_envs, &opts.main);
 
         if opts.print_mono_ast {
             mono_ast::printer::print_pgm(&mono_pgm);
@@ -400,11 +399,10 @@ mod wasm {
         let mut loaded_program = module_loader::load(file_path, false);
         deriving::expand_derives(&mut loaded_program);
 
-        let _tys = type_checker::check_pgm(&mut loaded_program, "main");
+        let (_tys, module_envs) = type_checker::check_pgm(&mut loaded_program, "main");
 
         type_checker::expand_type_synonyms(&mut loaded_program);
-        let module = loaded_program.merge();
-        let mut mono_pgm = monomorph::monomorphise(&module, "main");
+        let mut mono_pgm = monomorph::monomorphise(&loaded_program, module_envs, "main");
         let lowered_pgm = lowering::lower(&mut mono_pgm);
 
         let mut w = WasmOutput;

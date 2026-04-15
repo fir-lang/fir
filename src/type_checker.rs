@@ -38,7 +38,7 @@ use crate::module::ModulePath;
 /// Names can be either unprefixed (from direct/selective imports) or prefixed (from
 /// `import [Foo as P]`, accessed as `P/name`).
 #[derive(Debug, Clone, Default)]
-pub(super) struct ModuleEnv {
+pub(crate) struct ModuleEnv {
     /// Unprefixed names.
     pub names: HashMap<Name, Id>,
 
@@ -57,7 +57,7 @@ impl ModuleEnv {
 
     /// Look up a name with a module path prefix. Single-segment paths are treated as import
     /// prefixes (e.g. `P` in `import [Foo as P]`).
-    fn get_with_path(
+    pub(crate) fn get_with_path(
         &self,
         name: &Name,
         mod_prefix: &Option<crate::module::ModulePath>,
@@ -113,7 +113,10 @@ pub struct PgmTypes {
 ///
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
-pub(crate) fn check_pgm(pgm: &mut LoadedPgm, main: &str) -> PgmTypes {
+pub(crate) fn check_pgm(
+    pgm: &mut LoadedPgm,
+    main: &str,
+) -> (PgmTypes, HashMap<ModulePath, ModuleEnv>) {
     add_exception_types(pgm, main);
     kind_inference::add_missing_type_params(pgm);
     let module_envs = module_env::generate_module_envs(pgm);
@@ -133,7 +136,7 @@ pub(crate) fn check_pgm(pgm: &mut LoadedPgm, main: &str) -> PgmTypes {
         }
     }
 
-    tys
+    (tys, module_envs)
 }
 
 pub(crate) fn check_main_type(

@@ -82,7 +82,7 @@ pub(super) fn check_expr(
                 let (ty, ty_args) = scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
 
                 *expr = ast::Expr::Var(ast::VarExpr {
-                    mod_prefix: None,
+                    mod_prefix: mod_prefix.clone(),
                     id: var.clone(),
                     user_ty_args: vec![],
                     ty_args: ty_args.into_iter().map(Ty::UVar).collect(),
@@ -111,7 +111,7 @@ pub(super) fn check_expr(
                 let ty = scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
 
                 *expr = ast::Expr::Var(ast::VarExpr {
-                    mod_prefix: None,
+                    mod_prefix: mod_prefix.clone(),
                     id: var.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
@@ -282,7 +282,7 @@ pub(super) fn check_expr(
                     scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
 
                 *expr = ast::Expr::ConSel(ast::Con {
-                    mod_prefix: None,
+                    mod_prefix: mod_prefix.clone(),
                     ty: ty.clone(),
                     con: con.clone(),
                     user_ty_args: vec![],
@@ -315,7 +315,7 @@ pub(super) fn check_expr(
                     scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
 
                 *expr = ast::Expr::ConSel(ast::Con {
-                    mod_prefix: None,
+                    mod_prefix: mod_prefix.clone(),
                     ty: ty.clone(),
                     con: con.clone(),
                     user_ty_args: vec![],
@@ -446,7 +446,7 @@ pub(super) fn check_expr(
                 }
 
                 *expr = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                    mod_prefix: None,
+                    mod_prefix: mod_prefix.clone(),
                     ty: ty.clone(),
                     ty_user_ty_args: vec![],
                     member: member.clone(),
@@ -472,7 +472,7 @@ pub(super) fn check_expr(
                     scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
 
                 *expr = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                    mod_prefix: None,
+                    mod_prefix: mod_prefix.clone(),
                     ty: ty.clone(),
                     ty_user_ty_args: vec![],
                     member: member.clone(),

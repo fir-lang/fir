@@ -35,6 +35,10 @@ impl Id {
     pub fn name(&self) -> &Name {
         &self.name
     }
+
+    pub fn module(&self) -> &ModulePath {
+        &self.module
+    }
 }
 
 /// Well-known `Id`s for built-in types and traits.

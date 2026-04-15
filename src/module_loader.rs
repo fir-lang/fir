@@ -149,25 +149,6 @@ pub fn load(entry_file: &Path, print_parsed_ast: bool) -> LoadedPgm {
 }
 
 impl LoadedPgm {
-    pub fn merge(self) -> ast::Module {
-        let mut merged_module: ast::Module = ast::Module::empty();
-
-        for module in self.modules.into_values() {
-            for decl in module.decls {
-                match &decl.node {
-                    ast::TopDecl::Type(_)
-                    | ast::TopDecl::Fun(_)
-                    | ast::TopDecl::Trait(_)
-                    | ast::TopDecl::Impl(_) => merged_module.decls.push(decl),
-
-                    ast::TopDecl::Import(_) => {}
-                }
-            }
-        }
-
-        merged_module
-    }
-
     pub fn iter_decls(&self) -> impl Iterator<Item = (&ModulePath, &ast::L<ast::TopDecl>)> {
         self.modules
             .iter()
