@@ -1,6 +1,5 @@
 import [
     Compiler/Ast,
-    Compiler/Error,
     Compiler/Grammar,
     Compiler/Scanner,
 ]
@@ -358,29 +357,30 @@ FunDecl.format(self: FmtFunDecl, tokens: Array[Token]) Doc:
 
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-    let argListRet = _formatSigArgList(lparen, self.sig.params, tokens)
-    let argList = argListRet.doc
-    let rparen = argListRet.rparen
+    let (doc = argList, rparen = lastToken) = _formatSigArgList(
+        lparen, self.sig.params, tokens
+    )
 
-    let lastToken = rparen
+    let returnTy = match self.sig.returnTy:
+        Option.None: Doc.empty()
+        Option.Some(ret):
+            lastToken = ret.lastToken(tokens)
+            Doc.blank(1) + ret.format(tokens)
 
-    argList = argList.nest(4) + Doc.break_(0) + formatToken(rparen, tokens)
+    let exn = match self.sig.exceptions:
+        Option.None: Doc.empty()
+        Option.Some(exn):
+            let slash = nextNonTrivia(lastToken, tokens).unwrap()
+            assert(tokens.get(slash.idx).kind is TokenKind.Slash)
 
-    doc += argList.group()
+            lastToken = exn.lastToken(tokens)
 
-    if self.sig.returnTy is Option.Some(ret):
-        lastToken = ret.lastToken(tokens)
-        doc += Doc.blank(1) + ret.format(tokens)
+            Doc.blank(1)
+                + formatToken(slash, tokens)
+                + Doc.blank(1)
+                + exn.format(tokens)
 
-    if self.sig.exceptions is Option.Some(exn):
-        let slash = nextNonTrivia(lastToken, tokens).unwrap()
-        assert(tokens.get(slash.idx).kind is TokenKind.Slash)
-
-        doc += Doc.blank(1)
-            + formatToken(slash, tokens)
-            + Doc.blank(1)
-            + exn.format(tokens)
-        lastToken = exn.lastToken(tokens)
+    doc += Doc.grouped(argList + returnTy + exn)
 
     if self.body is Option.Some(stmts):
         let colon = nextNonTrivia(lastToken, tokens).unwrap()
@@ -496,6 +496,8 @@ _formatSigArgList(
 
     let rparen = nextNonTrivia(lastToken, tokens).unwrap()
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+
+    argList = argList.nest(4) + Doc.break_(0) + formatToken(rparen, tokens)
 
     (doc = argList, rparen = rparen)
 
@@ -2040,7 +2042,10 @@ tokenText(token: TokenIdx, tokens: Array[Token]) Str:
     tokens.get(token.idx).text
 
 
-join[Iterator[iter, exn], Iterator[iter, exn].Item = Doc](iter: iter, sep: Doc) Doc / exn:
+join[Iterator[iter, exn], Iterator[iter, exn].Item = Doc](
+    iter: iter,
+    sep: Doc,
+) Doc / exn:
     let doc = match iter.next():
         Option.None: return Doc.empty()
         Option.Some(doc): doc
