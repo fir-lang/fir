@@ -1,4 +1,4 @@
-type HashSet[k](
+value type HashSet[k](
     _map: HashMap[k, ()],
 )
 
