@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: 731bcabf922ec955c76ee5d16ae18102ec0fbbb8483e700c5b7b92f68cd4df04
+// sha3: 2706d8af8541bbbddaec48473213cd355aea282194109e0cb03675c2fa63d71e
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -56249,6 +56249,7 @@ fn __action114<'a>(
         }) => Expr::AssocFnSel(AssocFnSelExpr {
             mod_prefix,
             ty: id,
+            ty_id: None,
             ty_user_ty_args,
             member: field.name(),
             user_ty_args,

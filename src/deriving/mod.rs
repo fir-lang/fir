@@ -153,6 +153,7 @@ fn assoc_fn_sel(loc: &ast::Loc, ty: &str, member: &str) -> ast::L<ast::Expr> {
         ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
             mod_prefix: None,
             ty: ast::Name::new(ty),
+            ty_id: None,
             ty_user_ty_args: vec![],
             member: ast::Name::new(member),
             user_ty_args: vec![],

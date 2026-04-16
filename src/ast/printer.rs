@@ -655,6 +655,7 @@ impl Expr {
             Expr::AssocFnSel(AssocFnSelExpr {
                 mod_prefix,
                 ty,
+                ty_id: _,
                 ty_user_ty_args,
                 member,
                 user_ty_args,

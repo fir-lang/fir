@@ -722,10 +722,18 @@ pub struct MethodSelExpr {
 pub struct AssocFnSelExpr {
     /// Module prefix of the type constructor. E.g. in `Fir/Vec/Vec[U32].withCapacity`,
     /// `Fir/Vec/` part.
+    ///
+    /// This field is used to resolve the containing type name and it should not be used after type
+    /// checking.
     pub mod_prefix: Option<ModulePath>,
 
-    /// The type: `Vec` in the examples.
+    /// The containing type: `Vec` in the examples.
+    ///
+    /// This field should not be used after type checking. Use `ty_id` to get the containing type.
     pub ty: Name,
+
+    /// Resolved `Id` of `ty`. Filled in by the type checker.
+    pub ty_id: Option<Id>,
 
     /// Type arguments explicitly passed to the constructor. `[U32]` in the first example above.
     ///
@@ -1227,6 +1235,7 @@ impl Expr {
             Expr::AssocFnSel(AssocFnSelExpr {
                 mod_prefix: _,
                 ty: _,
+                ty_id: _,
                 ty_user_ty_args,
                 member: _,
                 user_ty_args,

@@ -339,6 +339,7 @@ pub(super) fn check_expr(
         ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
             mod_prefix,
             ty,
+            ty_id: _,
             ty_user_ty_args,
             member,
             user_ty_args,
@@ -439,6 +440,7 @@ pub(super) fn check_expr(
                 *expr = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                     mod_prefix: mod_prefix.clone(),
                     ty: ty.clone(),
+                    ty_id: Some(ty_id.clone()),
                     ty_user_ty_args: vec![],
                     member: member.clone(),
                     user_ty_args: vec![],
@@ -465,6 +467,7 @@ pub(super) fn check_expr(
                 *expr = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                     mod_prefix: mod_prefix.clone(),
                     ty: ty.clone(),
+                    ty_id: Some(ty_id.clone()),
                     ty_user_ty_args: vec![],
                     member: member.clone(),
                     user_ty_args: vec![],
@@ -710,8 +713,9 @@ pub(super) fn check_expr(
                 };
 
                 fun.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                    mod_prefix: None,
-                    ty: method_ty_id.name().clone(),
+                    mod_prefix: None,                // unused after type checking
+                    ty: method_ty_id.name().clone(), // unused after type checking
+                    ty_id: Some(method_ty_id.clone()),
                     ty_user_ty_args: vec![], // unused after type checking
                     member: method.clone(),
                     user_ty_args: vec![], // unused after type checking
@@ -943,6 +947,7 @@ pub(super) fn check_expr(
                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                                     mod_prefix: None,
                                     ty: Name::new_static("StrBuf"),
+                                    ty_id: Some(builtin_ids::STR_BUF()),
                                     ty_user_ty_args: vec![],
                                     member: Name::new_static("empty"),
                                     user_ty_args: vec![],
@@ -971,6 +976,7 @@ pub(super) fn check_expr(
                             node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                                 mod_prefix: None,
                                 ty: Name::new_static("StrBuf"),
+                                ty_id: Some(builtin_ids::STR_BUF()),
                                 ty_user_ty_args: vec![],
                                 member: Name::new_static("pushStr"),
                                 user_ty_args: vec![],
@@ -1040,6 +1046,7 @@ pub(super) fn check_expr(
                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                                     mod_prefix: None,
                                     ty: Name::new_static("ToStr"),
+                                    ty_id: Some(builtin_ids::TO_STR()),
                                     ty_user_ty_args: vec![],
                                     member: Name::new_static("toStr"),
                                     user_ty_args: vec![],
@@ -1077,6 +1084,7 @@ pub(super) fn check_expr(
                         node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                             mod_prefix: None,
                             ty: Name::new_static("ToStr"),
+                            ty_id: Some(builtin_ids::TO_STR()),
                             ty_user_ty_args: vec![],
                             member: Name::new_static("toStr"),
                             user_ty_args: vec![],
@@ -1268,6 +1276,7 @@ pub(super) fn check_expr(
                         node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                             mod_prefix: None,
                             ty: Name::new_static("Bool"),
+                            ty_id: Some(builtin_ids::BOOL()),
                             ty_user_ty_args: vec![],
                             member: Name::new_static("__not"),
                             user_ty_args: vec![],
@@ -1675,6 +1684,7 @@ pub(super) fn check_expr(
                         node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                             mod_prefix: None,
                             ty: iter_ty,
+                            ty_id: None,
                             ty_user_ty_args: vec![],
                             member: Name::new_static("fromIter"),
                             user_ty_args: vec![],
@@ -1704,6 +1714,7 @@ pub(super) fn check_expr(
                                     node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                                         mod_prefix: None,
                                         ty: con.name().clone(),
+                                        ty_id: None,
                                         ty_user_ty_args: vec![],
                                         member: Name::new_static("fromIter"),
                                         user_ty_args: vec![],

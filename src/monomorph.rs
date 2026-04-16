@@ -863,8 +863,9 @@ fn mono_expr(
         }
 
         ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-            mod_prefix,
+            mod_prefix: _,
             ty,
+            ty_id,
             ty_user_ty_args: _,
             member,
             user_ty_args: _,
@@ -885,16 +886,17 @@ fn mono_expr(
                 .map(|ty_arg| mono_tc_ty(ty_arg, ty_map, poly_pgm, mono_pgm, mangler, module_env))
                 .collect();
 
-            let assoc_ty_id = module_env.resolve(ty, mod_prefix, loc);
+            let assoc_ty_id = ty_id.as_ref().unwrap();
+
             // Check associated functions.
             if let Some((fn_module, fun_decl)) = poly_pgm
                 .associated
-                .get(&assoc_ty_id)
+                .get(assoc_ty_id)
                 .and_then(|ty_map| ty_map.get(member))
                 .or_else(|| {
                     poly_pgm
                         .method
-                        .get(&assoc_ty_id)
+                        .get(assoc_ty_id)
                         .and_then(|ty_map| ty_map.get(member))
                 })
             {
@@ -909,7 +911,7 @@ fn mono_expr(
                 );
 
                 return mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
-                    ty_id: mangler.mangle(&assoc_ty_id),
+                    ty_id: mangler.mangle(assoc_ty_id),
                     member: member.clone(),
                     ty_args: mono_ty_args,
                     ty: inferred_ty,
@@ -917,9 +919,9 @@ fn mono_expr(
             }
 
             // Check traits.
-            if poly_pgm.traits.contains_key(&assoc_ty_id) {
+            if poly_pgm.traits.contains_key(assoc_ty_id) {
                 mono_method(
-                    &assoc_ty_id,
+                    assoc_ty_id,
                     member,
                     &mono_ty_args,
                     poly_pgm,
@@ -929,7 +931,7 @@ fn mono_expr(
                     module_env,
                 );
                 return mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
-                    ty_id: mangler.mangle(&assoc_ty_id),
+                    ty_id: mangler.mangle(assoc_ty_id),
                     member: member.clone(),
                     ty_args: mono_ty_args,
                     ty: inferred_ty,

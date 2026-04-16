@@ -415,6 +415,7 @@ fn check_stmt(
                                                 node: ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
                                                     mod_prefix: None,
                                                     ty: Name::new_static("Iterator"),
+                                                    ty_id: Some(id::builtins::ITERATOR()),
                                                     ty_user_ty_args: vec![],
                                                     member: Name::new_static("next"),
                                                     user_ty_args: vec![],

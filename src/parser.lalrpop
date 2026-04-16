@@ -796,6 +796,7 @@ InlineExpr: Expr = {
                 Expr::AssocFnSel(AssocFnSelExpr {
                     mod_prefix,
                     ty: id,
+                    ty_id: None,
                     ty_user_ty_args,
                     member: field.name(),
                     user_ty_args,
