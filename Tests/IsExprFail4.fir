@@ -5,4 +5,4 @@ main():
         print(a)
 
 # expected exit status: 101
-# expected stderr: Tests/IsExprFail4.fir:5:15: Unbound variable a
+# expected stderr: Tests/IsExprFail4.fir:5:15: Unbound name a

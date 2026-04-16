@@ -60,12 +60,12 @@ use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::module::ModulePath;
 use crate::module_loader::LoadedPgm;
+use crate::type_checker::ModuleEnv;
 use crate::type_checker::convert::*;
 use crate::type_checker::id::Id;
 use crate::type_checker::ty::*;
 use crate::type_checker::ty_map::TyMap;
 use crate::type_checker::unification::try_unify_one_way;
-use crate::type_checker::{ModuleEnv, resolve_name};
 use crate::utils::loc_display;
 
 /// Maps trait ids to implementations.
@@ -123,7 +123,7 @@ pub(crate) fn collect_trait_env(
             _ => continue,
         };
 
-        let trait_id = resolve_name(module_env, &impl_.node.trait_.node);
+        let trait_id = module_env.resolve(&impl_.node.trait_.node, &None, &impl_.node.trait_.loc);
 
         /*
         let ty_con = tys
@@ -180,9 +180,8 @@ pub(crate) fn collect_trait_env(
     // Ensure all declared traits have entries, even those with no impls (e.g. RecRowToList).
     for (module_path, item) in pgm.iter_decls() {
         if let ast::TopDecl::Trait(trait_decl) = &item.node {
-            let module_env = module_envs.get(module_path).unwrap();
-            env.entry(resolve_name(module_env, &trait_decl.node.name.node))
-                .or_default();
+            let trait_id = Id::new(module_path, &trait_decl.node.name.node);
+            env.entry(trait_id).or_default();
         }
     }
 

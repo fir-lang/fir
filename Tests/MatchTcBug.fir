@@ -7,4 +7,4 @@ main():
     printStr("`idx`")
 
 # expected exit status: 101
-# expected stderr: Tests/MatchTcBug.fir:7:16: Unbound variable idx
+# expected stderr: Tests/MatchTcBug.fir:7:16: Unbound name idx

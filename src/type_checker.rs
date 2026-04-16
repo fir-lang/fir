@@ -21,6 +21,7 @@ mod unification;
 pub use crate::utils::loc_display;
 use convert::*;
 pub use id::Id;
+pub(crate) use module_env::ModuleEnv;
 use normalization::normalize_stmt;
 use stmt::check_stmts;
 use traits::*;
@@ -32,50 +33,6 @@ use unification::unify;
 use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::module::ModulePath;
-
-/// Maps names visible in a module to their `Id`s.
-///
-/// Names can be either unprefixed (from direct/selective imports) or prefixed (from
-/// `import [Foo as P]`, accessed as `P/name`).
-#[derive(Debug, Clone, Default)]
-pub(crate) struct ModuleEnv {
-    /// Unprefixed names.
-    pub names: HashMap<Name, Id>,
-
-    /// Prefixed names: prefix -> name -> id.
-    pub prefixed: HashMap<Name, HashMap<Name, Id>>,
-}
-
-impl ModuleEnv {
-    /// Look up a name, optionally under a module prefix.
-    fn get(&self, name: &Name, mod_prefix: Option<&Name>) -> Option<&Id> {
-        match mod_prefix {
-            None => self.names.get(name),
-            Some(prefix) => self.prefixed.get(prefix)?.get(name),
-        }
-    }
-
-    /// Look up a name with a module path prefix. Single-segment paths are treated as import
-    /// prefixes (e.g. `P` in `import [Foo as P]`).
-    pub(crate) fn get_with_path(
-        &self,
-        name: &Name,
-        mod_prefix: &Option<crate::module::ModulePath>,
-    ) -> Option<&Id> {
-        match mod_prefix {
-            None => self.names.get(name),
-            Some(path) => {
-                let segments = path.segments();
-                assert_eq!(
-                    segments.len(),
-                    1,
-                    "Multi-segment module paths not yet supported in name resolution"
-                );
-                self.prefixed.get(&Name::from(&segments[0]))?.get(name)
-            }
-        }
-    }
-}
 
 /// Type constructors and types in the program.
 #[derive(Debug)]
@@ -292,23 +249,6 @@ struct TcFunState<'a> {
     local_gen: u32,
 }
 
-impl TcFunState<'_> {
-    /// Resolve a `Name` from the AST to an `Id` using the current module's environment.
-    fn resolve(&self, name: &Name) -> Id {
-        resolve_name(self.module_env, name)
-    }
-}
-
-/// Resolve a `Name` from the AST to an `Id` using a module environment. Only for module-level
-/// definitions (types, traits, functions). Scoped names like associated type synonyms should be
-/// looked up via `TyMap::resolve` instead.
-pub(super) fn resolve_name(module_env: &ModuleEnv, name: &Name) -> Id {
-    module_env
-        .get(name, None)
-        .cloned()
-        .unwrap_or_else(|| panic!("Name `{}` not found in module environment", name))
-}
-
 const EXN_QVAR_ID: Name = Name::new_static("?exn");
 
 /// Collect type constructors (traits and data) and type schemes (top-level, associated, traits) of
@@ -334,9 +274,6 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
 
     // Collect all type constructors first, then add fields and methods.
     for (module_path, decl) in pgm.iter_decls() {
-        let module_env = module_envs
-            .get(module_path)
-            .unwrap_or_else(|| panic!("BUG: Module {module_path} is not in module envs"));
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 // Type synonyms are handled separately after this pass.
@@ -349,7 +286,7 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                     "{}: Type parameter list and kind list don't match",
                     loc_display(&decl.loc),
                 );
-                let ty_id = resolve_name(module_env, &ty_decl.node.name);
+                let ty_id = Id::new(module_path, &ty_decl.node.name);
                 if tys.has_con(&ty_id) {
                     panic!(
                         "{}: Type {} is defined multiple times",
@@ -382,7 +319,7 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                     trait_decl.node.type_params.len(),
                     trait_decl.node.type_param_kinds.len()
                 );
-                let ty_id = resolve_name(module_env, &trait_decl.node.name.node);
+                let ty_id = Id::new(module_path, &trait_decl.node.name.node);
                 if tys.has_con(&ty_id) {
                     panic!(
                         "{}: Type {} is defined multiple times",
@@ -504,7 +441,7 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                     }),
                 };
 
-                let ty_id = resolve_name(module_env, &ty_decl.node.name);
+                let ty_id = Id::new(module_path, &ty_decl.node.name);
                 tys.get_con_mut(&ty_id).unwrap().details = details;
             }
 
@@ -518,6 +455,8 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                     trait_decl.node.type_params.len(),
                     trait_decl.node.type_param_kinds.len()
                 );
+
+                let trait_id = Id::new(module_path, &trait_decl.node.name.node);
 
                 let trait_context_ast: ast::Context = ast::Context {
                     type_params: trait_decl
@@ -569,7 +508,6 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                             // Add a type synonym so that `Item` resolves to
                             // `TraitName[params...].Item` within the trait body.
                             let trait_ty = {
-                                let trait_name = trait_decl.node.name.node.clone();
                                 let args: Vec<Ty> = trait_decl
                                     .node
                                     .type_params
@@ -580,9 +518,9 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                                     })
                                     .collect();
                                 if args.is_empty() {
-                                    Ty::Con(resolve_name(module_env, &trait_name), Kind::Star)
+                                    Ty::Con(trait_id.clone(), Kind::Star)
                                 } else {
-                                    Ty::App(resolve_name(module_env, &trait_name), args, Kind::Star)
+                                    Ty::App(trait_id.clone(), args, Kind::Star)
                                 }
                             };
                             tys.insert_synonym(
@@ -681,7 +619,6 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                     }
                 }
 
-                let trait_id = resolve_name(module_env, &trait_decl.node.name.node);
                 let ty_con = tys.get_con_mut(&trait_id).unwrap();
                 ty_con.details = TyConDetails::Trait(TraitDetails { methods, assoc_tys });
 
@@ -712,7 +649,7 @@ fn add_default_impl_items(
             _ => continue,
         };
 
-        let trait_con_id = resolve_name(module_env, &impl_decl.trait_.node);
+        let trait_con_id = module_env.resolve(&impl_decl.trait_.node, &None, &impl_decl.trait_.loc);
 
         // Check that the trait in the impl block is really a trait.
         if !tys
@@ -997,6 +934,8 @@ fn collect_schemes(
                     trait_decl.node.type_param_kinds.len()
                 );
 
+                let trait_id = Id::new(module_path, &trait_decl.node.name.node);
+
                 // Note: this needs to be a `Vec` instead of a `Map` as we need to add trait context
                 // before the function context in the method type schemes, and type parameters in
                 // the trait context need to be in the same order as the trait declaration.
@@ -1067,7 +1006,6 @@ fn collect_schemes(
                         {
                             let kind = kind_inference::convert_kind(kind).unwrap_or(Kind::Star);
                             let trait_ty = {
-                                let trait_name = trait_decl.node.name.node.clone();
                                 let args: Vec<Ty> = trait_decl
                                     .node
                                     .type_params
@@ -1078,9 +1016,9 @@ fn collect_schemes(
                                     })
                                     .collect();
                                 if args.is_empty() {
-                                    Ty::Con(resolve_name(module_env, &trait_name), Kind::Star)
+                                    Ty::Con(trait_id.clone(), Kind::Star)
                                 } else {
-                                    Ty::App(resolve_name(module_env, &trait_name), args, Kind::Star)
+                                    Ty::App(trait_id.clone(), args, Kind::Star)
                                 }
                             };
                             tys.insert_synonym(
@@ -1149,14 +1087,11 @@ fn collect_schemes(
                         method_schemes
                             .entry(fun.node.name.node.clone())
                             .or_default()
-                            .push((
-                                resolve_name(module_env, &trait_decl.node.name.node),
-                                scheme.clone(),
-                            ));
+                            .push((trait_id.clone(), scheme.clone()));
                     }
 
                     associated_fn_schemes
-                        .entry(resolve_name(module_env, &trait_decl.node.name.node))
+                        .entry(trait_id.clone())
                         .or_default()
                         .insert(fun.node.name.node.clone(), scheme);
                 }
@@ -1173,14 +1108,8 @@ fn collect_schemes(
                 loc,
             }) => {
                 // Check that `parent_ty` exists.
-                if let Some(parent_ty) = parent_ty
-                    && module_env.get(&parent_ty.node, None).is_none()
-                {
-                    panic!(
-                        "{}: Unknown type {}",
-                        loc_display(&decl.loc),
-                        &parent_ty.node
-                    );
+                if let Some(parent_ty) = parent_ty {
+                    module_env.resolve(&parent_ty.node, &None, &parent_ty.loc);
                 }
 
                 let fun_preds: Vec<Pred> = convert_and_bind_context(
@@ -1206,7 +1135,8 @@ fn collect_schemes(
                         match parent_ty {
                             Some(parent_ty) => {
                                 // We checked above that the parent type exists.
-                                let parent_ty_id = resolve_name(module_env, &parent_ty.node);
+                                let parent_ty_id =
+                                    module_env.resolve(&parent_ty.node, &None, &parent_ty.loc);
                                 let parent_ty_con = tys.get_con(&parent_ty_id).unwrap();
                                 if !parent_ty_con.ty_params.is_empty() {
                                     panic!(
@@ -1253,18 +1183,21 @@ fn collect_schemes(
 
                 match parent_ty {
                     Some(parent_ty) => {
+                        let parent_ty_id =
+                            module_env.resolve(&parent_ty.node, &None, &parent_ty.loc);
+
                         match sig.self_ {
                             ast::SelfParam::No => {}
                             ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
-                                method_schemes.entry(name.node.clone()).or_default().push((
-                                    resolve_name(module_env, &parent_ty.node),
-                                    scheme.clone(),
-                                ));
+                                method_schemes
+                                    .entry(name.node.clone())
+                                    .or_default()
+                                    .push((parent_ty_id.clone(), scheme.clone()));
                             }
                         }
 
                         let old = associated_fn_schemes
-                            .entry(resolve_name(module_env, &parent_ty.node))
+                            .entry(parent_ty_id)
                             .or_default()
                             .insert(name.node.clone(), scheme);
 
@@ -1278,7 +1211,7 @@ fn collect_schemes(
                         }
                     }
                     None => {
-                        let id = resolve_name(module_env, &name.node);
+                        let id = Id::new(module_path, &name.node);
                         let old = top_schemes.insert(id, scheme);
                         if old.is_some() {
                             panic!(
@@ -1292,6 +1225,8 @@ fn collect_schemes(
             }
 
             ast::TopDecl::Type(ty_decl) => {
+                let ty_id = Id::new(module_path, &ty_decl.node.name);
+
                 // Add constructors as functions.
                 let rhs = match &ty_decl.node.rhs {
                     Some(ast::TypeDeclRhs::Synonym(_)) | None => {
@@ -1320,10 +1255,10 @@ fn collect_schemes(
 
                 // Return type of constructors.
                 let ret = if ty_decl.node.type_params.is_empty() {
-                    Ty::Con(resolve_name(module_env, &ty_decl.node.name), Kind::Star)
+                    Ty::Con(ty_id.clone(), Kind::Star)
                 } else {
                     Ty::App(
-                        resolve_name(module_env, &ty_decl.node.name),
+                        ty_id.clone(),
                         ty_decl
                             .node
                             .type_params
@@ -1366,7 +1301,7 @@ fn collect_schemes(
                                 loc: ty_decl.loc.clone(), // TODO: use con loc
                             };
                             let old = tys
-                                .get_con_mut(&resolve_name(module_env, &ty_decl.node.name))
+                                .get_con_mut(&ty_id)
                                 .unwrap()
                                 .details
                                 .as_type_mut()
@@ -1405,7 +1340,7 @@ fn collect_schemes(
                             loc: ty_decl.loc.clone(), // TODO: use con loc
                         };
                         let old = tys
-                            .get_con_mut(&resolve_name(module_env, &ty_decl.node.name))
+                            .get_con_mut(&ty_id)
                             .unwrap()
                             .details
                             .as_type_mut()
@@ -1440,7 +1375,11 @@ fn collect_schemes(
                 // Add type synonyms for associated types, mapping to
                 // `TraitName[args...].AssocTyName` so that both trait and impl sides produce the
                 // same `AssocTySelect` structure for `eq_modulo_alpha`.
-                let trait_name = impl_decl.node.trait_.node.clone();
+                let impl_trait_id = module_env.resolve(
+                    &impl_decl.node.trait_.node,
+                    &None,
+                    &impl_decl.node.trait_.loc,
+                );
                 let impl_trait_ty = {
                     let args: Vec<Ty> = impl_decl
                         .node
@@ -1449,16 +1388,15 @@ fn collect_schemes(
                         .map(|ty| convert_ast_ty(tys, module_env, &ty.node, &ty.loc))
                         .collect();
                     if args.is_empty() {
-                        Ty::Con(resolve_name(module_env, &trait_name), Kind::Star)
+                        Ty::Con(impl_trait_id.clone(), Kind::Star)
                     } else {
-                        Ty::App(resolve_name(module_env, &trait_name), args, Kind::Star)
+                        Ty::App(impl_trait_id.clone(), args, Kind::Star)
                     }
                 };
                 for item in &impl_decl.node.items {
                     if let ast::ImplDeclItem::Type { assoc_ty, .. } = item {
-                        let trait_id = resolve_name(module_env, &trait_name);
                         let kind = tys
-                            .get_con(&trait_id)
+                            .get_con(&impl_trait_id)
                             .unwrap()
                             .details
                             .trait_details()
@@ -1469,7 +1407,7 @@ fn collect_schemes(
                                 panic!(
                                     "{}: Trait {} does not have associated type {}",
                                     loc_display(&assoc_ty.loc),
-                                    trait_name,
+                                    impl_trait_id,
                                     assoc_ty.node,
                                 )
                             })
@@ -1548,7 +1486,6 @@ fn collect_schemes(
                         loc: fun.loc.clone(),
                     };
 
-                    let impl_trait_id = resolve_name(module_env, &impl_decl.node.trait_.node);
                     let trait_ty_con = tys.get_con(&impl_trait_id).unwrap_or_else(|| {
                         panic!(
                             "{}: Unknown trait {}",
@@ -1655,7 +1592,7 @@ fn check_top_fun(
             // The parent type should have no type arguments.
             match &fun.node.parent_ty {
                 Some(parent_ty) => {
-                    let parent_ty_id = resolve_name(module_env, &parent_ty.node);
+                    let parent_ty_id = module_env.resolve(&parent_ty.node, &None, &parent_ty.loc);
                     let parent_ty_con = tys.tys.get_con(&parent_ty_id).unwrap_or_else(|| {
                         panic!(
                             "{}: Unknown type {}",
@@ -1761,14 +1698,13 @@ fn check_impl(
         TyVarConversion::ToRVar,
     );
 
-    let trait_ty_con_id = &impl_.node.trait_;
-    let trait_id = resolve_name(module_env, &trait_ty_con_id.node);
+    let impl_trait_id = module_env.resolve(&impl_.node.trait_.node, &None, &impl_.node.trait_.loc);
 
-    let trait_ty_con = tys.tys.get_con(&trait_id).unwrap_or_else(|| {
+    let trait_ty_con = tys.tys.get_con(&impl_trait_id).unwrap_or_else(|| {
         panic!(
             "{}: Unknown trait {}",
-            loc_display(&trait_ty_con_id.loc),
-            trait_ty_con_id.node
+            loc_display(&impl_.node.trait_.loc),
+            &impl_.node.trait_.node
         )
     });
 
@@ -1777,8 +1713,8 @@ fn check_impl(
         .unwrap_or_else(|| {
             panic!(
                 "{}: {} in `impl` block is not a trait",
-                loc_display(&trait_ty_con_id.loc),
-                trait_ty_con_id.node
+                loc_display(&impl_.node.trait_.loc),
+                impl_.node.trait_.node
             )
         })
         .clone();
@@ -1942,7 +1878,7 @@ fn check_impl(
                 panic!(
                     "{}: Trait {} does not have method {}",
                     loc_display(&fun.loc),
-                    trait_ty_con_id.node,
+                    impl_.node.trait_.node,
                     fun_id
                 )
             }

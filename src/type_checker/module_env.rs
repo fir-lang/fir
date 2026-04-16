@@ -2,12 +2,59 @@ use crate::ast;
 use crate::collections::*;
 use crate::module::ModulePath;
 use crate::module_loader::*;
-use crate::type_checker::ModuleEnv;
+use crate::name::Name;
 use crate::type_checker::id::Id;
+use crate::utils::loc_display;
+
+/// Maps names visible in a module to their `Id`s.
+///
+/// Names can be either unprefixed (from direct/selective imports) or prefixed (from
+/// `import [Foo as P]`, accessed as `P/name`).
+#[derive(Debug, Clone, Default)]
+pub(crate) struct ModuleEnv {
+    /// Unprefixed names.
+    names: HashMap<Name, Id>,
+
+    /// Prefixed names: prefix -> name -> id.
+    prefixed: HashMap<Name, HashMap<Name, Id>>,
+}
+
+impl ModuleEnv {
+    pub(crate) fn resolve(
+        &self,
+        name: &Name,
+        mod_prefix: &Option<crate::module::ModulePath>,
+        loc: &ast::Loc,
+    ) -> Id {
+        match mod_prefix {
+            None => self
+                .names
+                .get(name)
+                .cloned()
+                .unwrap_or_else(|| panic!("{}: Unbound name {}", loc_display(loc), name)),
+            Some(path) => {
+                let segments = path.segments();
+                assert_eq!(
+                    segments.len(),
+                    1,
+                    "{}: Multi-segment module paths not yet supported in name resolution",
+                    loc_display(loc),
+                );
+                let prefix = Name::from(&segments[0]);
+                self.prefixed
+                    .get(&Name::from(&segments[0]))
+                    .and_then(|prefix_map| prefix_map.get(name).cloned())
+                    .unwrap_or_else(|| {
+                        panic!("{}: Unbound name {}/{}", loc_display(loc), prefix, name)
+                    })
+            }
+        }
+    }
+}
 
 /// For each module in the program, generate the module environment that maps the names that can be
 /// used in the module to their definitions.
-pub fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, ModuleEnv> {
+pub(crate) fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, ModuleEnv> {
     let mut envs: HashMap<ModulePath, ModuleEnv> = Default::default();
 
     // For each of the modules in the SCC, initialize envs with

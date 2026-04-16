@@ -31,13 +31,6 @@ struct PolyPgm {
 }
 
 impl PolyPgm {
-    fn resolve(&self, module_env: &ModuleEnv, name: &Name, mod_prefix: &Option<ModulePath>) -> Id {
-        module_env
-            .get_with_path(name, mod_prefix)
-            .cloned()
-            .unwrap_or_else(|| panic!("Cannot resolve name `{}`", name))
-    }
-
     fn module_env(&self, module: &ModulePath) -> &ModuleEnv {
         self.module_envs
             .get(module)
@@ -100,7 +93,7 @@ fn pgm_to_poly_pgm(loaded_pgm: &LoadedPgm, module_envs: HashMap<ModulePath, Modu
 
                 ast::TopDecl::Fun(fun_decl) => match fun_decl.node.parent_ty.clone() {
                     Some(parent_ty) => {
-                        let parent_id = env.get_with_path(&parent_ty.node, &None).cloned().unwrap();
+                        let parent_id = env.resolve(&parent_ty.node, &None, &parent_ty.loc);
                         match fun_decl.node.sig.self_ {
                             ast::SelfParam::No => {
                                 associated.entry(parent_id).or_default().insert(
@@ -159,10 +152,11 @@ fn pgm_to_poly_pgm(loaded_pgm: &LoadedPgm, module_envs: HashMap<ModulePath, Modu
                 }
 
                 ast::TopDecl::Impl(impl_decl) => {
-                    let trait_id = env
-                        .get_with_path(&impl_decl.node.trait_.node, &None)
-                        .cloned()
-                        .unwrap();
+                    let trait_id = env.resolve(
+                        &impl_decl.node.trait_.node,
+                        &None,
+                        &impl_decl.node.trait_.loc,
+                    );
                     traits
                         .entry(trait_id)
                         .or_default()
@@ -324,7 +318,11 @@ fn mono_top_fn(
             // type should not have type parameters.
             // TODO: Type checker should annotate all self types instead.
             let self_ty_name = fun_decl.parent_ty.as_ref().unwrap().node.clone();
-            let self_ty_id = poly_pgm.resolve(module_env, &self_ty_name, &None);
+            let self_ty_id = module_env.resolve(
+                &self_ty_name,
+                &None,
+                &fun_decl.parent_ty.as_ref().unwrap().loc,
+            );
             assert!(poly_pgm.ty.get(&self_ty_id).unwrap().type_params.is_empty());
             params.push((
                 Name::new_static("self"),
@@ -378,7 +376,7 @@ fn mono_top_fn(
     // Add current function to mono_pgm without a body to avoid looping.
     match &fun_decl.parent_ty {
         Some(parent_ty) => {
-            let parent_id = poly_pgm.resolve(module_env, &parent_ty.node, &None);
+            let parent_id = module_env.resolve(&parent_ty.node, &None, &parent_ty.loc);
             let mangled_parent = mangler.mangle(&parent_id);
             match mono_pgm
                 .associated
@@ -404,7 +402,7 @@ fn mono_top_fn(
             }
         }
         None => {
-            let fun_id = poly_pgm.resolve(module_env, &fun_decl.name.node, &None);
+            let fun_id = module_env.resolve(&fun_decl.name.node, &None, &fun_decl.name.loc);
             let mangled_fun_name = mangler.mangle(&fun_id);
             match mono_pgm
                 .funs
@@ -453,7 +451,7 @@ fn mono_top_fn(
 
     match &fun_decl.parent_ty {
         Some(parent_ty) => {
-            let parent_id = poly_pgm.resolve(module_env, &parent_ty.node, &None);
+            let parent_id = module_env.resolve(&parent_ty.node, &None, &parent_ty.loc);
             let mangled_parent = mangler.mangle(&parent_id);
             mono_pgm
                 .associated
@@ -466,7 +464,7 @@ fn mono_top_fn(
                 .body = Some(mono_body);
         }
         None => {
-            let fun_id = poly_pgm.resolve(module_env, &fun_decl.name.node, &None);
+            let fun_id = module_env.resolve(&fun_decl.name.node, &None, &fun_decl.name.loc);
             let mangled_fun_name = mangler.mangle(&fun_id);
             mono_pgm
                 .funs
@@ -582,7 +580,7 @@ fn mono_expr(
                 );
             }
 
-            let var_id = poly_pgm.resolve(module_env, var, mod_prefix);
+            let var_id = module_env.resolve(var, mod_prefix, loc);
             let poly_decl = poly_pgm
                 .top
                 .get(&var_id)
@@ -887,7 +885,7 @@ fn mono_expr(
                 .map(|ty_arg| mono_tc_ty(ty_arg, ty_map, poly_pgm, mono_pgm, mangler, module_env))
                 .collect();
 
-            let assoc_ty_id = poly_pgm.resolve(module_env, ty, mod_prefix);
+            let assoc_ty_id = module_env.resolve(ty, mod_prefix, loc);
             // Check associated functions.
             if let Some((fn_module, fun_decl)) = poly_pgm
                 .associated
@@ -1492,7 +1490,11 @@ fn mono_method(
                 // type should not have type parameters.
                 // TODO: Type checker should annotate all self types instead.
                 let self_ty_name = method.parent_ty.as_ref().unwrap().node.clone();
-                let self_ty_id = poly_pgm.resolve(method_env, &self_ty_name, &None);
+                let self_ty_id = method_env.resolve(
+                    &self_ty_name,
+                    &None,
+                    &method.parent_ty.as_ref().unwrap().loc,
+                );
                 assert!(poly_pgm.ty.get(&self_ty_id).unwrap().type_params.is_empty());
                 params.push((
                     Name::new_static("self"),
@@ -2458,7 +2460,7 @@ fn mono_ast_ty(
                             mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm, mangler, module_env)
                         })
                         .collect();
-                    let assoc_ty_id = poly_pgm.resolve(module_env, name, mod_prefix);
+                    let assoc_ty_id = module_env.resolve(name, mod_prefix, &ty.loc);
                     resolve_assoc_ty(
                         &assoc_ty_id,
                         &mono_args,
@@ -2487,7 +2489,7 @@ fn mono_ast_named_ty(
     mangler: &mut IdMangler,
     module_env: &ModuleEnv,
 ) -> mono::NamedType {
-    let con_id = poly_pgm.resolve(module_env, name, mod_prefix);
+    let con_id = module_env.resolve(name, mod_prefix, &ast::Loc::dummy());
     let ty_decl = poly_pgm.ty.get(&con_id).unwrap();
     let mono_args: Vec<mono::Type> = args
         .iter()

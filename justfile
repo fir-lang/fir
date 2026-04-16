@@ -46,7 +46,7 @@ interpreter_update_goldens: build
     #!/usr/bin/env bash
     shopt -s globstar
 
-    goldentests target/debug/fir Tests '# ' --overwrite
+    goldentests target/debug/fir Tests '# ' --overwrite --glob='!Tests/Modules/*'
 
     # goldentests leaves two newlines at the end of the files, remove one of
     # them.

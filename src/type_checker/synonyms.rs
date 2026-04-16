@@ -30,6 +30,7 @@ pub(super) fn resolve_synonym(
         resolving,
         tys,
         module_envs,
+        &rhs_ty.loc,
     );
 
     // Bind type params as QVars so they're available when converting the RHS.
@@ -67,6 +68,7 @@ fn resolve_synonym_deps(
     resolving: &mut HashSet<Id>,
     tys: &mut TyMap,
     module_envs: &HashMap<ModulePath, ModuleEnv>,
+    loc: &ast::Loc,
 ) {
     match ty {
         ast::Type::Named(ast::NamedType {
@@ -74,10 +76,9 @@ fn resolve_synonym_deps(
             name,
             args,
         }) => {
-            if let Some(id) = module_env.get_with_path(name, mod_prefix)
-                && synonym_asts.contains_key(id)
-            {
-                resolve_synonym(id, synonym_asts, resolving, tys, module_envs);
+            let ty_id = module_env.resolve(name, mod_prefix, loc);
+            if synonym_asts.contains_key(&ty_id) {
+                resolve_synonym(&ty_id, synonym_asts, resolving, tys, module_envs);
             }
             for arg in args {
                 resolve_synonym_deps(
@@ -87,6 +88,7 @@ fn resolve_synonym_deps(
                     resolving,
                     tys,
                     module_envs,
+                    &arg.loc,
                 );
             }
         }
@@ -100,6 +102,7 @@ fn resolve_synonym_deps(
                     resolving,
                     tys,
                     module_envs,
+                    loc,
                 );
             }
         }
@@ -113,6 +116,7 @@ fn resolve_synonym_deps(
                         resolving,
                         tys,
                         module_envs,
+                        &arg.loc,
                     );
                 }
             }
@@ -130,6 +134,7 @@ fn resolve_synonym_deps(
                     resolving,
                     tys,
                     module_envs,
+                    &arg.loc,
                 );
             }
             if let Some(ret) = ret {
@@ -140,6 +145,7 @@ fn resolve_synonym_deps(
                     resolving,
                     tys,
                     module_envs,
+                    &ret.loc,
                 );
             }
             if let Some(exn) = exceptions {
@@ -150,6 +156,7 @@ fn resolve_synonym_deps(
                     resolving,
                     tys,
                     module_envs,
+                    &exn.loc,
                 );
             }
         }
@@ -161,6 +168,7 @@ fn resolve_synonym_deps(
                 resolving,
                 tys,
                 module_envs,
+                &inner.loc,
             );
         }
     }

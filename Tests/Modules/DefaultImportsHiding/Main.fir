@@ -14,4 +14,4 @@ main():
 
 # args: --typecheck
 # expected exit status: 101
-# expected stderr: Tests/Modules/DefaultImportsHiding/Main.fir:13:5: Unbound variable lib2Fun
+# expected stderr: Tests/Modules/DefaultImportsHiding/Main.fir:13:5: Unbound name lib2Fun

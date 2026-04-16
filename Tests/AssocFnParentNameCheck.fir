@@ -8,4 +8,4 @@ main():
     a.f()
 
 # expected exit status: 101
-# expected stderr: Tests/AssocFnParentNameCheck.fir:3:1: Unknown type Fo
+# expected stderr: Tests/AssocFnParentNameCheck.fir:3:1: Unbound name Fo

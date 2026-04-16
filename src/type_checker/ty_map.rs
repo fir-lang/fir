@@ -1,4 +1,4 @@
-use crate::ast::Name;
+use crate::ast::{Loc, Name};
 use crate::collections::ScopeMap;
 use crate::type_checker::id::Id;
 use crate::type_checker::{ModuleEnv, Ty, TyCon};
@@ -45,6 +45,7 @@ impl TyMap {
         module_env: &ModuleEnv,
         name: &Name,
         mod_prefix: &Option<crate::module::ModulePath>,
+        loc: &Loc,
     ) -> Option<&TyCon> {
         // Synonyms are scoped (e.g. associated types), not module-level, so no prefix lookup.
         if mod_prefix.is_none()
@@ -52,8 +53,8 @@ impl TyMap {
         {
             return Some(syn);
         }
-        let id = module_env.get_with_path(name, mod_prefix)?;
-        self.cons.get(id)
+        let id = module_env.resolve(name, mod_prefix, loc);
+        self.cons.get(&id)
     }
 
     pub fn get_con(&self, id: &Id) -> Option<&TyCon> {

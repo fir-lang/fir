@@ -70,11 +70,10 @@ pub(super) fn check_expr(
                 );
             }
 
-            let scheme = match tc_state.module_env.get_with_path(var, mod_prefix) {
-                Some(var_id) => match tc_state.tys.top_schemes.get(var_id) {
-                    Some(scheme) => scheme,
-                    None => panic!("{}: Unbound variable {}", loc_display(loc), var),
-                },
+            let var_id = tc_state.module_env.resolve(var, mod_prefix, loc);
+
+            let scheme = match tc_state.tys.top_schemes.get(&var_id) {
+                Some(scheme) => scheme,
                 None => panic!("{}: Unbound variable {}", loc_display(loc), var),
             };
 
@@ -226,11 +225,7 @@ pub(super) fn check_expr(
             assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
-            let ty_id = tc_state
-                .module_env
-                .get_with_path(ty, mod_prefix)
-                .cloned()
-                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
+            let ty_id = tc_state.module_env.resolve(ty, mod_prefix, loc);
             let ty_con: &TyCon = tc_state
                 .tys
                 .tys
@@ -353,11 +348,7 @@ pub(super) fn check_expr(
             assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
-            let ty_id = tc_state
-                .module_env
-                .get_with_path(ty, mod_prefix)
-                .cloned()
-                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
+            let ty_id = tc_state.module_env.resolve(ty, mod_prefix, loc);
 
             if !ty_user_ty_args.is_empty() {
                 let con = tc_state

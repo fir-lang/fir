@@ -6,4 +6,4 @@ main():
 f() Option[U32]: Option.None
 
 # expected exit status: 101
-# expected stderr: Tests/PatConFail1.fir:3:9: Undefined type Foo
+# expected stderr: Tests/PatConFail1.fir:3:9: Unbound name Foo

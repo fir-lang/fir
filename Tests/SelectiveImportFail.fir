@@ -10,4 +10,4 @@ test() Result[Option[Bool], U32]:
 
 # args: --typecheck
 # expected exit status: 101
-# expected stderr: Tests/SelectiveImportFail.fir:8:8: Unknown type Result
+# expected stderr: Tests/SelectiveImportFail.fir:8:8: Unbound name Result

@@ -7,4 +7,4 @@ test() Bool:
 
 # args: --typecheck
 # expected exit status: 101
-# expected stderr: Tests/PrefixedImportFail.fir:5:8: Unknown type Bool
+# expected stderr: Tests/PrefixedImportFail.fir:5:8: Unbound name Bool
