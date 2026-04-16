@@ -113,7 +113,8 @@ pub(crate) fn generate_module_envs(pgm: &LoadedPgm) -> HashMap<ModulePath, Modul
             updated = false;
             for module_path in modules.iter() {
                 for module_import in pgm.dep_graph.get(module_path).unwrap() {
-                    // Same as above: handle the harmless case of a module importing itself.
+                    // We'll remove the importing and imported envs below, so skip self imports
+                    // where both envs are the same.
                     if &module_import.path == module_path {
                         continue;
                     }
