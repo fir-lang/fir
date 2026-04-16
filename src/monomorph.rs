@@ -1320,7 +1320,9 @@ fn mono_method(
     {
         // Find the matching impl.
         for impl_ in impls {
-            if let Some(mut substs) = match_trait_impl(&ty_args[0..trait_ty_args.len()], impl_) {
+            if let Some(mut substs) =
+                match_trait_impl(&ty_args[0..trait_ty_args.len()], impl_, poly_pgm, mangler)
+            {
                 let method: &ast::FunDecl = impl_
                     .methods
                     .iter()
@@ -1931,15 +1933,33 @@ fn mono_opt_l_ty(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Trait matching
 
+/// Try to match a trait type arguments (`ty_args`) against an `impl`'s parameters.
+///
+/// If successful, returns substitutions for the trait type arguments that when applied match the
+/// type arguments. (`ty_args`)
+///
+/// For example: in `foo.toStr()` where `foo : Vec[U32]`
+///
+/// - ty_args    = [Vec[U32]]
+/// - trait_impl = [ToStr[t]] ToStr[Vec[t]]
+///
+/// This matches and returns `{t => U32}`.
+///
+/// Note: we don't care about the `impl` predicates (`ToStr[t]` in the example) as we're not trying
+/// to resolve the predicates. We already know that they'll resolve (otherwise there would be a type
+/// error).
 fn match_trait_impl(
     ty_args: &[mono::Type],
     trait_impl: &PolyTraitImpl,
+    poly_pgm: &PolyPgm,
+    mangler: &mut IdMangler,
 ) -> Option<HashMap<Name, mono::Type>> {
     debug_assert_eq!(ty_args.len(), trait_impl.tys.len(), "{ty_args:?}");
 
+    let impl_env = poly_pgm.module_env(&trait_impl.module);
     let mut substs: HashMap<Name, mono::Type> = Default::default();
     for (impl_ty_arg, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
-        if !match_(impl_ty_arg, ty_arg, &mut substs) {
+        if !match_(impl_ty_arg, ty_arg, &mut substs, impl_env, mangler) {
             return None;
         }
     }
@@ -1947,14 +1967,20 @@ fn match_trait_impl(
     Some(substs)
 }
 
+/// Try to match a type argument against an `impl`'s type argument.
+///
+/// If successful, updates `substs`, mapping type variables in `impl` to types that make the types
+/// match.
 fn match_(
     impl_ty_arg: &ast::Type,
     arg_ty: &mono::Type,
     substs: &mut HashMap<Name, mono::Type>,
+    impl_env: &ModuleEnv,
+    mangler: &mut IdMangler,
 ) -> bool {
     match (impl_ty_arg, arg_ty) {
-        (ast::Type::Named(trait_named_ty), mono::Type::Named(arg_named_ty)) => {
-            match_named_ty(trait_named_ty, arg_named_ty, substs)
+        (ast::Type::Named(impl_named_ty), mono::Type::Named(arg_named_ty)) => {
+            match_named_ty(impl_named_ty, arg_named_ty, substs, impl_env, mangler)
         }
 
         (
@@ -1977,7 +2003,7 @@ fn match_(
                     Some(field2_ty) => field2_ty,
                     None => return false,
                 };
-                if !match_(field1_ty, field2_ty, substs) {
+                if !match_(field1_ty, field2_ty, substs, impl_env, mangler) {
                     return false;
                 }
             }
@@ -2032,7 +2058,7 @@ fn match_(
                     Some(label2_ty) => label2_ty,
                     None => return false,
                 };
-                if !match_named_ty(label1_ty, &label2_ty, substs) {
+                if !match_named_ty(label1_ty, &label2_ty, substs, impl_env, mangler) {
                     return false;
                 }
             }
@@ -2062,18 +2088,28 @@ fn match_(
     }
 }
 
+/// Same as `match_`, but matches named types.
+///
+/// Because `impl` (`PolyTraitImpl`) arguments have type parameters we use AST types for the `impl`
+/// arguments. This means we have to resolve names in `impl` arguments and then mangle before
+/// comparing them with mono types, becuase mono types don't have variables and all names in them
+/// are mangled. So this function takes the `impl`'s `ModuleEnv` and a `Manger` as arguments to be
+/// able to compare an AST type with a mono type.
 fn match_named_ty(
-    trait_ty: &ast::NamedType,
+    impl_ty: &ast::NamedType,
     arg_ty: &mono::NamedType,
     substs: &mut HashMap<Name, mono::Type>,
+    impl_env: &ModuleEnv,
+    mangler: &mut IdMangler,
 ) -> bool {
-    if trait_ty.name != arg_ty.name {
+    let trait_ty_id = impl_env.resolve(&impl_ty.name, &impl_ty.mod_prefix, &ast::Loc::dummy());
+    if mangler.mangle(&trait_ty_id) != arg_ty.name {
         return false;
     }
-    debug_assert_eq!(trait_ty.args.len(), arg_ty.args.len());
+    debug_assert_eq!(impl_ty.args.len(), arg_ty.args.len());
 
-    for (arg1, arg2) in trait_ty.args.iter().zip(arg_ty.args.iter()) {
-        if !match_(&arg1.node, arg2, substs) {
+    for (arg1, arg2) in impl_ty.args.iter().zip(arg_ty.args.iter()) {
+        if !match_(&arg1.node, arg2, substs, impl_env, mangler) {
             return false;
         }
     }
@@ -2108,7 +2144,7 @@ fn resolve_assoc_ty(
         .unwrap_or_else(|| panic!("Unknown trait {:?} in associated type selection", trait_id));
 
     for impl_ in &poly_trait.impls {
-        if let Some(substs) = match_trait_impl(trait_args, impl_) {
+        if let Some(substs) = match_trait_impl(trait_args, impl_, poly_pgm, mangler) {
             let impl_env = poly_pgm.module_env(&impl_.module);
             for (name, rhs_ty) in &impl_.assoc_tys {
                 if name == assoc_ty {
