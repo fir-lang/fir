@@ -697,6 +697,9 @@ BlockExpr: Expr = {
             body,
             inferred_ty: None,
         }),
+
+    "return" <expr:LBlockExpr> =>
+        Expr::Return(ReturnExpr { expr: Box::new(expr), inferred_ty: None }),
 }
 
 LInlineExpr: L<Expr> = {

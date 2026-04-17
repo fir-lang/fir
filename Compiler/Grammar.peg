@@ -457,6 +457,9 @@ blockExpr[AstExts[exts], AstIds[AstExts[exts].Ids]] Expr[exts]:
             _firstToken = TokenIdx(idx = cur),
         ))
 
+    cur=^ "return" expr=blockExpr:
+        Expr.Return(ReturnExpr(expr = Option.Some(expr), _firstToken = TokenIdx(idx = cur)))
+
 
 inlineExprCont[AstExts[exts], AstIds[AstExts[exts].Ids]] InlineExprCont[exts]:
     op=binOp rhs=prefixExpr:

@@ -2093,6 +2093,27 @@ blockExpr[AstExts[exts], AstIds[AstExts[exts].Ids],](
     match altResult:
         Result.Err(err): state._cursor = cursor0
         Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let cur = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Return, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let expr = blockExpr(state)
+            let val = do:
+                Expr.Return(
+                    ReturnExpr(
+                        expr = Option.Some(expr),
+                        _firstToken = TokenIdx(idx = cur),
+                    ),
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
     throw(state.updateErrorCursor(state._cursor))
 
 
