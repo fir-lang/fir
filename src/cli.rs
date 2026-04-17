@@ -7,33 +7,9 @@ pub struct FirArgs {
     pub program_args: Vec<String>,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum Mode {
-    Interpreter,
-    ToC,
-}
-
-pub fn get_fir_args(mode: Mode) -> FirArgs {
-    let mut cmd = clap::Command::new("fir")
+pub fn get_fir_args() -> FirArgs {
+    let cmd = clap::Command::new("fir")
         .version(version_info_str(rustc_tools_util::get_version_info!()))
-        .arg(
-            clap::Arg::new(PARSE)
-                .long(PARSE)
-                .num_args(0)
-                .help("Stop after parsing"),
-        )
-        .arg(
-            clap::Arg::new(TYPECHECK)
-                .long(TYPECHECK)
-                .num_args(0)
-                .help("Stop after type checking"),
-        )
-        .arg(
-            clap::Arg::new(BACKTRACE)
-                .long(BACKTRACE)
-                .num_args(0)
-                .help("Print backtraces in panics."),
-        )
         .arg(
             clap::Arg::new(TOKENIZE)
                 .long(TOKENIZE)
@@ -45,6 +21,24 @@ pub fn get_fir_args(mode: Mode) -> FirArgs {
                 .long(SCAN)
                 .num_args(0)
                 .help("Print scanned tokens and stop."),
+        )
+        .arg(
+            clap::Arg::new(PARSE)
+                .long(PARSE)
+                .num_args(0)
+                .help("Parse and stop."),
+        )
+        .arg(
+            clap::Arg::new(TYPECHECK)
+                .long(TYPECHECK)
+                .num_args(0)
+                .help("Type check and stop."),
+        )
+        .arg(
+            clap::Arg::new(BACKTRACE)
+                .long(BACKTRACE)
+                .num_args(0)
+                .help("Print backtraces in panics."),
         )
         .arg(
             clap::Arg::new(PRINT_PARSED_AST)
@@ -91,27 +85,31 @@ pub fn get_fir_args(mode: Mode) -> FirArgs {
                 .help("Path to the program to run."),
         )
         .arg(
+            clap::Arg::new(OUTPUT)
+                .long(OUTPUT)
+                .short('o')
+                .num_args(1)
+                .required(false)
+                .help("Where to generate C code. Enables C compilation."),
+        )
+        .arg(
+            clap::Arg::new(RUN_C)
+                .long(RUN_C)
+                .short('c')
+                .num_args(0)
+                .env("FIR_RUN_C")
+                .help("Whether to directly compile and run the generated C."),
+        )
+        .arg(
             clap::Arg::new(PROGRAM_ARGS)
                 .last(true)
                 .allow_hyphen_values(true)
                 .num_args(0..),
         );
 
-    match mode {
-        Mode::Interpreter => {}
-        Mode::ToC => {
-            cmd = cmd.arg(
-                clap::Arg::new(NO_RUN)
-                    .long(NO_RUN)
-                    .num_args(0)
-                    .help("Print the C code, instead of compiling and running it"),
-            );
-        }
-    }
-
     let matches = cmd.get_matches();
 
-    let mut opts = CompilerOpts {
+    let opts = CompilerOpts {
         parse: matches.get_flag(PARSE),
         typecheck: matches.get_flag(TYPECHECK),
         backtrace: matches.get_flag(BACKTRACE),
@@ -123,14 +121,9 @@ pub fn get_fir_args(mode: Mode) -> FirArgs {
         print_mono_ast: matches.get_flag(PRINT_MONO_AST),
         print_lowered_ast: matches.get_flag(PRINT_LOWERED_AST),
         main: matches.get_one(MAIN).cloned().unwrap(),
-        to_c: false,
-        run_c: false,
+        output: matches.get_one(OUTPUT).cloned(),
+        run_c: matches.get_flag(RUN_C),
     };
-
-    if let Mode::ToC = mode {
-        opts.to_c = true;
-        opts.run_c = !matches.get_flag(NO_RUN);
-    }
 
     let program: String = matches.get_one::<String>(PROGRAM).unwrap().clone();
 
@@ -159,7 +152,8 @@ const PRINT_LOWERED_AST: &str = "print-lowered-ast";
 const MAIN: &str = "main";
 const PROGRAM: &str = "program";
 const PROGRAM_ARGS: &str = "program-args";
-const NO_RUN: &str = "no-run";
+const OUTPUT: &str = "output";
+const RUN_C: &str = "run-c";
 
 // This is the same as `VersionInfo`'s `Display`, except it doesn't show the crate name as clap adds
 // command name as prefix in `--version`.

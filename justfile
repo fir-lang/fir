@@ -28,7 +28,7 @@ interpreter_golden_test: build
     goldentests target/debug/fir Tests '# ' --glob='!Tests/Modules/*'
 
 c_golden_test: build
-    goldentests target/debug/fir2c Tests '# ' --glob='!Tests/Interpreter/*' --glob='!Tests/Modules/*'
+    FIR_RUN_C=true goldentests target/debug/fir Tests '# ' --glob='!Tests/Interpreter/*' --glob='!Tests/Modules/*'
 
 module_golden_test: build
     #!/usr/bin/env bash
@@ -116,7 +116,7 @@ build_tools:
     for tool in "${tools[@]}"; do
         name=$(basename "${tool%.fir}")
         (
-            cargo run --quiet --bin fir2c -- "$tool" --no-run > "target/$name.c"
+            cargo run --quiet -- "$tool" -o "target/$name.c"
             gcc "target/$name.c" -o "target/$name" -O3
         ) &
         pids+=($!)
@@ -131,7 +131,7 @@ build_compiler:
 
     set -x
 
-    cargo run --release --bin fir2c -- Compiler/Main.fir --no-run > target/Compiler.c
+    cargo run --release -- Compiler/Main.fir -o target/Compiler.c
     gcc target/Compiler.c -o target/Compiler -O3
 
 generate_parser:

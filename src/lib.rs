@@ -39,6 +39,10 @@ pub struct CompilerOpts {
     /// Stop after type checking.
     pub typecheck: bool,
 
+    /// Whether to show Rust backtrace with panics.
+    ///
+    /// Note: all type errors are panics today, so this is useful to find out where a type error is
+    /// coming from. (e.g. when debugging the type checker)
     pub backtrace: bool,
 
     /// Print tokens and stop.
@@ -52,8 +56,19 @@ pub struct CompilerOpts {
     pub print_checked_ast: bool,
     pub print_mono_ast: bool,
     pub print_lowered_ast: bool,
+
+    /// Name of the main function.
     pub main: String,
-    pub to_c: bool,
+
+    /// Output file path. This implies compilation to C.
+    pub output: Option<String>,
+
+    /// When set, this compiles the program to C, then compiles the C code to native, then runs it.
+    ///
+    /// This mode is mainly for testing.
+    ///
+    /// This flag can be combined with `-o`. If `-o` is not given, then the C code is generated in a
+    /// temporary directory in `/tmp`.
     pub run_c: bool,
 }
 
@@ -198,17 +213,30 @@ mod native {
         }
 
         if opts.run_c {
+            // TODO: Make the path absolute path, otherwise `Command` below to run the compiled file
+            // tries to search in PATH for the program.
+            let (mut c_file, c_file_absolute_path): (Box<dyn std::io::Write>, std::path::PathBuf) =
+                match &opts.output {
+                    Some(out) => {
+                        assert!(out.ends_with(".c"));
+                        let file = std::fs::File::create(out).unwrap();
+                        let path = std::fs::canonicalize(out).unwrap();
+                        (Box::new(file), path)
+                    }
+                    None => {
+                        let file = tempfile::NamedTempFile::with_suffix(".c").unwrap();
+                        let path = file.path().to_owned();
+                        (Box::new(file), path)
+                    }
+                };
             let c = to_c::to_c(&lowered_pgm, &opts.main);
-            let mut file = tempfile::NamedTempFile::with_suffix(".c").unwrap();
-            let out_file_path = file.path().as_os_str().to_string_lossy().into_owned();
-            let out_file_path = &out_file_path[..out_file_path.len() - 2];
-            file.disable_cleanup(true);
-            file.write_all(c.as_bytes()).unwrap();
+            let out_file_absolute_path = c_file_absolute_path.with_extension("");
+            c_file.write_all(c.as_bytes()).unwrap();
             let mut gcc_cmd = std::process::Command::new("gcc");
             gcc_cmd
-                .arg(file.path().as_os_str())
+                .arg(&c_file_absolute_path)
                 .arg("-o")
-                .arg(out_file_path)
+                .arg(&out_file_absolute_path)
                 .arg("-Wall")
                 .arg("-Wextra")
                 .arg("-Wno-unused-variable")
@@ -236,9 +264,9 @@ mod native {
             if !output.status.success() {
                 std::process::exit(1);
             }
-            // dbg!(&out_file_path);
+            // dbg!(&out_file_absolute_path);
             // dbg!(&program_args);
-            let status = std::process::Command::new(out_file_path)
+            let status = std::process::Command::new(out_file_absolute_path)
                 .args(program_args)
                 .spawn()
                 .unwrap()
@@ -247,8 +275,11 @@ mod native {
             if !status.success() {
                 std::process::exit(1);
             }
-        } else if opts.to_c {
-            println!("{}", to_c::to_c(&lowered_pgm, &opts.main));
+        } else if let Some(output) = opts.output {
+            let c = to_c::to_c(&lowered_pgm, &opts.main);
+            let mut file = std::fs::File::create(&output).unwrap();
+            file.write_all(c.as_bytes()).unwrap();
+            drop(file);
         } else {
             let mut w = std::io::stdout();
             program_args.insert(0, program);

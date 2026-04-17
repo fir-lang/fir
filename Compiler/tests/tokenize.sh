@@ -8,7 +8,7 @@ shopt -s globstar
 SCRIPT_DIR="$(dirname "$0")"
 
 cargo build --release --bin fir
-cargo run --release --bin fir2c -- Compiler/Lexer.fir --main lexerDumpInterpreterTokens --no-run > target/LexerDumpInterpreterTokens.c
+cargo run --release -- Compiler/Lexer.fir --main lexerDumpInterpreterTokens -o target/LexerDumpInterpreterTokens.c
 gcc target/LexerDumpInterpreterTokens.c -o target/LexerDumpInterpreterTokens -O3
 
 exit_code=0

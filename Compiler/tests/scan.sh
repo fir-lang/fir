@@ -8,7 +8,7 @@ shopt -s globstar
 SCRIPT_DIR="$(dirname "$0")"
 
 cargo build --release --bin fir
-cargo run --release --bin fir2c -- Compiler/Scanner.fir --main scannerDumpInterpreterTokens --no-run > target/ScannerDumpInterpreterTokens.c
+cargo run --release -- Compiler/Scanner.fir --main scannerDumpInterpreterTokens -o target/ScannerDumpInterpreterTokens.c
 gcc target/ScannerDumpInterpreterTokens.c -o target/ScannerDumpInterpreterTokens -O3
 
 exit_code=0

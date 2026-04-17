@@ -8,7 +8,7 @@ shopt -s globstar
 SCRIPT_DIR="$(dirname "$0")"
 
 mkdir -p target
-cargo run --bin fir2c -- Compiler/Parser.fir --no-run > target/Parser.c
+cargo run -- Compiler/Parser.fir -o target/Parser.c
 gcc target/Parser.c -o target/Parser -O3
 
 exit_code=0
