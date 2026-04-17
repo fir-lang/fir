@@ -166,7 +166,9 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(rhs),
         }),
 
-    <l:@L> <attr:Attribute?> <value:"value"?> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
+    <l:@L> <attr:Attribute?>
+            <value:"value"?> "type" <type_name:UpperIdLBracket> <type_params:TypeParams>
+            <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
             attr,
             value: value.is_some(),
@@ -176,7 +178,9 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(rhs),
         }),
 
-    <l:@L> <attr:Attribute?> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "=" <tl:@L> <ty:Type> <tr:@R> NEWLINE <r:@R> =>
+    <l:@L> <attr:Attribute?>
+            "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "="
+            <tl:@L> <ty:Type> <tr:@R> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
             attr,
             value: false,
@@ -348,18 +352,34 @@ LTypeNoFn: L<Type> = {
 
 TypeNamed: Type = {
     <module_prefix:ModulePrefix?> <name:UpperId> =>
-        Type::Named(NamedType { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), name: name.name(), args: vec![] }),
+        Type::Named(NamedType {
+            mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
+            name: name.name(),
+            args: vec![],
+        }),
 
     <module_prefix:ModulePrefix?> <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
-        Type::Named(NamedType { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), name: name.name(), args }),
+        Type::Named(NamedType {
+            mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
+            name: name.name(),
+            args,
+        }),
 }
 
 NamedType: NamedType = {
     <module_prefix:ModulePrefix?> <name:UpperId> =>
-        NamedType { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), name: name.name(), args: vec![] },
+        NamedType {
+            mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
+            name: name.name(),
+            args: vec![]
+        },
 
     <module_prefix:ModulePrefix?> <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
-        NamedType { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), name: name.name(), args },
+        NamedType {
+            mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
+            name: name.name(),
+            args,
+        },
 }
 
 RowExtension: Option<Box<L<Type>>> = {
@@ -531,9 +551,11 @@ pub LStmt: L<Stmt> = {
 }
 
 Stmt: Stmt = {
-    "break" <label:Label?> NEWLINE => Stmt::Break { label: label.map(|l| Name::new(&l.smol_str()[1..])), level: 0 },
+    "break" <label:Label?> NEWLINE =>
+        Stmt::Break { label: label.map(|l| Name::new(&l.smol_str()[1..])), level: 0 },
 
-    "continue" <label:Label?> NEWLINE => Stmt::Continue { label: label.map(|l| Name::new(&l.smol_str()[1..])), level: 0 },
+    "continue" <label:Label?> NEWLINE =>
+        Stmt::Continue { label: label.map(|l| Name::new(&l.smol_str()[1..])), level: 0 },
 
     "let" <lhs:LPat> <ty:(":" <LType>)?> "=" <rhs:LInlineExpr> NEWLINE =>
         Stmt::Let(LetStmt { lhs, ty, rhs }),
@@ -561,7 +583,8 @@ Stmt: Stmt = {
     <l:@L> <expr:BlockExpr> <r:@R> =>
         Stmt::Expr(expr),
 
-    <label:Label?> "for" <pat:LPat> <item_ast_ty:(":" <LType>)?> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT => {
+    <label:Label?> "for" <pat:LPat> <item_ast_ty:(":" <LType>)?> "in" <expr:LExpr> ":"
+            NEWLINE INDENT <body:LStmts> DEDENT => {
         let label = label.map(|l| Name::new(&l.smol_str()[1..]));
         Stmt::For(ForStmt {
             label,
@@ -717,17 +740,38 @@ InlineExpr: Expr = {
     },
 
     <module_prefix:ModulePrefix?> <id:UpperId> =>
-        Expr::ConSel(Con { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), ty: id.name(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None }),
+        Expr::ConSel(Con {
+            mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
+            ty: id.name(),
+            con: None,
+            user_ty_args: vec![],
+            ty_args: vec![],
+            inferred_ty: None,
+        }),
 
     <module_prefix:ModulePrefix?> <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
-        Expr::ConSel(Con { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), ty: id.name(), con: None, user_ty_args, ty_args: vec![], inferred_ty: None }),
+        Expr::ConSel(Con {
+            mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
+            ty: id.name(),
+            con: None,
+            user_ty_args,
+            ty_args: vec![],
+            inferred_ty: None,
+        }),
 
     <module_prefix:ModulePrefix?> <path:UpperIdPath> => {
         let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConSel(Con { mod_prefix, ty, con: Some(con), user_ty_args: vec![], ty_args: vec![], inferred_ty: None })
+        Expr::ConSel(Con {
+            mod_prefix,
+            ty,
+            con: Some(con),
+            user_ty_args: vec![],
+            ty_args: vec![],
+            inferred_ty: None,
+        })
     },
 
     <module_prefix:ModulePrefix?> <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
@@ -735,7 +779,14 @@ InlineExpr: Expr = {
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConSel(Con { mod_prefix, ty, con: Some(con), user_ty_args, ty_args: vec![], inferred_ty: None })
+        Expr::ConSel(Con {
+            mod_prefix,
+            ty,
+            con: Some(con),
+            user_ty_args,
+            ty_args: vec![],
+            inferred_ty: None,
+        })
     },
 
     "(" <expr:Expr> ")" => {
@@ -795,7 +846,14 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>
         match expr {
-            Expr::ConSel(Con { mod_prefix, ty: id, con: None, user_ty_args: ty_user_ty_args, ty_args: _, inferred_ty: _ }) =>
+            Expr::ConSel(Con {
+                mod_prefix,
+                ty: id,
+                con: None,
+                user_ty_args: ty_user_ty_args,
+                ty_args: _,
+                inferred_ty: _,
+            }) =>
                 Expr::AssocFnSel(AssocFnSelExpr {
                     mod_prefix,
                     ty: id,
@@ -971,7 +1029,12 @@ InlineExpr: Expr = {
 
     <l:@L> "return" <r:@R> =>
         Expr::Return(ReturnExpr {
-            expr: Box::new(L::new(module, l, r, Expr::Record(RecordExpr { fields: vec![], splice: None, inferred_ty: None }))),
+            expr: Box::new(L::new(
+                module,
+                l,
+                r,
+                Expr::Record(RecordExpr { fields: vec![], splice: None, inferred_ty: None })
+            )),
             inferred_ty: None,
         }),
 
@@ -1067,7 +1130,11 @@ Pat: Pat = {
     <char:CharLit> => Pat::Char(parse_char_lit(&char.text)),
 
     <l:@L> "~" <pat:Pat> <r:@R> =>
-        Pat::Variant(VariantPat { pat: Box::new(L::new(module, l, r, pat)), inferred_ty: None, inferred_pat_ty: None }),
+        Pat::Variant(VariantPat {
+        pat: Box::new(L::new(module, l, r, pat)),
+        inferred_ty: None,
+        inferred_pat_ty: None,
+    }),
 
     #[precedence(level = "1")]
     #[assoc(side = "right")]
@@ -1081,14 +1148,28 @@ Pat: Pat = {
 
 Con: Con = {
     <module_prefix:ModulePrefix?> <ty:UpperId> =>
-        Con { mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)), ty: ty.name(), con: None, user_ty_args: vec![], ty_args: vec![], inferred_ty: None },
+        Con {
+            mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
+            ty: ty.name(),
+            con: None,
+            user_ty_args: vec![],
+            ty_args: vec![],
+            inferred_ty: None,
+        },
 
     <module_prefix:ModulePrefix?> <path:UpperIdPath> => {
         let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Con { mod_prefix, ty, con: Some(con), user_ty_args: vec![], ty_args: vec![], inferred_ty: None }
+        Con {
+            mod_prefix,
+            ty,
+            con: Some(con),
+            user_ty_args: vec![],
+            ty_args: vec![],
+            inferred_ty: None,
+        }
     },
 }
 
@@ -1107,13 +1188,15 @@ ConPat: ConPat = {
 FieldPats: (Vec<Named<L<Pat>>>, RestPat) = {
     ".." => (vec![], RestPat::Ignore),
 
-    ".." <binder:LowerId> => (vec![], RestPat::Bind(VarPat { var: binder.name(), ty: None, refined: None })),
+    ".." <binder:LowerId> =>
+        (vec![], RestPat::Bind(VarPat { var: binder.name(), ty: None, refined: None })),
 
     <fields:Sep<FieldPat, ",">> => (fields, RestPat::No),
 
     <fields:(<FieldPat> ",")+> ".." => (fields, RestPat::Ignore),
 
-    <fields:(<FieldPat> ",")+> ".." <binder:LowerId> => (fields, RestPat::Bind(VarPat { var: binder.name(), ty: None, refined: None })),
+    <fields:(<FieldPat> ",")+> ".." <binder:LowerId> =>
+        (fields, RestPat::Bind(VarPat { var: binder.name(), ty: None, refined: None })),
 }
 
 FieldPat: Named<L<Pat>> = {
@@ -1147,7 +1230,10 @@ ImportItem: ImportItem = {
 
     <id:UpperId> "as" <renamed:UpperId> => {
         let prefix = renamed.smol_str();
-        ImportItem { path: ModulePath::new(vec![id.smol_str()]), import_spec: Some(ImportSpec::Prefixed { prefix }) }
+        ImportItem {
+            path: ModulePath::new(vec![id.smol_str()]),
+            import_spec: Some(ImportSpec::Prefixed { prefix })
+        }
     },
 
     <module_prefix:ModulePrefix> <id:UpperId> "as" <renamed:UpperId> => {
