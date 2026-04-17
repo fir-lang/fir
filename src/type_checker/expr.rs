@@ -639,7 +639,7 @@ pub(super) fn check_expr(
                             );
 
                             // Move updated named arguments back to the AST.
-                            for (arg, field) in args.iter_mut().zip(fields.into_iter()) {
+                            for (arg, field) in args.iter_mut().zip(fields) {
                                 arg.expr = field.1;
                             }
                         }
@@ -1857,7 +1857,7 @@ pub(super) fn check_match_expr(
     }
 
     for (alt_idx, (ast::Alt { pat, guard, rhs }, mut alt_scope)) in
-        alts.iter_mut().zip(alt_envs.into_iter()).enumerate()
+        alts.iter_mut().zip(alt_envs).enumerate()
     {
         let refined_binders = refine_binders(&info.bound_vars[alt_idx], &pat.loc);
 

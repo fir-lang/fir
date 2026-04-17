@@ -1798,11 +1798,7 @@ fn check_impl(
                 );
             }
 
-            let assumps = impl_assumps
-                .iter()
-                .cloned()
-                .chain(fun_assumps.into_iter())
-                .collect();
+            let assumps = impl_assumps.iter().cloned().chain(fun_assumps).collect();
 
             let exceptions = match &fun.node.sig.exceptions {
                 Some(exc) => convert_ast_ty(&tys.tys, module_env, &exc.node, &exc.loc),
