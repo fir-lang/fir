@@ -1971,42 +1971,21 @@ fn check_field_sel(
     loc: &ast::Loc,
 ) -> (Ty, ast::Expr) {
     // TODO: What if we have a method and a field with the same name?
-    match object_ty {
-        Ty::Con(con, _) => {
-            if let Some(field_ty) = select_field(tc_state, con, &[], field, loc) {
-                if !user_ty_args.is_empty() {
-                    panic!("{}: Field passed type arguments", loc_display(loc));
-                }
-                return (
-                    field_ty.clone(),
-                    ast::Expr::FieldSel(ast::FieldSelExpr {
-                        object: Box::new(object.clone()),
-                        field: field.clone(),
-                        user_ty_args: vec![],
-                        inferred_ty: Some(field_ty),
-                    }),
-                );
-            }
+    if let Some((con, args)) = object_ty.con(tc_state.tys.tys.cons())
+        && let Some(field_ty) = select_field(tc_state, &con, &args, field, loc)
+    {
+        if !user_ty_args.is_empty() {
+            panic!("{}: Field passed type arguments", loc_display(loc));
         }
-
-        Ty::App(con, args, _) => {
-            if let Some(field_ty) = select_field(tc_state, con, args, field, loc) {
-                if !user_ty_args.is_empty() {
-                    panic!("{}: Field passed type arguments", loc_display(loc));
-                }
-                return (
-                    field_ty.clone(),
-                    ast::Expr::FieldSel(ast::FieldSelExpr {
-                        object: Box::new(object.clone()),
-                        field: field.clone(),
-                        user_ty_args: vec![],
-                        inferred_ty: Some(field_ty),
-                    }),
-                );
-            }
-        }
-
-        _ => {}
+        return (
+            field_ty.clone(),
+            ast::Expr::FieldSel(ast::FieldSelExpr {
+                object: Box::new(object.clone()),
+                field: field.clone(),
+                user_ty_args: vec![],
+                inferred_ty: Some(field_ty),
+            }),
+        );
     }
 
     let (method_ty_id, scheme) =
