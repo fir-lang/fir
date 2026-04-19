@@ -559,17 +559,17 @@ fn mono_expr(
     match expr {
         ast::Expr::Var(ast::VarExpr {
             mod_prefix,
-            id: var,
+            name,
             user_ty_args: _,
             ty_args,
             inferred_ty,
             resolved_id,
         }) => {
-            if locals.is_bound(var) {
+            if locals.is_bound(name) {
                 // Local variable, cannot be polymorphic.
                 assert!(ty_args.is_empty());
                 return mono::Expr::LocalVar(
-                    var.clone(),
+                    name.clone(),
                     mono_tc_ty(
                         inferred_ty.as_ref().unwrap(),
                         ty_map,
@@ -583,12 +583,12 @@ fn mono_expr(
 
             let var_id = resolved_id
                 .clone()
-                .unwrap_or_else(|| module_env.resolve(var, mod_prefix, loc));
+                .unwrap_or_else(|| module_env.resolve(name, mod_prefix, loc));
 
             let poly_decl = poly_pgm
                 .top
                 .get(&var_id)
-                .unwrap_or_else(|| panic!("{}: Unbound variable {}", loc_display(loc), var));
+                .unwrap_or_else(|| panic!("{}: Unbound variable {}", loc_display(loc), name));
 
             let mono_ty_args = ty_args
                 .iter()

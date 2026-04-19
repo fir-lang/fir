@@ -737,7 +737,7 @@ InlineExpr: Expr = {
         let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         Expr::Var(VarExpr {
             mod_prefix,
-            id: id.name(),
+            name: id.name(),
             user_ty_args,
             ty_args: vec![],
             inferred_ty: None,

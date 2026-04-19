@@ -164,7 +164,7 @@ fn check_stmt(
             match &mut lhs.node {
                 ast::Expr::Var(ast::VarExpr {
                     mod_prefix: _,
-                    id: var,
+                    name,
                     user_ty_args,
                     ty_args,
                     inferred_ty,
@@ -174,8 +174,8 @@ fn check_stmt(
                     assert!(ty_args.is_empty());
                     assert!(user_ty_args.is_empty());
                     assert!(resolved_id.is_none());
-                    let var_ty = tc_state.env.get(var).cloned().unwrap_or_else(|| {
-                        panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
+                    let var_ty = tc_state.env.get(name).cloned().unwrap_or_else(|| {
+                        panic!("{}: Unbound variable {}", loc_display(&lhs.loc), name)
                     });
                     *inferred_ty = Some(var_ty.clone());
                     check_expr(tc_state, &mut rhs.node, &rhs.loc, Some(&var_ty), loop_stack);
@@ -446,7 +446,7 @@ fn check_stmt(
                                                     loc: expr.loc.clone(),
                                                     node: ast::Expr::Var(ast::VarExpr {
                                                         mod_prefix: None,
-                                                        id: expr_local.clone(),
+                                                        name: expr_local.clone(),
                                                         user_ty_args: vec![],
                                                         ty_args: vec![],
                                                         inferred_ty: Some(iter_ty.clone()),

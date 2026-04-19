@@ -71,7 +71,7 @@ fn extract_derive_traits(attr: &ast::Attribute) -> Vec<ast::Name> {
         return vec![];
     };
 
-    if var.id != "derive" {
+    if var.name != "derive" {
         return vec![];
     }
 
@@ -102,7 +102,7 @@ fn var(loc: &ast::Loc, name: &str) -> ast::L<ast::Expr> {
         loc,
         ast::Expr::Var(ast::VarExpr {
             mod_prefix: None,
-            id: ast::Name::new(name),
+            name: ast::Name::new(name),
             user_ty_args: vec![],
             ty_args: vec![],
             inferred_ty: None,
