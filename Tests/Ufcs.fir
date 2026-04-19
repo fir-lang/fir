@@ -4,7 +4,6 @@ type Point(
 )
 
 
-# Not a method of Point.
 printPoint(p: Point):
     printStr("(`p.x.toStr()`, `p.y.toStr()`)")
 
@@ -23,6 +22,10 @@ pairToStr(pair: (fst: I32, snd: Str)) Str:
 # Collides with `Vec.len`, method should have precedence.
 len(s: Str) U32:
     s.len()
+
+
+pass(x: t, f: Fn(t) ret / exn) ret / exn:
+    f(x)
 
 
 main():
@@ -62,6 +65,10 @@ main():
 
     123.i32().pair("hi").pairToStr().print()
 
+    # Using a lambda to pass named arguments, or as positional argument other
+    # than the first.
+    456.i32().pass(\(y): Point(x = 123, y)).printPoint()
+
 # expected stdout:
 # (1, 2)
 # 42
@@ -72,3 +79,4 @@ main():
 # 3
 # (fst = 123, snd = hi) (top-level fn)
 # (fst = 123, snd = hi) (local fn)
+# (123, 456)
