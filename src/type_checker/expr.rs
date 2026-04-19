@@ -2129,31 +2129,30 @@ fn check_field_sel(
     }
 }
 
-/// Build the typed-AST desugaring of a UFCS call `object.f` where `f` is a top-level or local
-/// function.
-///
-/// Produces:
+/// Build the desugaring of a UFCS call `object.f` where `f` is a top-level or local function.
 ///
 /// ```ignore
+/// <object>.f
+///
+/// ==>
+///
 /// do:
 ///     let $ufcs_recv$ = <object>
 ///     \($ufcs_arg_0$, ..., $ufcs_arg_{n-1}$): f($ufcs_recv$, $ufcs_arg_0$, ..., $ufcs_arg_{n-1}$)
 /// ```
 ///
-/// All expressions have their `inferred_ty` populated so this synthetic tree can flow through the
-/// rest of the pipeline unchanged. The synthesized `Var(f)` resolves correctly in both the
-/// top-level and local cases: monomorph's `locals.is_bound` check picks the local when one exists,
-/// otherwise `module_env` resolves the top-level function.
+/// All expressions have their `inferred_ty` populated so this tree don't need to be type checked.
+/// The synthesized `VarExpr(f)` also has its resolved `Id` generated (when not local).
 #[allow(clippy::too_many_arguments)]
 fn build_ufcs_closure(
-    object: &ast::L<ast::Expr>,
-    receiver_ty: Ty,
-    fn_name: &Name,
-    fn_resolved_id: Option<Id>,
-    fn_full_ty: Ty,
-    fn_ty_args: Vec<Ty>,
-    closure_ty: Ty,
-    loc: &ast::Loc,
+    object: &ast::L<ast::Expr>, // expr in the receiver position
+    receiver_ty: Ty,            // type of `object`
+    fn_name: &Name,             // name of the function being called
+    fn_resolved_id: Option<Id>, // id of the function being called. `None` when local.
+    fn_full_ty: Ty,             // type of the function being called
+    fn_ty_args: Vec<Ty>,        // type args of the function being called
+    closure_ty: Ty,             // type of the `do` expression
+    loc: &ast::Loc,             // location of the AST nodes being built
 ) -> ast::Expr {
     let (closure_param_tys, _ret, _exn) = match &closure_ty {
         Ty::Fun {
@@ -2169,6 +2168,7 @@ fn build_ufcs_closure(
     // Build closure parameter names and the call-site args (receiver + closure params).
     let mut fn_params: Vec<(Name, Option<ast::L<ast::Type>>)> =
         Vec::with_capacity(closure_param_tys.len());
+
     let mut call_args: Vec<ast::CallArg> = Vec::with_capacity(closure_param_tys.len() + 1);
 
     call_args.push(ast::CallArg {
