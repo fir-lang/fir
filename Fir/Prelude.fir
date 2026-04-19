@@ -225,3 +225,31 @@ trait Hash[t]:
 
 trait Clone[t]:
     clone(self: t) t
+
+
+## Passes first argument to the second argument.
+##
+## This is to help chain calls with the uniform function call syntax (UFCS).
+## With UFCS, the left-hand side of the `.` is always passed as the first
+## positional argument. E.g.:
+##
+## ```
+## foo.f().g().x()
+##
+## ==>
+##
+## x(g(f(foo)))
+## ```
+##
+## If we want to pass it as a named argument, or as a positional argument other
+## than the first, we can use this helper:
+##
+## ```
+## x(first = 123, second = foo.f().g())
+##
+## ==>
+##
+## foo.f().g().pass(\(second): (first = 123, second)).x()
+## ```
+pass(x: t, f: Fn(t) ret / exn) ret / exn:
+    f(x)

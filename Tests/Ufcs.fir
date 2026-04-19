@@ -16,16 +16,14 @@ double(x: I32) I32:
 pair[t, u](a: t, b: u) (fst: t, snd: u):
     (fst = a, snd = b)
 
+
 pairToStr(pair: (fst: I32, snd: Str)) Str:
     "(fst = `pair.fst`, snd = `pair.snd`) (top-level fn)"
+
 
 # Collides with `Vec.len`, method should have precedence.
 len(s: Str) U32:
     s.len()
-
-
-pass(x: t, f: Fn(t) ret / exn) ret / exn:
-    f(x)
 
 
 main():
@@ -68,6 +66,7 @@ main():
     # Using a lambda to pass named arguments, or as positional argument other
     # than the first.
     456.i32().pass(\(y): Point(x = 123, y)).printPoint()
+
 
 # expected stdout:
 # (1, 2)
