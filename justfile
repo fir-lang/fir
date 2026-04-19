@@ -198,3 +198,4 @@ build_site: generate_parser
     cp Tests/ThrowingIter.fir $OUT_DIR/ThrowingIter.fir
     cp Tests/PPrintExample.fir $OUT_DIR/PPrintExample.fir
     cp Tests/NamedTypeExtensions.fir $OUT_DIR/NamedTypeExtensions.fir
+    cp Tests/UFCS.fir $OUT_DIR/UFCS.fir
