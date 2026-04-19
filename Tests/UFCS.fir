@@ -65,11 +65,11 @@ main():
 
     # Using a lambda to pass named arguments, or as positional argument other
     # than the first.
-    456.i32().pass(\(y): Point(x = 123, y)).printPoint()
+    456.i32().apply(\(y): Point(x = 123, y)).printPoint()
 
     # At least for now, it's not possible to call associated functions with this
-    # syntax. We have to use `pass`.
-    range(u32(0), u32(5)).pass(\(iter): Vec.fromIter(iter)).print()
+    # syntax. We have to use `apply`.
+    range(u32(0), u32(5)).apply(\(iter): Vec.fromIter(iter)).print()
 
 
 # expected stdout:

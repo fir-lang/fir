@@ -249,7 +249,7 @@ trait Clone[t]:
 ##
 ## ==>
 ##
-## foo.f().g().pass(\(second): (first = 123, second)).x()
+## foo.f().g().apply(\(second): (first = 123, second)).x()
 ## ```
-pass(x: t, f: Fn(t) ret / exn) ret / exn:
+apply(x: t, f: Fn(t) ret / exn) ret / exn:
     f(x)
