@@ -17,6 +17,8 @@ double(x: I32) I32:
 pair[t, u](a: t, b: u) (fst: t, snd: u):
     (fst = a, snd = b)
 
+pairToStr(pair: (fst: I32, snd: Str)) Str:
+    "(fst = `pair.fst`, snd = `pair.snd`) (top-level fn)"
 
 # Collides with `Vec.len`, method should have precedence.
 len(s: Str) U32:
@@ -51,6 +53,14 @@ main():
     # Method precedence: `"abc".len()` uses `Str.len`, not the top-level `len`.
     "abc".len().print()
 
+    123.i32().pair("hi").pairToStr().print()
+
+    # Local functions can also be used for UFCS and they have precedence over
+    # top-level ones.
+    let pairToStr = \(pair: (fst: I32, snd: Str)) Str:
+        "(fst = `pair.fst`, snd = `pair.snd`) (local fn)"
+
+    123.i32().pair("hi").pairToStr().print()
 
 # expected stdout:
 # (1, 2)
@@ -60,3 +70,5 @@ main():
 # (8, hi)
 # (9, hi)
 # 3
+# (fst = 123, snd = hi) (top-level fn)
+# (fst = 123, snd = hi) (local fn)

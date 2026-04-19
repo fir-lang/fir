@@ -1988,30 +1988,30 @@ fn check_field_sel(
         );
     }
 
-    let selection = select_method(tc_state, object_ty, field, loc).unwrap_or_else(|| {
-        panic!(
-            "{}: Type {} does not have field or method {}",
-            loc_display(loc),
-            object_ty,
-            field
-        )
-    });
-
-    let (scheme, is_top_fn, fn_id_for_ufcs) = match &selection {
-        Selection::Method { scheme, .. } => (scheme.clone(), false, None),
-        Selection::TopFn { scheme, fn_id } => (scheme.clone(), true, Some(fn_id.clone())),
-    };
+    let Selection { scheme, kind } =
+        select_method(tc_state, object_ty, field, loc).unwrap_or_else(|| {
+            panic!(
+                "{}: Type {} does not have field or method {}",
+                loc_display(loc),
+                object_ty,
+                field
+            )
+        });
 
     let (fn_ty, fn_ty_args) = if user_ty_args.is_empty() {
         let (ty, args) = scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
         (ty, args.into_iter().map(Ty::UVar).collect())
     } else {
         if scheme.quantified_vars.len() != user_ty_args.len() {
-            let kind = if is_top_fn { "Function" } else { "Method" };
+            let kind_str = match &kind {
+                SelectionKind::Method { .. } => "Method",
+                SelectionKind::TopFn { .. } => "Function",
+                SelectionKind::LocalFn { .. } => "Local function",
+            };
             panic!(
                 "{}: {} takes {} type arguments, but applied to {}",
                 loc_display(loc),
-                kind,
+                kind_str,
                 scheme.quantified_vars.len(),
                 user_ty_args.len()
             );
@@ -2061,7 +2061,7 @@ fn check_field_sel(
         FunArgs::Named { .. } => panic!(),
     };
 
-    let dropped_ty = Ty::Fun {
+    let closure_ty = Ty::Fun {
         args,
         ret,
         exceptions,
@@ -2069,44 +2069,55 @@ fn check_field_sel(
 
     // Normalize after unification so that `AssocTySelect` nodes that depend on the self type can be
     // resolved.
-    let dropped_ty = dropped_ty.deep_normalize(
+    let closure_ty = closure_ty.deep_normalize(
         tc_state.tys.tys.cons(),
         tc_state.trait_env,
         tc_state.var_gen,
         tc_state.assumps,
     );
 
-    match selection {
-        Selection::Method {
-            type_or_trait_id, ..
-        } => (
-            dropped_ty.clone(),
+    match kind {
+        SelectionKind::Method { type_or_trait_id } => (
+            closure_ty.clone(),
             ast::Expr::MethodSel(ast::MethodSelExpr {
                 object: Box::new(object.clone()),
                 method_ty_id: type_or_trait_id,
                 method: field.clone(),
                 ty_args: fn_ty_args,
-                inferred_ty: Some(dropped_ty),
+                inferred_ty: Some(closure_ty),
             }),
         ),
 
-        Selection::TopFn { .. } => {
-            let fn_id = fn_id_for_ufcs.unwrap();
+        SelectionKind::TopFn { fn_id } => {
             let ufcs_expr = build_ufcs_closure(
                 object,
                 self_arg,
-                &fn_id,
+                fn_id.name(),
                 fn_ty.clone(),
                 fn_ty_args,
-                dropped_ty.clone(),
+                closure_ty.clone(),
                 loc,
             );
-            (dropped_ty, ufcs_expr)
+            (closure_ty, ufcs_expr)
+        }
+
+        SelectionKind::LocalFn { name } => {
+            let ufcs_expr = build_ufcs_closure(
+                object,
+                self_arg,
+                &name,
+                fn_ty.clone(),
+                fn_ty_args,
+                closure_ty.clone(),
+                loc,
+            );
+            (closure_ty, ufcs_expr)
         }
     }
 }
 
-/// Build the typed-AST desugaring of a UFCS call `object.f` where `f` is a top-level function.
+/// Build the typed-AST desugaring of a UFCS call `object.f` where `f` is a top-level or local
+/// function.
 ///
 /// Produces:
 ///
@@ -2117,12 +2128,14 @@ fn check_field_sel(
 /// ```
 ///
 /// All expressions have their `inferred_ty` populated so this synthetic tree can flow through the
-/// rest of the pipeline unchanged.
+/// rest of the pipeline unchanged. The synthesized `Var(f)` resolves correctly in both the
+/// top-level and local cases: monomorph's `locals.is_bound` check picks the local when one exists,
+/// otherwise `module_env` resolves the top-level function.
 #[allow(clippy::too_many_arguments)]
 fn build_ufcs_closure(
     object: &ast::L<ast::Expr>,
     receiver_ty: Ty,
-    fn_id: &Id,
+    fn_name: &Name,
     fn_full_ty: Ty,
     fn_ty_args: Vec<Ty>,
     closure_ty: Ty,
@@ -2182,7 +2195,7 @@ fn build_ufcs_closure(
             loc: loc.clone(),
             node: ast::Expr::Var(ast::VarExpr {
                 mod_prefix: None,
-                id: fn_id.name().clone(),
+                id: fn_name.clone(),
                 user_ty_args: vec![],
                 ty_args: fn_ty_args,
                 inferred_ty: Some(fn_full_ty),
@@ -2290,25 +2303,38 @@ fn select_field(
 }
 
 /// Result of selecting an `<expr>.<name>` target, other than a record field.
-pub(crate) enum Selection {
+pub(crate) struct Selection {
+    pub(crate) scheme: Scheme,
+    pub(crate) kind: SelectionKind,
+}
+
+pub(crate) enum SelectionKind {
     /// `<name>` is a method (direct or trait) on the receiver's type.
     Method {
         /// Enclosing type or trait id.
         type_or_trait_id: Id,
-        scheme: Scheme,
     },
 
     /// `<name>` resolves to a top-level function in the current module whose first positional
-    /// argument unifies with the receiver (UFCS).
-    TopFn { fn_id: Id, scheme: Scheme },
+    /// argument unifies with the receiver.
+    TopFn { fn_id: Id },
+
+    /// `<name>` resolves to a local binding whose type is a function with a matching first
+    /// positional argument. The scheme has no quantified vars or predicates.
+    LocalFn { name: Name },
 }
 
-/// Try to select a method (direct or trait) or a UFCS top-level function.
+/// Try to select a method (direct or trait), a local function, or a top-level function.
 ///
-/// Methods take precedence over top-level functions: if any method candidate matches, top-level
-/// functions are not considered. A top-level function `f` is UFCS-eligible when it has a
-/// `Positional` argument list with at least one argument whose type unifies one-way with the
-/// receiver.
+/// Precedence:
+///
+/// - Methods first
+/// - Then local functions
+/// - Then top-level functions
+///
+/// Note that there's no backtracking in this process: if the first parameter of a function one-way
+/// unifies with the receiver type, the function is selected and the decision is final. Type errors
+/// in other parameters (or unresovled predicates) etc. do not influence the method selection.
 fn select_method(
     tc_state: &mut TcFunState,
     receiver: &Ty,
@@ -2354,9 +2380,9 @@ fn select_method(
             for (i, candidate) in method_candidates.iter().enumerate() {
                 if !tc_state.tys.tys.get_con(&candidate.0).unwrap().is_trait() {
                     let (type_or_trait_id, scheme) = method_candidates.remove(i);
-                    return Some(Selection::Method {
-                        type_or_trait_id,
+                    return Some(Selection {
                         scheme,
+                        kind: SelectionKind::Method { type_or_trait_id },
                     });
                 }
             }
@@ -2374,12 +2400,50 @@ fn select_method(
         }
 
         let (type_or_trait_id, scheme) = method_candidates.pop().unwrap();
-        return Some(Selection::Method {
-            type_or_trait_id,
+        return Some(Selection {
             scheme,
+            kind: SelectionKind::Method { type_or_trait_id },
         });
     }
 
+    // No methods matched. If the name is locally bound, try UFCS on the local. Locals shadow
+    // same-named top-level fns, so if the local's type doesn't fit UFCS we stop here rather than
+    // falling through to top-level candidates (whose synthesized reference would be mis-resolved to
+    // the local anyway).
+    if let Some(local_ty) = tc_state.env.get(method).cloned() {
+        let normalized = local_ty.normalize(tc_state.tys.tys.cons());
+        let first_arg = match &normalized {
+            Ty::Fun {
+                args: FunArgs::Positional { args },
+                ret: _,
+                exceptions: _,
+            } if !args.is_empty() => args[0].clone(),
+            _ => return None,
+        };
+        if try_unify_one_way(
+            &first_arg,
+            receiver,
+            tc_state.tys.tys.cons(),
+            tc_state.var_gen,
+            loc,
+        ) {
+            let scheme = Scheme {
+                quantified_vars: vec![],
+                preds: vec![],
+                ty: normalized,
+                loc: loc.clone(),
+            };
+            return Some(Selection {
+                scheme,
+                kind: SelectionKind::LocalFn {
+                    name: method.clone(),
+                },
+            });
+        }
+        return None;
+    }
+
+    // Not locally bound, try top-level functions visible in this module.
     let candidate_ids: Vec<Id> = tc_state
         .module_env
         .iter_unprefixed_ids(method)
@@ -2427,9 +2491,10 @@ fn select_method(
         );
     }
 
-    top_candidates
-        .pop()
-        .map(|(fn_id, scheme)| Selection::TopFn { fn_id, scheme })
+    top_candidates.pop().map(|(fn_id, scheme)| Selection {
+        scheme,
+        kind: SelectionKind::TopFn { fn_id },
+    })
 }
 
 pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) -> Ty {
