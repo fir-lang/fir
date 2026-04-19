@@ -636,16 +636,28 @@ impl Expr {
 
             Expr::MethodSel(MethodSelExpr {
                 object,
-                method_ty_id,
-                method,
+                fun,
                 ty_args,
                 inferred_ty: _,
             }) => {
                 object.node.print(buf, indent);
-                buf.push_str(".{");
-                buf.push_str(&method_ty_id.to_string());
-                buf.push_str(".}");
-                buf.push_str(method);
+                match fun {
+                    MethodSelFun::Method { ty_id, method_name } => {
+                        buf.push_str(".{");
+                        buf.push_str(&ty_id.to_string());
+                        buf.push_str(".}");
+                        buf.push_str(method_name);
+                    }
+                    MethodSelFun::TopLevel { local_name: _, id } => {
+                        buf.push_str(".{");
+                        buf.push_str(&id.to_string());
+                        buf.push('}');
+                    }
+                    MethodSelFun::Local { name } => {
+                        buf.push('.');
+                        buf.push_str(name);
+                    }
+                }
                 print_ty_args(ty_args, buf);
             }
 

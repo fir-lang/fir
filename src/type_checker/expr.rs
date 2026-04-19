@@ -675,12 +675,10 @@ pub(super) fn check_expr(
                 ),
             };
 
-            // If the callee is a method and called directly, convert it into an associated function
-            // call to avoid closure allocation.
+            // If the callee is a `MethodSel` rewrite it into a direct call.
             if let ast::Expr::MethodSel(ast::MethodSelExpr {
                 object,
-                method_ty_id,
-                method,
+                fun: method_fun,
                 ty_args,
                 inferred_ty,
             }) = &fun.node
@@ -696,7 +694,7 @@ pub(super) fn check_expr(
                     },
                 );
 
-                let assoc_fn_ty = match &fun_ty {
+                let full_fn_ty = match &fun_ty {
                     Ty::Fun {
                         args: FunArgs::Positional { args: method_args },
                         ret,
@@ -713,22 +711,46 @@ pub(super) fn check_expr(
                         }
                     }
                     _ => panic!(
-                        "{}: Method type is not a function with positional args: {:?}",
+                        "{}: MethodSel type is not a function with positional args: {:?}",
                         loc_display(loc),
                         fun_ty
                     ),
                 };
 
-                fun.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                    mod_prefix: None,                // unused after type checking
-                    ty: method_ty_id.name().clone(), // unused after type checking
-                    ty_id: Some(method_ty_id.clone()),
-                    ty_user_ty_args: vec![], // unused after type checking
-                    member: method.clone(),
-                    user_ty_args: vec![], // unused after type checking
-                    ty_args: ty_args.clone(),
-                    inferred_ty: Some(assoc_fn_ty),
-                });
+                fun.node = match method_fun {
+                    ast::MethodSelFun::Method { ty_id, method_name } => {
+                        ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                            mod_prefix: None,         // unused after type checking
+                            ty: ty_id.name().clone(), // unused after type checking
+                            ty_id: Some(ty_id.clone()),
+                            ty_user_ty_args: vec![], // unused after type checking
+                            member: method_name.clone(),
+                            user_ty_args: vec![], // unused after type checking
+                            ty_args: ty_args.clone(),
+                            inferred_ty: Some(full_fn_ty),
+                        })
+                    }
+
+                    ast::MethodSelFun::TopLevel { local_name, id } => {
+                        ast::Expr::Var(ast::VarExpr {
+                            mod_prefix: None,
+                            name: local_name.clone(),
+                            user_ty_args: vec![],
+                            ty_args: ty_args.clone(),
+                            inferred_ty: Some(full_fn_ty),
+                            resolved_id: Some(id.clone()),
+                        })
+                    }
+
+                    ast::MethodSelFun::Local { name } => ast::Expr::Var(ast::VarExpr {
+                        mod_prefix: None,
+                        name: name.clone(),
+                        user_ty_args: vec![],
+                        ty_args: ty_args.clone(),
+                        inferred_ty: Some(full_fn_ty),
+                        resolved_id: None,
+                    }),
+                };
             }
 
             *inferred_ty = Some(ret_ty.clone());
@@ -2052,10 +2074,10 @@ fn check_field_sel(
         ),
     };
 
-    let self_arg = match &mut args {
+    match &mut args {
         FunArgs::Positional { args } => {
             // Type arguments of the receiver already substituted for type parameters in
-            // `select_method`. Drop 'self' (in methods) / first argument (in UFCS).
+            // `select_method`. Drop the first argument and unify with the receiver's type.
             let self_arg = args.remove(0);
             unify(
                 &self_arg,
@@ -2067,10 +2089,9 @@ fn check_field_sel(
                 tc_state.assumps,
                 tc_state.preds,
             );
-            self_arg
         }
         FunArgs::Named { .. } => panic!(),
-    };
+    }
 
     let closure_ty = Ty::Fun {
         args,
@@ -2087,185 +2108,27 @@ fn check_field_sel(
         tc_state.assumps,
     );
 
-    match kind {
-        SelectionKind::Method { type_or_trait_id } => (
-            closure_ty.clone(),
-            ast::Expr::MethodSel(ast::MethodSelExpr {
-                object: Box::new(object.clone()),
-                method_ty_id: type_or_trait_id,
-                method: field.clone(),
-                ty_args: fn_ty_args,
-                inferred_ty: Some(closure_ty),
-            }),
-        ),
-
-        SelectionKind::TopFn { fn_id } => {
-            let ufcs_expr = build_ufcs_closure(
-                object,
-                self_arg,
-                fn_id.name(),
-                Some(fn_id.clone()),
-                fn_ty.clone(),
-                fn_ty_args,
-                closure_ty.clone(),
-                loc,
-            );
-            (closure_ty, ufcs_expr)
-        }
-
-        SelectionKind::LocalFn { name } => {
-            let ufcs_expr = build_ufcs_closure(
-                object,
-                self_arg,
-                &name,
-                None, // local var
-                fn_ty.clone(),
-                fn_ty_args,
-                closure_ty.clone(),
-                loc,
-            );
-            (closure_ty, ufcs_expr)
-        }
-    }
-}
-
-/// Build the desugaring of a UFCS call `object.f` where `f` is a top-level or local function.
-///
-/// ```ignore
-/// <object>.f
-///
-/// ==>
-///
-/// do:
-///     let $ufcs_recv$ = <object>
-///     \($ufcs_arg_0$, ..., $ufcs_arg_{n-1}$): f($ufcs_recv$, $ufcs_arg_0$, ..., $ufcs_arg_{n-1}$)
-/// ```
-///
-/// All expressions have their `inferred_ty` populated so this tree don't need to be type checked.
-/// The synthesized `VarExpr(f)` also has its resolved `Id` generated (when not local).
-#[allow(clippy::too_many_arguments)]
-fn build_ufcs_closure(
-    object: &ast::L<ast::Expr>, // expr in the receiver position
-    receiver_ty: Ty,            // type of `object`
-    fn_name: &Name,             // name of the function being called
-    fn_resolved_id: Option<Id>, // id of the function being called. `None` when local.
-    fn_full_ty: Ty,             // type of the function being called
-    fn_ty_args: Vec<Ty>,        // type args of the function being called
-    closure_ty: Ty,             // type of the `do` expression
-    loc: &ast::Loc,             // location of the AST nodes being built
-) -> ast::Expr {
-    let (closure_param_tys, _ret, _exn) = match &closure_ty {
-        Ty::Fun {
-            args: FunArgs::Positional { args },
-            ret,
-            exceptions,
-        } => (args.clone(), ret.clone(), exceptions.clone()),
-        _ => panic!("UFCS closure type not a positional Fun: {closure_ty}"),
+    let fun = match kind {
+        SelectionKind::Method { type_or_trait_id } => ast::MethodSelFun::Method {
+            ty_id: type_or_trait_id,
+            method_name: field.clone(),
+        },
+        SelectionKind::TopFn { fn_id } => ast::MethodSelFun::TopLevel {
+            local_name: field.clone(),
+            id: fn_id,
+        },
+        SelectionKind::LocalFn { name } => ast::MethodSelFun::Local { name },
     };
 
-    let recv_name = Name::new_static("$ufcs_recv$");
-
-    // Build closure parameter names and the call-site args (receiver + closure params).
-    let mut fn_params: Vec<(Name, Option<ast::L<ast::Type>>)> =
-        Vec::with_capacity(closure_param_tys.len());
-
-    let mut call_args: Vec<ast::CallArg> = Vec::with_capacity(closure_param_tys.len() + 1);
-
-    call_args.push(ast::CallArg {
-        name: None,
-        expr: ast::L {
-            loc: loc.clone(),
-            node: ast::Expr::Var(ast::VarExpr {
-                mod_prefix: None,
-                name: recv_name.clone(),
-                user_ty_args: vec![],
-                ty_args: vec![],
-                inferred_ty: Some(receiver_ty.clone()),
-                resolved_id: None, // local var
-            }),
-        },
-    });
-
-    for (i, param_ty) in closure_param_tys.iter().enumerate() {
-        let param_name = Name::new(format!("$ufcs_arg_{i}$"));
-        fn_params.push((param_name.clone(), None));
-        call_args.push(ast::CallArg {
-            name: None,
-            expr: ast::L {
-                loc: loc.clone(),
-                node: ast::Expr::Var(ast::VarExpr {
-                    mod_prefix: None,
-                    name: param_name,
-                    user_ty_args: vec![],
-                    ty_args: vec![],
-                    inferred_ty: Some(param_ty.clone()),
-                    resolved_id: None, // local var
-                }),
-            },
-        });
-    }
-
-    // f($ufcs_recv$, a0, ..., a_{n-1})
-    let call_expr = ast::Expr::Call(ast::CallExpr {
-        fun: Box::new(ast::L {
-            loc: loc.clone(),
-            node: ast::Expr::Var(ast::VarExpr {
-                mod_prefix: None,
-                name: fn_name.clone(),
-                user_ty_args: vec![],
-                ty_args: fn_ty_args,
-                inferred_ty: Some(fn_full_ty),
-                resolved_id: fn_resolved_id,
-            }),
+    (
+        closure_ty.clone(),
+        ast::Expr::MethodSel(ast::MethodSelExpr {
+            object: Box::new(object.clone()),
+            fun,
+            ty_args: fn_ty_args,
+            inferred_ty: Some(closure_ty),
         }),
-        args: call_args,
-        splice: None,
-        inferred_ty: match &closure_ty {
-            Ty::Fun { ret, .. } => Some((**ret).clone()),
-            _ => unreachable!(),
-        },
-    });
-
-    let fn_expr = ast::Expr::Fn(ast::FnExpr {
-        sig: ast::FunSig {
-            context: ast::Context::default(),
-            self_: ast::SelfParam::No,
-            params: fn_params,
-            return_ty: None,
-            exceptions: None,
-        },
-        body: vec![ast::L {
-            loc: loc.clone(),
-            node: ast::Stmt::Expr(call_expr),
-        }],
-        inferred_ty: Some(closure_ty.clone()),
-    });
-
-    // Do { let $ufcs_recv$ = <object>; <fn_expr> }
-    ast::Expr::Do(ast::DoExpr {
-        stmts: vec![
-            ast::L {
-                loc: loc.clone(),
-                node: ast::Stmt::Let(ast::LetStmt {
-                    lhs: ast::L {
-                        loc: loc.clone(),
-                        node: ast::Pat::Var(ast::VarPat {
-                            var: recv_name,
-                            ty: Some(receiver_ty),
-                            refined: None,
-                        }),
-                    },
-                    ty: None,
-                    rhs: object.clone(),
-                }),
-            },
-            ast::L {
-                loc: loc.clone(),
-                node: ast::Stmt::Expr(fn_expr),
-            },
-        ],
-        inferred_ty: Some(closure_ty),
-    })
+    )
 }
 
 fn select_field(

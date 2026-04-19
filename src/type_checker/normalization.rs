@@ -129,8 +129,7 @@ fn normalize_expr(
 
         ast::Expr::MethodSel(ast::MethodSelExpr {
             object,
-            method_ty_id: _,
-            method: _,
+            fun: _,
             ty_args,
             inferred_ty,
         }) => {
