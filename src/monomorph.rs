@@ -640,10 +640,9 @@ fn mono_expr(
         }),
 
         ast::Expr::MethodSel(ast::MethodSelExpr {
-            object,       // receiver
-            method_ty_id, // trait of type that the method belongs to
-            method,       // method or associated function name
-            ty_args,      // function type arguments
+            object,  // receiver (first argument)
+            fun,     // function of the closure
+            ty_args, // function type arguments
             inferred_ty,
         }) => {
             let inferred_ty = mono_tc_ty(
@@ -660,17 +659,6 @@ fn mono_expr(
                 .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm, mangler, module_env))
                 .collect();
 
-            mono_method(
-                method_ty_id,
-                method,
-                &mono_ty_args,
-                poly_pgm,
-                mono_pgm,
-                loc,
-                mangler,
-                module_env,
-            );
-
             let mono_object = mono_bl_expr(
                 object, ty_map, poly_pgm, mono_pgm, locals, mangler, module_env,
             );
@@ -685,37 +673,100 @@ fn mono_expr(
             );
 
             /*
-            <receiver>.<method>
+            <receiver>.<fun>
 
             ==>
 
             do:
-                let receiver = <receiver>
-                \(...args): <receiver_type>.<method>(reciver, ...args)
+                let $receiver$ = <receiver>
+                \($arg0$, ..., $argN$): <fun>($receiver$, $arg0$, ..., $argN$)
             */
 
-            let mono_fun = mono_pgm
-                .associated
-                .get(&mangler.mangle(method_ty_id))
-                .unwrap()
-                .get(method)
-                .unwrap()
-                .get(&mono_ty_args)
-                .unwrap();
+            let fn_type = match &inferred_ty {
+                mono::Type::Fn(fn_type) => fn_type,
+                _ => panic!(),
+            };
 
-            let mono::FnType { args, ret, exn } = mono_fun.sig.ty();
-
-            let mono_fun_args = match args {
+            let positional_args = match &fn_type.args {
                 mono::FunArgs::Positional(args) => args,
-                mono::FunArgs::Named(_) => {
-                    // Methods can't have named arguments.
-                    panic!()
+                mono::FunArgs::Named(_) => panic!(),
+            };
+
+            let inner_callee = match fun {
+                ast::MethodSelFun::Method { ty_id, method_name } => {
+                    mono_method(
+                        ty_id,
+                        method_name,
+                        &mono_ty_args,
+                        poly_pgm,
+                        mono_pgm,
+                        loc,
+                        mangler,
+                        module_env,
+                    );
+                    let mono_fun = mono_pgm
+                        .associated
+                        .get(&mangler.mangle(ty_id))
+                        .unwrap()
+                        .get(method_name)
+                        .unwrap()
+                        .get(&mono_ty_args)
+                        .unwrap();
+                    let full_fn_ty = mono_fun.sig.ty();
+                    mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
+                        ty_id: mangler.mangle(ty_id),
+                        member: method_name.clone(),
+                        ty_args: mono_ty_args.clone(),
+                        ty: mono::Type::Fn(full_fn_ty.clone()),
+                    })
+                }
+
+                ast::MethodSelFun::TopLevel { local_name: _, id } => {
+                    let poly_decl = poly_pgm.top.get(id).unwrap_or_else(|| {
+                        panic!("{}: Unbound top-level function {}", loc_display(loc), id)
+                    });
+                    let callee_env = poly_pgm.module_env(id.module());
+                    mono_top_fn(
+                        poly_decl,
+                        &mono_ty_args,
+                        poly_pgm,
+                        mono_pgm,
+                        mangler,
+                        callee_env,
+                    );
+                    let full_fn_ty = mono::FnType {
+                        args: mono::FunArgs::Positional(
+                            std::iter::once(mono_object_ty.clone())
+                                .chain(positional_args.iter().cloned())
+                                .collect(),
+                        ),
+                        ret: fn_type.ret.clone(),
+                        exn: fn_type.exn.clone(),
+                    };
+                    mono::Expr::TopVar(mono::VarExpr {
+                        id: mangler.mangle(id),
+                        ty_args: mono_ty_args.clone(),
+                        ty: mono::Type::Fn(full_fn_ty.clone()),
+                    })
+                }
+
+                ast::MethodSelFun::Local { name } => {
+                    assert!(mono_ty_args.is_empty());
+                    let full_fn_ty = mono::FnType {
+                        args: mono::FunArgs::Positional(
+                            std::iter::once(mono_object_ty.clone())
+                                .chain(positional_args.iter().cloned())
+                                .collect(),
+                        ),
+                        ret: fn_type.ret.clone(),
+                        exn: fn_type.exn.clone(),
+                    };
+                    mono::Expr::LocalVar(name.clone(), mono::Type::Fn(full_fn_ty.clone()))
                 }
             };
 
-            let closure_params: Vec<(Name, mono::L<mono::Type>)> = mono_fun_args
+            let closure_params: Vec<(Name, mono::L<mono::Type>)> = positional_args
                 .iter()
-                .skip(1) // skip receiver
                 .enumerate()
                 .map(|(i, arg_ty)| {
                     (
@@ -730,7 +781,7 @@ fn mono_expr(
 
             let receiver_id = Name::new_static("$receiver$");
 
-            let assoc_fn_args: Vec<mono::CallArg> =
+            let call_args: Vec<mono::CallArg> =
                 std::iter::once((receiver_id.clone(), mono_object_ty.clone()))
                     .chain(
                         closure_params
@@ -754,7 +805,7 @@ fn mono_expr(
                             lhs: mono::L {
                                 loc: loc.clone(),
                                 node: mono::Pat::Var(mono::VarPat {
-                                    var: Name::new_static("$receiver$"),
+                                    var: receiver_id,
                                     ty: mono_object_ty,
                                     refined: None,
                                 }),
@@ -767,22 +818,17 @@ fn mono_expr(
                         node: mono::Stmt::Expr(mono::Expr::Fn(mono::FnExpr {
                             sig: mono::FunSig {
                                 params: closure_params,
-                                return_ty: Some(ast::L::new_dummy((*ret).clone())),
-                                exceptions: Some(ast::L::new_dummy((*exn).clone())),
+                                return_ty: Some(ast::L::new_dummy((*fn_type.ret).clone())),
+                                exceptions: Some(ast::L::new_dummy((*fn_type.exn).clone())),
                             },
                             body: vec![mono::L {
                                 loc: loc.clone(),
                                 node: mono::Stmt::Expr(mono::Expr::Call(mono::CallExpr {
                                     fun: Box::new(ast::L {
                                         loc: loc.clone(),
-                                        node: mono::Expr::AssocFnSel(mono::AssocFnSelExpr {
-                                            ty_id: mangler.mangle(method_ty_id),
-                                            member: method.clone(),
-                                            ty_args: mono_ty_args,
-                                            ty: mono::Type::Fn(mono_fun.sig.ty()),
-                                        }),
+                                        node: inner_callee,
                                     }),
-                                    args: assoc_fn_args,
+                                    args: call_args,
                                     splice: None,
                                     ty: inferred_ty.clone(),
                                 })),

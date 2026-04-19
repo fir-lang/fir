@@ -120,6 +120,19 @@ impl NameMap {
 }
 
 impl ModuleEnv {
+    /// Iterate all unprefixed ids bound to `name` in this module's environment.
+    ///
+    /// Unlike `resolve`, this does not panic when the name is unbound or imported from multiple
+    /// modules, it just yields zero or more ids. Intended for candidate-style lookups (e.g. UFCS)
+    /// where the caller disambiguates by other means (unification of argument types, etc.).
+    pub(crate) fn iter_unprefixed_ids(&self, name: &Name) -> impl Iterator<Item = &Id> {
+        self.names
+            .map
+            .get(name)
+            .into_iter()
+            .flat_map(|id_set| id_set.ids.iter())
+    }
+
     pub(crate) fn resolve(
         &self,
         name: &Name,

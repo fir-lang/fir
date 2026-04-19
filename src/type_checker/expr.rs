@@ -675,12 +675,10 @@ pub(super) fn check_expr(
                 ),
             };
 
-            // If the callee is a method and called directly, convert it into an associated function
-            // call to avoid closure allocation.
+            // If the callee is a `MethodSel` rewrite it into a direct call.
             if let ast::Expr::MethodSel(ast::MethodSelExpr {
                 object,
-                method_ty_id,
-                method,
+                fun: method_fun,
                 ty_args,
                 inferred_ty,
             }) = &fun.node
@@ -696,7 +694,7 @@ pub(super) fn check_expr(
                     },
                 );
 
-                let assoc_fn_ty = match &fun_ty {
+                let full_fn_ty = match &fun_ty {
                     Ty::Fun {
                         args: FunArgs::Positional { args: method_args },
                         ret,
@@ -713,22 +711,46 @@ pub(super) fn check_expr(
                         }
                     }
                     _ => panic!(
-                        "{}: Method type is not a function with positional args: {:?}",
+                        "{}: MethodSel type is not a function with positional args: {:?}",
                         loc_display(loc),
                         fun_ty
                     ),
                 };
 
-                fun.node = ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
-                    mod_prefix: None,                // unused after type checking
-                    ty: method_ty_id.name().clone(), // unused after type checking
-                    ty_id: Some(method_ty_id.clone()),
-                    ty_user_ty_args: vec![], // unused after type checking
-                    member: method.clone(),
-                    user_ty_args: vec![], // unused after type checking
-                    ty_args: ty_args.clone(),
-                    inferred_ty: Some(assoc_fn_ty),
-                });
+                fun.node = match method_fun {
+                    ast::MethodSelFun::Method { ty_id, method_name } => {
+                        ast::Expr::AssocFnSel(ast::AssocFnSelExpr {
+                            mod_prefix: None,         // unused after type checking
+                            ty: ty_id.name().clone(), // unused after type checking
+                            ty_id: Some(ty_id.clone()),
+                            ty_user_ty_args: vec![], // unused after type checking
+                            member: method_name.clone(),
+                            user_ty_args: vec![], // unused after type checking
+                            ty_args: ty_args.clone(),
+                            inferred_ty: Some(full_fn_ty),
+                        })
+                    }
+
+                    ast::MethodSelFun::TopLevel { local_name, id } => {
+                        ast::Expr::Var(ast::VarExpr {
+                            mod_prefix: None,
+                            name: local_name.clone(),
+                            user_ty_args: vec![],
+                            ty_args: ty_args.clone(),
+                            inferred_ty: Some(full_fn_ty),
+                            resolved_id: Some(id.clone()),
+                        })
+                    }
+
+                    ast::MethodSelFun::Local { name } => ast::Expr::Var(ast::VarExpr {
+                        mod_prefix: None,
+                        name: name.clone(),
+                        user_ty_args: vec![],
+                        ty_args: ty_args.clone(),
+                        inferred_ty: Some(full_fn_ty),
+                        resolved_id: None,
+                    }),
+                };
             }
 
             *inferred_ty = Some(ret_ty.clone());
@@ -1999,7 +2021,7 @@ fn check_field_sel(
         );
     }
 
-    let (method_ty_id, scheme) =
+    let Selection { scheme, kind } =
         select_method(tc_state, object_ty, field, loc).unwrap_or_else(|| {
             panic!(
                 "{}: Type {} does not have field or method {}",
@@ -2009,14 +2031,20 @@ fn check_field_sel(
             )
         });
 
-    let (method_ty, method_ty_args) = if user_ty_args.is_empty() {
+    let (fn_ty, fn_ty_args) = if user_ty_args.is_empty() {
         let (ty, args) = scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
         (ty, args.into_iter().map(Ty::UVar).collect())
     } else {
         if scheme.quantified_vars.len() != user_ty_args.len() {
+            let kind_str = match &kind {
+                SelectionKind::Method { .. } => "Method",
+                SelectionKind::TopFn { .. } => "Function",
+                SelectionKind::LocalFn { .. } => "Local function",
+            };
             panic!(
-                "{}: Method takes {} type arguments, but applied to {}",
+                "{}: {} takes {} type arguments, but applied to {}",
                 loc_display(loc),
+                kind_str,
                 scheme.quantified_vars.len(),
                 user_ty_args.len()
             );
@@ -2032,7 +2060,7 @@ fn check_field_sel(
         (ty, user_ty_args_converted)
     };
 
-    let (mut args, ret, exceptions) = match method_ty {
+    let (mut args, ret, exceptions) = match fn_ty.clone() {
         Ty::Fun {
             args,
             ret,
@@ -2042,14 +2070,14 @@ fn check_field_sel(
         _ => panic!(
             "{}: Type of method is not a function type: {:?}",
             loc_display(loc),
-            method_ty
+            fn_ty
         ),
     };
 
     match &mut args {
         FunArgs::Positional { args } => {
             // Type arguments of the receiver already substituted for type parameters in
-            // `select_method`. Drop 'self' argument.
+            // `select_method`. Drop the first argument and unify with the receiver's type.
             let self_arg = args.remove(0);
             unify(
                 &self_arg,
@@ -2065,7 +2093,7 @@ fn check_field_sel(
         FunArgs::Named { .. } => panic!(),
     }
 
-    let ty = Ty::Fun {
+    let closure_ty = Ty::Fun {
         args,
         ret,
         exceptions,
@@ -2073,21 +2101,32 @@ fn check_field_sel(
 
     // Normalize after unification so that `AssocTySelect` nodes that depend on the self type can be
     // resolved.
-    let ty = ty.deep_normalize(
+    let closure_ty = closure_ty.deep_normalize(
         tc_state.tys.tys.cons(),
         tc_state.trait_env,
         tc_state.var_gen,
         tc_state.assumps,
     );
 
+    let fun = match kind {
+        SelectionKind::Method { type_or_trait_id } => ast::MethodSelFun::Method {
+            ty_id: type_or_trait_id,
+            method_name: field.clone(),
+        },
+        SelectionKind::TopFn { fn_id } => ast::MethodSelFun::TopLevel {
+            local_name: field.clone(),
+            id: fn_id,
+        },
+        SelectionKind::LocalFn { name } => ast::MethodSelFun::Local { name },
+    };
+
     (
-        ty.clone(),
+        closure_ty.clone(),
         ast::Expr::MethodSel(ast::MethodSelExpr {
             object: Box::new(object.clone()),
-            method_ty_id,
-            method: field.clone(),
-            ty_args: method_ty_args,
-            inferred_ty: Some(ty),
+            fun,
+            ty_args: fn_ty_args,
+            inferred_ty: Some(closure_ty),
         }),
     )
 }
@@ -2143,66 +2182,199 @@ fn select_field(
     }
 }
 
-/// Try to select a method (direct or trait). Does not select associated functions.
+/// Result of selecting an `<expr>.<name>` target, other than a record field.
+pub(crate) struct Selection {
+    pub(crate) scheme: Scheme,
+    pub(crate) kind: SelectionKind,
+}
+
+pub(crate) enum SelectionKind {
+    /// `<name>` is a method (direct or trait) on the receiver's type.
+    Method {
+        /// Enclosing type or trait id.
+        type_or_trait_id: Id,
+    },
+
+    /// `<name>` resolves to a top-level function in the current module whose first positional
+    /// argument unifies with the receiver.
+    TopFn { fn_id: Id },
+
+    /// `<name>` resolves to a local binding whose type is a function with a matching first
+    /// positional argument. The scheme has no quantified vars or predicates.
+    LocalFn { name: Name },
+}
+
+/// Try to select a method (direct or trait), a local function, or a top-level function.
+///
+/// Precedence:
+///
+/// - Methods first
+/// - Then local functions
+/// - Then top-level functions
+///
+/// Note that there's no backtracking in this process: if the first parameter of a function one-way
+/// unifies with the receiver type, the function is selected and the decision is final. Type errors
+/// in other parameters (or unresovled predicates) etc. do not influence the method selection.
 fn select_method(
     tc_state: &mut TcFunState,
     receiver: &Ty,
     method: &Name,
     loc: &ast::Loc,
-) -> Option<(Id, Scheme)> {
-    let mut candidates: Vec<(Id, Scheme)> = vec![];
+) -> Option<Selection> {
+    let mut method_candidates: Vec<(Id, Scheme)> = vec![];
 
-    for (ty_id, candidate) in tc_state.tys.method_schemes.get(method)? {
-        // Don't add predicates to the current predicate set. We will instantiate the scheme again
-        // in the call site and use predicates generated from that.
-        let (ty, _) = candidate.instantiate(tc_state.var_gen, &mut Default::default(), loc);
-        let candidate_self_ty = match &ty {
+    if let Some(candidates) = tc_state.tys.method_schemes.get(method) {
+        for (ty_id, candidate) in candidates {
+            // Don't add predicates to the current predicate set. We will instantiate the scheme
+            // again in the call site and use predicates generated from that.
+            let (ty, _) = candidate.instantiate(tc_state.var_gen, &mut Default::default(), loc);
+            let candidate_self_ty = match &ty {
+                Ty::Fun {
+                    args: FunArgs::Positional { args },
+                    ret: _,
+                    exceptions: _,
+                } => &args[0],
+
+                other => panic!(
+                    "{}: Method call candidate for {} does not have function type: {}",
+                    loc_display(loc),
+                    method,
+                    other
+                ),
+            };
+            if try_unify_one_way(
+                candidate_self_ty,
+                receiver,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                loc,
+            ) {
+                method_candidates.push((ty_id.clone(), candidate.clone()));
+            }
+        }
+    }
+
+    if !method_candidates.is_empty() {
+        if method_candidates.len() > 1 {
+            // If there's a non-trait candidate, pick it. Otherwise fail with an ambiguity error.
+            for (i, candidate) in method_candidates.iter().enumerate() {
+                if !tc_state.tys.tys.get_con(&candidate.0).unwrap().is_trait() {
+                    let (type_or_trait_id, scheme) = method_candidates.remove(i);
+                    return Some(Selection {
+                        scheme,
+                        kind: SelectionKind::Method { type_or_trait_id },
+                    });
+                }
+            }
+
+            let candidates_str: Vec<String> = method_candidates
+                .iter()
+                .map(|(ty_id, _)| format!("{ty_id}.{method}"))
+                .collect();
+
+            panic!(
+                "{}: Ambiguous method call, candidates: {}",
+                loc_display(loc),
+                candidates_str.join(", ")
+            );
+        }
+
+        let (type_or_trait_id, scheme) = method_candidates.pop().unwrap();
+        return Some(Selection {
+            scheme,
+            kind: SelectionKind::Method { type_or_trait_id },
+        });
+    }
+
+    // No methods matched. If the name is locally bound, try UFCS on the local. Locals shadow
+    // same-named top-level fns, so if the local's type doesn't fit UFCS we stop here rather than
+    // falling through to top-level candidates (whose synthesized reference would be mis-resolved to
+    // the local anyway).
+    if let Some(local_ty) = tc_state.env.get(method).cloned() {
+        let normalized = local_ty.normalize(tc_state.tys.tys.cons());
+        let first_arg = match &normalized {
             Ty::Fun {
                 args: FunArgs::Positional { args },
                 ret: _,
                 exceptions: _,
-            } => &args[0],
-
-            other => panic!(
-                "{}: Method call candidate for {} does not have function type: {}",
-                loc_display(loc),
-                method,
-                other
-            ),
+            } if !args.is_empty() => args[0].clone(),
+            _ => return None,
         };
         if try_unify_one_way(
-            candidate_self_ty,
+            &first_arg,
             receiver,
             tc_state.tys.tys.cons(),
             tc_state.var_gen,
             loc,
         ) {
-            candidates.push((ty_id.clone(), candidate.clone()));
+            let scheme = Scheme {
+                quantified_vars: vec![],
+                preds: vec![],
+                ty: normalized,
+                loc: loc.clone(),
+            };
+            return Some(Selection {
+                scheme,
+                kind: SelectionKind::LocalFn {
+                    name: method.clone(),
+                },
+            });
+        }
+        return None;
+    }
+
+    // Not locally bound, try top-level functions visible in this module.
+    let candidate_ids: Vec<Id> = tc_state
+        .module_env
+        .iter_unprefixed_ids(method)
+        .cloned()
+        .collect();
+    let mut top_candidates: Vec<(Id, Scheme)> = vec![];
+    for id in candidate_ids {
+        let scheme = match tc_state.tys.top_schemes.get(&id) {
+            Some(s) => s.clone(),
+            None => continue, // not a top-level function (type, trait, etc.)
+        };
+        let (ty, _) = scheme.instantiate(tc_state.var_gen, &mut Default::default(), loc);
+        let candidate_first_arg = match &ty {
+            Ty::Fun {
+                args: FunArgs::Positional { args },
+                ret: _,
+                exceptions: _,
+            } if !args.is_empty() => &args[0],
+
+            // Zero-arg, or named-arg functions are not UFCS candidates.
+            _ => continue,
+        };
+        if try_unify_one_way(
+            candidate_first_arg,
+            receiver,
+            tc_state.tys.tys.cons(),
+            tc_state.var_gen,
+            loc,
+        ) {
+            top_candidates.push((id, scheme));
         }
     }
 
-    if candidates.len() > 1 {
-        // If there's an associated function among the candidates, pick it. Otherwise fail with an
-        // ambiguity error.
-        for (i, candidate) in candidates.iter().enumerate() {
-            if !tc_state.tys.tys.get_con(&candidate.0).unwrap().is_trait() {
-                return Some(candidates.remove(i));
-            }
-        }
-
-        let candidates_str: Vec<String> = candidates
+    if top_candidates.len() > 1 {
+        let candidates_str: Vec<String> = top_candidates
             .iter()
-            .map(|(ty_id, _)| format!("{ty_id}.{method}"))
+            .map(|(fn_id, _)| format!("{fn_id}"))
             .collect();
 
         panic!(
-            "{}: Ambiguous method call, candidates: {}",
+            "{}: Ambiguous call for {}, candidates: {}",
             loc_display(loc),
+            method,
             candidates_str.join(", ")
         );
     }
 
-    candidates.pop()
+    top_candidates.pop().map(|(fn_id, scheme)| Selection {
+        scheme,
+        kind: SelectionKind::TopFn { fn_id },
+    })
 }
 
 pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) -> Ty {
