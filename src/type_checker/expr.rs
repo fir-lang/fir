@@ -1988,24 +1988,30 @@ fn check_field_sel(
         );
     }
 
-    let (method_ty_id, scheme) =
-        select_method(tc_state, object_ty, field, loc).unwrap_or_else(|| {
-            panic!(
-                "{}: Type {} does not have field or method {}",
-                loc_display(loc),
-                object_ty,
-                field
-            )
-        });
+    let selection = select_method(tc_state, object_ty, field, loc).unwrap_or_else(|| {
+        panic!(
+            "{}: Type {} does not have field or method {}",
+            loc_display(loc),
+            object_ty,
+            field
+        )
+    });
 
-    let (method_ty, method_ty_args) = if user_ty_args.is_empty() {
+    let (scheme, is_top_fn, fn_id_for_ufcs) = match &selection {
+        Selection::Method { scheme, .. } => (scheme.clone(), false, None),
+        Selection::TopFn { scheme, fn_id } => (scheme.clone(), true, Some(fn_id.clone())),
+    };
+
+    let (fn_ty, fn_ty_args) = if user_ty_args.is_empty() {
         let (ty, args) = scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
         (ty, args.into_iter().map(Ty::UVar).collect())
     } else {
         if scheme.quantified_vars.len() != user_ty_args.len() {
+            let kind = if is_top_fn { "Function" } else { "Method" };
             panic!(
-                "{}: Method takes {} type arguments, but applied to {}",
+                "{}: {} takes {} type arguments, but applied to {}",
                 loc_display(loc),
+                kind,
                 scheme.quantified_vars.len(),
                 user_ty_args.len()
             );
@@ -2021,7 +2027,7 @@ fn check_field_sel(
         (ty, user_ty_args_converted)
     };
 
-    let (mut args, ret, exceptions) = match method_ty {
+    let (mut args, ret, exceptions) = match fn_ty.clone() {
         Ty::Fun {
             args,
             ret,
@@ -2031,14 +2037,14 @@ fn check_field_sel(
         _ => panic!(
             "{}: Type of method is not a function type: {:?}",
             loc_display(loc),
-            method_ty
+            fn_ty
         ),
     };
 
-    match &mut args {
+    let self_arg = match &mut args {
         FunArgs::Positional { args } => {
             // Type arguments of the receiver already substituted for type parameters in
-            // `select_method`. Drop 'self' argument.
+            // `select_method`. Drop 'self' (in methods) / first argument (in UFCS).
             let self_arg = args.remove(0);
             unify(
                 &self_arg,
@@ -2050,11 +2056,12 @@ fn check_field_sel(
                 tc_state.assumps,
                 tc_state.preds,
             );
+            self_arg
         }
         FunArgs::Named { .. } => panic!(),
-    }
+    };
 
-    let ty = Ty::Fun {
+    let dropped_ty = Ty::Fun {
         args,
         ret,
         exceptions,
@@ -2062,23 +2069,173 @@ fn check_field_sel(
 
     // Normalize after unification so that `AssocTySelect` nodes that depend on the self type can be
     // resolved.
-    let ty = ty.deep_normalize(
+    let dropped_ty = dropped_ty.deep_normalize(
         tc_state.tys.tys.cons(),
         tc_state.trait_env,
         tc_state.var_gen,
         tc_state.assumps,
     );
 
-    (
-        ty.clone(),
-        ast::Expr::MethodSel(ast::MethodSelExpr {
-            object: Box::new(object.clone()),
-            method_ty_id,
-            method: field.clone(),
-            ty_args: method_ty_args,
-            inferred_ty: Some(ty),
+    match selection {
+        Selection::Method {
+            type_or_trait_id, ..
+        } => (
+            dropped_ty.clone(),
+            ast::Expr::MethodSel(ast::MethodSelExpr {
+                object: Box::new(object.clone()),
+                method_ty_id: type_or_trait_id,
+                method: field.clone(),
+                ty_args: fn_ty_args,
+                inferred_ty: Some(dropped_ty),
+            }),
+        ),
+
+        Selection::TopFn { .. } => {
+            let fn_id = fn_id_for_ufcs.unwrap();
+            let ufcs_expr = build_ufcs_closure(
+                object,
+                self_arg,
+                &fn_id,
+                fn_ty.clone(),
+                fn_ty_args,
+                dropped_ty.clone(),
+                loc,
+            );
+            (dropped_ty, ufcs_expr)
+        }
+    }
+}
+
+/// Build the typed-AST desugaring of a UFCS call `object.f` where `f` is a top-level function.
+///
+/// Produces:
+///
+/// ```ignore
+/// do:
+///     let $ufcs_recv$ = <object>
+///     \($ufcs_arg_0$, ..., $ufcs_arg_{n-1}$): f($ufcs_recv$, $ufcs_arg_0$, ..., $ufcs_arg_{n-1}$)
+/// ```
+///
+/// All expressions have their `inferred_ty` populated so this synthetic tree can flow through the
+/// rest of the pipeline unchanged.
+#[allow(clippy::too_many_arguments)]
+fn build_ufcs_closure(
+    object: &ast::L<ast::Expr>,
+    receiver_ty: Ty,
+    fn_id: &Id,
+    fn_full_ty: Ty,
+    fn_ty_args: Vec<Ty>,
+    closure_ty: Ty,
+    loc: &ast::Loc,
+) -> ast::Expr {
+    let (closure_param_tys, _ret, _exn) = match &closure_ty {
+        Ty::Fun {
+            args: FunArgs::Positional { args },
+            ret,
+            exceptions,
+        } => (args.clone(), ret.clone(), exceptions.clone()),
+        _ => panic!("UFCS closure type not a positional Fun: {closure_ty}"),
+    };
+
+    let recv_name = Name::new_static("$ufcs_recv$");
+
+    // Build closure parameter names and the call-site args (receiver + closure params).
+    let mut fn_params: Vec<(Name, Option<ast::L<ast::Type>>)> =
+        Vec::with_capacity(closure_param_tys.len());
+    let mut call_args: Vec<ast::CallArg> = Vec::with_capacity(closure_param_tys.len() + 1);
+
+    call_args.push(ast::CallArg {
+        name: None,
+        expr: ast::L {
+            loc: loc.clone(),
+            node: ast::Expr::Var(ast::VarExpr {
+                mod_prefix: None,
+                id: recv_name.clone(),
+                user_ty_args: vec![],
+                ty_args: vec![],
+                inferred_ty: Some(receiver_ty.clone()),
+            }),
+        },
+    });
+
+    for (i, param_ty) in closure_param_tys.iter().enumerate() {
+        let param_name = Name::new(format!("$ufcs_arg_{i}$"));
+        fn_params.push((param_name.clone(), None));
+        call_args.push(ast::CallArg {
+            name: None,
+            expr: ast::L {
+                loc: loc.clone(),
+                node: ast::Expr::Var(ast::VarExpr {
+                    mod_prefix: None,
+                    id: param_name,
+                    user_ty_args: vec![],
+                    ty_args: vec![],
+                    inferred_ty: Some(param_ty.clone()),
+                }),
+            },
+        });
+    }
+
+    // f($ufcs_recv$, a0, ..., a_{n-1})
+    let call_expr = ast::Expr::Call(ast::CallExpr {
+        fun: Box::new(ast::L {
+            loc: loc.clone(),
+            node: ast::Expr::Var(ast::VarExpr {
+                mod_prefix: None,
+                id: fn_id.name().clone(),
+                user_ty_args: vec![],
+                ty_args: fn_ty_args,
+                inferred_ty: Some(fn_full_ty),
+            }),
         }),
-    )
+        args: call_args,
+        splice: None,
+        inferred_ty: match &closure_ty {
+            Ty::Fun { ret, .. } => Some((**ret).clone()),
+            _ => unreachable!(),
+        },
+    });
+
+    let fn_expr = ast::Expr::Fn(ast::FnExpr {
+        sig: ast::FunSig {
+            context: ast::Context::default(),
+            self_: ast::SelfParam::No,
+            params: fn_params,
+            return_ty: None,
+            exceptions: None,
+        },
+        body: vec![ast::L {
+            loc: loc.clone(),
+            node: ast::Stmt::Expr(call_expr),
+        }],
+        inferred_ty: Some(closure_ty.clone()),
+    });
+
+    // Do { let $ufcs_recv$ = <object>; <fn_expr> }
+    ast::Expr::Do(ast::DoExpr {
+        stmts: vec![
+            ast::L {
+                loc: loc.clone(),
+                node: ast::Stmt::Let(ast::LetStmt {
+                    lhs: ast::L {
+                        loc: loc.clone(),
+                        node: ast::Pat::Var(ast::VarPat {
+                            var: recv_name,
+                            ty: Some(receiver_ty),
+                            refined: None,
+                        }),
+                    },
+                    ty: None,
+                    rhs: object.clone(),
+                }),
+            },
+            ast::L {
+                loc: loc.clone(),
+                node: ast::Stmt::Expr(fn_expr),
+            },
+        ],
+        inferred_ty: Some(closure_ty),
+    })
 }
 
 fn select_field(
@@ -2132,66 +2289,147 @@ fn select_field(
     }
 }
 
-/// Try to select a method (direct or trait). Does not select associated functions.
+/// Result of selecting an `<expr>.<name>` target, other than a record field.
+pub(crate) enum Selection {
+    /// `<name>` is a method (direct or trait) on the receiver's type.
+    Method {
+        /// Enclosing type or trait id.
+        type_or_trait_id: Id,
+        scheme: Scheme,
+    },
+
+    /// `<name>` resolves to a top-level function in the current module whose first positional
+    /// argument unifies with the receiver (UFCS).
+    TopFn { fn_id: Id, scheme: Scheme },
+}
+
+/// Try to select a method (direct or trait) or a UFCS top-level function.
+///
+/// Methods take precedence over top-level functions: if any method candidate matches, top-level
+/// functions are not considered. A top-level function `f` is UFCS-eligible when it has a
+/// `Positional` argument list with at least one argument whose type unifies one-way with the
+/// receiver.
 fn select_method(
     tc_state: &mut TcFunState,
     receiver: &Ty,
     method: &Name,
     loc: &ast::Loc,
-) -> Option<(Id, Scheme)> {
-    let mut candidates: Vec<(Id, Scheme)> = vec![];
+) -> Option<Selection> {
+    let mut method_candidates: Vec<(Id, Scheme)> = vec![];
 
-    for (ty_id, candidate) in tc_state.tys.method_schemes.get(method)? {
-        // Don't add predicates to the current predicate set. We will instantiate the scheme again
-        // in the call site and use predicates generated from that.
-        let (ty, _) = candidate.instantiate(tc_state.var_gen, &mut Default::default(), loc);
-        let candidate_self_ty = match &ty {
+    if let Some(candidates) = tc_state.tys.method_schemes.get(method) {
+        for (ty_id, candidate) in candidates {
+            // Don't add predicates to the current predicate set. We will instantiate the scheme
+            // again in the call site and use predicates generated from that.
+            let (ty, _) = candidate.instantiate(tc_state.var_gen, &mut Default::default(), loc);
+            let candidate_self_ty = match &ty {
+                Ty::Fun {
+                    args: FunArgs::Positional { args },
+                    ret: _,
+                    exceptions: _,
+                } => &args[0],
+
+                other => panic!(
+                    "{}: Method call candidate for {} does not have function type: {}",
+                    loc_display(loc),
+                    method,
+                    other
+                ),
+            };
+            if try_unify_one_way(
+                candidate_self_ty,
+                receiver,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                loc,
+            ) {
+                method_candidates.push((ty_id.clone(), candidate.clone()));
+            }
+        }
+    }
+
+    if !method_candidates.is_empty() {
+        if method_candidates.len() > 1 {
+            // If there's a non-trait candidate, pick it. Otherwise fail with an ambiguity error.
+            for (i, candidate) in method_candidates.iter().enumerate() {
+                if !tc_state.tys.tys.get_con(&candidate.0).unwrap().is_trait() {
+                    let (type_or_trait_id, scheme) = method_candidates.remove(i);
+                    return Some(Selection::Method {
+                        type_or_trait_id,
+                        scheme,
+                    });
+                }
+            }
+
+            let candidates_str: Vec<String> = method_candidates
+                .iter()
+                .map(|(ty_id, _)| format!("{ty_id}.{method}"))
+                .collect();
+
+            panic!(
+                "{}: Ambiguous method call, candidates: {}",
+                loc_display(loc),
+                candidates_str.join(", ")
+            );
+        }
+
+        let (type_or_trait_id, scheme) = method_candidates.pop().unwrap();
+        return Some(Selection::Method {
+            type_or_trait_id,
+            scheme,
+        });
+    }
+
+    let candidate_ids: Vec<Id> = tc_state
+        .module_env
+        .iter_unprefixed_ids(method)
+        .cloned()
+        .collect();
+    let mut top_candidates: Vec<(Id, Scheme)> = vec![];
+    for id in candidate_ids {
+        let scheme = match tc_state.tys.top_schemes.get(&id) {
+            Some(s) => s.clone(),
+            None => continue, // not a top-level function (type, trait, etc.)
+        };
+        let (ty, _) = scheme.instantiate(tc_state.var_gen, &mut Default::default(), loc);
+        let candidate_first_arg = match &ty {
             Ty::Fun {
                 args: FunArgs::Positional { args },
                 ret: _,
                 exceptions: _,
-            } => &args[0],
+            } if !args.is_empty() => &args[0],
 
-            other => panic!(
-                "{}: Method call candidate for {} does not have function type: {}",
-                loc_display(loc),
-                method,
-                other
-            ),
+            // Zero-arg, or named-arg functions are not UFCS candidates.
+            _ => continue,
         };
         if try_unify_one_way(
-            candidate_self_ty,
+            candidate_first_arg,
             receiver,
             tc_state.tys.tys.cons(),
             tc_state.var_gen,
             loc,
         ) {
-            candidates.push((ty_id.clone(), candidate.clone()));
+            top_candidates.push((id, scheme));
         }
     }
 
-    if candidates.len() > 1 {
-        // If there's an associated function among the candidates, pick it. Otherwise fail with an
-        // ambiguity error.
-        for (i, candidate) in candidates.iter().enumerate() {
-            if !tc_state.tys.tys.get_con(&candidate.0).unwrap().is_trait() {
-                return Some(candidates.remove(i));
-            }
-        }
-
-        let candidates_str: Vec<String> = candidates
+    if top_candidates.len() > 1 {
+        let candidates_str: Vec<String> = top_candidates
             .iter()
-            .map(|(ty_id, _)| format!("{ty_id}.{method}"))
+            .map(|(fn_id, _)| format!("{fn_id}"))
             .collect();
 
         panic!(
-            "{}: Ambiguous method call, candidates: {}",
+            "{}: Ambiguous call for {}, candidates: {}",
             loc_display(loc),
+            method,
             candidates_str.join(", ")
         );
     }
 
-    candidates.pop()
+    top_candidates
+        .pop()
+        .map(|(fn_id, scheme)| Selection::TopFn { fn_id, scheme })
 }
 
 pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) -> Ty {
