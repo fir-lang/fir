@@ -581,10 +581,9 @@ fn mono_expr(
                 );
             }
 
-            let var_id = match resolved_id {
-                Some(id) => id.clone(),
-                None => module_env.resolve(var, mod_prefix, loc),
-            };
+            let var_id = resolved_id
+                .clone()
+                .unwrap_or_else(|| module_env.resolve(var, mod_prefix, loc));
 
             let poly_decl = poly_pgm
                 .top
