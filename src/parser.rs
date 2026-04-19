@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: 62dbba2dc17c693bc42ca32b7e03111bb840c4ab85aa65d1232682d42a29f631
+// sha3: 7aba4492f8766f1490a73eda45b15e05034da1ae1dab216cdc9acf688e6d426b
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -56042,13 +56042,13 @@ fn __action100<'a>(
 ) -> Expr {
     {
         let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
-        let str = id.name();
         Expr::Var(VarExpr {
             mod_prefix,
-            id: str,
+            id: id.name(),
             user_ty_args,
             ty_args: vec![],
             inferred_ty: None,
+            resolved_id: None,
         })
     }
 }

@@ -639,6 +639,10 @@ pub struct VarExpr {
     pub ty_args: Vec<Ty>,
 
     pub inferred_ty: Option<Ty>,
+
+    /// The resolved variable. Filled in by the type checker. Only available for top-level variable
+    /// references.
+    pub resolved_id: Option<Id>,
 }
 
 #[derive(Debug, Clone)]
@@ -1224,6 +1228,7 @@ impl Expr {
                 user_ty_args,
                 ty_args,
                 inferred_ty,
+                resolved_id: _,
             }) => {
                 assert!(inferred_ty.is_none());
                 assert!(ty_args.is_empty());
