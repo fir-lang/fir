@@ -67,6 +67,10 @@ main():
     # than the first.
     456.i32().pass(\(y): Point(x = 123, y)).printPoint()
 
+    # At least for now, it's not possible to call associated functions with this
+    # syntax. We have to use `pass`.
+    range(u32(0), u32(5)).pass(\(iter): Vec.fromIter(iter)).print()
+
 
 # expected stdout:
 # (1, 2)
@@ -79,3 +83,4 @@ main():
 # (fst = 123, snd = hi) (top-level fn)
 # (fst = 123, snd = hi) (local fn)
 # (123, 456)
+# [0,1,2,3,4]
