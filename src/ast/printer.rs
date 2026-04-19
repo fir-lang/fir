@@ -610,14 +610,14 @@ impl Expr {
         match self {
             Expr::Var(VarExpr {
                 mod_prefix,
-                id,
+                name,
                 user_ty_args,
                 ty_args,
                 inferred_ty: _,
                 resolved_id: _,
             }) => {
                 print_mod_prefix(mod_prefix, buf);
-                buf.push_str(id);
+                buf.push_str(name);
                 print_user_ty_args(user_ty_args, buf);
                 print_ty_args(ty_args, buf);
             }

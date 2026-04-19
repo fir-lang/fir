@@ -629,7 +629,7 @@ pub enum Expr {
 pub struct VarExpr {
     pub mod_prefix: Option<ModulePath>,
 
-    pub id: Name,
+    pub name: Name,
 
     /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
     /// there will be always one element.
@@ -1224,7 +1224,7 @@ impl Expr {
 
             Expr::Var(VarExpr {
                 mod_prefix: _,
-                id: _,
+                name: _,
                 user_ty_args,
                 ty_args,
                 inferred_ty,

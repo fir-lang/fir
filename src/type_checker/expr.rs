@@ -35,7 +35,7 @@ pub(super) fn check_expr(
     match expr {
         ast::Expr::Var(ast::VarExpr {
             mod_prefix,
-            id: var,
+            name,
             user_ty_args,
             ty_args,
             inferred_ty,
@@ -47,13 +47,13 @@ pub(super) fn check_expr(
             // Check if local.
             if resolved_id.is_none()
                 && mod_prefix.is_none()
-                && let Some(ty) = tc_state.env.get(var)
+                && let Some(ty) = tc_state.env.get(name)
             {
                 if !user_ty_args.is_empty() {
                     panic!(
                         "{}: Local variables can't have type parameters, but `{}` is passed type arguments",
                         loc_display(loc),
-                        var
+                        name
                     );
                 }
                 *inferred_ty = Some(ty.clone());
@@ -74,11 +74,11 @@ pub(super) fn check_expr(
 
             let var_id = resolved_id
                 .clone()
-                .unwrap_or_else(|| tc_state.module_env.resolve(var, mod_prefix, loc));
+                .unwrap_or_else(|| tc_state.module_env.resolve(name, mod_prefix, loc));
 
             let scheme = match tc_state.tys.top_schemes.get(&var_id) {
                 Some(scheme) => scheme,
-                None => panic!("{}: Unbound variable {}", loc_display(loc), var),
+                None => panic!("{}: Unbound variable {}", loc_display(loc), name),
             };
 
             let ty = if user_ty_args.is_empty() {
@@ -86,7 +86,7 @@ pub(super) fn check_expr(
 
                 *expr = ast::Expr::Var(ast::VarExpr {
                     mod_prefix: mod_prefix.clone(),
-                    id: var.clone(),
+                    name: name.clone(),
                     user_ty_args: vec![],
                     ty_args: ty_args.into_iter().map(Ty::UVar).collect(),
                     inferred_ty: Some(ty.clone()),
@@ -99,7 +99,7 @@ pub(super) fn check_expr(
                     panic!(
                         "{}: Variable {} takes {} type arguments, but applied to {}",
                         loc_display(loc),
-                        var,
+                        name,
                         scheme.quantified_vars.len(),
                         user_ty_args.len()
                     );
@@ -116,7 +116,7 @@ pub(super) fn check_expr(
 
                 *expr = ast::Expr::Var(ast::VarExpr {
                     mod_prefix: mod_prefix.clone(),
-                    id: var.clone(),
+                    name: name.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
                     inferred_ty: Some(ty.clone()),
@@ -577,13 +577,13 @@ pub(super) fn check_expr(
                                     match &arg.expr.node {
                                         ast::Expr::Var(ast::VarExpr {
                                             mod_prefix: _,
-                                            id,
+                                            name,
                                             user_ty_args: _,
                                             ty_args: _,
                                             inferred_ty: _,
                                             resolved_id: _,
                                         }) => {
-                                            arg.name = Some(id.clone());
+                                            arg.name = Some(name.clone());
                                         }
                                         _ => {
                                             panic!(
@@ -1004,7 +1004,7 @@ pub(super) fn check_expr(
                                     loc: loc.clone(),
                                     node: ast::Expr::Var(ast::VarExpr {
                                         mod_prefix: None,
-                                        id: buf_id.clone(),
+                                        name: buf_id.clone(),
                                         user_ty_args: vec![],
                                         ty_args: vec![],
                                         inferred_ty: Some(str_buf_ty.clone()),
@@ -1112,7 +1112,7 @@ pub(super) fn check_expr(
                         expr: ast::L {
                             node: ast::Expr::Var(ast::VarExpr {
                                 mod_prefix: None,
-                                id: buf_id.clone(),
+                                name: buf_id.clone(),
                                 user_ty_args: vec![],
                                 ty_args: vec![],
                                 inferred_ty: Some(str_buf_ty.clone()),
@@ -1594,7 +1594,7 @@ pub(super) fn check_expr(
                             loc: loc.clone(),
                             node: ast::Expr::Var(ast::VarExpr {
                                 mod_prefix: None,
-                                id: Name::new("empty"),
+                                name: Name::new("empty"),
                                 user_ty_args: vec![],
                                 ty_args: vec![],
                                 inferred_ty: None,
@@ -1647,7 +1647,7 @@ pub(super) fn check_expr(
                                 loc: loc.clone(),
                                 node: ast::Expr::Var(ast::VarExpr {
                                     mod_prefix: None,
-                                    id: Name::new_static("once"),
+                                    name: Name::new_static("once"),
                                     user_ty_args: vec![],
                                     ty_args: vec![],
                                     inferred_ty: None,
@@ -2177,7 +2177,7 @@ fn build_ufcs_closure(
             loc: loc.clone(),
             node: ast::Expr::Var(ast::VarExpr {
                 mod_prefix: None,
-                id: recv_name.clone(),
+                name: recv_name.clone(),
                 user_ty_args: vec![],
                 ty_args: vec![],
                 inferred_ty: Some(receiver_ty.clone()),
@@ -2195,7 +2195,7 @@ fn build_ufcs_closure(
                 loc: loc.clone(),
                 node: ast::Expr::Var(ast::VarExpr {
                     mod_prefix: None,
-                    id: param_name,
+                    name: param_name,
                     user_ty_args: vec![],
                     ty_args: vec![],
                     inferred_ty: Some(param_ty.clone()),
@@ -2211,7 +2211,7 @@ fn build_ufcs_closure(
             loc: loc.clone(),
             node: ast::Expr::Var(ast::VarExpr {
                 mod_prefix: None,
-                id: fn_name.clone(),
+                name: fn_name.clone(),
                 user_ty_args: vec![],
                 ty_args: fn_ty_args,
                 inferred_ty: Some(fn_full_ty),
