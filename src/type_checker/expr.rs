@@ -39,12 +39,14 @@ pub(super) fn check_expr(
             user_ty_args,
             ty_args,
             inferred_ty,
+            resolved_id,
         }) => {
             assert!(inferred_ty.is_none());
             assert!(ty_args.is_empty());
 
             // Check if local.
-            if mod_prefix.is_none()
+            if resolved_id.is_none()
+                && mod_prefix.is_none()
                 && let Some(ty) = tc_state.env.get(var)
             {
                 if !user_ty_args.is_empty() {
@@ -70,7 +72,9 @@ pub(super) fn check_expr(
                 );
             }
 
-            let var_id = tc_state.module_env.resolve(var, mod_prefix, loc);
+            let var_id = resolved_id
+                .clone()
+                .unwrap_or_else(|| tc_state.module_env.resolve(var, mod_prefix, loc));
 
             let scheme = match tc_state.tys.top_schemes.get(&var_id) {
                 Some(scheme) => scheme,
@@ -86,6 +90,7 @@ pub(super) fn check_expr(
                     user_ty_args: vec![],
                     ty_args: ty_args.into_iter().map(Ty::UVar).collect(),
                     inferred_ty: Some(ty.clone()),
+                    resolved_id: Some(var_id.clone()),
                 });
 
                 ty
@@ -115,6 +120,7 @@ pub(super) fn check_expr(
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
                     inferred_ty: Some(ty.clone()),
+                    resolved_id: Some(var_id.clone()),
                 });
 
                 ty
@@ -575,6 +581,7 @@ pub(super) fn check_expr(
                                             user_ty_args: _,
                                             ty_args: _,
                                             inferred_ty: _,
+                                            resolved_id: _,
                                         }) => {
                                             arg.name = Some(id.clone());
                                         }
@@ -1001,6 +1008,7 @@ pub(super) fn check_expr(
                                         user_ty_args: vec![],
                                         ty_args: vec![],
                                         inferred_ty: Some(str_buf_ty.clone()),
+                                        resolved_id: None, // local var
                                     }),
                                 },
                             },
@@ -1108,6 +1116,7 @@ pub(super) fn check_expr(
                                 user_ty_args: vec![],
                                 ty_args: vec![],
                                 inferred_ty: Some(str_buf_ty.clone()),
+                                resolved_id: None, // local var
                             }),
                             loc: loc.clone(),
                         },
@@ -1589,6 +1598,7 @@ pub(super) fn check_expr(
                                 user_ty_args: vec![],
                                 ty_args: vec![],
                                 inferred_ty: None,
+                                resolved_id: Some(builtin_ids::EMPTY()),
                             }),
                         }),
                         args: vec![],
@@ -1641,6 +1651,7 @@ pub(super) fn check_expr(
                                     user_ty_args: vec![],
                                     ty_args: vec![],
                                     inferred_ty: None,
+                                    resolved_id: Some(builtin_ids::ONCE()),
                                 }),
                             }),
                             args: vec![ast::CallArg {

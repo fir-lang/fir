@@ -563,6 +563,7 @@ fn mono_expr(
             user_ty_args: _,
             ty_args,
             inferred_ty,
+            resolved_id,
         }) => {
             if locals.is_bound(var) {
                 // Local variable, cannot be polymorphic.
@@ -580,7 +581,10 @@ fn mono_expr(
                 );
             }
 
-            let var_id = module_env.resolve(var, mod_prefix, loc);
+            let var_id = resolved_id
+                .clone()
+                .unwrap_or_else(|| module_env.resolve(var, mod_prefix, loc));
+
             let poly_decl = poly_pgm
                 .top
                 .get(&var_id)

@@ -130,6 +130,14 @@ pub(crate) mod builtins {
         fir_id("Iter", "Iterator")
     }
 
+    pub fn EMPTY() -> Id {
+        fir_id("Iter", "empty")
+    }
+
+    pub fn ONCE() -> Id {
+        fir_id("Iter", "once")
+    }
+
     // Fir/RowToList
     pub fn REC_ROW_TO_LIST() -> Id {
         fir_id("RowToList", "RecRowToList")

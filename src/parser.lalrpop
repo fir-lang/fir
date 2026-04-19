@@ -735,8 +735,14 @@ InlineExpr: Expr = {
     #[precedence(level = "0")]
     <module_prefix:ModulePrefix?> <id:LowerId> <user_ty_args:UserTyArgs> => {
         let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
-        let str = id.name();
-        Expr::Var(VarExpr { mod_prefix, id: str, user_ty_args, ty_args: vec![], inferred_ty: None })
+        Expr::Var(VarExpr {
+            mod_prefix,
+            id: id.name(),
+            user_ty_args,
+            ty_args: vec![],
+            inferred_ty: None,
+            resolved_id: None,
+        })
     },
 
     <module_prefix:ModulePrefix?> <id:UpperId> =>

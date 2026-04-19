@@ -168,10 +168,12 @@ fn check_stmt(
                     user_ty_args,
                     ty_args,
                     inferred_ty,
+                    resolved_id,
                 }) => {
                     assert!(inferred_ty.is_none());
                     assert!(ty_args.is_empty());
                     assert!(user_ty_args.is_empty());
+                    assert!(resolved_id.is_none());
                     let var_ty = tc_state.env.get(var).cloned().unwrap_or_else(|| {
                         panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
                     });
@@ -448,6 +450,7 @@ fn check_stmt(
                                                         user_ty_args: vec![],
                                                         ty_args: vec![],
                                                         inferred_ty: Some(iter_ty.clone()),
+                                                        resolved_id: None, // local var
                                                     }),
                                                 },
                                             }],

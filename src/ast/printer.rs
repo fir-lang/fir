@@ -614,6 +614,7 @@ impl Expr {
                 user_ty_args,
                 ty_args,
                 inferred_ty: _,
+                resolved_id: _,
             }) => {
                 print_mod_prefix(mod_prefix, buf);
                 buf.push_str(id);

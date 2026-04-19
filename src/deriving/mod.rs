@@ -106,6 +106,7 @@ fn var(loc: &ast::Loc, name: &str) -> ast::L<ast::Expr> {
             user_ty_args: vec![],
             ty_args: vec![],
             inferred_ty: None,
+            resolved_id: None,
         }),
     )
 }
