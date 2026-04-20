@@ -1099,7 +1099,16 @@ impl[Tokens[AstTyId[exts]]] Tokens[VariantPat[exts]]:
         self.pat.lastToken(tokens)
 
 
-## A sum or product constructor, in patterns and expressions.
+## A sum or product constructor, in patterns and expressions. Examples:
+##
+## - `Vec`
+## - `Vec[U32]`
+## - `Option.Some`
+## - `Option[U32].Some`
+## - `Option.Some[U32]`
+## - `Option[t1].Some[t2]`
+##
+## All variants above can get a module prefix.
 #[derive(ToDoc)]
 type Con[exts](
     ## Module prefix, e.g. `Fir/` in `Fir/Option.Some`.
@@ -1111,10 +1120,15 @@ type Con[exts](
     ## Name of the constructor. Only in sum types.
     con: Option[Id],
 
-    ## Type arguments explicitly passed to the variable.
+    ## Type arguments explicitly passed to the type, e.g. `[U32]` in `Option[U32].Some`.
     ##
     ## Always `Option.None` in patterns.
-    userTyArgs: Option[TyArgs[exts]],
+    tyUserTyArgs: Option[TyArgs[exts]],
+
+    ## Type arguments explicitly passed to the constructor, e.g. `[U32]` in `Option.Some[U32]`.
+    ##
+    ## Always `Option.None` in patterns.
+    conUserTyArgs: Option[TyArgs[exts]],
 
     # In variant constructors we'll see a '~' before `ty`, so we can't use `ty` as the first token.
     _firstToken: TokenIdx,
@@ -1126,12 +1140,15 @@ impl[Tokens[AstTyId[exts]]] Tokens[Con[exts]]:
         self._firstToken
 
     lastToken(self: Con[exts], tokens: Array[Token]) TokenIdx:
-        match self.userTyArgs:
+        match self.conUserTyArgs:
             Option.Some(tyArgs): tyArgs.lastToken(tokens)
             Option.None:
                 match self.con:
                     Option.Some(con): con.token
-                    Option.None: self.ty.lastToken(tokens)
+                    Option.None:
+                        match self.tyUserTyArgs:
+                            Option.Some(tyArgs): tyArgs.lastToken(tokens)
+                            Option.None: self.ty.lastToken(tokens)
 
 
 #[derive(ToDoc)]

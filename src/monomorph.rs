@@ -844,7 +844,8 @@ fn mono_expr(
             mod_prefix: _, // type id obtained from inferred type
             ty: _,
             con,
-            user_ty_args: _,
+            ty_user_ty_args: _,
+            con_user_ty_args: _,
             ty_args,
             inferred_ty,
         }) => {
@@ -1755,7 +1756,8 @@ fn mono_pat(
                     mod_prefix: _, // type id obtained from inferred type
                     ty: _,
                     con,
-                    user_ty_args: _,
+                    ty_user_ty_args: _,
+                    con_user_ty_args: _,
                     ty_args,
                     inferred_ty,
                 },

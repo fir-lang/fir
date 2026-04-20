@@ -220,113 +220,8 @@ pub(super) fn check_expr(
 
         ast::Expr::MethodSel(_) => panic!("MethodSel in type checker"),
 
-        ast::Expr::ConSel(ast::Con {
-            mod_prefix,
-            ty,
-            con,
-            user_ty_args,
-            ty_args,
-            inferred_ty,
-        }) => {
-            assert!(inferred_ty.is_none());
-            assert!(ty_args.is_empty());
-
-            let ty_id = tc_state.module_env.resolve(ty, mod_prefix, loc);
-            let ty_con: &TyCon = tc_state
-                .tys
-                .tys
-                .get_con(&ty_id)
-                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
-
-            let ty_details: &TypeDetails = ty_con.type_details().unwrap_or_else(|| {
-                panic!(
-                    "{}: Type {} is a trait or type synonym",
-                    loc_display(loc),
-                    ty
-                )
-            });
-
-            let scheme: &Scheme = match con {
-                Some(con) => {
-                    if !ty_details.sum {
-                        panic!(
-                            "{}: Type {} does not have sum constructors",
-                            loc_display(loc),
-                            ty
-                        );
-                    }
-                    ty_details.cons.get(con).unwrap_or_else(|| {
-                        panic!(
-                            "{}: Type {} does not have a constructor named {}",
-                            loc_display(loc),
-                            ty,
-                            con
-                        )
-                    })
-                }
-
-                None => {
-                    if ty_details.sum {
-                        panic!(
-                            "{}: Sum type allocation {} needs a constructor",
-                            loc_display(loc),
-                            ty
-                        );
-                    }
-                    assert_eq!(ty_details.cons.len(), 1);
-                    ty_details.cons.values().next().unwrap()
-                }
-            };
-
-            let con_ty = if user_ty_args.is_empty() {
-                let (con_ty, con_ty_args) =
-                    scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
-
-                *expr = ast::Expr::ConSel(ast::Con {
-                    mod_prefix: mod_prefix.clone(),
-                    ty: ty.clone(),
-                    con: con.clone(),
-                    user_ty_args: vec![],
-                    ty_args: con_ty_args.into_iter().map(Ty::UVar).collect(),
-                    inferred_ty: Some(con_ty.clone()),
-                });
-
-                con_ty
-            } else {
-                if scheme.quantified_vars.len() != user_ty_args.len() {
-                    panic!(
-                        "{}: Constructor {}{}{} takes {} type arguments, but applied to {}",
-                        loc_display(loc),
-                        ty,
-                        if con.is_some() { "." } else { "" },
-                        con.as_ref().cloned().unwrap_or(Name::new_static("")),
-                        scheme.quantified_vars.len(),
-                        user_ty_args.len()
-                    );
-                }
-
-                let user_ty_args_converted: Vec<Ty> = user_ty_args
-                    .iter()
-                    .map(|ty| {
-                        convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc)
-                    })
-                    .collect();
-
-                let con_ty =
-                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
-
-                *expr = ast::Expr::ConSel(ast::Con {
-                    mod_prefix: mod_prefix.clone(),
-                    ty: ty.clone(),
-                    con: con.clone(),
-                    user_ty_args: vec![],
-                    ty_args: user_ty_args_converted,
-                    inferred_ty: Some(con_ty.clone()),
-                });
-
-                con_ty
-            };
-
+        ast::Expr::ConSel(con) => {
+            let con_ty = check_con_sel(tc_state, con, loc);
             (
                 unify_expected_ty(
                     con_ty,
@@ -2660,4 +2555,111 @@ fn check_record_expr(
         extension,
         is_row: false,
     }
+}
+
+pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: &ast::Loc) -> Ty {
+    let ast::Con {
+        mod_prefix,
+        ty,
+        con: con_name,
+        ty_user_ty_args,
+        con_user_ty_args,
+        ty_args,
+        inferred_ty,
+    } = con;
+
+    assert!(inferred_ty.is_none());
+    assert!(ty_args.is_empty());
+
+    if !ty_user_ty_args.is_empty() && !con_user_ty_args.is_empty() {
+        panic!(
+            "{}: Constructor selection expressions should have only one type argument list",
+            loc_display(loc)
+        );
+    }
+
+    let ty_id = tc_state.module_env.resolve(ty, mod_prefix, loc);
+
+    let ty_con: &TyCon = tc_state
+        .tys
+        .tys
+        .get_con(&ty_id)
+        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
+
+    let ty_details: &TypeDetails = ty_con.type_details().unwrap_or_else(|| {
+        panic!(
+            "{}: Type {} is a trait or type synonym",
+            loc_display(loc),
+            ty
+        )
+    });
+
+    let scheme: &Scheme = match con_name {
+        Some(con_name) => {
+            if !ty_details.sum {
+                panic!(
+                    "{}: Type {} does not have sum constructors",
+                    loc_display(loc),
+                    ty
+                );
+            }
+            ty_details.cons.get(con_name).unwrap_or_else(|| {
+                panic!(
+                    "{}: Type {} does not have a constructor named {}",
+                    loc_display(loc),
+                    ty,
+                    con_name
+                )
+            })
+        }
+
+        None => {
+            if ty_details.sum {
+                panic!(
+                    "{}: Sum type allocation {} needs a constructor",
+                    loc_display(loc),
+                    ty
+                );
+            }
+            assert_eq!(ty_details.cons.len(), 1);
+            ty_details.cons.values().next().unwrap()
+        }
+    };
+
+    let ty_arg_list: &[ast::L<ast::Type>] = if ty_user_ty_args.is_empty() {
+        con_user_ty_args
+    } else {
+        ty_user_ty_args
+    };
+
+    let (ty, ty_args) = if ty_arg_list.is_empty() {
+        let (ty, ty_args) = scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
+        (ty, ty_args.into_iter().map(Ty::UVar).collect())
+    } else {
+        if scheme.quantified_vars.len() != ty_arg_list.len() {
+            panic!(
+                "{}: Constructor {}{}{} takes {} type arguments, but applied to {}",
+                loc_display(loc),
+                ty,
+                if con_name.is_some() { "." } else { "" },
+                con_name.as_ref().cloned().unwrap_or(Name::new_static("")),
+                scheme.quantified_vars.len(),
+                ty_arg_list.len()
+            );
+        }
+
+        let user_ty_args_converted: Vec<Ty> = ty_arg_list
+            .iter()
+            .map(|ty| convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc))
+            .collect();
+
+        let con_ty = scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
+
+        (con_ty, user_ty_args_converted)
+    };
+
+    con.ty_args = ty_args;
+    con.inferred_ty = Some(ty.clone());
+
+    ty
 }

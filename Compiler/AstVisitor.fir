@@ -450,7 +450,9 @@ defaultVisitVariant[Visitor[v]](v: v, e: CVariantExpr):
 
 defaultVisitCon[Visitor[v]](v: v, c: CCon):
     v.visitTyId(c.ty)
-    if c.userTyArgs is Option.Some(args):
+    if c.tyUserTyArgs is Option.Some(args):
+        v.visitTyArgs(args)
+    if c.conUserTyArgs is Option.Some(args):
         v.visitTyArgs(args)
 
 

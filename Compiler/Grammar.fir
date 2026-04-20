@@ -3210,20 +3210,10 @@ con[AstExts[exts], AstIds[AstExts[exts].Ids],](
             let optionalCursor0 = state._cursor
             let symResult = try(
                 \():
-                    if state.peek() is Option.Some(sym)
-                            and sym is Token(kind = TokenKind.Dot, ..):
-                        state._cursor += 1
-                    else:
-                        throw(state.updateErrorCursor(state._cursor))
-                    let con = state.nextCursor()
-                    if state.peek() is Option.Some(sym)
-                            and sym is Token(kind = TokenKind.UpperId, ..):
-                        state._cursor += 1
-                    else:
-                        throw(state.updateErrorCursor(state._cursor))
-                    con,
+                    let tyUserTyArgs = tyArgs(state)
+                    tyUserTyArgs,
             )
-            let con = match symResult:
+            let tyUserTyArgs = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
                     Option.None
@@ -3233,10 +3223,34 @@ con[AstExts[exts], AstIds[AstExts[exts].Ids],](
             let optionalCursor0 = state._cursor
             let symResult = try(
                 \():
-                    let userTyArgs = tyArgs(state)
-                    userTyArgs,
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Dot, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let con_ = state.nextCursor()
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.UpperId, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let optionalCursor0 = state._cursor
+                    let symResult = try(
+                        \():
+                            let conTyArgs = tyArgs(state)
+                            conTyArgs,
+                    )
+                    let conTyArgs = match symResult:
+                        Result.Err(err):
+                            state._cursor = optionalCursor0
+                            Option.None
+                        Result.Ok(ok):
+                            ()
+                            Option.Some(ok)
+                    let conPart = (con_ = con_, conTyArgs = conTyArgs)
+                    conPart,
             )
-            let userTyArgs = match symResult:
+            let conPart = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
                     Option.None
@@ -3247,8 +3261,9 @@ con[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 Con(
                     modPrefix = prefix.map(\(p: U32): TokenIdx(idx = p)),
                     ty = newTyId(ty),
-                    con = con.map(\(con: U32): newId(con)),
-                    userTyArgs,
+                    con = conPart.map(\(cp): newId(cp.con_)),
+                    tyUserTyArgs,
+                    conUserTyArgs = conPart.map(\(cp): cp.conTyArgs).flatten(),
                     _firstToken =
                         match prefix:
                             Option.Some(p): TokenIdx(idx = p)
@@ -4572,12 +4587,17 @@ simplePat[AstExts[exts], AstIds[AstExts[exts].Ids],](
                         _lastToken =
                             match fs:
                                 Option.None:
-                                    match con.userTyArgs:
+                                    match con.conUserTyArgs:
                                         Option.Some(tyArgs): tyArgs._lastToken
                                         Option.None:
                                             match con.con:
                                                 Option.Some(conId): conId.token
-                                                Option.None: con._firstToken
+                                                Option.None:
+                                                    match con.tyUserTyArgs:
+                                                        Option.Some(tyArgs):
+                                                            tyArgs._lastToken
+                                                        Option.None:
+                                                            con._firstToken
                                 Option.Some((last, ..)): TokenIdx(idx = last),
                     ),
                 )

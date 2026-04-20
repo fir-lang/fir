@@ -218,7 +218,8 @@ fn derive_eq_sum(
             mod_prefix: None,
             ty: type_name.clone(),
             con: Some(con.name.clone()),
-            user_ty_args: vec![],
+            ty_user_ty_args: vec![],
+            con_user_ty_args: vec![],
             ty_args: vec![],
             inferred_ty: None,
         };

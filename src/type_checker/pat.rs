@@ -25,80 +25,11 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
         ast::Pat::Ignore => Ty::UVar(tc_state.var_gen.new_var(Kind::Star, pat.loc.clone())),
 
         ast::Pat::Con(ast::ConPat {
-            con:
-                ast::Con {
-                    mod_prefix,
-                    ty: pat_ty_name,
-                    con: pat_con_name,
-                    user_ty_args,
-                    ty_args,
-                    inferred_ty,
-                },
+            con,
             fields: pat_fields,
             rest,
         }) => {
-            assert!(inferred_ty.is_none());
-            assert!(ty_args.is_empty());
-            assert!(user_ty_args.is_empty());
-
-            let pat_ty_id = tc_state
-                .module_env
-                .resolve(pat_ty_name, mod_prefix, &pat.loc);
-
-            let ty_con: &TyCon = tc_state.tys.tys.get_con(&pat_ty_id).unwrap_or_else(|| {
-                panic!("{}: Undefined type {}", loc_display(&pat.loc), pat_ty_name)
-            });
-
-            // Check that `con` exists and field shapes match.
-            let con_scheme = match &ty_con.details {
-                TyConDetails::Type(TypeDetails {
-                    sum,
-                    cons,
-                    value: _,
-                }) => match pat_con_name {
-                    Some(pat_con_name) => {
-                        if !*sum {
-                            panic!(
-                                "{}: Type {} is not a sum type",
-                                loc_display(&pat.loc),
-                                ty_con.id
-                            )
-                        }
-                        cons.get(pat_con_name).unwrap_or_else(|| {
-                            panic!(
-                                "{}: Type {} does not have a constructor named {}",
-                                loc_display(&pat.loc),
-                                ty_con.id,
-                                pat_con_name,
-                            )
-                        })
-                    }
-                    None => {
-                        if *sum {
-                            panic!(
-                                "{}: Type {} is a sum type, the pattern needs a constructor",
-                                loc_display(&pat.loc),
-                                ty_con.id
-                            )
-                        }
-                        assert_eq!(cons.len(), 1);
-                        cons.values().next().unwrap()
-                    }
-                },
-
-                TyConDetails::Trait { .. } | TyConDetails::Synonym(_) => panic!(
-                    "{}: Type constructor {} is a trait or synonym",
-                    loc_display(&pat.loc),
-                    pat_ty_name
-                ),
-            };
-
-            // We don't need to instantiate based on pattern types. If we don't have a term with
-            // the type the pattern will never match.
-            let (con_ty, con_ty_args) =
-                con_scheme.instantiate(tc_state.var_gen, tc_state.preds, &pat.loc);
-
-            *ty_args = con_ty_args.into_iter().map(Ty::UVar).collect();
+            let con_ty = crate::type_checker::expr::check_con_sel(tc_state, con, &pat.loc);
 
             // If consturctor takes named arguments, fields pattern need to be named, or a variable
             // pattern, as shorthand for `foo = foo`.
@@ -131,7 +62,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
                 .collect();
 
             let ty = apply_con_ty(tc_state, &con_ty, &pat_field_tys, rest, &pat.loc);
-            *inferred_ty = Some(ty.clone());
+            con.inferred_ty = Some(ty.clone());
             ty
         }
 

@@ -307,7 +307,7 @@ fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
         mod_prefix: _,
         ty,
         con,
-        user_ty_args,
+        ty_user_ty_args: user_ty_args,
         ..
     }) = attr
         && ty == &ast::Name::new_static("NoImplicitPrelude")

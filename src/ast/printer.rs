@@ -1120,11 +1120,22 @@ impl Pat {
 
 impl Con {
     pub fn print(&self, buf: &mut String) {
-        print_mod_prefix(&self.mod_prefix, buf);
-        buf.push_str(&self.ty);
-        if let Some(con) = &self.con {
+        let Con {
+            mod_prefix,
+            ty,
+            con,
+            ty_user_ty_args,
+            con_user_ty_args,
+            ty_args: _,
+            inferred_ty: _,
+        } = self;
+        print_mod_prefix(mod_prefix, buf);
+        buf.push_str(ty);
+        print_user_ty_args(ty_user_ty_args, buf);
+        if let Some(con) = con {
             buf.push('.');
             buf.push_str(con);
+            print_user_ty_args(con_user_ty_args, buf);
         }
         print_ty_args(&self.ty_args, buf);
     }

@@ -612,7 +612,8 @@ Stmt: Stmt = {
                 mod_prefix: None,
                 ty: Name::new_static("Bool"),
                 con: Some(Name::new_static("True")),
-                user_ty_args: vec![],
+                ty_user_ty_args: vec![],
+                con_user_ty_args: vec![],
                 ty_args: vec![],
                 inferred_ty: None,
             })),
@@ -750,17 +751,19 @@ InlineExpr: Expr = {
             mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
             ty: id.name(),
             con: None,
-            user_ty_args: vec![],
+            ty_user_ty_args: vec![],
+            con_user_ty_args: vec![],
             ty_args: vec![],
             inferred_ty: None,
         }),
 
-    <module_prefix:ModulePrefix?> <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
+    <module_prefix:ModulePrefix?> <id:UpperIdLBracket> <ty_user_ty_args:Sep1<LType, ",">> "]" =>
         Expr::ConSel(Con {
             mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
             ty: id.name(),
             con: None,
-            user_ty_args,
+            ty_user_ty_args,
+            con_user_ty_args: vec![],
             ty_args: vec![],
             inferred_ty: None,
         }),
@@ -774,13 +777,14 @@ InlineExpr: Expr = {
             mod_prefix,
             ty,
             con: Some(con),
-            user_ty_args: vec![],
+            ty_user_ty_args: vec![],
+            con_user_ty_args: vec![],
             ty_args: vec![],
             inferred_ty: None,
         })
     },
 
-    <module_prefix:ModulePrefix?> <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
+    <module_prefix:ModulePrefix?> <path:UpperIdPathLBracket> <con_user_ty_args:Sep1<LType, ",">> "]" => {
         let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let mut parts = path_parts(&path.text);
         let con = parts.pop().unwrap();
@@ -789,7 +793,8 @@ InlineExpr: Expr = {
             mod_prefix,
             ty,
             con: Some(con),
-            user_ty_args,
+            ty_user_ty_args: vec![],
+            con_user_ty_args,
             ty_args: vec![],
             inferred_ty: None,
         })
@@ -854,22 +859,27 @@ InlineExpr: Expr = {
         match expr {
             Expr::ConSel(Con {
                 mod_prefix,
-                ty: id,
+                ty,
                 con: None,
-                user_ty_args: ty_user_ty_args,
+                ty_user_ty_args,
+                con_user_ty_args,
                 ty_args: _,
                 inferred_ty: _,
-            }) =>
+            }) => {
+                // There's no con on the left side of the dot, so there should
+                // be no con args.
+                assert!(con_user_ty_args.is_empty());
                 Expr::AssocFnSel(AssocFnSelExpr {
                     mod_prefix,
-                    ty: id,
+                    ty,
                     ty_id: None,
                     ty_user_ty_args,
                     member: field.name(),
                     user_ty_args,
                     ty_args: vec![],
                     inferred_ty: None,
-                }),
+                })
+            },
 
             _ => Expr::FieldSel(FieldSelExpr {
                 object: Box::new(L::new(module, l, r, expr)),
@@ -877,6 +887,73 @@ InlineExpr: Expr = {
                 user_ty_args,
                 inferred_ty: None,
             }),
+        },
+
+    <l:@L> <expr:InlineExpr> <r:@R> <dot_l:@L> <dot:"."> <dot_r:@R> <con:UpperId> =>?
+        match expr {
+            Expr::ConSel(Con {
+                mod_prefix,
+                ty,
+                con: None,
+                ty_user_ty_args,
+                con_user_ty_args,
+                ty_args: _,
+                inferred_ty: _,
+            }) => {
+                // There's no con on the left side of the dot, so there should
+                // be no con args.
+                assert!(con_user_ty_args.is_empty());
+                Ok(Expr::ConSel(Con {
+                    mod_prefix,
+                    ty,
+                    con: Some(Name::new(con.smol_str())),
+                    ty_user_ty_args,
+                    con_user_ty_args,
+                    ty_args: vec![],
+                    inferred_ty: None,
+                }))
+            },
+
+            _ => {
+                Err(::lalrpop_util::ParseError::UnrecognizedToken {
+                    token: (dot_l, dot, dot_r),
+                    expected: vec![],
+                })
+            },
+        },
+
+    <l:@L> <expr:InlineExpr> <r:@R> <dot_l:@L> <dot:"."> <dot_r:@R>
+            <con:UpperIdLBracket> <new_con_user_ty_args:Sep1<LType, ",">> "]" =>?
+        match expr {
+            Expr::ConSel(Con {
+                mod_prefix,
+                ty,
+                con: None,
+                ty_user_ty_args,
+                con_user_ty_args: old_con_user_ty_args,
+                ty_args: _,
+                inferred_ty: _,
+            }) => {
+                // There's no con on the left side of the dot, so there should
+                // be no con args.
+                assert!(old_con_user_ty_args.is_empty());
+                Ok(Expr::ConSel(Con {
+                    mod_prefix,
+                    ty,
+                    con: Some(Name::new(con.smol_str())),
+                    ty_user_ty_args,
+                    con_user_ty_args: new_con_user_ty_args,
+                    ty_args: vec![],
+                    inferred_ty: None,
+                }))
+            },
+
+            _ => {
+                Err(::lalrpop_util::ParseError::UnrecognizedToken {
+                    token: (dot_l, dot, dot_r),
+                    expected: vec![],
+                })
+            },
         },
 
     "[" <elems:Sep<SeqElem, ",">> "]" =>
@@ -1153,16 +1230,33 @@ Pat: Pat = {
 }
 
 Con: Con = {
-    <module_prefix:ModulePrefix?> <ty:UpperId> =>
+    // Con
+    <module_prefix:ModulePrefix?> <ty:UpperId> => {
         Con {
             mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
             ty: ty.name(),
             con: None,
-            user_ty_args: vec![],
+            ty_user_ty_args: vec![],
+            con_user_ty_args: vec![],
             ty_args: vec![],
             inferred_ty: None,
-        },
+        }
+    },
 
+    // Con[...]
+    <module_prefix:ModulePrefix?> <ty:UpperIdLBracket> <ty_user_ty_args:Sep1<LType, ",">> "]" => {
+        Con {
+            mod_prefix: module_prefix.map(|t| process_module_path(t.smol_str(), None)),
+            ty: ty.name(),
+            con: None,
+            ty_user_ty_args,
+            con_user_ty_args: vec![],
+            ty_args: vec![],
+            inferred_ty: None,
+        }
+    },
+
+    // Type.Con
     <module_prefix:ModulePrefix?> <path:UpperIdPath> => {
         let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
         let mut parts = path_parts(&path.text);
@@ -1172,7 +1266,55 @@ Con: Con = {
             mod_prefix,
             ty,
             con: Some(con),
-            user_ty_args: vec![],
+            ty_user_ty_args: vec![],
+            con_user_ty_args: vec![],
+            ty_args: vec![],
+            inferred_ty: None,
+        }
+    },
+
+    // Type[...].Con
+    <module_prefix:ModulePrefix?> <ty:UpperIdLBracket> <ty_user_ty_args:Sep1<LType, ",">> "]"
+            "." <con:UpperId> => {
+        let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
+        Con {
+            mod_prefix,
+            ty: Name::new(ty.smol_str()),
+            con: Some(Name::new(con.smol_str())),
+            ty_user_ty_args,
+            con_user_ty_args: vec![],
+            ty_args: vec![],
+            inferred_ty: None,
+        }
+    },
+
+    // Type.Con[...]
+    <module_prefix:ModulePrefix?> <path:UpperIdPathLBracket> <con_user_ty_args:Sep1<LType, ",">> "]" => {
+        let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
+        let mut parts = path_parts(&path.text);
+        let con = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Con {
+            mod_prefix,
+            ty,
+            con: Some(con),
+            ty_user_ty_args: vec![],
+            con_user_ty_args,
+            ty_args: vec![],
+            inferred_ty: None,
+        }
+    },
+
+    // Type[...].Con[...]
+    <module_prefix:ModulePrefix?> <ty:UpperIdLBracket> <ty_user_ty_args:Sep1<LType, ",">> "]" "."
+            <con:UpperIdLBracket> <con_user_ty_args:Sep1<LType, ",">> "]" => {
+        let mod_prefix = module_prefix.map(|t| process_module_path(t.smol_str(), None));
+        Con {
+            mod_prefix,
+            ty: Name::new(ty.smol_str()),
+            con: Some(Name::new(con.smol_str())),
+            ty_user_ty_args,
+            con_user_ty_args,
             ty_args: vec![],
             inferred_ty: None,
         }

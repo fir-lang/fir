@@ -469,7 +469,8 @@ fn check_stmt(
                                                 mod_prefix: None,
                                                 ty: Name::new_static("Option"),
                                                 con: Some(Name::new_static("Some")),
-                                                user_ty_args: vec![],
+                                                ty_user_ty_args: vec![],
+                                                con_user_ty_args: vec![],
                                                 ty_args: vec![item_ty.clone()],
                                                 inferred_ty: Some(Ty::App(
                                                     id::builtins::OPTION(),

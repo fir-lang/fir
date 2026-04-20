@@ -706,12 +706,14 @@ seqElem[AstExts[exts], AstIds[AstExts[exts].Ids]] SeqElem[exts]:
 
 
 con[AstExts[exts], AstIds[AstExts[exts].Ids]] Con[exts]:
-    prefix=(^ _"ModulePrefix")? ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
+    prefix=(^ _"ModulePrefix")? ty=^ "UpperId" tyUserTyArgs=tyArgs?
+            conPart=(_"." con_=^ "UpperId" conTyArgs=tyArgs?)?:
         Con(
             modPrefix = prefix.map(\(p: U32): TokenIdx(idx = p)),
             ty = newTyId(ty),
-            con = con.map(\(con: U32): newId(con)),
-            userTyArgs,
+            con = conPart.map(\(cp): newId(cp.con_)),
+            tyUserTyArgs,
+            conUserTyArgs = conPart.map(\(cp): cp.conTyArgs).flatten(),
             _firstToken = match prefix:
                 Option.Some(p): TokenIdx(idx = p)
                 Option.None: TokenIdx(idx = ty),
@@ -903,12 +905,15 @@ simplePat[AstExts[exts], AstIds[AstExts[exts].Ids]] Pat[exts]:
 
             _lastToken = match fs:
                 Option.None:
-                    match con.userTyArgs:
+                    match con.conUserTyArgs:
                         Option.Some(tyArgs): tyArgs._lastToken
                         Option.None:
                             match con.con:
                                 Option.Some(conId): conId.token
-                                Option.None: con._firstToken
+                                Option.None:
+                                    match con.tyUserTyArgs:
+                                        Option.Some(tyArgs): tyArgs._lastToken
+                                        Option.None: con._firstToken
                 Option.Some((last, ..)): TokenIdx(idx = last),
         ))
 

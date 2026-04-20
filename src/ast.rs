@@ -486,17 +486,55 @@ pub struct VariantPat {
     pub inferred_pat_ty: Option<Ty>,
 }
 
+/// A product or sum constructor. Examples:
+///
+/// - `Vec`
+/// - `Vec[U32]`
+/// - `Option.Some`
+/// - `Option[U32].Some`
+/// - `Option.Some[U32]`
+/// - `Option[t1].Some[t2]`
+///
+/// Note that the last one is parsed but it will be rejected by the type checker as the two type
+/// arguments pass the same type parameters.
+///
+/// All variants above can get a module prefix:
+///
+/// - `Prelude/Vec`
+/// - `Prelude/Option[U32].Some`
+/// - ...
 #[derive(Debug, Clone)]
 pub struct Con {
     pub mod_prefix: Option<ModulePath>,
+
+    /// Name of the type: `Option`, `Vec`.
     pub ty: Name,
+
+    /// Constructor: `Some` in `Option.Some`.
+    ///
+    /// This is not available for product type constructors.
     pub con: Option<Name>,
 
-    /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
-    /// there will be always one element.
+    /// Type arguments explicitly passed to the type. Only empty when not specified. Otherwise there
+    /// will be always one element.
     ///
     /// Always empty in patterns.
-    pub user_ty_args: Vec<L<Type>>,
+    ///
+    /// E.g. in `Option[U32].Some`, this is `[U32]`.
+    pub ty_user_ty_args: Vec<L<Type>>,
+
+    /// Type arguments explicitly passed to the constructor. Only empty when not specified.
+    /// Otherwise there will be always one element.
+    ///
+    /// Always empty in patterns.
+    ///
+    /// E.g. in `Option.Some[U32]`. this is `[U32]`.
+    ///
+    /// The parser accepts two type lists at the same time: `Option[t1].Some[t2]`. This use is
+    /// rejected by the type checker as the two type argument lists pass the same arguments.
+    ///
+    /// After type checking, only `ty_args` should be used.
+    pub con_user_ty_args: Vec<L<Type>>,
 
     /// Inferred type arguments of the constructor's type. Filled in by the type checker.
     pub ty_args: Vec<Ty>,

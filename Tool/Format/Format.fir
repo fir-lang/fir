@@ -856,14 +856,19 @@ Con.format(self: FmtCon, tokens: Array[Token]) Doc:
         Option.None: Doc.empty()
 
     doc += formatToken(self.ty.token, tokens)
+    doc += formatTyArgs(self.tyUserTyArgs, tokens)
 
     if self.con is Option.Some(con):
-        let dot = nextNonTrivia(self.ty.token, tokens).unwrap()
+        let dot = match self.tyUserTyArgs:
+            Option.Some(tyArgs):
+                nextNonTrivia(tyArgs._lastToken, tokens).unwrap()
+            Option.None: nextNonTrivia(self.ty.token, tokens).unwrap()
         assert(tokens.get(dot.idx).kind is TokenKind.Dot)
 
         doc += formatToken(dot, tokens) + formatToken(con.token, tokens)
+        doc += formatTyArgs(self.conUserTyArgs, tokens)
 
-    doc + formatTyArgs(self.userTyArgs, tokens)
+    doc
 
 
 FieldSelExpr.format(self: FmtFieldSelExpr, tokens: Array[Token]) Doc:
