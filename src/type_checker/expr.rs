@@ -2636,7 +2636,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
                 panic!(
                     "{}: Type {} takes {} arguments, but passed {}",
                     loc_display(loc),
-                    ty,
+                    con_ty,
                     ty_con.arity(),
                     user_ty_args_converted.len()
                 );
