@@ -2560,11 +2560,12 @@ fn check_record_expr(
 pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: &ast::Loc) -> Ty {
     let ast::Con {
         mod_prefix,
-        ty,
+        ty: con_ty,
         con: con_name,
         ty_user_ty_args,
         con_user_ty_args,
         ty_args,
+        resolved_ty_id,
         inferred_ty,
     } = con;
 
@@ -2578,19 +2579,110 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
         );
     }
 
-    let ty_id = tc_state.module_env.resolve(ty, mod_prefix, loc);
+    let ty_arg_list: &[ast::L<ast::Type>] = if ty_user_ty_args.is_empty() {
+        con_user_ty_args
+    } else {
+        ty_user_ty_args
+    };
 
-    let ty_con: &TyCon = tc_state
+    let mut user_ty_args_converted: Vec<Ty> = ty_arg_list
+        .iter()
+        .map(|ty| convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc))
+        .collect();
+
+    let ty_id = tc_state.module_env.resolve(con_ty, mod_prefix, loc);
+    *resolved_ty_id = Some(ty_id.clone());
+
+    let mut ty_con: &TyCon = tc_state
         .tys
         .tys
         .get_con(&ty_id)
-        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
+        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), con_ty));
+
+    match &ty_con.details {
+        TyConDetails::Trait(_) => {
+            panic!("{}: Type {} is a trait", loc_display(loc), con_ty)
+        }
+
+        TyConDetails::Type(_) => {}
+
+        TyConDetails::Synonym(ty) => {
+            // With synonyms we don't allow constructor type arguments.
+            if !con_user_ty_args.is_empty() {
+                panic!(
+                    "{}: Constructor type arguments not allowed with synonyms",
+                    loc_display(loc)
+                );
+            }
+
+            // E.g. type MyResult[t] = Result[U32, t]
+            //
+            // ty_con args = [t]
+            // con         = Result
+            // args        = [U32, t]   (t is a QVar)
+            //
+            // In this case we don't allow constructor type arguments, to avoid unifying two lists.
+            //
+            // - MyResult[Str].Ok ==> OK, ty_args = [U32, Str], con_ty_args = []
+            // - MyResult.Ok[Str] ==> NOT OK, type error
+            //
+            // If the synonym is not passed type arguments, we pass fresh unification variables for
+            // the type arguments and use the expanded RHS's type arguments as the constructor's
+            // scheme's type arguments.
+
+            if !user_ty_args_converted.is_empty()
+                && ty_con.arity() != user_ty_args_converted.len() as u32
+            {
+                panic!(
+                    "{}: Type {} takes {} arguments, but passed {}",
+                    loc_display(loc),
+                    con_ty,
+                    ty_con.arity(),
+                    user_ty_args_converted.len()
+                );
+            }
+
+            let mut synonym_ty_con_args = user_ty_args_converted.clone();
+
+            if ty_con.arity() != 0 && user_ty_args_converted.is_empty() {
+                synonym_ty_con_args = ty_con
+                    .ty_params
+                    .iter()
+                    .map(|(_, kind)| Ty::UVar(tc_state.var_gen.new_var(*kind, loc.clone())))
+                    .collect();
+            }
+
+            assert_eq!(ty_con.arity(), synonym_ty_con_args.len() as u32);
+
+            let ty = ty.subst_qvars(
+                &ty_con
+                    .ty_params
+                    .iter()
+                    .enumerate()
+                    .map(|(i, (ty_param, _))| (ty_param.clone(), synonym_ty_con_args[i].clone()))
+                    .collect(),
+            );
+
+            let (con, args) = ty.con(tc_state.tys.tys.cons()).unwrap();
+
+            user_ty_args_converted = args;
+
+            ty_con = tc_state
+                .tys
+                .tys
+                .get_con(&con)
+                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
+
+            *con_ty = con.name().clone();
+            *resolved_ty_id = Some(con.clone());
+        }
+    }
 
     let ty_details: &TypeDetails = ty_con.type_details().unwrap_or_else(|| {
         panic!(
             "{}: Type {} is a trait or type synonym",
             loc_display(loc),
-            ty
+            con_ty
         )
     });
 
@@ -2600,14 +2692,14 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
                 panic!(
                     "{}: Type {} does not have sum constructors",
                     loc_display(loc),
-                    ty
+                    con_ty
                 );
             }
             ty_details.cons.get(con_name).unwrap_or_else(|| {
                 panic!(
                     "{}: Type {} does not have a constructor named {}",
                     loc_display(loc),
-                    ty,
+                    con_ty,
                     con_name
                 )
             })
@@ -2618,7 +2710,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
                 panic!(
                     "{}: Sum type allocation {} needs a constructor",
                     loc_display(loc),
-                    ty
+                    con_ty
                 );
             }
             assert_eq!(ty_details.cons.len(), 1);
@@ -2626,35 +2718,24 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
         }
     };
 
-    let ty_arg_list: &[ast::L<ast::Type>] = if ty_user_ty_args.is_empty() {
-        con_user_ty_args
-    } else {
-        ty_user_ty_args
-    };
+    assert_eq!(scheme.quantified_vars.len() as u32, ty_con.arity());
 
-    let (ty, ty_args) = if ty_arg_list.is_empty() {
+    let (ty, ty_args) = if user_ty_args_converted.is_empty() {
         let (ty, ty_args) = scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
         (ty, ty_args.into_iter().map(Ty::UVar).collect())
     } else {
-        if scheme.quantified_vars.len() != ty_arg_list.len() {
+        if scheme.quantified_vars.len() != user_ty_args_converted.len() {
             panic!(
                 "{}: Constructor {}{}{} takes {} type arguments, but applied to {}",
                 loc_display(loc),
-                ty,
+                con_ty,
                 if con_name.is_some() { "." } else { "" },
                 con_name.as_ref().cloned().unwrap_or(Name::new_static("")),
                 scheme.quantified_vars.len(),
-                ty_arg_list.len()
+                user_ty_args_converted.len()
             );
         }
-
-        let user_ty_args_converted: Vec<Ty> = ty_arg_list
-            .iter()
-            .map(|ty| convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc))
-            .collect();
-
         let con_ty = scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
-
         (con_ty, user_ty_args_converted)
     };
 

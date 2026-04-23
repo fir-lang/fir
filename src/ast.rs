@@ -539,6 +539,9 @@ pub struct Con {
     /// Inferred type arguments of the constructor's type. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
 
+    /// Resolved id for the type (`ty` field). Filled in by the type checker.
+    pub resolved_ty_id: Option<Id>,
+
     pub inferred_ty: Option<Ty>,
 }
 

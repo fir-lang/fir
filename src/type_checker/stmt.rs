@@ -472,6 +472,7 @@ fn check_stmt(
                                                 ty_user_ty_args: vec![],
                                                 con_user_ty_args: vec![],
                                                 ty_args: vec![item_ty.clone()],
+                                                resolved_ty_id: Some(id::builtins::OPTION()),
                                                 inferred_ty: Some(Ty::App(
                                                     id::builtins::OPTION(),
                                                     vec![item_ty.clone()],

@@ -2115,10 +2115,13 @@ fn rename_domain_var(var: &Name, uniq: u32) -> Name {
 /// This only expands type synonyms in the `ast::Type`s in the AST that the monomorphiser uses. E.g.
 /// it doesn't expand synonyms in `let` binding type annotations because monomorphiser doesn't use
 /// those.
-pub(crate) fn expand_type_synonyms(pgm: &mut LoadedPgm) {
+pub(crate) fn expand_type_synonyms(
+    pgm: &mut LoadedPgm,
+    module_envs: &HashMap<ModulePath, ModuleEnv>,
+) {
     // Collect top-level synonyms with their type parameter names.
-    let mut synonyms: HashMap<Name, (Vec<Name>, ast::Type)> = Default::default();
-    for (_, decl) in pgm.iter_decls() {
+    let mut synonyms: HashMap<Id, (Vec<Name>, ast::Type)> = Default::default();
+    for (module_path, decl) in pgm.iter_decls() {
         if let ast::TopDecl::Type(ty_decl) = &decl.node
             && let Some(ast::TypeDeclRhs::Synonym(rhs)) = &ty_decl.node.rhs
         {
@@ -2128,23 +2131,36 @@ pub(crate) fn expand_type_synonyms(pgm: &mut LoadedPgm) {
                 .iter()
                 .map(|p| p.name.node.clone())
                 .collect();
-            synonyms.insert(ty_decl.node.name.clone(), (params, rhs.node.clone()));
+            synonyms.insert(
+                Id::new(module_path, &ty_decl.node.name),
+                (params, rhs.node.clone()),
+            );
         }
     }
 
-    for (_, decl) in pgm.iter_decls_mut() {
+    for (module_path, decl) in pgm.iter_decls_mut() {
+        let env = module_envs
+            .get(module_path)
+            .unwrap_or_else(|| panic!("No module env for {module_path}"));
+        let ctx = SynonymCtx {
+            by_id: &synonyms,
+            by_name: &Default::default(),
+            env,
+        };
         match &mut decl.node {
             ast::TopDecl::Type(ty_decl) => {
-                expand_synonyms_in_type_decl(&mut ty_decl.node, &synonyms);
+                expand_synonyms_in_type_decl(&mut ty_decl.node, &ctx);
             }
 
             ast::TopDecl::Fun(fun) => {
-                expand_synonyms_in_fun(&mut fun.node, &synonyms);
+                expand_synonyms_in_fun(&mut fun.node, &ctx);
             }
 
             ast::TopDecl::Trait(trait_decl) => {
-                // Build scoped synonyms: trait associated types map to AssocTySelect.
-                let mut scoped = synonyms.clone();
+                // Build scoped synonyms: trait associated types map to `AssocTySelect`. These are
+                // 0-param synonyms that only live inside the trait body and are always referenced
+                // unqualified.
+                let mut trait_synonyms: HashMap<Name, (Vec<Name>, ast::Type)> = Default::default();
                 for item in &trait_decl.node.items {
                     if let ast::TraitDeclItem::Type {
                         name: assoc_ty,
@@ -2166,7 +2182,7 @@ pub(crate) fn expand_type_synonyms(pgm: &mut LoadedPgm) {
                                 })
                                 .collect(),
                         });
-                        scoped.insert(
+                        trait_synonyms.insert(
                             assoc_ty.node.clone(),
                             (
                                 vec![],
@@ -2179,6 +2195,12 @@ pub(crate) fn expand_type_synonyms(pgm: &mut LoadedPgm) {
                     }
                 }
 
+                let scoped = SynonymCtx {
+                    by_id: &synonyms,
+                    by_name: &trait_synonyms,
+                    env,
+                };
+
                 for item in &mut trait_decl.node.items {
                     if let ast::TraitDeclItem::Fun(fun) = item {
                         expand_synonyms_in_fun(&mut fun.node, &scoped);
@@ -2188,20 +2210,26 @@ pub(crate) fn expand_type_synonyms(pgm: &mut LoadedPgm) {
 
             ast::TopDecl::Impl(impl_decl) => {
                 // Build scoped synonyms: impl associated type assignments.
-                let mut scoped = synonyms.clone();
+                let mut impl_synonyms: HashMap<Name, (Vec<Name>, ast::Type)> = Default::default();
                 for item in &impl_decl.node.items {
                     if let ast::ImplDeclItem::Type { assoc_ty, rhs } = item {
                         // First expand any synonyms in the RHS itself.
                         let mut rhs_expanded = rhs.node.clone();
-                        expand_synonyms_in_ty(&mut rhs_expanded, &synonyms);
-                        scoped.insert(assoc_ty.node.clone(), (vec![], rhs_expanded));
+                        expand_synonyms_in_ty(&mut rhs_expanded, &ctx);
+                        impl_synonyms.insert(assoc_ty.node.clone(), (vec![], rhs_expanded));
                     }
                 }
+
+                let scoped = SynonymCtx {
+                    by_id: &synonyms,
+                    by_name: &impl_synonyms,
+                    env,
+                };
 
                 for item in &mut impl_decl.node.items {
                     match item {
                         ast::ImplDeclItem::Type { assoc_ty: _, rhs } => {
-                            expand_synonyms_in_ty(&mut rhs.node, &synonyms);
+                            expand_synonyms_in_ty(&mut rhs.node, &ctx);
                         }
                         ast::ImplDeclItem::Fun(fun) => {
                             expand_synonyms_in_fun(&mut fun.node, &scoped);
@@ -2215,79 +2243,97 @@ pub(crate) fn expand_type_synonyms(pgm: &mut LoadedPgm) {
     }
 }
 
-fn expand_synonyms_in_type_decl(
-    decl: &mut ast::TypeDecl,
-    synonyms: &HashMap<Name, (Vec<Name>, ast::Type)>,
-) {
+/// Synonym expansion context for a single declaration.
+struct SynonymCtx<'a> {
+    /// Module-level synonyms.
+    by_id: &'a HashMap<Id, (Vec<Name>, ast::Type)>,
+
+    /// Local (trait or impl) synonyms.
+    by_name: &'a HashMap<Name, (Vec<Name>, ast::Type)>,
+
+    /// Module env for the current declaration.
+    env: &'a ModuleEnv,
+}
+
+fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, ctx: &SynonymCtx<'_>) {
     match &mut decl.rhs {
         Some(ast::TypeDeclRhs::Sum { cons, extension }) => {
             for con in cons {
-                expand_synonyms_in_fields(&mut con.fields, synonyms);
+                expand_synonyms_in_fields(&mut con.fields, ctx);
             }
             if let Some(ext) = extension {
-                expand_synonyms_in_ty(&mut ext.node, synonyms);
+                expand_synonyms_in_ty(&mut ext.node, ctx);
             }
         }
         Some(ast::TypeDeclRhs::Product(fields)) => {
-            expand_synonyms_in_fields(fields, synonyms);
+            expand_synonyms_in_fields(fields, ctx);
         }
         Some(ast::TypeDeclRhs::Synonym(rhs)) => {
-            expand_synonyms_in_ty(&mut rhs.node, synonyms);
+            expand_synonyms_in_ty(&mut rhs.node, ctx);
         }
         None => {}
     }
 }
 
-fn expand_synonyms_in_fields(
-    fields: &mut ast::ConFields,
-    synonyms: &HashMap<Name, (Vec<Name>, ast::Type)>,
-) {
+fn expand_synonyms_in_fields(fields: &mut ast::ConFields, ctx: &SynonymCtx<'_>) {
     match fields {
         ast::ConFields::Empty => {}
         ast::ConFields::Named { fields, extension } => {
             for (_, ty) in fields {
-                expand_synonyms_in_ty(&mut ty.node, synonyms);
+                expand_synonyms_in_ty(&mut ty.node, ctx);
             }
             if let Some(ext) = extension {
-                expand_synonyms_in_ty(&mut ext.node, synonyms);
+                expand_synonyms_in_ty(&mut ext.node, ctx);
             }
         }
         ast::ConFields::Unnamed { fields } => {
             for ty in fields {
-                expand_synonyms_in_ty(&mut ty.node, synonyms);
+                expand_synonyms_in_ty(&mut ty.node, ctx);
             }
         }
     }
 }
 
-fn expand_synonyms_in_fun(
-    fun: &mut ast::FunDecl,
-    synonyms: &HashMap<Name, (Vec<Name>, ast::Type)>,
-) {
-    expand_synonyms_in_sig(&mut fun.sig, synonyms);
+fn expand_synonyms_in_fun(fun: &mut ast::FunDecl, ctx: &SynonymCtx<'_>) {
+    expand_synonyms_in_sig(&mut fun.sig, ctx);
 }
 
-fn expand_synonyms_in_sig(sig: &mut ast::FunSig, synonyms: &HashMap<Name, (Vec<Name>, ast::Type)>) {
+fn expand_synonyms_in_sig(sig: &mut ast::FunSig, ctx: &SynonymCtx<'_>) {
     if let ast::SelfParam::Explicit(ty) = &mut sig.self_ {
-        expand_synonyms_in_ty(&mut ty.node, synonyms);
+        expand_synonyms_in_ty(&mut ty.node, ctx);
     }
     for (_, ty) in &mut sig.params {
         if let Some(ty) = ty {
-            expand_synonyms_in_ty(&mut ty.node, synonyms);
+            expand_synonyms_in_ty(&mut ty.node, ctx);
         }
     }
     if let Some(ty) = &mut sig.return_ty {
-        expand_synonyms_in_ty(&mut ty.node, synonyms);
+        expand_synonyms_in_ty(&mut ty.node, ctx);
     }
     if let Some(ty) = &mut sig.exceptions {
-        expand_synonyms_in_ty(&mut ty.node, synonyms);
+        expand_synonyms_in_ty(&mut ty.node, ctx);
     }
 }
 
-fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Name, (Vec<Name>, ast::Type)>) {
+fn lookup_synonym<'a>(
+    named: &ast::NamedType,
+    ctx: &'a SynonymCtx<'_>,
+) -> Option<&'a (Vec<Name>, ast::Type)> {
+    if named.mod_prefix.is_none()
+        && let Some(entry) = ctx.by_name.get(&named.name)
+    {
+        return Some(entry);
+    }
+    let id = ctx
+        .env
+        .resolve(&named.name, &named.mod_prefix, &ast::Loc::dummy());
+    ctx.by_id.get(&id)
+}
+
+fn expand_synonyms_in_ty(ty: &mut ast::Type, ctx: &SynonymCtx<'_>) {
     match ty {
         ast::Type::Named(named) => {
-            if let Some((params, body)) = synonyms.get(&named.name) {
+            if let Some((params, body)) = lookup_synonym(named, ctx) {
                 assert_eq!(
                     params.len(),
                     named.args.len(),
@@ -2305,11 +2351,11 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Name, (Vec<Name>
                 subst_ast_ty_vars(&mut expanded, &substs);
                 *ty = expanded;
                 // Recursively expand in case the expansion contains more synonyms.
-                expand_synonyms_in_ty(ty, synonyms);
+                expand_synonyms_in_ty(ty, ctx);
                 return;
             }
             for arg in &mut named.args {
-                expand_synonyms_in_ty(&mut arg.node, synonyms);
+                expand_synonyms_in_ty(&mut arg.node, ctx);
             }
         }
 
@@ -2321,10 +2367,10 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Name, (Vec<Name>
             is_row: _,
         } => {
             for (_, field_ty) in fields {
-                expand_synonyms_in_ty(field_ty, synonyms);
+                expand_synonyms_in_ty(field_ty, ctx);
             }
             if let Some(ext) = extension {
-                expand_synonyms_in_ty(&mut ext.node, synonyms);
+                expand_synonyms_in_ty(&mut ext.node, ctx);
             }
         }
 
@@ -2335,23 +2381,23 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Name, (Vec<Name>
         } => {
             for alt in alts {
                 for arg in &mut alt.args {
-                    expand_synonyms_in_ty(&mut arg.node, synonyms);
+                    expand_synonyms_in_ty(&mut arg.node, ctx);
                 }
             }
             if let Some(ext) = extension {
-                expand_synonyms_in_ty(&mut ext.node, synonyms);
+                expand_synonyms_in_ty(&mut ext.node, ctx);
             }
         }
 
         ast::Type::Fn(fn_ty) => {
             for arg in &mut fn_ty.args {
-                expand_synonyms_in_ty(&mut arg.node, synonyms);
+                expand_synonyms_in_ty(&mut arg.node, ctx);
             }
             if let Some(ret) = &mut fn_ty.ret {
-                expand_synonyms_in_ty(&mut ret.node, synonyms);
+                expand_synonyms_in_ty(&mut ret.node, ctx);
             }
             if let Some(exn) = &mut fn_ty.exceptions {
-                expand_synonyms_in_ty(&mut exn.node, synonyms);
+                expand_synonyms_in_ty(&mut exn.node, ctx);
             }
         }
 
@@ -2359,7 +2405,7 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, synonyms: &HashMap<Name, (Vec<Name>
             ty: inner,
             assoc_ty: _,
         } => {
-            expand_synonyms_in_ty(&mut inner.node, synonyms);
+            expand_synonyms_in_ty(&mut inner.node, ctx);
         }
     }
 }
