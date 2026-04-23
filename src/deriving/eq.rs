@@ -221,6 +221,7 @@ fn derive_eq_sum(
             ty_user_ty_args: vec![],
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         };
 

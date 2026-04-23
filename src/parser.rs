@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: 9648e508885acba222ce85560e526ae4d34b575f5a27fbe099c48664a5099066
+// sha3: 229a260d61152cde53b8a3255486ac5e3caae1beb2f16f63cc36226384b8a14e
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -56891,6 +56891,7 @@ fn __action79<'a>(
                     ty_user_ty_args: vec![],
                     con_user_ty_args: vec![],
                     ty_args: vec![],
+                    resolved_ty_id: None,
                     inferred_ty: None,
                 }),
             ),
@@ -57281,6 +57282,7 @@ fn __action101<'a>(
         ty_user_ty_args: vec![],
         con_user_ty_args: vec![],
         ty_args: vec![],
+        resolved_ty_id: None,
         inferred_ty: None,
     })
 }
@@ -57305,6 +57307,7 @@ fn __action102<'a>(
         ty_user_ty_args,
         con_user_ty_args: vec![],
         ty_args: vec![],
+        resolved_ty_id: None,
         inferred_ty: None,
     })
 }
@@ -57332,6 +57335,7 @@ fn __action103<'a>(
             ty_user_ty_args: vec![],
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         })
     }
@@ -57362,6 +57366,7 @@ fn __action104<'a>(
             ty_user_ty_args: vec![],
             con_user_ty_args,
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         })
     }
@@ -57588,6 +57593,7 @@ fn __action115<'a>(
             ty_user_ty_args,
             con_user_ty_args,
             ty_args: _,
+            resolved_ty_id,
             inferred_ty: _,
         }) => {
             // There's no con on the left side of the dot, so there should
@@ -57638,6 +57644,7 @@ fn __action116<'a>(
             ty_user_ty_args,
             con_user_ty_args,
             ty_args: _,
+            resolved_ty_id,
             inferred_ty: _,
         }) => {
             // There's no con on the left side of the dot, so there should
@@ -57650,6 +57657,7 @@ fn __action116<'a>(
                 ty_user_ty_args,
                 con_user_ty_args,
                 ty_args: vec![],
+                resolved_ty_id: None,
                 inferred_ty: None,
             }))
         }
@@ -57687,6 +57695,7 @@ fn __action117<'a>(
             ty_user_ty_args,
             con_user_ty_args: old_con_user_ty_args,
             ty_args: _,
+            resolved_ty_id,
             inferred_ty: _,
         }) => {
             // There's no con on the left side of the dot, so there should
@@ -57699,6 +57708,7 @@ fn __action117<'a>(
                 ty_user_ty_args,
                 con_user_ty_args: new_con_user_ty_args,
                 ty_args: vec![],
+                resolved_ty_id: None,
                 inferred_ty: None,
             }))
         }
@@ -58648,6 +58658,7 @@ fn __action170<'a>(
             ty_user_ty_args: vec![],
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     }
@@ -58674,6 +58685,7 @@ fn __action171<'a>(
             ty_user_ty_args,
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     }
@@ -58702,6 +58714,7 @@ fn __action172<'a>(
             ty_user_ty_args: vec![],
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     }
@@ -58731,6 +58744,7 @@ fn __action173<'a>(
             ty_user_ty_args,
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     }
@@ -58761,6 +58775,7 @@ fn __action174<'a>(
             ty_user_ty_args: vec![],
             con_user_ty_args,
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     }
@@ -58792,6 +58807,7 @@ fn __action175<'a>(
             ty_user_ty_args,
             con_user_ty_args,
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     }

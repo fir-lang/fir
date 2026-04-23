@@ -514,11 +514,17 @@ impl PatMatrix {
             while let Some(pat) = work.pop() {
                 match pat.node {
                     ast::Pat::Con(ast::ConPat {
-                        con: ast::Con { ty, con, .. },
+                        con:
+                            ast::Con {
+                                ty,
+                                con,
+                                resolved_ty_id,
+                                ..
+                            },
                         fields,
                         rest,
                     }) => {
-                        let ty_id = tc_state.module_env.resolve(&ty, &None, &pat.loc);
+                        let ty_id = resolved_ty_id.unwrap();
                         let con = con.unwrap_or_else(|| ty.clone());
 
                         // Note: `ty` may not be the same as `con_ty_id` when checking variant

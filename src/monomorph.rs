@@ -847,9 +847,10 @@ fn mono_expr(
             ty_user_ty_args: _,
             con_user_ty_args: _,
             ty_args,
+            resolved_ty_id,
             inferred_ty,
         }) => {
-            let con_ty_id = extract_type_con_id(inferred_ty.as_ref().unwrap());
+            let con_ty_id = resolved_ty_id.clone().unwrap();
             let inferred_ty = mono_tc_ty(
                 inferred_ty.as_ref().unwrap(),
                 ty_map,
@@ -1759,12 +1760,13 @@ fn mono_pat(
                     ty_user_ty_args: _,
                     con_user_ty_args: _,
                     ty_args,
+                    resolved_ty_id,
                     inferred_ty,
                 },
             fields,
             rest,
         }) => {
-            let pat_ty_id = extract_type_con_id(inferred_ty.as_ref().unwrap());
+            let pat_ty_id = resolved_ty_id.clone().unwrap();
             let inferred_ty = mono_tc_ty(
                 inferred_ty.as_ref().unwrap(),
                 ty_map,

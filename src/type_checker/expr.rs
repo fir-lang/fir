@@ -2565,6 +2565,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
         ty_user_ty_args,
         con_user_ty_args,
         ty_args,
+        resolved_ty_id,
         inferred_ty,
     } = con;
 
@@ -2590,6 +2591,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
         .collect();
 
     let ty_id = tc_state.module_env.resolve(con_ty, mod_prefix, loc);
+    *resolved_ty_id = Some(ty_id.clone());
 
     let mut ty_con: &TyCon = tc_state
         .tys
@@ -2672,6 +2674,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
                 .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
 
             *con_ty = con.name().clone();
+            *resolved_ty_id = Some(con.clone());
         }
     }
 

@@ -183,6 +183,7 @@ fn con_sel(loc: &ast::Loc, ty: &str, con: Option<&str>) -> ast::L<ast::Expr> {
             ty_user_ty_args: vec![],
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }),
     )
@@ -296,6 +297,7 @@ fn let_destructure_rest(
                         ty_user_ty_args: vec![],
                         con_user_ty_args: vec![],
                         ty_args: vec![],
+                        resolved_ty_id: None,
                         inferred_ty: None,
                     },
                     fields,

@@ -615,6 +615,7 @@ Stmt: Stmt = {
                 ty_user_ty_args: vec![],
                 con_user_ty_args: vec![],
                 ty_args: vec![],
+                resolved_ty_id: None,
                 inferred_ty: None,
             })),
             body,
@@ -754,6 +755,7 @@ InlineExpr: Expr = {
             ty_user_ty_args: vec![],
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }),
 
@@ -765,6 +767,7 @@ InlineExpr: Expr = {
             ty_user_ty_args,
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }),
 
@@ -780,6 +783,7 @@ InlineExpr: Expr = {
             ty_user_ty_args: vec![],
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         })
     },
@@ -796,6 +800,7 @@ InlineExpr: Expr = {
             ty_user_ty_args: vec![],
             con_user_ty_args,
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         })
     },
@@ -864,6 +869,7 @@ InlineExpr: Expr = {
                 ty_user_ty_args,
                 con_user_ty_args,
                 ty_args: _,
+                resolved_ty_id,
                 inferred_ty: _,
             }) => {
                 // There's no con on the left side of the dot, so there should
@@ -898,6 +904,7 @@ InlineExpr: Expr = {
                 ty_user_ty_args,
                 con_user_ty_args,
                 ty_args: _,
+                resolved_ty_id,
                 inferred_ty: _,
             }) => {
                 // There's no con on the left side of the dot, so there should
@@ -910,6 +917,7 @@ InlineExpr: Expr = {
                     ty_user_ty_args,
                     con_user_ty_args,
                     ty_args: vec![],
+                    resolved_ty_id: None,
                     inferred_ty: None,
                 }))
             },
@@ -932,6 +940,7 @@ InlineExpr: Expr = {
                 ty_user_ty_args,
                 con_user_ty_args: old_con_user_ty_args,
                 ty_args: _,
+                resolved_ty_id,
                 inferred_ty: _,
             }) => {
                 // There's no con on the left side of the dot, so there should
@@ -944,6 +953,7 @@ InlineExpr: Expr = {
                     ty_user_ty_args,
                     con_user_ty_args: new_con_user_ty_args,
                     ty_args: vec![],
+                    resolved_ty_id: None,
                     inferred_ty: None,
                 }))
             },
@@ -1239,6 +1249,7 @@ Con: Con = {
             ty_user_ty_args: vec![],
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     },
@@ -1252,6 +1263,7 @@ Con: Con = {
             ty_user_ty_args,
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     },
@@ -1269,6 +1281,7 @@ Con: Con = {
             ty_user_ty_args: vec![],
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     },
@@ -1284,6 +1297,7 @@ Con: Con = {
             ty_user_ty_args,
             con_user_ty_args: vec![],
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     },
@@ -1301,6 +1315,7 @@ Con: Con = {
             ty_user_ty_args: vec![],
             con_user_ty_args,
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     },
@@ -1316,6 +1331,7 @@ Con: Con = {
             ty_user_ty_args,
             con_user_ty_args,
             ty_args: vec![],
+            resolved_ty_id: None,
             inferred_ty: None,
         }
     },

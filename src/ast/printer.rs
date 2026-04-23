@@ -1127,6 +1127,7 @@ impl Con {
             ty_user_ty_args,
             con_user_ty_args,
             ty_args: _,
+            resolved_ty_id: _,
             inferred_ty: _,
         } = self;
         print_mod_prefix(mod_prefix, buf);
