@@ -10,6 +10,7 @@ TODOs:
 
 use crate::ast::{Loc, Name};
 use crate::collections::*;
+use crate::indenting_printer::Printer;
 use crate::lowering::*;
 use crate::mono_ast as mono;
 use crate::utils::loc_display;
@@ -52,7 +53,7 @@ impl<'a> Cg<'a> {
 }
 
 pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
-    let mut p = Printer::default();
+    let mut p = Printer::new();
 
     writedoc!(
         p,
@@ -288,12 +289,9 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                     p.indent();
                     p.nl();
                     w!(p, "return (({struct_name}){{");
-                    for i in 0..source_con.fields.len() {
-                        if i > 0 {
-                            w!(p, ",");
-                        }
+                    p.sep(0..source_con.fields.len(), ",", |p, i| {
                         w!(p, " ._{i} = p{i}");
-                    }
+                    });
                     w!(p, " }});");
                     p.dedent();
                     p.nl();
@@ -354,19 +352,13 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         p.indent();
         p.nl();
         w!(p, "return (({}(*)(", c_ty(&fun.return_ty, pgm));
-        for (i, ty) in fun.params.iter().enumerate() {
-            if i != 0 {
-                w!(p, ", ");
-            }
+        p.sep(fun.params.iter(), ", ", |p, ty| {
             w!(p, "{}", c_ty(ty, pgm));
-        }
+        });
         w!(p, "))(_fun_{i}))(");
-        for i in 0..fun.params.len() {
-            if i != 0 {
-                w!(p, ", ");
-            }
+        p.sep(0..fun.params.len(), ", ", |p, i| {
             w!(p, "p{i}");
-        }
+        });
         w!(p, ");");
         p.dedent();
         p.nl();
@@ -423,21 +415,16 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 
     generate_main_fn(pgm, main, &mut p);
 
-    p.print()
+    p.finish()
 }
 
 fn forward_declare_fun(fun: &Fun, idx: usize, pgm: &LoweredPgm, p: &mut Printer) {
     w!(p, "// {} {}", loc_display(&fun.name.loc), fun.name.node);
     if !fun.ty_args.is_empty() {
         w!(p, "[");
-        for (i, ty_arg) in fun.ty_args.iter().enumerate() {
-            if i > 0 {
-                w!(p, ", ");
-            }
-            let mut ty_str = String::new();
-            ty_arg.print(&mut ty_str);
-            w!(p, "{}", ty_str);
-        }
+        p.sep(fun.ty_args.iter(), ", ", |p, ty_arg| {
+            w!(p, "{}", ty_arg);
+        });
         w!(p, "]");
     }
     p.nl();
@@ -446,12 +433,9 @@ fn forward_declare_fun(fun: &Fun, idx: usize, pgm: &LoweredPgm, p: &mut Printer)
     if param_count == 0 {
         w!(p, "void");
     } else {
-        for (i, ty) in fun.params.iter().enumerate() {
-            if i > 0 {
-                w!(p, ", ");
-            }
+        p.sep(fun.params.iter().enumerate(), ", ", |p, (i, ty)| {
             w!(p, "{} _p{}", c_ty(ty, pgm), i);
-        }
+        });
     }
     wln!(p, ");");
 }
@@ -1453,24 +1437,16 @@ fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p
     w!(p, "// {} {}", loc_display(loc), fun.name.node);
     if !fun.ty_args.is_empty() {
         w!(p, "[");
-        for (i, ty_arg) in fun.ty_args.iter().enumerate() {
-            if i > 0 {
-                w!(p, ", ");
-            }
-            let mut ty_str = String::new();
-            ty_arg.print(&mut ty_str);
-            w!(p, "{}", ty_str);
-        }
+        p.sep(fun.ty_args.iter(), ", ", |p, ty_arg| {
+            w!(p, "{}", ty_arg);
+        });
         w!(p, "]");
     }
     p.nl();
     w!(p, "static {} _fun_{}(", c_ty(&fun.return_ty, cg.pgm), idx);
-    for (i, ty) in fun.params.iter().enumerate() {
-        if i > 0 {
-            w!(p, ", ");
-        }
+    p.sep(fun.params.iter().enumerate(), ", ", |p, (i, ty)| {
         w!(p, "{} _{}", c_ty(ty, cg.pgm), i);
-    }
+    });
     w!(p, ") {{");
     p.indent();
     p.nl();
@@ -1755,13 +1731,10 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             } else if is_value_type(ret_ty, cg.pgm) {
                 let struct_name = heap_obj_struct_name(cg.pgm, *heap_obj_idx);
                 w!(p, "(({struct_name}){{");
-                for (i, arg) in args.iter().enumerate() {
-                    if i > 0 {
-                        w!(p, ",");
-                    }
+                p.sep(args.iter().enumerate(), ",", |p, (i, arg)| {
                     w!(p, " ._{i} = ");
                     expr_to_c(&arg.node, &arg.loc, locals, cg, p);
-                }
+                });
                 w!(p, " }})");
             } else {
                 let struct_name = heap_obj_struct_name(cg.pgm, *heap_obj_idx);
@@ -1813,12 +1786,9 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 Expr::Fun(fun_idx) => {
                     // Direct function call
                     w!(p, "_fun_{}(", fun_idx.as_usize());
-                    for (i, arg) in args.iter().enumerate() {
-                        if i > 0 {
-                            w!(p, ", ");
-                        }
+                    p.sep(args.iter(), ", ", |p, arg| {
                         expr_to_c(&arg.node, &arg.loc, locals, cg, p);
-                    }
+                    });
                     w!(p, ")");
                 }
                 other => {
@@ -1968,10 +1938,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 Some(match_temp)
             };
 
-            for (i, alt) in alts.iter().enumerate() {
-                if i > 0 {
-                    w!(p, " else ");
-                }
+            p.sep(alts.iter(), " else ", |p, alt| {
                 // Generate pattern match condition
                 let cond = pat_to_cond(&alt.pat.node, &scrut_temp, scrut_ty, None, locals, cg);
                 w!(p, "if ({}", cond);
@@ -1993,7 +1960,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 p.dedent();
                 p.nl();
                 w!(p, "}}");
-            }
+            });
             w!(p, " else {{");
             p.indent();
             p.nl();
@@ -2038,10 +2005,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 Some(if_temp)
             };
 
-            for (i, (cond, body)) in branches.iter().enumerate() {
-                if i > 0 {
-                    w!(p, " else ");
-                }
+            p.sep(branches.iter(), " else ", |p, (cond, body)| {
                 let cond_temp = cg.fresh_temp();
                 w!(p, "{{");
                 p.indent();
@@ -2057,7 +2021,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 p.dedent();
                 p.nl();
                 w!(p, "}}");
-            }
+            });
 
             match else_branch {
                 Some(else_body) => {
@@ -2586,50 +2550,6 @@ fn gen_get_tag(pgm: &LoweredPgm, expr: &str, ty: &mono::Type) -> String {
         }
 
         mono::Type::Fn(_) => "CLOSURE_TAG".to_string(),
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Printing utils
-
-#[derive(Debug, Default)]
-struct Printer {
-    lines: Vec<String>,
-    current_line: String,
-    indent: u32,
-}
-
-impl Printer {
-    fn nl(&mut self) {
-        let line = std::mem::replace(&mut self.current_line, " ".repeat(self.indent as usize * 4));
-        self.lines.push(line)
-    }
-
-    fn print(mut self) -> String {
-        self.nl();
-        let mut out = String::with_capacity(self.lines.iter().map(|l| l.len()).sum());
-        for (i, line) in self.lines.iter().enumerate() {
-            if i != 0 {
-                out.push('\n');
-            }
-            out.push_str(line);
-        }
-        out
-    }
-
-    fn indent(&mut self) {
-        self.indent += 1;
-    }
-
-    fn dedent(&mut self) {
-        self.indent -= 1;
-    }
-}
-
-impl Write for Printer {
-    fn write_str(&mut self, s: &str) -> std::fmt::Result {
-        self.current_line.push_str(s);
-        Ok(())
     }
 }
 

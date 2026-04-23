@@ -9,6 +9,7 @@ mod ast;
 pub mod cli;
 mod collections;
 mod deriving;
+mod indenting_printer;
 mod interpolation;
 mod interpreter;
 mod lexer;
