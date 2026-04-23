@@ -2560,7 +2560,7 @@ fn check_record_expr(
 pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: &ast::Loc) -> Ty {
     let ast::Con {
         mod_prefix,
-        ty,
+        ty: con_ty,
         con: con_name,
         ty_user_ty_args,
         con_user_ty_args,
@@ -2589,17 +2589,17 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
         .map(|ty| convert_ast_ty(&tc_state.tys.tys, tc_state.module_env, &ty.node, &ty.loc))
         .collect();
 
-    let ty_id = tc_state.module_env.resolve(ty, mod_prefix, loc);
+    let ty_id = tc_state.module_env.resolve(con_ty, mod_prefix, loc);
 
     let mut ty_con: &TyCon = tc_state
         .tys
         .tys
         .get_con(&ty_id)
-        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
+        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), con_ty));
 
     match &ty_con.details {
         TyConDetails::Trait(_) => {
-            panic!("{}: Type {} is a trait", loc_display(loc), ty)
+            panic!("{}: Type {} is a trait", loc_display(loc), con_ty)
         }
 
         TyConDetails::Type(_) => {}
@@ -2670,6 +2670,8 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
                 .tys
                 .get_con(&con)
                 .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
+
+            *con_ty = con.name().clone();
         }
     }
 
@@ -2677,7 +2679,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
         panic!(
             "{}: Type {} is a trait or type synonym",
             loc_display(loc),
-            ty
+            con_ty
         )
     });
 
@@ -2687,14 +2689,14 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
                 panic!(
                     "{}: Type {} does not have sum constructors",
                     loc_display(loc),
-                    ty
+                    con_ty
                 );
             }
             ty_details.cons.get(con_name).unwrap_or_else(|| {
                 panic!(
                     "{}: Type {} does not have a constructor named {}",
                     loc_display(loc),
-                    ty,
+                    con_ty,
                     con_name
                 )
             })
@@ -2705,7 +2707,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
                 panic!(
                     "{}: Sum type allocation {} needs a constructor",
                     loc_display(loc),
-                    ty
+                    con_ty
                 );
             }
             assert_eq!(ty_details.cons.len(), 1);
@@ -2723,7 +2725,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
             panic!(
                 "{}: Constructor {}{}{} takes {} type arguments, but applied to {}",
                 loc_display(loc),
-                ty,
+                con_ty,
                 if con_name.is_some() { "." } else { "" },
                 con_name.as_ref().cloned().unwrap_or(Name::new_static("")),
                 scheme.quantified_vars.len(),
