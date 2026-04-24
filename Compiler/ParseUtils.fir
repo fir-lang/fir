@@ -59,10 +59,6 @@ newVarId[AstIds[ids]](cursor: U32) AstIds[ids].AstVarId:
     AstIds[ids].astVarIdFromToken(TokenIdx(idx = cursor))
 
 
-newAssocId[AstIds[ids]](cursor: U32) AstIds[ids].AstAssocVarId:
-    AstIds[ids].astAssocVarIdFromToken(TokenIdx(idx = cursor))
-
-
 newTyId[AstIds[ids]](cursor: U32) AstIds[ids].AstTyId:
     AstIds[ids].astTyIdFromToken(TokenIdx(idx = cursor))
 

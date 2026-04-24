@@ -12,19 +12,12 @@ trait AstIds[t]:
     ## Identifiers that refer to types.
     type AstTyId = Id
 
-    ## Identifiers that refer to associated variables.
-    type AstAssocVarId = Id
-
     ## For parsing: create an `AstVarId` from a token.
     astVarIdFromToken(token: TokenIdx) AstVarId:
         Id(token)
 
     ## For parsing: create an `AstTyId` from a token.
     astTyIdFromToken(token: TokenIdx) AstTyId:
-        Id(token)
-
-    ## For parsing: create an `AstAssocVarId` from a token.
-    astAssocVarIdFromToken(token: TokenIdx) AstAssocVarId:
         Id(token)
 
 
@@ -96,10 +89,6 @@ type AstTyId[exts] = AstIds[AstExts[exts].Ids].AstTyId
 
 ## Type synonym to make it easy to access `AstIds.AstVarId` from an `AstExts`.
 type AstVarId[exts] = AstIds[AstExts[exts].Ids].AstVarId
-
-
-## Type synonym to make it easy to access `AstIds.AstAssocVarId` from an `AstExts`.
-type AstAssocVarId[exts] = AstIds[AstExts[exts].Ids].AstAssocVarId
 
 
 type DefaultAstExts
@@ -1348,7 +1337,7 @@ type AssocFnSelExpr[exts](
 
     # The associated function name: `withCapacity` and `push` in the examples
     # above.
-    member: AstAssocVarId[exts],
+    member: TokenIdx,
 
     ## Type arguments explicitly passed to the variable.
     userTyArgs: Option[TyArgs[exts]],
