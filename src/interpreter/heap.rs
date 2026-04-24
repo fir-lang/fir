@@ -1,5 +1,5 @@
 use crate::interpreter::*;
-use crate::lowering::{CON_CON_IDX, FUN_CON_IDX, Repr};
+use crate::lowering::{CON_CON_IDX, FUN_CON_IDX};
 
 use bytemuck::{cast_slice, cast_slice_mut};
 
