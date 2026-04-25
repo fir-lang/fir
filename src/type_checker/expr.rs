@@ -1497,8 +1497,9 @@ pub(super) fn check_expr(
 
             - empty:    [item, ?exn] Fn() Empty[item] / ?exn
             - once:     [t, ?exn] Fn(t) Once[t] / ?exn
-            - chain:    [iter, exn, other, ?exn] [Iterator[iter, exn]]
-                        Fn(iter, other) Chain[iter, other, Iterator[iter, exn].Item, exn] / ?exn
+            - chain:    [iter: *, exn: *, other: *, ?exn: *]
+                        [Iterator[iter, exn]]
+                        Fn(iter, other) Chain[iter, other, exn] / ?exn
             */
 
             let iter_ty = ty.clone();
