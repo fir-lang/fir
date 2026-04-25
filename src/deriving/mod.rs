@@ -521,7 +521,7 @@ fn ty_has_vars(ty: &ast::Type) -> bool {
             extension,
             is_row: _,
         } => {
-            fields.iter().any(|(_, t)| ty_has_vars(t))
+            fields.iter().any(|(_, t)| ty_has_vars(&t.node))
                 || extension.as_ref().is_some_and(|e| ty_has_vars(&e.node))
         }
 

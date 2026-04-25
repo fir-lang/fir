@@ -231,7 +231,7 @@ pub enum Type {
 
     /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..r)`.
     Record {
-        fields: Vec<(Name, Type)>,
+        fields: Vec<(Name, L<Type>)>,
         extension: Option<Box<L<Type>>>,
         is_row: bool,
     },
@@ -1113,9 +1113,9 @@ impl Type {
                 extension,
                 is_row,
             } => {
-                let fields: Vec<(Name, Type)> = fields
+                let fields: Vec<(Name, L<Type>)> = fields
                     .iter()
-                    .map(|(name, ty)| (name.clone(), ty.subst_ids(substs)))
+                    .map(|(name, ty)| (name.clone(), ty.map_as_ref(|ty| ty.subst_ids(substs))))
                     .collect();
 
                 let extension = extension

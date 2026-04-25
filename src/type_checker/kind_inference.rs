@@ -215,7 +215,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Name, Opti
             is_row: _,
         } => {
             for (_field_name, field_ty) in fields {
-                collect_tvs(field_ty, loc, tvs);
+                collect_tvs(&field_ty.node, &field_ty.loc, tvs);
             }
             collect_extension_tvs(extension, tvs, RecordOrVariant::Record);
         }

@@ -301,7 +301,7 @@ impl Type {
                 p.sep(fields.iter(), ", ", |p, (field_name, field_ty)| {
                     p.str(field_name);
                     p.str(": ");
-                    field_ty.print(p);
+                    field_ty.node.print(p);
                 });
                 if let Some(extension) = extension {
                     if !fields.is_empty() {

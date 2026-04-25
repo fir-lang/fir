@@ -96,13 +96,13 @@ fn resolve_synonym_deps(
         ast::Type::Record { fields, .. } => {
             for (_, field_ty) in fields {
                 resolve_synonym_deps(
-                    field_ty,
+                    &field_ty.node,
                     module_env,
                     synonym_asts,
                     resolving,
                     tys,
                     module_envs,
-                    loc,
+                    &field_ty.loc,
                 );
             }
         }

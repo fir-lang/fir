@@ -2047,7 +2047,7 @@ fn match_(
         ) => {
             let fields1_map: HashMap<&Name, &ast::Type> = fields1
                 .iter()
-                .map(|(field_name, field_ty)| (field_name, field_ty))
+                .map(|(field_name, field_ty)| (field_name, &field_ty.node))
                 .collect();
 
             let mut fields2_map: HashMap<&Name, &mono::Type> = fields2.iter().collect();
@@ -2771,7 +2771,7 @@ fn get_variant_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Name, mono::NamedTyp
 }
 
 fn collect_record_labels(
-    ast_fields: &[(Name, ast::Type)],
+    ast_fields: &[(Name, ast::L<ast::Type>)],
     extension: &Option<Box<ast::L<ast::Type>>>,
     ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
@@ -2784,7 +2784,14 @@ fn collect_record_labels(
     for (field_name, field_ty) in ast_fields.iter() {
         let old = fields.insert(
             field_name.clone(),
-            mono_ast_ty(field_ty, ty_map, poly_pgm, mono_pgm, mangler, module_env),
+            mono_ast_ty(
+                &field_ty.node,
+                ty_map,
+                poly_pgm,
+                mono_pgm,
+                mangler,
+                module_env,
+            ),
         );
         if old.is_some() {
             panic!("BUG: Duplicate label in record");

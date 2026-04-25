@@ -398,8 +398,8 @@ TypeArg: L<(Option<Name>, L<Type>)> = {
     },
 }
 
-RecordTypeField: (Name, Type) = {
-    <name:LowerId> ":" <ty:Type> => (name.name(), ty),
+RecordTypeField: (Name, L<Type>) = {
+    <name:LowerId> ":" <ty:LType> => (name.name(), ty),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
