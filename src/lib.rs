@@ -57,6 +57,7 @@ pub struct CompilerOpts {
     pub print_checked_ast: bool,
     pub print_mono_ast: bool,
     pub print_lowered_ast: bool,
+    pub test_parsed_ast_printer: bool,
 
     /// Name of the main function.
     pub main: String,
@@ -77,18 +78,31 @@ fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String 
     format!("{}:{}:{}", module, lexgen_loc.line + 1, lexgen_loc.col + 1)
 }
 
-fn parse_module(module: &SmolStr, contents: &str) -> ast::Module {
+fn parse_module(module: &SmolStr, contents: &str, test_printer: bool) -> ast::Module {
     let tokens = combine_uppercase_lbrackets(scanner::scan(
         lexer::lex(contents, module).into_iter(),
         module,
     ));
-    // dbg!(tokens.iter().map(|(_, t, _)| t.clone()).collect::<Vec<_>>());
-
     let parser = parser::ModuleParser::new();
-    match parser.parse(&(module.as_str().into()), tokens) {
+    let mut ast = match parser.parse(&(module.as_str().into()), tokens) {
         Ok(ast) => ast,
         Err(err) => report_parse_error(module, err),
+    };
+    if test_printer {
+        let printed = ast.print_to_string();
+        let tokens = combine_uppercase_lbrackets(scanner::scan(
+            lexer::lex(&printed, module).into_iter(),
+            module,
+        ));
+        match parser.parse(&(module.as_str().into()), tokens) {
+            Ok(new_ast) => ast = new_ast,
+            Err(err) => {
+                println!("{printed}");
+                report_parse_error(module, err);
+            }
+        }
     }
+    ast
 }
 
 fn report_parse_error(
@@ -175,7 +189,11 @@ mod native {
         }
 
         let file_path = Path::new(&program); // "examples/Foo.fir"
-        let mut loaded_pgm = module_loader::load(file_path, opts.print_parsed_ast);
+        let mut loaded_pgm = module_loader::load(
+            file_path,
+            opts.print_parsed_ast,
+            opts.test_parsed_ast_printer,
+        );
 
         if opts.parse {
             return;
@@ -292,6 +310,7 @@ mod native {
         path: P,
         module: &str,
         print_parsed_ast: bool,
+        test_ast_printer: bool,
     ) -> ast::Module {
         let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
             panic!(
@@ -302,7 +321,7 @@ mod native {
             )
         });
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
-        let parsed = parse_module(&module_path, &contents);
+        let parsed = parse_module(&module_path, &contents, test_ast_printer);
         if print_parsed_ast {
             println!("mod {} {{\n", module);
             parsed.print();
@@ -378,11 +397,12 @@ mod wasm {
         path: P,
         module: &str,
         _print_parsed_ast: bool,
+        test_ast_printer: bool,
     ) -> ast::Module {
         let path = path.as_ref().to_string_lossy();
         let contents = read_file_utf8(&path);
         let module_path: SmolStr = path.into();
-        parse_module(&module_path, &contents)
+        parse_module(&module_path, &contents, test_ast_printer)
     }
 
     #[wasm_bindgen]
@@ -428,7 +448,7 @@ mod wasm {
         // NB. This path handled specially in the web page, it returns the program input field
         // contents.
         let file_path = Path::new("Main.fir");
-        let mut loaded_program = module_loader::load(file_path, false);
+        let mut loaded_program = module_loader::load(file_path, false, false);
         deriving::expand_derives(&mut loaded_program);
 
         let (_tys, module_envs) = type_checker::check_pgm(&mut loaded_program, "main");

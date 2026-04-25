@@ -68,7 +68,7 @@ pub struct SccNode {
     pub dependencies: Vec<SccIdx>,
 }
 
-pub fn load(entry_file: &Path, print_parsed_ast: bool) -> LoadedPgm {
+pub fn load(entry_file: &Path, print_parsed_ast: bool, test_ast_printer: bool) -> LoadedPgm {
     let entry = ModulePath::from_file_path(entry_file);
     let mut work: Vec<ModulePath> = vec![entry.clone()];
     let mut modules: HashMap<ModulePath, ast::Module> = HashMap::default();
@@ -84,7 +84,12 @@ pub fn load(entry_file: &Path, print_parsed_ast: bool) -> LoadedPgm {
     while let Some(module_path) = work.pop() {
         let file_path = module_path.to_file_path();
         let display_name = module_path.to_string();
-        let module = crate::parse_file(&file_path, &display_name, print_parsed_ast);
+        let module = crate::parse_file(
+            &file_path,
+            &display_name,
+            print_parsed_ast,
+            test_ast_printer,
+        );
 
         dep_graph.entry(module_path.clone()).or_default();
 
