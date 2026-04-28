@@ -55,6 +55,7 @@ lexgen::lexer! {
         "do" = TokenKind::Do,
         "elif" = TokenKind::Elif,
         "else" = TokenKind::Else,
+        "extern" = TokenKind::Extern,
         "fn" = TokenKind::Fn,
         "Fn" = TokenKind::UpperFn,
         "for" = TokenKind::For,
