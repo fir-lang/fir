@@ -23,7 +23,9 @@ parseSum(nums: Vec[Str]) U32:
     result
 
 
-parseSumPropagateErrors(nums: Vec[Str]) U32 / [Overflow, EmptyInput, InvalidDigit, ..errs]:
+parseSumPropagateErrors(
+    nums: Vec[Str],
+) U32 / [Overflow, EmptyInput, InvalidDigit, ..errs]:
     let result: U32 = 0
     for i in nums.iter().map(parseU32Exn):
         result += i
@@ -86,7 +88,9 @@ main():
 #
 ####################################################################################################
 
-handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]) Option[U32] / [..errs]:
+handleInvalidDigit(
+    parseResult: Result[[InvalidDigit, ..errs], Option[U32]],
+) Option[U32] / [..errs]:
     match parseResult:
         Result.Ok(result): result
         Result.Err(~InvalidDigit): Option.Some(u32(0))
@@ -168,5 +172,5 @@ checkedMul(i1: U32, i2: U32) Option[U32]:
 # 10
 
 # expected stderr:
-# Tests/ThrowingIter.fir:65:5: Unexhaustive pattern match
-# Tests/ThrowingIter.fir:71:5: Unexhaustive pattern match
+# Tests/ThrowingIter.fir:67:5: Unexhaustive pattern match
+# Tests/ThrowingIter.fir:73:5: Unexhaustive pattern match
