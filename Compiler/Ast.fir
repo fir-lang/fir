@@ -330,8 +330,9 @@ type SelfParam[exts]:
 
 #[derive(ToDoc)]
 type ImportDecl[exts](
-    ## Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`.
-    attr: Option[Attribute[exts]],
+    ## Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`,
+    ## `#[include(...)]`.
+    attrs: Vec[Attribute[exts]],
 
     ## Imported items, e.g. `[Fir/Prelude, Compiler/Parser/[parse]]`.
     items: Vec[ImportItem],

@@ -911,8 +911,8 @@ pub struct VariantExpr {
 
 #[derive(Debug, Clone)]
 pub struct ImportDecl {
-    /// Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`.
-    pub attr: Option<Attribute>,
+    /// Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`, `#[include(...)]`.
+    pub attrs: Vec<Attribute>,
     pub items: Vec<ImportItem>,
 }
 

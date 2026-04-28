@@ -4902,19 +4902,17 @@ importDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
     let cursor0 = state._cursor
     let altResult = try(
         \():
-            let optionalCursor0 = state._cursor
-            let symResult = try(
-                \():
-                    let attr = attr(state)
-                    attr,
-            )
-            let attr = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
+            let zeroOrMoreCursor0 = state._cursor
+            let attrs = Vec.empty()
+            loop:
+                let attrsLen0 = attrs.len()
+                let symResult = try(\(): attrs.push(attr(state)))
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        attrs.truncate(attrsLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Import, ..):
                 state._cursor += 1
@@ -4936,7 +4934,7 @@ importDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                ImportDecl(attr, items = Vec.empty())
+                ImportDecl(attrs, items = Vec.empty())
             val,
     )
     match altResult:
@@ -4944,19 +4942,17 @@ importDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let optionalCursor0 = state._cursor
-            let symResult = try(
-                \():
-                    let attr = attr(state)
-                    attr,
-            )
-            let attr = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
+            let zeroOrMoreCursor0 = state._cursor
+            let attrs = Vec.empty()
+            loop:
+                let attrsLen0 = attrs.len()
+                let symResult = try(\(): attrs.push(attr(state)))
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        attrs.truncate(attrsLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Import, ..):
                 state._cursor += 1
@@ -5012,7 +5008,7 @@ importDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 items.insert(0, item0)
-                ImportDecl(attr, items = items)
+                ImportDecl(attrs, items = items)
             val,
     )
     match altResult:

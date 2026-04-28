@@ -976,12 +976,12 @@ conFieldPat[AstExts[exts], AstIds[AstExts[exts].Ids]] Named[Pat[exts]]:
 
 
 importDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] ImportDecl[exts]:
-    attr=attr? "import" "[" "]" "NEWLINE":
-        ImportDecl(attr, items = Vec.empty())
+    attrs=attr* "import" "[" "]" "NEWLINE":
+        ImportDecl(attrs, items = Vec.empty())
 
-    attr=attr? "import" "[" item0=importItem items=(_"," importItem)* ","? "]" "NEWLINE":
+    attrs=attr* "import" "[" item0=importItem items=(_"," importItem)* ","? "]" "NEWLINE":
         items.insert(0, item0)
-        ImportDecl(attr, items = items)
+        ImportDecl(attrs, items = items)
 
 
 importItem ImportItem:
