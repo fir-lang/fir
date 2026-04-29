@@ -36,6 +36,9 @@ pub struct LoadedPgm {
     pub dep_graph: HashMap<ModulePath, Vec<ModuleImport>>,
 
     pub scc_graph: SccGraph,
+
+    /// Headers included in the loaded modules.
+    pub extern_headers: OrdSet<String>,
 }
 
 /// DAG of strongly connected components.
@@ -81,6 +84,8 @@ pub fn load(entry_file: &Path, print_parsed_ast: bool, test_ast_printer: bool) -
         SmolStr::new_static("Prelude"),
     ]);
 
+    let mut extern_headers: OrdSet<String> = Default::default();
+
     while let Some(module_path) = work.pop() {
         let file_path = module_path.to_file_path();
         let display_name = module_path.to_string();
@@ -98,6 +103,7 @@ pub fn load(entry_file: &Path, print_parsed_ast: bool, test_ast_printer: bool) -
         for decl in &module.decls {
             if let ast::TopDecl::Import(import) = &decl.node {
                 implicit_prelude &= !no_implicit_prelude(import);
+                collect_extern_headers(import, &mut extern_headers);
                 for item in &import.node.items {
                     if !modules.contains_key(&item.path) {
                         modules.insert(item.path.clone(), ast::Module::empty());
@@ -150,6 +156,7 @@ pub fn load(entry_file: &Path, print_parsed_ast: bool, test_ast_printer: bool) -
         entry,
         dep_graph,
         scc_graph,
+        extern_headers,
     }
 }
 
@@ -325,13 +332,66 @@ fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
                 return true;
             }
             panic!(
-                "{}: Weird `import` attribute: {}",
+                "{}: Weird `NoImplicitPrelude` attribute: {}",
                 loc_display(&import.loc),
                 attr
             );
         }
     }
     false
+}
+
+fn collect_extern_headers(import: &ast::L<ast::ImportDecl>, headers: &mut OrdSet<String>) {
+    for attr in import.node.attrs.iter() {
+        if attr.lhs.is_some() {
+            continue;
+        }
+        let attr = &attr.expr.node;
+        if let ast::Expr::Call(ast::CallExpr {
+            fun,
+            args,
+            splice,
+            inferred_ty: _,
+        }) = &attr
+            && let ast::Expr::Var(ast::VarExpr {
+                mod_prefix: None,
+                name,
+                user_ty_args,
+                ty_args: _,
+                inferred_ty: _,
+                resolved_id: _,
+            }) = &fun.node
+            && name == &Name::new("include")
+        {
+            if splice.is_some()
+                || !user_ty_args.is_empty()
+                || args.iter().any(|arg| arg.name.is_some())
+            {
+                panic!(
+                    "{}: Weird `include` attribute: {}",
+                    loc_display(&import.loc),
+                    attr
+                );
+            }
+            for arg in args {
+                match &arg.expr.node {
+                    ast::Expr::Str(parts)
+                        if parts.len() == 1
+                            && let crate::interpolation::StrPart::Str(str) = &parts[0] =>
+                    {
+                        headers.insert(str.to_string());
+                    }
+                    _ => {
+                        panic!(
+                            "{}: Weird `include` attribute: {}",
+                            loc_display(&import.loc),
+                            attr
+                        );
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl fmt::Display for SccIdx {

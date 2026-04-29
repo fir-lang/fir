@@ -231,6 +231,8 @@ mod native {
             lowering::printer::print_pgm(&lowered_pgm);
         }
 
+        let headers = loaded_pgm.extern_headers;
+
         if opts.run_c {
             // TODO: Make the path absolute path, otherwise `Command` below to run the compiled file
             // tries to search in PATH for the program.
@@ -248,7 +250,7 @@ mod native {
                         (Box::new(file), path)
                     }
                 };
-            let c = to_c::to_c(&lowered_pgm, &opts.main);
+            let c = to_c::to_c(&lowered_pgm, &opts.main, headers);
             let out_file_absolute_path = c_file_absolute_path.with_extension("");
             c_file.write_all(c.as_bytes()).unwrap();
             let mut gcc_cmd = std::process::Command::new("gcc");
@@ -295,7 +297,7 @@ mod native {
                 std::process::exit(1);
             }
         } else if let Some(output) = opts.output {
-            let c = to_c::to_c(&lowered_pgm, &opts.main);
+            let c = to_c::to_c(&lowered_pgm, &opts.main, headers);
             let mut file = std::fs::File::create(&output).unwrap();
             file.write_all(c.as_bytes()).unwrap();
             drop(file);

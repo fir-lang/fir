@@ -52,22 +52,21 @@ impl<'a> Cg<'a> {
     }
 }
 
-pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
+pub(crate) fn to_c(pgm: &LoweredPgm, main: &str, mut headers: OrdSet<String>) -> String {
     let mut p = Printer::new();
 
-    writedoc!(
-        p,
-        "
-        #include <inttypes.h>
-        #include <setjmp.h>
-        #include <stdbool.h>
-        #include <stdint.h>
-        #include <stdio.h>
-        #include <stdlib.h>
-        #include <string.h>
+    headers.insert("inttypes.h".to_string());
+    headers.insert("setjmp.h".to_string());
+    headers.insert("stdbool.h".to_string());
+    headers.insert("stdint.h".to_string());
+    headers.insert("stdio.h".to_string());
+    headers.insert("stdlib.h".to_string());
+    headers.insert("string.h".to_string());
 
-        "
-    );
+    for header in headers {
+        wln!(p, "#include <{header}>");
+    }
+    p.nl();
 
     // Generate the CLOSURE type before other types. CLOSURE is a special built-in that doesn't have
     // a TypeDecl entry, so it's not part of the dependency-sorted types.
