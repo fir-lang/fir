@@ -121,9 +121,9 @@ impl TypeDeclRhs {
                 ty.node.print(p);
             }
 
-            TypeDeclRhs::Extern(parts) => {
+            TypeDeclRhs::Extern(ExternTypeDeclRhs { template, fields }) => {
                 p.str(" = \"");
-                for part in parts.iter() {
+                for part in template.iter() {
                     match part {
                         ExternTypeTemplatePart::C(s) => escape_str_lit(s, p),
                         ExternTypeTemplatePart::Var(name) => {
@@ -134,6 +134,22 @@ impl TypeDeclRhs {
                     }
                 }
                 p.char('"');
+                if !fields.is_empty() {
+                    p.char('(');
+                    p.indented(|p| {
+                        for field in fields.iter() {
+                            p.nl();
+                            p.str(&field.name);
+                            p.str(": ");
+                            field.fir_type.node.print(p);
+                            p.str(" = \"");
+                            escape_str_lit(&field.c_type, p);
+                            p.str("\",");
+                        }
+                    });
+                    p.nl();
+                    p.char(')');
+                }
             }
         }
     }

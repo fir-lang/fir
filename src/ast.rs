@@ -202,7 +202,7 @@ pub enum TypeDeclRhs {
     /// An extern type definition:
     /// - `extern type File = "FILE"`
     /// - `extern type Ptr[t] = "`t`*"`
-    Extern(Vec<ExternTypeTemplatePart>),
+    Extern(ExternTypeDeclRhs),
 }
 
 /// A sum type constructor.
@@ -222,6 +222,19 @@ pub enum ConFields {
     Unnamed {
         fields: Vec<L<Type>>,
     },
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternTypeDeclRhs {
+    pub template: Vec<ExternTypeTemplatePart>,
+    pub fields: Vec<ExternTypeField>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternTypeField {
+    pub name: Name,
+    pub fir_type: L<Type>,
+    pub c_type: String,
 }
 
 #[derive(Debug, Clone)]

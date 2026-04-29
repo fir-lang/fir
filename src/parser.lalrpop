@@ -157,6 +157,11 @@ Attribute: Attribute = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TypeDecl: L<TypeDecl> = {
+
+    //
+    // Sums and products
+    //
+
     <l:@L> <attr:Attribute?> <value:"value"?> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
             attr,
@@ -178,6 +183,10 @@ TypeDecl: L<TypeDecl> = {
             type_param_kinds: vec![],
             rhs: Some(rhs),
         }),
+
+    //
+    // Type synonyms
+    //
 
     <l:@L> <attr:Attribute?>
             "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "="
@@ -201,6 +210,10 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(TypeDeclRhs::Synonym(ty)),
         }),
 
+    //
+    // Prim types
+    //
+
     <l:@L> <attr:Attribute?> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
             attr,
@@ -221,30 +234,52 @@ TypeDecl: L<TypeDecl> = {
             rhs: None,
         }),
 
+    //
+    // Extern types
+    //
+
     <l:@L> "extern" "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "="
            BeginStr <interpolations:(<BeginInterpolation> <LExpr> EndInterpolation)*>
-           <end:EndStr> NEWLINE <r:@R> => {
+           <end:EndStr> <fields:("(" <Sep<ExternTypeField, ",">> ")")?> NEWLINE <r:@R> => {
         L::new(module, l, r, TypeDecl {
             attr: None,
             value: false,
             name: type_name.name(),
             type_params,
             type_param_kinds: vec![],
-            rhs: Some(TypeDeclRhs::Extern(extern_type_template_parts(interpolations, end))),
+            rhs: Some(TypeDeclRhs::Extern(ExternTypeDeclRhs {
+                template: extern_type_template_parts(interpolations, end),
+                fields: vec![],
+            })),
         })
     },
 
     <l:@L> "extern" "type" <type_name:UpperId> "="
            BeginStr <interpolations:(<BeginInterpolation> <LExpr> EndInterpolation)*>
-           <end:EndStr> NEWLINE <r:@R> => {
+           <end:EndStr> <fields:("(" <Sep<ExternTypeField, ",">> ")")?> NEWLINE <r:@R> => {
         L::new(module, l, r, TypeDecl {
             attr: None,
             value: false,
             name: type_name.name(),
             type_params: vec![],
             type_param_kinds: vec![],
-            rhs: Some(TypeDeclRhs::Extern(extern_type_template_parts(interpolations, end))),
+            rhs: Some(TypeDeclRhs::Extern(ExternTypeDeclRhs {
+                template: extern_type_template_parts(interpolations, end),
+                fields: fields.unwrap_or(vec![]),
+            })),
         })
+    }
+}
+
+ExternTypeField: ExternTypeField = {
+    <name:LowerId> ":" <fir_type:LType> "=" BeginStr <str:EndStr> => {
+        let c_type = str.text.as_str();
+        let c_type = &c_type[0..c_type.len() - 1]; // drop the "
+        ExternTypeField {
+            name: Name::new(name.smol_str()),
+            fir_type,
+            c_type: c_type.to_string(),
+        }
     }
 }
 
