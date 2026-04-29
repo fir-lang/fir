@@ -37,8 +37,8 @@ div(num: I32, den: I32) DivT:
     inline("div(`num`, `den`)")
 
 
-Ptr.isNull(self: Ptr[t]) Int:
-    inline("`self` == NULL")
+Ptr.isNull(self: Ptr[t]) Bool / exn:
+    inline[U32, exn]("(uint32_t)(`self` == NULL)") != 0
 
 
 Ptr.deref(self: Ptr[t]) t:

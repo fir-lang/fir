@@ -409,7 +409,7 @@ pub(super) fn check_expr(
                 inferred_ty: _,
                 resolved_id: _,
             }) = &fun.node
-                && user_ty_args.is_empty()
+                && (user_ty_args.len() == 0 || user_ty_args.len() == 2)
                 && args.len() == 1
                 && let ast::CallArg {
                     name: None,
@@ -426,9 +426,14 @@ pub(super) fn check_expr(
                 && (mod_prefix.is_some() || tc_state.env.get(name).is_none())
                 && tc_state.module_env.resolve(name, mod_prefix, loc) == builtin_ids::C_INLINE()
             {
-                let expected_ty = match expected_ty {
-                    Some(expected_ty) => expected_ty,
-                    None => panic!("{}: Inline C call needs type annotation", loc_display(loc)),
+                let ret_ty = match user_ty_args.get(0) {
+                    Some(ret_ty) => convert_ast_ty(
+                        &tc_state.tys.tys,
+                        tc_state.module_env,
+                        &ret_ty.node,
+                        &ret_ty.loc,
+                    ),
+                    None => Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
                 };
 
                 // The string argument is type checked as a inline C code template where for the
@@ -474,16 +479,27 @@ pub(super) fn check_expr(
                     loc: loc.clone(),
                     node: ast::Stmt::Expr(ast::Expr::InlineC(ast::InlineCExpr {
                         parts: inline_c_parts,
-                        inferred_ty: Some(expected_ty.clone()),
+                        inferred_ty: Some(ret_ty.clone()),
                     })),
                 });
 
+                let ty = unify_expected_ty(
+                    ret_ty,
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
+                    tc_state.var_gen,
+                    loc,
+                    tc_state.assumps,
+                    tc_state.preds,
+                );
+
                 *expr = ast::Expr::Do(ast::DoExpr {
                     stmts: do_stmts,
-                    inferred_ty: Some(expected_ty.clone()),
+                    inferred_ty: Some(ty.clone()),
                 });
 
-                return (expected_ty.clone(), Default::default());
+                return (ty, Default::default());
             }
 
             let (fun_ty, _) = check_expr(tc_state, &mut fun.node, &fun.loc, None, loop_stack);

@@ -12,23 +12,24 @@ nullTerminated(bytes: Vec[U8]) Array[U8]:
     bytes.push(0)
     bytes.takeArray()
 
+
 extern type File = "FILE"
 
 
-fopen(path: C/Ptr[U8], mode: C/Ptr[U8]) C/Ptr[C/File]:
-    "fopen((const char*)`path`, (const char*)`mode`)"
+fopen(path: C/Ptr[U8], mode: C/Ptr[U8]) C/Ptr[File]:
+    C/inline("fopen((const char*)`path`, (const char*)`mode`)")
 
 
-fclose(stream: C/Ptr[C/File]) C/Int:
-    "fclose(`stream`)"
+fclose(stream: C/Ptr[File]) C/Int:
+    C/inline("fclose(`stream`)")
 
 
-fread(ptr: C/Ptr[U8], size: C/SizeT, nmemb: C/SizeT, stream: C/Ptr[C/File]) C/SizeT:
-    "fread(`ptr`, `size`, `nmemb`, `stream`)"
+fread(ptr: C/Ptr[U8], size: C/SizeT, nmemb: C/SizeT, stream: C/Ptr[File]) C/SizeT:
+    C/inline("fread(`ptr`, `size`, `nmemb`, `stream`)")
 
 
-fwrite(ptr: C/Ptr[U8], size: C/SizeT, nmemb: C/SizeT, stream: C/Ptr[C/File]) C/SizeT:
-    "fwrite(ptr, size, nmemb, stream)"
+fwrite(ptr: C/Ptr[U8], size: C/SizeT, nmemb: C/SizeT, stream: C/Ptr[File]) C/SizeT:
+    C/inline("fwrite(ptr, size, nmemb, stream)")
 
 
 main():
@@ -49,7 +50,7 @@ main():
     let r_mode = nullTerminated(r_mode_v)
 
     # Write "Hi!" to the file.
-    let fw = fopen(path.cPtr(), w_mode.cPtr())
+    let fw = fopen(path.ptr(), w_mode.ptr())
     if fw.isNull():
         panic("fopen for write failed")
 
@@ -57,17 +58,17 @@ main():
     out.set(u32(0), u8(72))  # H
     out.set(u32(1), u8(105)) # i
     out.set(u32(2), u8(33))  # !
-    let nw = fwrite(out.cPtr(), u32(1).toCSize(), u32(3).toCSize(), fw)
+    let nw = fwrite(out.ptr(), u32(1).toCSize(), u32(3).toCSize(), fw)
     printStr("wrote `nw.toU32()` bytes")
     let _ = fclose(fw)
 
     # Read it back.
-    let fr = fopen(path.cPtr(), r_mode.cPtr())
+    let fr = fopen(path.ptr(), r_mode.ptr())
     if fr.isNull():
         panic("fopen for read failed")
 
     let buf: Array[U8] = Array.new(3)
-    let nr = fread(buf.cPtr(), u32(1).toCSize(), u32(3).toCSize(), fr)
+    let nr = fread(buf.ptr(), u32(1).toCSize(), u32(3).toCSize(), fr)
     let _ = fclose(fr)
 
     printStr("read `nr.toU32()` bytes")

@@ -2,17 +2,17 @@
 import [Fir/C as C]
 
 
-extern "sys/time.h" type TimeVal = "struct timeval"(
+extern type TimeVal = "struct timeval"(
     tvSec: I64 = "tv_sec",
     tvUsec: I64 = "tv_usec",
 )
 
 
-allocTimeVal() CPtr[TimeVal]:
+allocTimeVal() C/Ptr[TimeVal]:
     C/inline("calloc(1, sizeof(struct timeval))")
 
 
-freeTimeVal(tv: CPtr[TimeVal]):
+freeTimeVal(tv: C/Ptr[TimeVal]):
     C/inline("free(`tv`)")
 
 
