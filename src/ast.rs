@@ -682,6 +682,9 @@ pub enum Expr {
 
     /// A variant: `~Option.Some(123)`, `~123`.
     Variant(VariantExpr),
+
+    /// An inline C expression, desugared by the type checker from a `C/inline("...")` call.
+    InlineC(InlineCExpr),
 }
 
 #[derive(Debug, Clone)]
@@ -925,6 +928,18 @@ pub struct RecordExpr {
 pub struct VariantExpr {
     pub expr: Box<L<Expr>>,
     pub inferred_ty: Option<Ty>,
+}
+
+#[derive(Debug, Clone)]
+pub struct InlineCExpr {
+    pub parts: Vec<InlineCPart>,
+    pub inferred_ty: Option<Ty>,
+}
+
+#[derive(Debug, Clone)]
+pub enum InlineCPart {
+    Str(String),
+    Var(Name), // a local variable
 }
 
 #[derive(Debug, Clone)]
@@ -1456,6 +1471,8 @@ impl Expr {
                 assert!(inferred_ty.is_none());
                 expr.node.subst_ty_ids(substs);
             }
+
+            Expr::InlineC(_) => {}
         }
     }
 
@@ -1473,7 +1490,8 @@ impl Expr {
             | Expr::Fn(FnExpr { inferred_ty, .. })
             | Expr::Do(DoExpr { inferred_ty, .. })
             | Expr::Record(RecordExpr { inferred_ty, .. })
-            | Expr::Variant(VariantExpr { inferred_ty, .. }) => inferred_ty.clone(),
+            | Expr::Variant(VariantExpr { inferred_ty, .. })
+            | Expr::InlineC(InlineCExpr { inferred_ty, .. }) => inferred_ty.clone(),
 
             Expr::Int(IntExpr { kind, .. }) => {
                 let id = match kind.as_ref()? {

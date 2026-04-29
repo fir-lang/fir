@@ -1330,6 +1330,8 @@ fn mono_expr(
                 ),
             })
         }
+
+        ast::Expr::InlineC(parts) => todo!(),
     }
 }
 
