@@ -116,6 +116,10 @@ impl TypeDeclRhs {
                 p.str(" = ");
                 ty.node.print(p);
             }
+
+            TypeDeclRhs::Extern(parts) => {
+                todo!()
+            }
         }
     }
 }

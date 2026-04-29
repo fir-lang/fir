@@ -25,9 +25,9 @@ pub fn derive_eq(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::TopDe
         }
         Some(ast::TypeDeclRhs::Product(fields)) => derive_eq_product(loc, &type_decl.name, fields),
         Some(ast::TypeDeclRhs::Sum { cons, .. }) => derive_eq_sum(loc, &type_decl.name, cons),
-        Some(ast::TypeDeclRhs::Synonym(_)) => {
+        Some(ast::TypeDeclRhs::Synonym(_) | ast::TypeDeclRhs::Extern(_)) => {
             // Should be caught at the call site.
-            panic!("BUG: Type synonym in derive(Eq) macro")
+            panic!("BUG: Type synonym or extern type in derive(Eq) macro")
         }
     };
 

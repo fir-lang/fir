@@ -74,6 +74,7 @@ extern {
         "do" => Token { kind: TokenKind::Do, .. },
         "elif" => Token { kind: TokenKind::Elif, .. },
         "else" => Token { kind: TokenKind::Else, .. },
+        "extern" => Token { kind: TokenKind::Extern, .. },
         "fn" => Token { kind: TokenKind::Fn, .. },
         "for" => Token { kind: TokenKind::For, .. },
         "if" => Token { kind: TokenKind::If, .. },
@@ -219,6 +220,18 @@ TypeDecl: L<TypeDecl> = {
             type_param_kinds: vec![],
             rhs: None,
         }),
+
+    <l:@L> "extern" "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "="
+           BeginStr <interpolations:(<BeginInterpolation> <LExpr> EndInterpolation)*>
+           <end:EndStr> NEWLINE <r:@R> => {
+        todo!()
+    },
+
+    <l:@L> "extern" "type" <type_name:UpperId> "="
+           BeginStr <interpolations:(<BeginInterpolation> <LExpr> EndInterpolation)*>
+           <end:EndStr> NEWLINE <r:@R> => {
+        todo!()
+    }
 }
 
 TypeDeclRhs: TypeDeclRhs = {

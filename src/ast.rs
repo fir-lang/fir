@@ -198,6 +198,11 @@ pub enum TypeDeclRhs {
 
     /// A type synonym: `type Foo = U32`.
     Synonym(L<Type>),
+
+    /// An extern type definition:
+    /// - `extern type File = "FILE"`
+    /// - `extern type Ptr[t] = "`t`*"`
+    Extern(Vec<StrPart>),
 }
 
 /// A sum type constructor.

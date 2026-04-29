@@ -2698,6 +2698,10 @@ fn mono_ty_decl(
         ast::TypeDeclRhs::Synonym(_) => {
             panic!("Type synonyms should be expanded before monomorphization")
         }
+
+        ast::TypeDeclRhs::Extern(parts) => {
+            todo!()
+        }
     });
 
     mono_pgm.ty.get_mut(&mono_ty_id).unwrap().insert(

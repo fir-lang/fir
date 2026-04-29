@@ -432,6 +432,8 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                         }),
 
                         ast::TypeDeclRhs::Synonym(_) => unreachable!(),
+
+                        ast::TypeDeclRhs::Extern(_) => todo!(),
                     },
 
                     None => TyConDetails::Type(TypeDetails {
@@ -1359,6 +1361,10 @@ fn collect_schemes(
                         // Synonyms are skipped above.
                         unreachable!()
                     }
+
+                    ast::TypeDeclRhs::Extern(_) => {
+                        todo!()
+                    }
                 }
             }
 
@@ -2271,7 +2277,7 @@ fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, ctx: &SynonymCtx<'_>) 
         Some(ast::TypeDeclRhs::Synonym(rhs)) => {
             expand_synonyms_in_ty(&mut rhs.node, ctx);
         }
-        None => {}
+        Some(ast::TypeDeclRhs::Extern(_)) | None => {}
     }
 }
 
