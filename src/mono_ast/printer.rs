@@ -74,6 +74,44 @@ impl TypeDeclRhs {
             TypeDeclRhs::Product(fields) => {
                 print_con_fields(fields, p);
             }
+
+            TypeDeclRhs::Extern(ExternType { template, fields }) => {
+                p.str(" = \"");
+                for part in template.iter() {
+                    match part {
+                        ExternTypeTemplatePart::C(s) => {
+                            crate::ast::printer::escape_str_lit(s, p);
+                        }
+                        ExternTypeTemplatePart::TyArg(ty) => {
+                            p.char('`');
+                            ty.print(p);
+                            p.char('`');
+                        }
+                    }
+                }
+                p.char('"');
+                if !fields.is_empty() {
+                    p.char('(');
+                    p.indented(|p| {
+                        for ExternField {
+                            fir_name,
+                            ty,
+                            c_name,
+                        } in fields.iter()
+                        {
+                            p.nl();
+                            p.str(fir_name);
+                            p.str(": ");
+                            ty.print(p);
+                            p.str(" = \"");
+                            crate::ast::printer::escape_str_lit(c_name, p);
+                            p.str("\",");
+                        }
+                    });
+                    p.nl();
+                    p.char(')');
+                }
+            }
         }
     }
 }

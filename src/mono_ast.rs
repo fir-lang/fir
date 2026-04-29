@@ -30,6 +30,7 @@ pub struct TypeDecl {
 pub enum TypeDeclRhs {
     Sum(Vec<ConDecl>),
     Product(ConFields),
+    Extern(ExternType),
 }
 
 #[derive(Debug, Clone)]
@@ -43,6 +44,33 @@ pub enum ConFields {
     Empty,
     Named(OrdMap<Name, Type>),
     Unnamed(Vec<Type>),
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternType {
+    pub template: Vec<ExternTypeTemplatePart>,
+    pub fields: Vec<ExternField>,
+}
+
+#[derive(Debug, Clone)]
+pub enum ExternTypeTemplatePart {
+    /// Raw C text from the original template.
+    C(String),
+
+    /// Concrete type substituted for an AST template's type variable.
+    TyArg(Type),
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternField {
+    /// Fir name of the field.
+    pub fir_name: Name,
+
+    /// Field type with the enclosing type's parameters substituted.
+    pub ty: Type,
+
+    /// Name of the field in the C struct.
+    pub c_name: String,
 }
 
 // Note: `Type` is used in maps and sets and it *cannot* have `Loc`s in it to avoid duplicating

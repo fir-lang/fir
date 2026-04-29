@@ -704,7 +704,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     }
                 }
 
-                Some(mono::TypeDeclRhs::Product(_)) | None => {
+                Some(mono::TypeDeclRhs::Product(_)) | Some(mono::TypeDeclRhs::Extern(_)) | None => {
                     product_con_nums
                         .entry(con_id.clone())
                         .or_default()
@@ -867,6 +867,10 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 con_decl.value,
                             ));
                             con_indices.push(idx);
+                        }
+
+                        mono::TypeDeclRhs::Extern(_) => {
+                            todo!()
                         }
                     }
                     NamedTypeRhs::Source(rhs.clone())
@@ -1675,6 +1679,14 @@ fn lower_expr(
 
                 Some(mono::TypeDeclRhs::Product(fields)) => fields,
 
+                Some(mono::TypeDeclRhs::Extern(_)) => {
+                    todo!(
+                        "{}: Constructor selection on extern type {} is not implemented yet",
+                        loc_display(loc),
+                        ty_id
+                    );
+                }
+
                 None => &mono::ConFields::Empty,
             };
 
@@ -1740,6 +1752,13 @@ fn lower_expr(
                                 )
                             }
                         },
+                        Some(mono::TypeDeclRhs::Extern(_)) => {
+                            todo!(
+                                "{}: Field selection on extern type {} is not implemented yet",
+                                loc_display(loc),
+                                name
+                            );
+                        }
                     }
                 }
 
@@ -2361,6 +2380,14 @@ fn lower_pat(
                 }
 
                 Some(mono::TypeDeclRhs::Product(fields)) => fields,
+
+                Some(mono::TypeDeclRhs::Extern(_)) => {
+                    todo!(
+                        "{}: Pattern match against extern type {} is not implemented yet",
+                        loc_display(loc),
+                        ty
+                    );
+                }
 
                 None => panic!(
                     "BUG: {}: Type {} doesn't have any constructors",

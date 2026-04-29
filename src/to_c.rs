@@ -531,6 +531,9 @@ fn source_decl_to_c(
             assert_eq!(con_indices.len(), 1);
             gen_source_con_struct(&ty.name, &ty.ty_args, fields, con_indices[0], true, pgm, p);
         }
+        mono::TypeDeclRhs::Extern(_) => {
+            // Extern types are imported from C headers.
+        }
     }
 }
 
@@ -2783,6 +2786,11 @@ fn type_decl_deps_(
                         }
                     }
                 },
+                mono::TypeDeclRhs::Extern(ext) => {
+                    for f in ext.fields.iter() {
+                        type_deps(named_tys, record_tys, variant_tys, types, &f.ty, deps);
+                    }
+                }
             },
             NamedTypeRhs::Builtin(_, _) => {
                 for ty in ty_args {
