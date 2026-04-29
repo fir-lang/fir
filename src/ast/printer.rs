@@ -982,8 +982,22 @@ impl Expr {
                 expr.node.print(p);
             }
 
-            Expr::InlineC(parts) => {
-                todo!()
+            Expr::InlineC(InlineCExpr { parts, inferred_ty }) => {
+                p.str("inline(\"");
+                for part in parts {
+                    match part {
+                        InlineCPart::Str(s) => escape_str_lit(s, p),
+                        InlineCPart::Var(name) => {
+                            p.char('`');
+                            p.str(name);
+                            p.char('`');
+                        }
+                    }
+                }
+                p.str("\")");
+                if let Some(ty) = inferred_ty {
+                    write!(p, " #| inferred type = {ty} |#").unwrap();
+                }
             }
         }
     }

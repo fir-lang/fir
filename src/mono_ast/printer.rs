@@ -536,7 +536,21 @@ impl Expr {
                 expr.node.print(p);
             }
 
-            Expr::InlineC(InlineCExpr { parts, ty }) => todo!(),
+            Expr::InlineC(InlineCExpr { parts, ty }) => {
+                p.str("inline(\"");
+                for part in parts {
+                    match part {
+                        InlineCPart::Str(s) => crate::ast::printer::escape_str_lit(s, p),
+                        InlineCPart::Var(name) => {
+                            p.char('`');
+                            p.str(name);
+                            p.char('`');
+                        }
+                    }
+                }
+                p.str("\")");
+                write!(p, " #| ty = {ty} |#").unwrap();
+            }
         }
     }
 }

@@ -367,7 +367,18 @@ impl Expr {
                 expr.node.print(p);
             }
 
-            Expr::InlineC { parts } => todo!(),
+            Expr::InlineC { parts } => {
+                p.str("inline(\"");
+                for part in parts {
+                    match part {
+                        InlineCPart::Str(s) => crate::ast::printer::escape_str_lit(s, p),
+                        InlineCPart::Var(local_idx) => {
+                            write!(p, "`local{}`", local_idx.0).unwrap();
+                        }
+                    }
+                }
+                p.str("\")");
+            }
         }
     }
 }
