@@ -25,7 +25,7 @@ interpreter_unit_test:
     cargo test
 
 interpreter_golden_test: build
-    goldentests target/debug/fir Tests '# ' --glob='!Tests/Modules/*'
+    goldentests target/debug/fir Tests '# ' --glob='!Tests/Modules/*' --glob='!Tests/C/*'
 
 c_golden_test: build
     FIR_RUN_C=true goldentests target/debug/fir Tests '# ' --glob='!Tests/Interpreter/*' --glob='!Tests/Modules/*'
@@ -46,7 +46,7 @@ interpreter_update_goldens: build
     #!/usr/bin/env bash
     shopt -s globstar
 
-    goldentests target/debug/fir Tests '# ' --overwrite --glob='!Tests/Modules/*'
+    goldentests target/debug/fir Tests '# ' --overwrite --glob='!Tests/Modules/*' --glob='!Tests/C/*'
 
     # goldentests leaves two newlines at the end of the files, remove one of
     # them.
