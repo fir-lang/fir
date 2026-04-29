@@ -708,7 +708,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     }
                 }
 
-                Some(mono::TypeDeclRhs::Product(_)) | Some(mono::TypeDeclRhs::Extern(_)) | None => {
+                Some(mono::TypeDeclRhs::Product(_)) | None => {
                     product_con_nums
                         .entry(con_id.clone())
                         .or_default()
@@ -718,6 +718,10 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
                             idx
                         });
+                }
+
+                Some(mono::TypeDeclRhs::Extern(_)) => {
+                    // Don't allocate heap obj indices for extern types.
                 }
             }
         }
@@ -874,7 +878,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         }
 
                         mono::TypeDeclRhs::Extern(_) => {
-                            continue;
+                            // Don't allocate heap obj indices for extern types.
                         }
                     }
                     NamedTypeRhs::Source(rhs.clone())

@@ -29,7 +29,7 @@ fread(ptr: C/Ptr[U8], size: C/SizeT, nmemb: C/SizeT, stream: C/Ptr[File]) C/Size
 
 
 fwrite(ptr: C/Ptr[U8], size: C/SizeT, nmemb: C/SizeT, stream: C/Ptr[File]) C/SizeT:
-    C/inline("fwrite(ptr, size, nmemb, stream)")
+    C/inline("fwrite(`ptr`, `size`, `nmemb`, `stream`)")
 
 
 main():
