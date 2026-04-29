@@ -305,7 +305,8 @@ fn visit_expr(
         | mono::Expr::AssocFnSel(_)
         | mono::Expr::Int(_)
         | mono::Expr::Char(_)
-        | mono::Expr::Str(_) => {}
+        | mono::Expr::Str(_)
+        | mono::Expr::InlineC(_) => {}
 
         mono::Expr::FieldSel(mono::FieldSelExpr {
             object,

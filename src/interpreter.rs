@@ -715,6 +715,10 @@ fn eval<W: Write>(
             // Also note: currently the only value types are integer types.
             eval(w, pgm, heap, locals, &expr.node, &expr.loc, call_stack)
         }
+
+        Expr::InlineC { .. } => {
+            panic!("{}: Interpreter cannot run inline C", loc_display(loc));
+        }
     }
 }
 

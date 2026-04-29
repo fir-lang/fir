@@ -1331,7 +1331,25 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::InlineC(parts) => todo!(),
+        ast::Expr::InlineC(ast::InlineCExpr { parts, inferred_ty }) => {
+            mono::Expr::InlineC(mono::InlineCExpr {
+                parts: parts
+                    .iter()
+                    .map(|part| match part {
+                        ast::InlineCPart::Str(str) => mono::InlineCPart::Str(str.clone()),
+                        ast::InlineCPart::Var(var) => mono::InlineCPart::Var(var.clone()),
+                    })
+                    .collect(),
+                ty: mono_tc_ty(
+                    inferred_ty.as_ref().unwrap(),
+                    ty_map,
+                    poly_pgm,
+                    mono_pgm,
+                    mangler,
+                    module_env,
+                ),
+            })
+        }
     }
 }
 

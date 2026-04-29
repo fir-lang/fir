@@ -2229,6 +2229,19 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.nl();
             w!(p, "}})");
         }
+
+        Expr::InlineC { parts } => {
+            for part in parts {
+                match part {
+                    InlineCPart::Str(str) => {
+                        w!(p, "{str}");
+                    }
+                    InlineCPart::Var(local_idx) => {
+                        w!(p, "_{}", local_idx.as_usize());
+                    }
+                }
+            }
+        }
     }
 }
 

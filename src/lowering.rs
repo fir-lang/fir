@@ -450,6 +450,10 @@ pub enum Expr {
         expr_ty: mono::Type,
         variant_ty: OrdMap<Name, mono::NamedType>,
     },
+
+    InlineC {
+        parts: Vec<InlineCPart>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -502,6 +506,12 @@ pub struct IsExpr {
     pub expr: Box<L<Expr>>,
     pub pat: L<Pat>,
     pub expr_ty: mono::Type,
+}
+
+#[derive(Debug, Clone)]
+pub enum InlineCPart {
+    Str(String),
+    Var(LocalIdx),
 }
 
 #[derive(Debug, Clone)]
@@ -2225,6 +2235,19 @@ fn lower_expr(
                 vars,
             )
         }
+
+        mono::Expr::InlineC(mono::InlineCExpr { parts, ty }) => (
+            Expr::InlineC {
+                parts: parts
+                    .iter()
+                    .map(|part| match part {
+                        mono::InlineCPart::Str(str) => InlineCPart::Str(str.clone()),
+                        mono::InlineCPart::Var(var) => InlineCPart::Var(scope.use_var(var, loc)),
+                    })
+                    .collect(),
+            },
+            Default::default(),
+        ),
     }
 }
 

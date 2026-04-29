@@ -535,6 +535,8 @@ impl Expr {
                 p.char('~');
                 expr.node.print(p);
             }
+
+            Expr::InlineC(InlineCExpr { parts, ty }) => todo!(),
         }
     }
 }

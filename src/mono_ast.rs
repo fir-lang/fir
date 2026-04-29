@@ -324,6 +324,7 @@ pub enum Expr {
     Do(Vec<L<Stmt>>, Type),
     Record(RecordExpr),
     Variant(VariantExpr),
+    InlineC(InlineCExpr),
 }
 
 impl Expr {
@@ -338,7 +339,8 @@ impl Expr {
             | Expr::Do(_, ty)
             | Expr::Return(_, ty)
             | Expr::Match(MatchExpr { ty, .. })
-            | Expr::If(IfExpr { ty, .. }) => ty.clone(),
+            | Expr::If(IfExpr { ty, .. })
+            | Expr::InlineC(InlineCExpr { ty, .. }) => ty.clone(),
 
             Expr::Int(IntExpr { kind, .. }) => {
                 let con = match kind.unwrap() {
@@ -417,6 +419,18 @@ pub struct RecordExpr {
 pub struct VariantExpr {
     pub expr: Box<L<Expr>>,
     pub ty: OrdMap<Name, NamedType>, // the variant type
+}
+
+#[derive(Debug, Clone)]
+pub struct InlineCExpr {
+    pub parts: Vec<InlineCPart>,
+    pub ty: Type,
+}
+
+#[derive(Debug, Clone)]
+pub enum InlineCPart {
+    Str(String),
+    Var(Name),
 }
 
 #[derive(Debug, Clone)]
