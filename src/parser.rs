@@ -1,8 +1,8 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: eb0d0dbad538d2810f1f94a0a39401d9ec5c22b309029e84c349acbe8075b2fb
+// sha3: 7bbe93a3dc42b4d838c79f1bc998374dbef1b361b23c457c146e086fe71281d5
 #![allow(clippy::all)]
 use crate::ast::*;
-use crate::interpolation::{copy_update_escapes, str_parts};
+use crate::interpolation::*;
 use crate::module::ModulePath;
 use crate::parser_utils::*;
 use crate::token::*;
@@ -21,7 +21,7 @@ extern crate alloc;
 mod __parse__LExpr {
 
     use crate::ast::*;
-    use crate::interpolation::{str_parts, copy_update_escapes};
+    use crate::interpolation::*;
     use crate::module::ModulePath;
     use crate::parser_utils::*;
     use crate::token::*;
@@ -18303,7 +18303,7 @@ pub use self::__parse__LExpr::LExprParser;
 mod __parse__LStmt {
 
     use crate::ast::*;
-    use crate::interpolation::{str_parts, copy_update_escapes};
+    use crate::interpolation::*;
     use crate::module::ModulePath;
     use crate::parser_utils::*;
     use crate::token::*;
@@ -36585,7 +36585,7 @@ pub use self::__parse__LStmt::LStmtParser;
 mod __parse__Module {
 
     use crate::ast::*;
-    use crate::interpolation::{str_parts, copy_update_escapes};
+    use crate::interpolation::*;
     use crate::module::ModulePath;
     use crate::parser_utils::*;
     use crate::token::*;
@@ -56529,7 +56529,24 @@ fn __action14<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<TypeDecl> {
-    { todo!() }
+    {
+        L::new(
+            module,
+            l,
+            r,
+            TypeDecl {
+                attr: None,
+                value: false,
+                name: type_name.name(),
+                type_params,
+                type_param_kinds: vec![],
+                rhs: Some(TypeDeclRhs::Extern(extern_type_template_parts(
+                    interpolations,
+                    end,
+                ))),
+            },
+        )
+    }
 }
 
 #[allow(unused_variables)]
@@ -56551,7 +56568,24 @@ fn __action15<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<TypeDecl> {
-    { todo!() }
+    {
+        L::new(
+            module,
+            l,
+            r,
+            TypeDecl {
+                attr: None,
+                value: false,
+                name: type_name.name(),
+                type_params: vec![],
+                type_param_kinds: vec![],
+                rhs: Some(TypeDeclRhs::Extern(extern_type_template_parts(
+                    interpolations,
+                    end,
+                ))),
+            },
+        )
+    }
 }
 
 #[allow(unused_variables)]

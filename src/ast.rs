@@ -3,7 +3,7 @@
 pub mod printer;
 
 use crate::collections::HashMap;
-use crate::interpolation::StrPart;
+use crate::interpolation::{ExternTypeTemplatePart, StrPart};
 use crate::module::ModulePath;
 pub use crate::name::Name;
 pub use crate::token::IntKind;
@@ -202,7 +202,7 @@ pub enum TypeDeclRhs {
     /// An extern type definition:
     /// - `extern type File = "FILE"`
     /// - `extern type Ptr[t] = "`t`*"`
-    Extern(Vec<StrPart>),
+    Extern(Vec<ExternTypeTemplatePart>),
 }
 
 /// A sum type constructor.

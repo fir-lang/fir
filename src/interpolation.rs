@@ -1,5 +1,7 @@
 use crate::ast;
+use crate::name::Name;
 use crate::token::Token;
+use crate::utils::loc_display;
 
 #[derive(Debug, Clone)]
 pub enum StrPart {
@@ -25,6 +27,53 @@ pub(crate) fn str_parts(
     let str = end.text.as_str();
     let str = &str[..str.len() - 1];
     parts.push(StrPart::Str(copy_update_escapes(str)));
+
+    parts
+}
+
+#[derive(Debug, Clone)]
+pub enum ExternTypeTemplatePart {
+    C(String),
+    Var(ast::L<Name>),
+}
+
+pub(crate) fn extern_type_template_parts(
+    interpolations: Vec<(Token, ast::L<ast::Expr>)>,
+    end: Token,
+) -> Vec<ExternTypeTemplatePart> {
+    let mut parts: Vec<ExternTypeTemplatePart> = Vec::with_capacity(1 + (interpolations.len() * 2));
+
+    for (before, expr) in interpolations {
+        let ty_var = match expr.node {
+            ast::Expr::Var(ast::VarExpr {
+                mod_prefix,
+                name,
+                user_ty_args,
+                ty_args: _,
+                inferred_ty: _,
+                resolved_id: _,
+            }) if mod_prefix.is_none() && user_ty_args.is_empty() => name,
+
+            _ => panic!(
+                "{}: Extern type strings can only have type variables as interpolations",
+                &loc_display(&expr.loc)
+            ),
+        };
+
+        // Drop the `
+        let str = before.text.as_str();
+        let str = &str[..str.len() - 1];
+        parts.push(ExternTypeTemplatePart::C(copy_update_escapes(str)));
+        parts.push(ExternTypeTemplatePart::Var(ast::L {
+            loc: expr.loc.clone(),
+            node: ty_var,
+        }));
+    }
+
+    // Drop the "
+    let str = end.text.as_str();
+    let str = &str[..str.len() - 1];
+    parts.push(ExternTypeTemplatePart::C(copy_update_escapes(str)));
 
     parts
 }

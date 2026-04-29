@@ -1,7 +1,7 @@
 #![allow(clippy::all)]
 
 use crate::ast::*;
-use crate::interpolation::{str_parts, copy_update_escapes};
+use crate::interpolation::*;
 use crate::module::ModulePath;
 use crate::parser_utils::*;
 use crate::token::*;
@@ -224,13 +224,27 @@ TypeDecl: L<TypeDecl> = {
     <l:@L> "extern" "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "="
            BeginStr <interpolations:(<BeginInterpolation> <LExpr> EndInterpolation)*>
            <end:EndStr> NEWLINE <r:@R> => {
-        todo!()
+        L::new(module, l, r, TypeDecl {
+            attr: None,
+            value: false,
+            name: type_name.name(),
+            type_params,
+            type_param_kinds: vec![],
+            rhs: Some(TypeDeclRhs::Extern(extern_type_template_parts(interpolations, end))),
+        })
     },
 
     <l:@L> "extern" "type" <type_name:UpperId> "="
            BeginStr <interpolations:(<BeginInterpolation> <LExpr> EndInterpolation)*>
            <end:EndStr> NEWLINE <r:@R> => {
-        todo!()
+        L::new(module, l, r, TypeDecl {
+            attr: None,
+            value: false,
+            name: type_name.name(),
+            type_params: vec![],
+            type_param_kinds: vec![],
+            rhs: Some(TypeDeclRhs::Extern(extern_type_template_parts(interpolations, end))),
+        })
     }
 }
 
