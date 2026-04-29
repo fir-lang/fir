@@ -310,23 +310,26 @@ fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
         }
         let attr = &attr.expr.node;
         if let ast::Expr::ConSel(ast::Con {
-            mod_prefix: _,
+            mod_prefix,
             ty,
             con,
-            ty_user_ty_args: user_ty_args,
-            ..
-        }) = attr
+            ty_user_ty_args,
+            con_user_ty_args: _,
+            ty_args: _,
+            resolved_ty_id: _,
+            inferred_ty: _,
+        }) = &attr
             && ty == &ast::Name::new_static("NoImplicitPrelude")
-            && con.is_none()
-            && user_ty_args.is_empty()
         {
-            return true;
+            if mod_prefix.is_none() && con.is_none() && ty_user_ty_args.is_empty() {
+                return true;
+            }
+            panic!(
+                "{}: Weird `import` attribute: {}",
+                loc_display(&import.loc),
+                attr
+            );
         }
-        panic!(
-            "{}: Weird `import` attribute: {}",
-            loc_display(&import.loc),
-            attr
-        );
     }
     false
 }
