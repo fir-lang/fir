@@ -1,4 +1,5 @@
 use crate::indenting_printer::Printer;
+use crate::interpolation::ExternTypeTemplatePart;
 use crate::{ast::*, type_checker::RecordOrVariant};
 
 use std::fmt::Write;
@@ -74,6 +75,9 @@ impl TypeDecl {
         if self.rhs.is_none() {
             p.str("prim ");
         }
+        if matches!(&self.rhs, Some(TypeDeclRhs::Extern(_))) {
+            p.str("extern ");
+        }
         p.str("type ");
         p.str(&self.name);
 
@@ -118,7 +122,18 @@ impl TypeDeclRhs {
             }
 
             TypeDeclRhs::Extern(parts) => {
-                todo!()
+                p.str(" = \"");
+                for part in parts.iter() {
+                    match part {
+                        ExternTypeTemplatePart::C(s) => escape_str_lit(s, p),
+                        ExternTypeTemplatePart::Var(name) => {
+                            p.char('`');
+                            p.str(&name.node);
+                            p.char('`');
+                        }
+                    }
+                }
+                p.char('"');
             }
         }
     }
