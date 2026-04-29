@@ -8,9 +8,6 @@ extern type Int = "int"
 extern type SizeT = "size_t"
 
 
-extern type File = "FILE"
-
-
 extern type Ptr[t] = "`t`*"
 
 

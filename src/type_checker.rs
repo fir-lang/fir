@@ -433,7 +433,11 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
 
                         ast::TypeDeclRhs::Synonym(_) => unreachable!(),
 
-                        ast::TypeDeclRhs::Extern(_) => todo!(),
+                        ast::TypeDeclRhs::Extern(_) => TyConDetails::Type(TypeDetails {
+                            cons: Default::default(),
+                            sum: false,
+                            value: false, // not sure about this part
+                        }),
                     },
 
                     None => TyConDetails::Type(TypeDetails {

@@ -12,20 +12,22 @@ nullTerminated(bytes: Vec[U8]) Array[U8]:
     bytes.push(0)
     bytes.takeArray()
 
+extern type File = "FILE"
 
-fopen(path: C/Ptr[U8], mode: C/Ptr[U8]) CPtr[C/File]:
+
+fopen(path: C/Ptr[U8], mode: C/Ptr[U8]) C/Ptr[C/File]:
     "fopen((const char*)`path`, (const char*)`mode`)"
 
 
-fclose(stream: C/Ptr[C/File]) CInt:
+fclose(stream: C/Ptr[C/File]) C/Int:
     "fclose(`stream`)"
 
 
-fread(ptr: C/Ptr[U8], size: C/Size, nmemb: C/Size, stream: C/Ptr[C/File]) C/Size:
+fread(ptr: C/Ptr[U8], size: C/SizeT, nmemb: C/SizeT, stream: C/Ptr[C/File]) C/SizeT:
     "fread(`ptr`, `size`, `nmemb`, `stream`)"
 
 
-fwrite(ptr: C/Ptr[U8], size: C/Size, nmemb: C/Size, stream: C/Ptr[CFile]) C/Size:
+fwrite(ptr: C/Ptr[U8], size: C/SizeT, nmemb: C/SizeT, stream: C/Ptr[C/File]) C/SizeT:
     "fwrite(ptr, size, nmemb, stream)"
 
 
