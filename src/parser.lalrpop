@@ -180,24 +180,24 @@ TypeDecl: L<TypeDecl> = {
 
     <l:@L> <attr:Attribute?>
             "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "="
-            <tl:@L> <ty:Type> <tr:@R> NEWLINE <r:@R> =>
+            <ty:LType> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
             attr,
             value: false,
             name: type_name.name(),
             type_params,
             type_param_kinds: vec![],
-            rhs: Some(TypeDeclRhs::Synonym(L::new(module, tl, tr, ty))),
+            rhs: Some(TypeDeclRhs::Synonym(ty)),
         }),
 
-    <l:@L> <attr:Attribute?> "type" <type_name:UpperId> "=" <tl:@L> <ty:Type> <tr:@R> NEWLINE <r:@R> =>
+    <l:@L> <attr:Attribute?> "type" <type_name:UpperId> "=" <ty:LType> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
             attr,
             value: false,
             name: type_name.name(),
             type_params: vec![],
             type_param_kinds: vec![],
-            rhs: Some(TypeDeclRhs::Synonym(L::new(module, tl, tr, ty))),
+            rhs: Some(TypeDeclRhs::Synonym(ty)),
         }),
 
     <l:@L> <attr:Attribute?> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>

@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: 61bc8799790e3205ca5254cf952d7bc18d929f37416e2efa2d1c5e2966b4133c
+// sha3: fcec948c4c2fa78f336ee07fafb5b09366259b23de647739874f888624a32e43
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -17437,10 +17437,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, "=", Type, NEWLINE => ActionFn(675);
+        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, "=", LType, NEWLINE => ActionFn(675);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
-        let __sym5 = __pop_Variant106(__symbols);
+        let __sym5 = __pop_Variant2(__symbols);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant95(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -17461,10 +17461,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperIdLBracket, TypeParams, "=", Type, NEWLINE => ActionFn(676);
+        // TypeDecl = "type", UpperIdLBracket, TypeParams, "=", LType, NEWLINE => ActionFn(676);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
-        let __sym4 = __pop_Variant106(__symbols);
+        let __sym4 = __pop_Variant2(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant95(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
@@ -17484,10 +17484,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperId, "=", Type, NEWLINE => ActionFn(677);
+        // TypeDecl = Attribute, "type", UpperId, "=", LType, NEWLINE => ActionFn(677);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
-        let __sym4 = __pop_Variant106(__symbols);
+        let __sym4 = __pop_Variant2(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
@@ -17507,10 +17507,10 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperId, "=", Type, NEWLINE => ActionFn(678);
+        // TypeDecl = "type", UpperId, "=", LType, NEWLINE => ActionFn(678);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
-        let __sym3 = __pop_Variant106(__symbols);
+        let __sym3 = __pop_Variant2(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
@@ -35465,10 +35465,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, "=", Type, NEWLINE => ActionFn(675);
+        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, "=", LType, NEWLINE => ActionFn(675);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
-        let __sym5 = __pop_Variant106(__symbols);
+        let __sym5 = __pop_Variant2(__symbols);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant95(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -35489,10 +35489,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperIdLBracket, TypeParams, "=", Type, NEWLINE => ActionFn(676);
+        // TypeDecl = "type", UpperIdLBracket, TypeParams, "=", LType, NEWLINE => ActionFn(676);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
-        let __sym4 = __pop_Variant106(__symbols);
+        let __sym4 = __pop_Variant2(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant95(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
@@ -35512,10 +35512,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperId, "=", Type, NEWLINE => ActionFn(677);
+        // TypeDecl = Attribute, "type", UpperId, "=", LType, NEWLINE => ActionFn(677);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
-        let __sym4 = __pop_Variant106(__symbols);
+        let __sym4 = __pop_Variant2(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
@@ -35535,10 +35535,10 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperId, "=", Type, NEWLINE => ActionFn(678);
+        // TypeDecl = "type", UpperId, "=", LType, NEWLINE => ActionFn(678);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
-        let __sym3 = __pop_Variant106(__symbols);
+        let __sym3 = __pop_Variant2(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
@@ -39561,11 +39561,15 @@ mod __parse__Module {
             119 => match state {
                 36 | 66 | 75..=76 | 96 | 118 | 123 => 348,
                 80 | 126 | 180 => 432,
+                81 => 435,
+                85 => 440,
                 95 => 452,
                 97 => 454,
                 113 => 499,
                 115 => 505,
                 125 => 529,
+                128 => 535,
+                130 => 539,
                 137 => 549,
                 151 => 590,
                 152 => 593,
@@ -39745,11 +39749,7 @@ mod __parse__Module {
             },
             174 => 177,
             175 => match state {
-                81 => 435,
-                85 => 440,
                 89 => 444,
-                128 => 535,
-                130 => 539,
                 _ => 310,
             },
             176 => 311,
@@ -54743,10 +54743,10 @@ mod __parse__Module {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, "=", Type, NEWLINE => ActionFn(675);
+        // TypeDecl = Attribute, "type", UpperIdLBracket, TypeParams, "=", LType, NEWLINE => ActionFn(675);
         assert!(__symbols.len() >= 7);
         let __sym6 = __pop_Variant0(__symbols);
-        let __sym5 = __pop_Variant106(__symbols);
+        let __sym5 = __pop_Variant2(__symbols);
         let __sym4 = __pop_Variant0(__symbols);
         let __sym3 = __pop_Variant95(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
@@ -54767,10 +54767,10 @@ mod __parse__Module {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperIdLBracket, TypeParams, "=", Type, NEWLINE => ActionFn(676);
+        // TypeDecl = "type", UpperIdLBracket, TypeParams, "=", LType, NEWLINE => ActionFn(676);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
-        let __sym4 = __pop_Variant106(__symbols);
+        let __sym4 = __pop_Variant2(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant95(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
@@ -54790,10 +54790,10 @@ mod __parse__Module {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = Attribute, "type", UpperId, "=", Type, NEWLINE => ActionFn(677);
+        // TypeDecl = Attribute, "type", UpperId, "=", LType, NEWLINE => ActionFn(677);
         assert!(__symbols.len() >= 6);
         let __sym5 = __pop_Variant0(__symbols);
-        let __sym4 = __pop_Variant106(__symbols);
+        let __sym4 = __pop_Variant2(__symbols);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
@@ -54813,10 +54813,10 @@ mod __parse__Module {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeDecl = "type", UpperId, "=", Type, NEWLINE => ActionFn(678);
+        // TypeDecl = "type", UpperId, "=", LType, NEWLINE => ActionFn(678);
         assert!(__symbols.len() >= 5);
         let __sym4 = __pop_Variant0(__symbols);
-        let __sym3 = __pop_Variant106(__symbols);
+        let __sym3 = __pop_Variant2(__symbols);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant0(__symbols);
@@ -55541,9 +55541,7 @@ fn __action10<'a>(
     (_, type_name, _): (Loc, Token, Loc),
     (_, type_params, _): (Loc, Vec<TypeParam>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, tl, _): (Loc, Loc, Loc),
-    (_, ty, _): (Loc, Type, Loc),
-    (_, tr, _): (Loc, Loc, Loc),
+    (_, ty, _): (Loc, L<Type>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<TypeDecl> {
@@ -55557,7 +55555,7 @@ fn __action10<'a>(
             name: type_name.name(),
             type_params,
             type_param_kinds: vec![],
-            rhs: Some(TypeDeclRhs::Synonym(L::new(module, tl, tr, ty))),
+            rhs: Some(TypeDeclRhs::Synonym(ty)),
         },
     )
 }
@@ -55575,9 +55573,7 @@ fn __action11<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, type_name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, tl, _): (Loc, Loc, Loc),
-    (_, ty, _): (Loc, Type, Loc),
-    (_, tr, _): (Loc, Loc, Loc),
+    (_, ty, _): (Loc, L<Type>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<TypeDecl> {
@@ -55591,7 +55587,7 @@ fn __action11<'a>(
             name: type_name.name(),
             type_params: vec![],
             type_param_kinds: vec![],
-            rhs: Some(TypeDeclRhs::Synonym(L::new(module, tl, tr, ty))),
+            rhs: Some(TypeDeclRhs::Synonym(ty)),
         },
     )
 }
@@ -65793,22 +65789,15 @@ fn __action586<'a>(
     __2: (Loc, Token, Loc),
     __3: (Loc, Vec<TypeParam>, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Type, Loc),
-    __6: (Loc, Loc, Loc),
-    __7: (Loc, Token, Loc),
-    __8: (Loc, Loc, Loc),
+    __5: (Loc, L<Type>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Loc, Loc),
 ) -> L<TypeDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __start1 = __4.2;
-    let __end1 = __5.0;
     let __temp0 = __action290(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action290(module, &__start1, &__end1);
-    let __temp1 = (__start1, __temp1, __end1);
-    __action10(
-        module, __temp0, __0, __1, __2, __3, __4, __temp1, __5, __6, __7, __8,
-    )
+    __action10(module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7)
 }
 
 #[allow(unused_variables)]
@@ -65823,22 +65812,15 @@ fn __action587<'a>(
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, Type, Loc),
-    __5: (Loc, Loc, Loc),
-    __6: (Loc, Token, Loc),
-    __7: (Loc, Loc, Loc),
+    __4: (Loc, L<Type>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Loc, Loc),
 ) -> L<TypeDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __start1 = __3.2;
-    let __end1 = __4.0;
     let __temp0 = __action290(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action290(module, &__start1, &__end1);
-    let __temp1 = (__start1, __temp1, __end1);
-    __action11(
-        module, __temp0, __0, __1, __2, __3, __temp1, __4, __5, __6, __7,
-    )
+    __action11(module, __temp0, __0, __1, __2, __3, __4, __5, __6)
 }
 
 #[allow(unused_variables)]
@@ -67235,18 +67217,14 @@ fn __action659<'a>(
     __2: (Loc, Token, Loc),
     __3: (Loc, Vec<TypeParam>, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Type, Loc),
+    __5: (Loc, L<Type>, Loc),
     __6: (Loc, Token, Loc),
 ) -> L<TypeDecl> {
-    let __start0 = __5.2;
-    let __end0 = __6.0;
-    let __start1 = __6.2;
-    let __end1 = __6.2;
+    let __start0 = __6.2;
+    let __end0 = __6.2;
     let __temp0 = __action289(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action289(module, &__start1, &__end1);
-    let __temp1 = (__start1, __temp1, __end1);
-    __action586(module, __0, __1, __2, __3, __4, __5, __temp0, __6, __temp1)
+    __action586(module, __0, __1, __2, __3, __4, __5, __6, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -67261,18 +67239,14 @@ fn __action660<'a>(
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, Type, Loc),
+    __4: (Loc, L<Type>, Loc),
     __5: (Loc, Token, Loc),
 ) -> L<TypeDecl> {
-    let __start0 = __4.2;
-    let __end0 = __5.0;
-    let __start1 = __5.2;
-    let __end1 = __5.2;
+    let __start0 = __5.2;
+    let __end0 = __5.2;
     let __temp0 = __action289(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action289(module, &__start1, &__end1);
-    let __temp1 = (__start1, __temp1, __end1);
-    __action587(module, __0, __1, __2, __3, __4, __temp0, __5, __temp1)
+    __action587(module, __0, __1, __2, __3, __4, __5, __temp0)
 }
 
 #[allow(unused_variables)]
@@ -67565,7 +67539,7 @@ fn __action675<'a>(
     __2: (Loc, Token, Loc),
     __3: (Loc, Vec<TypeParam>, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Type, Loc),
+    __5: (Loc, L<Type>, Loc),
     __6: (Loc, Token, Loc),
 ) -> L<TypeDecl> {
     let __start0 = __0.0;
@@ -67587,7 +67561,7 @@ fn __action676<'a>(
     __1: (Loc, Token, Loc),
     __2: (Loc, Vec<TypeParam>, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, Type, Loc),
+    __4: (Loc, L<Type>, Loc),
     __5: (Loc, Token, Loc),
 ) -> L<TypeDecl> {
     let __start0 = __0.0;
@@ -67609,7 +67583,7 @@ fn __action677<'a>(
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, Type, Loc),
+    __4: (Loc, L<Type>, Loc),
     __5: (Loc, Token, Loc),
 ) -> L<TypeDecl> {
     let __start0 = __0.0;
@@ -67630,7 +67604,7 @@ fn __action678<'a>(
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Type, Loc),
+    __3: (Loc, L<Type>, Loc),
     __4: (Loc, Token, Loc),
 ) -> L<TypeDecl> {
     let __start0 = __0.0;
