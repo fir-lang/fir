@@ -153,10 +153,6 @@ pub(crate) mod builtins {
     }
 
     // Fir/C
-    pub fn C_TEMPLATE() -> Id {
-        fir_id("C", "Template")
-    }
-
     pub fn C_INLINE() -> Id {
         fir_id("C", "inline")
     }

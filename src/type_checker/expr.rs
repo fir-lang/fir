@@ -409,7 +409,7 @@ pub(super) fn check_expr(
                 inferred_ty: _,
                 resolved_id: _,
             }) = &fun.node
-                && (user_ty_args.len() == 0 || user_ty_args.len() == 2)
+                && (user_ty_args.is_empty() || user_ty_args.len() == 2)
                 && args.len() == 1
                 && let ast::CallArg {
                     name: None,
@@ -426,7 +426,7 @@ pub(super) fn check_expr(
                 && (mod_prefix.is_some() || tc_state.env.get(name).is_none())
                 && tc_state.module_env.resolve(name, mod_prefix, loc) == builtin_ids::C_INLINE()
             {
-                let ret_ty = match user_ty_args.get(0) {
+                let ret_ty = match user_ty_args.first() {
                     Some(ret_ty) => convert_ast_ty(
                         &tc_state.tys.tys,
                         tc_state.module_env,
@@ -454,7 +454,7 @@ pub(super) fn check_expr(
                             let (expr_ty, _) =
                                 check_expr(tc_state, &mut expr.node, &expr.loc, None, loop_stack);
                             let var_idx = do_stmts.len();
-                            let var = Name::new(&format!("${var_idx}"));
+                            let var = Name::new(format!("${var_idx}"));
                             do_stmts.push(ast::L {
                                 loc: expr.loc.clone(),
                                 node: ast::Stmt::Let(ast::LetStmt {

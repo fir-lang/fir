@@ -2270,7 +2270,7 @@ fn lower_expr(
             )
         }
 
-        mono::Expr::InlineC(mono::InlineCExpr { parts, ty }) => (
+        mono::Expr::InlineC(mono::InlineCExpr { parts, ty: _ }) => (
             Expr::InlineC {
                 parts: parts
                     .iter()
