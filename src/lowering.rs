@@ -282,6 +282,10 @@ pub enum BuiltinFunDecl {
         t: mono::Type,
     },
 
+    ArrayPtr {
+        t: mono::Type,
+    },
+
     ReadFileUtf8,
 
     GetArgs,
@@ -870,7 +874,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         }
 
                         mono::TypeDeclRhs::Extern(_) => {
-                            todo!()
+                            continue;
                         }
                     }
                     NamedTypeRhs::Source(rhs.clone())
@@ -1462,6 +1466,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
                                 let t = fun_ty_args[0].clone();
                                 BuiltinFunDecl::ArrayCopyWithin { t }
+                            }
+
+                            ("Array", "ptr") => {
+                                // prim Array.ptr(self: Array[t]) Ptr[t]
+                                assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                                let t = fun_ty_args[0].clone();
+                                BuiltinFunDecl::ArrayPtr { t }
                             }
 
                             ("I32", "asU32") => {

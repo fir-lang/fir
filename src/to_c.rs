@@ -1358,6 +1358,25 @@ fn builtin_fun_to_c(
             );
         }
 
+        BuiltinFunDecl::ArrayPtr { t } => {
+            let t_ty = c_ty(t, pgm);
+            let array_ty = c_ty(
+                &mono::Type::Named(mono::NamedType {
+                    name: Name::new_static("Array"),
+                    args: vec![t.clone()],
+                }),
+                pgm,
+            );
+            writedoc!(
+                p,
+                "
+                static {t_ty}* _fun_{idx}({array_ty} arr) {{
+                    return arr.data_ptr;
+                }}
+                ",
+            );
+        }
+
         // End of array functions //////////////////////////////////////////////////////////////////
         BuiltinFunDecl::ReadFileUtf8 => {
             writedoc!(

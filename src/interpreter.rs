@@ -1434,6 +1434,13 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(pgm.unit_alloc)
         }
 
+        BuiltinFunDecl::ArrayPtr { t: _ } => {
+            panic!(
+                "{}: Interpreter does not support Array.ptr",
+                loc_display(loc)
+            );
+        }
+
         BuiltinFunDecl::ReadFileUtf8 => {
             debug_assert_eq!(args.len(), 1);
             let path = args[0];
