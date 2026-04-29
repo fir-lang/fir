@@ -420,6 +420,10 @@ pub(super) fn check_expr(
                         },
                 } = &mut args[0]
                 && splice.is_none()
+                // The next condition checks whether the variable is a local. `ModuleEnv::resolve`
+                // panics for local variables so we can't call it directly. This is the same special
+                // case we have in `VarExpr` handling above.
+                && (mod_prefix.is_some() || tc_state.env.get(name).is_none())
                 && tc_state.module_env.resolve(name, mod_prefix, loc) == builtin_ids::C_INLINE()
             {
                 let expected_ty = match expected_ty {
