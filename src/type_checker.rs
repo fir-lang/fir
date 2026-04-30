@@ -2367,7 +2367,7 @@ fn expand_synonyms_in_ty(ty: &mut ast::Type, ctx: &SynonymCtx<'_>) {
             is_row: _,
         } => {
             for (_, field_ty) in fields {
-                expand_synonyms_in_ty(field_ty, ctx);
+                expand_synonyms_in_ty(&mut field_ty.node, ctx);
             }
             if let Some(ext) = extension {
                 expand_synonyms_in_ty(&mut ext.node, ctx);
@@ -2430,7 +2430,7 @@ fn subst_ast_ty_vars(ty: &mut ast::Type, vars: &HashMap<Name, &ast::Type>) {
             is_row: _,
         } => {
             for (_, field_ty) in fields {
-                subst_ast_ty_vars(field_ty, vars);
+                subst_ast_ty_vars(&mut field_ty.node, vars);
             }
             if let Some(ext) = extension {
                 subst_ast_ty_vars(&mut ext.node, vars);

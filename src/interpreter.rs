@@ -8,6 +8,7 @@ use heap::Heap;
 
 use crate::ast::{self, L, Loc, Name};
 use crate::lowering::*;
+use crate::mono_ast as mono;
 use crate::utils::loc_display;
 
 use std::cmp::Ordering;
@@ -254,6 +255,39 @@ macro_rules! val {
             ControlFlow::Unwind(val) => return ControlFlow::Unwind(val),
         }
     };
+}
+
+/// Value sizes, used in arrays.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Repr {
+    U8,
+    U32,
+    U64,
+}
+
+impl Repr {
+    fn from_mono_ty(mono_ty: &mono::Type) -> Repr {
+        match mono_ty {
+            mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                match name.as_str() {
+                    "I8" | "U8" => Repr::U8,
+                    "I32" | "U32" => Repr::U32,
+                    "I64" | "U64" => Repr::U64,
+                    _ => Repr::U64, // box
+                }
+            }
+
+            mono::Type::Record { .. } | mono::Type::Variant { .. } | mono::Type::Fn(_) => Repr::U64,
+        }
+    }
+
+    fn elem_size_in_bytes(&self) -> usize {
+        match self {
+            Repr::U8 => 1,
+            Repr::U32 => 4,
+            Repr::U64 => 8,
+        }
+    }
 }
 
 fn call_fun<W: Write>(

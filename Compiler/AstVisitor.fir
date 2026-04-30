@@ -362,7 +362,6 @@ defaultVisitFieldSelExpr[Visitor[v]](v: v, e: CFieldSelExpr):
 
 defaultVisitAssocFnSelExpr[Visitor[v]](v: v, e: CAssocFnSelExpr):
     v.visitTyId(e.ty)
-    v.visitAssocVarId(e.member)
     if e.userTyArgs is Option.Some(args):
         v.visitTyArgs(args)
 

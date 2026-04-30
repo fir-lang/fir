@@ -927,7 +927,7 @@ AssocFnSelExpr.format(self: AssocFnSelExpr, tokens: Array[Token]) Doc:
             + formatToken(self.ty.token, tokens)
             + Doc.break_(0)
             + formatToken(dot, tokens)
-            + formatToken(self.member.token, tokens)
+            + formatToken(self.member, tokens)
             + formatTyArgs(self.userTyArgs, tokens),
     )
 

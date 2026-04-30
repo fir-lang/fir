@@ -153,41 +153,6 @@ impl ClosureIdx {
     }
 }
 
-// For now we will monomorphise fully but allocate anything other than integeres, bools, and chars
-// as boxes. We also don't need to distinguish pointers from other word-sized things as we don't
-// have a garbage collection yet.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Repr {
-    U8,
-    U32,
-    U64,
-}
-
-impl Repr {
-    pub fn from_mono_ty(mono_ty: &mono::Type) -> Repr {
-        match mono_ty {
-            mono::Type::Named(mono::NamedType { name, args: _ }) => {
-                match name.as_str() {
-                    "I8" | "U8" => Repr::U8,
-                    "I32" | "U32" => Repr::U32,
-                    "I64" | "U64" => Repr::U64,
-                    _ => Repr::U64, // box
-                }
-            }
-
-            mono::Type::Record { .. } | mono::Type::Variant { .. } | mono::Type::Fn(_) => Repr::U64,
-        }
-    }
-
-    pub fn elem_size_in_bytes(&self) -> usize {
-        match self {
-            Repr::U8 => 1,
-            Repr::U32 => 4,
-            Repr::U64 => 8,
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct Fun {
     pub parent_ty: Option<L<Name>>,

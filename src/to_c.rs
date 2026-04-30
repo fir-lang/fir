@@ -93,11 +93,22 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         // non-value types, in `Array` structs we can refer to value types in a pointer type (the
         // `data_ptr` field), so value types also need to be forward declared.
         for type_idx in scc {
-            if let TypeDecl::Named(named_type) = &pgm.types[type_idx.as_usize()]
-                && matches!(&named_type.rhs, NamedTypeRhs::Source(_))
-            {
-                let struct_name = named_type_struct_name(&named_type.name, &named_type.ty_args);
-                wln!(p, "typedef struct {struct_name} {struct_name};");
+            match &pgm.types[type_idx.as_usize()] {
+                TypeDecl::Named(named_type) => {
+                    if matches!(&named_type.rhs, NamedTypeRhs::Source(_)) {
+                        let struct_name =
+                            named_type_struct_name(&named_type.name, &named_type.ty_args);
+                        wln!(p, "typedef struct {struct_name} {struct_name};");
+                    }
+                }
+                TypeDecl::Record(record_ty, _) => {
+                    let struct_name = record_struct_name(record_ty);
+                    wln!(p, "typedef struct {struct_name} {struct_name};");
+                }
+                TypeDecl::Variant(variant_ty) => {
+                    let struct_name = variant_struct_name(variant_ty);
+                    wln!(p, "typedef struct {struct_name} {struct_name};");
+                }
             }
         }
         p.nl();

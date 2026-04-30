@@ -33,7 +33,7 @@ trait Iterator[iter, exn]:
                 return Bool.False
         Bool.True
 
-    chain(self: iter, other: other) Chain[iter, other, Item, exn]:
+    chain(self: iter, other: other) Chain[iter, other, exn]:
         Chain(iter1 = Option.Some(self), iter2 = Option.Some(other))
 
     filter(self: iter, f: Fn(Item) Bool / exn) Filter[iter, Item, exn]:
@@ -373,7 +373,7 @@ impl Clone[Empty[item]]:
 # --------------------------------------------------------------------------------------------------
 
 
-type Chain[iter1, iter2, item, exn](
+type Chain[iter1, iter2, exn](
     iter1: Option[iter1],
     iter2: Option[iter2],
 )
@@ -382,12 +382,11 @@ type Chain[iter1, iter2, item, exn](
 impl[
     Iterator[iter1, exn],
     Iterator[iter2, exn],
-    Iterator[iter1, exn].Item = item,
-    Iterator[iter2, exn].Item = item,
-] Iterator[Chain[iter1, iter2, item, exn], exn]:
-    type Item = item
+    Iterator[iter1, exn].Item = Iterator[iter2, exn].Item,
+] Iterator[Chain[iter1, iter2, exn], exn]:
+    type Item = Iterator[iter2, exn].Item
 
-    next(self: Chain[iter1, iter2, item, exn]) Option[Item] / exn:
+    next(self: Chain[iter1, iter2, exn]) Option[Item] / exn:
         if self.iter1 is Option.Some(iter1):
             match iter1.next():
                 Option.Some(val): return Option.Some(val)
@@ -400,7 +399,7 @@ impl[
 
         Option.None
 
-    size(self: Chain[iter1, iter2, item, exn]) Option[U32] / exn2:
+    size(self: Chain[iter1, iter2, exn]) Option[U32] / exn2:
         let hint: U32 = 0
 
         if self.iter1 is Option.Some(iter):
@@ -416,8 +415,8 @@ impl[
         Option.Some(hint)
 
 
-impl[Clone[iter1], Clone[iter2]] Clone[Chain[iter1, iter2, item, exn]]:
-    clone(self: Chain[iter1, iter2, item, exn]) Chain[iter1, iter2, item, exn]:
+impl[Clone[iter1], Clone[iter2]] Clone[Chain[iter1, iter2, exn]]:
+    clone(self: Chain[iter1, iter2, exn]) Chain[iter1, iter2, exn]:
         Chain(iter1 = self.iter1.clone(), iter2 = self.iter2.clone())
 
 

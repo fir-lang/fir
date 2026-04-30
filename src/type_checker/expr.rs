@@ -1495,10 +1495,11 @@ pub(super) fn check_expr(
             /*
             Functions used in the desugaring:
 
-            - empty:    [?exn] Fn() Empty / ?exn
+            - empty:    [item, ?exn] Fn() Empty[item] / ?exn
             - once:     [t, ?exn] Fn(t) Once[t] / ?exn
-            - onceWith: [exn, t, ?exn] Fn(Fn() : t / exn) OnceWith[t, exn] / ?exn
-            - chain:    [iter, item, exn, other, ?exn] [Iterator[iter, item, exn]] Fn(iter, other) Chain[iter, other, item, exn] / ?exn
+            - chain:    [iter: *, exn: *, other: *, ?exn: *]
+                        [Iterator[iter, exn]]
+                        Fn(iter, other) Chain[iter, other, exn] / ?exn
             */
 
             let iter_ty = ty.clone();

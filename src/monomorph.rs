@@ -69,7 +69,7 @@ struct PolyTraitImpl {
     methods: Vec<ast::FunDecl>,
 
     /// Associated type definitions, e.g. `type Item = t`.
-    assoc_tys: Vec<(Name, ast::Type)>,
+    assoc_tys: Vec<(Name, ast::L<ast::Type>)>,
     // We don't care about predicates, those are for type checking.
     // If a trait use type checks, then we know there will be a match in trait env during monomorph.
 }
@@ -185,7 +185,7 @@ fn pgm_to_poly_pgm(loaded_pgm: &LoadedPgm, module_envs: HashMap<ModulePath, Modu
                                 .iter()
                                 .filter_map(|item| match item {
                                     ast::ImplDeclItem::Type { assoc_ty, rhs } => {
-                                        Some((assoc_ty.node.clone(), rhs.node.clone()))
+                                        Some((assoc_ty.node.clone(), rhs.clone()))
                                     }
                                     ast::ImplDeclItem::Fun(_) => None,
                                 })
@@ -1962,14 +1962,18 @@ fn mono_named_l_pat(
 }
 
 fn mono_l_ty(
-    ty: &ast::L<ast::Type>,
+    l_ty: &ast::L<ast::Type>,
     ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     mangler: &mut IdMangler,
     module_env: &ModuleEnv,
 ) -> ast::L<mono::Type> {
-    ty.map_as_ref(|ty| mono_ast_ty(ty, ty_map, poly_pgm, mono_pgm, mangler, module_env))
+    l_ty.map_as_ref(|ty| {
+        mono_ast_ty(
+            ty, ty_map, poly_pgm, mono_pgm, mangler, module_env, &l_ty.loc,
+        )
+    })
 }
 
 fn mono_opt_l_ty(
@@ -2047,7 +2051,7 @@ fn match_(
         ) => {
             let fields1_map: HashMap<&Name, &ast::Type> = fields1
                 .iter()
-                .map(|(field_name, field_ty)| (field_name, field_ty))
+                .map(|(field_name, field_ty)| (field_name, &field_ty.node))
                 .collect();
 
             let mut fields2_map: HashMap<&Name, &mono::Type> = fields2.iter().collect();
@@ -2202,7 +2206,15 @@ fn resolve_assoc_ty(
             let impl_env = poly_pgm.module_env(&impl_.module);
             for (name, rhs_ty) in &impl_.assoc_tys {
                 if name == assoc_ty {
-                    return mono_ast_ty(rhs_ty, &substs, poly_pgm, mono_pgm, mangler, impl_env);
+                    return mono_ast_ty(
+                        &rhs_ty.node,
+                        &substs,
+                        poly_pgm,
+                        mono_pgm,
+                        mangler,
+                        impl_env,
+                        &rhs_ty.loc,
+                    );
                 }
             }
         }
@@ -2470,6 +2482,7 @@ fn mono_ast_ty(
     mono_pgm: &mut MonoPgm,
     mangler: &mut IdMangler,
     module_env: &ModuleEnv,
+    loc: &ast::Loc,
 ) -> mono::Type {
     match ty {
         ast::Type::Named(ast::NamedType {
@@ -2480,7 +2493,10 @@ fn mono_ast_ty(
             mod_prefix, name, args, ty_map, poly_pgm, mono_pgm, mangler, module_env,
         )),
 
-        ast::Type::Var(var) => ty_map.get(var).unwrap().clone(),
+        ast::Type::Var(var) => ty_map
+            .get(var)
+            .unwrap_or_else(|| panic!("BUG: {}: Variable {} not in env", loc_display(loc), var))
+            .clone(),
 
         ast::Type::Record {
             fields,
@@ -2517,14 +2533,18 @@ fn mono_ast_ty(
             args: mono::FunArgs::Positional(
                 args.iter()
                     .map(|arg| {
-                        mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm, mangler, module_env)
+                        mono_ast_ty(
+                            &arg.node, ty_map, poly_pgm, mono_pgm, mangler, module_env, &arg.loc,
+                        )
                     })
                     .collect(),
             ),
             ret: Box::new(
                 ret.as_ref()
                     .map(|ret| {
-                        mono_ast_ty(&ret.node, ty_map, poly_pgm, mono_pgm, mangler, module_env)
+                        mono_ast_ty(
+                            &ret.node, ty_map, poly_pgm, mono_pgm, mangler, module_env, &ret.loc,
+                        )
                     })
                     .unwrap_or_else(mono::Type::unit),
             ),
@@ -2532,7 +2552,9 @@ fn mono_ast_ty(
                 exceptions
                     .as_ref()
                     .map(|exn| {
-                        mono_ast_ty(&exn.node, ty_map, poly_pgm, mono_pgm, mangler, module_env)
+                        mono_ast_ty(
+                            &exn.node, ty_map, poly_pgm, mono_pgm, mangler, module_env, &exn.loc,
+                        )
                     })
                     .unwrap_or_else(mono::Type::empty),
             ),
@@ -2549,7 +2571,10 @@ fn mono_ast_ty(
                     let mono_args: Vec<mono::Type> = args
                         .iter()
                         .map(|arg| {
-                            mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm, mangler, module_env)
+                            mono_ast_ty(
+                                &arg.node, ty_map, poly_pgm, mono_pgm, mangler, module_env,
+                                &arg.loc,
+                            )
                         })
                         .collect();
                     let assoc_ty_id = module_env.resolve(name, mod_prefix, &ty.loc);
@@ -2585,7 +2610,11 @@ fn mono_ast_named_ty(
     let ty_decl = poly_pgm.ty.get(&con_id).unwrap();
     let mono_args: Vec<mono::Type> = args
         .iter()
-        .map(|arg| mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm, mangler, module_env))
+        .map(|arg| {
+            mono_ast_ty(
+                &arg.node, ty_map, poly_pgm, mono_pgm, mangler, module_env, &arg.loc,
+            )
+        })
         .collect();
     let mono_ty_decl_id = mono_ty_decl(ty_decl, &mono_args, poly_pgm, mono_pgm, &con_id, mangler);
     mono::NamedType {
@@ -2714,13 +2743,17 @@ fn mono_fields(
                 .map(|(name, ty)| {
                     (
                         name.clone(),
-                        mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm, mangler, module_env),
+                        mono_ast_ty(
+                            &ty.node, ty_map, poly_pgm, mono_pgm, mangler, module_env, &ty.loc,
+                        ),
                     )
                 })
                 .collect();
 
             if let Some(ext) = extension {
-                match mono_ast_ty(&ext.node, ty_map, poly_pgm, mono_pgm, mangler, module_env) {
+                match mono_ast_ty(
+                    &ext.node, ty_map, poly_pgm, mono_pgm, mangler, module_env, &ext.loc,
+                ) {
                     mono::Type::Record { fields } => all_fields.extend(fields),
                     other @ (mono::Type::Named(_)
                     | mono::Type::Variant { .. }
@@ -2736,7 +2769,11 @@ fn mono_fields(
         ast::ConFields::Unnamed { fields } => mono::ConFields::Unnamed(
             fields
                 .iter()
-                .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm, mangler, module_env))
+                .map(|ty| {
+                    mono_ast_ty(
+                        &ty.node, ty_map, poly_pgm, mono_pgm, mangler, module_env, &ty.loc,
+                    )
+                })
                 .collect(),
         ),
     }
@@ -2771,7 +2808,7 @@ fn get_variant_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Name, mono::NamedTyp
 }
 
 fn collect_record_labels(
-    ast_fields: &[(Name, ast::Type)],
+    ast_fields: &[(Name, ast::L<ast::Type>)],
     extension: &Option<Box<ast::L<ast::Type>>>,
     ty_map: &HashMap<Name, mono::Type>,
     poly_pgm: &PolyPgm,
@@ -2784,7 +2821,15 @@ fn collect_record_labels(
     for (field_name, field_ty) in ast_fields.iter() {
         let old = fields.insert(
             field_name.clone(),
-            mono_ast_ty(field_ty, ty_map, poly_pgm, mono_pgm, mangler, module_env),
+            mono_ast_ty(
+                &field_ty.node,
+                ty_map,
+                poly_pgm,
+                mono_pgm,
+                mangler,
+                module_env,
+                &field_ty.loc,
+            ),
         );
         if old.is_some() {
             panic!("BUG: Duplicate label in record");

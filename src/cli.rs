@@ -71,6 +71,19 @@ pub fn get_fir_args() -> FirArgs {
                 .help("Print AST after lowering."),
         )
         .arg(
+            clap::Arg::new(TEST_PARSED_AST_PRINTER)
+                .long(TEST_PARSED_AST_PRINTER)
+                .num_args(0)
+                .long_help(indoc::indoc!(
+                    "
+                    After parsing a module, convert it to a string using the AST printer
+                    and parse it from the string again.
+                    This is used to test that the printer prints valid Fir.\
+                    "
+                ))
+                .env("FIR_TEST_PARSED_AST_PRINTER"),
+        )
+        .arg(
             clap::Arg::new(MAIN)
                 .long(MAIN)
                 .num_args(1)
@@ -120,6 +133,7 @@ pub fn get_fir_args() -> FirArgs {
         print_checked_ast: matches.get_flag(PRINT_CHECKED_AST),
         print_mono_ast: matches.get_flag(PRINT_MONO_AST),
         print_lowered_ast: matches.get_flag(PRINT_LOWERED_AST),
+        test_parsed_ast_printer: matches.get_flag(TEST_PARSED_AST_PRINTER),
         main: matches.get_one(MAIN).cloned().unwrap(),
         output: matches.get_one(OUTPUT).cloned(),
         run_c: matches.get_flag(RUN_C),
@@ -149,6 +163,7 @@ const PRINT_EXPANDED_AST: &str = "print-expanded-ast";
 const PRINT_CHECKED_AST: &str = "print-checked-ast";
 const PRINT_MONO_AST: &str = "print-mono-ast";
 const PRINT_LOWERED_AST: &str = "print-lowered-ast";
+const TEST_PARSED_AST_PRINTER: &str = "test-parsed-ast-printer";
 const MAIN: &str = "main";
 const PROGRAM: &str = "program";
 const PROGRAM_ARGS: &str = "program-args";

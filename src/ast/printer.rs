@@ -5,14 +5,21 @@ use std::fmt::Write;
 
 impl Module {
     pub fn print(&self) {
+        print!("{}", self.print_to_string());
+    }
+
+    pub fn print_to_string(&self) -> String {
+        let mut out = String::new();
         for (i, top_decl) in self.decls.iter().enumerate() {
             if i != 0 {
-                println!();
+                out.push('\n');
             }
             let mut p = Printer::new();
             top_decl.node.print(&mut p);
-            println!("{}", p.as_str());
+            out.push_str(p.as_str());
+            out.push('\n');
         }
+        out
     }
 }
 
@@ -61,6 +68,12 @@ impl TypeDecl {
             p.nl();
         }
 
+        if self.value {
+            p.str("value ");
+        }
+        if self.rhs.is_none() {
+            p.str("prim ");
+        }
         p.str("type ");
         p.str(&self.name);
 
@@ -196,13 +209,16 @@ impl TraitDecl {
         p.str(&self.name.node);
         p.char('[');
         p.sep(self.type_params.iter(), ", ", |p, param| param.print(p));
-        p.str("]:");
-        p.indented(|p| {
-            for item in self.items.iter() {
-                p.nl();
-                item.print(p);
-            }
-        });
+        p.char(']');
+        if !self.items.is_empty() {
+            p.char(':');
+            p.indented(|p| {
+                for item in self.items.iter() {
+                    p.nl();
+                    item.print(p);
+                }
+            });
+        }
     }
 }
 
@@ -250,16 +266,19 @@ impl ImplDecl {
         p.str(&self.trait_.node);
         p.char('[');
         p.sep(self.tys.iter(), ", ", |p, ty| ty.node.print(p));
-        p.str("]:");
-        p.indented(|p| {
-            for (i, item) in self.items.iter().enumerate() {
-                if i != 0 {
+        p.char(']');
+        if !self.items.is_empty() {
+            p.char(':');
+            p.indented(|p| {
+                for (i, item) in self.items.iter().enumerate() {
+                    if i != 0 {
+                        p.nl();
+                    }
                     p.nl();
+                    item.print(p);
                 }
-                p.nl();
-                item.print(p);
-            }
-        });
+            });
+        }
     }
 }
 
@@ -301,7 +320,7 @@ impl Type {
                 p.sep(fields.iter(), ", ", |p, (field_name, field_ty)| {
                     p.str(field_name);
                     p.str(": ");
-                    field_ty.print(p);
+                    field_ty.node.print(p);
                 });
                 if let Some(extension) = extension {
                     if !fields.is_empty() {
@@ -323,28 +342,7 @@ impl Type {
                 } else {
                     p.char('[');
                 }
-                p.sep(
-                    alts.iter(),
-                    ", ",
-                    |p,
-                     NamedType {
-                         mod_prefix,
-                         name,
-                         args,
-                     }| {
-                        print_mod_prefix(mod_prefix, p);
-                        p.str(name);
-                        if !args.is_empty() {
-                            p.char('(');
-                            p.sep(args.iter(), ", ", |p, L { loc: _, node }| {
-                                p.str(name);
-                                p.str(": ");
-                                node.print(p);
-                            });
-                            p.char(')');
-                        }
-                    },
-                );
+                p.sep(alts.iter(), ", ", |p, alt| alt.print(p));
                 if let Some(ext) = extension {
                     if !alts.is_empty() {
                         p.str(", ");
@@ -365,11 +363,11 @@ impl Type {
                 p.char(')');
                 if let Some(ret) = ret {
                     p.char(' ');
-                    ret.node.print(p);
+                    print_ty_no_fn(&ret.node, p);
                 }
                 if let Some(exn) = exceptions {
                     p.str(" / ");
-                    exn.node.print(p);
+                    print_ty_no_fn(&exn.node, p);
                 }
             }
 
@@ -451,11 +449,11 @@ impl FunSig {
         p.char(')');
         if let Some(ret_ty) = &self.return_ty {
             p.char(' ');
-            ret_ty.node.print(p);
+            print_ty_no_fn(&ret_ty.node, p);
         }
         if let Some(exn) = &self.exceptions {
             p.str(" / ");
-            exn.node.print(p);
+            print_ty_no_fn(&exn.node, p);
         }
     }
 }
@@ -517,7 +515,7 @@ impl Stmt {
                 if let Some(label) = label {
                     p.char('\'');
                     p.str(label);
-                    p.str(": ");
+                    p.char(' ');
                 }
                 p.str("for ");
                 pat.node.print(p);
@@ -540,7 +538,7 @@ impl Stmt {
                 if let Some(label) = label {
                     p.char('\'');
                     p.str(label);
-                    p.str(": ");
+                    p.char(' ');
                 }
                 p.str("while ");
                 cond.node.print(p);
@@ -579,7 +577,14 @@ impl Expr {
                 user_ty_args,
                 inferred_ty: _,
             }) => {
+                let parens = !is_primary_expr(&object.node);
+                if parens {
+                    p.char('(');
+                }
                 object.node.print(p);
+                if parens {
+                    p.char(')');
+                }
                 p.char('.');
                 p.str(field);
                 print_user_ty_args(user_ty_args, p);
@@ -591,7 +596,14 @@ impl Expr {
                 ty_args,
                 inferred_ty: _,
             }) => {
+                let parens = !is_primary_expr(&object.node);
+                if parens {
+                    p.char('(');
+                }
                 object.node.print(p);
+                if parens {
+                    p.char(')');
+                }
                 match fun {
                     MethodSelFun::Method { ty_id, method_name } => {
                         p.str(".{");
@@ -699,6 +711,15 @@ impl Expr {
                         StrPart::Expr(expr) => {
                             p.char('`');
                             expr.node.print(p);
+                            // If the interpolated expression is a multi-line block (do, if, match,
+                            // lambda), put the closing backtick on a fresh, dedented line so the
+                            // scanner can detect the end of the indented block.
+                            if matches!(
+                                &expr.node,
+                                Expr::Do(_) | Expr::If(_) | Expr::Match(_) | Expr::Fn(_)
+                            ) {
+                                p.nl();
+                            }
                             p.char('`');
                         }
                     }
@@ -782,6 +803,7 @@ impl Expr {
                     if !fields.is_empty() {
                         p.str(", ");
                     }
+                    p.str("..");
                     expr.node.print(p);
                 }
                 p.char(')');
@@ -870,7 +892,7 @@ impl Expr {
                 if let Some(inferred_ty) = inferred_ty {
                     write!(p, " #| inferred type = {inferred_ty} |#").unwrap();
                 }
-                p.str(" {");
+                p.char(':');
                 p.indented(|p| {
                     for stmt in body.iter() {
                         p.nl();
@@ -878,7 +900,6 @@ impl Expr {
                     }
                 });
                 p.nl();
-                p.char('}');
             }
 
             Expr::Is(IsExpr { expr, pat }) => {
@@ -1024,11 +1045,9 @@ impl Pat {
             }
 
             Pat::Or(pat1, pat2) => {
-                p.char('(');
                 pat1.node.print(p);
-                p.str(") | (");
+                p.str(" | ");
                 pat2.node.print(p);
-                p.char(')');
             }
 
             Pat::Variant(VariantPat {
@@ -1139,6 +1158,35 @@ fn expr_parens(expr: &Expr) -> bool {
             | Expr::Record(_)
             | Expr::Seq { .. }
             | Expr::Variant(_)
+    )
+}
+
+/// Print a type at a position where `Fn` types are not allowed (e.g. function return types,
+/// exception types, row extensions). Wraps `Fn` types in parens to disambiguate.
+fn print_ty_no_fn(ty: &Type, p: &mut Printer) {
+    if matches!(ty, Type::Fn(_)) {
+        p.char('(');
+        ty.print(p);
+        p.char(')');
+    } else {
+        ty.print(p);
+    }
+}
+
+fn is_primary_expr(expr: &Expr) -> bool {
+    matches!(
+        expr,
+        Expr::Var(_)
+            | Expr::ConSel(_)
+            | Expr::FieldSel(_)
+            | Expr::MethodSel(_)
+            | Expr::AssocFnSel(_)
+            | Expr::Call(_)
+            | Expr::Int(_)
+            | Expr::Str(_)
+            | Expr::Char(_)
+            | Expr::Record(_)
+            | Expr::Seq { .. }
     )
 }
 
@@ -1273,6 +1321,10 @@ pub(crate) fn escape_str_lit(s: &str, w: &mut impl Write) {
         match c {
             '"' => {
                 w.write_str("\\\"").unwrap();
+            }
+
+            '`' => {
+                w.write_str("\\`").unwrap();
             }
 
             '\n' => {

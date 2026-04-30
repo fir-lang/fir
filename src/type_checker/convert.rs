@@ -29,7 +29,7 @@ pub(super) fn convert_ast_ty(
             let mut labels: OrdMap<Name, Ty> = OrdMap::new();
 
             for (field_name, field_ty) in fields {
-                let ty = convert_ast_ty(tys, module_env, field_ty, loc);
+                let ty = convert_ast_ty(tys, module_env, &field_ty.node, &field_ty.loc);
                 let old = labels.insert(field_name.clone(), ty);
                 if old.is_some() {
                     panic!(

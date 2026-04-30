@@ -67,29 +67,16 @@ impl Tokens[TyId]:
         self.token
 
 
-impl Tokens[AssocVarId]:
-    firstToken(self: AssocVarId, tokens: Array[Token]) TokenIdx:
-        self.token
-
-    lastToken(self: AssocVarId, tokens: Array[Token]) TokenIdx:
-        self.token
-
-
 impl AstIds[CompilerIds]:
     type AstVarId = VarId
 
     type AstTyId = TyId
-
-    type AstAssocVarId = AssocVarId
 
     astVarIdFromToken(token: TokenIdx) AstVarId:
         VarId(token, name = "", _resolved = Option.None)
 
     astTyIdFromToken(token: TokenIdx) AstTyId:
         TyId(token, name = "", _resolved = Option.None)
-
-    astAssocVarIdFromToken(token: TokenIdx) AstAssocVarId:
-        AssocVarId(token, name = "", _resolved = Option.None)
 
 
 type CTopDecl = TopDecl[CompilerAstExts]
