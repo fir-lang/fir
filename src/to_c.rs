@@ -866,6 +866,12 @@ fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
     if let mono::Type::Fn(_) = ty {
         return "CLOSURE*".to_string();
     }
+    if let mono::Type::Named(_) = ty
+        && let TypeDecl::Named(decl) = pgm.decl(ty)
+        && let NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(ext)) = &decl.rhs
+    {
+        return expand_extern_template(ext, pgm);
+    }
     let ptr = match pgm.decl(ty) {
         TypeDecl::Named(decl) => !decl.value,
         TypeDecl::Record(_, _) | TypeDecl::Variant(_) => false,
@@ -876,6 +882,17 @@ fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
         s.push('*'); // make pointer
     }
     s
+}
+
+fn expand_extern_template(ext: &mono::ExternType, pgm: &LoweredPgm) -> String {
+    let mut ty_str = String::new();
+    for part in &ext.template {
+        match part {
+            mono::ExternTypeTemplatePart::C(s) => ty_str.push_str(s),
+            mono::ExternTypeTemplatePart::TyArg(ty) => ty_str.push_str(&c_ty(ty, pgm)),
+        }
+    }
+    ty_str
 }
 
 fn ty_to_c(ty: &mono::Type, out: &mut String) {
