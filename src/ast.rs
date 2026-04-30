@@ -1250,6 +1250,17 @@ impl Stmt {
 }
 
 impl Expr {
+    pub fn placeholder() -> Expr {
+        Expr::Char('a')
+    }
+
+    pub fn l_placeholder() -> L<Expr> {
+        L {
+            loc: Loc::dummy(),
+            node: Expr::Char('a'),
+        }
+    }
+
     pub fn subst_ty_ids(&mut self, substs: &HashMap<Name, Type>) {
         match self {
             Expr::ConSel(_) | Expr::Int(_) | Expr::Char(_) => {}
