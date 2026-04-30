@@ -219,7 +219,7 @@ mod native {
 
         type_checker::expand_type_synonyms(&mut loaded_pgm, &module_envs);
 
-        let mut mono_pgm = monomorph::monomorphise(&loaded_pgm, module_envs, &opts.main);
+        let mut mono_pgm = monomorph::monomorphise(loaded_pgm, module_envs, &opts.main);
 
         if opts.print_mono_ast {
             mono_ast::printer::print_pgm(&mono_pgm);
@@ -454,7 +454,7 @@ mod wasm {
         let (_tys, module_envs) = type_checker::check_pgm(&mut loaded_program, "main");
 
         type_checker::expand_type_synonyms(&mut loaded_program, &module_envs);
-        let mut mono_pgm = monomorph::monomorphise(&loaded_program, module_envs, "main");
+        let mut mono_pgm = monomorph::monomorphise(loaded_program, module_envs, "main");
         let lowered_pgm = lowering::lower(&mut mono_pgm);
 
         let mut w = WasmOutput;
