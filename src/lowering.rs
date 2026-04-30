@@ -879,6 +879,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
 
                         mono::TypeDeclRhs::Extern(_) => {
                             // Don't allocate heap obj indices for extern types.
+                            value = true;
                         }
                     }
                     NamedTypeRhs::Source(rhs.clone())
@@ -1767,12 +1768,15 @@ fn lower_expr(
                                 )
                             }
                         },
-                        Some(mono::TypeDeclRhs::Extern(_)) => {
-                            todo!(
-                                "{}: Field selection on extern type {} is not implemented yet",
-                                loc_display(loc),
-                                name
-                            );
+                        Some(mono::TypeDeclRhs::Extern(extern_ty)) => {
+                            let mut field_idx: u32 = 0;
+                            for (field_idx_, extern_field) in extern_ty.fields.iter().enumerate() {
+                                if field == &extern_field.fir_name {
+                                    field_idx = field_idx_ as u32;
+                                    break;
+                                }
+                            }
+                            field_idx
                         }
                     }
                 }

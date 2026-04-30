@@ -862,6 +862,19 @@ fn is_value_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
     }
 }
 
+fn is_extern_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
+    match ty {
+        mono::Type::Named(_) => match pgm.decl(ty) {
+            TypeDecl::Named(decl) => match decl.rhs {
+                NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(_)) => true,
+                _ => false,
+            },
+            _ => false,
+        },
+        _ => false,
+    }
+}
+
 fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
     if let mono::Type::Fn(_) = ty {
         return "CLOSURE*".to_string();
@@ -1652,7 +1665,7 @@ fn stmt_to_c(
             }
             Expr::FieldSel(FieldSelExpr {
                 object,
-                field: _,
+                field,
                 idx,
                 object_ty,
             }) => {
@@ -1660,7 +1673,18 @@ fn stmt_to_c(
                 w!(p, "{} {} = ", c_ty(object_ty, cg.pgm), obj_temp);
                 expr_to_c(&object.node, &object.loc, locals, cg, p);
                 wln!(p, "; // {}", loc_display(&object.loc));
-                w!(p, "{}->_{} = ", obj_temp, idx);
+                let accessor = if is_extern_type(object_ty, cg.pgm) {
+                    field.to_string()
+                } else {
+                    format!("_{idx}")
+                };
+                if is_value_type(object_ty, cg.pgm) {
+                    // TODO: This doesn't work, this updates the copy of the object rather than the
+                    // original object, because of the temporary created above.
+                    w!(p, "{obj_temp}.{accessor} = ");
+                } else {
+                    w!(p, "{obj_temp}->{accessor} = ");
+                }
                 expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
                 wln!(p, ";");
                 if let Some(result_var) = result_var {
@@ -1810,16 +1834,21 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
 
         Expr::FieldSel(FieldSelExpr {
             object,
-            field: _,
+            field,
             idx,
             object_ty,
         }) => {
             w!(p, "(");
             expr_to_c(&object.node, &object.loc, locals, cg, p);
-            if is_value_type(object_ty, cg.pgm) {
-                w!(p, ")._{}", idx);
+            let accessor = if is_extern_type(object_ty, cg.pgm) {
+                field.to_string()
             } else {
-                w!(p, ")->_{}", idx);
+                format!("_{idx}")
+            };
+            if is_value_type(object_ty, cg.pgm) {
+                w!(p, ").{accessor}");
+            } else {
+                w!(p, ")->{accessor}");
             }
         }
 
