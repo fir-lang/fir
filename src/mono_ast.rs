@@ -341,7 +341,7 @@ impl Expr {
             | Expr::If(IfExpr { ty, .. }) => ty.clone(),
 
             Expr::Int(IntExpr { kind, .. }) => {
-                let con = match kind.unwrap() {
+                let con = match kind.borrow().unwrap() {
                     IntKind::I8(_) => "I8",
                     IntKind::U8(_) => "U8",
                     IntKind::I32(_) => "I32",

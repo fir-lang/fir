@@ -692,7 +692,7 @@ impl Expr {
                 parsed: _,
             }) => {
                 p.str(text);
-                match kind {
+                match &*kind.borrow() {
                     Some(IntKind::I64(_)) => p.str("I64"),
                     Some(IntKind::U64(_)) => p.str("U64"),
                     Some(IntKind::I32(_)) => p.str("I32"),

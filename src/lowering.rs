@@ -1915,7 +1915,7 @@ fn lower_expr(
         }
 
         mono::Expr::Int(int) => {
-            let kind = int.kind.unwrap();
+            let kind = int.kind.borrow().unwrap();
             let value = match kind {
                 ast::IntKind::I8(val) => val as u8 as u64,
                 ast::IntKind::U8(val) => val as u64,

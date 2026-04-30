@@ -8,7 +8,7 @@ use crate::token::*;
 
 use std::convert::Infallible;
 use std::rc::Rc;
-
+use std::cell::RefCell;
 
 use lexgen_util::{LexerError, Loc};
 
@@ -824,7 +824,7 @@ InlineExpr: Expr = {
     <l:@L> <int:IntLit> => {
         Expr::Int(IntExpr {
             text: int.text.clone(),
-            kind: None, // for type checker
+            kind: Rc::new(RefCell::new(None)), // for type checker
             parsed: parse_int_lit(&int.text, module, &l),
         })
     },

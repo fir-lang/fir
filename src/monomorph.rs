@@ -995,7 +995,7 @@ fn mono_expr(
         }
 
         ast::Expr::Int(int @ ast::IntExpr { kind, .. }) => {
-            let ty_builtin_id = match kind.unwrap() {
+            let ty_builtin_id = match kind.borrow().unwrap() {
                 ast::IntKind::I8(_) => builtins::I8(),
                 ast::IntKind::U8(_) => builtins::U8(),
                 ast::IntKind::I32(_) => builtins::I32(),
