@@ -21,13 +21,13 @@ main():
     if tv.isNull():
         panic("calloc failed")
 
-    tv.tvSec = i64(12345)
-    tv.tvUsec = i64(678)
+    tv.tvSec = 12345
+    tv.tvUsec = 678
 
     printStr("tvSec = `tv.tvSec`")
     printStr("tvUsec = `tv.tvUsec`")
 
-    tv.tvSec = i64(99999)
+    tv.tvSec = 99999
     printStr("tvSec after overwrite = `tv.tvSec`")
 
     freeTimeVal(tv)

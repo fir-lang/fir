@@ -4,6 +4,7 @@ import [Fir/C as C]
 toCSize(i: U32) C/SizeT:
     C/inline("(size_t)`i`")
 
+
 toU32(i: C/SizeT) U32:
     C/inline("(uint32_t)`i`")
 
@@ -55,9 +56,9 @@ main():
         panic("fopen for write failed")
 
     let out: Array[U8] = Array.new(3)
-    out.set(u32(0), u8(72))  # H
-    out.set(u32(1), u8(105)) # i
-    out.set(u32(2), u8(33))  # !
+    out.set(0, 72)  # H
+    out.set(1, 105) # i
+    out.set(2, 33)  # !
     let nw = fwrite(out.ptr(), u32(1).toCSize(), u32(3).toCSize(), fw)
     printStr("wrote `nw.toU32()` bytes")
     let _ = fclose(fw)
@@ -72,7 +73,7 @@ main():
     let _ = fclose(fr)
 
     printStr("read `nr.toU32()` bytes")
-    for i: U32 in range(u32(0), nr.toU32()):
+    for i in range(u32(0), nr.toU32()):
         printStr("byte[`i`] = `buf.get(i).asU32()`")
 
 
