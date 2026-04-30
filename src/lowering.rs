@@ -282,6 +282,10 @@ pub enum BuiltinFunDecl {
         t: mono::Type,
     },
 
+    ArrayPtr {
+        t: mono::Type,
+    },
+
     ReadFileUtf8,
 
     GetArgs,
@@ -450,6 +454,10 @@ pub enum Expr {
         expr_ty: mono::Type,
         variant_ty: OrdMap<Name, mono::NamedType>,
     },
+
+    InlineC {
+        parts: Vec<InlineCPart>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -502,6 +510,12 @@ pub struct IsExpr {
     pub expr: Box<L<Expr>>,
     pub pat: L<Pat>,
     pub expr_ty: mono::Type,
+}
+
+#[derive(Debug, Clone)]
+pub enum InlineCPart {
+    Str(String),
+    Var(LocalIdx),
 }
 
 #[derive(Debug, Clone)]
@@ -705,6 +719,10 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             idx
                         });
                 }
+
+                Some(mono::TypeDeclRhs::Extern(_)) => {
+                    // Don't allocate heap obj indices for extern types.
+                }
             }
         }
     }
@@ -857,6 +875,11 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 con_decl.value,
                             ));
                             con_indices.push(idx);
+                        }
+
+                        mono::TypeDeclRhs::Extern(_) => {
+                            // Don't allocate heap obj indices for extern types.
+                            value = true;
                         }
                     }
                     NamedTypeRhs::Source(rhs.clone())
@@ -1450,6 +1473,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 BuiltinFunDecl::ArrayCopyWithin { t }
                             }
 
+                            ("Array", "ptr") => {
+                                // prim Array.ptr(self: Array[t]) Ptr[t]
+                                assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                                let t = fun_ty_args[0].clone();
+                                BuiltinFunDecl::ArrayPtr { t }
+                            }
+
                             ("I32", "asU32") => {
                                 assert_eq!(fun_ty_args.len(), 1); // exception (implicit)
                                 BuiltinFunDecl::I32AsU32
@@ -1665,6 +1695,14 @@ fn lower_expr(
 
                 Some(mono::TypeDeclRhs::Product(fields)) => fields,
 
+                Some(mono::TypeDeclRhs::Extern(_)) => {
+                    todo!(
+                        "{}: Constructor selection on extern type {} is not implemented yet",
+                        loc_display(loc),
+                        ty_id
+                    );
+                }
+
                 None => &mono::ConFields::Empty,
             };
 
@@ -1730,6 +1768,16 @@ fn lower_expr(
                                 )
                             }
                         },
+                        Some(mono::TypeDeclRhs::Extern(extern_ty)) => {
+                            let mut field_idx: u32 = 0;
+                            for (field_idx_, extern_field) in extern_ty.fields.iter().enumerate() {
+                                if field == &extern_field.fir_name {
+                                    field_idx = field_idx_ as u32;
+                                    break;
+                                }
+                            }
+                            field_idx
+                        }
                     }
                 }
 
@@ -2225,6 +2273,19 @@ fn lower_expr(
                 vars,
             )
         }
+
+        mono::Expr::InlineC(mono::InlineCExpr { parts, ty: _ }) => (
+            Expr::InlineC {
+                parts: parts
+                    .iter()
+                    .map(|part| match part {
+                        mono::InlineCPart::Str(str) => InlineCPart::Str(str.clone()),
+                        mono::InlineCPart::Var(var) => InlineCPart::Var(scope.use_var(var, loc)),
+                    })
+                    .collect(),
+            },
+            Default::default(),
+        ),
     }
 }
 
@@ -2338,6 +2399,14 @@ fn lower_pat(
                 }
 
                 Some(mono::TypeDeclRhs::Product(fields)) => fields,
+
+                Some(mono::TypeDeclRhs::Extern(_)) => {
+                    todo!(
+                        "{}: Pattern match against extern type {} is not implemented yet",
+                        loc_display(loc),
+                        ty
+                    );
+                }
 
                 None => panic!(
                     "BUG: {}: Type {} doesn't have any constructors",

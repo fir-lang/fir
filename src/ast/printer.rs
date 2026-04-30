@@ -1,4 +1,5 @@
 use crate::indenting_printer::Printer;
+use crate::interpolation::ExternTypeTemplatePart;
 use crate::{ast::*, type_checker::RecordOrVariant};
 
 use std::fmt::Write;
@@ -74,6 +75,9 @@ impl TypeDecl {
         if self.rhs.is_none() {
             p.str("prim ");
         }
+        if matches!(&self.rhs, Some(TypeDeclRhs::Extern(_))) {
+            p.str("extern ");
+        }
         p.str("type ");
         p.str(&self.name);
 
@@ -115,6 +119,37 @@ impl TypeDeclRhs {
             TypeDeclRhs::Synonym(ty) => {
                 p.str(" = ");
                 ty.node.print(p);
+            }
+
+            TypeDeclRhs::Extern(ExternTypeDeclRhs { template, fields }) => {
+                p.str(" = \"");
+                for part in template.iter() {
+                    match part {
+                        ExternTypeTemplatePart::C(s) => escape_str_lit(s, p),
+                        ExternTypeTemplatePart::Var(name) => {
+                            p.char('`');
+                            p.str(&name.node);
+                            p.char('`');
+                        }
+                    }
+                }
+                p.char('"');
+                if !fields.is_empty() {
+                    p.char('(');
+                    p.indented(|p| {
+                        for field in fields.iter() {
+                            p.nl();
+                            p.str(&field.name);
+                            p.str(": ");
+                            field.fir_type.node.print(p);
+                            p.str(" = \"");
+                            escape_str_lit(&field.c_type, p);
+                            p.str("\",");
+                        }
+                    });
+                    p.nl();
+                    p.char(')');
+                }
             }
         }
     }
@@ -169,7 +204,7 @@ impl FunDecl {
 
 impl ImportDecl {
     pub fn print(&self, p: &mut Printer) {
-        if let Some(attr) = &self.attr {
+        for attr in self.attrs.iter() {
             attr.print(p);
         }
         p.str("import [");
@@ -945,6 +980,24 @@ impl Expr {
             }) => {
                 p.char('~');
                 expr.node.print(p);
+            }
+
+            Expr::InlineC(InlineCExpr { parts, inferred_ty }) => {
+                p.str("inline(\"");
+                for part in parts {
+                    match part {
+                        InlineCPart::Str(s) => escape_str_lit(s, p),
+                        InlineCPart::Var(name) => {
+                            p.char('`');
+                            p.str(name);
+                            p.char('`');
+                        }
+                    }
+                }
+                p.str("\")");
+                if let Some(ty) = inferred_ty {
+                    write!(p, " #| inferred type = {ty} |#").unwrap();
+                }
             }
         }
     }

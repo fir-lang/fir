@@ -3,7 +3,7 @@
 pub mod printer;
 
 use crate::collections::HashMap;
-use crate::interpolation::StrPart;
+use crate::interpolation::{ExternTypeTemplatePart, StrPart};
 use crate::module::ModulePath;
 pub use crate::name::Name;
 pub use crate::token::IntKind;
@@ -198,6 +198,11 @@ pub enum TypeDeclRhs {
 
     /// A type synonym: `type Foo = U32`.
     Synonym(L<Type>),
+
+    /// An extern type definition:
+    /// - `extern type File = "FILE"`
+    /// - `extern type Ptr[t] = "`t`*"`
+    Extern(ExternTypeDeclRhs),
 }
 
 /// A sum type constructor.
@@ -217,6 +222,19 @@ pub enum ConFields {
     Unnamed {
         fields: Vec<L<Type>>,
     },
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternTypeDeclRhs {
+    pub template: Vec<ExternTypeTemplatePart>,
+    pub fields: Vec<ExternTypeField>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternTypeField {
+    pub name: Name,
+    pub fir_type: L<Type>,
+    pub c_type: String,
 }
 
 #[derive(Debug, Clone)]
@@ -664,6 +682,9 @@ pub enum Expr {
 
     /// A variant: `~Option.Some(123)`, `~123`.
     Variant(VariantExpr),
+
+    /// An inline C expression, desugared by the type checker from a `C/inline("...")` call.
+    InlineC(InlineCExpr),
 }
 
 #[derive(Debug, Clone)]
@@ -910,9 +931,21 @@ pub struct VariantExpr {
 }
 
 #[derive(Debug, Clone)]
+pub struct InlineCExpr {
+    pub parts: Vec<InlineCPart>,
+    pub inferred_ty: Option<Ty>,
+}
+
+#[derive(Debug, Clone)]
+pub enum InlineCPart {
+    Str(String),
+    Var(Name), // a local variable
+}
+
+#[derive(Debug, Clone)]
 pub struct ImportDecl {
-    /// Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`.
-    pub attr: Option<Attribute>,
+    /// Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`, `#[include(...)]`.
+    pub attrs: Vec<Attribute>,
     pub items: Vec<ImportItem>,
 }
 
@@ -1438,6 +1471,8 @@ impl Expr {
                 assert!(inferred_ty.is_none());
                 expr.node.subst_ty_ids(substs);
             }
+
+            Expr::InlineC(_) => {}
         }
     }
 
@@ -1455,7 +1490,8 @@ impl Expr {
             | Expr::Fn(FnExpr { inferred_ty, .. })
             | Expr::Do(DoExpr { inferred_ty, .. })
             | Expr::Record(RecordExpr { inferred_ty, .. })
-            | Expr::Variant(VariantExpr { inferred_ty, .. }) => inferred_ty.clone(),
+            | Expr::Variant(VariantExpr { inferred_ty, .. })
+            | Expr::InlineC(InlineCExpr { inferred_ty, .. }) => inferred_ty.clone(),
 
             Expr::Int(IntExpr { kind, .. }) => {
                 let id = match kind.as_ref()? {

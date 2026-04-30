@@ -30,6 +30,7 @@ pub struct TypeDecl {
 pub enum TypeDeclRhs {
     Sum(Vec<ConDecl>),
     Product(ConFields),
+    Extern(ExternType),
 }
 
 #[derive(Debug, Clone)]
@@ -43,6 +44,33 @@ pub enum ConFields {
     Empty,
     Named(OrdMap<Name, Type>),
     Unnamed(Vec<Type>),
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternType {
+    pub template: Vec<ExternTypeTemplatePart>,
+    pub fields: Vec<ExternField>,
+}
+
+#[derive(Debug, Clone)]
+pub enum ExternTypeTemplatePart {
+    /// Raw C text from the original template.
+    C(String),
+
+    /// Concrete type substituted for an AST template's type variable.
+    TyArg(Type),
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternField {
+    /// Fir name of the field.
+    pub fir_name: Name,
+
+    /// Field type with the enclosing type's parameters substituted.
+    pub ty: Type,
+
+    /// Name of the field in the C struct.
+    pub c_name: String,
 }
 
 // Note: `Type` is used in maps and sets and it *cannot* have `Loc`s in it to avoid duplicating
@@ -324,6 +352,7 @@ pub enum Expr {
     Do(Vec<L<Stmt>>, Type),
     Record(RecordExpr),
     Variant(VariantExpr),
+    InlineC(InlineCExpr),
 }
 
 impl Expr {
@@ -338,7 +367,8 @@ impl Expr {
             | Expr::Do(_, ty)
             | Expr::Return(_, ty)
             | Expr::Match(MatchExpr { ty, .. })
-            | Expr::If(IfExpr { ty, .. }) => ty.clone(),
+            | Expr::If(IfExpr { ty, .. })
+            | Expr::InlineC(InlineCExpr { ty, .. }) => ty.clone(),
 
             Expr::Int(IntExpr { kind, .. }) => {
                 let con = match kind.unwrap() {
@@ -417,6 +447,18 @@ pub struct RecordExpr {
 pub struct VariantExpr {
     pub expr: Box<L<Expr>>,
     pub ty: OrdMap<Name, NamedType>, // the variant type
+}
+
+#[derive(Debug, Clone)]
+pub struct InlineCExpr {
+    pub parts: Vec<InlineCPart>,
+    pub ty: Type,
+}
+
+#[derive(Debug, Clone)]
+pub enum InlineCPart {
+    Str(String),
+    Var(Name),
 }
 
 #[derive(Debug, Clone)]

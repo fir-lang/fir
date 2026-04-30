@@ -166,6 +166,14 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
 fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     assert!(ty.type_param_kinds.is_empty());
 
+    // `extern` types can only take `*` arguments.
+    if let Some(ast::TypeDeclRhs::Extern(_)) = &ty.rhs {
+        for _ in &ty.type_params {
+            ty.type_param_kinds.push(Kind::Star);
+        }
+        return;
+    }
+
     let mut type_param_kinds: OrderMap<Name, Option<Kind>> = Default::default();
     for param in &ty.type_params {
         type_param_kinds.insert(param.name.node.clone(), convert_kind(&param.kind));
@@ -183,6 +191,9 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
         }
         Some(ast::TypeDeclRhs::Synonym(ty)) => {
             collect_tvs(&ty.node, &ty.loc, &mut type_param_kinds);
+        }
+        Some(ast::TypeDeclRhs::Extern(_)) => {
+            panic!() // handled above
         }
         None => {}
     }

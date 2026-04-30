@@ -9,6 +9,7 @@ syntax keyword firKeyword
     \ elif
     \ else
     \ export
+    \ extern
     \ fn
     \ Fn
     \ for

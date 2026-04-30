@@ -20,7 +20,9 @@ pub fn derive_to_doc(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::T
             derive_to_doc_product(loc, &type_decl.name, fields)
         }
         Some(ast::TypeDeclRhs::Sum { cons, .. }) => derive_to_doc_sum(loc, &type_decl.name, cons),
-        Some(ast::TypeDeclRhs::Synonym(_)) => unreachable!("Caught in expand_derives"),
+        Some(ast::TypeDeclRhs::Synonym(_) | ast::TypeDeclRhs::Extern(_)) => {
+            panic!("BUG: Type synonym or extern type in derive(ToDoc) macro")
+        }
     };
 
     let fun = make_method(loc, "toDoc", self_ty, vec![], doc_ty, body);

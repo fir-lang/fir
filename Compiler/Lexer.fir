@@ -260,6 +260,14 @@ Lexer._nextInit(self) Option[Token] / Error:
             Token(kind = TokenKind.Else, text = "else", byteIdx, line, col),
         )
 
+    if input.startsWith("extern")
+            and not _isIdContStr(input.substr(6, input.len())):
+        self._byteIdx += 6
+        self._col += 6
+        return Option.Some(
+            Token(kind = TokenKind.Extern, text = "extern", byteIdx, line, col),
+        )
+
     if input.startsWith("fn") and not _isIdContStr(input.substr(2, input.len())):
         self._byteIdx += 2
         self._col += 2

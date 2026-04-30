@@ -432,6 +432,12 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                         }),
 
                         ast::TypeDeclRhs::Synonym(_) => unreachable!(),
+
+                        ast::TypeDeclRhs::Extern(_) => TyConDetails::Type(TypeDetails {
+                            cons: Default::default(),
+                            sum: false,
+                            value: false, // not sure about this part
+                        }),
                     },
 
                     None => TyConDetails::Type(TypeDetails {
@@ -1359,6 +1365,60 @@ fn collect_schemes(
                         // Synonyms are skipped above.
                         unreachable!()
                     }
+
+                    ast::TypeDeclRhs::Extern(ast::ExternTypeDeclRhs {
+                        template: _,
+                        fields,
+                    }) => {
+                        let args = FunArgs::Named {
+                            args: fields
+                                .iter()
+                                .map(|field| {
+                                    (
+                                        field.name.clone(),
+                                        convert_ast_ty(
+                                            tys,
+                                            module_env,
+                                            &field.fir_type.node,
+                                            &field.fir_type.loc,
+                                        ),
+                                    )
+                                })
+                                .collect(),
+                            extension: None,
+                        };
+                        let ty = Ty::Fun {
+                            args,
+                            ret: Box::new(ret.clone()),
+                            exceptions: None,
+                        };
+                        let scheme = Scheme {
+                            quantified_vars: ty_decl
+                                .node
+                                .type_params
+                                .iter()
+                                .map(|type_param| type_param.name.node.clone())
+                                .zip(ty_decl.node.type_param_kinds.iter().cloned())
+                                .collect(),
+                            preds: Default::default(),
+                            ty,
+                            loc: ty_decl.loc.clone(),
+                        };
+                        let old = tys
+                            .get_con_mut(&ty_id)
+                            .unwrap()
+                            .details
+                            .as_type_mut()
+                            .cons
+                            .insert(ty_decl.node.name.clone(), scheme.clone());
+                        if old.is_some() {
+                            panic!(
+                                "{}: Constructor {} is defined multiple times",
+                                loc_display(&ty_decl.loc),
+                                ty_decl.node.name,
+                            );
+                        }
+                    }
                 }
             }
 
@@ -2271,7 +2331,7 @@ fn expand_synonyms_in_type_decl(decl: &mut ast::TypeDecl, ctx: &SynonymCtx<'_>) 
         Some(ast::TypeDeclRhs::Synonym(rhs)) => {
             expand_synonyms_in_ty(&mut rhs.node, ctx);
         }
-        None => {}
+        Some(ast::TypeDeclRhs::Extern(_)) | None => {}
     }
 }
 

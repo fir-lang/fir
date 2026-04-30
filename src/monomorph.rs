@@ -1330,6 +1330,26 @@ fn mono_expr(
                 ),
             })
         }
+
+        ast::Expr::InlineC(ast::InlineCExpr { parts, inferred_ty }) => {
+            mono::Expr::InlineC(mono::InlineCExpr {
+                parts: parts
+                    .iter()
+                    .map(|part| match part {
+                        ast::InlineCPart::Str(str) => mono::InlineCPart::Str(str.clone()),
+                        ast::InlineCPart::Var(var) => mono::InlineCPart::Var(var.clone()),
+                    })
+                    .collect(),
+                ty: mono_tc_ty(
+                    inferred_ty.as_ref().unwrap(),
+                    ty_map,
+                    poly_pgm,
+                    mono_pgm,
+                    mangler,
+                    module_env,
+                ),
+            })
+        }
     }
 }
 
@@ -2697,6 +2717,59 @@ fn mono_ty_decl(
 
         ast::TypeDeclRhs::Synonym(_) => {
             panic!("Type synonyms should be expanded before monomorphization")
+        }
+
+        ast::TypeDeclRhs::Extern(ast::ExternTypeDeclRhs { template, fields }) => {
+            let params = &ty_decl.type_params;
+            assert_eq!(
+                params.len(),
+                args.len(),
+                "BUG: extern type {} instantiated with wrong arity",
+                ty_decl.name,
+            );
+
+            let mono_template: Vec<mono::ExternTypeTemplatePart> = template
+                .iter()
+                .map(|part| match part {
+                    crate::interpolation::ExternTypeTemplatePart::C(s) => {
+                        mono::ExternTypeTemplatePart::C(s.clone())
+                    }
+                    crate::interpolation::ExternTypeTemplatePart::Var(name) => {
+                        let idx = params
+                            .iter()
+                            .position(|p| p.name.node == name.node)
+                            .unwrap_or_else(|| {
+                                panic!(
+                                    "BUG: extern type {} template references unknown type variable {}",
+                                    ty_decl.name, name.node
+                                )
+                            });
+                        mono::ExternTypeTemplatePart::TyArg(args[idx].clone())
+                    }
+                })
+                .collect();
+
+            let mono_fields: Vec<mono::ExternField> = fields
+                .iter()
+                .map(|f| mono::ExternField {
+                    fir_name: f.name.clone(),
+                    ty: mono_ast_ty(
+                        &f.fir_type.node,
+                        &ty_map,
+                        poly_pgm,
+                        mono_pgm,
+                        mangler,
+                        module_env,
+                        &f.fir_type.loc,
+                    ),
+                    c_name: f.c_type.clone(),
+                })
+                .collect();
+
+            mono::TypeDeclRhs::Extern(mono::ExternType {
+                template: mono_template,
+                fields: mono_fields,
+            })
         }
     });
 

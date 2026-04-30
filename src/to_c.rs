@@ -52,22 +52,21 @@ impl<'a> Cg<'a> {
     }
 }
 
-pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
+pub(crate) fn to_c(pgm: &LoweredPgm, main: &str, mut headers: OrdSet<String>) -> String {
     let mut p = Printer::new();
 
-    writedoc!(
-        p,
-        "
-        #include <inttypes.h>
-        #include <setjmp.h>
-        #include <stdbool.h>
-        #include <stdint.h>
-        #include <stdio.h>
-        #include <stdlib.h>
-        #include <string.h>
+    headers.insert("inttypes.h".to_string());
+    headers.insert("setjmp.h".to_string());
+    headers.insert("stdbool.h".to_string());
+    headers.insert("stdint.h".to_string());
+    headers.insert("stdio.h".to_string());
+    headers.insert("stdlib.h".to_string());
+    headers.insert("string.h".to_string());
 
-        "
-    );
+    for header in headers {
+        wln!(p, "#include <{header}>");
+    }
+    p.nl();
 
     // Generate the CLOSURE type before other types. CLOSURE is a special built-in that doesn't have
     // a TypeDecl entry, so it's not part of the dependency-sorted types.
@@ -531,6 +530,9 @@ fn source_decl_to_c(
             assert_eq!(con_indices.len(), 1);
             gen_source_con_struct(&ty.name, &ty.ty_args, fields, con_indices[0], true, pgm, p);
         }
+        mono::TypeDeclRhs::Extern(_) => {
+            // Extern types are imported from C headers.
+        }
     }
 }
 
@@ -860,9 +862,28 @@ fn is_value_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
     }
 }
 
+fn is_extern_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
+    match ty {
+        mono::Type::Named(_) => match pgm.decl(ty) {
+            TypeDecl::Named(decl) => match decl.rhs {
+                NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(_)) => true,
+                _ => false,
+            },
+            _ => false,
+        },
+        _ => false,
+    }
+}
+
 fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
     if let mono::Type::Fn(_) = ty {
         return "CLOSURE*".to_string();
+    }
+    if let mono::Type::Named(_) = ty
+        && let TypeDecl::Named(decl) = pgm.decl(ty)
+        && let NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(ext)) = &decl.rhs
+    {
+        return expand_extern_template(ext, pgm);
     }
     let ptr = match pgm.decl(ty) {
         TypeDecl::Named(decl) => !decl.value,
@@ -874,6 +895,17 @@ fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
         s.push('*'); // make pointer
     }
     s
+}
+
+fn expand_extern_template(ext: &mono::ExternType, pgm: &LoweredPgm) -> String {
+    let mut ty_str = String::new();
+    for part in &ext.template {
+        match part {
+            mono::ExternTypeTemplatePart::C(s) => ty_str.push_str(s),
+            mono::ExternTypeTemplatePart::TyArg(ty) => ty_str.push_str(&c_ty(ty, pgm)),
+        }
+    }
+    ty_str
 }
 
 fn ty_to_c(ty: &mono::Type, out: &mut String) {
@@ -1355,6 +1387,25 @@ fn builtin_fun_to_c(
             );
         }
 
+        BuiltinFunDecl::ArrayPtr { t } => {
+            let t_ty = c_ty(t, pgm);
+            let array_ty = c_ty(
+                &mono::Type::Named(mono::NamedType {
+                    name: Name::new_static("Array"),
+                    args: vec![t.clone()],
+                }),
+                pgm,
+            );
+            writedoc!(
+                p,
+                "
+                static {t_ty}* _fun_{idx}({array_ty} arr) {{
+                    return arr.data_ptr;
+                }}
+                ",
+            );
+        }
+
         // End of array functions //////////////////////////////////////////////////////////////////
         BuiltinFunDecl::ReadFileUtf8 => {
             writedoc!(
@@ -1614,7 +1665,7 @@ fn stmt_to_c(
             }
             Expr::FieldSel(FieldSelExpr {
                 object,
-                field: _,
+                field,
                 idx,
                 object_ty,
             }) => {
@@ -1622,7 +1673,18 @@ fn stmt_to_c(
                 w!(p, "{} {} = ", c_ty(object_ty, cg.pgm), obj_temp);
                 expr_to_c(&object.node, &object.loc, locals, cg, p);
                 wln!(p, "; // {}", loc_display(&object.loc));
-                w!(p, "{}->_{} = ", obj_temp, idx);
+                let accessor = if is_extern_type(object_ty, cg.pgm) {
+                    field.to_string()
+                } else {
+                    format!("_{idx}")
+                };
+                if is_value_type(object_ty, cg.pgm) {
+                    // TODO: This doesn't work, this updates the copy of the object rather than the
+                    // original object, because of the temporary created above.
+                    w!(p, "{obj_temp}.{accessor} = ");
+                } else {
+                    w!(p, "{obj_temp}->{accessor} = ");
+                }
                 expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
                 wln!(p, ";");
                 if let Some(result_var) = result_var {
@@ -1772,16 +1834,21 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
 
         Expr::FieldSel(FieldSelExpr {
             object,
-            field: _,
+            field,
             idx,
             object_ty,
         }) => {
             w!(p, "(");
             expr_to_c(&object.node, &object.loc, locals, cg, p);
-            if is_value_type(object_ty, cg.pgm) {
-                w!(p, ")._{}", idx);
+            let accessor = if is_extern_type(object_ty, cg.pgm) {
+                field.to_string()
             } else {
-                w!(p, ")->_{}", idx);
+                format!("_{idx}")
+            };
+            if is_value_type(object_ty, cg.pgm) {
+                w!(p, ").{accessor}");
+            } else {
+                w!(p, ")->{accessor}");
             }
         }
 
@@ -2228,6 +2295,19 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.dedent();
             p.nl();
             w!(p, "}})");
+        }
+
+        Expr::InlineC { parts } => {
+            for part in parts {
+                match part {
+                    InlineCPart::Str(str) => {
+                        w!(p, "{str}");
+                    }
+                    InlineCPart::Var(local_idx) => {
+                        w!(p, "_{}", local_idx.as_usize());
+                    }
+                }
+            }
         }
     }
 }
@@ -2770,6 +2850,11 @@ fn type_decl_deps_(
                         }
                     }
                 },
+                mono::TypeDeclRhs::Extern(ext) => {
+                    for f in ext.fields.iter() {
+                        type_deps(named_tys, record_tys, variant_tys, types, &f.ty, deps);
+                    }
+                }
             },
             NamedTypeRhs::Builtin(_, _) => {
                 for ty in ty_args {
