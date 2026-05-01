@@ -2010,7 +2010,7 @@ fn check_field_sel(
 ) -> (Ty, ast::Expr) {
     // TODO: What if we have a method and a field with the same name?
     if let Some((con, args)) = object_ty.con(tc_state.tys.tys.cons())
-        && let Some(field_ty) = select_field(tc_state, &con, &args, field, loc)
+        && let Some(field_ty) = select_field(tc_state, con, args, field, loc)
     {
         if !user_ty_args.is_empty() {
             panic!("{}: Field passed type arguments", loc_display(loc));
@@ -2138,15 +2138,22 @@ fn check_field_sel(
 
 fn select_field(
     tc_state: &mut TcFunState,
-    ty_con_id: &Id,
-    ty_args: &[Ty],
+    mut ty_con_id: Id,
+    mut ty_args: Vec<Ty>,
     field: &Name,
     loc: &ast::Loc,
 ) -> Option<Ty> {
+    if ty_con_id == id::builtins::C_PTR() {
+        assert_eq!(ty_args.len(), 1);
+        let (con, args) = ty_args[0].con(tc_state.tys.tys.cons())?;
+        ty_con_id = con;
+        ty_args = args;
+    }
+
     let ty_con = tc_state
         .tys
         .tys
-        .get_con(ty_con_id)
+        .get_con(&ty_con_id)
         .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con_id));
 
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
@@ -2161,7 +2168,7 @@ fn select_field(
             let con_scheme = cons.values().next().unwrap();
 
             let con_ty = con_scheme
-                .instantiate_with_tys(ty_args, tc_state.preds, loc)
+                .instantiate_with_tys(&ty_args, tc_state.preds, loc)
                 .deep_normalize(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
