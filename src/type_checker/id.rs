@@ -156,6 +156,10 @@ pub(crate) mod builtins {
     pub fn C_INLINE() -> Id {
         fir_id("C", "inline")
     }
+
+    pub fn C_PTR() -> Id {
+        fir_id("C", "Ptr")
+    }
 }
 
 /// Mangles `Id`s for code generation purposes.
