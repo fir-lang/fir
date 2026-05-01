@@ -1,5 +1,6 @@
 main():
-    let x: Vec[U8] = Vec.fromIter(once(1).chain(once(2)).chain(once(3)))
+    let x: Vec[U8] = Vec.fromIter(once(0).chain(once(255)))
     print(x)
 
-# expected stdout: [1,2,3]
+
+# expected stdout: [0,255]
