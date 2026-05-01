@@ -7,9 +7,9 @@ use crate::interpolation::StrPart;
 use crate::module::ModulePath;
 pub use crate::name::Name;
 pub use crate::token::IntKind;
-use crate::type_checker::id::builtins as builtin_ids;
 use crate::type_checker::{Id, Kind, Ty};
 
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use smol_str::SmolStr;
@@ -828,17 +828,36 @@ pub struct ReturnExpr {
     pub inferred_ty: Option<Ty>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct IntExpr {
     /// The integer token contents. This includes the sign and radix parts, when available.
     /// Examples: `-0xabc`, `0b1010`, `123`.
     pub text: SmolStr,
 
     /// The type checker updates this based on the inferred type of the integer.
-    pub kind: Option<IntKind>,
+    pub kind: Rc<RefCell<Option<IntKind>>>,
 
     /// Absolute value of the parsed integer.
     pub parsed: u64,
+
+    /// Inferred type of the expression. Filled in by the type checker.
+    pub inferred_ty: Option<Ty>,
+}
+
+// Manual `Clone` implementation for `IntExpr` to avoid sharing `kind` field values when we copy
+// default method impls.
+impl Clone for IntExpr {
+    fn clone(&self) -> IntExpr {
+        // Type checked ASTs shouldn't be cloned, cloning is only for copying default trait methods
+        // to impls.
+        assert!(self.inferred_ty.is_none());
+        IntExpr {
+            text: self.text.clone(),
+            kind: Rc::new(RefCell::new(*self.kind.borrow())),
+            parsed: self.parsed,
+            inferred_ty: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1473,19 +1492,8 @@ impl Expr {
             | Expr::Fn(FnExpr { inferred_ty, .. })
             | Expr::Do(DoExpr { inferred_ty, .. })
             | Expr::Record(RecordExpr { inferred_ty, .. })
-            | Expr::Variant(VariantExpr { inferred_ty, .. }) => inferred_ty.clone(),
-
-            Expr::Int(IntExpr { kind, .. }) => {
-                let id = match kind.as_ref()? {
-                    IntKind::I8(_) => builtin_ids::I8(),
-                    IntKind::U8(_) => builtin_ids::U8(),
-                    IntKind::I32(_) => builtin_ids::I32(),
-                    IntKind::U32(_) => builtin_ids::U32(),
-                    IntKind::I64(_) => builtin_ids::I64(),
-                    IntKind::U64(_) => builtin_ids::U64(),
-                };
-                Some(Ty::Con(id, Kind::Star))
-            }
+            | Expr::Variant(VariantExpr { inferred_ty, .. })
+            | Expr::Int(IntExpr { inferred_ty, .. }) => inferred_ty.clone(),
 
             Expr::Str(_) => Some(Ty::str()),
 

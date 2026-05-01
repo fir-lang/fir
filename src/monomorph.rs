@@ -997,7 +997,7 @@ fn mono_expr(
         ast::Expr::Int(ast::IntExpr { kind, .. }) => {
             // No need to monomorphise integer type constructors (I32, U8, etc.) here as we always
             // monomorphise them as built-ins/primitives. (in `monomorphise`)
-            mono::Expr::Int(kind.unwrap())
+            mono::Expr::Int(kind.borrow().unwrap())
         }
 
         ast::Expr::Char(char) => {
