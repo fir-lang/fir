@@ -17,6 +17,7 @@ pub(crate) fn parse_char_lit(text: &str) -> char {
             't' => '\t',
             'r' => '\r',
             '\\' => '\\',
+            '0' => '\0',
             other => panic!("Unknown escaped character: '\\{other}'"),
         }
     } else {

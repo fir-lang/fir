@@ -153,7 +153,7 @@ lexgen::lexer! {
         let bin_int = ['0' '1' '_']+;
         '-'? "0b" $bin_int+ = TokenKind::Int,
 
-        "'" ((_ # '\'') | "\\'" | "\\n" | "\\t" | "\\r" | "\\\\") "'" = TokenKind::Char,
+        "'" ((_ # '\'') | "\\'" | "\\n" | "\\t" | "\\r" | "\\\\" | "\\0") "'" = TokenKind::Char,
     }
 
 
@@ -169,11 +169,8 @@ lexgen::lexer! {
             lexer.switch_and_return(LexerRule::Init, TokenKind::EndStr)
         },
 
-        // Escaped interpolation start
-        "\\`" => |lexer| lexer.continue_(),
-
         // Escape characters
-        '\\' ('"' | 'n' | 't' | 'r' | '\\') => |lexer| lexer.continue_(),
+        '\\' ('"' | '`' | 'n' | 't' | 'r' | '\\' | '0') => |lexer| lexer.continue_(),
 
         // "Continuation escape": backslash followed by newline ignores the newline and following
         // whitespace.

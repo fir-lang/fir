@@ -46,6 +46,7 @@ parseCharLit(text: Str) Char:
             't': '\t'
             'r': '\r'
             '\\': '\\'
+            '0': '\0'
             other: panic("Unknown escaped character: '\\`other`'")
     else:
         char
