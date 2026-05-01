@@ -219,7 +219,14 @@ mod native {
 
         type_checker::expand_type_synonyms(&mut loaded_pgm, &module_envs);
 
-        let mut mono_pgm = monomorph::monomorphise(&loaded_pgm, module_envs, &opts.main);
+        let headers = loaded_pgm.extern_headers;
+
+        let mut mono_pgm = monomorph::monomorphise(
+            loaded_pgm.modules,
+            loaded_pgm.entry,
+            module_envs,
+            &opts.main,
+        );
 
         if opts.print_mono_ast {
             mono_ast::printer::print_pgm(&mono_pgm);
@@ -230,8 +237,6 @@ mod native {
         if opts.print_lowered_ast {
             lowering::printer::print_pgm(&lowered_pgm);
         }
-
-        let headers = loaded_pgm.extern_headers;
 
         if opts.run_c {
             // TODO: Make the path absolute path, otherwise `Command` below to run the compiled file
@@ -450,13 +455,14 @@ mod wasm {
         // NB. This path handled specially in the web page, it returns the program input field
         // contents.
         let file_path = Path::new("Main.fir");
-        let mut loaded_program = module_loader::load(file_path, false, false);
-        deriving::expand_derives(&mut loaded_program);
+        let mut loaded_pgm = module_loader::load(file_path, false, false);
+        deriving::expand_derives(&mut loaded_pgm);
 
-        let (_tys, module_envs) = type_checker::check_pgm(&mut loaded_program, "main");
+        let (_tys, module_envs) = type_checker::check_pgm(&mut loaded_pgm, "main");
 
-        type_checker::expand_type_synonyms(&mut loaded_program, &module_envs);
-        let mut mono_pgm = monomorph::monomorphise(&loaded_program, module_envs, "main");
+        type_checker::expand_type_synonyms(&mut loaded_pgm, &module_envs);
+        let mut mono_pgm =
+            monomorph::monomorphise(loaded_pgm.modules, loaded_pgm.entry, module_envs, "main");
         let lowered_pgm = lowering::lower(&mut mono_pgm);
 
         let mut w = WasmOutput;

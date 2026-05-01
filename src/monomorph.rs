@@ -2,7 +2,6 @@ use crate::ast::{self, Name, Named};
 use crate::collections::*;
 use crate::interpolation::StrPart;
 use crate::module::ModulePath;
-use crate::module_loader::LoadedPgm;
 use crate::mono_ast as mono;
 use crate::mono_ast::MonoPgm;
 use crate::type_checker::id::{Id, IdMangler, builtins};
@@ -27,6 +26,7 @@ struct PolyPgm {
     method: HashMap<Id, HashMap<Name, (ModulePath, ast::FunDecl)>>,
 
     ty: HashMap<Id, ast::TypeDecl>,
+
     module_envs: HashMap<ModulePath, ModuleEnv>,
 }
 
@@ -66,7 +66,7 @@ struct PolyTraitImpl {
     /// In the example above: `[Map[iter, a, b], b]`.
     tys: Vec<ast::Type>,
 
-    methods: Vec<ast::FunDecl>,
+    methods: HashMap<Name, ast::FunDecl>,
 
     /// Associated type definitions, e.g. `type Item = t`.
     assoc_tys: Vec<(Name, ast::L<ast::Type>)>,
@@ -74,54 +74,60 @@ struct PolyTraitImpl {
     // If a trait use type checks, then we know there will be a match in trait env during monomorph.
 }
 
-fn pgm_to_poly_pgm(loaded_pgm: &LoadedPgm, module_envs: HashMap<ModulePath, ModuleEnv>) -> PolyPgm {
+fn pgm_to_poly_pgm(
+    modules: HashMap<ModulePath, ast::Module>,
+    module_envs: HashMap<ModulePath, ModuleEnv>,
+) -> PolyPgm {
     let mut traits: HashMap<Id, PolyTrait> = Default::default();
     let mut top: HashMap<Id, ast::FunDecl> = Default::default();
     let mut associated: HashMap<Id, HashMap<Name, (ModulePath, ast::FunDecl)>> = Default::default();
     let mut method: HashMap<Id, HashMap<Name, (ModulePath, ast::FunDecl)>> = Default::default();
     let mut ty: HashMap<Id, ast::TypeDecl> = Default::default();
 
-    for (module_path, module) in &loaded_pgm.modules {
-        let env = module_envs.get(module_path).unwrap();
-        for decl in &module.decls {
-            match &decl.node {
+    for (module_path, module) in modules {
+        let env = module_envs.get(&module_path).unwrap();
+        for decl in module.decls {
+            match decl.node {
                 ast::TopDecl::Type(ty_decl) => {
-                    let id = Id::new(module_path, &ty_decl.node.name);
-                    let old = ty.insert(id, ty_decl.node.clone());
+                    let ty_decl = ty_decl.node;
+                    let id = Id::new(&module_path, &ty_decl.name);
+                    let old = ty.insert(id, ty_decl);
                     assert!(old.is_none());
                 }
 
-                ast::TopDecl::Fun(fun_decl) => match fun_decl.node.parent_ty.clone() {
-                    Some(parent_ty) => {
-                        let parent_id = env.resolve(&parent_ty.node, &None, &parent_ty.loc);
-                        match fun_decl.node.sig.self_ {
-                            ast::SelfParam::No => {
-                                associated.entry(parent_id).or_default().insert(
-                                    fun_decl.node.name.node.clone(),
-                                    (module_path.clone(), fun_decl.node.clone()),
-                                );
-                            }
-                            ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
-                                method.entry(parent_id).or_default().insert(
-                                    fun_decl.node.name.node.clone(),
-                                    (module_path.clone(), fun_decl.node.clone()),
-                                );
-                            }
+                ast::TopDecl::Fun(fun_decl) => {
+                    let fun_decl = fun_decl.node;
+                    let parent_id = fun_decl
+                        .parent_ty
+                        .as_ref()
+                        .map(|parent_ty| env.resolve(&parent_ty.node, &None, &parent_ty.loc));
+                    match parent_id {
+                        Some(parent_id) => {
+                            let target = if matches!(fun_decl.sig.self_, ast::SelfParam::No) {
+                                &mut associated
+                            } else {
+                                &mut method
+                            };
+                            let name = fun_decl.name.node.clone();
+                            target
+                                .entry(parent_id)
+                                .or_default()
+                                .insert(name, (module_path.clone(), fun_decl));
+                        }
+                        None => {
+                            let id = Id::new(&module_path, &fun_decl.name.node);
+                            let old = top.insert(id, fun_decl);
+                            assert!(old.is_none());
                         }
                     }
-                    None => {
-                        let id = Id::new(module_path, &fun_decl.node.name.node);
-                        let old = top.insert(id, fun_decl.node.clone());
-                        assert!(old.is_none());
-                    }
-                },
+                }
 
                 ast::TopDecl::Trait(trait_decl) => {
                     assert_eq!(
                         trait_decl.node.type_params.len(),
                         trait_decl.node.type_param_kinds.len()
                     );
-                    let id = Id::new(module_path, &trait_decl.node.name.node);
+                    let id = Id::new(&module_path, &trait_decl.node.name.node);
                     match traits.entry(id) {
                         Entry::Occupied(mut entry) => {
                             // We see an impl before the trait. Make sure the args were right.
@@ -152,44 +158,32 @@ fn pgm_to_poly_pgm(loaded_pgm: &LoadedPgm, module_envs: HashMap<ModulePath, Modu
                 }
 
                 ast::TopDecl::Impl(impl_decl) => {
-                    let trait_id = env.resolve(
-                        &impl_decl.node.trait_.node,
-                        &None,
-                        &impl_decl.node.trait_.loc,
-                    );
+                    let impl_decl = impl_decl.node;
+                    let trait_id =
+                        env.resolve(&impl_decl.trait_.node, &None, &impl_decl.trait_.loc);
+                    let mut methods: HashMap<Name, ast::FunDecl> = Default::default();
+                    let mut assoc_tys: Vec<(Name, ast::L<ast::Type>)> = Vec::new();
+                    for item in impl_decl.items {
+                        match item {
+                            ast::ImplDeclItem::Type { assoc_ty, rhs } => {
+                                assoc_tys.push((assoc_ty.node, rhs));
+                            }
+                            ast::ImplDeclItem::Fun(fun) => {
+                                let old = methods.insert(fun.node.name.node.clone(), fun.node);
+                                assert!(old.is_none());
+                            }
+                        }
+                    }
                     traits
                         .entry(trait_id)
                         .or_default()
                         .impls
                         .push(PolyTraitImpl {
                             module: module_path.clone(),
-                            type_params: impl_decl.node.context.type_params.clone(),
-                            tys: impl_decl
-                                .node
-                                .tys
-                                .iter()
-                                .map(|ty| ty.node.clone())
-                                .collect(),
-                            methods: impl_decl
-                                .node
-                                .items
-                                .iter()
-                                .filter_map(|item| match item {
-                                    ast::ImplDeclItem::Type { .. } => None,
-                                    ast::ImplDeclItem::Fun(fun) => Some(fun.node.clone()),
-                                })
-                                .collect(),
-                            assoc_tys: impl_decl
-                                .node
-                                .items
-                                .iter()
-                                .filter_map(|item| match item {
-                                    ast::ImplDeclItem::Type { assoc_ty, rhs } => {
-                                        Some((assoc_ty.node.clone(), rhs.clone()))
-                                    }
-                                    ast::ImplDeclItem::Fun(_) => None,
-                                })
-                                .collect(),
+                            type_params: impl_decl.context.type_params,
+                            tys: impl_decl.tys.into_iter().map(|ty| ty.node).collect(),
+                            methods,
+                            assoc_tys,
                         });
                 }
 
@@ -209,11 +203,12 @@ fn pgm_to_poly_pgm(loaded_pgm: &LoadedPgm, module_envs: HashMap<ModulePath, Modu
 }
 
 pub fn monomorphise(
-    loaded_pgm: &LoadedPgm,
+    modules: HashMap<ModulePath, ast::Module>,
+    entry: ModulePath,
     module_envs: HashMap<ModulePath, ModuleEnv>,
     main: &str,
 ) -> MonoPgm {
-    let poly_pgm = pgm_to_poly_pgm(loaded_pgm, module_envs);
+    let poly_pgm = pgm_to_poly_pgm(modules, module_envs);
     let mut mono_pgm = MonoPgm::default();
     let mut mangler = IdMangler::new();
 
@@ -269,12 +264,12 @@ pub fn monomorphise(
         );
     }
 
-    let main_id = Id::new(&loaded_pgm.entry, &Name::from(main));
+    let main_id = Id::new(&entry, &Name::from(main));
     let main_decl = poly_pgm
         .top
         .get(&main_id)
         .unwrap_or_else(|| panic!("Main function `{main}` not defined"));
-    let main_env = poly_pgm.module_env(&loaded_pgm.entry);
+    let main_env = poly_pgm.module_env(&entry);
     mono_top_fn(
         main_decl,
         &[],
@@ -692,7 +687,7 @@ fn mono_expr(
                 mono::FunArgs::Named(_) => panic!(),
             };
 
-            let inner_callee = match fun {
+            let callee = match fun {
                 ast::MethodSelFun::Method { ty_id, method_name } => {
                     mono_method(
                         ty_id,
@@ -826,7 +821,7 @@ fn mono_expr(
                                 node: mono::Stmt::Expr(mono::Expr::Call(mono::CallExpr {
                                     fun: Box::new(ast::L {
                                         loc: loc.clone(),
-                                        node: inner_callee,
+                                        node: callee,
                                     }),
                                     args: call_args,
                                     splice: None,
@@ -1392,139 +1387,141 @@ fn mono_method(
     {
         // Find the matching impl.
         for impl_ in impls {
-            if let Some(mut substs) =
-                match_trait_impl(&ty_args[0..trait_ty_args.len()], impl_, poly_pgm, mangler)
+            let mut substs = match match_trait_impl(
+                &ty_args[0..trait_ty_args.len()],
+                impl_,
+                poly_pgm,
+                mangler,
+            ) {
+                Some(substs) => substs,
+                None => continue,
+            };
+
+            let method: &ast::FunDecl = impl_.methods.get(method_id).unwrap();
+
+            let impl_env = poly_pgm.module_env(&impl_.module);
+
+            // Bind function type parameters.
+            for ((ty_param, _kind), ty_arg) in method
+                .sig
+                .context
+                .type_params
+                .iter()
+                .zip(&ty_args[trait_ty_args.len()..])
             {
-                let method: &ast::FunDecl = impl_
-                    .methods
-                    .iter()
-                    .find(|fun_decl| &fun_decl.name.node == method_id)
-                    .unwrap();
-
-                let impl_env = poly_pgm.module_env(&impl_.module);
-
-                // Bind function type parameters.
-                for ((ty_param, _kind), ty_arg) in method
-                    .sig
-                    .context
-                    .type_params
-                    .iter()
-                    .zip(&ty_args[trait_ty_args.len()..])
-                {
-                    substs.insert(ty_param.clone(), ty_arg.clone());
-                }
-
-                let mut params: Vec<(Name, ast::L<mono::Type>)> =
-                    Vec::with_capacity(method.sig.params.len() + 1);
-
-                let mut locals: ScopeSet<Name> = Default::default();
-
-                match &method.sig.self_ {
-                    ast::SelfParam::No => {}
-                    ast::SelfParam::Implicit => panic!(),
-                    ast::SelfParam::Explicit(self_ty) => {
-                        let self_mono_ty =
-                            mono_l_ty(self_ty, &substs, poly_pgm, mono_pgm, mangler, impl_env);
-                        params.push((Name::new_static("self"), self_mono_ty));
-                        locals.insert(Name::new_static("self"));
-                    }
-                }
-
-                params.extend(method.sig.params.iter().map(|(param_name, param_ty)| {
-                    (
-                        param_name.clone(),
-                        mono_l_ty(
-                            param_ty.as_ref().unwrap(),
-                            &substs,
-                            poly_pgm,
-                            mono_pgm,
-                            mangler,
-                            impl_env,
-                        ),
-                    )
-                }));
-
-                let return_ty: Option<ast::L<mono::Type>> = mono_opt_l_ty(
-                    &method.sig.return_ty,
-                    &substs,
-                    poly_pgm,
-                    mono_pgm,
-                    mangler,
-                    impl_env,
-                );
-
-                let exceptions: Option<ast::L<mono::Type>> = mono_opt_l_ty(
-                    &method.sig.exceptions,
-                    &substs,
-                    poly_pgm,
-                    mono_pgm,
-                    mangler,
-                    impl_env,
-                );
-
-                // See if we already monomorphised this method.
-                match mono_pgm
-                    .associated
-                    .entry(mangled_ty_id.clone())
-                    .or_default()
-                    .entry(method_id.clone())
-                    .or_default()
-                    .entry(ty_args.to_vec())
-                {
-                    Entry::Occupied(_) => {
-                        return;
-                    }
-                    Entry::Vacant(entry) => {
-                        entry.insert(mono::FunDecl {
-                            parent_ty: Some(ast::L {
-                                node: mangled_ty_id.clone(),
-                                loc: ast::Loc::dummy(),
-                            }),
-                            name: method.name.set_node(method_id.clone()),
-                            sig: mono::FunSig {
-                                params,
-                                return_ty,
-                                exceptions,
-                            },
-                            body: None,
-                        });
-                    }
-                }
-
-                // Monomorphise method body.
-                let body = match &method.body {
-                    Some(body) => body,
-                    None => return,
-                };
-
-                method
-                    .sig
-                    .params
-                    .iter()
-                    .for_each(|(id, _)| locals.insert(id.clone()));
-
-                let mono_body = mono_l_stmts(
-                    body,
-                    &substs,
-                    poly_pgm,
-                    mono_pgm,
-                    &mut locals,
-                    mangler,
-                    impl_env,
-                );
-
-                mono_pgm
-                    .associated
-                    .get_mut(&mangled_ty_id)
-                    .unwrap()
-                    .get_mut(method_id)
-                    .unwrap()
-                    .get_mut(ty_args)
-                    .unwrap()
-                    .body = Some(mono_body);
-
-                return;
+                substs.insert(ty_param.clone(), ty_arg.clone());
             }
+
+            let mut params: Vec<(Name, ast::L<mono::Type>)> =
+                Vec::with_capacity(method.sig.params.len() + 1);
+
+            let mut locals: ScopeSet<Name> = Default::default();
+
+            match &method.sig.self_ {
+                ast::SelfParam::No => {}
+                ast::SelfParam::Implicit => panic!(),
+                ast::SelfParam::Explicit(self_ty) => {
+                    let self_mono_ty =
+                        mono_l_ty(self_ty, &substs, poly_pgm, mono_pgm, mangler, impl_env);
+                    params.push((Name::new_static("self"), self_mono_ty));
+                    locals.insert(Name::new_static("self"));
+                }
+            }
+
+            params.extend(method.sig.params.iter().map(|(param_name, param_ty)| {
+                (
+                    param_name.clone(),
+                    mono_l_ty(
+                        param_ty.as_ref().unwrap(),
+                        &substs,
+                        poly_pgm,
+                        mono_pgm,
+                        mangler,
+                        impl_env,
+                    ),
+                )
+            }));
+
+            let return_ty: Option<ast::L<mono::Type>> = mono_opt_l_ty(
+                &method.sig.return_ty,
+                &substs,
+                poly_pgm,
+                mono_pgm,
+                mangler,
+                impl_env,
+            );
+
+            let exceptions: Option<ast::L<mono::Type>> = mono_opt_l_ty(
+                &method.sig.exceptions,
+                &substs,
+                poly_pgm,
+                mono_pgm,
+                mangler,
+                impl_env,
+            );
+
+            // See if we already monomorphised this method.
+            match mono_pgm
+                .associated
+                .entry(mangled_ty_id.clone())
+                .or_default()
+                .entry(method_id.clone())
+                .or_default()
+                .entry(ty_args.to_vec())
+            {
+                Entry::Occupied(_) => {
+                    return;
+                }
+                Entry::Vacant(entry) => {
+                    entry.insert(mono::FunDecl {
+                        parent_ty: Some(ast::L {
+                            node: mangled_ty_id.clone(),
+                            loc: ast::Loc::dummy(),
+                        }),
+                        name: method.name.set_node(method_id.clone()),
+                        sig: mono::FunSig {
+                            params,
+                            return_ty,
+                            exceptions,
+                        },
+                        body: None,
+                    });
+                }
+            }
+
+            // Monomorphise method body.
+            let body = match &method.body {
+                Some(body) => body,
+                None => return,
+            };
+
+            method
+                .sig
+                .params
+                .iter()
+                .for_each(|(id, _)| locals.insert(id.clone()));
+
+            let mono_body = mono_l_stmts(
+                body,
+                &substs,
+                poly_pgm,
+                mono_pgm,
+                &mut locals,
+                mangler,
+                impl_env,
+            );
+
+            mono_pgm
+                .associated
+                .get_mut(&mangled_ty_id)
+                .unwrap()
+                .get_mut(method_id)
+                .unwrap()
+                .get_mut(ty_args)
+                .unwrap()
+                .body = Some(mono_body);
+
+            return;
         }
 
         let args = ty_args
