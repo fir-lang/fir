@@ -1724,6 +1724,10 @@ pub(super) fn check_expr(
                 binders,
             )
         }
+
+        ast::Expr::Placeholder => {
+            panic!("{}: BUG: Placeholder in check_expr", loc_display(loc));
+        }
     }
 }
 

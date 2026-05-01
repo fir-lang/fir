@@ -664,6 +664,9 @@ pub enum Expr {
 
     /// A variant: `~Option.Some(123)`, `~123`.
     Variant(VariantExpr),
+
+    /// A dummy node used in place of removed AST nodes. (usually during desugaring)
+    Placeholder,
 }
 
 #[derive(Debug, Clone)]
@@ -1251,13 +1254,13 @@ impl Stmt {
 
 impl Expr {
     pub fn placeholder() -> Expr {
-        Expr::Char('a')
+        Expr::Placeholder
     }
 
     pub fn l_placeholder() -> L<Expr> {
         L {
             loc: Loc::dummy(),
-            node: Expr::Char('a'),
+            node: Expr::Placeholder,
         }
     }
 
@@ -1449,6 +1452,10 @@ impl Expr {
                 assert!(inferred_ty.is_none());
                 expr.node.subst_ty_ids(substs);
             }
+
+            Expr::Placeholder => {
+                panic!("BUG: Placeholder in subst_ty_ids")
+            }
         }
     }
 
@@ -1492,6 +1499,10 @@ impl Expr {
 
             // Rest of the expressions will be desugared by the type checker.
             Expr::BinOp(_) | Expr::UnOp(_) | Expr::Seq { .. } => None,
+
+            Expr::Placeholder => {
+                panic!("BUG: Placeholder in inferred_ty");
+            }
         }
     }
 }
