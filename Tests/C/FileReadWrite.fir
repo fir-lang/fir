@@ -9,11 +9,6 @@ toU32(i: C/SizeT) U32:
     C/inline("(uint32_t)`i`")
 
 
-nullTerminated(bytes: Vec[U8]) Array[U8]:
-    bytes.push(0)
-    bytes.takeArray()
-
-
 extern type File = "FILE"
 
 
@@ -35,36 +30,22 @@ fwrite(ptr: C/Ptr[U8], size: C/SizeT, nmemb: C/SizeT, stream: C/Ptr[File]) C/Siz
 
 main():
     # "/tmp/fir_ffi_rw_test"
-    let path_v: Vec[U8] = Vec.[
-        u8(47), u8(116), u8(109), u8(112), u8(47),
-        u8(102), u8(105), u8(114), u8(95),
-        u8(102), u8(102), u8(105), u8(95),
-        u8(114), u8(119), u8(95),
-        u8(116), u8(101), u8(115), u8(116),
-    ]
-    let path = nullTerminated(path_v)
-
-    let w_mode_v: Vec[U8] = Vec.[u8(119)] # "w"
-    let w_mode = nullTerminated(w_mode_v)
-
-    let r_mode_v: Vec[U8] = Vec.[u8(114)] # "r"
-    let r_mode = nullTerminated(r_mode_v)
+    let path = "/tmp/fir_ffi_rw_test\0"
+    let w_mode = "w\0"
+    let r_mode = "r\0"
 
     # Write "Hi!" to the file.
-    let fw = fopen(path.ptr(), w_mode.ptr())
+    let fw = fopen(path._bytes.ptr(), w_mode._bytes.ptr())
     if fw.isNull():
         panic("fopen for write failed")
 
-    let out: Array[U8] = Array.new(3)
-    out.set(0, 72)  # H
-    out.set(1, 105) # i
-    out.set(2, 33)  # !
-    let nw = fwrite(out.ptr(), u32(1).toCSize(), u32(3).toCSize(), fw)
+    let out = "Hi!"
+    let nw = fwrite(out._bytes.ptr(), u32(1).toCSize(), u32(3).toCSize(), fw)
     printStr("wrote `nw.toU32()` bytes")
     let _ = fclose(fw)
 
     # Read it back.
-    let fr = fopen(path.ptr(), r_mode.ptr())
+    let fr = fopen(path._bytes.ptr(), r_mode._bytes.ptr())
     if fr.isNull():
         panic("fopen for read failed")
 
