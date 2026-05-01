@@ -1990,9 +1990,8 @@ fn lower_expr(
             (expr, Default::default())
         }
 
-        mono::Expr::Int(int) => {
-            let kind = int.kind.unwrap();
-            let value = match kind {
+        mono::Expr::Int(kind) => {
+            let value = match *kind {
                 ast::IntKind::I8(val) => val as u8 as u64,
                 ast::IntKind::U8(val) => val as u64,
                 ast::IntKind::I32(val) => val as u32 as u64,

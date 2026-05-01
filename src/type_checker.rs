@@ -34,6 +34,11 @@ use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::module::ModulePath;
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use smol_str::SmolStr;
+
 /// Type constructors and types in the program.
 #[derive(Debug)]
 pub struct PgmTypes {
@@ -247,6 +252,21 @@ struct TcFunState<'a> {
 
     /// Local counter for generating new temporaries.
     local_gen: u32,
+
+    /// Integer literals in the function. After type checking the whole function, these are
+    /// revisited to check that their types are integer types and that the values fit into the
+    /// inferred types. Ambiguous types (unification variable) are defaulted as `I32` and then range
+    /// checked.
+    int_lits: &'a mut Vec<IntLit>,
+}
+
+#[derive(Debug)]
+struct IntLit {
+    text: SmolStr,
+    parsed: u64,
+    kind: Rc<RefCell<Option<ast::IntKind>>>,
+    ty: Ty,
+    loc: ast::Loc,
 }
 
 const EXN_QVAR_ID: Name = Name::new_static("?exn");
@@ -1702,6 +1722,8 @@ fn check_top_fun(
         None => panic!(),
     };
 
+    let mut int_lits = Vec::new();
+
     let mut tc_state = TcFunState {
         return_ty: ret_ty.clone(),
         trait_env,
@@ -1713,13 +1735,21 @@ fn check_top_fun(
         exceptions,
         assumps: &assumps,
         local_gen: 0,
+        int_lits: &mut int_lits,
     };
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         check_stmts(&mut tc_state, body, Some(&ret_ty), &mut Vec::new());
     }
 
-    resolve_preds(trait_env, assumps, tys.tys.cons(), preds, &var_gen);
+    resolve_preds(
+        trait_env,
+        assumps,
+        tys.tys.cons(),
+        preds,
+        &var_gen,
+        int_lits,
+    );
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
@@ -1862,6 +1892,8 @@ fn check_impl(
                 None => panic!(),
             };
 
+            let mut int_lits = Vec::new();
+
             let mut tc_state = TcFunState {
                 return_ty: ret_ty.clone(),
                 trait_env,
@@ -1873,11 +1905,19 @@ fn check_impl(
                 exceptions,
                 assumps: &assumps,
                 local_gen: 0,
+                int_lits: &mut int_lits,
             };
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), &mut Vec::new());
 
-            resolve_preds(trait_env, assumps, tys.tys.cons(), preds, &var_gen);
+            resolve_preds(
+                trait_env,
+                assumps,
+                tys.tys.cons(),
+                preds,
+                &var_gen,
+                int_lits,
+            );
 
             for stmt in body.iter_mut() {
                 normalize_stmt(
@@ -1971,6 +2011,7 @@ fn resolve_preds(
     cons: &ScopeMap<Id, TyCon>,
     mut goals: Vec<Pred>,
     var_gen: &UVarGen,
+    int_lits: Vec<IntLit>,
 ) {
     let mut progress = true;
 
@@ -2077,6 +2118,11 @@ fn resolve_preds(
         goals = next_goals;
     }
 
+    if !int_lits.is_empty() {
+        check_and_default_int_lits(cons, trait_env, var_gen, int_lits, &assumps, &mut goals);
+        return resolve_preds(trait_env, assumps, cons, goals, var_gen, vec![]);
+    }
+
     if !goals.is_empty() {
         goals.sort();
         use std::fmt::Write;
@@ -2087,6 +2133,155 @@ fn resolve_preds(
             writeln!(&mut msg, "{}: {}", loc_display(&goal.loc.clone()), goal).unwrap();
         }
         panic!("{}", msg);
+    }
+}
+
+fn check_and_default_int_lits(
+    cons: &ScopeMap<Id, TyCon>,
+    trait_env: &TraitEnv,
+    var_gen: &UVarGen,
+    int_lits: Vec<IntLit>,
+    assumps: &[Pred],
+    preds: &mut Vec<Pred>,
+) {
+    for IntLit {
+        text,
+        parsed,
+        kind,
+        ty,
+        loc,
+    } in int_lits
+    {
+        let ty = ty.deep_normalize(cons, trait_env, var_gen, &[]);
+        let con = match ty {
+            Ty::Con(con, _) | Ty::App(con, _, _) => con,
+            Ty::UVar(var) => {
+                // Default as I32
+                unify(
+                    &Ty::UVar(var.clone()),
+                    &Ty::Con(id::builtins::I32(), Kind::Star),
+                    cons,
+                    trait_env,
+                    var_gen,
+                    &loc,
+                    assumps,
+                    preds,
+                );
+                id::builtins::I32()
+            }
+            other => {
+                panic!(
+                    "{}: Unexpected integer literal type: {}",
+                    loc_display(&loc),
+                    other,
+                )
+            }
+        };
+        let negate = text.starts_with('-');
+        if con == id::builtins::U8() {
+            if negate {
+                panic!(
+                    "{}: Cannot negate unsigned integer: {}",
+                    loc_display(&loc),
+                    text
+                );
+            }
+            *kind.borrow_mut() = Some(ast::IntKind::U8(u8::try_from(parsed).unwrap_or_else(
+                |_| {
+                    panic!(
+                        "{}: Integer literal {} out of range for U8",
+                        loc_display(&loc),
+                        text
+                    )
+                },
+            )));
+        } else if con == id::builtins::I8() {
+            let mut bits = u8::try_from(parsed).unwrap_or_else(|_| {
+                panic!(
+                    "{}: Integer literal {} out of range for I8",
+                    loc_display(&loc),
+                    text
+                )
+            });
+            let limit = if negate { i8::MIN } else { i8::MAX }.unsigned_abs();
+            if bits > limit {
+                panic!(
+                    "{}: Integer literal {} out of range for I8",
+                    loc_display(&loc),
+                    text
+                );
+            }
+            if negate {
+                bits = !bits.wrapping_sub(1);
+            }
+            *kind.borrow_mut() = Some(ast::IntKind::I8(bits as i8));
+        } else if con == id::builtins::U32() {
+            if negate {
+                panic!(
+                    "{}: Cannot negate unsigned integer: {}",
+                    loc_display(&loc),
+                    text
+                );
+            }
+            *kind.borrow_mut() = Some(ast::IntKind::U32(u32::try_from(parsed).unwrap_or_else(
+                |_| {
+                    panic!(
+                        "{}: Integer literal {} out of range for U32",
+                        loc_display(&loc),
+                        text
+                    )
+                },
+            )));
+        } else if con == id::builtins::I32() {
+            let mut bits = u32::try_from(parsed).unwrap_or_else(|_| {
+                panic!(
+                    "{}: Integer literal {} out of range for I32",
+                    loc_display(&loc),
+                    text
+                )
+            });
+            let limit = if negate { i32::MIN } else { i32::MAX }.unsigned_abs();
+            if bits > limit {
+                panic!(
+                    "{}: Integer literal {} out of range for I32",
+                    loc_display(&loc),
+                    text
+                );
+            }
+            if negate {
+                bits = !bits.wrapping_sub(1);
+            }
+            *kind.borrow_mut() = Some(ast::IntKind::I32(bits as i32));
+        } else if con == id::builtins::U64() {
+            if negate {
+                panic!(
+                    "{}: Cannot negate unsigned integer: {}",
+                    loc_display(&loc),
+                    text
+                );
+            }
+            *kind.borrow_mut() = Some(ast::IntKind::U64(parsed));
+        } else if con == id::builtins::I64() {
+            let mut bits = parsed;
+            let limit = if negate { i64::MIN } else { i64::MAX }.unsigned_abs();
+            if bits > limit {
+                panic!(
+                    "{}: Integer literal {} out of range for I32",
+                    loc_display(&loc),
+                    text
+                );
+            }
+            if negate {
+                bits = !bits.wrapping_sub(1);
+            }
+            *kind.borrow_mut() = Some(ast::IntKind::I64(bits as i64));
+        } else {
+            panic!(
+                "{}: Expected {}, found integer literal",
+                loc_display(&loc),
+                con.name(),
+            )
+        }
     }
 }
 

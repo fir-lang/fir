@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: ad4a8892c9b4fbc409ab297a3c0e0b6bec178f07ccb43c947a4df13f49883840
+// sha3: 8d5bc32c86ea9200ab4567b349c7965898afa9d0404e7a51fe4574eb346a4581
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::*;
@@ -7,6 +7,7 @@ use crate::module::ModulePath;
 use crate::parser_utils::*;
 use crate::token::*;
 use lexgen_util::{LexerError, Loc};
+use std::cell::RefCell;
 use std::convert::Infallible;
 use std::rc::Rc;
 #[allow(unused_extern_crates)]
@@ -27,6 +28,7 @@ mod __parse__LExpr {
     use crate::token::*;
     use std::convert::Infallible;
     use std::rc::Rc;
+    use std::cell::RefCell;
     use lexgen_util::{LexerError, Loc};
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
@@ -18775,6 +18777,7 @@ mod __parse__LStmt {
     use crate::token::*;
     use std::convert::Infallible;
     use std::rc::Rc;
+    use std::cell::RefCell;
     use lexgen_util::{LexerError, Loc};
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
@@ -37523,6 +37526,7 @@ mod __parse__Module {
     use crate::token::*;
     use std::convert::Infallible;
     use std::rc::Rc;
+    use std::cell::RefCell;
     use lexgen_util::{LexerError, Loc};
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
@@ -59883,8 +59887,9 @@ fn __action112<'a>(
     {
         Expr::Int(IntExpr {
             text: int.text.clone(),
-            kind: None, // for type checker
+            kind: Rc::new(RefCell::new(None)), // for type checker
             parsed: parse_int_lit(&int.text, module, &l),
+            inferred_ty: None,
         })
     }
 }

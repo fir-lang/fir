@@ -367,22 +367,26 @@ impl Expr {
                 p.char(')');
             }
 
-            Expr::Int(IntExpr {
-                text,
-                kind,
-                parsed: _,
-            }) => {
-                p.str(text);
-                match kind {
-                    Some(IntKind::I64(_)) => p.str("I64"),
-                    Some(IntKind::U64(_)) => p.str("U64"),
-                    Some(IntKind::I32(_)) => p.str("I32"),
-                    Some(IntKind::U32(_)) => p.str("U32"),
-                    Some(IntKind::I8(_)) => p.str("I8"),
-                    Some(IntKind::U8(_)) => p.str("U8"),
-                    None => {}
+            Expr::Int(kind) => match kind {
+                IntKind::I64(i) => {
+                    write!(p, "i64({i})").unwrap();
                 }
-            }
+                IntKind::U64(i) => {
+                    write!(p, "u64({i})").unwrap();
+                }
+                IntKind::I32(i) => {
+                    write!(p, "i32({i})").unwrap();
+                }
+                IntKind::U32(i) => {
+                    write!(p, "u32({i})").unwrap();
+                }
+                IntKind::I8(i) => {
+                    write!(p, "i8({i})").unwrap();
+                }
+                IntKind::U8(i) => {
+                    write!(p, "u8({i})").unwrap();
+                }
+            },
 
             Expr::Str(str) => {
                 p.char('"');

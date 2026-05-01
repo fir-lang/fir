@@ -7,8 +7,8 @@ main():
 # expected stderr:
 # Tests/RecordSplicingFail1.fir:3:23: Unable to unify types
 #              U32 and
-#              (.._2)
+#              (.._3)
 #              (
 #                 Con("U32", Star)
-#                 Record { labels: {}, extension: Some(UVar(UVarRef(UVar { id: 2, kind: Row(Record), link: None, loc: Tests/RecordSplicingFail1.fir:3:23-3:24 }))), is_row: false }
+#                 Record { labels: {}, extension: Some(UVar(UVarRef(UVar { id: 3, kind: Row(Record), link: None, loc: Tests/RecordSplicingFail1.fir:3:23-3:24 }))), is_row: false }
 #              )
