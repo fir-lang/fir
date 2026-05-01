@@ -102,7 +102,16 @@ fn normalize_expr(
                 .for_each(|ty| *ty = ty.deep_normalize(cons, trait_env, var_gen, &[]))
         }
 
-        ast::Expr::Int(_) | ast::Expr::Char(_) => {}
+        ast::Expr::Int(ast::IntExpr { inferred_ty, .. }) => {
+            *inferred_ty = Some(inferred_ty.as_ref().unwrap().deep_normalize(
+                cons,
+                trait_env,
+                var_gen,
+                &[],
+            ));
+        }
+
+        ast::Expr::Char(_) => {}
 
         ast::Expr::Str(parts) => parts.iter_mut().for_each(|part| match part {
             StrPart::Str(_) => {}
