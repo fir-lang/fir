@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: f86c2dd226c065e1afb9f25793b358b925d07f98a6f816cfe2059914c7def87d
+// sha3: aa7b1ed9d65edd95c290101ec8b9d7ae12f015a92434553155da65c7228d46fd
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, str_parts};
@@ -57469,6 +57469,7 @@ fn __action109<'a>(
             text: int.text.clone(),
             kind: Rc::new(RefCell::new(None)), // for type checker
             parsed: parse_int_lit(&int.text, module, &l),
+            inferred_ty: None,
         })
     }
 }

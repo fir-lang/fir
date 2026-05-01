@@ -826,6 +826,7 @@ InlineExpr: Expr = {
             text: int.text.clone(),
             kind: Rc::new(RefCell::new(None)), // for type checker
             parsed: parse_int_lit(&int.text, module, &l),
+            inferred_ty: None,
         })
     },
 

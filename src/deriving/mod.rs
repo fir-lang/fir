@@ -224,6 +224,7 @@ fn u32_lit(loc: &ast::Loc, n: u32) -> ast::L<ast::Expr> {
             text: SmolStr::new(n.to_string()),
             kind: std::rc::Rc::new(std::cell::RefCell::new(None)),
             parsed: n as u64,
+            inferred_ty: None,
         }),
     )
 }

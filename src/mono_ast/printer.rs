@@ -344,6 +344,7 @@ impl Expr {
                 text,
                 kind,
                 parsed: _,
+                inferred_ty: _,
             }) => {
                 p.str(text);
                 match &*kind.borrow() {

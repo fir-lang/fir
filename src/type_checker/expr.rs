@@ -660,8 +660,14 @@ pub(super) fn check_expr(
             (ret_ty, Default::default())
         }
 
-        ast::Expr::Int(ast::IntExpr { text, kind, parsed }) => {
+        ast::Expr::Int(ast::IntExpr {
+            text,
+            kind,
+            parsed,
+            inferred_ty,
+        }) => {
             assert!(kind.borrow().is_none(), "{}: {:?}", loc_display(loc), kind);
+            assert!(inferred_ty.is_none());
 
             let ty = expected_ty
                 .cloned()
@@ -674,6 +680,8 @@ pub(super) fn check_expr(
                 ty: ty.clone(),
                 loc: loc.clone(),
             });
+
+            *inferred_ty = Some(ty.clone());
 
             (ty, Default::default())
         }
