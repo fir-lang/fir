@@ -7,23 +7,23 @@ main():
     Point(x = 1, y = 2).printPoint()
 
     # UFCS method-like chain.
-    i32(21).double().print()
+    21.double().print()
 
     # UFCS as a value (closure form): bare `a.f` with `f` a top-level fn.
-    let f = i32(10).double      # allocates closure, captures the argument of `double`
+    let f = 10.double           # allocates closure, captures the argument of `double`
     f().print()                 # closure call
 
     # Polymorphic top-level functions via UFCS.
-    let p = i32(7).pair("hi")
+    let p = 7.pair("hi")
     "(`p.fst`, `p.snd`)".print()
 
     # Polymorphic top-level function, converted to closure.
-    let pFn = i32(8).pair       # allocates closure, captures first argument to `pair`
+    let pFn = 8.pair            # allocates closure, captures first argument to `pair`
     let p = pFn("hi")           # closure call
     "(`p.fst`, `p.snd`)".print()
 
     # Polymorphic top-level function, with explicit type arguments.
-    let pFn = i32(9).pair[I32, Str, []]
+    let pFn = 9.pair[I32, Str, []]
     let p = pFn("hi")
     "(`p.fst`, `p.snd`)".print()
 
@@ -32,18 +32,18 @@ main():
 
     # When there isn't a local with the same name, top-level functions are
     # called as methods.
-    i32(123).pair("hi").pairToStr().print()     # calls top-level `pairToStr`
+    123.pair("hi").pairToStr().print()  # calls top-level `pairToStr`
 
     # Local functions can also be used for UFCS and they have precedence over
     # top-level ones.
     let pairToStr = \(pair: (fst: I32, snd: Str)) Str:
         "(fst = `pair.fst`, snd = `pair.snd`) (local fn)"
 
-    i32(123).pair("hi").pairToStr().print()     # calls local `pairToStr`
+    123.pair("hi").pairToStr().print()  # calls local `pairToStr`
 
     # Using a lambda to pass named arguments, or as positional argument other
     # than the first.
-    i32(456).apply(\(y): Point(x = 123, y)).printPoint()
+    456.apply(\(y): Point(x = 123, y)).printPoint()
 
     # At least for now, it's not possible to call associated functions with this
     # syntax. We have to use `apply`.
