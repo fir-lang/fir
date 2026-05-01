@@ -584,6 +584,10 @@ pub(super) fn check_expr(
             {
                 assert_eq!(inferred_ty.as_ref().unwrap(), &fun_ty);
 
+                // `object` is already type checked, so it's desugared and its `inferred_type` field
+                // is updated. This `unwrap` can't fail.
+                let receiver_ty = object.node.inferred_ty().unwrap();
+
                 let receiver_arg_node =
                     std::mem::replace(&mut object.node, ast::Expr::placeholder());
                 args.insert(
@@ -600,9 +604,7 @@ pub(super) fn check_expr(
                         ret,
                         exceptions,
                     } => {
-                        // `object` is already type checked, so it's desugared and its
-                        // `inferred_type` field is updated. This `unwrap` can't fail.
-                        let mut full_args = vec![object.node.inferred_ty().unwrap()];
+                        let mut full_args = vec![receiver_ty];
                         full_args.extend(method_args.iter().cloned());
                         Ty::Fun {
                             args: FunArgs::Positional { args: full_args },
