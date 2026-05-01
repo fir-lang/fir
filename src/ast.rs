@@ -848,7 +848,9 @@ pub struct IntExpr {
 // default method impls.
 impl Clone for IntExpr {
     fn clone(&self) -> IntExpr {
-        // assert!(self.inferred_ty.is_none());
+        // Type checked ASTs shouldn't be cloned, cloning is only for copying default trait methods
+        // to impls.
+        assert!(self.inferred_ty.is_none());
         IntExpr {
             text: self.text.clone(),
             kind: Rc::new(RefCell::new(*self.kind.borrow())),
