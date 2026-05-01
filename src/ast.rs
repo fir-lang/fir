@@ -3,7 +3,7 @@
 pub mod printer;
 
 use crate::collections::HashMap;
-use crate::interpolation::{ExternTypeTemplatePart, StrPart};
+use crate::interpolation::StrPart;
 use crate::module::ModulePath;
 pub use crate::name::Name;
 pub use crate::token::IntKind;
@@ -200,8 +200,16 @@ pub enum TypeDeclRhs {
     Synonym(L<Type>),
 
     /// An extern type definition:
+    ///
     /// - `extern type File = "FILE"`
-    /// - `extern type Ptr[t] = "`t`*"`
+    ///
+    /// - With fields:
+    ///   ```
+    ///   extern type DivT = "div_t"(
+    ///       quot: I32 = "quot",
+    ///       rem: I32 = "rem",
+    ///   )
+    ///   ```
     Extern(ExternTypeDeclRhs),
 }
 
@@ -226,7 +234,7 @@ pub enum ConFields {
 
 #[derive(Debug, Clone)]
 pub struct ExternTypeDeclRhs {
-    pub template: Vec<ExternTypeTemplatePart>,
+    pub c_type: String,
     pub fields: Vec<ExternTypeField>,
 }
 
@@ -268,7 +276,7 @@ pub enum Type {
     AssocTySelect { ty: L<Box<Type>>, assoc_ty: Name },
 }
 
-/// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
+/// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, exn]`.
 #[derive(Debug, Clone)]
 pub struct NamedType {
     /// Module prefix of the type constructor, e.g. in `Fir/Vec/Vec` this is the `Fir/Vec/` part.

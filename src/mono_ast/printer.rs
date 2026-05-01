@@ -75,20 +75,9 @@ impl TypeDeclRhs {
                 print_con_fields(fields, p);
             }
 
-            TypeDeclRhs::Extern(ExternType { template, fields }) => {
+            TypeDeclRhs::Extern(ExternType { c_type, fields }) => {
                 p.str(" = \"");
-                for part in template.iter() {
-                    match part {
-                        ExternTypeTemplatePart::C(s) => {
-                            crate::ast::printer::escape_str_lit(s, p);
-                        }
-                        ExternTypeTemplatePart::TyArg(ty) => {
-                            p.char('`');
-                            ty.print(p);
-                            p.char('`');
-                        }
-                    }
-                }
+                crate::ast::printer::escape_str_lit(c_type, p);
                 p.char('"');
                 if !fields.is_empty() {
                     p.char('(');

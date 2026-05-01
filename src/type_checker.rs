@@ -1366,10 +1366,7 @@ fn collect_schemes(
                         unreachable!()
                     }
 
-                    ast::TypeDeclRhs::Extern(ast::ExternTypeDeclRhs {
-                        template: _,
-                        fields,
-                    }) => {
+                    ast::TypeDeclRhs::Extern(ast::ExternTypeDeclRhs { c_type: _, fields }) => {
                         let args = FunArgs::Named {
                             args: fields
                                 .iter()

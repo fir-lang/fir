@@ -239,8 +239,10 @@ TypeDecl: L<TypeDecl> = {
     //
 
     <l:@L> "extern" "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "="
-           BeginStr <interpolations:(<BeginInterpolation> <LExpr> EndInterpolation)*>
-           <end:EndStr> <fields:("(" <Sep<ExternTypeField, ",">> ")")?> NEWLINE <r:@R> => {
+           BeginStr <str:EndStr>
+           <fields:("(" <Sep<ExternTypeField, ",">> ")")?> NEWLINE <r:@R> => {
+        let c_type = str.text.as_str();
+        let c_type = &c_type[0..c_type.len() - 1]; // drop the "
         L::new(module, l, r, TypeDecl {
             attr: None,
             value: false,
@@ -248,15 +250,16 @@ TypeDecl: L<TypeDecl> = {
             type_params,
             type_param_kinds: vec![],
             rhs: Some(TypeDeclRhs::Extern(ExternTypeDeclRhs {
-                template: extern_type_template_parts(interpolations, end),
+                c_type: c_type.to_string(),
                 fields: vec![],
             })),
         })
     },
 
-    <l:@L> "extern" "type" <type_name:UpperId> "="
-           BeginStr <interpolations:(<BeginInterpolation> <LExpr> EndInterpolation)*>
-           <end:EndStr> <fields:("(" <Sep<ExternTypeField, ",">> ")")?> NEWLINE <r:@R> => {
+    <l:@L> "extern" "type" <type_name:UpperId> "=" BeginStr <str:EndStr>
+           <fields:("(" <Sep<ExternTypeField, ",">> ")")?> NEWLINE <r:@R> => {
+        let c_type = str.text.as_str();
+        let c_type = &c_type[0..c_type.len() - 1]; // drop the "
         L::new(module, l, r, TypeDecl {
             attr: None,
             value: false,
@@ -264,7 +267,7 @@ TypeDecl: L<TypeDecl> = {
             type_params: vec![],
             type_param_kinds: vec![],
             rhs: Some(TypeDeclRhs::Extern(ExternTypeDeclRhs {
-                template: extern_type_template_parts(interpolations, end),
+                c_type: c_type.to_string(),
                 fields: fields.unwrap_or(vec![]),
             })),
         })

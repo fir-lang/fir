@@ -74,14 +74,9 @@ fn visit_ty_decl(
             visit_fields(fields, records, variants);
         }
 
-        Some(mono::TypeDeclRhs::Extern(ext)) => {
-            for f in ext.fields.iter() {
+        Some(mono::TypeDeclRhs::Extern(mono::ExternType { c_type: _, fields })) => {
+            for f in fields.iter() {
                 visit_ty(&f.ty, records, variants);
-            }
-            for part in ext.template.iter() {
-                if let mono::ExternTypeTemplatePart::TyArg(ty) = part {
-                    visit_ty(ty, records, variants);
-                }
             }
         }
     }

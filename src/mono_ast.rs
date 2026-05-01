@@ -48,17 +48,8 @@ pub enum ConFields {
 
 #[derive(Debug, Clone)]
 pub struct ExternType {
-    pub template: Vec<ExternTypeTemplatePart>,
+    pub c_type: String,
     pub fields: Vec<ExternField>,
-}
-
-#[derive(Debug, Clone)]
-pub enum ExternTypeTemplatePart {
-    /// Raw C text from the original template.
-    C(String),
-
-    /// Concrete type substituted for an AST template's type variable.
-    TyArg(Type),
 }
 
 #[derive(Debug, Clone)]

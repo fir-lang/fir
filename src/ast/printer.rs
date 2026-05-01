@@ -1,5 +1,4 @@
 use crate::indenting_printer::Printer;
-use crate::interpolation::ExternTypeTemplatePart;
 use crate::{ast::*, type_checker::RecordOrVariant};
 
 use std::fmt::Write;
@@ -121,18 +120,9 @@ impl TypeDeclRhs {
                 ty.node.print(p);
             }
 
-            TypeDeclRhs::Extern(ExternTypeDeclRhs { template, fields }) => {
+            TypeDeclRhs::Extern(ExternTypeDeclRhs { c_type, fields }) => {
                 p.str(" = \"");
-                for part in template.iter() {
-                    match part {
-                        ExternTypeTemplatePart::C(s) => escape_str_lit(s, p),
-                        ExternTypeTemplatePart::Var(name) => {
-                            p.char('`');
-                            p.str(&name.node);
-                            p.char('`');
-                        }
-                    }
-                }
+                escape_str_lit(c_type, p);
                 p.char('"');
                 if !fields.is_empty() {
                     p.char('(');

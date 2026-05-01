@@ -865,10 +865,9 @@ fn is_value_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
 fn is_extern_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
     match ty {
         mono::Type::Named(_) => match pgm.decl(ty) {
-            TypeDecl::Named(decl) => match decl.rhs {
-                NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(_)) => true,
-                _ => false,
-            },
+            TypeDecl::Named(decl) => {
+                matches!(decl.rhs, NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(_)))
+            }
             _ => false,
         },
         _ => false,
@@ -881,9 +880,12 @@ fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
     }
     if let mono::Type::Named(_) = ty
         && let TypeDecl::Named(decl) = pgm.decl(ty)
-        && let NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(ext)) = &decl.rhs
+        && let NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(mono::ExternType {
+            c_type,
+            fields: _,
+        })) = &decl.rhs
     {
-        return expand_extern_template(ext, pgm);
+        return c_type.to_string();
     }
     let ptr = match pgm.decl(ty) {
         TypeDecl::Named(decl) => !decl.value,
@@ -895,17 +897,6 @@ fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
         s.push('*'); // make pointer
     }
     s
-}
-
-fn expand_extern_template(ext: &mono::ExternType, pgm: &LoweredPgm) -> String {
-    let mut ty_str = String::new();
-    for part in &ext.template {
-        match part {
-            mono::ExternTypeTemplatePart::C(s) => ty_str.push_str(s),
-            mono::ExternTypeTemplatePart::TyArg(ty) => ty_str.push_str(&c_ty(ty, pgm)),
-        }
-    }
-    ty_str
 }
 
 fn ty_to_c(ty: &mono::Type, out: &mut String) {
