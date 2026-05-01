@@ -1,6 +1,6 @@
 pub mod printer;
 
-pub use crate::ast::{IntExpr, L, Loc, Name, Named};
+pub use crate::ast::{L, Loc, Name, Named};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -311,7 +311,7 @@ pub enum Expr {
     FieldSel(FieldSelExpr),     // <expr>.<id>
     AssocFnSel(AssocFnSelExpr), // <id>.<id>
     Call(CallExpr),
-    Int(IntExpr),
+    Int(IntKind),
     Str(String),
     Char(char),
     BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
@@ -340,8 +340,12 @@ impl Expr {
             | Expr::Match(MatchExpr { ty, .. })
             | Expr::If(IfExpr { ty, .. }) => ty.clone(),
 
-            Expr::Int(IntExpr { kind, .. }) => {
-                let con = match kind.unwrap() {
+            Expr::Int(kind) => {
+                // This code is quite hacky/delicate. The names below should be the mangled names of
+                // `Fir/Num/...` types. Because we monomorphise these types as first thing in
+                // `monomorphise` they get a name without a prefix/suffix, but if that ever changes
+                // the code below will return an incorrect type.
+                let con = match kind {
                     IntKind::I8(_) => "I8",
                     IntKind::U8(_) => "U8",
                     IntKind::I32(_) => "I32",
