@@ -11,8 +11,6 @@ use crate::type_checker::ty::*;
 use crate::type_checker::unification::{try_unify_one_way, unify, unify_expected_ty};
 use crate::type_checker::{TcFunState, loc_display};
 
-use std::mem::replace;
-
 /// Returns the type of the expression, and binders that the expression binds.
 ///
 /// Only boolean expressions bind variables.
@@ -971,7 +969,7 @@ pub(super) fn check_expr(
                             Some(&Ty::UVar(expr_var)),
                             loop_stack,
                         );
-                        let expr_node = replace(&mut expr.node, ast::Expr::placeholder());
+                        let expr_node = std::mem::replace(&mut expr.node, ast::Expr::placeholder());
                         expr.node = ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
                                 // ToStr.toStr[t, exn](self: t) Str / exn
@@ -1431,13 +1429,13 @@ pub(super) fn check_expr(
                 param_tys.push(param_ty_converted.clone());
             }
 
-            let old_ret_ty = replace(&mut tc_state.return_ty, ret_ty.clone());
-            let old_exceptions = replace(&mut tc_state.exceptions, exceptions.clone());
+            let old_ret_ty = std::mem::replace(&mut tc_state.return_ty, ret_ty.clone());
+            let old_exceptions = std::mem::replace(&mut tc_state.exceptions, exceptions.clone());
 
             check_stmts(tc_state, body, Some(&ret_ty), &mut Vec::new());
 
-            let exceptions = replace(&mut tc_state.exceptions, old_exceptions);
-            let ret_ty = replace(&mut tc_state.return_ty, old_ret_ty);
+            let exceptions = std::mem::replace(&mut tc_state.exceptions, old_exceptions);
+            let ret_ty = std::mem::replace(&mut tc_state.return_ty, old_ret_ty);
 
             tc_state.env.exit();
 
