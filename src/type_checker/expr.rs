@@ -11,8 +11,6 @@ use crate::type_checker::ty::*;
 use crate::type_checker::unification::{try_unify_one_way, unify, unify_expected_ty};
 use crate::type_checker::{TcFunState, loc_display};
 
-use std::mem::replace;
-
 /// Returns the type of the expression, and binders that the expression binds.
 ///
 /// Only boolean expressions bind variables.
@@ -181,6 +179,8 @@ pub(super) fn check_expr(
                                 ty
                             }
                             None => {
+                                let object =
+                                    std::mem::replace(object, Box::new(ast::Expr::l_placeholder()));
                                 let (ty, new_expr) = check_field_sel(
                                     tc_state,
                                     object,
@@ -196,6 +196,8 @@ pub(super) fn check_expr(
                     }
 
                     other => {
+                        let object =
+                            std::mem::replace(object, Box::new(ast::Expr::l_placeholder()));
                         let (ty, new_expr) =
                             check_field_sel(tc_state, object, field, user_ty_args, other, loc);
                         *expr = new_expr;
@@ -505,8 +507,10 @@ pub(super) fn check_expr(
                             let mut fields: Vec<(Name, ast::L<ast::Expr>)> = args
                                 .iter_mut()
                                 .map(|arg| {
-                                    let expr =
-                                        std::mem::replace(&mut arg.expr.node, ast::Expr::Char('a'));
+                                    let expr = std::mem::replace(
+                                        &mut arg.expr.node,
+                                        ast::Expr::placeholder(),
+                                    );
                                     (
                                         arg.name.as_ref().unwrap().clone(),
                                         arg.expr.map_as_ref(|_| expr),
@@ -576,16 +580,21 @@ pub(super) fn check_expr(
                 fun: method_fun,
                 ty_args,
                 inferred_ty,
-            }) = &fun.node
+            }) = &mut fun.node
             {
                 assert_eq!(inferred_ty.as_ref().unwrap(), &fun_ty);
 
-                // Methods can't have named arguments.
+                // `object` is already type checked, so it's desugared and its `inferred_type` field
+                // is updated. This `unwrap` can't fail.
+                let receiver_ty = object.node.inferred_ty().unwrap();
+
+                let receiver_arg_node =
+                    std::mem::replace(&mut object.node, ast::Expr::placeholder());
                 args.insert(
                     0,
                     ast::CallArg {
                         name: None,
-                        expr: (**object).clone(),
+                        expr: object.set_node(receiver_arg_node),
                     },
                 );
 
@@ -595,9 +604,7 @@ pub(super) fn check_expr(
                         ret,
                         exceptions,
                     } => {
-                        // `object` is already type checked, so it's desugared and its
-                        // `inferred_type` field is updated. This `unwrap` can't fail.
-                        let mut full_args = vec![object.node.inferred_ty().unwrap()];
+                        let mut full_args = vec![receiver_ty];
                         full_args.extend(method_args.iter().cloned());
                         Ty::Fun {
                             args: FunArgs::Positional { args: full_args },
@@ -964,7 +971,7 @@ pub(super) fn check_expr(
                             Some(&Ty::UVar(expr_var)),
                             loop_stack,
                         );
-                        let expr_node = replace(&mut expr.node, ast::Expr::Char('a'));
+                        let expr_node = std::mem::replace(&mut expr.node, ast::Expr::placeholder());
                         expr.node = ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
                                 // ToStr.toStr[t, exn](self: t) Str / exn
@@ -1218,7 +1225,7 @@ pub(super) fn check_expr(
                     }),
                     args: vec![ast::CallArg {
                         name: None,
-                        expr: *arg.clone(),
+                        expr: std::mem::replace(&mut *arg, ast::Expr::l_placeholder()),
                     }],
                     splice: None,
                     inferred_ty: Some(Ty::bool()),
@@ -1424,13 +1431,13 @@ pub(super) fn check_expr(
                 param_tys.push(param_ty_converted.clone());
             }
 
-            let old_ret_ty = replace(&mut tc_state.return_ty, ret_ty.clone());
-            let old_exceptions = replace(&mut tc_state.exceptions, exceptions.clone());
+            let old_ret_ty = std::mem::replace(&mut tc_state.return_ty, ret_ty.clone());
+            let old_exceptions = std::mem::replace(&mut tc_state.exceptions, exceptions.clone());
 
             check_stmts(tc_state, body, Some(&ret_ty), &mut Vec::new());
 
-            let exceptions = replace(&mut tc_state.exceptions, old_exceptions);
-            let ret_ty = replace(&mut tc_state.return_ty, old_ret_ty);
+            let exceptions = std::mem::replace(&mut tc_state.exceptions, old_exceptions);
+            let ret_ty = std::mem::replace(&mut tc_state.return_ty, old_ret_ty);
 
             tc_state.env.exit();
 
@@ -1717,6 +1724,10 @@ pub(super) fn check_expr(
                 binders,
             )
         }
+
+        ast::Expr::Placeholder => {
+            panic!("{}: BUG: Placeholder in check_expr", loc_display(loc));
+        }
     }
 }
 
@@ -1893,7 +1904,7 @@ pub(super) fn check_if_expr(
 /// Returns the type of the expression, with updated AST node for the expression.
 fn check_field_sel(
     tc_state: &mut TcFunState,
-    object: &ast::L<ast::Expr>,
+    object: Box<ast::L<ast::Expr>>,
     field: &Name,
     user_ty_args: &[ast::L<ast::Type>],
     object_ty: &Ty,
@@ -1909,7 +1920,7 @@ fn check_field_sel(
         return (
             field_ty.clone(),
             ast::Expr::FieldSel(ast::FieldSelExpr {
-                object: Box::new(object.clone()),
+                object,
                 field: field.clone(),
                 user_ty_args: vec![],
                 inferred_ty: Some(field_ty),
@@ -2019,7 +2030,7 @@ fn check_field_sel(
     (
         closure_ty.clone(),
         ast::Expr::MethodSel(ast::MethodSelExpr {
-            object: Box::new(object.clone()),
+            object,
             fun,
             ty_args: fn_ty_args,
             inferred_ty: Some(closure_ty),

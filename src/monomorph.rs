@@ -1326,6 +1326,10 @@ fn mono_expr(
                 ),
             })
         }
+
+        ast::Expr::Placeholder => {
+            panic!("{}: BUG: Placeholder in mono_expr", loc_display(loc));
+        }
     }
 }
 
