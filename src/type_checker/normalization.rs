@@ -309,6 +309,10 @@ fn normalize_expr(
         }
 
         ast::Expr::InlineC(_) => {}
+
+        ast::Expr::Placeholder => {
+            panic!("{}: BUG: Placeholder in normalize_expr", loc_display(loc));
+        }
     }
 }
 

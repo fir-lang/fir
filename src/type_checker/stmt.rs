@@ -392,6 +392,19 @@ fn check_stmt(
 
             let expr_local = Name::new(format!("temp{}", tc_state.local_gen));
             tc_state.local_gen += 1;
+
+            let iter_expr = ast::L {
+                loc: expr.loc.clone(),
+                node: std::mem::replace(&mut expr.node, ast::Expr::placeholder()),
+            };
+
+            let item_pat = ast::L {
+                loc: pat.loc.clone(),
+                node: std::mem::replace(&mut pat.node, ast::Pat::Ignore),
+            };
+
+            let body_stmts = std::mem::take(body);
+
             stmt.node = ast::Stmt::Expr(ast::Expr::Do(ast::DoExpr {
                 stmts: vec![
                     ast::L {
@@ -406,7 +419,7 @@ fn check_stmt(
                                 }),
                             },
                             ty: None,
-                            rhs: expr.clone(),
+                            rhs: iter_expr,
                         }),
                     },
                     ast::L {
@@ -489,14 +502,14 @@ fn check_stmt(
                                             },
                                             fields: vec![ast::Named {
                                                 name: None,
-                                                node: pat.clone(),
+                                                node: item_pat,
                                             }],
                                             rest: ast::RestPat::No,
                                         }),
                                     },
                                 }),
                             },
-                            body: body.clone(),
+                            body: body_stmts,
                         }),
                     },
                 ],

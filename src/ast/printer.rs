@@ -989,6 +989,10 @@ impl Expr {
                     write!(p, " #| inferred type = {ty} |#").unwrap();
                 }
             }
+
+            Expr::Placeholder => {
+                p.str("<PLACEHOLDER>");
+            }
         }
     }
 }
