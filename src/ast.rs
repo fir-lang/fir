@@ -204,7 +204,7 @@ pub enum TypeDeclRhs {
     /// - `extern type File = "FILE"`
     ///
     /// - With fields:
-    ///   ```
+    ///   ```text
     ///   extern type DivT = "div_t"(
     ///       quot: I32 = "quot",
     ///       rem: I32 = "rem",
