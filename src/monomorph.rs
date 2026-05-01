@@ -994,18 +994,10 @@ fn mono_expr(
             )
         }
 
-        ast::Expr::Int(int @ ast::IntExpr { kind, .. }) => {
-            let ty_builtin_id = match kind.borrow().unwrap() {
-                ast::IntKind::I8(_) => builtins::I8(),
-                ast::IntKind::U8(_) => builtins::U8(),
-                ast::IntKind::I32(_) => builtins::I32(),
-                ast::IntKind::U32(_) => builtins::U32(),
-                ast::IntKind::I64(_) => builtins::I64(),
-                ast::IntKind::U64(_) => builtins::U64(),
-            };
-            let ty_decl = poly_pgm.ty.get(&ty_builtin_id).unwrap();
-            mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm, &ty_builtin_id, mangler);
-            mono::Expr::Int(int.clone())
+        ast::Expr::Int(ast::IntExpr { kind, .. }) => {
+            // No need to monomorphise integer type constructors (I32, U8, etc.) here as we always
+            // monomorphise them as built-ins/primitives. (in `monomorphise`)
+            mono::Expr::Int(kind.borrow().unwrap())
         }
 
         ast::Expr::Char(char) => {
