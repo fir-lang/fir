@@ -1685,16 +1685,14 @@ fn check_top_fun(
         check_stmts(&mut tc_state, body, Some(&ret_ty), &mut Vec::new());
     }
 
-    check_and_default_int_lits(
-        tys.tys.cons(),
+    resolve_preds(
         trait_env,
+        assumps,
+        tys.tys.cons(),
+        preds,
         &var_gen,
         int_lits,
-        &assumps,
-        &mut preds,
     );
-
-    resolve_preds(trait_env, assumps, tys.tys.cons(), preds, &var_gen);
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
@@ -1855,16 +1853,14 @@ fn check_impl(
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), &mut Vec::new());
 
-            check_and_default_int_lits(
-                tys.tys.cons(),
+            resolve_preds(
                 trait_env,
+                assumps,
+                tys.tys.cons(),
+                preds,
                 &var_gen,
                 int_lits,
-                &assumps,
-                &mut preds,
             );
-
-            resolve_preds(trait_env, assumps, tys.tys.cons(), preds, &var_gen);
 
             for stmt in body.iter_mut() {
                 normalize_stmt(
@@ -1958,6 +1954,7 @@ fn resolve_preds(
     cons: &ScopeMap<Id, TyCon>,
     mut goals: Vec<Pred>,
     var_gen: &UVarGen,
+    int_lits: Vec<IntLit>,
 ) {
     let mut progress = true;
 
@@ -2062,6 +2059,11 @@ fn resolve_preds(
         }
 
         goals = next_goals;
+    }
+
+    if !int_lits.is_empty() {
+        check_and_default_int_lits(cons, trait_env, var_gen, int_lits, &assumps, &mut goals);
+        return resolve_preds(trait_env, assumps, cons, goals, var_gen, vec![]);
     }
 
     if !goals.is_empty() {
