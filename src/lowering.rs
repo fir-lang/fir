@@ -345,6 +345,11 @@ pub enum BuiltinConDecl {
     U32,
     I64,
     U64,
+
+    /// A C pointer.
+    CPtr {
+        t: mono::Type,
+    },
 }
 
 #[derive(Debug)]
@@ -889,6 +894,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     // We don't have the syntax to mark prim types as values, but they're all values
                     // currently.
                     value = true;
+
                     let con = match con_id.as_str() {
                         "Array" => {
                             assert_eq!(con_ty_args.len(), 1);
@@ -925,6 +931,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         "U64" => {
                             assert_eq!(con_ty_args.len(), 0);
                             BuiltinConDecl::U64
+                        }
+
+                        "Ptr" => {
+                            assert_eq!(con_ty_args.len(), 1);
+                            BuiltinConDecl::CPtr {
+                                t: con_ty_args[0].clone(),
+                            }
                         }
 
                         other => panic!("Unknown built-in type: {other}"),

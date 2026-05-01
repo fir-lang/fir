@@ -8,7 +8,11 @@ extern type Int = "int"
 extern type SizeT = "size_t"
 
 
-extern type Ptr[t] = "`t`*"
+## This is the C pointer type, e.g. `Ptr[Foo]` becomes `Foo*` in C.
+##
+## This type is specially handled by the compiler to allow field access and
+## updates behind pointers.
+prim type Ptr[t]
 
 
 extern type DivT = "div_t"(

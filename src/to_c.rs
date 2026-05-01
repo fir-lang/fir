@@ -94,10 +94,18 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str, mut headers: OrdSet<String>) ->
         for type_idx in scc {
             match &pgm.types[type_idx.as_usize()] {
                 TypeDecl::Named(named_type) => {
-                    if matches!(&named_type.rhs, NamedTypeRhs::Source(_)) {
+                    if let NamedTypeRhs::Source(rhs) = &named_type.rhs {
                         let struct_name =
                             named_type_struct_name(&named_type.name, &named_type.ty_args);
-                        wln!(p, "typedef struct {struct_name} {struct_name};");
+                        if let mono::TypeDeclRhs::Extern(mono::ExternType { c_type, fields: _ }) =
+                            rhs
+                        {
+                            wln!(p, "typedef {c_type} {struct_name};");
+                        } else {
+                            let struct_name =
+                                named_type_struct_name(&named_type.name, &named_type.ty_args);
+                            wln!(p, "typedef struct {struct_name} {struct_name};");
+                        }
                     }
                 }
                 TypeDecl::Record(record_ty, _) => {
@@ -673,6 +681,22 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, pgm: &LoweredPgm, p
             wln!(p, "// U64 tag {}", tag);
             wln!(p, "typedef uint64_t U64;");
         }
+
+        BuiltinConDecl::CPtr { t } => {
+            let t_str = if let mono::Type::Named(_) = t
+                && let TypeDecl::Named(decl) = pgm.decl(t)
+                && let NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(mono::ExternType {
+                    c_type,
+                    fields: _,
+                })) = &decl.rhs
+            {
+                c_type.to_string()
+            } else {
+                c_ty(t, pgm)
+            };
+            let typedef_name = ptr_typedef_name(t, pgm);
+            wln!(p, "typedef {t_str}* {typedef_name};");
+        }
     }
 }
 
@@ -726,6 +750,14 @@ fn variant_struct_name(variant: &VariantType) -> String {
 
 fn array_struct_name(t: &mono::Type, pgm: &LoweredPgm) -> String {
     let mut name = String::from("Array_");
+    let t = c_ty(t, pgm);
+    let t_no_star = t.as_str().strip_suffix("*").unwrap_or(t.as_ref());
+    name.push_str(t_no_star);
+    name
+}
+
+fn ptr_typedef_name(t: &mono::Type, pgm: &LoweredPgm) -> String {
+    let mut name = String::from("Ptr_");
     let t = c_ty(t, pgm);
     let t_no_star = t.as_str().strip_suffix("*").unwrap_or(t.as_ref());
     name.push_str(t_no_star);
@@ -877,15 +909,6 @@ fn is_extern_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
 fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
     if let mono::Type::Fn(_) = ty {
         return "CLOSURE*".to_string();
-    }
-    if let mono::Type::Named(_) = ty
-        && let TypeDecl::Named(decl) = pgm.decl(ty)
-        && let NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(mono::ExternType {
-            c_type,
-            fields: _,
-        })) = &decl.rhs
-    {
-        return c_type.to_string();
     }
     let ptr = match pgm.decl(ty) {
         TypeDecl::Named(decl) => !decl.value,
