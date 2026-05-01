@@ -13,7 +13,7 @@ allocTimeVal() C/Ptr[TimeVal]:
 
 
 freeTimeVal(tv: C/Ptr[TimeVal]):
-    C/inline("free(`tv`)")
+    C/inline("({ free(`tv`); _singleton_Record; })")
 
 
 main():

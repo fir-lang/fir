@@ -479,6 +479,8 @@ pub struct FieldSelExpr {
     pub idx: u32,
 
     pub object_ty: mono::Type,
+
+    pub deref: Option<Name>,
 }
 
 #[derive(Debug, Clone)]
@@ -1742,7 +1744,18 @@ fn lower_expr(
 
             let (object, _object_vars) = lower_bl_expr(object, closures, indices, scope, mono_pgm);
 
-            let field_idx: u32 = match &object_ty {
+            let mut deref: Option<Name> = None;
+
+            let object_with_field_ty = if let mono::Type::Named(mono::NamedType { name, args }) =
+                &object_ty
+                && name == "Ptr"
+            {
+                args[0].clone()
+            } else {
+                object_ty.clone()
+            };
+
+            let field_idx: u32 = match &object_with_field_ty {
                 mono::Type::Named(mono::NamedType { name, args }) => {
                     let ty_decl: &mono::TypeDecl =
                         mono_pgm.ty.get(name).unwrap().get(args).unwrap();
@@ -1786,6 +1799,7 @@ fn lower_expr(
                             for (field_idx_, extern_field) in extern_ty.fields.iter().enumerate() {
                                 if field == &extern_field.fir_name {
                                     field_idx = field_idx_ as u32;
+                                    deref = Some(Name::new(&extern_field.c_name));
                                     break;
                                 }
                             }
@@ -1818,6 +1832,7 @@ fn lower_expr(
                     field: field.clone(),
                     idx: field_idx,
                     object_ty,
+                    deref,
                 }),
                 Default::default(),
             )
@@ -2740,6 +2755,7 @@ fn lower_splice(
                         field: splice_field_name.clone(),
                         idx: field_idx,
                         object_ty: splice_ty.clone(),
+                        deref: None,
                     }),
                     loc: splice.loc.clone(),
                 },

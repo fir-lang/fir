@@ -224,6 +224,7 @@ impl Expr {
                 field,
                 idx: _,
                 object_ty: _,
+                deref: _,
             }) => {
                 object.node.print(p);
                 p.char('.');

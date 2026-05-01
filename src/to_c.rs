@@ -1682,6 +1682,7 @@ fn stmt_to_c(
                 field,
                 idx,
                 object_ty,
+                deref,
             }) => {
                 let obj_temp = cg.fresh_temp();
                 w!(p, "{} {} = ", c_ty(object_ty, cg.pgm), obj_temp);
@@ -1692,9 +1693,9 @@ fn stmt_to_c(
                 } else {
                     format!("_{idx}")
                 };
-                if is_value_type(object_ty, cg.pgm) {
-                    // TODO: This doesn't work, this updates the copy of the object rather than the
-                    // original object, because of the temporary created above.
+                if let Some(deref) = deref {
+                    w!(p, "{obj_temp}->{deref} = ");
+                } else if is_value_type(object_ty, cg.pgm) {
                     w!(p, "{obj_temp}.{accessor} = ");
                 } else {
                     w!(p, "{obj_temp}->{accessor} = ");
@@ -1851,6 +1852,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             field,
             idx,
             object_ty,
+            deref,
         }) => {
             w!(p, "(");
             expr_to_c(&object.node, &object.loc, locals, cg, p);
@@ -1859,7 +1861,9 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             } else {
                 format!("_{idx}")
             };
-            if is_value_type(object_ty, cg.pgm) {
+            if let Some(deref) = deref {
+                w!(p, ")->{deref}");
+            } else if is_value_type(object_ty, cg.pgm) {
                 w!(p, ").{accessor}");
             } else {
                 w!(p, ")->{accessor}");
