@@ -935,7 +935,7 @@ Lexer._nextString(self) Token / Error:
                 self._byteIdx += 1
                 self._col += 1
                 match self._nextChar():
-                    '`' | '"' | 'n' | 't' | 'r' | '\\':
+                    '`' | '"' | 'n' | 't' | 'r' | '\\' | '0':
                         self._byteIdx += 1
                         self._col += 1
                     '\n':
@@ -976,6 +976,7 @@ Lexer._char(self) Token / Error:
                 'n': '\n'
                 't': '\t'
                 'r': '\r'
+                '0': '\0'
                 other:
                     self._fail(
                         "invalid escape character in character literal: '`other`'",
