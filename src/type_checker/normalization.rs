@@ -307,6 +307,10 @@ fn normalize_expr(
             ));
             normalize_expr(&mut expr.node, &expr.loc, cons, trait_env, var_gen);
         }
+
+        ast::Expr::Placeholder => {
+            panic!("{}: BUG: Placeholder in normalize_expr", loc_display(loc));
+        }
     }
 }
 

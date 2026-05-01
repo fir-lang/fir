@@ -946,6 +946,10 @@ impl Expr {
                 p.char('~');
                 expr.node.print(p);
             }
+
+            Expr::Placeholder => {
+                p.str("<PLACEHOLDER>");
+            }
         }
     }
 }
