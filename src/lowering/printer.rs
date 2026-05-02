@@ -210,7 +210,6 @@ impl Expr {
             Expr::ConAlloc {
                 con_idx,
                 args,
-                arg_tys: _,
                 ret_ty: _,
             } => {
                 write!(p, "con{}", con_idx.as_usize()).unwrap();

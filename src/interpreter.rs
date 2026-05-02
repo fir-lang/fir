@@ -522,7 +522,6 @@ fn eval<W: Write>(
         Expr::ConAlloc {
             con_idx,
             args,
-            arg_tys: _,
             ret_ty: _,
         } => {
             if args.is_empty() {

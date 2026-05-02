@@ -1777,10 +1777,8 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
         Expr::ConAlloc {
             con_idx: heap_obj_idx,
             args,
-            arg_tys,
             ret_ty,
         } => {
-            assert_eq!(args.len(), arg_tys.len());
             if args.is_empty() {
                 w!(
                     p,

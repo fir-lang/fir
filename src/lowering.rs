@@ -413,7 +413,6 @@ pub enum Expr {
     ConAlloc {
         con_idx: HeapObjIdx,
         args: Vec<L<Expr>>,
-        arg_tys: Vec<mono::Type>,
         ret_ty: mono::Type,
     },
 
@@ -1730,7 +1729,6 @@ fn lower_expr(
                 Expr::ConAlloc {
                     con_idx: idx,
                     args: vec![],
-                    arg_tys: vec![],
                     ret_ty: ty.clone(),
                 }
             } else {
@@ -1914,7 +1912,6 @@ fn lower_expr(
                         Expr::Con(heap_obj_idx) => Expr::ConAlloc {
                             con_idx: *heap_obj_idx,
                             args,
-                            arg_tys: arg_tys.clone(),
                             ret_ty: (*ret).clone(),
                         },
                         _ => Expr::Call(CallExpr {
@@ -1983,7 +1980,6 @@ fn lower_expr(
                         Expr::Con(heap_obj_idx) => Expr::ConAlloc {
                             con_idx: *heap_obj_idx,
                             args,
-                            arg_tys: named_args.values().cloned().collect(),
                             ret_ty: (*ret).clone(),
                         },
                         _ => Expr::Call(CallExpr {
@@ -2035,7 +2031,6 @@ fn lower_expr(
                     loc: loc.clone(),
                     node: Expr::Int(u64::from(*char as u32)),
                 }],
-                arg_tys: vec![mono::Type::u32()],
                 ret_ty: mono::Type::char(),
             },
             Default::default(),
@@ -2125,7 +2120,6 @@ fn lower_expr(
                             loc: loc.clone(),
                         })
                         .collect(),
-                    arg_tys: field_tys.values().cloned().collect(),
                     ret_ty: ty.clone(),
                 }),
                 loc: loc.clone(),
