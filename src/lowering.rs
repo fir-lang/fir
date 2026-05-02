@@ -345,7 +345,8 @@ pub enum BuiltinConDecl {
 
 #[derive(Debug)]
 pub struct SourceConDecl {
-    pub name: Name,
+    pub ty_name: Name,
+    pub con_name: Name,
     pub idx: HeapObjIdx,
     pub ty_args: Vec<mono::Type>,
     pub fields: Vec<mono::Type>,
@@ -817,8 +818,8 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         .heap_objs
         .push(HeapObj::Builtin(BuiltinConDecl::Closure)); // CLOSURE_CON_IDX = 2
 
-    for (con_id, con_ty_map) in &mono_pgm.ty {
-        for (con_ty_args, con_decl) in con_ty_map {
+    for (ty_name, ty_arg_map) in &mono_pgm.ty {
+        for (ty_args, con_decl) in ty_arg_map {
             let mut con_indices: Vec<HeapObjIdx> = vec![];
             let mut sum = false;
             let mut value = con_decl.value;
@@ -832,11 +833,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             // get the type details during code generation.
                             for mono::ConDecl { name, fields } in cons {
                                 let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                                let name = Name::new(format!("{con_id}_{name}"));
+                                let con_name = Name::new(format!("{ty_name}_{name}"));
                                 lowered_pgm.heap_objs.push(lower_source_con(
                                     idx,
-                                    &name,
-                                    con_ty_args,
+                                    ty_name,
+                                    &con_name,
+                                    ty_args,
                                     fields,
                                     true, // sum
                                     con_decl.value,
@@ -849,8 +851,9 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
                             lowered_pgm.heap_objs.push(lower_source_con(
                                 idx,
-                                con_id,
-                                con_ty_args,
+                                ty_name,
+                                ty_name,
+                                ty_args,
                                 fields,
                                 false, // product
                                 con_decl.value,
@@ -865,41 +868,41 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     // We don't have the syntax to mark prim types as values, but they're all values
                     // currently.
                     value = true;
-                    let con = match con_id.as_str() {
+                    let con = match ty_name.as_str() {
                         "Array" => {
-                            assert_eq!(con_ty_args.len(), 1);
+                            assert_eq!(ty_args.len(), 1);
                             BuiltinConDecl::Array {
-                                t: con_ty_args[0].clone(),
+                                t: ty_args[0].clone(),
                             }
                         }
 
                         "I8" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::I8
                         }
 
                         "U8" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::U8
                         }
 
                         "I32" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::I32
                         }
 
                         "U32" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::U32
                         }
 
                         "I64" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::I64
                         }
 
                         "U64" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::U64
                         }
 
@@ -916,12 +919,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             let ty_idx = TypeIdx(lowered_pgm.types.len() as u32);
             lowered_pgm
                 .named_tys
-                .entry(con_id.clone())
+                .entry(ty_name.clone())
                 .or_default()
-                .insert(con_ty_args.clone(), ty_idx);
+                .insert(ty_args.clone(), ty_idx);
             lowered_pgm.types.push(TypeDecl::Named(NamedTypeDecl {
-                name: con_id.clone(),
-                ty_args: con_ty_args.clone(),
+                name: ty_name.clone(),
+                ty_args: ty_args.clone(),
                 rhs,
                 con_indices,
                 sum,
@@ -1512,14 +1515,16 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
 
 fn lower_source_con(
     idx: HeapObjIdx,
-    con_id: &Name,
+    ty_name: &Name,
+    con_name: &Name,
     con_ty_args: &[mono::Type],
     fields: &mono::ConFields,
     sum: bool,
     value: bool,
 ) -> HeapObj {
     HeapObj::Source(SourceConDecl {
-        name: con_id.clone(),
+        ty_name: ty_name.clone(),
+        con_name: con_name.clone(),
         idx,
         ty_args: con_ty_args.to_vec(),
         fields: match fields {

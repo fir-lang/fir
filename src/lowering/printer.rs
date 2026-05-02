@@ -19,7 +19,8 @@ impl LoweredPgm {
                 HeapObj::Builtin(builtin) => write!(p, "{builtin:?}").unwrap(),
 
                 HeapObj::Source(SourceConDecl {
-                    name,
+                    ty_name: _,
+                    con_name,
                     idx,
                     ty_args,
                     fields,
@@ -27,7 +28,7 @@ impl LoweredPgm {
                     value: _,
                 }) => {
                     assert_eq!(idx.0 as usize, heap_obj_idx);
-                    p.str(name.as_str());
+                    p.str(con_name.as_str());
                     print_ty_args(ty_args, p);
                     p.char('(');
                     p.sep(fields.iter(), ", ", |p, field_ty| {
