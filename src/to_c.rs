@@ -215,24 +215,22 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str, mut headers: OrdSet<String>) ->
         match heap_obj {
             HeapObj::Source(source_con) if source_con.fields.is_empty() => {
                 let singleton_name = source_con_singleton_name(source_con);
-                let struct_name = source_con_struct_name(&source_con.name, &source_con.ty_args);
-                let tag_name = source_con_tag_name(&source_con.name, &source_con.ty_args);
-                let value = source_con.value;
-                let product = is_product_con(pgm, source_con.idx);
-                if product {
-                    wln!(p, "static {struct_name} {singleton_name}_data = {{ }};");
-                } else {
+                let struct_name = source_con_struct_name(&source_con.con_name, &source_con.ty_args);
+                let tag_name = source_con_tag_name(&source_con.con_name, &source_con.ty_args);
+                if source_con.sum {
                     wln!(
                         p,
                         "static {struct_name} {singleton_name}_data = {{ ._tag = {tag_name} }};",
                     );
+                } else {
+                    wln!(p, "static {struct_name} {singleton_name}_data = {{ }};");
                 }
-                if value {
+                if source_con.value {
                     // Check if this belongs to a value sum type; if so, generate a singleton of the
                     // sum type with the constructor in the union.
-                    let sum_ty_name = value_sum_type_for_con(pgm, source_con.idx);
-                    if let Some(sum_decl) = sum_ty_name {
-                        let sum_struct = named_type_struct_name(&sum_decl.name, &sum_decl.ty_args);
+                    if source_con.sum {
+                        let sum_struct =
+                            named_type_struct_name(&source_con.ty_name, &source_con.ty_args);
                         wln!(
                             p,
                             "static {sum_struct} {singleton_name}_sum = {{ ._tag = {tag_name} }};",
@@ -265,13 +263,13 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str, mut headers: OrdSet<String>) ->
         match heap_obj {
             HeapObj::Source(source_con) if !source_con.fields.is_empty() => {
                 let con_idx = HeapObjIdx(tag as u32);
-                let sum_decl = value_sum_type_for_con(pgm, con_idx);
                 let struct_name = heap_obj_struct_name(pgm, con_idx);
                 let tag_name = heap_obj_tag_name(pgm, con_idx);
 
-                if let Some(sum_decl) = sum_decl {
+                if source_con.sum && source_con.value {
                     // Value sum type: return by value.
-                    let sum_struct = named_type_struct_name(&sum_decl.name, &sum_decl.ty_args);
+                    let sum_struct =
+                        named_type_struct_name(&source_con.ty_name, &source_con.ty_args);
                     w!(
                         p,
                         "static {sum_struct} _con_closure_{tag}_fun(CLOSURE* self"
@@ -316,7 +314,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str, mut headers: OrdSet<String>) ->
                     wln!(p, "}}");
                 } else {
                     // Boxed type: heap allocate.
-                    let product = is_product_con(pgm, con_idx);
+                    let product = is_product_con(&con_idx, pgm);
                     w!(p, "static uint64_t _con_closure_{tag}_fun(CLOSURE* self");
                     for (i, ty) in source_con.fields.iter().enumerate() {
                         w!(p, ", {} p{i}", c_ty(ty, pgm));
@@ -767,7 +765,7 @@ fn ptr_typedef_name(t: &mono::Type, pgm: &LoweredPgm) -> String {
 fn heap_obj_struct_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
         HeapObj::Source(source_con) => {
-            source_con_struct_name(&source_con.name, &source_con.ty_args)
+            source_con_struct_name(&source_con.con_name, &source_con.ty_args)
         }
         HeapObj::Record(record) => record_struct_name(record),
         HeapObj::Variant(variant) => variant_struct_name(variant),
@@ -777,7 +775,9 @@ fn heap_obj_struct_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
 
 fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
-        HeapObj::Source(source_con) => source_con_tag_name(&source_con.name, &source_con.ty_args),
+        HeapObj::Source(source_con) => {
+            source_con_tag_name(&source_con.con_name, &source_con.ty_args)
+        }
         HeapObj::Record(record) => format!("TAG_{}", record_struct_name(record)),
         HeapObj::Variant(_) => panic!("Variants don't have runtime tags"),
         HeapObj::Builtin(_) => panic!("Builtin in heap_obj_tag_name"),
@@ -787,7 +787,7 @@ fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
 /// Generate singleton variable name for a nullary source constructor.
 fn source_con_singleton_name(source_con: &SourceConDecl) -> String {
     let mut name = String::from("_singleton_");
-    name.push_str(&source_con.name);
+    name.push_str(&source_con.con_name);
     for ty_arg in &source_con.ty_args {
         name.push('_');
         ty_to_c(ty_arg, &mut name);
@@ -849,22 +849,7 @@ fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
     }
 }
 
-/// Find the named type declaration that owns a constructor, if it's a value sum type.
-// TODO: This linearly searches all types and needs to go.
-fn value_sum_type_for_con(pgm: &LoweredPgm, con_idx: HeapObjIdx) -> Option<&NamedTypeDecl> {
-    for type_decl in &pgm.types {
-        if let TypeDecl::Named(decl) = type_decl
-            && decl.value
-            && decl.sum
-            && decl.con_indices.contains(&con_idx)
-        {
-            return Some(decl);
-        }
-    }
-    None
-}
-
-fn is_product_con(pgm: &LoweredPgm, idx: HeapObjIdx) -> bool {
+fn is_product_con(idx: &HeapObjIdx, pgm: &LoweredPgm) -> bool {
     match &pgm.heap_objs[idx.as_usize()] {
         HeapObj::Source(source_con) => !source_con.sum,
         HeapObj::Record(_) => true,
@@ -873,13 +858,12 @@ fn is_product_con(pgm: &LoweredPgm, idx: HeapObjIdx) -> bool {
     }
 }
 
-fn is_value_sum_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
-    match ty {
-        mono::Type::Named(_) => match pgm.decl(ty) {
-            TypeDecl::Named(decl) => decl.value && decl.sum,
-            _ => false,
-        },
-        _ => false,
+fn is_value_sum_type(idx: &HeapObjIdx, pgm: &LoweredPgm) -> bool {
+    match &pgm.heap_objs[idx.as_usize()] {
+        HeapObj::Builtin(_) => false,
+        HeapObj::Source(decl) => decl.value && decl.sum,
+        HeapObj::Record(_) => false,
+        HeapObj::Variant(_) => true,
     }
 }
 
@@ -1786,7 +1770,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     c_ty(ret_ty, cg.pgm),
                     heap_obj_singleton_name(cg.pgm, *heap_obj_idx)
                 );
-            } else if is_value_sum_type(ret_ty, cg.pgm) {
+            } else if is_value_sum_type(heap_obj_idx, cg.pgm) {
                 let ret_struct_name = c_ty(ret_ty, cg.pgm);
                 let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
                 let con_field = format!("_con_{}", heap_obj_idx.0);
@@ -1809,7 +1793,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 w!(p, " }})");
             } else {
                 let struct_name = heap_obj_struct_name(cg.pgm, *heap_obj_idx);
-                let product = is_product_con(cg.pgm, *heap_obj_idx);
+                let product = is_product_con(heap_obj_idx, cg.pgm);
                 w!(p, "({{");
                 p.indent();
                 p.nl();
@@ -2459,7 +2443,7 @@ fn pat_to_cond(
             };
             let mut cond = tag_check;
             let value = is_value_type(scrutinee_ty, cg.pgm);
-            let value_sum = is_value_sum_type(scrutinee_ty, cg.pgm);
+            let value_sum = is_value_sum_type(con, cg.pgm);
             for (i, field_pat) in fields.iter().enumerate() {
                 let field_expr = if value_sum {
                     format!("({scrutinee})._con_{}._{i}", con.0)
