@@ -245,7 +245,7 @@ TypeDecl: L<TypeDecl> = {
         let c_type = &c_type[0..c_type.len() - 1]; // drop the "
         L::new(module, l, r, TypeDecl {
             attr: None,
-            value: false,
+            value: true, // treat extern types as values
             name: type_name.name(),
             type_params,
             type_param_kinds: vec![],
@@ -262,7 +262,7 @@ TypeDecl: L<TypeDecl> = {
         let c_type = &c_type[0..c_type.len() - 1]; // drop the "
         L::new(module, l, r, TypeDecl {
             attr: None,
-            value: false,
+            value: true, // treat extern types as values
             name: type_name.name(),
             type_params: vec![],
             type_param_kinds: vec![],

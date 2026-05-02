@@ -480,7 +480,12 @@ pub struct FieldSelExpr {
 
     pub object_ty: mono::Type,
 
-    pub deref: Option<Name>,
+    /// When this is available, the `object` is a C struct and we should use the struct field name
+    /// here instead of the field index.
+    pub c_field_name: Option<Name>,
+
+    /// Whether to index with `.` or `->`.
+    pub deref: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -1744,14 +1749,27 @@ fn lower_expr(
 
             let (object, _object_vars) = lower_bl_expr(object, closures, indices, scope, mono_pgm);
 
-            let mut deref: Option<Name> = None;
+            fn is_value_type(ty: &mono::Type, pgm: &mono::MonoPgm) -> bool {
+                match ty {
+                    mono::Type::Named(mono::NamedType { name, args }) => {
+                        pgm.ty.get(name).unwrap().get(args).unwrap().value
+                    }
+                    mono::Type::Record { .. } | mono::Type::Variant { .. } => true,
+                    mono::Type::Fn(_) => false,
+                }
+            }
+
+            let mut c_field_name: Option<Name> = None;
+            let deref;
 
             let object_with_field_ty = if let mono::Type::Named(mono::NamedType { name, args }) =
                 &object_ty
                 && name == "Ptr"
             {
+                deref = true;
                 args[0].clone()
             } else {
+                deref = !is_value_type(&object_ty, mono_pgm);
                 object_ty.clone()
             };
 
@@ -1799,7 +1817,7 @@ fn lower_expr(
                             for (field_idx_, extern_field) in extern_ty.fields.iter().enumerate() {
                                 if field == &extern_field.fir_name {
                                     field_idx = field_idx_ as u32;
-                                    deref = Some(Name::new(&extern_field.c_name));
+                                    c_field_name = Some(Name::new(&extern_field.c_name));
                                     break;
                                 }
                             }
@@ -1832,6 +1850,7 @@ fn lower_expr(
                     field: field.clone(),
                     idx: field_idx,
                     object_ty,
+                    c_field_name,
                     deref,
                 }),
                 Default::default(),
@@ -2754,7 +2773,8 @@ fn lower_splice(
                         field: splice_field_name.clone(),
                         idx: field_idx,
                         object_ty: splice_ty.clone(),
-                        deref: None,
+                        c_field_name: None,
+                        deref: false,
                     }),
                     loc: splice.loc.clone(),
                 },

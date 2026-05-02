@@ -456,7 +456,7 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                         ast::TypeDeclRhs::Extern(_) => TyConDetails::Type(TypeDetails {
                             cons: Default::default(),
                             sum: false,
-                            value: false, // not sure about this part
+                            value: true, // not sure about this part
                         }),
                     },
 

@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: 8d5bc32c86ea9200ab4567b349c7965898afa9d0404e7a51fe4574eb346a4581
+// sha3: 218ec3df8b038422f85e0be2ecef7bdeef38aea49270490ecc466474eed6f3ce
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::*;
@@ -57998,7 +57998,7 @@ fn __action14<'a>(
             r,
             TypeDecl {
                 attr: None,
-                value: false,
+                value: true, // treat extern types as values
                 name: type_name.name(),
                 type_params,
                 type_param_kinds: vec![],
@@ -58039,7 +58039,7 @@ fn __action15<'a>(
             r,
             TypeDecl {
                 attr: None,
-                value: false,
+                value: true, // treat extern types as values
                 name: type_name.name(),
                 type_params: vec![],
                 type_param_kinds: vec![],

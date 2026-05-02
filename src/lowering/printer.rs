@@ -224,6 +224,7 @@ impl Expr {
                 field,
                 idx: _,
                 object_ty: _,
+                c_field_name: _,
                 deref: _,
             }) => {
                 object.node.print(p);

@@ -556,11 +556,14 @@ fn select_field_for_assignment(
     field: &Name,
     loc: &ast::Loc,
 ) -> Option<Ty> {
+    let mut behind_ptr = false;
+
     if ty_con_id == id::builtins::C_PTR() {
         assert_eq!(ty_args.len(), 1);
         let (con, args) = ty_args[0].con(tc_state.tys.tys.cons())?;
         ty_con_id = con;
         ty_args = args;
+        behind_ptr = true;
     }
 
     let ty_con = tc_state
@@ -573,7 +576,7 @@ fn select_field_for_assignment(
 
     match &ty_con.details {
         TyConDetails::Type(TypeDetails { cons, sum, value }) if !sum => {
-            if *value {
+            if *value && !behind_ptr {
                 panic!("{}: Value types can't be updated", loc_display(loc));
             }
 

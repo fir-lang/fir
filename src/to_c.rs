@@ -894,18 +894,6 @@ fn is_value_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
     }
 }
 
-fn is_extern_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
-    match ty {
-        mono::Type::Named(_) => match pgm.decl(ty) {
-            TypeDecl::Named(decl) => {
-                matches!(decl.rhs, NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(_)))
-            }
-            _ => false,
-        },
-        _ => false,
-    }
-}
-
 fn c_ty(ty: &mono::Type, pgm: &LoweredPgm) -> String {
     if let mono::Type::Fn(_) = ty {
         return "CLOSURE*".to_string();
@@ -1679,27 +1667,24 @@ fn stmt_to_c(
             }
             Expr::FieldSel(FieldSelExpr {
                 object,
-                field,
+                field: _,
                 idx,
                 object_ty,
+                c_field_name,
                 deref,
             }) => {
                 let obj_temp = cg.fresh_temp();
                 w!(p, "{} {} = ", c_ty(object_ty, cg.pgm), obj_temp);
                 expr_to_c(&object.node, &object.loc, locals, cg, p);
                 wln!(p, "; // {}", loc_display(&object.loc));
-                let accessor = if is_extern_type(object_ty, cg.pgm) {
-                    field.to_string()
-                } else {
-                    format!("_{idx}")
-                };
-                if let Some(deref) = deref {
-                    w!(p, "{obj_temp}->{deref} = ");
-                } else if is_value_type(object_ty, cg.pgm) {
-                    w!(p, "{obj_temp}.{accessor} = ");
-                } else {
-                    w!(p, "{obj_temp}->{accessor} = ");
-                }
+
+                let accessor = c_field_name
+                    .as_ref()
+                    .map(|name| name.to_string())
+                    .unwrap_or_else(|| format!("_{idx}"));
+                let deref_str = if *deref { "->" } else { "." };
+                w!(p, "{obj_temp}{deref_str}{accessor} = ");
+
                 expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
                 wln!(p, ";");
                 if let Some(result_var) = result_var {
@@ -1849,25 +1834,20 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
 
         Expr::FieldSel(FieldSelExpr {
             object,
-            field,
+            field: _,
             idx,
-            object_ty,
+            object_ty: _,
+            c_field_name,
             deref,
         }) => {
             w!(p, "(");
             expr_to_c(&object.node, &object.loc, locals, cg, p);
-            let accessor = if is_extern_type(object_ty, cg.pgm) {
-                field.to_string()
-            } else {
-                format!("_{idx}")
-            };
-            if let Some(deref) = deref {
-                w!(p, ")->{deref}");
-            } else if is_value_type(object_ty, cg.pgm) {
-                w!(p, ").{accessor}");
-            } else {
-                w!(p, ")->{accessor}");
-            }
+            let accessor = c_field_name
+                .as_ref()
+                .map(|name| name.to_string())
+                .unwrap_or_else(|| format!("_{idx}"));
+            let deref_str = if *deref { "->" } else { "." };
+            w!(p, "){deref_str}{accessor} ");
         }
 
         Expr::Call(CallExpr { fun, args, fun_ty }) => {
