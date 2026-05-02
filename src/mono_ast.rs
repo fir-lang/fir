@@ -86,13 +86,6 @@ impl Type {
         })
     }
 
-    pub(crate) fn u32() -> Type {
-        Type::Named(NamedType {
-            name: Name::new_static("U32"),
-            args: vec![],
-        })
-    }
-
     pub(crate) fn u64() -> Type {
         Type::Named(NamedType {
             name: Name::new_static("U64"),
