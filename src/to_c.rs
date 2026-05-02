@@ -307,7 +307,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                     wln!(p, "}}");
                 } else {
                     // Boxed type: heap allocate.
-                    let product = is_product_con(pgm, con_idx);
+                    let product = is_product_con(&con_idx, pgm);
                     w!(p, "static uint64_t _con_closure_{tag}_fun(CLOSURE* self");
                     for (i, ty) in source_con.fields.iter().enumerate() {
                         w!(p, ", {} p{i}", c_ty(ty, pgm));
@@ -815,7 +815,7 @@ fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
     }
 }
 
-fn is_product_con(pgm: &LoweredPgm, idx: HeapObjIdx) -> bool {
+fn is_product_con(idx: &HeapObjIdx, pgm: &LoweredPgm) -> bool {
     match &pgm.heap_objs[idx.as_usize()] {
         HeapObj::Source(source_con) => !source_con.sum,
         HeapObj::Record(_) => true,
@@ -824,13 +824,12 @@ fn is_product_con(pgm: &LoweredPgm, idx: HeapObjIdx) -> bool {
     }
 }
 
-fn is_value_sum_type(ty: &mono::Type, pgm: &LoweredPgm) -> bool {
-    match ty {
-        mono::Type::Named(_) => match pgm.decl(ty) {
-            TypeDecl::Named(decl) => decl.value && decl.sum,
-            _ => false,
-        },
-        _ => false,
+fn is_value_sum_type(idx: &HeapObjIdx, pgm: &LoweredPgm) -> bool {
+    match &pgm.heap_objs[idx.as_usize()] {
+        HeapObj::Builtin(_) => false,
+        HeapObj::Source(decl) => decl.value && decl.sum,
+        HeapObj::Record(_) => false,
+        HeapObj::Variant(_) => true,
     }
 }
 
@@ -1709,7 +1708,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     c_ty(ret_ty, cg.pgm),
                     heap_obj_singleton_name(cg.pgm, *heap_obj_idx)
                 );
-            } else if is_value_sum_type(ret_ty, cg.pgm) {
+            } else if is_value_sum_type(heap_obj_idx, cg.pgm) {
                 let ret_struct_name = c_ty(ret_ty, cg.pgm);
                 let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
                 let con_field = format!("_con_{}", heap_obj_idx.0);
@@ -1732,7 +1731,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 w!(p, " }})");
             } else {
                 let struct_name = heap_obj_struct_name(cg.pgm, *heap_obj_idx);
-                let product = is_product_con(cg.pgm, *heap_obj_idx);
+                let product = is_product_con(heap_obj_idx, cg.pgm);
                 w!(p, "({{");
                 p.indent();
                 p.nl();
@@ -2366,7 +2365,7 @@ fn pat_to_cond(
             };
             let mut cond = tag_check;
             let value = is_value_type(scrutinee_ty, cg.pgm);
-            let value_sum = is_value_sum_type(scrutinee_ty, cg.pgm);
+            let value_sum = is_value_sum_type(con, cg.pgm);
             for (i, field_pat) in fields.iter().enumerate() {
                 let field_expr = if value_sum {
                     format!("({scrutinee})._con_{}._{i}", con.0)

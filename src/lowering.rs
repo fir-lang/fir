@@ -90,7 +90,6 @@ pub struct NamedTypeDecl {
     pub ty_args: Vec<mono::Type>,
     pub rhs: NamedTypeRhs,
     pub con_indices: Vec<HeapObjIdx>,
-    pub sum: bool,
     pub value: bool,
 }
 
@@ -821,13 +820,11 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     for (ty_name, ty_arg_map) in &mono_pgm.ty {
         for (ty_args, con_decl) in ty_arg_map {
             let mut con_indices: Vec<HeapObjIdx> = vec![];
-            let mut sum = false;
             let mut value = con_decl.value;
             let rhs: NamedTypeRhs = match &con_decl.rhs {
                 Some(rhs) => {
                     match rhs {
                         mono::TypeDeclRhs::Sum(cons) => {
-                            sum = true;
                             // For sum types, we generate an index representing the type itself (rather
                             // than its consturctors). This index is used in dependency anlaysis, and to
                             // get the type details during code generation.
@@ -927,7 +924,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 ty_args: ty_args.clone(),
                 rhs,
                 con_indices,
-                sum,
                 value,
             }));
         }
