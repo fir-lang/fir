@@ -253,93 +253,92 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     );
     p.nl();
     for (tag, heap_obj) in pgm.heap_objs.iter().enumerate() {
-        match heap_obj {
-            HeapObj::Source(source_con) if !source_con.fields.is_empty() => {
-                let con_idx = HeapObjIdx(tag as u32);
-                let struct_name = heap_obj_struct_name(pgm, con_idx);
-                let tag_name = heap_obj_tag_name(pgm, con_idx);
+        let source_con = match heap_obj {
+            HeapObj::Source(source_con) if !source_con.fields.is_empty() => source_con,
+            _ => continue,
+        };
 
-                if source_con.sum && source_con.value {
-                    // Value sum type: return by value.
-                    let sum_struct =
-                        named_type_struct_name(&source_con.ty_name, &source_con.ty_args);
-                    w!(
-                        p,
-                        "static {sum_struct} _con_closure_{tag}_fun(CLOSURE* self"
-                    );
-                    for (i, ty) in source_con.fields.iter().enumerate() {
-                        w!(p, ", {} p{i}", c_ty(ty, pgm));
-                    }
-                    w!(p, ") {{");
-                    p.indent();
-                    p.nl();
-                    let con_field = format!("_con_{tag}");
-                    w!(
-                        p,
-                        "return (({sum_struct}){{ ._tag = {tag_name}, .{con_field} = {{ ._tag = {tag_name}"
-                    );
-                    for i in 0..source_con.fields.len() {
-                        w!(p, ", ._{i} = p{i}");
-                    }
-                    w!(p, " }} }});");
-                    p.dedent();
-                    p.nl();
-                    wln!(p, "}}");
-                } else if source_con.value {
-                    // Value product type: return by value.
-                    w!(
-                        p,
-                        "static {struct_name} _con_closure_{tag}_fun(CLOSURE* self"
-                    );
-                    for (i, ty) in source_con.fields.iter().enumerate() {
-                        w!(p, ", {} p{i}", c_ty(ty, pgm));
-                    }
-                    w!(p, ") {{");
-                    p.indent();
-                    p.nl();
-                    w!(p, "return (({struct_name}){{");
-                    p.sep(0..source_con.fields.len(), ",", |p, i| {
-                        w!(p, " ._{i} = p{i}");
-                    });
-                    w!(p, " }});");
-                    p.dedent();
-                    p.nl();
-                    wln!(p, "}}");
-                } else {
-                    // Boxed type: heap allocate.
-                    let product = is_product_con(&con_idx, pgm);
-                    w!(p, "static uint64_t _con_closure_{tag}_fun(CLOSURE* self");
-                    for (i, ty) in source_con.fields.iter().enumerate() {
-                        w!(p, ", {} p{i}", c_ty(ty, pgm));
-                    }
-                    w!(p, ") {{");
-                    p.indent();
-                    p.nl();
-                    wln!(p, "{struct_name}* _obj = malloc(sizeof({struct_name}));");
-                    if !product {
-                        wln!(p, "_obj->_tag = {tag_name};");
-                    }
-                    for i in 0..source_con.fields.len() {
-                        wln!(p, "_obj->_{i} = p{i};");
-                    }
-                    w!(p, "return (uint64_t)_obj;");
-                    p.dedent();
-                    p.nl();
-                    wln!(p, "}}");
-                }
+        let con_idx = HeapObjIdx(tag as u32);
+        let struct_name = source_con_struct_name(&source_con.con_name, &source_con.ty_args);
+        let tag_name = source_con_tag_name(&source_con.con_name, &source_con.ty_args);
 
-                w!(
-                    p,
-                    "static CLOSURE _con_closure_{tag}_data = {{ .fun = (void(*)(void))_con_closure_{tag}_fun }};",
-                );
-                p.nl();
-
-                w!(p, "#define _con_closure_{tag} (&_con_closure_{tag}_data)");
-                p.nl();
-                p.nl();
+        if source_con.sum && source_con.value {
+            // Value sum type: return by value.
+            let sum_struct = named_type_struct_name(&source_con.ty_name, &source_con.ty_args);
+            w!(
+                p,
+                "static {sum_struct} _con_closure_{tag}_fun(CLOSURE* self"
+            );
+            for (i, ty) in source_con.fields.iter().enumerate() {
+                w!(p, ", {} p{i}", c_ty(ty, pgm));
             }
-            _ => {}
+            w!(p, ") {{");
+            p.indent();
+            p.nl();
+            let con_field = format!("_con_{tag}");
+            w!(
+                p,
+                "return (({sum_struct}){{ ._tag = {tag_name}, .{con_field} = {{ ._tag = {tag_name}"
+            );
+            for i in 0..source_con.fields.len() {
+                w!(p, ", ._{i} = p{i}");
+            }
+            w!(p, " }} }});");
+            p.dedent();
+            p.nl();
+            wln!(p, "}}");
+        } else if source_con.value {
+            // Value product type: return by value.
+            w!(
+                p,
+                "static {struct_name} _con_closure_{tag}_fun(CLOSURE* self"
+            );
+            for (i, ty) in source_con.fields.iter().enumerate() {
+                w!(p, ", {} p{i}", c_ty(ty, pgm));
+            }
+            w!(p, ") {{");
+            p.indent();
+            p.nl();
+            w!(p, "return (({struct_name}){{");
+            p.sep(0..source_con.fields.len(), ",", |p, i| {
+                w!(p, " ._{i} = p{i}");
+            });
+            w!(p, " }});");
+            p.dedent();
+            p.nl();
+            wln!(p, "}}");
+        } else {
+            // Boxed type: heap allocate.
+            let product = is_product_con(&con_idx, pgm);
+            w!(p, "static uint64_t _con_closure_{tag}_fun(CLOSURE* self");
+            for (i, ty) in source_con.fields.iter().enumerate() {
+                w!(p, ", {} p{i}", c_ty(ty, pgm));
+            }
+            w!(p, ") {{");
+            p.indent();
+            p.nl();
+            wln!(p, "{struct_name}* _obj = malloc(sizeof({struct_name}));");
+            if !product {
+                wln!(p, "_obj->_tag = {tag_name};");
+            }
+            for i in 0..source_con.fields.len() {
+                wln!(p, "_obj->_{i} = p{i};");
+            }
+            w!(p, "return (uint64_t)_obj;");
+            p.dedent();
+            p.nl();
+            wln!(p, "}}");
         }
+
+        w!(
+            p,
+            "static CLOSURE _con_closure_{tag}_data = {{ .fun = (void(*)(void))_con_closure_{tag}_fun }};",
+        );
+        p.nl();
+
+        w!(p, "#define _con_closure_{tag} (&_con_closure_{tag}_data)");
+        p.nl();
+        p.nl();
     }
     p.nl();
 
