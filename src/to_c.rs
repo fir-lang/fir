@@ -2507,14 +2507,10 @@ fn generate_main_fn(pgm: &LoweredPgm, main: &str, p: &mut Printer) {
 /// - For boxed sum types: the generated code will read the tag word of the heap allocated object.
 /// - For unboxed sum types: the generated code will read the tag from the struct of the sum type.
 fn gen_get_tag(pgm: &LoweredPgm, expr: &str, ty: &mono::Type) -> String {
-    // For product types, use the tag macro.
     match ty {
         mono::Type::Named(mono::NamedType { name, args }) => {
             let idx = *pgm.named_tys.get(name).unwrap().get(args).unwrap();
-            let named_ty = match &pgm.types[idx.as_usize()] {
-                TypeDecl::Named(ty) => ty,
-                _ => panic!(),
-            };
+            let named_ty = pgm.types[idx.as_usize()].as_named();
             if named_ty.con_indices.len() == 1 {
                 return heap_obj_tag_name(pgm, named_ty.con_indices[0]);
             }
@@ -2531,10 +2527,7 @@ fn gen_get_tag(pgm: &LoweredPgm, expr: &str, ty: &mono::Type) -> String {
                     fields: fields.clone(),
                 })
                 .unwrap();
-            let idx = match &pgm.types[idx.as_usize()] {
-                TypeDecl::Record(_, idx) => *idx,
-                _ => panic!(),
-            };
+            let idx = pgm.types[idx.as_usize()].as_record().1;
             heap_obj_tag_name(pgm, idx)
         }
 

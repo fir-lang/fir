@@ -84,6 +84,22 @@ pub enum TypeDecl {
     Variant(VariantType),
 }
 
+impl TypeDecl {
+    pub fn as_named(&self) -> &NamedTypeDecl {
+        match self {
+            TypeDecl::Named(named) => named,
+            _ => panic!(),
+        }
+    }
+
+    pub fn as_record(&self) -> (&RecordType, HeapObjIdx) {
+        match self {
+            TypeDecl::Record(record, heap_obj_idx) => (record, *heap_obj_idx),
+            _ => panic!(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct NamedTypeDecl {
     pub name: Name,
