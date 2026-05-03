@@ -279,7 +279,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                         "return (({sum_struct}){{ ._tag = {tag_name}, .{con_field} = {{ ._tag = {tag_name}"
                     );
                     for (i, (field_name, _field_ty)) in source_con.fields.iter().enumerate() {
-                        w!(p, ", .{field_name} = p{i}");
+                        w!(p, ", .{} = p{i}", c_field_name(field_name));
                     }
                     w!(p, " }} }});");
                     p.dedent();
@@ -302,7 +302,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                         source_con.fields.iter().enumerate(),
                         ",",
                         |p, (i, (field_name, _field_ty))| {
-                            w!(p, " .{field_name} = p{i}");
+                            w!(p, " .{} = p{i}", c_field_name(field_name));
                         },
                     );
                     w!(p, " }});");
@@ -324,7 +324,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                         wln!(p, "_obj->_tag = {tag_name};");
                     }
                     for (i, (field_name, _field_ty)) in source_con.fields.iter().enumerate() {
-                        wln!(p, "_obj->{field_name} = p{i};");
+                        wln!(p, "_obj->{} = p{i};", c_field_name(field_name));
                     }
                     w!(p, "return (uint64_t)_obj;");
                     p.dedent();
@@ -571,7 +571,7 @@ fn gen_source_con_struct(
     };
     for (field_name, field_ty) in fields.iter() {
         p.nl();
-        w!(p, "{} {field_name};", c_ty(field_ty, pgm));
+        w!(p, "{} {};", c_ty(field_ty, pgm), c_field_name(field_name));
     }
     p.dedent();
     p.nl();
@@ -791,7 +791,7 @@ fn record_decl_to_c(record: &RecordType, tag: u32, pgm: &LoweredPgm, p: &mut Pri
     p.indent();
     for (field_name, field_ty) in record.fields.iter() {
         p.nl();
-        w!(p, "{} {field_name};", c_ty(field_ty, pgm));
+        w!(p, "{} {};", c_ty(field_ty, pgm), c_field_name(field_name));
     }
     p.dedent();
     p.nl();
@@ -1617,7 +1617,7 @@ fn stmt_to_c(
                 w!(p, "{} {} = ", c_ty(object_ty, cg.pgm), obj_temp);
                 expr_to_c(&object.node, &object.loc, locals, cg, p);
                 wln!(p, "; // {}", loc_display(&object.loc));
-                w!(p, "{obj_temp}->{field} = ");
+                w!(p, "{obj_temp}->{} = ", c_field_name(field));
                 expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
                 wln!(p, ";");
                 if let Some(result_var) = result_var {
@@ -1747,7 +1747,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     "(({ret_struct_name}){{ ._tag = {tag_name}, .{con_field} = {{ ._tag = {tag_name}"
                 );
                 for ((field_name, _field_ty), arg) in fields.iter().zip(args.iter()) {
-                    w!(p, ", .{field_name} = ");
+                    w!(p, ", .{} = ", c_field_name(field_name));
                     expr_to_c(&arg.node, &arg.loc, locals, cg, p);
                 }
                 w!(p, " }} }})");
@@ -1758,7 +1758,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     fields.iter().zip(args.iter()),
                     ",",
                     |p, ((field_name, _field_ty), arg)| {
-                        w!(p, " .{field_name} = ");
+                        w!(p, " .{} = ", c_field_name(field_name));
                         expr_to_c(&arg.node, &arg.loc, locals, cg, p);
                     },
                 );
@@ -1775,7 +1775,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     wln!(p, "_obj->_tag = {tag_name};");
                 }
                 for ((field_name, _field_ty), arg) in fields.iter().zip(args.iter()) {
-                    w!(p, "_obj->{field_name} = ");
+                    w!(p, "_obj->{} = ", c_field_name(field_name));
                     expr_to_c(&arg.node, &arg.loc, locals, cg, p);
                     wln!(p, ";");
                 }
@@ -1795,9 +1795,9 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             w!(p, "(");
             expr_to_c(&object.node, &object.loc, locals, cg, p);
             if is_value_type(object_ty, cg.pgm) {
-                w!(p, ").{field}");
+                w!(p, ").{}", c_field_name(field));
             } else {
-                w!(p, ")->{field}");
+                w!(p, ")->{}", c_field_name(field));
             }
         }
 
@@ -2407,6 +2407,7 @@ fn pat_to_cond(
             let value = is_value_type(scrutinee_ty, cg.pgm);
             let value_sum = is_value_sum_type(con, cg.pgm);
             for ((field_name, field_ty), field_pat) in field_tys.iter().zip(fields.iter()) {
+                let field_name = c_field_name(field_name);
                 let field_expr = if value_sum {
                     format!("({scrutinee})._con_{}.{field_name}", con.as_usize())
                 } else if value {
@@ -2436,7 +2437,7 @@ fn pat_to_cond(
                     if rest_i > 0 {
                         rest_init.push(',');
                     }
-                    let src_field_name = &field_tys[src_field_idx as usize].0;
+                    let src_field_name = c_field_name(&field_tys[src_field_idx as usize].0);
                     let field_expr = if value_sum {
                         format!("({scrutinee})._con_{}.{src_field_name}", con.0)
                     } else if value {
@@ -2444,7 +2445,7 @@ fn pat_to_cond(
                     } else {
                         format!("(({struct_name}*){scrutinee})->{src_field_name}")
                     };
-                    let rest_field_name = rest_field_names[rest_i];
+                    let rest_field_name = c_field_name(rest_field_names[rest_i]);
                     rest_init.push_str(&format!(" .{rest_field_name} = {field_expr}"));
                 }
                 rest_init.push_str(" })");
@@ -2876,5 +2877,45 @@ fn named_type_deps(
     let idx = *named_tys.get(&ty.name).unwrap().get(&ty.args).unwrap();
     if deps.insert(idx) {
         type_decl_deps_(named_tys, record_tys, variant_tys, types, idx, deps);
+    }
+}
+
+fn c_field_name(name: &Name) -> &str {
+    match name.as_str() {
+        "auto" => "auto_",
+        "break" => "break_",
+        "case" => "case_",
+        "char" => "char_",
+        "const" => "const_",
+        "continue" => "continue_",
+        "default" => "default_",
+        "do" => "do_",
+        "double" => "double_",
+        "else" => "else_",
+        "enum" => "enum_",
+        "extern" => "extern_",
+        "float" => "float_",
+        "for" => "for_",
+        "goto" => "goto_",
+        "if" => "if_",
+        "inline" => "inline_",
+        "int" => "int_",
+        "long" => "long_",
+        "register" => "register_",
+        "restrict" => "restrict_",
+        "return" => "return_",
+        "short" => "short_",
+        "signed" => "signed_",
+        "sizeof" => "sizeof_",
+        "static" => "static_",
+        "struct" => "struct_",
+        "switch" => "switch_",
+        "typedef" => "typedef_",
+        "union" => "union_",
+        "unsigned" => "unsigned_",
+        "void" => "void_",
+        "volatile" => "volatile_",
+        "while" => "while_",
+        s => s,
     }
 }
