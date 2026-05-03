@@ -364,7 +364,7 @@ pub struct SourceConDecl {
     pub con_name: Name,
     pub idx: HeapObjIdx,
     pub ty_args: Vec<mono::Type>,
-    pub fields: Vec<mono::Type>,
+    pub fields: Vec<(Name, mono::Type)>,
     pub sum: bool,
     pub value: bool,
 }
@@ -471,7 +471,7 @@ pub enum Expr {
 pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
 
-    /// For debugging: name of the field.
+    /// Fir name of the field. Used in C backend.
     pub field: Name,
 
     /// Index of the field in the object's payload.
@@ -1541,8 +1541,15 @@ fn lower_source_con(
         ty_args: con_ty_args.to_vec(),
         fields: match fields {
             mono::ConFields::Empty => vec![],
-            mono::ConFields::Named(fields) => fields.values().cloned().collect(),
-            mono::ConFields::Unnamed(fields) => fields.to_vec(),
+            mono::ConFields::Named(fields) => fields
+                .iter()
+                .map(|(field_name, field_ty)| (field_name.clone(), field_ty.clone()))
+                .collect(),
+            mono::ConFields::Unnamed(fields) => fields
+                .iter()
+                .enumerate()
+                .map(|(i, field_ty)| (Name::new(format!("_{i}")), field_ty.clone()))
+                .collect(),
         },
         sum,
         value,
