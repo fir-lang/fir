@@ -13,9 +13,13 @@ TimeVal.new(sec: U64, usec: U64) TimeVal:
 
 
 main():
-    let tv: TimeVal = TimeVal.new(1, 2)
-    printStr("tvSec = `tv.tvSec`")
-    printStr("tvUsec = `tv.tvUsec`")
+    let tv1: TimeVal = TimeVal.new(1, 2)
+    printStr("tvSec = `tv1.tvSec`")
+    printStr("tvUsec = `tv1.tvUsec`")
+
+    let tv2: TimeVal = TimeVal(tvSec = 3, tvUsec = 4)
+    printStr("tvSec = `tv2.tvSec`")
+    printStr("tvUsec = `tv2.tvUsec`")
 
 
 # expected stdout:
