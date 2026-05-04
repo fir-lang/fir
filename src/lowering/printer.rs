@@ -31,8 +31,8 @@ impl LoweredPgm {
                     p.str(con_name.as_str());
                     print_ty_args(ty_args, p);
                     p.char('(');
-                    p.sep(fields.iter(), ", ", |p, field_ty| {
-                        write!(p, "{field_ty}").unwrap()
+                    p.sep(fields.iter(), ", ", |p, (field_name, field_ty)| {
+                        write!(p, "{field_name}: {field_ty}").unwrap()
                     });
                     p.char(')');
                 }
@@ -224,7 +224,6 @@ impl Expr {
                 field,
                 idx: _,
                 object_ty: _,
-                c_field_name: _,
                 deref: _,
             }) => {
                 object.node.print(p);

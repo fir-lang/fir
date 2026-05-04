@@ -84,6 +84,22 @@ pub enum TypeDecl {
     Variant(VariantType),
 }
 
+impl TypeDecl {
+    pub fn as_named(&self) -> &NamedTypeDecl {
+        match self {
+            TypeDecl::Named(named) => named,
+            _ => panic!(),
+        }
+    }
+
+    pub fn as_record(&self) -> (&RecordType, HeapObjIdx) {
+        match self {
+            TypeDecl::Record(record, heap_obj_idx) => (record, *heap_obj_idx),
+            _ => panic!(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct NamedTypeDecl {
     pub name: Name,
@@ -357,7 +373,7 @@ pub struct SourceConDecl {
     pub con_name: Name,
     pub idx: HeapObjIdx,
     pub ty_args: Vec<mono::Type>,
-    pub fields: Vec<mono::Type>,
+    pub fields: Vec<(Name, mono::Type)>,
     pub sum: bool,
     pub value: bool,
 }
@@ -468,7 +484,7 @@ pub enum Expr {
 pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
 
-    /// For debugging: name of the field.
+    /// Fir name of the field. Used in C backend.
     pub field: Name,
 
     /// Index of the field in the object's payload.
@@ -478,10 +494,6 @@ pub struct FieldSelExpr {
     pub idx: u32,
 
     pub object_ty: mono::Type,
-
-    /// When this is available, the `object` is a C struct and we should use the struct field name
-    /// here instead of the field index.
-    pub c_field_name: Option<Name>,
 
     /// Whether to index with `.` or `->`.
     pub deref: bool,
@@ -1586,8 +1598,17 @@ fn lower_source_con(
         ty_args: con_ty_args.to_vec(),
         fields: match fields {
             mono::ConFields::Empty => vec![],
-            mono::ConFields::Named(fields) => fields.values().cloned().collect(),
-            mono::ConFields::Unnamed(fields) => fields.to_vec(),
+            mono::ConFields::Named(fields) => fields
+                .iter()
+                .map(|(field_name, field_ty)| {
+                    (Name::new(c_field_name(field_name)), field_ty.clone())
+                })
+                .collect(),
+            mono::ConFields::Unnamed(fields) => fields
+                .iter()
+                .enumerate()
+                .map(|(i, field_ty)| (Name::new(format!("_{i}")), field_ty.clone()))
+                .collect(),
         },
         sum,
         value,
@@ -1769,7 +1790,6 @@ fn lower_expr(
                 }
             }
 
-            let mut c_field_name: Option<Name> = None;
             let deref;
 
             let object_with_field_ty = if let mono::Type::Named(mono::NamedType { name, args }) =
@@ -1782,6 +1802,10 @@ fn lower_expr(
                 deref = !is_value_type(&object_ty, mono_pgm);
                 object_ty.clone()
             };
+
+            // Defaults to the sanitized Fir name, extern types override with the C name from the
+            // declaration.
+            let mut field_name: Name = Name::new(c_field_name(field));
 
             let field_idx: u32 = match &object_with_field_ty {
                 mono::Type::Named(mono::NamedType { name, args }) => {
@@ -1827,7 +1851,7 @@ fn lower_expr(
                             for (field_idx_, extern_field) in extern_ty.fields.iter().enumerate() {
                                 if field == &extern_field.fir_name {
                                     field_idx = field_idx_ as u32;
-                                    c_field_name = Some(Name::new(&extern_field.c_name));
+                                    field_name = Name::new(&extern_field.c_name);
                                     break;
                                 }
                             }
@@ -1857,10 +1881,9 @@ fn lower_expr(
             (
                 Expr::FieldSel(FieldSelExpr {
                     object,
-                    field: field.clone(),
+                    field: field_name,
                     idx: field_idx,
                     object_ty,
-                    c_field_name,
                     deref,
                 }),
                 Default::default(),
@@ -2776,10 +2799,9 @@ fn lower_splice(
                             node: Expr::LocalVar(splice_local_idx),
                             loc: splice.loc.clone(),
                         }),
-                        field: splice_field_name.clone(),
+                        field: Name::new(c_field_name(splice_field_name)),
                         idx: field_idx,
                         object_ty: splice_ty.clone(),
-                        c_field_name: None,
                         deref: false,
                     }),
                     loc: splice.loc.clone(),
@@ -2787,5 +2809,45 @@ fn lower_splice(
             }),
             loc: splice.loc.clone(),
         })
+    }
+}
+
+pub fn c_field_name(name: &Name) -> &str {
+    match name.as_str() {
+        "auto" => "auto_",
+        "break" => "break_",
+        "case" => "case_",
+        "char" => "char_",
+        "const" => "const_",
+        "continue" => "continue_",
+        "default" => "default_",
+        "do" => "do_",
+        "double" => "double_",
+        "else" => "else_",
+        "enum" => "enum_",
+        "extern" => "extern_",
+        "float" => "float_",
+        "for" => "for_",
+        "goto" => "goto_",
+        "if" => "if_",
+        "inline" => "inline_",
+        "int" => "int_",
+        "long" => "long_",
+        "register" => "register_",
+        "restrict" => "restrict_",
+        "return" => "return_",
+        "short" => "short_",
+        "signed" => "signed_",
+        "sizeof" => "sizeof_",
+        "static" => "static_",
+        "struct" => "struct_",
+        "switch" => "switch_",
+        "typedef" => "typedef_",
+        "union" => "union_",
+        "unsigned" => "unsigned_",
+        "void" => "void_",
+        "volatile" => "volatile_",
+        "while" => "while_",
+        s => s,
     }
 }
