@@ -25,3 +25,5 @@ main():
 # expected stdout:
 # tvSec = 1
 # tvUsec = 2
+# tvSec = 3
+# tvUsec = 4

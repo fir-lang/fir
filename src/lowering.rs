@@ -896,23 +896,24 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             con_indices.push(idx);
                         }
 
-                        mono::TypeDeclRhs::Extern(_) => {
-                            // Don't allocate heap obj indices for extern types.
+                        mono::TypeDeclRhs::Extern(mono::ExternType { c_type: _, fields }) => {
                             value = true;
                             let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                            // --- TODO ------------------------------------------------------------
-                            // This part is incorrect
-                            // We probably want a `HeapObj::Extern` variant?
-                            lowered_pgm.heap_objs.push(lower_source_con(
+                            lowered_pgm.heap_objs.push(HeapObj::Source(SourceConDecl {
+                                ty_name: ty_name.clone(),
+                                con_name: ty_name.clone(),
                                 idx,
-                                ty_name,
-                                ty_name,
-                                ty_args,
-                                &mono::ConFields::Empty,
-                                false, // product
-                                con_decl.value,
-                            ));
-                            // ---------------------------------------------------------------------
+                                ty_args: ty_args.clone(),
+                                fields: match fields {
+                                    Some(fields) => fields
+                                        .iter()
+                                        .map(|f| (Name::new(&f.c_name), f.ty.clone()))
+                                        .collect(),
+                                    None => vec![],
+                                },
+                                sum: false,
+                                value: true,
+                            }));
                             con_indices.push(idx);
                         }
                     }
@@ -1730,6 +1731,8 @@ fn lower_expr(
 
             let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty_id).unwrap().get(ty_args).unwrap();
 
+            let extern_synth_fields: mono::ConFields;
+
             let con_fields = match &ty_decl.rhs {
                 Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
                     for con_ in cons {
@@ -1747,12 +1750,21 @@ fn lower_expr(
 
                 Some(mono::TypeDeclRhs::Product(fields)) => fields,
 
-                Some(mono::TypeDeclRhs::Extern(_)) => {
-                    todo!(
-                        "{}: Constructor selection on extern type {} is not implemented yet",
-                        loc_display(loc),
-                        ty_id
+                Some(mono::TypeDeclRhs::Extern(extern_ty)) => {
+                    let extern_fields = extern_ty.fields.as_ref().unwrap_or_else(|| {
+                        panic!(
+                            "BUG: {}: Pat::Con on an extern type without fields {}",
+                            loc_display(loc),
+                            ty
+                        )
+                    });
+                    extern_synth_fields = mono::ConFields::Named(
+                        extern_fields
+                            .iter()
+                            .map(|f| (f.fir_name.clone(), f.ty.clone()))
+                            .collect(),
                     );
+                    &extern_synth_fields
                 }
 
                 None => &mono::ConFields::Empty,
