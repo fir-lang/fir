@@ -2477,6 +2477,8 @@ fn lower_pat(
 
             let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty).unwrap().get(ty_args).unwrap();
 
+            let extern_synth_fields: mono::ConFields;
+
             let con_fields: &mono::ConFields = match &ty_decl.rhs {
                 Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
                     for con_ in cons {
@@ -2494,12 +2496,21 @@ fn lower_pat(
 
                 Some(mono::TypeDeclRhs::Product(fields)) => fields,
 
-                Some(mono::TypeDeclRhs::Extern(_)) => {
-                    todo!(
-                        "{}: Pattern match against extern type {} is not implemented yet",
-                        loc_display(loc),
-                        ty
+                Some(mono::TypeDeclRhs::Extern(extern_ty)) => {
+                    let extern_fields = extern_ty.fields.as_ref().unwrap_or_else(|| {
+                        panic!(
+                            "BUG: {}: Pat::Con on extern type without fields {}",
+                            loc_display(loc),
+                            ty
+                        )
+                    });
+                    extern_synth_fields = mono::ConFields::Named(
+                        extern_fields
+                            .iter()
+                            .map(|f| (f.fir_name.clone(), f.ty.clone()))
+                            .collect(),
                     );
+                    &extern_synth_fields
                 }
 
                 None => panic!(
