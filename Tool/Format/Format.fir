@@ -161,45 +161,7 @@ TypeDecl.format(self: TypeDecl, tokens: Array[Token]) Doc:
 TypeDeclRhs.format(self: TypeDeclRhs, tokens: Array[Token]) Doc:
     match self:
         TypeDeclRhs.Sum(cons, extension):
-            assert(not (cons.isEmpty() and extension is Option.None))
-
-            let colon = match cons.getOpt(0):
-                Option.Some(firstCon):
-                    prevNonTrivia(firstCon.name.token, tokens).unwrap()
-                Option.None:
-                    let dotdot = prevNonTrivia(
-                        extension.unwrap().firstToken(tokens), tokens,
-                    ).unwrap()
-                    assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
-                    prevNonTrivia(dotdot, tokens).unwrap()
-
-            assert(tokens.get(colon.idx).kind is TokenKind.Colon)
-
-            let doc = Doc.empty()
-            let conIdx: U32 = 0
-            for con: ConDecl in cons.iter():
-                if conIdx != 0:
-                    doc += Doc.hardLine()
-
-                    let lastConLastLine = tokens.get(
-                        cons.get(conIdx - 1)._lastToken.idx,
-                    ).rightLoc().line
-                    if tokens.get(con.name.token.idx).line - lastConLastLine > 1:
-                        doc += Doc.hardLine()
-
-                doc += con.format(tokens)
-
-                conIdx += 1
-
-            if extension is Option.Some(ext):
-                if conIdx != 0:
-                    doc += Doc.hardLine()
-                let dotdot = prevNonTrivia(ext.firstToken(tokens), tokens)
-                    .unwrap()
-                assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
-                doc += formatToken(dotdot, tokens) + ext.format(tokens)
-
-            Doc.nested(4, formatToken(colon, tokens) + Doc.hardLine() + doc)
+            _formatSumDecl(cons, extension, tokens)
 
         TypeDeclRhs.Product(fields): fields.format(tokens)
 
@@ -210,6 +172,53 @@ TypeDeclRhs.format(self: TypeDeclRhs, tokens: Array[Token]) Doc:
                 + formatToken(eq, tokens)
                 + Doc.blank(1)
                 + ty.format(tokens)
+
+        TypeDeclRhs.Extern(cType, fields): panic("TODO")
+
+
+_formatSumDecl(
+    cons: Vec[ConDecl],
+    extension: Option[Type],
+    tokens: Array[Token],
+) Doc:
+    assert(not (cons.isEmpty() and extension is Option.None))
+
+    let colon = match cons.getOpt(0):
+        Option.Some(firstCon):
+            prevNonTrivia(firstCon.name.token, tokens).unwrap()
+        Option.None:
+            let dotdot = prevNonTrivia(
+                extension.unwrap().firstToken(tokens), tokens,
+            ).unwrap()
+            assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+            prevNonTrivia(dotdot, tokens).unwrap()
+
+    assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+    let doc = Doc.empty()
+    let conIdx: U32 = 0
+    for con: ConDecl in cons.iter():
+        if conIdx != 0:
+            doc += Doc.hardLine()
+
+            let lastConLastLine = tokens.get(
+                cons.get(conIdx - 1)._lastToken.idx,
+            ).rightLoc().line
+            if tokens.get(con.name.token.idx).line - lastConLastLine > 1:
+                doc += Doc.hardLine()
+
+        doc += con.format(tokens)
+
+        conIdx += 1
+
+    if extension is Option.Some(ext):
+        if conIdx != 0:
+            doc += Doc.hardLine()
+        let dotdot = prevNonTrivia(ext.firstToken(tokens), tokens).unwrap()
+        assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+        doc += formatToken(dotdot, tokens) + ext.format(tokens)
+
+    Doc.nested(4, formatToken(colon, tokens) + Doc.hardLine() + doc)
 
 
 ConDecl.format(self: ConDecl, tokens: Array[Token]) Doc:
