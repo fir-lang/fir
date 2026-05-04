@@ -565,9 +565,11 @@ _formatSigArgList(
 
 
 ImportDecl.format(self: ImportDecl, tokens: Array[Token]) Doc:
-    let attr = match self.attr:
-        Option.Some(attr): attr.format(tokens) + Doc.hardLine()
-        Option.None: Doc.empty()
+    let attr = if self.attrs.isEmpty():
+        Doc.empty()
+    else:
+        self.attrs.iter().map(\(attr): attr.format(tokens)).join(Doc.hardLine())
+            + Doc.hardLine()
 
     let lbracket = nextNonTrivia(self.import_, tokens).unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
