@@ -1847,8 +1847,15 @@ fn lower_expr(
                             }
                         },
                         Some(mono::TypeDeclRhs::Extern(extern_ty)) => {
+                            let extern_fields = extern_ty.fields.as_ref().unwrap_or_else(|| {
+                                panic!(
+                                    "BUG: {}: FieldSel on extern type without fields {}",
+                                    loc_display(loc),
+                                    name
+                                )
+                            });
                             let mut field_idx: u32 = 0;
-                            for (field_idx_, extern_field) in extern_ty.fields.iter().enumerate() {
+                            for (field_idx_, extern_field) in extern_fields.iter().enumerate() {
                                 if field == &extern_field.fir_name {
                                     field_idx = field_idx_ as u32;
                                     field_name = Name::new(&extern_field.c_name);

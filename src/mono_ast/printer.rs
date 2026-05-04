@@ -79,7 +79,7 @@ impl TypeDeclRhs {
                 p.str(" = \"");
                 crate::ast::printer::escape_str_lit(c_type, p);
                 p.char('"');
-                if !fields.is_empty() {
+                if let Some(fields) = fields {
                     p.char('(');
                     p.indented(|p| {
                         for ExternField {

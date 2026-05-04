@@ -2042,7 +2042,10 @@ fn select_field(
             sum,
             value: _,
         }) if !sum => {
-            assert_eq!(cons.len(), 1);
+            if cons.is_empty() {
+                return None;
+            }
+
             let con_scheme = cons.values().next().unwrap();
 
             let con_ty = con_scheme

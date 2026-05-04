@@ -235,7 +235,12 @@ pub enum ConFields {
 #[derive(Debug, Clone)]
 pub struct ExternTypeDeclRhs {
     pub c_type: String,
-    pub fields: Vec<ExternTypeField>,
+
+    /// The field list of the extern type.
+    ///
+    /// When not available, the type is abstract in Fir: we can't allocate it, can't access fields
+    /// in Fir.
+    pub fields: Option<Vec<ExternTypeField>>,
 }
 
 #[derive(Debug, Clone)]

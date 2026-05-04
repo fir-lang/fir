@@ -2721,22 +2721,23 @@ fn mono_ty_decl(
                 ty_decl.name,
             );
 
-            let mono_fields: Vec<mono::ExternField> = fields
-                .iter()
-                .map(|f| mono::ExternField {
-                    fir_name: f.name.clone(),
-                    ty: mono_ast_ty(
-                        &f.fir_type.node,
-                        &ty_map,
-                        poly_pgm,
-                        mono_pgm,
-                        mangler,
-                        module_env,
-                        &f.fir_type.loc,
-                    ),
-                    c_name: f.c_type.clone(),
-                })
-                .collect();
+            let mono_fields: Option<Vec<mono::ExternField>> = fields.as_ref().map(|fs| {
+                fs.iter()
+                    .map(|f| mono::ExternField {
+                        fir_name: f.name.clone(),
+                        ty: mono_ast_ty(
+                            &f.fir_type.node,
+                            &ty_map,
+                            poly_pgm,
+                            mono_pgm,
+                            mangler,
+                            module_env,
+                            &f.fir_type.loc,
+                        ),
+                        c_name: f.c_type.clone(),
+                    })
+                    .collect()
+            });
 
             mono::TypeDeclRhs::Extern(mono::ExternType {
                 c_type: c_type.to_string(),

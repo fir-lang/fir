@@ -74,9 +74,12 @@ fn visit_ty_decl(
             visit_fields(fields, records, variants);
         }
 
+        #[allow(clippy::collapsible_match)]
         Some(mono::TypeDeclRhs::Extern(mono::ExternType { c_type: _, fields })) => {
-            for f in fields.iter() {
-                visit_ty(&f.ty, records, variants);
+            if let Some(fields) = fields {
+                for f in fields.iter() {
+                    visit_ty(&f.ty, records, variants);
+                }
             }
         }
     }

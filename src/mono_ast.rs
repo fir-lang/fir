@@ -49,7 +49,7 @@ pub enum ConFields {
 #[derive(Debug, Clone)]
 pub struct ExternType {
     pub c_type: String,
-    pub fields: Vec<ExternField>,
+    pub fields: Option<Vec<ExternField>>,
 }
 
 #[derive(Debug, Clone)]

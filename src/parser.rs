@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.23.1"
-// sha3: b314360977283c751425dd2150c69f8dbd007b000c87da2b66bf7824002c5c34
+// sha3: 8718dc360cb5f35c21e377515e76d26256562fadef40f01ad7d929f7845b73ba
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::*;
@@ -57746,7 +57746,7 @@ fn __action14<'a>(
                 type_param_kinds: vec![],
                 rhs: Some(TypeDeclRhs::Extern(ExternTypeDeclRhs {
                     c_type: c_type.to_string(),
-                    fields: fields.unwrap_or(vec![]),
+                    fields,
                 })),
             },
         )

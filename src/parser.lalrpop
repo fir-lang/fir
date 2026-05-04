@@ -250,7 +250,7 @@ TypeDecl: L<TypeDecl> = {
             type_param_kinds: vec![],
             rhs: Some(TypeDeclRhs::Extern(ExternTypeDeclRhs {
                 c_type: c_type.to_string(),
-                fields: fields.unwrap_or(vec![]),
+                fields,
             })),
         })
     }

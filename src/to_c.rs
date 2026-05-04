@@ -2857,8 +2857,10 @@ fn type_decl_deps_(
                     }
                 },
                 mono::TypeDeclRhs::Extern(ext) => {
-                    for f in ext.fields.iter() {
-                        type_deps(named_tys, record_tys, variant_tys, types, &f.ty, deps);
+                    if let Some(fields) = &ext.fields {
+                        for f in fields.iter() {
+                            type_deps(named_tys, record_tys, variant_tys, types, &f.ty, deps);
+                        }
                     }
                 }
             },
