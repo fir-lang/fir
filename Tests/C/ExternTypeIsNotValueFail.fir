@@ -8,4 +8,4 @@ main():
 # args: --typecheck
 # expected exit status: 101
 # expected stderr:
-# Tests/C/ExternTypeAliasIsNotValueFail.fir:9:13: Type Int has no constructor and cannot be used as a value
+# Tests/C/ExternTypeIsNotValueFail.fir:5:13: Type Int has no constructor and cannot be used as a value

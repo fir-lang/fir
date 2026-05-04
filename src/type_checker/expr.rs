@@ -2712,6 +2712,13 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
                     con_ty
                 );
             }
+            if ty_details.cons.is_empty() {
+                panic!(
+                    "{}: Type {} has no constructor and cannot be used as a value",
+                    loc_display(loc),
+                    con_ty,
+                );
+            }
             assert_eq!(ty_details.cons.len(), 1);
             ty_details.cons.values().next().unwrap()
         }
