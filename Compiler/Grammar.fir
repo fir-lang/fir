@@ -1393,15 +1393,16 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
+            let cTypeBegin = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.BeginStr, ..):
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let cTypeEnd = if state.peek() is Option.Some(sym)
+            let cTypeEnd = state.nextCursor()
+            if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.EndStr, ..):
                 state._cursor += 1
-                sym
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let optionalCursor0 = state._cursor
@@ -1423,8 +1424,6 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                let cTypeText = cTypeEnd.text
-                let cType = cTypeText.substr(0, cTypeText.len() - 1)
                 TypeDecl(
                     attr,
                     kind =
@@ -1432,7 +1431,14 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                             TypeDeclKind.Extern(TokenIdx(idx = extern_))
                         ),
                     name = newId(name),
-                    rhs = Option.Some(TypeDeclRhs.Extern(cType, fields = fs)),
+                    rhs =
+                        Option.Some(
+                            TypeDeclRhs.Extern(
+                                cTypeBegin = TokenIdx(idx = cTypeBegin),
+                                cTypeEnd = TokenIdx(idx = cTypeEnd),
+                                fields = fs,
+                            ),
+                        ),
                     typeParams = Vec.empty(),
                     ..AstExts[exts].defaultTypeDeclExts()
                 )
@@ -1858,21 +1864,25 @@ externTypeField[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
+            let cNameBegin = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.BeginStr, ..):
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let cNameEnd = if state.peek() is Option.Some(sym)
+            let cNameEnd = state.nextCursor()
+            if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.EndStr, ..):
                 state._cursor += 1
-                sym
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                let cNameText = cNameEnd.text
-                let cName = cNameText.substr(0, cNameText.len() - 1)
-                ExternField(name = newId(name), ty, cName)
+                ExternField(
+                    name = newId(name),
+                    ty,
+                    cNameBegin = TokenIdx(idx = cNameBegin),
+                    cNameEnd = TokenIdx(idx = cNameEnd),
+                )
             val,
     )
     match altResult:

@@ -49,7 +49,7 @@ resolveNames(pgm: Program):
 
                     TypeDeclRhs.Synonym(ty): visitor.visitType(ty)
 
-                    TypeDeclRhs.Extern(cType = _, fields):
+                    TypeDeclRhs.Extern(cTypeBegin = _, cTypeEnd = _, fields):
                         if fields is Option.Some(fs):
                             for f: CExternField in fs.iter():
                                 visitor.visitType(f.ty)

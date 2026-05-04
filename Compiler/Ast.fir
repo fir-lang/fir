@@ -154,11 +154,11 @@ type TypeDecl[exts](
     ## The type name. `Vec` in the example.
     name: Id,
 
-    ## Constructors of the type.
-    rhs: Option[TypeDeclRhs[exts]],
-
     ## Type parameters of the type. `[t]` in the example.
     typeParams: Vec[DeclTypeParam[exts]],
+
+    ## Constructors of the type.
+    rhs: Option[TypeDeclRhs[exts]],
 
     ..AstExts[exts].TypeDeclExts
 )
@@ -216,7 +216,12 @@ type TypeDeclRhs[exts]:
     ## - `extern type DivT = "div_t"(quot: I32 = "quot", rem: I32 = "rem")`
     ##   (constructor form, `fields = Some(...)`, possibly empty).
     Extern(
-        cType: Str,
+        ## The `BeginStr` token for the string literal for the C type.
+        cTypeBegin: TokenIdx,
+
+        ## The `EndStr` tokenf or the string literal for the C type.
+        cTypeEnd: TokenIdx,
+
         fields: Option[Vec[ExternField[exts]]],
     )
 
@@ -230,7 +235,8 @@ type ExternField[exts](
     ty: Type[exts],
 
     ## C field name (used in the generated C struct).
-    cName: Str,
+    cNameBegin: TokenIdx,
+    cNameEnd: TokenIdx,
 )
 
 

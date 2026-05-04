@@ -354,15 +354,17 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
     # - `extern type Foo = "..."()`              (empty struct constructor)
     # - `extern type DivT = "div_t"(quot: I32 = "quot", rem: I32 = "rem")`
     attr=attr? extern_=^ "extern" "type" name=^ "UpperId" "="
-            _"BeginStr" cTypeEnd="EndStr"
+            cTypeBegin=^ "BeginStr" cTypeEnd=^ "EndStr"
             fs=externTypeFields? "NEWLINE":
-        let cTypeText = cTypeEnd.text
-        let cType = cTypeText.substr(0, cTypeText.len() - 1)
         TypeDecl(
             attr,
             kind = Option.Some(TypeDeclKind.Extern(TokenIdx(idx = extern_))),
             name = newId(name),
-            rhs = Option.Some(TypeDeclRhs.Extern(cType, fields = fs)),
+            rhs = Option.Some(TypeDeclRhs.Extern(
+                cTypeBegin = TokenIdx(idx = cTypeBegin),
+                cTypeEnd = TokenIdx(idx = cTypeEnd),
+                fields = fs,
+            )),
             typeParams = Vec.empty(),
             ..AstExts[exts].defaultTypeDeclExts()
         )
@@ -428,10 +430,13 @@ externTypeFields[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[ExternField[exts]
 
 # A single `extern type` field: `name: FirType = "c_name"`.
 externTypeField[AstExts[exts], AstIds[AstExts[exts].Ids]] ExternField[exts]:
-    name=^ "LowerId" ":" ty=type_ "=" _"BeginStr" cNameEnd="EndStr":
-        let cNameText = cNameEnd.text
-        let cName = cNameText.substr(0, cNameText.len() - 1)
-        ExternField(name = newId(name), ty, cName)
+    name=^ "LowerId" ":" ty=type_ "=" cNameBegin=^ "BeginStr" cNameEnd=^ "EndStr":
+        ExternField(
+            name = newId(name),
+            ty,
+            cNameBegin = TokenIdx(idx = cNameBegin),
+            cNameEnd = TokenIdx(idx = cNameEnd)
+        )
 
 
 # --------------------------------------------------------------------------------------------------

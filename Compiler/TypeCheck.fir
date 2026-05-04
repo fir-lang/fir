@@ -319,7 +319,8 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             Option.Some(TypeDeclRhs.Synonym(_)):
                 panic("Synonyms should be handled above")
 
-            Option.Some(TypeDeclRhs.Extern(cType = _, fields)):
+            Option.Some(TypeDeclRhs.Extern(cTypeBegin = _, cTypeEnd = _, fields)
+            ):
                 if fields is Option.Some(fs):
                     let namedFields: Vec[CNamedField] = Vec.fromIter(
                         fs.iter().map(
