@@ -2045,6 +2045,7 @@ fn select_field(
             if cons.is_empty() {
                 return None;
             }
+            assert_eq!(cons.len(), 1);
 
             let con_scheme = cons.values().next().unwrap();
 

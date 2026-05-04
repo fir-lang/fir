@@ -266,8 +266,8 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str, mut headers: OrdSet<String>) ->
         };
 
         let con_idx = HeapObjIdx(tag as u32);
-        let struct_name = source_con_struct_name(&source_con.con_name, &source_con.ty_args);
-        let tag_name = source_con_tag_name(&source_con.con_name, &source_con.ty_args);
+        let struct_name = heap_obj_struct_name(pgm, con_idx);
+        let tag_name = heap_obj_tag_name(pgm, con_idx);
 
         if source_con.sum && source_con.value {
             // Value sum type: return by value.
@@ -540,7 +540,10 @@ fn source_decl_to_c(
             gen_source_con_struct(&ty.name, &ty.ty_args, fields, con_indices[0], true, pgm, p);
         }
         mono::TypeDeclRhs::Extern(_) => {
-            // Extern types are imported from C headers.
+            let con_idx = con_indices[0];
+            let tag = con_idx.0;
+            let tag_name = source_con_tag_name(&ty.name, &ty.ty_args);
+            wln!(p, "#define {tag_name} {tag}");
         }
     }
 }
@@ -1671,7 +1674,7 @@ fn stmt_to_c(
                 expr_to_c(&object.node, &object.loc, locals, cg, p);
                 wln!(p, "; // {}", loc_display(&object.loc));
                 let deref_str = if *deref { "->" } else { "." };
-                w!(p, "{obj_temp}{deref_str}{} = ", field);
+                w!(p, "{obj_temp}{deref_str}{field} = ");
                 expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
                 wln!(p, ";");
                 if let Some(result_var) = result_var {
@@ -1769,15 +1772,13 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             let heap_obj = &cg.pgm.heap_objs[heap_obj_idx.as_usize()];
             let fields: Vec<(Name, mono::Type)> = match heap_obj {
                 HeapObj::Builtin(_) => panic!(),
-                HeapObj::Source(source_con_decl) => source_con_decl
-                    .fields
-                    .iter()
-                    .map(|(field_name, field_ty)| (field_name.clone(), field_ty.clone()))
-                    .collect(),
+                HeapObj::Source(source_con_decl) => source_con_decl.fields.clone(),
                 HeapObj::Record(record_type) => record_type
                     .fields
                     .iter()
-                    .map(|(field_name, field_ty)| (field_name.clone(), field_ty.clone()))
+                    .map(|(field_name, field_ty)| {
+                        (Name::new(c_field_name(field_name)), field_ty.clone())
+                    })
                     .collect(),
                 HeapObj::Variant(_) => {
                     // Variants should be allocated with `Expr::Variant`.
@@ -1812,7 +1813,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     fields.iter().zip(args.iter()),
                     ",",
                     |p, ((field_name, _field_ty), arg)| {
-                        w!(p, " .{} = ", c_field_name(field_name));
+                        w!(p, " .{field_name} = ");
                         expr_to_c(&arg.node, &arg.loc, locals, cg, p);
                     },
                 );
@@ -1829,7 +1830,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     wln!(p, "_obj->_tag = {tag_name};");
                 }
                 for ((field_name, _field_ty), arg) in fields.iter().zip(args.iter()) {
-                    w!(p, "_obj->{} = ", c_field_name(field_name));
+                    w!(p, "_obj->{field_name} = ");
                     expr_to_c(&arg.node, &arg.loc, locals, cg, p);
                     wln!(p, ";");
                 }
@@ -2461,8 +2462,9 @@ fn pat_to_cond(
                 HeapObj::Record(record) => record
                     .fields
                     .iter()
-                    .clone()
-                    .map(|(field_name, field_ty)| (field_name.clone(), field_ty.clone()))
+                    .map(|(field_name, field_ty)| {
+                        (Name::new(c_field_name(field_name)), field_ty.clone())
+                    })
                     .collect(),
                 HeapObj::Builtin(_) => panic!("Builtin constructor {:?} in Pat::Con", con),
                 HeapObj::Variant(_) => panic!("Variant in Pat::Con"),
@@ -2472,7 +2474,6 @@ fn pat_to_cond(
             let value = is_value_type(scrutinee_ty, cg.pgm);
             let value_sum = is_value_sum_type(con, cg.pgm);
             for ((field_name, field_ty), field_pat) in field_tys.iter().zip(fields.iter()) {
-                let field_name = c_field_name(field_name);
                 let field_expr = if value_sum {
                     format!("({scrutinee})._con_{}.{field_name}", con.as_usize())
                 } else if value {
@@ -2510,7 +2511,7 @@ fn pat_to_cond(
                     } else {
                         format!("(({struct_name}*){scrutinee})->{src_field_name}")
                     };
-                    let rest_field_name = rest_field_names[rest_i];
+                    let rest_field_name = c_field_name(rest_field_names[rest_i]);
                     rest_init.push_str(&format!(" .{rest_field_name} = {field_expr}"));
                 }
                 rest_init.push_str(" })");
