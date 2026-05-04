@@ -382,6 +382,9 @@ type ImportDecl[exts](
     ## The `import` token.
     import_: TokenIdx,
 
+    ## The `import` token.
+    import_: TokenIdx,
+
     ## Imported items, e.g. `[Fir/Prelude, Compiler/Parser/[parse]]`.
     items: Vec[ImportItem],
 )

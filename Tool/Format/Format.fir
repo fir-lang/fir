@@ -579,7 +579,7 @@ ImportDecl.format(self: ImportDecl, tokens: Array[Token]) Doc:
     if self.items.isEmpty():
         let rbracket = nextNonTrivia(lbracket, tokens).unwrap()
         assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
-        return header + formatToken(rbracket, tokens)
+        return leading + header + formatToken(rbracket, tokens)
 
     # Single-item imports stay on one line if they fit (using `break_(0)` so the
     # group can still break when the item is too long). Multi-item imports are
