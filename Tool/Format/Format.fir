@@ -503,22 +503,21 @@ _formatSigArgList(
 
 
 ImportDecl.format(self: ImportDecl, tokens: Array[Token]) Doc:
-    assert(not self.items.isEmpty())
-
-    let firstItemFirstToken = self.items.get(0).firstToken(tokens)
-    let lbracket = prevNonTrivia(firstItemFirstToken, tokens).unwrap()
+    let lbracket = nextNonTrivia(self.import_, tokens).unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
-
-    let import_ = prevNonTrivia(lbracket, tokens).unwrap()
-    assert(tokens.get(import_.idx).kind is TokenKind.Import)
 
     # Leading comments of `import` contain hard line breaks; keep them outside
     # the group so they don't force the group to break.
-    let leading = formatLeadingComments(import_, tokens)
-    let header = Doc.str(tokens.get(import_.idx).text)
-        + formatTrailingComments(import_, tokens)
+    let leading = formatLeadingComments(self.import_, tokens)
+    let header = Doc.str(tokens.get(self.import_.idx).text)
+        + formatTrailingComments(self.import_, tokens)
         + Doc.blank(1)
         + formatToken(lbracket, tokens)
+
+    if self.items.isEmpty():
+        let rbracket = nextNonTrivia(lbracket, tokens).unwrap()
+        assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
+        return leading + header + formatToken(rbracket, tokens)
 
     # Single-item imports stay on one line if they fit (using `break_(0)` so the
     # group can still break when the item is too long). Multi-item imports are
