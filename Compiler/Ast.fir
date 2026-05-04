@@ -148,15 +148,8 @@ type TypeDecl[exts](
     ## Attributes of the type: e.g. `#[derive(ToDoc, Eq)]`.
     attr: Option[Attribute[exts]],
 
-    ## The `value` token in value type declarations: `value type Bool: ...`.
-    ##
-    ## A type can't be both `value` and `prim`, the parser only allows one of them.
-    value_: Option[TokenIdx],
-
-    ## The `prim` token in built-in type declarations: `prim type U32`.
-    ##
-    ## A type can't be both `value` and `prim`, the parser only allows one of them.
-    prim_: Option[TokenIdx],
+    ## `value`, `prim`, or `extern` token.
+    kind: Option[TypeDeclKind],
 
     ## The type name. `Vec` in the example.
     name: Id,
@@ -171,12 +164,35 @@ type TypeDecl[exts](
 )
 
 
+#[derive(ToDoc)]
+type TypeDeclKind:
+    Value(TokenIdx)
+    Prim(TokenIdx)
+    Extern(TokenIdx)
+
+
 impl Tokens[TypeDecl[exts]]:
     firstToken(self: TypeDecl[exts], tokens: Array[Token]) TokenIdx:
-        self.value_.or_(self.prim_).unwrapOr(self.name.token)
+        match self.kind:
+            Option.None:
+                let type_ = prevNonTrivia(self.name.token, tokens).unwrap()
+                assert(tokens.get(type_.idx).kind is TokenKind.Type)
+                type_
+            Option.Some(kind): kind.firstToken(tokens)
 
     lastToken(self: TypeDecl[exts], tokens: Array[Token]) TokenIdx:
         panic("TOOD")
+
+
+impl Tokens[TypeDeclKind]:
+    firstToken(self: TypeDeclKind, tokens: Array[Token]) TokenIdx:
+        match self:
+            TypeDeclKind.Value(t)
+                | TypeDeclKind.Prim(t)
+                | TypeDeclKind.Extern(t): t
+
+    lastToken(self: TypeDeclKind, tokens: Array[Token]) TokenIdx:
+        self.firstToken(tokens)
 
 
 ## Constructors of a type declaration.

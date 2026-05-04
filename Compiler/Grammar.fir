@@ -1035,8 +1035,10 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
             let val = do:
                 TypeDecl(
                     attr,
-                    value_ = valToken.map(\(a): TokenIdx(idx = val)),
-                    prim_ = Option.None,
+                    kind =
+                        valToken.map(
+                            \(a): TypeDeclKind.Value(TokenIdx(idx = val))
+                        ),
                     name = newId(name),
                     rhs =
                         Option.Some(
@@ -1145,8 +1147,10 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                     Option.None: ConFields.Empty
                 TypeDecl(
                     attr,
-                    value_ = valToken.map(\(a): TokenIdx(idx = val)),
-                    prim_ = Option.None,
+                    kind =
+                        valToken.map(
+                            \(a): TypeDeclKind.Value(TokenIdx(idx = val))
+                        ),
                     name = newId(name),
                     rhs = Option.Some(TypeDeclRhs.Product(fs)),
                     typeParams =
@@ -1212,8 +1216,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
             let val = do:
                 TypeDecl(
                     attr,
-                    value_ = Option.None,
-                    prim_ = Option.None,
+                    kind = Option.None,
                     name = newId(name),
                     rhs = Option.Some(TypeDeclRhs.Synonym(rhs)),
                     typeParams = params,
@@ -1265,8 +1268,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
             let val = do:
                 TypeDecl(
                     attr,
-                    value_ = Option.None,
-                    prim_ = Option.None,
+                    kind = Option.None,
                     name = newId(name),
                     rhs = Option.Some(TypeDeclRhs.Synonym(rhs)),
                     typeParams = Vec.empty(),
@@ -1340,8 +1342,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
             let val = do:
                 TypeDecl(
                     attr,
-                    value_ = Option.None,
-                    prim_ = Option.Some(TokenIdx(idx = prim_)),
+                    kind = Option.Some(TypeDeclKind.Prim(TokenIdx(idx = prim_))),
                     name = newId(name),
                     rhs = Option.None,
                     typeParams =
@@ -1370,6 +1371,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 Result.Ok(ok):
                     ()
                     Option.Some(ok)
+            let extern_ = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Extern, ..):
                 state._cursor += 1
@@ -1386,29 +1388,6 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let optionalCursor0 = state._cursor
-            let symResult = try(
-                \():
-                    if state.peek() is Option.Some(sym)
-                            and sym is Token(kind = TokenKind.LBracket, ..):
-                        state._cursor += 1
-                    else:
-                        throw(state.updateErrorCursor(state._cursor))
-                    let params = typeParams(state)
-                    if state.peek() is Option.Some(sym)
-                            and sym is Token(kind = TokenKind.RBracket, ..):
-                        state._cursor += 1
-                    else:
-                        throw(state.updateErrorCursor(state._cursor))
-                    params,
-            )
-            let params = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Eq, ..):
                 state._cursor += 1
@@ -1448,14 +1427,13 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 let cType = cTypeText.substr(0, cTypeText.len() - 1)
                 TypeDecl(
                     attr,
-                    value_ = Option.None,
-                    prim_ = Option.None,
+                    kind =
+                        Option.Some(
+                            TypeDeclKind.Extern(TokenIdx(idx = extern_))
+                        ),
                     name = newId(name),
                     rhs = Option.Some(TypeDeclRhs.Extern(cType, fields = fs)),
-                    typeParams =
-                        match params:
-                            Option.Some(params): params
-                            Option.None: Vec.empty(),
+                    typeParams = Vec.empty(),
                     ..AstExts[exts].defaultTypeDeclExts()
                 )
             val,

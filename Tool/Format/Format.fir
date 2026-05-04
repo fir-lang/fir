@@ -98,11 +98,9 @@ TypeDecl.format(self: TypeDecl, tokens: Array[Token]) Doc:
     if self.attr is Option.Some(attr):
         doc += attr.format(tokens) + Doc.hardLine()
 
-    if self.value_ is Option.Some(value_):
-        doc += formatToken(value_, tokens) + Doc.blank(1)
-
-    if self.prim_ is Option.Some(prim_):
-        doc += formatToken(prim_, tokens) + Doc.blank(1)
+    if self.kind is Option.Some(kind):
+        let token = kind.firstToken(tokens)
+        doc += formatToken(token, tokens) + Doc.blank(1)
 
     let type_ = prevNonTrivia(self.name.token, tokens).unwrap()
     assert(tokens.get(type_.idx).kind is TokenKind.Type)
