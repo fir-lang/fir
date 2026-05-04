@@ -1,0 +1,6 @@
+import [
+
+
+]
+
+# expected stdout: import []

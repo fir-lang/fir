@@ -379,6 +379,9 @@ type ImportDecl[exts](
     ## `#[include(...)]`.
     attrs: Vec[Attribute[exts]],
 
+    ## The `import` token.
+    import_: TokenIdx,
+
     ## Imported items, e.g. `[Fir/Prelude, Compiler/Parser/[parse]]`.
     items: Vec[ImportItem],
 )
