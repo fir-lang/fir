@@ -172,7 +172,13 @@ TypeDeclRhs.format(self: TypeDeclRhs, tokens: Array[Token]) Doc:
                 + ty.format(tokens)
 
         TypeDeclRhs.Extern(cTypeBegin, cTypeEnd, fields):
-            let doc = formatToken(cTypeBegin, tokens)
+            let eq = prevNonTrivia(cTypeBegin, tokens).unwrap()
+            assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+
+            let doc = Doc.blank(1)
+                + formatToken(eq, tokens)
+                + Doc.blank(1)
+                + formatToken(cTypeBegin, tokens)
                 + formatToken(cTypeEnd, tokens)
 
             if fields is Option.Some(fields):
@@ -217,12 +223,8 @@ TypeDeclRhs.format(self: TypeDeclRhs, tokens: Array[Token]) Doc:
                 let rparen = nextNonTrivia(lastToken, tokens).unwrap()
                 assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-                doc += formatToken(lparen, tokens)
-                    + Doc.grouped(
-                        Doc.nested(4, Doc.break_(0) + fieldList.group())
-                            + Doc.break_(0)
-                            + formatToken(rparen, tokens),
-                    )
+                doc += (formatToken(lparen, tokens) + Doc.hardLine() + fieldList)
+                    .nest(4) + Doc.hardLine() + formatToken(rparen, tokens)
 
             doc
 
