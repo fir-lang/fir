@@ -503,6 +503,10 @@ _formatSigArgList(
 
 
 ImportDecl.format(self: ImportDecl, tokens: Array[Token]) Doc:
+    let attr = match self.attr:
+        Option.Some(attr): attr.format(tokens) + Doc.hardLine()
+        Option.None: Doc.empty()
+
     let lbracket = nextNonTrivia(self.import_, tokens).unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
@@ -517,7 +521,7 @@ ImportDecl.format(self: ImportDecl, tokens: Array[Token]) Doc:
     if self.items.isEmpty():
         let rbracket = nextNonTrivia(lbracket, tokens).unwrap()
         assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
-        return leading + header + formatToken(rbracket, tokens)
+        return attr + leading + header + formatToken(rbracket, tokens)
 
     # Single-item imports stay on one line if they fit (using `break_(0)` so the
     # group can still break when the item is too long). Multi-item imports are
@@ -556,7 +560,8 @@ ImportDecl.format(self: ImportDecl, tokens: Array[Token]) Doc:
     assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
     if self.items.len() == 1:
-        leading
+        attr
+            + leading
             + Doc.grouped(
                 header
                     + docRest.nest(4)
@@ -564,7 +569,8 @@ ImportDecl.format(self: ImportDecl, tokens: Array[Token]) Doc:
                     + formatToken(rbracket, tokens),
             )
     else:
-        leading
+        attr
+            + leading
             + header
             + docRest.nest(4)
             + Doc.hardLine()
