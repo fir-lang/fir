@@ -238,24 +238,6 @@ TypeDecl: L<TypeDecl> = {
     // Extern types
     //
 
-    <l:@L> "extern" "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "="
-           BeginStr <str:EndStr>
-           <fields:("(" <Sep<ExternTypeField, ",">> ")")?> NEWLINE <r:@R> => {
-        let c_type = str.text.as_str();
-        let c_type = &c_type[0..c_type.len() - 1]; // drop the "
-        L::new(module, l, r, TypeDecl {
-            attr: None,
-            value: true, // treat extern types as values
-            name: type_name.name(),
-            type_params,
-            type_param_kinds: vec![],
-            rhs: Some(TypeDeclRhs::Extern(ExternTypeDeclRhs {
-                c_type: c_type.to_string(),
-                fields: vec![],
-            })),
-        })
-    },
-
     <l:@L> "extern" "type" <type_name:UpperId> "=" BeginStr <str:EndStr>
            <fields:("(" <Sep<ExternTypeField, ",">> ")")?> NEWLINE <r:@R> => {
         let c_type = str.text.as_str();
