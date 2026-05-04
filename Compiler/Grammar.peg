@@ -27,6 +27,7 @@ Terminals:
     "for" = Token(kind = TokenKind.For, ..)
     "if" = Token(kind = TokenKind.If, ..)
     "impl" = Token(kind = TokenKind.Impl, ..)
+    "extern" = Token(kind = TokenKind.Extern, ..)
     "import" = Token(kind = TokenKind.Import, ..)
     "in" = Token(kind = TokenKind.In, ..)
     "is" = Token(kind = TokenKind.Is, ..)
@@ -352,6 +353,28 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
             ..AstExts[exts].defaultTypeDeclExts()
         )
 
+    # Extern type, with optional type params and optional field list:
+    #
+    # - `extern type File = "FILE"`              (type alias, no constructor)
+    # - `extern type Foo = "..."()`              (empty struct constructor)
+    # - `extern type DivT = "div_t"(quot: I32 = "quot", rem: I32 = "rem")`
+    attr=attr? "extern" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "="
+            _"BeginStr" cTypeEnd="EndStr"
+            fs=externTypeFields? "NEWLINE":
+        let cTypeText = cTypeEnd.text
+        let cType = cTypeText.substr(0, cTypeText.len() - 1)
+        TypeDecl(
+            attr,
+            value_ = Option.None,
+            prim_ = Option.None,
+            name = newId(name),
+            rhs = Option.Some(TypeDeclRhs.Extern(cType, fields = fs)),
+            typeParams = match params:
+                Option.Some(params): params
+                Option.None: Vec.empty(),
+            ..AstExts[exts].defaultTypeDeclExts()
+        )
+
 
 typeParams[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[DeclTypeParam[exts]]:
     p0=declTypeParam ps=(_"," declTypeParam)* ","?:
@@ -399,6 +422,24 @@ conFields[AstExts[exts], AstIds[AstExts[exts].Ids]] (fields: ConFields[exts], la
 conField[AstExts[exts], AstIds[AstExts[exts].Ids]] (name: Option[Id], ty: Type[exts]):
     name=(^ _"LowerId" _":")? ty=type_:
         (name = name.map(\(name: U32): newId(name)), ty = ty)
+
+
+# Field list for an `extern type` constructor: `(name1: Ty1 = "c1", name2: Ty2 = "c2")`.
+# The empty `()` form is allowed and produces an empty `Vec`.
+externTypeFields[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[ExternField[exts]]:
+    "(" ")":
+        Vec.empty()
+
+    "(" f0=externTypeField fs=(_"," externTypeField)* ","? ")":
+        Vec.fromIter(once(f0).chain(fs.iter()))
+
+
+# A single `extern type` field: `name: FirType = "c_name"`.
+externTypeField[AstExts[exts], AstIds[AstExts[exts].Ids]] ExternField[exts]:
+    name=^ "LowerId" ":" ty=type_ "=" _"BeginStr" cNameEnd="EndStr":
+        let cNameText = cNameEnd.text
+        let cName = cNameText.substr(0, cNameText.len() - 1)
+        ExternField(name = newId(name), ty, cName)
 
 
 # --------------------------------------------------------------------------------------------------

@@ -583,7 +583,7 @@ fn gen_source_con_struct(
     };
     for (field_name, field_ty) in fields.iter() {
         p.nl();
-        w!(p, "{} {field_name};", c_ty(field_ty, pgm));
+        w!(p, "{} {};", c_ty(field_ty, pgm), c_field_name(field_name));
     }
     p.dedent();
     p.nl();

@@ -319,13 +319,34 @@ addModTyConDetails(pgm: Program, modIdx: ModuleIdx) / TypeError:
             Option.Some(TypeDeclRhs.Synonym(_)):
                 panic("Synonyms should be handled above")
 
+            Option.Some(TypeDeclRhs.Extern(cType = _, fields)):
+                if fields is Option.Some(fs):
+                    let namedFields: Vec[CNamedField] = Vec.fromIter(
+                        fs.iter().map(
+                            \(f: CExternField):
+                                NamedField(name = f.name, ty = f.ty),
+                        ),
+                    )
+                    let conFields = ConFields.Named(
+                        fields = namedFields, extension = Option.None
+                    )
+                    let ty = match convertFields(mod, varMap, conFields):
+                        Option.None: ret
+                        Option.Some(args): Ty.Fun(args, ret, exn = Option.None)
+                    let scheme = Scheme(
+                        qvars, preds = Vec.empty(), ty, loc = mod.loc(tyDecl),
+                    )
+                    let old = schemes.insert(tyNameStr, scheme)
+                    assert(old is Option.None)
+
             Option.None: ()
 
         tyCon.info.details = TyConDetails.Type(
             TypeDetails(
                 cons = schemes,
                 sum =
-                    not (tyDecl.rhs is Option.Some(TypeDeclRhs.Product(_fields))),
+                    not (tyDecl.rhs is Option.Some(TypeDeclRhs.Product(_fields))
+                        or tyDecl.rhs is Option.Some(TypeDeclRhs.Extern(..))),
             ),
         )
 

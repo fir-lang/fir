@@ -194,6 +194,29 @@ type TypeDeclRhs[exts]:
     ## A type synonym: `type Foo = U32`
     Synonym(Type[exts])
 
+    ## An extern type:
+    ##
+    ## - `extern type File = "FILE"` (type-alias form, `fields = None`).
+    ## - `extern type DivT = "div_t"(quot: I32 = "quot", rem: I32 = "rem")`
+    ##   (constructor form, `fields = Some(...)`, possibly empty).
+    Extern(
+        cType: Str,
+        fields: Option[Vec[ExternField[exts]]],
+    )
+
+
+#[derive(ToDoc)]
+type ExternField[exts](
+    ## Fir field name.
+    name: Id,
+
+    ## Fir field type.
+    ty: Type[exts],
+
+    ## C field name (used in the generated C struct).
+    cName: Str,
+)
+
 
 ## A sum type constructor.
 #[derive(ToDoc)]

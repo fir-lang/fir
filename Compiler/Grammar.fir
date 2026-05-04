@@ -1355,6 +1355,114 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
     match altResult:
         Result.Err(err): state._cursor = cursor0
         Result.Ok(val): return val
+    let altResult = try(
+        \():
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let attr = attr(state)
+                    attr,
+            )
+            let attr = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Extern, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Type, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let name = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.UpperId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.LBracket, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    let params = typeParams(state)
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.RBracket, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    params,
+            )
+            let params = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Eq, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.BeginStr, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let cTypeEnd = if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.EndStr, ..):
+                state._cursor += 1
+                sym
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    let fs = externTypeFields(state)
+                    fs,
+            )
+            let fs = match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    Option.None
+                Result.Ok(ok):
+                    ()
+                    Option.Some(ok)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Newline, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                let cTypeText = cTypeEnd.text
+                let cType = cTypeText.substr(0, cTypeText.len() - 1)
+                TypeDecl(
+                    attr,
+                    value_ = Option.None,
+                    prim_ = Option.None,
+                    name = newId(name),
+                    rhs = Option.Some(TypeDeclRhs.Extern(cType, fields = fs)),
+                    typeParams =
+                        match params:
+                            Option.Some(params): params
+                            Option.None: Vec.empty(),
+                    ..AstExts[exts].defaultTypeDeclExts()
+                )
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
     throw(state.updateErrorCursor(state._cursor))
 
 
@@ -1663,6 +1771,130 @@ conField[AstExts[exts], AstIds[AstExts[exts].Ids],](
             let ty = type_(state)
             let val = do:
                 (name = name.map(\(name: U32): newId(name)), ty = ty)
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+externTypeFields[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) Vec[ExternField[exts]] / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                Vec.empty()
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    let altResult = try(
+        \():
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let f0 = externTypeField(state)
+            let zeroOrMoreCursor0 = state._cursor
+            let fs = Vec.empty()
+            loop:
+                let fsLen0 = fs.len()
+                let symResult = try(
+                    \():
+                        if state.peek() is Option.Some(sym)
+                                and sym is Token(kind = TokenKind.Comma, ..):
+                            state._cursor += 1
+                        else:
+                            throw(state.updateErrorCursor(state._cursor))
+                        fs.push(externTypeField(state)),
+                )
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        fs.truncate(fsLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                \():
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Comma, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    (),
+            )
+            match symResult:
+                Result.Err(err): state._cursor = optionalCursor0
+                Result.Ok(ok): ()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RParen, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                Vec.fromIter(once(f0).chain(fs.iter()))
+            val,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(val): return val
+    throw(state.updateErrorCursor(state._cursor))
+
+
+externTypeField[AstExts[exts], AstIds[AstExts[exts].Ids],](
+    state: ParserState[Token, ()],
+) ExternField[exts] / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        \():
+            let name = state.nextCursor()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LowerId, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Colon, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let ty = type_(state)
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Eq, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.BeginStr, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let cNameEnd = if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.EndStr, ..):
+                state._cursor += 1
+                sym
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let val = do:
+                let cNameText = cNameEnd.text
+                let cName = cNameText.substr(0, cNameText.len() - 1)
+                ExternField(name = newId(name), ty, cName)
             val,
     )
     match altResult:
