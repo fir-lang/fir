@@ -4915,6 +4915,7 @@ importDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 Result.Ok(ok):
                     ()
                     Option.Some(ok)
+            let import_ = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Import, ..):
                 state._cursor += 1
@@ -4936,7 +4937,11 @@ importDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                ImportDecl(attr, items = Vec.empty())
+                ImportDecl(
+                    attr,
+                    import_ = TokenIdx(idx = import_),
+                    items = Vec.empty(),
+                )
             val,
     )
     match altResult:
@@ -4957,6 +4962,7 @@ importDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 Result.Ok(ok):
                     ()
                     Option.Some(ok)
+            let import_ = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Import, ..):
                 state._cursor += 1
@@ -5012,7 +5018,9 @@ importDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 items.insert(0, item0)
-                ImportDecl(attr, items = items)
+                ImportDecl(
+                    attr, import_ = TokenIdx(idx = import_), items = items
+                )
             val,
     )
     match altResult:
