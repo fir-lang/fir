@@ -95,8 +95,10 @@ TopDecl.format(self: TopDecl, tokens: Array[Token]) Doc:
 TypeDecl.format(self: TypeDecl, tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
-    if self.attr is Option.Some(attr):
-        doc += attr.format(tokens) + Doc.hardLine()
+    if not self.attrs.isEmpty():
+        doc += self.attrs.iter().map(\(attr): attr.format(tokens)).join(
+            Doc.hardLine()
+        ) + Doc.hardLine()
 
     if self.kind is Option.Some(kind):
         let token = kind.firstToken(tokens)

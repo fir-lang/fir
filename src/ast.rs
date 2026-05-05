@@ -150,7 +150,7 @@ pub enum TopDecl {
 #[derive(Debug, Clone)]
 pub struct TypeDecl {
     /// Attributes of the type. E.g. `#[derive(ToDoc, Eq)]`.
-    pub attr: Option<Attribute>,
+    pub attrs: Vec<Attribute>,
 
     /// Whether this is a value type.
     pub value: bool,

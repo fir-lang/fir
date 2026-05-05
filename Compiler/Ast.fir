@@ -146,7 +146,7 @@ type TopDecl[exts]:
 #[derive(ToDoc)]
 type TypeDecl[exts](
     ## Attributes of the type: e.g. `#[derive(ToDoc, Eq)]`.
-    attr: Option[Attribute[exts]],
+    attrs: Vec[Attribute[exts]],
 
     ## `value`, `prim`, or `extern` token.
     kind: Option[TypeDeclKind],
@@ -378,9 +378,6 @@ type ImportDecl[exts](
     ## Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`,
     ## `#[include(...)]`.
     attrs: Vec[Attribute[exts]],
-
-    ## The `import` token.
-    import_: TokenIdx,
 
     ## The `import` token.
     import_: TokenIdx,

@@ -912,19 +912,17 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
     let cursor0 = state._cursor
     let altResult = try(
         \():
-            let optionalCursor0 = state._cursor
-            let symResult = try(
-                \():
-                    let attr = attr(state)
-                    attr,
-            )
-            let attr = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
+            let zeroOrMoreCursor0 = state._cursor
+            let attrs = Vec.empty()
+            loop:
+                let attrsLen0 = attrs.len()
+                let symResult = try(\(): attrs.push(attr(state)))
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        attrs.truncate(attrsLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let val = state.nextCursor()
             let optionalCursor0 = state._cursor
             let symResult = try(
@@ -1034,7 +1032,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
-                    attr,
+                    attrs,
                     kind =
                         valToken.map(
                             \(a): TypeDeclKind.Value(TokenIdx(idx = val))
@@ -1057,19 +1055,17 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let optionalCursor0 = state._cursor
-            let symResult = try(
-                \():
-                    let attr = attr(state)
-                    attr,
-            )
-            let attr = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
+            let zeroOrMoreCursor0 = state._cursor
+            let attrs = Vec.empty()
+            loop:
+                let attrsLen0 = attrs.len()
+                let symResult = try(\(): attrs.push(attr(state)))
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        attrs.truncate(attrsLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let val = state.nextCursor()
             let optionalCursor0 = state._cursor
             let symResult = try(
@@ -1146,7 +1142,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                     Option.Some(fs): fs.fields
                     Option.None: ConFields.Empty
                 TypeDecl(
-                    attr,
+                    attrs,
                     kind =
                         valToken.map(
                             \(a): TypeDeclKind.Value(TokenIdx(idx = val))
@@ -1166,19 +1162,17 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let optionalCursor0 = state._cursor
-            let symResult = try(
-                \():
-                    let attr = attr(state)
-                    attr,
-            )
-            let attr = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
+            let zeroOrMoreCursor0 = state._cursor
+            let attrs = Vec.empty()
+            loop:
+                let attrsLen0 = attrs.len()
+                let symResult = try(\(): attrs.push(attr(state)))
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        attrs.truncate(attrsLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let val = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Type, ..):
@@ -1215,7 +1209,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
-                    attr,
+                    attrs,
                     kind = Option.None,
                     name = newId(name),
                     rhs = Option.Some(TypeDeclRhs.Synonym(rhs)),
@@ -1229,19 +1223,17 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let optionalCursor0 = state._cursor
-            let symResult = try(
-                \():
-                    let attr = attr(state)
-                    attr,
-            )
-            let attr = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
+            let zeroOrMoreCursor0 = state._cursor
+            let attrs = Vec.empty()
+            loop:
+                let attrsLen0 = attrs.len()
+                let symResult = try(\(): attrs.push(attr(state)))
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        attrs.truncate(attrsLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let val = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Type, ..):
@@ -1267,7 +1259,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
-                    attr,
+                    attrs,
                     kind = Option.None,
                     name = newId(name),
                     rhs = Option.Some(TypeDeclRhs.Synonym(rhs)),
@@ -1281,19 +1273,17 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let optionalCursor0 = state._cursor
-            let symResult = try(
-                \():
-                    let attr = attr(state)
-                    attr,
-            )
-            let attr = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
+            let zeroOrMoreCursor0 = state._cursor
+            let attrs = Vec.empty()
+            loop:
+                let attrsLen0 = attrs.len()
+                let symResult = try(\(): attrs.push(attr(state)))
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        attrs.truncate(attrsLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let prim_ = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Prim, ..):
@@ -1341,7 +1331,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
-                    attr,
+                    attrs,
                     kind = Option.Some(TypeDeclKind.Prim(TokenIdx(idx = prim_))),
                     name = newId(name),
                     rhs = Option.None,
@@ -1358,19 +1348,17 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
         Result.Ok(val): return val
     let altResult = try(
         \():
-            let optionalCursor0 = state._cursor
-            let symResult = try(
-                \():
-                    let attr = attr(state)
-                    attr,
-            )
-            let attr = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
+            let zeroOrMoreCursor0 = state._cursor
+            let attrs = Vec.empty()
+            loop:
+                let attrsLen0 = attrs.len()
+                let symResult = try(\(): attrs.push(attr(state)))
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        attrs.truncate(attrsLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
             let extern_ = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.Extern, ..):
@@ -1425,7 +1413,7 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids],](
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
                 TypeDecl(
-                    attr,
+                    attrs,
                     kind =
                         Option.Some(
                             TypeDeclKind.Extern(TokenIdx(idx = extern_))

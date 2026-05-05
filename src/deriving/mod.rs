@@ -19,35 +19,33 @@ fn expand_derives_module(module: &mut ast::Module) {
 
     for decl in module.decls.iter() {
         if let ast::TopDecl::Type(type_decl) = &decl.node {
-            let Some(attr) = &type_decl.node.attr else {
-                continue;
-            };
+            for attr in type_decl.node.attrs.iter() {
+                let attr_loc = attr.expr.loc.clone();
+                let traits = extract_derive_traits(attr);
 
-            let attr_loc = attr.expr.loc.clone();
-            let traits = extract_derive_traits(attr);
+                if traits.is_empty() {
+                    continue;
+                }
 
-            if traits.is_empty() {
-                continue;
-            }
+                if let Some(ast::TypeDeclRhs::Synonym(_)) = &type_decl.node.rhs {
+                    panic!(
+                        "{}: Cannot derive traits for type synonym `{}`",
+                        loc_display(&attr_loc),
+                        type_decl.node.name,
+                    );
+                }
 
-            if let Some(ast::TypeDeclRhs::Synonym(_)) = &type_decl.node.rhs {
-                panic!(
-                    "{}: Cannot derive traits for type synonym `{}`",
-                    loc_display(&attr_loc),
-                    type_decl.node.name,
-                );
-            }
-
-            for trait_name in &traits {
-                match trait_name.as_str() {
-                    "Eq" => {
-                        new_impls.push(eq::derive_eq(&type_decl.node, &attr_loc));
-                    }
-                    "ToDoc" => {
-                        new_impls.push(to_doc::derive_to_doc(&type_decl.node, &attr_loc));
-                    }
-                    other => {
-                        panic!("{}: Unknown derive trait `{other}`", loc_display(&attr_loc));
+                for trait_name in &traits {
+                    match trait_name.as_str() {
+                        "Eq" => {
+                            new_impls.push(eq::derive_eq(&type_decl.node, &attr_loc));
+                        }
+                        "ToDoc" => {
+                            new_impls.push(to_doc::derive_to_doc(&type_decl.node, &attr_loc));
+                        }
+                        other => {
+                            panic!("{}: Unknown derive trait `{other}`", loc_display(&attr_loc));
+                        }
                     }
                 }
             }
