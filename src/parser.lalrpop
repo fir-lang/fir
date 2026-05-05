@@ -149,6 +149,11 @@ Attribute: Attribute = {
     },
 }
 
+#[inline]
+Attributes: Vec<Attribute> = {
+    Attribute*
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Type declarations
@@ -156,9 +161,9 @@ Attribute: Attribute = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TypeDecl: L<TypeDecl> = {
-    <l:@L> <attr:Attribute?> <value:"value"?> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
+    <l:@L> <attrs:Attributes> <value:"value"?> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr,
+            attrs,
             value: value.is_some(),
             name: type_name.name(),
             type_params: vec![],
@@ -166,11 +171,11 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(rhs),
         }),
 
-    <l:@L> <attr:Attribute?>
+    <l:@L> <attrs:Attributes>
             <value:"value"?> "type" <type_name:UpperIdLBracket> <type_params:TypeParams>
             <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr,
+            attrs,
             value: value.is_some(),
             name: type_name.name(),
             type_params,
@@ -178,11 +183,11 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(rhs),
         }),
 
-    <l:@L> <attr:Attribute?>
+    <l:@L> <attrs:Attributes>
             "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "="
             <ty:LType> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr,
+            attrs,
             value: false,
             name: type_name.name(),
             type_params,
@@ -190,9 +195,9 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(TypeDeclRhs::Synonym(ty)),
         }),
 
-    <l:@L> <attr:Attribute?> "type" <type_name:UpperId> "=" <ty:LType> NEWLINE <r:@R> =>
+    <l:@L> <attrs:Attributes> "type" <type_name:UpperId> "=" <ty:LType> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr,
+            attrs,
             value: false,
             name: type_name.name(),
             type_params: vec![],
@@ -200,9 +205,9 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(TypeDeclRhs::Synonym(ty)),
         }),
 
-    <l:@L> <attr:Attribute?> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>
+    <l:@L> <attrs:Attributes> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr,
+            attrs,
             value: false,
             name: type_name.name(),
             type_params: vec![],
@@ -212,7 +217,7 @@ TypeDecl: L<TypeDecl> = {
 
     <l:@L> "prim" "type" <type_name:UpperIdLBracket> <type_params:TypeParams> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr: None,
+            attrs: vec![],
             value: false,
             name: type_name.name(),
             type_params,
@@ -1379,8 +1384,8 @@ FieldPat: Named<L<Pat>> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImportDecl: L<ImportDecl> = {
-    <l:@L> <attr:Attribute?> "import" "[" <items:Sep<ImportItem, ",">> "]" NEWLINE <r:@R> =>
-        L::new(module, l, r, ImportDecl { attr, items }),
+    <l:@L> <attrs:Attributes> "import" "[" <items:Sep<ImportItem, ",">> "]" NEWLINE <r:@R> =>
+        L::new(module, l, r, ImportDecl { attrs, items }),
 }
 
 ImportItem: ImportItem = {

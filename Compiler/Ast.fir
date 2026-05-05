@@ -146,7 +146,7 @@ type TopDecl[exts]:
 #[derive(ToDoc)]
 type TypeDecl[exts](
     ## Attributes of the type: e.g. `#[derive(ToDoc, Eq)]`.
-    attr: Option[Attribute[exts]],
+    attrs: Vec[Attribute[exts]],
 
     ## The `value` token in value type declarations: `value type Bool: ...`.
     ##
@@ -331,7 +331,7 @@ type SelfParam[exts]:
 #[derive(ToDoc)]
 type ImportDecl[exts](
     ## Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`.
-    attr: Option[Attribute[exts]],
+    attrs: Vec[Attribute[exts]],
 
     ## The `import` token.
     import_: TokenIdx,

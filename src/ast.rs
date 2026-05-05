@@ -150,7 +150,7 @@ pub enum TopDecl {
 #[derive(Debug, Clone)]
 pub struct TypeDecl {
     /// Attributes of the type. E.g. `#[derive(ToDoc, Eq)]`.
-    pub attr: Option<Attribute>,
+    pub attrs: Vec<Attribute>,
 
     /// Whether this is a value type.
     pub value: bool,
@@ -934,7 +934,7 @@ pub struct VariantExpr {
 #[derive(Debug, Clone)]
 pub struct ImportDecl {
     /// Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`.
-    pub attr: Option<Attribute>,
+    pub attrs: Vec<Attribute>,
     pub items: Vec<ImportItem>,
 }
 

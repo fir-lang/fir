@@ -283,11 +283,11 @@ returnTy[AstExts[exts], AstIds[AstExts[exts].Ids]] (ret: Option[Type[exts]], exn
 
 typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
     # Sum type: at least one constructors
-    attr=attr? val=^ valToken="value"? "type"
+    attrs=attr* val=^ valToken="value"? "type"
             name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT"
             rhs=conDecl* ext=(_".." type_ _"NEWLINE")? "DEDENT":
         TypeDecl(
-            attr,
+            attrs,
             value_ = valToken.map(\(a): TokenIdx(idx = val)),
             prim_ = Option.None,
             name = newId(name),
@@ -299,12 +299,12 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
         )
 
     # Product type
-    attr=attr? val=^ valToken="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
+    attrs=attr* val=^ valToken="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
         let fs = match fs:
             Option.Some(fs): fs.fields
             Option.None: ConFields.Empty
         TypeDecl(
-            attr,
+            attrs,
             value_ = valToken.map(\(a): TokenIdx(idx = val)),
             prim_ = Option.None,
             name = newId(name),
@@ -316,9 +316,9 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
         )
 
     # Type synonym with type params
-    attr=attr? val=^ "type" name=^ "UpperId" "[" params=typeParams "]" "=" rhs=type_ "NEWLINE":
+    attrs=attr* val=^ "type" name=^ "UpperId" "[" params=typeParams "]" "=" rhs=type_ "NEWLINE":
         TypeDecl(
-            attr,
+            attrs,
             value_ = Option.None,
             prim_ = Option.None,
             name = newId(name),
@@ -328,9 +328,9 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
         )
 
     # Type synonym
-    attr=attr? val=^ "type" name=^ "UpperId" "=" rhs=type_ "NEWLINE":
+    attrs=attr* val=^ "type" name=^ "UpperId" "=" rhs=type_ "NEWLINE":
         TypeDecl(
-            attr,
+            attrs,
             value_ = Option.None,
             prim_ = Option.None,
             name = newId(name),
@@ -339,9 +339,9 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
             ..AstExts[exts].defaultTypeDeclExts()
         )
 
-    attr=attr? prim_=^ "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
+    attrs=attr* prim_=^ "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
         TypeDecl(
-            attr,
+            attrs,
             value_ = Option.None,
             prim_ = Option.Some(TokenIdx(idx = prim_)),
             name = newId(name),
@@ -976,17 +976,17 @@ conFieldPat[AstExts[exts], AstIds[AstExts[exts].Ids]] Named[Pat[exts]]:
 
 
 importDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] ImportDecl[exts]:
-    attr=attr? import_=^ "import" "[" "]" "NEWLINE":
+    attrs=attr* import_=^ "import" "[" "]" "NEWLINE":
         ImportDecl(
-            attr,
+            attrs,
             import_ = TokenIdx(idx = import_),
             items = Vec.empty(),
         )
 
-    attr=attr? import_=^ "import" "[" item0=importItem items=(_"," importItem)* ","? "]" "NEWLINE":
+    attrs=attr* import_=^ "import" "[" item0=importItem items=(_"," importItem)* ","? "]" "NEWLINE":
         items.insert(0, item0)
         ImportDecl(
-            attr,
+            attrs,
             import_ = TokenIdx(idx = import_),
             items = items
         )

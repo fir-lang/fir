@@ -95,8 +95,10 @@ TopDecl.format(self: TopDecl, tokens: Array[Token]) Doc:
 TypeDecl.format(self: TypeDecl, tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
-    if self.attr is Option.Some(attr):
-        doc += attr.format(tokens) + Doc.hardLine()
+    if not self.attrs.isEmpty():
+        doc += self.attrs.iter().map(\(attr): attr.format(tokens)).join(
+            Doc.hardLine()
+        ) + Doc.hardLine()
 
     if self.value_ is Option.Some(value_):
         doc += formatToken(value_, tokens) + Doc.blank(1)
@@ -503,9 +505,11 @@ _formatSigArgList(
 
 
 ImportDecl.format(self: ImportDecl, tokens: Array[Token]) Doc:
-    let attr = match self.attr:
-        Option.Some(attr): attr.format(tokens) + Doc.hardLine()
-        Option.None: Doc.empty()
+    let attr = if self.attrs.isEmpty():
+        Doc.empty()
+    else:
+        self.attrs.iter().map(\(attr): attr.format(tokens)).join(Doc.hardLine())
+            + Doc.hardLine()
 
     let lbracket = nextNonTrivia(self.import_, tokens).unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)

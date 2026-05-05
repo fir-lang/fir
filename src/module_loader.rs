@@ -304,28 +304,34 @@ fn scc(graph: &HashMap<ModulePath, HashSet<ModulePath>>) -> Vec<Vec<ModulePath>>
 }
 
 fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
-    let attr = match &import.node.attr {
-        Some(attr) if attr.lhs.is_none() => &attr.expr.node,
-        _ => return false,
-    };
-    if let ast::Expr::ConSel(ast::Con {
-        mod_prefix: _,
-        ty,
-        con,
-        ty_user_ty_args: user_ty_args,
-        ..
-    }) = attr
-        && ty == &ast::Name::new_static("NoImplicitPrelude")
-        && con.is_none()
-        && user_ty_args.is_empty()
-    {
-        return true;
+    for attr in import.node.attrs.iter() {
+        if attr.lhs.is_some() {
+            continue;
+        }
+        let attr = &attr.expr.node;
+        if let ast::Expr::ConSel(ast::Con {
+            mod_prefix,
+            ty,
+            con,
+            ty_user_ty_args,
+            con_user_ty_args: _,
+            ty_args: _,
+            resolved_ty_id: _,
+            inferred_ty: _,
+        }) = &attr
+            && ty == &ast::Name::new_static("NoImplicitPrelude")
+        {
+            if mod_prefix.is_none() && con.is_none() && ty_user_ty_args.is_empty() {
+                return true;
+            }
+            panic!(
+                "{}: Weird `NoImplicitPrelude` attribute: {}",
+                loc_display(&import.loc),
+                attr
+            );
+        }
     }
-    panic!(
-        "{}: Weird `import` attribute: {}",
-        loc_display(&import.loc),
-        attr
-    );
+    false
 }
 
 impl fmt::Display for SccIdx {

@@ -50,7 +50,7 @@ impl Attribute {
 
 impl TypeDecl {
     pub fn print(&self, p: &mut Printer) {
-        if let Some(attr) = &self.attr {
+        for attr in self.attrs.iter() {
             attr.print(p);
         }
 
@@ -169,7 +169,7 @@ impl FunDecl {
 
 impl ImportDecl {
     pub fn print(&self, p: &mut Printer) {
-        if let Some(attr) = &self.attr {
+        for attr in self.attrs.iter() {
             attr.print(p);
         }
         p.str("import [");
