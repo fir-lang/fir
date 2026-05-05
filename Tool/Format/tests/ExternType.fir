@@ -20,9 +20,7 @@ extern type Foo = "struct foo"(
 # extern type Foo = "struct foo"
 # 
 # 
-# extern type Foo = "struct foo"(
-# 
-# )
+# extern type Foo = "struct foo"()
 # 
 # 
 # extern type Foo = "struct foo"(

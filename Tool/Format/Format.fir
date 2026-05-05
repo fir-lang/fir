@@ -241,6 +241,13 @@ _formatExternDecl(
         let lparen = nextNonTrivia(cTypeEnd, tokens).unwrap()
         assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
+        if fields.isEmpty():
+            let rparen = nextNonTrivia(lparen, tokens).unwrap()
+            assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+            return doc
+                + formatToken(lparen, tokens)
+                + formatToken(rparen, tokens)
+
         let fieldList = Doc.empty()
         let trailingComma = Bool.False
         let lastToken = lparen
