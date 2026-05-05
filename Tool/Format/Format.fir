@@ -174,61 +174,7 @@ TypeDeclRhs.format(self: TypeDeclRhs, tokens: Array[Token]) Doc:
                 + ty.format(tokens)
 
         TypeDeclRhs.Extern(cTypeBegin, cTypeEnd, fields):
-            let eq = prevNonTrivia(cTypeBegin, tokens).unwrap()
-            assert(tokens.get(eq.idx).kind is TokenKind.Eq)
-
-            let doc = Doc.blank(1)
-                + formatToken(eq, tokens)
-                + Doc.blank(1)
-                + formatToken(cTypeBegin, tokens)
-                + formatToken(cTypeEnd, tokens)
-
-            if fields is Option.Some(fields):
-                let lparen = nextNonTrivia(cTypeEnd, tokens).unwrap()
-                assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
-
-                let fieldList = Doc.empty()
-                let trailingComma = Bool.False
-                let lastToken = lparen
-                for ExternField(name, ty, cNameBegin, cNameEnd) in
-                        fields.iter():
-                    if trailingComma:
-                        fieldList += Doc.break_(1)
-                        trailingComma = Bool.False
-
-                    fieldList += formatToken(name.token, tokens)
-
-                    let colon = nextNonTrivia(name.token, tokens).unwrap()
-                    assert(tokens.get(colon.idx).kind is TokenKind.Colon)
-
-                    fieldList += formatToken(colon, tokens)
-                        + Doc.blank(1)
-                        + ty.format(tokens)
-                        + Doc.blank(1)
-
-                    let eq = nextNonTrivia(ty.lastToken(tokens), tokens).unwrap()
-                    assert(tokens.get(eq.idx).kind is TokenKind.Eq)
-
-                    fieldList += formatToken(eq, tokens)
-                        + Doc.blank(1)
-                        + formatToken(cNameBegin, tokens)
-                        + formatToken(cNameEnd, tokens)
-
-                    lastToken = cNameEnd
-
-                    if nextNonTrivia(lastToken, tokens) is Option.Some(next)
-                            and tokens.get(next.idx).kind is TokenKind.Comma:
-                        trailingComma = Bool.True
-                        fieldList += formatToken(next, tokens)
-                        lastToken = next
-
-                let rparen = nextNonTrivia(lastToken, tokens).unwrap()
-                assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
-
-                doc += (formatToken(lparen, tokens) + Doc.hardLine() + fieldList)
-                    .nest(4) + Doc.hardLine() + formatToken(rparen, tokens)
-
-            doc
+            _formatExternDecl(cTypeBegin, cTypeEnd, fields, tokens)
 
 
 _formatSumDecl(
@@ -274,6 +220,69 @@ _formatSumDecl(
         doc += formatToken(dotdot, tokens) + ext.format(tokens)
 
     Doc.nested(4, formatToken(colon, tokens) + Doc.hardLine() + doc)
+
+
+_formatExternDecl(
+    cTypeBegin: TokenIdx,
+    cTypeEnd: TokenIdx,
+    fields: Option[Vec[ExternField]],
+    tokens: Array[Token],
+) Doc:
+    let eq = prevNonTrivia(cTypeBegin, tokens).unwrap()
+    assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+
+    let doc = Doc.blank(1)
+        + formatToken(eq, tokens)
+        + Doc.blank(1)
+        + formatToken(cTypeBegin, tokens)
+        + formatToken(cTypeEnd, tokens)
+
+    if fields is Option.Some(fields):
+        let lparen = nextNonTrivia(cTypeEnd, tokens).unwrap()
+        assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
+
+        let fieldList = Doc.empty()
+        let trailingComma = Bool.False
+        let lastToken = lparen
+        for ExternField(name, ty, cNameBegin, cNameEnd) in fields.iter():
+            if trailingComma:
+                fieldList += Doc.break_(1)
+                trailingComma = Bool.False
+
+            fieldList += formatToken(name.token, tokens)
+
+            let colon = nextNonTrivia(name.token, tokens).unwrap()
+            assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+            fieldList += formatToken(colon, tokens)
+                + Doc.blank(1)
+                + ty.format(tokens)
+                + Doc.blank(1)
+
+            let eq = nextNonTrivia(ty.lastToken(tokens), tokens).unwrap()
+            assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+
+            fieldList += formatToken(eq, tokens)
+                + Doc.blank(1)
+                + formatToken(cNameBegin, tokens)
+                + formatToken(cNameEnd, tokens)
+
+            lastToken = cNameEnd
+
+            if nextNonTrivia(lastToken, tokens) is Option.Some(next)
+                    and tokens.get(next.idx).kind is TokenKind.Comma:
+                trailingComma = Bool.True
+                fieldList += formatToken(next, tokens)
+                lastToken = next
+
+        let rparen = nextNonTrivia(lastToken, tokens).unwrap()
+        assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+
+        doc += (formatToken(lparen, tokens) + Doc.hardLine() + fieldList).nest(
+            4
+        ) + Doc.hardLine() + formatToken(rparen, tokens)
+
+    doc
 
 
 ConDecl.format(self: ConDecl, tokens: Array[Token]) Doc:
@@ -2354,3 +2363,6 @@ type Attribute = Ast/Attribute[Ast/DefaultAstExts]
 
 
 type TyArgs = Ast/TyArgs[Ast/DefaultAstExts]
+
+
+type ExternField = Ast/ExternField[Ast/DefaultAstExts]
