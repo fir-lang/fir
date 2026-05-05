@@ -244,20 +244,31 @@ pub(super) fn convert_fields(
 ) -> Option<FunArgs> {
     match fields {
         ast::ConFields::Empty => None,
-        ast::ConFields::Named { fields, extension } => Some(FunArgs::Named {
-            args: fields
-                .iter()
-                .map(|(name, ty)| {
-                    (
-                        name.clone(),
-                        convert_ast_ty(tys, module_env, &ty.node, &ty.loc),
+
+        ast::ConFields::Named { fields, extension } => {
+            let mut args: OrdMap<Name, Ty> = Default::default();
+            for (name, ty) in fields.iter() {
+                let old = args.insert(
+                    name.clone(),
+                    convert_ast_ty(tys, module_env, &ty.node, &ty.loc),
+                );
+                if old.is_some() {
+                    // Ideally location here should be the location of the field name rather than
+                    // type, but it's OK for now.
+                    panic!(
+                        "{}: Field {name} defined multiple times",
+                        loc_display(&ty.loc)
                     )
-                })
-                .collect(),
-            extension: extension
+                }
+            }
+
+            let extension = extension
                 .as_ref()
-                .map(|ext_ty| Box::new(convert_ast_ty(tys, module_env, &ext_ty.node, &ext_ty.loc))),
-        }),
+                .map(|ext_ty| Box::new(convert_ast_ty(tys, module_env, &ext_ty.node, &ext_ty.loc)));
+
+            Some(FunArgs::Named { args, extension })
+        }
+
         ast::ConFields::Unnamed { fields } => Some(FunArgs::Positional {
             args: fields
                 .iter()
