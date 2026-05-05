@@ -12,8 +12,9 @@ allocTimeVal() C/Ptr[TimeVal]:
     C/inline("calloc(1, sizeof(struct timeval))")
 
 
-freeTimeVal(tv: C/Ptr[TimeVal]):
-    C/inline("({ free(`tv`); _singleton_Record; })")
+freeTimeVal(tv: C/Ptr[TimeVal]) / exn:
+    C/inline[C/Void, exn]("free(`tv`)")
+    ()
 
 
 main():

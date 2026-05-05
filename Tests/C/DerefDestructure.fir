@@ -12,8 +12,9 @@ mkDivOnHeap(num: I32, den: I32) C/Ptr[DivT]:
     C/inline("({ div_t* p = (div_t*)malloc(sizeof(div_t)); *p = div(`num`, `den`); p; })")
 
 
-freeDivT(p: C/Ptr[DivT]):
-    C/inline("({ free(`p`); _singleton_Record; })")
+freeDivT(p: C/Ptr[DivT]) / exn:
+    C/inline[C/Void, exn]("free(`p`)")
+    ()
 
 
 main():

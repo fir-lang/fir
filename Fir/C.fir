@@ -15,6 +15,10 @@ extern type SizeT = "size_t"
 prim type Ptr[t]
 
 
+## The C `void` type.
+prim type Void
+
+
 extern type DivT = "div_t"(
     quot: I32 = "quot",
     rem: I32 = "rem",

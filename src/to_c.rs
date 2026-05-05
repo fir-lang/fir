@@ -708,6 +708,10 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, pgm: &LoweredPgm, p
             let typedef_name = ptr_typedef_name(t, pgm);
             wln!(p, "typedef {t_str}* {typedef_name};");
         }
+
+        BuiltinConDecl::CVoid => {
+            wln!(p, "typedef void Void;");
+        }
     }
 }
 
@@ -2214,15 +2218,22 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             w!(p, "({{");
             p.indent();
             p.nl();
-            let expr_temp = cg.fresh_temp();
-            wln!(
-                p,
-                "{} {expr_temp}; // {}",
-                c_ty(ty, cg.pgm),
-                loc_display(loc)
-            );
-            stmts_to_c(stmts, Some(&expr_temp), locals, cg, p);
-            w!(p, "{expr_temp};");
+            let expr_temp = if ty.is_c_void() {
+                None
+            } else {
+                let expr_temp = cg.fresh_temp();
+                wln!(
+                    p,
+                    "{} {expr_temp}; // {}",
+                    c_ty(ty, cg.pgm),
+                    loc_display(loc)
+                );
+                Some(expr_temp)
+            };
+            stmts_to_c(stmts, expr_temp.as_deref(), locals, cg, p);
+            if let Some(expr_temp) = expr_temp {
+                w!(p, "{expr_temp};");
+            }
             p.dedent();
             p.nl();
             w!(p, "}})");

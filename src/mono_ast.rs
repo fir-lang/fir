@@ -139,6 +139,13 @@ impl Type {
         }
         false
     }
+
+    pub(crate) fn is_c_void(&self) -> bool {
+        match self {
+            Type::Named(NamedType { name, args: _ }) => name == "Void",
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

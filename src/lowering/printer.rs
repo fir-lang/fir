@@ -350,12 +350,10 @@ impl Expr {
             Expr::Do(body, _) => {
                 p.str("do:");
                 p.indented(|p| {
-                    p.indented(|p| {
-                        p.nl();
-                        for stmt in body.iter() {
-                            stmt.node.print(p);
-                        }
-                    });
+                    p.nl();
+                    for stmt in body.iter() {
+                        stmt.node.print(p);
+                    }
                 });
             }
 
