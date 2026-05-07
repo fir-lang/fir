@@ -1,4 +1,4 @@
-main():
+main() / []:
     print("asdf".chars().count[CharIter, []]())
     print(empty().count())
     print(once(u32(1)).count[Once[U32], []]())

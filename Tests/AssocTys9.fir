@@ -84,7 +84,7 @@ printExt[
         Expr.Abs(ext, ..): print(ext)
         Expr.Let(ext, ..): print(ext)
 
-main():
+main() / []:
     printExt(makeAstGeneric[FmtExprExts, []]())
     printExt(makeAstGeneric[TcExprExts, []]())
 

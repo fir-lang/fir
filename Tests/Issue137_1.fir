@@ -8,7 +8,7 @@ impl Test[U32, [FooError]]:
     test(self: U32, arg: [FooError]):
         print(self)
 
-main():
+main() / []:
     u32(123).test[U32, [FooError], []](~FooError.FooError)
 
 # expected stdout: 123

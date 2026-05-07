@@ -12,7 +12,7 @@ outer() [B, ..r]:
         ~A: ~B
         other: other
 
-main():
+main() / []:
     # `r = row[A]` makes `inner`'s return type `[A, B, A]`.
     match outer[row[A], []]():
         ~A: print("A")

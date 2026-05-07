@@ -2,7 +2,7 @@
 # functions with the method call syntax.
 
 
-main():
+main() / []:
     # Direct UFCS call.
     Point(x = 1, y = 2).printPoint()
 

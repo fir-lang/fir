@@ -49,7 +49,7 @@ impl Sequence[EmptySeq, t, exn]:
 
 # ------------------------------------------------------------------------------
 
-main():
+main() / []:
     let seq =
         AppendAfter(
             seq1 = AppendAfter(seq1 = CountFrom(from = 0), seq2 = CountFrom(from = 10), amt = 5),

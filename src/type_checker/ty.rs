@@ -121,6 +121,13 @@ impl FunArgs {
         FunArgs::Positional { args: vec![] }
     }
 
+    pub fn is_empty(&self) -> bool {
+        match self {
+            FunArgs::Positional { args } => args.is_empty(),
+            FunArgs::Named { .. } => false,
+        }
+    }
+
     pub fn is_named(&self) -> bool {
         matches!(self, FunArgs::Named { .. })
     }
@@ -839,11 +846,33 @@ impl Ty {
         }
     }
 
+    pub(super) fn is_unit(&self) -> bool {
+        match self {
+            Ty::Record {
+                labels,
+                extension,
+                is_row,
+            } => labels.is_empty() && extension.is_none() && !is_row,
+            _ => false,
+        }
+    }
+
     pub(super) fn empty_variant() -> Ty {
         Ty::Variant {
             labels: Default::default(),
             extension: None,
             is_row: false,
+        }
+    }
+
+    pub(super) fn is_empty_variant(&self) -> bool {
+        match self {
+            Ty::Variant {
+                labels,
+                extension,
+                is_row,
+            } => labels.is_empty() && extension.is_none() && !is_row,
+            _ => false,
         }
     }
 

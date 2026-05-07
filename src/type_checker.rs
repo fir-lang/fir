@@ -75,11 +75,7 @@ pub struct PgmTypes {
 ///
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
-pub(crate) fn check_pgm(
-    pgm: &mut LoadedPgm,
-    main: &str,
-) -> (PgmTypes, HashMap<ModulePath, ModuleEnv>) {
-    add_exception_types(pgm, main);
+pub(crate) fn check_pgm(pgm: &mut LoadedPgm) -> (PgmTypes, HashMap<ModulePath, ModuleEnv>) {
     kind_inference::add_missing_type_params(pgm);
     let module_envs = module_env::generate_module_envs(pgm);
     let mut tys = collect_types(pgm, &module_envs);
@@ -101,108 +97,76 @@ pub(crate) fn check_pgm(
     (tys, module_envs)
 }
 
-pub(crate) fn check_main_type(
-    tys: &PgmTypes,
-    trait_env: &TraitEnv,
-    main_module: &ModulePath,
-    main: &str,
-) {
+/// Check that the main function has no args, returns `()`, and has the exception type `[]` or a
+/// quantified type variable like `exn`.
+///
+/// We accept both `[]` and `exn` as the exception type as they're morally the same, see #126.
+pub(crate) fn check_main_type(tys: &PgmTypes, main_module: &ModulePath, main: &str) {
     let main_id = Id::new(main_module, &Name::from(main));
+
     let main_scheme = tys
         .top_schemes
         .get(&main_id)
         .unwrap_or_else(|| panic!("Main function `{main}` is not defined."));
 
-    if !main_scheme.quantified_vars.is_empty() || !main_scheme.preds.is_empty() {
-        panic!("Main function `{main}` can't have quantified variables and predicates.");
+    let (args, ret, exceptions) = match &main_scheme.ty {
+        Ty::Fun {
+            args,
+            ret,
+            exceptions,
+        } => (args, ret, exceptions),
+
+        _ => panic!(),
+    };
+
+    if !args.is_empty() {
+        panic!(
+            "{}: Main function `{main}` can't have arguments",
+            loc_display(&main_scheme.loc)
+        );
     }
 
-    unify(
-        &main_scheme.ty,
-        &Ty::Fun {
-            args: FunArgs::Positional { args: vec![] },
-            ret: Box::new(Ty::unit()),
-            exceptions: Some(Box::new(Ty::empty_variant())),
-        },
-        tys.tys.cons(),
-        trait_env,
-        &UVarGen::default(),
-        &main_scheme.loc,
-        &[],
-        &mut vec![],
-    );
-}
+    if !ret.is_unit() {
+        panic!(
+            "{}: Main function `{main}` should return `()`",
+            loc_display(&main_scheme.loc)
+        );
+    }
 
-/// Add exception types to functions without one.
-fn add_exception_types(pgm: &mut LoadedPgm, main: &str) {
-    for (_, decl) in pgm.iter_decls_mut() {
-        match &mut decl.node {
-            ast::TopDecl::Fun(ast::L { node: fun, loc }) => {
-                if fun.sig.exceptions.is_none() {
-                    if fun.name.node == main {
-                        fun.sig.exceptions = Some(ast::L {
-                            node: ast::Type::Variant {
-                                alts: Default::default(),
-                                extension: None,
-                                is_row: false,
-                            },
-                            loc: loc.clone(),
-                        });
-                    } else {
-                        fun.sig.exceptions = Some(exn_type(
-                            fun.name.loc.module.clone(),
-                            fun.name.loc.line_start,
-                        ));
-                    }
-                }
-            }
+    // Exception types should've been added before type checking.
+    let exceptions = exceptions.as_ref().unwrap();
 
-            ast::TopDecl::Trait(ast::L { node, .. }) => {
-                for item in &mut node.items {
-                    match item {
-                        ast::TraitDeclItem::Type { .. } => {}
-                        ast::TraitDeclItem::Fun(fun) => {
-                            if fun.node.sig.exceptions.is_none() {
-                                fun.node.sig.exceptions =
-                                    Some(exn_type(fun.loc.module.clone(), fun.loc.line_start));
-                            }
-                        }
-                    }
-                }
-            }
-
-            ast::TopDecl::Impl(ast::L { node, .. }) => {
-                for item in &mut node.items {
-                    match item {
-                        ast::ImplDeclItem::Type { .. } => {}
-                        ast::ImplDeclItem::Fun(fun) => {
-                            if fun.node.sig.exceptions.is_none() {
-                                fun.node.sig.exceptions =
-                                    Some(exn_type(fun.loc.module.clone(), fun.loc.line_start));
-                            }
-                        }
-                    }
-                }
-            }
-
-            ast::TopDecl::Import(_) | ast::TopDecl::Type(_) => {}
+    if exceptions.is_empty_variant() {
+        if !main_scheme.quantified_vars.is_empty() || !main_scheme.preds.is_empty() {
+            panic!(
+                "{}: Main function `{main}` can't have quantified variables or predicates",
+                loc_display(&main_scheme.loc)
+            );
         }
-    }
-}
-
-// The default exception type: `?exn`.
-fn exn_type(module: std::rc::Rc<str>, line: u16) -> ast::L<ast::Type> {
-    ast::L {
-        node: ast::Type::Var(EXN_QVAR_ID),
-        loc: ast::Loc {
-            module,
-            line_start: line,
-            col_start: 0,
-            byte_offset_start: 0,
-            line_end: line,
-            col_end: 0,
-            byte_offset_end: 0,
-        },
+    } else {
+        match &**exceptions {
+            Ty::QVar(_name, kind) => {
+                assert_eq!(kind, &Kind::Star);
+                if !main_scheme.preds.is_empty() {
+                    panic!(
+                        "{}: Main function `{main}` can't have predicates",
+                        loc_display(&main_scheme.loc)
+                    );
+                }
+                if main_scheme.quantified_vars.len() > 1 {
+                    panic!(
+                        "{}: Main function `{main}` can't have quantified variables other than the exception variable",
+                        loc_display(&main_scheme.loc)
+                    );
+                }
+            }
+            _ => {
+                panic!(
+                    "{}: Main function `{main}` exception type should be `[]` or a type variable like `exn`",
+                    loc_display(&main_scheme.loc)
+                );
+            }
+        }
     }
 }
 
@@ -268,8 +232,6 @@ struct IntLit {
     ty: Ty,
     loc: ast::Loc,
 }
-
-const EXN_QVAR_ID: Name = Name::new_static("?exn");
 
 /// Collect type constructors (traits and data) and type schemes (top-level, associated, traits) of
 /// the program.

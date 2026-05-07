@@ -9,7 +9,7 @@ outer() [Bool, ..r]:
         ~Option.None: ~Bool.False
         other: other
 
-main():
+main() / []:
     # `r = row[Option[U64]]` makes `inner`'s return type
     # `[Option[U32], B, Option[U64]`, which is not allowed (duplicate label).
     #
