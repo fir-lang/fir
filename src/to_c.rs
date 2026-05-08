@@ -215,9 +215,17 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str, mut headers: OrdSet<String>) ->
         match heap_obj {
             HeapObj::Source(source_con) if source_con.fields.is_empty() => {
                 let singleton_name = source_con_singleton_name(source_con);
-                let struct_name = source_con_struct_name(&source_con.con_name, &source_con.ty_args);
-                let tag_name = source_con_tag_name(&source_con.con_name, &source_con.ty_args);
-                if source_con.sum {
+                let struct_name = source_con_struct_name(
+                    &source_con.ty_name,
+                    source_con.con_name.as_ref(),
+                    &source_con.ty_args,
+                );
+                let tag_name = source_con_tag_name(
+                    &source_con.ty_name,
+                    source_con.con_name.as_ref(),
+                    &source_con.ty_args,
+                );
+                if source_con.is_sum() {
                     wln!(
                         p,
                         "static {struct_name} {singleton_name}_data = {{ ._tag = {tag_name} }};",
@@ -228,7 +236,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str, mut headers: OrdSet<String>) ->
                 if source_con.value {
                     // Check if this belongs to a value sum type; if so, generate a singleton of the
                     // sum type with the constructor in the union.
-                    if source_con.sum {
+                    if source_con.is_sum() {
                         let sum_struct =
                             named_type_struct_name(&source_con.ty_name, &source_con.ty_args);
                         wln!(
@@ -266,10 +274,18 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str, mut headers: OrdSet<String>) ->
         };
 
         let con_idx = HeapObjIdx(tag as u32);
-        let struct_name = heap_obj_struct_name(pgm, con_idx);
-        let tag_name = heap_obj_tag_name(pgm, con_idx);
+        let struct_name = source_con_struct_name(
+            &source_con.ty_name,
+            source_con.con_name.as_ref(),
+            &source_con.ty_args,
+        );
+        let tag_name = source_con_tag_name(
+            &source_con.ty_name,
+            source_con.con_name.as_ref(),
+            &source_con.ty_args,
+        );
 
-        if source_con.sum && source_con.value {
+        if source_con.is_sum() && source_con.value {
             // Value sum type: return by value.
             let sum_struct = named_type_struct_name(&source_con.ty_name, &source_con.ty_args);
             w!(
@@ -528,8 +544,16 @@ fn source_decl_to_c(
         mono::TypeDeclRhs::Sum(cons) => {
             assert_eq!(cons.len(), con_indices.len());
             for (con, &con_idx) in cons.iter().zip(con_indices.iter()) {
-                let con_name: Name = format!("{}_{}", ty.name, con.name).into();
-                gen_source_con_struct(&con_name, &ty.ty_args, &con.fields, con_idx, false, pgm, p);
+                gen_source_con_struct(
+                    &ty.name,
+                    Some(&con.name),
+                    &ty.ty_args,
+                    &con.fields,
+                    con_idx,
+                    false,
+                    pgm,
+                    p,
+                );
             }
             if ty.value {
                 gen_value_sum_struct(ty, cons, pgm, p);
@@ -537,19 +561,29 @@ fn source_decl_to_c(
         }
         mono::TypeDeclRhs::Product(fields) => {
             assert_eq!(con_indices.len(), 1);
-            gen_source_con_struct(&ty.name, &ty.ty_args, fields, con_indices[0], true, pgm, p);
+            gen_source_con_struct(
+                &ty.name,
+                None,
+                &ty.ty_args,
+                fields,
+                con_indices[0],
+                true,
+                pgm,
+                p,
+            );
         }
         mono::TypeDeclRhs::Extern(_) => {
             let con_idx = con_indices[0];
             let tag = con_idx.0;
-            let tag_name = source_con_tag_name(&ty.name, &ty.ty_args);
+            let tag_name = source_con_tag_name(&ty.name, None, &ty.ty_args);
             wln!(p, "#define {tag_name} {tag}");
         }
     }
 }
 
 fn gen_source_con_struct(
-    name: &Name,
+    ty_name: &Name,
+    con_name: Option<&Name>,
     ty_args: &[mono::Type],
     fields: &mono::ConFields,
     idx: HeapObjIdx,
@@ -558,8 +592,8 @@ fn gen_source_con_struct(
     p: &mut Printer,
 ) {
     let tag = idx.0;
-    let tag_name = source_con_tag_name(name, ty_args);
-    let struct_name = source_con_struct_name(name, ty_args);
+    let tag_name = source_con_tag_name(ty_name, con_name, ty_args);
+    let struct_name = source_con_struct_name(ty_name, con_name, ty_args);
 
     wln!(p, "#define {tag_name} {tag}");
 
@@ -628,8 +662,7 @@ fn gen_value_sum_struct(
         w!(p, "union {{");
         p.indent();
         for (con, &con_idx) in cons.iter().zip(ty.con_indices.iter()) {
-            let con_struct_name =
-                source_con_struct_name(&format!("{}_{}", ty.name, con.name).into(), &ty.ty_args);
+            let con_struct_name = source_con_struct_name(&ty.name, Some(&con.name), &ty.ty_args);
             p.nl();
             w!(p, "{con_struct_name} _con_{};", con_idx.0);
         }
@@ -715,9 +748,13 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, pgm: &LoweredPgm, p
     }
 }
 
-fn source_con_tag_name(name: &Name, ty_args: &[mono::Type]) -> String {
+fn source_con_tag_name(ty_name: &Name, con_name: Option<&Name>, ty_args: &[mono::Type]) -> String {
     let mut tag_name = String::from("TAG_");
-    tag_name.push_str(name);
+    tag_name.push_str(ty_name);
+    if let Some(con_name) = con_name {
+        tag_name.push('_');
+        tag_name.push_str(con_name.as_str());
+    }
     for ty_arg in ty_args.iter() {
         tag_name.push('_');
         ty_to_c(ty_arg, &mut tag_name);
@@ -725,15 +762,26 @@ fn source_con_tag_name(name: &Name, ty_args: &[mono::Type]) -> String {
     tag_name
 }
 
-fn source_con_struct_name(name: &Name, ty_args: &[mono::Type]) -> String {
-    let mut name = name.to_string();
-    for ty_arg in ty_args.iter() {
-        name.push('_');
-        ty_to_c(ty_arg, &mut name);
+fn source_con_struct_name(
+    ty_name: &Name,
+    con_name: Option<&Name>,
+    ty_args: &[mono::Type],
+) -> String {
+    let mut struct_name = ty_name.to_string();
+    if let Some(con_name) = con_name {
+        struct_name.push('_');
+        struct_name.push_str(con_name.as_str());
     }
-    name
+    for ty_arg in ty_args.iter() {
+        struct_name.push('_');
+        ty_to_c(ty_arg, &mut struct_name);
+    }
+    struct_name
 }
 
+/// Only for sum types: name of the tag type's struct.
+///
+/// E.g. for `Option.Some` for `U32`, this generates `Option_U32`.
 fn named_type_struct_name(name: &Name, ty_args: &[mono::Type]) -> String {
     let mut name = name.to_string();
     for ty_arg in ty_args {
@@ -781,9 +829,11 @@ fn ptr_typedef_name(t: &mono::Type, pgm: &LoweredPgm) -> String {
 
 fn heap_obj_struct_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
-        HeapObj::Source(source_con) => {
-            source_con_struct_name(&source_con.con_name, &source_con.ty_args)
-        }
+        HeapObj::Source(source_con) => source_con_struct_name(
+            &source_con.ty_name,
+            source_con.con_name.as_ref(),
+            &source_con.ty_args,
+        ),
         HeapObj::Record(record) => record_struct_name(record),
         HeapObj::Variant(variant) => variant_struct_name(variant),
         HeapObj::Builtin(_) => panic!("Builtin in heap_obj_struct_name"),
@@ -792,9 +842,11 @@ fn heap_obj_struct_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
 
 fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
-        HeapObj::Source(source_con) => {
-            source_con_tag_name(&source_con.con_name, &source_con.ty_args)
-        }
+        HeapObj::Source(source_con) => source_con_tag_name(
+            &source_con.ty_name,
+            source_con.con_name.as_ref(),
+            &source_con.ty_args,
+        ),
         HeapObj::Record(record) => format!("TAG_{}", record_struct_name(record)),
         HeapObj::Variant(_) => panic!("Variants don't have runtime tags"),
         HeapObj::Builtin(_) => panic!("Builtin in heap_obj_tag_name"),
@@ -804,7 +856,11 @@ fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
 /// Generate singleton variable name for a nullary source constructor.
 fn source_con_singleton_name(source_con: &SourceConDecl) -> String {
     let mut name = String::from("_singleton_");
-    name.push_str(&source_con.con_name);
+    name.push_str(&source_con.ty_name);
+    if let Some(con_name) = &source_con.con_name {
+        name.push('_');
+        name.push_str(con_name);
+    }
     for ty_arg in &source_con.ty_args {
         name.push('_');
         ty_to_c(ty_arg, &mut name);
@@ -868,7 +924,7 @@ fn named_ty_to_c(named_ty: &mono::NamedType, out: &mut String) {
 
 fn is_product_con(idx: &HeapObjIdx, pgm: &LoweredPgm) -> bool {
     match &pgm.heap_objs[idx.as_usize()] {
-        HeapObj::Source(source_con) => !source_con.sum,
+        HeapObj::Source(source_con) => source_con.con_name.is_none(),
         HeapObj::Record(_) => true,
         HeapObj::Builtin(BuiltinConDecl::Array { .. }) => true,
         HeapObj::Builtin(_) | HeapObj::Variant(_) => false,
@@ -878,7 +934,7 @@ fn is_product_con(idx: &HeapObjIdx, pgm: &LoweredPgm) -> bool {
 fn is_value_sum_type(idx: &HeapObjIdx, pgm: &LoweredPgm) -> bool {
     match &pgm.heap_objs[idx.as_usize()] {
         HeapObj::Builtin(_) => false,
-        HeapObj::Source(decl) => decl.value && decl.sum,
+        HeapObj::Source(decl) => decl.value && decl.is_sum(),
         HeapObj::Record(_) => false,
         HeapObj::Variant(_) => true,
     }
