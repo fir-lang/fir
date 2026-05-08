@@ -205,52 +205,49 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
     );
     p.nl();
     for heap_obj in pgm.heap_objs.iter() {
-        match heap_obj {
-            HeapObj::Source(source_con) if source_con.fields.is_empty() => {
-                let singleton_name = source_con_singleton_name(source_con);
-                let struct_name = source_con_struct_name(
-                    &source_con.ty_name,
-                    source_con.con_name.as_ref(),
-                    &source_con.ty_args,
+        let source_con = if let HeapObj::Source(source_con) = heap_obj
+            && source_con.fields.is_empty()
+            && !source_con.value
+        {
+            source_con
+        } else {
+            continue;
+        };
+
+        let singleton_name = source_con_singleton_name(source_con);
+        let struct_name = source_con_struct_name(
+            &source_con.ty_name,
+            source_con.con_name.as_ref(),
+            &source_con.ty_args,
+        );
+        let tag_name = source_con_tag_name(
+            &source_con.ty_name,
+            source_con.con_name.as_ref(),
+            &source_con.ty_args,
+        );
+        if source_con.is_sum() {
+            wln!(
+                p,
+                "static {struct_name} {singleton_name}_data = {{ ._tag = {tag_name} }};",
+            );
+        } else {
+            wln!(p, "static {struct_name} {singleton_name}_data = {{ }};");
+        }
+        if source_con.value {
+            // Check if this belongs to a value sum type; if so, generate a singleton of the
+            // sum type with the constructor in the union.
+            if source_con.is_sum() {
+                let sum_struct = named_type_struct_name(&source_con.ty_name, &source_con.ty_args);
+                wln!(
+                    p,
+                    "static {sum_struct} {singleton_name}_sum = {{ ._tag = {tag_name} }};",
                 );
-                let tag_name = source_con_tag_name(
-                    &source_con.ty_name,
-                    source_con.con_name.as_ref(),
-                    &source_con.ty_args,
-                );
-                if source_con.is_sum() {
-                    wln!(
-                        p,
-                        "static {struct_name} {singleton_name}_data = {{ ._tag = {tag_name} }};",
-                    );
-                } else {
-                    wln!(p, "static {struct_name} {singleton_name}_data = {{ }};");
-                }
-                if source_con.value {
-                    // Check if this belongs to a value sum type; if so, generate a singleton of the
-                    // sum type with the constructor in the union.
-                    if source_con.is_sum() {
-                        let sum_struct =
-                            named_type_struct_name(&source_con.ty_name, &source_con.ty_args);
-                        wln!(
-                            p,
-                            "static {sum_struct} {singleton_name}_sum = {{ ._tag = {tag_name} }};",
-                        );
-                        wln!(p, "#define {singleton_name} ({singleton_name}_sum)");
-                    } else {
-                        wln!(p, "#define {singleton_name} ({singleton_name}_data)");
-                    }
-                } else {
-                    wln!(p, "#define {singleton_name} (&{singleton_name}_data)");
-                }
-            }
-            HeapObj::Record(record) if record.fields.is_empty() => {
-                let struct_name = record_struct_name(record);
-                let singleton_name = format!("_singleton_{}", struct_name);
-                wln!(p, "static {struct_name} {singleton_name}_data = {{ }};");
+                wln!(p, "#define {singleton_name} ({singleton_name}_sum)");
+            } else {
                 wln!(p, "#define {singleton_name} ({singleton_name}_data)");
             }
-            _ => {}
+        } else {
+            wln!(p, "#define {singleton_name} (&{singleton_name}_data)");
         }
     }
     p.nl();
@@ -814,6 +811,11 @@ fn heap_obj_tag_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
 
 /// Generate singleton variable name for a nullary source constructor.
 fn source_con_singleton_name(source_con: &SourceConDecl) -> String {
+    assert!(
+        !source_con.value,
+        "{}.{:?} is a value type, values don't have singletons",
+        source_con.ty_name, source_con.con_name
+    );
     let mut name = String::from("_singleton_");
     name.push_str(&source_con.ty_name);
     if let Some(con_name) = &source_con.con_name {
@@ -831,7 +833,7 @@ fn source_con_singleton_name(source_con: &SourceConDecl) -> String {
 fn heap_obj_singleton_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
     match &pgm.heap_objs[idx.0 as usize] {
         HeapObj::Source(source_con) => source_con_singleton_name(source_con),
-        HeapObj::Record(record) => format!("_singleton_{}", record_struct_name(record)),
+        HeapObj::Record(_) => panic!("Records don't have singletons"),
         HeapObj::Variant(_) => panic!("Variants don't have singletons"),
         HeapObj::Builtin(_) => panic!("Builtin heap objects don't have singletons"),
     }
@@ -988,7 +990,6 @@ fn builtin_fun_to_c(
 
         BuiltinFunDecl::PrintStrNoNl => {
             let ret_ty = c_ty(ret, pgm);
-            let unit = heap_obj_singleton_name(pgm, pgm.unit_con_idx);
             writedoc!(
                 p,
                 "
@@ -997,7 +998,7 @@ fn builtin_fun_to_c(
                     uint32_t len = (uint32_t)bytes_arr.len;
                     uint8_t* data_ptr = bytes_arr.data_ptr;
                     fwrite(data_ptr, 1, len, stdout);
-                    return {unit};
+                    return (Record){{}};
                 }}
                 ",
             );
@@ -1170,11 +1171,11 @@ fn builtin_fun_to_c(
                 BuiltinFunDecl::U64Eq => "U64",
                 _ => unreachable!(),
             };
-            let true_val = heap_obj_singleton_name(pgm, pgm.true_con_idx);
-            let false_val = heap_obj_singleton_name(pgm, pgm.false_con_idx);
+            let true_tag = pgm.true_con_idx.as_u64();
+            let false_tag = pgm.false_con_idx.as_u64();
             wln!(
                 p,
-                "static Bool _fun_{idx}({ty} a, {ty} b) {{ return (a == b) ? {true_val} : {false_val}; }}"
+                "static Bool _fun_{idx}({ty} a, {ty} b) {{ return (Bool){{ ._tag = (a == b) ? {true_tag} : {false_tag} }}; }}"
             );
         }
 
@@ -1358,13 +1359,12 @@ fn builtin_fun_to_c(
                 pgm,
             );
             let ret_ty = c_ty(ret, pgm);
-            let unit = heap_obj_singleton_name(pgm, pgm.unit_con_idx);
             writedoc!(
                 p,
                 "
                 static {ret_ty} _fun_{idx}({array_ty} arr, U32 idx, {t_ty} val) {{
                     arr.data_ptr[idx] = val;
-                    return {unit};
+                    return (Record){{}};
                 }}
                 ",
             );
@@ -1392,14 +1392,13 @@ fn builtin_fun_to_c(
                 pgm,
             );
             let ret_ty = c_ty(ret, pgm);
-            let unit = heap_obj_singleton_name(pgm, pgm.unit_con_idx);
             writedoc!(
                 p,
                 "
                 static {ret_ty} _fun_{idx}({array_ty} arr, U32 src, U32 dst, U32 len) {{
                     {t_ty}* data_ptr = arr.data_ptr;
                     memmove(data_ptr + dst, data_ptr + src, len * sizeof({t_ty}));
-                    return {unit};
+                    return (Record){{}};
                 }}
                 ",
             );
@@ -1477,16 +1476,16 @@ fn gen_int_tostr_fn(idx: usize, arg_ty: &str, fmt: &str, p: &mut Printer) {
 ///     prim cmp(self: U64, other: U64) Ordering
 /// ```
 fn gen_int_cmp_fn(idx: usize, arg_ty: &str, pgm: &LoweredPgm, p: &mut Printer) {
-    let less = heap_obj_singleton_name(pgm, pgm.ordering_less_con_idx);
-    let greater = heap_obj_singleton_name(pgm, pgm.ordering_greater_con_idx);
-    let equal = heap_obj_singleton_name(pgm, pgm.ordering_equal_con_idx);
+    let less_tag = pgm.ordering_less_con_idx.as_u64();
+    let greater_tag = pgm.ordering_greater_con_idx.as_u64();
+    let equal_tag = pgm.ordering_equal_con_idx.as_u64();
     writedoc!(
         p,
         "
         static Ordering _fun_{idx}({arg_ty} a, {arg_ty} b) {{
-            if (a < b) return {less};
-            if (a > b) return {greater};
-            return {equal};
+            if (a < b) return (Ordering){{ ._tag = {less_tag} }};
+            if (a > b) return (Ordering){{ ._tag = {greater_tag} }};
+            return (Ordering){{ ._tag = {equal_tag} }};
         }}
 
         "
@@ -1600,11 +1599,7 @@ fn stmts_to_c(
 ) {
     if stmts.is_empty() {
         if let Some(result_var) = result_var {
-            wln!(
-                p,
-                "{result_var} = {};",
-                heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
-            );
+            wln!(p, "{result_var} = (Record){{}};");
         }
         return;
     }
@@ -1641,11 +1636,7 @@ fn stmt_to_c(
                 pat_to_cond(&lhs.node, &rhs_temp, rhs_ty, None, locals, cg)
             );
             if let Some(result_var) = result_var {
-                wln!(
-                    p,
-                    "{result_var} = {};",
-                    heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
-                );
+                wln!(p, "{result_var} = (Record){{}};");
             }
         }
 
@@ -1655,11 +1646,7 @@ fn stmt_to_c(
                 expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
                 wln!(p, ";");
                 if let Some(result_var) = result_var {
-                    wln!(
-                        p,
-                        "{result_var} = {};",
-                        heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
-                    );
+                    wln!(p, "{result_var} = (Record){{}};");
                 }
             }
             Expr::FieldSel(FieldSelExpr {
@@ -1676,11 +1663,7 @@ fn stmt_to_c(
                 expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
                 wln!(p, ";");
                 if let Some(result_var) = result_var {
-                    wln!(
-                        p,
-                        "{result_var} = {};",
-                        heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
-                    );
+                    wln!(p, "{result_var} = (Record){{}};");
                 }
             }
             _ => {
@@ -1722,11 +1705,7 @@ fn stmt_to_c(
                 wln!(p, "_break_{}:;", label);
             }
             if let Some(result_var) = result_var {
-                wln!(
-                    p,
-                    "{result_var} = {};",
-                    heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
-                );
+                wln!(p, "{result_var} = (Record){{}};");
             }
         }
 
@@ -1768,25 +1747,31 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             ret_ty,
         } => {
             let heap_obj = &cg.pgm.heap_objs[heap_obj_idx.as_usize()];
-            let fields: Vec<(Name, mono::Type)> = match heap_obj {
+            let (fields, value): (Vec<(Name, mono::Type)>, bool) = match heap_obj {
                 HeapObj::Builtin(_) => panic!(),
-                HeapObj::Source(source_con_decl) => source_con_decl
-                    .fields
-                    .iter()
-                    .map(|(field_name, field_ty)| (field_name.clone(), field_ty.clone()))
-                    .collect(),
-                HeapObj::Record(record_type) => record_type
-                    .fields
-                    .iter()
-                    .map(|(field_name, field_ty)| (field_name.clone(), field_ty.clone()))
-                    .collect(),
+                HeapObj::Source(source_con_decl) => (
+                    source_con_decl
+                        .fields
+                        .iter()
+                        .map(|(field_name, field_ty)| (field_name.clone(), field_ty.clone()))
+                        .collect(),
+                    source_con_decl.value,
+                ),
+                HeapObj::Record(record_type) => (
+                    record_type
+                        .fields
+                        .iter()
+                        .map(|(field_name, field_ty)| (field_name.clone(), field_ty.clone()))
+                        .collect(),
+                    true,
+                ),
                 HeapObj::Variant(_) => {
                     // Variants should be allocated with `Expr::Variant`.
                     panic!("BUG: Variant in ConAlloc")
                 }
             };
             assert_eq!(fields.len(), args.len());
-            if args.is_empty() {
+            if args.is_empty() && !value {
                 w!(
                     p,
                     "({}){}",
@@ -1796,16 +1781,20 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             } else if is_value_sum_type(heap_obj_idx, cg.pgm) {
                 let ret_struct_name = c_ty(ret_ty, cg.pgm);
                 let tag_name = heap_obj_tag_name(cg.pgm, *heap_obj_idx);
-                let con_field = format!("_con_{}", heap_obj_idx.0);
-                w!(
-                    p,
-                    "(({ret_struct_name}){{ ._tag = {tag_name}, .{con_field} = {{ ._tag = {tag_name}"
-                );
-                for ((field_name, _field_ty), arg) in fields.iter().zip(args.iter()) {
-                    w!(p, ", .{} = ", c_field_name(field_name));
-                    expr_to_c(&arg.node, &arg.loc, locals, cg, p);
+                if args.is_empty() {
+                    w!(p, "(({ret_struct_name}){{ ._tag = {tag_name} }})");
+                } else {
+                    let con_field = format!("_con_{}", heap_obj_idx.0);
+                    w!(
+                        p,
+                        "(({ret_struct_name}){{ ._tag = {tag_name}, .{con_field} = {{ ._tag = {tag_name}"
+                    );
+                    for ((field_name, _field_ty), arg) in fields.iter().zip(args.iter()) {
+                        w!(p, ", .{} = ", c_field_name(field_name));
+                        expr_to_c(&arg.node, &arg.loc, locals, cg, p);
+                    }
+                    w!(p, " }} }})");
                 }
-                w!(p, " }} }})");
             } else if is_value_type(ret_ty, cg.pgm) {
                 let struct_name = heap_obj_struct_name(cg.pgm, *heap_obj_idx);
                 w!(p, "(({struct_name}){{");
@@ -2056,11 +2045,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     w!(p, "{match_temp};");
                 }
                 None => {
-                    w!(
-                        p,
-                        "{};",
-                        heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
-                    );
+                    w!(p, "(Record){{}};");
                 }
             }
             p.dedent();
@@ -2132,11 +2117,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     w!(p, "{if_temp};");
                 }
                 None => {
-                    w!(
-                        p,
-                        "{};",
-                        heap_obj_singleton_name(cg.pgm, cg.pgm.unit_con_idx)
-                    );
+                    w!(p, "(Record){{}};");
                 }
             }
             p.dedent();
@@ -2186,8 +2167,8 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             w!(p, "{} {} = ", c_ty(expr_ty, cg.pgm), expr_temp);
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);
             wln!(p, "; // {}", loc_display(&expr.loc));
-            let true_val = heap_obj_singleton_name(cg.pgm, cg.pgm.true_con_idx);
-            let false_val = heap_obj_singleton_name(cg.pgm, cg.pgm.false_con_idx);
+            let true_tag = cg.pgm.true_con_idx.as_u64();
+            let false_tag = cg.pgm.false_con_idx.as_u64();
             wln!(p, "Bool _is_result;");
             w!(
                 p,
@@ -2196,13 +2177,13 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             );
             p.indent();
             p.nl();
-            w!(p, "_is_result = {true_val};");
+            w!(p, "_is_result = (Bool){{ ._tag = {true_tag} }};");
             p.dedent();
             p.nl();
             w!(p, "}} else {{");
             p.indent();
             p.nl();
-            w!(p, "_is_result = {false_val};");
+            w!(p, "_is_result = (Bool){{ ._tag = {false_tag} }};");
             p.dedent();
             p.nl();
             wln!(p, "}}");
