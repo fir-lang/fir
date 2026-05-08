@@ -14,7 +14,7 @@ impl Foo[U32]:
 test[Foo[t].A = U64]():
     ()
 
-main():
+main() / []:
     test[U32, []]()
 
 # args: --typecheck

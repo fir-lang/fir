@@ -2,6 +2,13 @@
 Simple kind inference: analyzes one declaration at a time, infers kind of a type parameter without
 explicit kind annotation from the definition. If a type parameter is used in a row position its kind
 is inferred. Otherwise it's defaulted as `*`.
+
+Also adds a type parameter for the missing exception types in functions. E.g.
+
+    foo(x: U32, y: U32) U32
+    ==>
+    foo[?exn: *](x: U32, y: U32) U32 / ?exn
+
 */
 
 use crate::ast;
@@ -38,9 +45,13 @@ pub fn add_missing_type_params(pgm: &mut LoadedPgm) {
 fn add_missing_type_params_fun(
     sig: &mut ast::FunSig,
     tvs: &mut OrderMap<Name, Option<Kind>>,
-    _loc: &ast::Loc,
+    loc: &ast::Loc,
 ) {
     assert!(sig.context.type_params.is_empty());
+
+    if sig.exceptions.is_none() {
+        sig.exceptions = Some(exn_type(loc));
+    }
 
     // Variables bound in the enclosing `trait` or `impl` context.
     let bound_vars: HashSet<Name> = tvs.keys().cloned().collect();
@@ -369,3 +380,13 @@ pub(crate) fn convert_kind(kind: &Option<ast::L<ast::Type>>) -> Option<Kind> {
         loc_display(&kind.loc)
     )
 }
+
+// The default exception type: `?exn`.
+fn exn_type(loc: &ast::Loc) -> ast::L<ast::Type> {
+    ast::L {
+        node: ast::Type::Var(EXN_QVAR_NAME),
+        loc: loc.clone(),
+    }
+}
+
+const EXN_QVAR_NAME: Name = Name::new_static("?exn");

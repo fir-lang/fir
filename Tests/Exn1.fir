@@ -36,7 +36,7 @@ forEachWithControlFlow(vec: Vec[t], f: Fn(t) () / [Break, ..r]) Result[[..r], ()
 
     Result.Ok(())
 
-main():
+main() / []:
     match try(f1):
         Result.Err(~E1.E1): printStr("OK")
         Result.Ok(()): panic("")

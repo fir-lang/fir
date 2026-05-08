@@ -9,7 +9,7 @@ impl Foo[U32]:
     getA() Foo[U32].A:
         u64(123)
 
-main():
+main() / []:
     let x: U64 = Foo.getA[U32, []]()
     print(x)
 

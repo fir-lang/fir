@@ -12,7 +12,7 @@ impl FromStr[Bool]:
             "False": Bool.False
             _: panic("WAT")
 
-main():
+main() / []:
     print(FromStr.fromStr[U32, []]("asdf"))
     print(FromStr.fromStr[Bool, []]("True"))
     print(FromStr.fromStr[Bool, []]("False"))

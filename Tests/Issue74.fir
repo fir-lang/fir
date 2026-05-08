@@ -1,4 +1,4 @@
-main():
+main() / []:
     let iter = range(Bool.True, Bool.False)
     iter.next[RangeIterator[Bool], []]()
     ()

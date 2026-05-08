@@ -17,7 +17,7 @@ foo[ToBool[t]]() / exn:
     else:
         print("false")
 
-main():
+main() / []:
     foo[True, []]()
     foo[False, []]()
 

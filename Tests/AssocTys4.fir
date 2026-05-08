@@ -16,7 +16,7 @@ impl Foo[Type1]:
     getA() Foo[Type1].A:
         Type2
 
-main():
+main() / []:
     let x: Type2 = Foo.getA[Type1, []]()
     ()
 

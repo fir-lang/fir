@@ -1,4 +1,4 @@
-main():
+main() / []:
     let v1 = Vec[U32].withCapacity(10)
     print(v1)
 

@@ -1,6 +1,6 @@
 id(x: t) t: x
 
-main():
+main() / []:
     let x = id[U32, []]
     print(x(123))
 

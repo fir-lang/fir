@@ -13,7 +13,7 @@ impl Foo[U32]:
 makeVar[Foo[t]](a: Foo[t].A) Foo[t].A:
     a
 
-main():
+main() / []:
     print(Foo.getA[U32, []]())
 
 # expected stdout:

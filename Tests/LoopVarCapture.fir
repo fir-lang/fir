@@ -1,4 +1,4 @@
-main():
+main() / []:
     let funs: Vec[Fn() U32 / []] = Vec.empty()
 
     for i: U32 in range(u32(0), u32(10)):

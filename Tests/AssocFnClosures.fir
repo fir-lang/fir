@@ -12,7 +12,7 @@ MyBool.print(self):
         MyBool.False: printStr("False")
         MyBool.True: printStr("True")
 
-main():
+main() / []:
     let a = T(i = 123).print
     let b = MyBool.True.print
     let c = MyBool.False.print

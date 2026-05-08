@@ -270,9 +270,15 @@ pub fn monomorphise(
         .get(&main_id)
         .unwrap_or_else(|| panic!("Main function `{main}` not defined"));
     let main_env = poly_pgm.module_env(&entry);
+    // Main function is allowed to have `[]` or `exn` as the exception type, handle both cases.
+    let ty_args: Vec<mono::Type> = if main_decl.sig.context.type_params.len() == 1 {
+        vec![mono::Type::empty()]
+    } else {
+        vec![]
+    };
     mono_top_fn(
         main_decl,
-        &[],
+        &ty_args,
         &poly_pgm,
         &mut mono_pgm,
         &mut mangler,
