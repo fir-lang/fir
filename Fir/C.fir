@@ -16,7 +16,7 @@ prim type Ptr[t]
 
 
 ## The C `void` type.
-prim type Void
+extern type Void = "void"
 
 
 extern type DivT = "div_t"(

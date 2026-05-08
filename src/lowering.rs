@@ -365,9 +365,6 @@ pub enum BuiltinConDecl {
     CPtr {
         t: mono::Type,
     },
-
-    /// The C `void` type.
-    CVoid,
 }
 
 /// A constructor defined in Fir, monomorphised. Examples in mono AST syntax:
@@ -1003,11 +1000,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             BuiltinConDecl::CPtr {
                                 t: ty_args[0].clone(),
                             }
-                        }
-
-                        "Void" => {
-                            assert_eq!(ty_args.len(), 0);
-                            BuiltinConDecl::CVoid
                         }
 
                         other => panic!("Unknown built-in type: {other}"),

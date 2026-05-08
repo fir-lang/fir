@@ -738,10 +738,6 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, pgm: &LoweredPgm, p
             let typedef_name = ptr_typedef_name(t, pgm);
             wln!(p, "typedef {t_str}* {typedef_name};");
         }
-
-        BuiltinConDecl::CVoid => {
-            wln!(p, "typedef void Void;");
-        }
     }
 }
 
