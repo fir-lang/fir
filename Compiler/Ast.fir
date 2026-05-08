@@ -948,6 +948,7 @@ impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[WhileStmt[exts]]:
 
 #[derive(ToDoc)]
 type LoopStmt[exts](
+    label: Option[Id],
     body: Vec[Stmt[exts]],
     _firstToken: TokenIdx,
 )

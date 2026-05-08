@@ -4441,7 +4441,9 @@ stmt[AstExts[exts], AstIds[AstExts[exts].Ids],](
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let val = do:
-                Stmt.Loop(LoopStmt(body, _firstToken = TokenIdx(idx = cur)))
+                Stmt.Loop(
+                    LoopStmt(label, body, _firstToken = TokenIdx(idx = cur))
+                )
             val,
     )
     match altResult:
