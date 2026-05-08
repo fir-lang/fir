@@ -358,15 +358,51 @@ pub enum BuiltinConDecl {
     U64,
 }
 
+/// A constructor defined in Fir, monomorphised. Examples in mono AST syntax:
+///
+/// ```ignore
+/// # A product constructor
+/// type Vec[U32](
+///    _data: Array[U32],
+///    _len: U32,
+/// )
+///
+/// # Sum constructors
+/// value type Option[U32]:
+///     None
+///     Some(U32)
+/// ```
 #[derive(Debug)]
 pub struct SourceConDecl {
+    /// Name of the type. `Vec` and `Option` in the examples.
     pub ty_name: Name,
-    pub con_name: Name,
+
+    /// Only for sum types: name of the constructor. `None` and `Some` in the examples.
+    pub con_name: Option<Name>,
+
+    /// Tag of the constructor. Used in sum values and when the constructor is in a variant.
+    ///
+    /// Also reused as an index into `LoweredPgm.heap_objs`.
     pub idx: HeapObjIdx,
+
+    /// Type arguments of the types. `[U32]` in the examples.
     pub ty_args: Vec<mono::Type>,
+
+    /// Fields of the constructor. `_data` and `_len` in the `Vec` example.
+    ///
+    /// For positional fields, names are underscored indices of the fields. `_0` in the `Some`
+    /// constructor in the example.
     pub fields: Vec<(Name, mono::Type)>,
-    pub sum: bool,
+
+    /// Whether the constructor is for a value type. In the examples: `false` in `Vec`, `true` in
+    /// `Option` consturctors.
     pub value: bool,
+}
+
+impl SourceConDecl {
+    pub fn is_sum(&self) -> bool {
+        self.con_name.is_some()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -846,14 +882,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             // get the type details during code generation.
                             for mono::ConDecl { name, fields } in cons {
                                 let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                                let con_name = Name::new(format!("{ty_name}_{name}"));
                                 lowered_pgm.heap_objs.push(lower_source_con(
                                     idx,
                                     ty_name,
-                                    &con_name,
+                                    Some(name),
                                     ty_args,
                                     fields,
-                                    true, // sum
                                     con_decl.value,
                                 ));
                                 con_indices.push(idx);
@@ -865,10 +899,9 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             lowered_pgm.heap_objs.push(lower_source_con(
                                 idx,
                                 ty_name,
-                                ty_name,
+                                None,
                                 ty_args,
                                 fields,
-                                false, // product
                                 con_decl.value,
                             ));
                             con_indices.push(idx);
@@ -1528,15 +1561,14 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
 fn lower_source_con(
     idx: HeapObjIdx,
     ty_name: &Name,
-    con_name: &Name,
+    con_name: Option<&Name>,
     con_ty_args: &[mono::Type],
     fields: &mono::ConFields,
-    sum: bool,
     value: bool,
 ) -> HeapObj {
     HeapObj::Source(SourceConDecl {
         ty_name: ty_name.clone(),
-        con_name: con_name.clone(),
+        con_name: con_name.cloned(),
         idx,
         ty_args: con_ty_args.to_vec(),
         fields: match fields {
@@ -1551,7 +1583,6 @@ fn lower_source_con(
                 .map(|(i, field_ty)| (Name::new(format!("_{i}")), field_ty.clone()))
                 .collect(),
         },
-        sum,
         value,
     })
 }
