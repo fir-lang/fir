@@ -458,7 +458,7 @@ mod wasm {
         let mut loaded_pgm = module_loader::load(file_path, false, false);
         deriving::expand_derives(&mut loaded_pgm);
 
-        let (_tys, module_envs) = type_checker::check_pgm(&mut loaded_program);
+        let (_tys, module_envs) = type_checker::check_pgm(&mut loaded_pgm);
 
         type_checker::expand_type_synonyms(&mut loaded_pgm, &module_envs);
         let mut mono_pgm =
