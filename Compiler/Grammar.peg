@@ -821,7 +821,7 @@ stmt[AstExts[exts], AstIds[AstExts[exts].Ids]] Stmt[exts]:
         Stmt.While(WhileStmt(label, cond, body, _firstToken = TokenIdx(idx = cur)))
 
     cur=^ label=loopLabel? "loop" ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
-        Stmt.Loop(LoopStmt(body, _firstToken = TokenIdx(idx = cur)))
+        Stmt.Loop(LoopStmt(label, body, _firstToken = TokenIdx(idx = cur)))
 
     lhs=inlineExpr rhs=stmtExprCont:
         match rhs:

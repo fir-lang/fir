@@ -1519,12 +1519,20 @@ WhileStmt.format(self: WhileStmt, tokens: Array[Token]) Doc:
 
 
 LoopStmt.format(self: LoopStmt, tokens: Array[Token]) Doc:
+    let doc = Doc.empty()
     let loop_ = self.firstToken(tokens)
+
+    if self.label is Option.Some(label):
+        doc += formatToken(label.token, tokens) + Doc.blank(1)
+        loop_ = nextNonTrivia(label.token, tokens).unwrap()
+
+    assert(tokens.get(loop_.idx).kind is TokenKind.Loop)
 
     let colon = nextNonTrivia(loop_, tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    formatToken(loop_, tokens)
+    doc
+        + formatToken(loop_, tokens)
         + Doc.nested(
             4,
             formatToken(colon, tokens)
