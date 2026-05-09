@@ -46,17 +46,9 @@ impl LoweredPgm {
                 *self.named_tys.get(name).unwrap().get(args).unwrap()
             }
 
-            mono::Type::Record { fields } => *self
-                .record_tys
-                .get(&RecordType {
-                    fields: fields.clone(),
-                })
-                .unwrap(),
+            mono::Type::Record { fields } => *self.record_tys.get(fields).unwrap(),
 
-            mono::Type::Variant { alts } => *self
-                .variant_tys
-                .get(&VariantType { alts: alts.clone() })
-                .unwrap(),
+            mono::Type::Variant { alts } => *self.variant_tys.get(alts).unwrap(),
 
             mono::Type::Fn(_) => panic!(),
         }
@@ -2007,12 +1999,7 @@ fn lower_expr(
             splice,
             ty: field_tys,
         }) => {
-            let record_idx = *indices
-                .records
-                .get(&RecordType {
-                    fields: field_tys.clone(),
-                })
-                .unwrap();
+            let record_idx = *indices.records.get(field_tys).unwrap();
 
             // Evaluate args in program order, pass in the order expected by the constructor.
             let mut arg_locals: HashMap<Name, LocalIdx> = Default::default();
@@ -2438,10 +2425,7 @@ fn lower_pat(
         }
 
         mono::Pat::Record(mono::RecordPat { fields, ty, rest }) => {
-            let idx = *indices
-                .records
-                .get(&RecordType { fields: ty.clone() })
-                .unwrap();
+            let idx = *indices.records.get(ty).unwrap();
 
             let mut field_pats: Vec<L<Pat>> = Vec::with_capacity(ty.len());
 
@@ -2557,16 +2541,11 @@ fn lower_rest_pat(
             }
 
             let rest_record_fields = match &var_pat.ty {
-                mono::Type::Record { fields } => fields.clone(),
+                mono::Type::Record { fields } => fields,
                 other => panic!("BUG: RestPat::Bind var has non-record type: {other:?}"),
             };
 
-            let rest_con = *indices
-                .records
-                .get(&RecordType {
-                    fields: rest_record_fields,
-                })
-                .unwrap();
+            let rest_con = *indices.records.get(rest_record_fields).unwrap();
 
             let var_idx = LocalIdx(scope.locals.len() as u32);
             scope.locals.push(LocalInfo {

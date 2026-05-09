@@ -105,7 +105,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                     wln!(p, "typedef struct {struct_name} {struct_name};");
                 }
                 TypeDecl::Variant(variant_ty) => {
-                    let struct_name = variant_struct_name(variant_ty);
+                    let struct_name = variant_struct_name(&variant_ty.alts);
                     wln!(p, "typedef struct {struct_name} {struct_name};");
                 }
             }
@@ -765,9 +765,9 @@ fn record_struct_name(record: &RecordType) -> String {
     name
 }
 
-fn variant_struct_name(variant: &VariantType) -> String {
+fn variant_struct_name(alts: &OrdMap<Name, mono::NamedType>) -> String {
     let mut name = String::from("Variant");
-    for named_ty in variant.alts.values() {
+    for named_ty in alts.values() {
         name.push('_');
         named_ty_to_c(named_ty, &mut name);
     }
@@ -790,7 +790,7 @@ fn heap_obj_struct_name(pgm: &LoweredPgm, idx: HeapObjIdx) -> String {
             &source_con.ty_args,
         ),
         HeapObj::Record(record) => record_struct_name(record),
-        HeapObj::Variant(variant) => variant_struct_name(variant),
+        HeapObj::Variant(variant) => variant_struct_name(&variant.alts),
         HeapObj::Builtin(_) => panic!("Builtin in heap_obj_struct_name"),
     }
 }
@@ -855,7 +855,7 @@ fn record_decl_to_c(record: &RecordType, tag: u32, pgm: &LoweredPgm, p: &mut Pri
 }
 
 fn variant_decl_to_c(variant: &VariantType, pgm: &LoweredPgm, p: &mut Printer) {
-    let struct_name = variant_struct_name(variant);
+    let struct_name = variant_struct_name(&variant.alts);
     w!(p, "typedef struct {} {{", struct_name);
     p.indent();
     p.nl();
@@ -2240,9 +2240,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 })
                 .unwrap();
 
-            let variant_struct_name = variant_struct_name(&VariantType {
-                alts: variant_ty.clone(),
-            });
+            let variant_struct_name = variant_struct_name(variant_ty);
 
             let expr_temp = cg.fresh_temp();
             w!(p, "{} {expr_temp} = ", c_ty(expr_ty, cg.pgm));
@@ -2318,10 +2316,7 @@ fn gen_variant_conversion(
         _ => panic!("gen_variant_conversion called with non-variant types"),
     };
 
-    let to_variant_ty = VariantType {
-        alts: to_alts.clone(),
-    };
-    let to_struct_name = variant_struct_name(&to_variant_ty);
+    let to_struct_name = variant_struct_name(to_alts);
 
     // Handle empty target variant - this is an unreachable case at runtime,
     // but we still need to generate valid C code. Just copy the tag.
@@ -2586,12 +2581,7 @@ fn gen_get_tag(pgm: &LoweredPgm, expr: &str, ty: &mono::Type) -> String {
         }
 
         mono::Type::Record { fields } => {
-            let idx = *pgm
-                .record_tys
-                .get(&RecordType {
-                    fields: fields.clone(),
-                })
-                .unwrap();
+            let idx = *pgm.record_tys.get(fields).unwrap();
             let idx = pgm.types[idx.as_usize()].as_record().1;
             heap_obj_tag_name(pgm, idx)
         }
@@ -2846,10 +2836,7 @@ fn type_deps(
         }
 
         mono::Type::Record { fields } => {
-            let record_type = RecordType {
-                fields: fields.clone(),
-            };
-            if let Some(&idx) = record_tys.get(&record_type)
+            if let Some(&idx) = record_tys.get(fields)
                 && deps.insert(idx)
             {
                 type_decl_deps_(named_tys, record_tys, variant_tys, types, idx, deps);
@@ -2857,8 +2844,7 @@ fn type_deps(
         }
 
         mono::Type::Variant { alts } => {
-            let variant_type = VariantType { alts: alts.clone() };
-            if let Some(&idx) = variant_tys.get(&variant_type)
+            if let Some(&idx) = variant_tys.get(alts)
                 && deps.insert(idx)
             {
                 type_decl_deps_(named_tys, record_tys, variant_tys, types, idx, deps);

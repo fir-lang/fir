@@ -2,6 +2,8 @@ use crate::ast::Name;
 use crate::collections::*;
 use crate::mono_ast as mono;
 
+use std::borrow::Borrow;
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct RecordType {
     pub(crate) fields: OrdMap<Name, mono::Type>,
@@ -15,9 +17,21 @@ impl RecordType {
     }
 }
 
+impl Borrow<OrdMap<Name, mono::Type>> for RecordType {
+    fn borrow(&self) -> &OrdMap<Name, mono::Type> {
+        &self.fields
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct VariantType {
     pub(crate) alts: OrdMap<Name, mono::NamedType>,
+}
+
+impl Borrow<OrdMap<Name, mono::NamedType>> for VariantType {
+    fn borrow(&self) -> &OrdMap<Name, mono::NamedType> {
+        &self.alts
+    }
 }
 
 pub fn collect_anonymous_types(pgm: &mono::MonoPgm) -> (HashSet<RecordType>, HashSet<VariantType>) {
