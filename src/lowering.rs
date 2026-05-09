@@ -1761,7 +1761,7 @@ fn lower_expr(
 
             let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty_id).unwrap().get(ty_args).unwrap();
 
-            let extern_synth_fields: mono::ConFields;
+            let synthesized_extern_fields: mono::ConFields;
 
             let con_fields = match &ty_decl.rhs {
                 Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
@@ -1788,13 +1788,13 @@ fn lower_expr(
                             ty
                         )
                     });
-                    extern_synth_fields = mono::ConFields::Named(
+                    synthesized_extern_fields = mono::ConFields::Named(
                         extern_fields
                             .iter()
                             .map(|f| (f.fir_name.clone(), f.ty.clone()))
                             .collect(),
                     );
-                    &extern_synth_fields
+                    &synthesized_extern_fields
                 }
 
                 None => &mono::ConFields::Empty,
@@ -2507,7 +2507,7 @@ fn lower_pat(
 
             let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty).unwrap().get(ty_args).unwrap();
 
-            let extern_synth_fields: mono::ConFields;
+            let synthesized_extern_fields: mono::ConFields;
 
             let con_fields: &mono::ConFields = match &ty_decl.rhs {
                 Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
@@ -2534,13 +2534,13 @@ fn lower_pat(
                             ty
                         )
                     });
-                    extern_synth_fields = mono::ConFields::Named(
+                    synthesized_extern_fields = mono::ConFields::Named(
                         extern_fields
                             .iter()
                             .map(|f| (f.fir_name.clone(), f.ty.clone()))
                             .collect(),
                     );
-                    &extern_synth_fields
+                    &synthesized_extern_fields
                 }
 
                 None => panic!(
