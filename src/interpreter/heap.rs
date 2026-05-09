@@ -106,11 +106,7 @@ impl Heap {
         let array_len = val_as_u32(self[array + ARRAY_LEN_FIELD_IDX]);
         if start > array_len || end > array_len || start > end {
             let mut msg_str = format!(
-                "{}: OOB array slice (start = {}, end = {}, len = {})\n",
-                loc_display(loc),
-                start,
-                end,
-                array_len
+                "{loc}: OOB array slice (start = {start}, end = {end}, len = {array_len})\n"
             );
             msg_str.push_str("\nFIR STACK:\n");
             crate::interpreter::write_call_stack(call_stack, &mut msg_str);
@@ -138,12 +134,7 @@ impl Heap {
     ) {
         let array_len = val_as_u32(self[array + ARRAY_LEN_FIELD_IDX]);
         if idx >= array_len {
-            let mut msg_str = format!(
-                "{}: OOB array access (idx = {}, len = {})\n",
-                loc_display(loc),
-                idx,
-                array_len
-            );
+            let mut msg_str = format!("{loc}: OOB array access (idx = {idx}, len = {array_len})\n");
             msg_str.push_str("\nFIR STACK:\n");
             crate::interpreter::write_call_stack(call_stack, &mut msg_str);
             panic!("{}", msg_str);
@@ -181,7 +172,7 @@ impl Heap {
     ) {
         let array_len = val_as_u32(self[array + ARRAY_LEN_FIELD_IDX]);
         if src + len > array_len || dst + len > array_len {
-            let mut msg_str = format!("{}: OOB array access\n", loc_display(loc));
+            let mut msg_str = format!("{loc}: OOB array access\n");
             msg_str.push_str("\nFIR STACK:\n");
             crate::interpreter::write_call_stack(call_stack, &mut msg_str);
             panic!("{}", msg_str);
@@ -217,12 +208,7 @@ impl Heap {
     ) -> u64 {
         let array_len = val_as_u32(self[array + ARRAY_LEN_FIELD_IDX]);
         if idx >= array_len {
-            let mut msg_str = format!(
-                "{}: OOB array access (idx = {}, len = {})\n",
-                loc_display(loc),
-                idx,
-                array_len
-            );
+            let mut msg_str = format!("{loc}: OOB array access (idx = {idx}, len = {array_len})\n");
             msg_str.push_str("\nFIR STACK:\n");
             crate::interpreter::write_call_stack(call_stack, &mut msg_str);
             panic!("{}", msg_str);

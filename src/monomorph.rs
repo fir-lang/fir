@@ -6,7 +6,6 @@ use crate::mono_ast as mono;
 use crate::mono_ast::MonoPgm;
 use crate::type_checker::id::{Id, IdMangler, builtins};
 use crate::type_checker::{FunArgs, Kind, ModuleEnv, RecordOrVariant, Ty};
-use crate::utils::*;
 
 /// The program in front-end syntax, converted to a graph for efficient and easy lookups.
 #[derive(Debug)]
@@ -34,7 +33,7 @@ impl PolyPgm {
     fn module_env(&self, module: &ModulePath) -> &ModuleEnv {
         self.module_envs
             .get(module)
-            .unwrap_or_else(|| panic!("No module env for {}", module))
+            .unwrap_or_else(|| panic!("No module env for {module}"))
     }
 }
 
@@ -507,13 +506,7 @@ fn mono_stmt(
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
             // Complex assignment operators should've been desugared during type checking.
-            assert_eq!(
-                *op,
-                ast::AssignOp::Eq,
-                "{}: Complex assignment: {:?}",
-                loc_display(loc),
-                op
-            );
+            assert_eq!(*op, ast::AssignOp::Eq, "{loc}: Complex assignment: {op:?}");
             mono::Stmt::Assign(mono::AssignStmt {
                 lhs: mono_l_expr(lhs, ty_map, poly_pgm, mono_pgm, locals, mangler, module_env),
                 rhs: mono_l_expr(rhs, ty_map, poly_pgm, mono_pgm, locals, mangler, module_env),
@@ -525,7 +518,7 @@ fn mono_stmt(
         )),
 
         ast::Stmt::For(ast::ForStmt { .. }) => {
-            panic!("{}: For loop should've been desugared", loc_display(loc))
+            panic!("{loc}: For loop should've been desugared")
         }
 
         ast::Stmt::While(ast::WhileStmt { label, cond, body }) => {
@@ -589,7 +582,7 @@ fn mono_expr(
             let poly_decl = poly_pgm
                 .top
                 .get(&var_id)
-                .unwrap_or_else(|| panic!("{}: Unbound variable {}", loc_display(loc), name));
+                .unwrap_or_else(|| panic!("{loc}: Unbound variable {name}"));
 
             let mono_ty_args = ty_args
                 .iter()
@@ -723,9 +716,10 @@ fn mono_expr(
                 }
 
                 ast::MethodSelFun::TopLevel { local_name: _, id } => {
-                    let poly_decl = poly_pgm.top.get(id).unwrap_or_else(|| {
-                        panic!("{}: Unbound top-level function {}", loc_display(loc), id)
-                    });
+                    let poly_decl = poly_pgm
+                        .top
+                        .get(id)
+                        .unwrap_or_else(|| panic!("{loc}: Unbound top-level function {id}"));
                     let callee_env = poly_pgm.module_env(id.module());
                     mono_top_fn(
                         poly_decl,
@@ -771,7 +765,7 @@ fn mono_expr(
                 .enumerate()
                 .map(|(i, arg_ty)| {
                     (
-                        Name::new(format!("$arg{}$", i)),
+                        Name::new(format!("$arg{i}$")),
                         mono::L {
                             loc: loc.clone(),
                             node: arg_ty.clone(),
@@ -887,7 +881,7 @@ fn mono_expr(
                 }
                 None => {
                     let poly_ty_decl = match poly_pgm.ty.get(&con_ty_id) {
-                        None => panic!("Unknown constructor {:?}", con_ty_id),
+                        None => panic!("Unknown constructor {con_ty_id:?}"),
                         Some(ty_decl) => ty_decl,
                     };
 
@@ -991,12 +985,7 @@ fn mono_expr(
                 });
             }
 
-            panic!(
-                "{}: Associated function or method {}.{} isn't in poly pgm",
-                loc_display(loc),
-                ty,
-                member
-            )
+            panic!("{loc}: Associated function or method {ty}.{member} isn't in poly pgm")
         }
 
         ast::Expr::Int(ast::IntExpr { kind, .. }) => {
@@ -1045,11 +1034,11 @@ fn mono_expr(
 
         ast::Expr::Str(parts) => {
             if parts.len() != 1 {
-                panic!("{}: Non-desugared string literal", loc_display(loc));
+                panic!("{loc}: Non-desugared string literal");
             }
             let str = match &parts[0] {
                 StrPart::Expr(_) => {
-                    panic!("{}: Non-desugared string literal", loc_display(loc));
+                    panic!("{loc}: Non-desugared string literal");
                 }
                 StrPart::Str(str) => str,
             };
@@ -1083,11 +1072,11 @@ fn mono_expr(
         ),
 
         ast::Expr::BinOp(ast::BinOpExpr { op, .. }) => {
-            panic!("{}: Non-desugared binop: {:?}", loc_display(loc), op);
+            panic!("{loc}: Non-desugared binop: {op:?}");
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr: _ }) => {
-            panic!("{}: Non-desugared unop: {:?}", loc_display(loc), op)
+            panic!("{loc}: Non-desugared unop: {op:?}")
         }
 
         ast::Expr::Return(ast::ReturnExpr { expr, inferred_ty }) => mono::Expr::Return(
@@ -1345,7 +1334,7 @@ fn mono_expr(
         }
 
         ast::Expr::Placeholder => {
-            panic!("{}: BUG: Placeholder in mono_expr", loc_display(loc));
+            panic!("{loc}: BUG: Placeholder in mono_expr");
         }
     }
 }
@@ -1532,12 +1521,7 @@ fn mono_method(
             .collect::<Vec<String>>()
             .join(", ");
 
-        panic!(
-            "{}: Unable to find matching impl for {} type args [{}]",
-            loc_display(loc),
-            method_ty_id,
-            args,
-        );
+        panic!("{loc}: Unable to find matching impl for {method_ty_id} type args [{args}]",);
     }
 
     if let Some(method_map) = poly_pgm.method.get(method_ty_id) {
@@ -2218,7 +2202,7 @@ fn resolve_assoc_ty(
     let poly_trait = poly_pgm
         .traits
         .get(trait_id)
-        .unwrap_or_else(|| panic!("Unknown trait {:?} in associated type selection", trait_id));
+        .unwrap_or_else(|| panic!("Unknown trait {trait_id:?} in associated type selection"));
 
     for impl_ in &poly_trait.impls {
         if let Some(substs) = match_trait_impl(trait_args, impl_, poly_pgm, mangler) {
@@ -2239,10 +2223,7 @@ fn resolve_assoc_ty(
         }
     }
 
-    panic!(
-        "No matching impl for {}.{} with args {:?}",
-        trait_id, assoc_ty, trait_args
-    )
+    panic!("No matching impl for {trait_id}.{assoc_ty} with args {trait_args:?}")
 }
 
 /// Build the `List` type for `RecRowToList`: `List[RecordField[T1], List[..., []]]`.
@@ -2322,7 +2303,7 @@ fn mono_tc_ty(
             let ty_decl = poly_pgm
                 .ty
                 .get(&con)
-                .unwrap_or_else(|| panic!("Unknown type constructor {:?}", con));
+                .unwrap_or_else(|| panic!("Unknown type constructor {con:?}"));
 
             mono::Type::Named(mono::NamedType {
                 name: mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm, &con, mangler),
@@ -2481,7 +2462,7 @@ fn mono_tc_ty(
             let (trait_id, trait_args): (Id, &[Ty]) = match ty.as_ref() {
                 Ty::App(id, args, _kind) => (id.clone(), args.as_slice()),
                 Ty::Con(id, _kind) => (id.clone(), &[]),
-                _ => panic!("Expected trait constructor in AssocTySelect, got {:?}", ty),
+                _ => panic!("Expected trait constructor in AssocTySelect, got {ty:?}"),
             };
             let mono_args: Vec<mono::Type> = trait_args
                 .iter()
@@ -2514,7 +2495,7 @@ fn mono_ast_ty(
 
         ast::Type::Var(var) => ty_map
             .get(var)
-            .unwrap_or_else(|| panic!("BUG: {}: Variable {} not in env", loc_display(loc), var))
+            .unwrap_or_else(|| panic!("BUG: {loc}: Variable {var} not in env"))
             .clone(),
 
         ast::Type::Record {
@@ -2607,7 +2588,7 @@ fn mono_ast_ty(
                     )
                 }
                 ast::Type::Var(var) => {
-                    panic!("Unexpected type variable {} in AssocTySelect", var);
+                    panic!("Unexpected type variable {var} in AssocTySelect");
                 }
                 _ => panic!("Expected named type in AssocTySelect, got {:?}", ty.node),
             }
@@ -2836,11 +2817,7 @@ fn get_record_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Name, mono::Type> {
         mono::Type::Record { fields } => fields,
 
         other @ (mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_)) => {
-            panic!(
-                "{}: BUG: Record expression with non-record type: {}",
-                loc_display(loc),
-                other
-            )
+            panic!("{loc}: BUG: Record expression with non-record type: {other}")
         }
     }
 }
@@ -2850,11 +2827,7 @@ fn get_variant_ty(ty: mono::Type, loc: &ast::Loc) -> OrdMap<Name, mono::NamedTyp
         mono::Type::Variant { alts } => alts,
 
         other @ (mono::Type::Named(_) | mono::Type::Record { .. } | mono::Type::Fn(_)) => {
-            panic!(
-                "{}: BUG: Variant expression with non-record type: {}",
-                loc_display(loc),
-                other
-            )
+            panic!("{loc}: BUG: Variant expression with non-record type: {other}")
         }
     }
 }
@@ -3044,7 +3017,7 @@ fn collect_record_rows(
             let (ext_trait_id, trait_args): (Id, &[Ty]) = match ty.as_ref() {
                 Ty::App(id, args, _kind) => (id.clone(), args.as_slice()),
                 Ty::Con(id, _kind) => (id.clone(), &[]),
-                _ => panic!("Expected trait constructor in AssocTySelect, got {:?}", ty),
+                _ => panic!("Expected trait constructor in AssocTySelect, got {ty:?}"),
             };
             let mono_args: Vec<mono::Type> = trait_args
                 .iter()
@@ -3322,6 +3295,6 @@ fn extract_type_con_id(ty: &Ty) -> Id {
     match ty {
         Ty::Con(id, _) | Ty::App(id, _, _) => id.clone(),
         Ty::Fun { ret, .. } => extract_type_con_id(ret),
-        _ => panic!("Cannot extract type constructor Id from {:?}", ty),
+        _ => panic!("Cannot extract type constructor Id from {ty:?}"),
     }
 }

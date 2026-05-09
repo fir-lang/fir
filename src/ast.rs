@@ -27,10 +27,8 @@ pub struct Loc {
     pub module: Rc<str>,
     pub line_start: u16,
     pub col_start: u16,
-    pub byte_offset_start: u32,
     pub line_end: u16,
     pub col_end: u16,
-    pub byte_offset_end: u32,
 }
 
 impl std::fmt::Debug for Loc {
@@ -46,16 +44,26 @@ impl std::fmt::Debug for Loc {
     }
 }
 
+impl std::fmt::Display for Loc {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}:{}:{}",
+            self.module,
+            self.line_start + 1,
+            self.col_start + 1
+        )
+    }
+}
+
 impl Loc {
     pub fn dummy() -> Self {
         Loc {
             module: "".into(),
             line_start: 0,
             col_start: 0,
-            byte_offset_start: 0,
             line_end: 0,
             col_end: 0,
-            byte_offset_end: 0,
         }
     }
 }
@@ -108,10 +116,8 @@ impl Loc {
             module: module.clone(),
             line_start: start.line as u16,
             col_start: start.col as u16,
-            byte_offset_start: start.byte_idx as u32,
             line_end: end.line as u16,
             col_end: end.col as u16,
-            byte_offset_end: end.byte_idx as u32,
         }
     }
 }

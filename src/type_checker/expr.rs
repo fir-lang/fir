@@ -9,7 +9,7 @@ use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{try_unify_one_way, unify, unify_expected_ty};
-use crate::type_checker::{IntLit, TcFunState, loc_display};
+use crate::type_checker::{IntLit, TcFunState};
 
 /// Returns the type of the expression, and binders that the expression binds.
 ///
@@ -49,9 +49,7 @@ pub(super) fn check_expr(
             {
                 if !user_ty_args.is_empty() {
                     panic!(
-                        "{}: Local variables can't have type parameters, but `{}` is passed type arguments",
-                        loc_display(loc),
-                        name
+                        "{loc}: Local variables can't have type parameters, but `{name}` is passed type arguments"
                     );
                 }
                 *inferred_ty = Some(ty.clone());
@@ -76,7 +74,7 @@ pub(super) fn check_expr(
 
             let scheme = match tc_state.tys.top_schemes.get(&var_id) {
                 Some(scheme) => scheme,
-                None => panic!("{}: Unbound variable {}", loc_display(loc), name),
+                None => panic!("{loc}: Unbound variable {name}"),
             };
 
             let ty = if user_ty_args.is_empty() {
@@ -96,7 +94,7 @@ pub(super) fn check_expr(
                 if scheme.quantified_vars.len() != user_ty_args.len() {
                     panic!(
                         "{}: Variable {} takes {} type arguments, but applied to {}",
-                        loc_display(loc),
+                        loc,
                         name,
                         scheme.quantified_vars.len(),
                         user_ty_args.len()
@@ -161,7 +159,7 @@ pub(super) fn check_expr(
                         is_row: _,
                     } => {
                         if !user_ty_args.is_empty() {
-                            panic!("{}: Record field with type arguments", loc_display(loc));
+                            panic!("{loc}: Record field with type arguments");
                         }
                         let (labels, _) = crate::type_checker::row_utils::collect_record_rows(
                             tc_state.tys.tys.cons(),
@@ -259,12 +257,12 @@ pub(super) fn check_expr(
                     .tys
                     .tys
                     .get_con(&ty_id)
-                    .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
+                    .unwrap_or_else(|| panic!("{loc}: Unknown type {ty}"));
 
                 if con.ty_params.len() != ty_user_ty_args.len() {
                     panic!(
                         "{}: Type {} takes {} type arguments, but applied to {}",
-                        loc_display(loc),
+                        loc,
                         ty,
                         con.ty_params.len(),
                         ty_user_ty_args.len(),
@@ -282,15 +280,10 @@ pub(super) fn check_expr(
                     // check whether the type exist.
                     match tc_state.tys.tys.get_con(&ty_id) {
                         Some(_) => {
-                            panic!(
-                                "{}: Type {} does not have associated function {}",
-                                loc_display(loc),
-                                ty,
-                                member
-                            );
+                            panic!("{loc}: Type {ty} does not have associated function {member}");
                         }
                         None => {
-                            panic!("{}: Unknown type {}", loc_display(loc), ty);
+                            panic!("{loc}: Unknown type {ty}");
                         }
                     }
                 });
@@ -356,7 +349,7 @@ pub(super) fn check_expr(
                 if scheme.quantified_vars.len() != user_ty_args.len() {
                     panic!(
                         "{}: Associated function {}.{} takes {} type arguments, but applied to {}",
-                        loc_display(loc),
+                        loc,
                         ty,
                         member,
                         scheme.quantified_vars.len(),
@@ -530,23 +523,21 @@ pub(super) fn check_expr(
                             for arg in args.iter() {
                                 if arg.name.is_some() {
                                     panic!(
-                                        "{}: Named argument applied to function that expects positional arguments",
-                                        loc_display(loc),
+                                        "{loc}: Named argument applied to function that expects positional arguments",
                                     );
                                 }
                             }
 
                             if splice.is_some() {
                                 panic!(
-                                    "{}: Function with positional arguments can't have a spliced argument",
-                                    loc_display(loc),
+                                    "{loc}: Function with positional arguments can't have a spliced argument",
                                 );
                             }
 
                             if param_tys.len() != args.len() {
                                 panic!(
                                     "{}: Function with arity {} is passed {} args",
-                                    loc_display(loc),
+                                    loc,
                                     param_tys.len(),
                                     args.len()
                                 );
@@ -585,8 +576,7 @@ pub(super) fn check_expr(
                                         }
                                         _ => {
                                             panic!(
-                                                "{}: Positional argument applied to function that expects named arguments",
-                                                loc_display(loc),
+                                                "{loc}: Positional argument applied to function that expects named arguments",
                                             );
                                         }
                                     }
@@ -668,11 +658,9 @@ pub(super) fn check_expr(
                     ret_ty
                 }
 
-                _ => panic!(
-                    "{}: Function in function application is not a function: {:?}",
-                    loc_display(loc),
-                    fun_ty,
-                ),
+                _ => {
+                    panic!("{loc}: Function in function application is not a function: {fun_ty:?}",)
+                }
             };
 
             // If the callee is a `MethodSel` rewrite it into a direct call.
@@ -714,9 +702,7 @@ pub(super) fn check_expr(
                         }
                     }
                     _ => panic!(
-                        "{}: MethodSel type is not a function with positional args: {:?}",
-                        loc_display(loc),
-                        fun_ty
+                        "{loc}: MethodSel type is not a function with positional args: {fun_ty:?}"
                     ),
                 };
 
@@ -767,7 +753,7 @@ pub(super) fn check_expr(
             parsed,
             inferred_ty,
         }) => {
-            assert!(kind.borrow().is_none(), "{}: {:?}", loc_display(loc), kind);
+            assert!(kind.borrow().is_none(), "{loc}: {kind:?}");
             assert!(inferred_ty.is_none());
 
             let ty = expected_ty
@@ -1073,7 +1059,7 @@ pub(super) fn check_expr(
                             .collect();
                         panic!(
                             "{}: Left and right exprs in `and` bind same variables: {}",
-                            loc_display(loc),
+                            loc,
                             intersection.join(", "),
                         );
                     }
@@ -1385,12 +1371,7 @@ pub(super) fn check_expr(
                             } => expected_args.get(param_idx).cloned(),
                             FunArgs::Named { .. } => None,
                         })
-                        .unwrap_or_else(|| {
-                            panic!(
-                                "{}: fn expr needs argument type annotations",
-                                loc_display(loc)
-                            )
-                        })
+                        .unwrap_or_else(|| panic!("{loc}: fn expr needs argument type annotations"))
                 });
 
                 tc_state
@@ -1511,10 +1492,7 @@ pub(super) fn check_expr(
                 }
 
                 if pairs && singles {
-                    panic!(
-                        "{}: Sequence has both key-value pair and single element",
-                        loc_display(loc)
-                    );
+                    panic!("{loc}: Sequence has both key-value pair and single element");
                 }
 
                 let mut elem_iters: Vec<ast::L<ast::Expr>> = Vec::with_capacity(elems.len());
@@ -1695,14 +1673,11 @@ pub(super) fn check_expr(
 
         ast::Expr::InlineC(_) => {
             // Inline C expressions are desugared expressions generated by the type checker.
-            panic!(
-                "{}: BUG: Inline C expression in type checker",
-                loc_display(loc)
-            );
+            panic!("{loc}: BUG: Inline C expression in type checker");
         }
 
         ast::Expr::Placeholder => {
-            panic!("{}: BUG: Placeholder in check_expr", loc_display(loc));
+            panic!("{loc}: BUG: Placeholder in check_expr");
         }
     }
 }
@@ -1764,12 +1739,12 @@ pub(super) fn check_match_expr(
 
     for (arm_idx, arm) in alts.iter().enumerate() {
         if !info.is_useful(arm_idx as u32) {
-            eprintln!("{}: Redundant branch", loc_display(&arm.pat.loc));
+            eprintln!("{}: Redundant branch", arm.pat.loc);
         }
     }
 
     if !exhaustive {
-        eprintln!("{}: Unexhaustive pattern match", loc_display(loc));
+        eprintln!("{loc}: Unexhaustive pattern match");
     }
 
     for (alt_idx, (ast::Alt { pat, guard, rhs }, mut alt_scope)) in
@@ -1891,7 +1866,7 @@ fn check_field_sel(
         && let Some(field_ty) = select_field(tc_state, con, args, field, loc)
     {
         if !user_ty_args.is_empty() {
-            panic!("{}: Field passed type arguments", loc_display(loc));
+            panic!("{loc}: Field passed type arguments");
         }
         return (
             field_ty.clone(),
@@ -1904,15 +1879,8 @@ fn check_field_sel(
         );
     }
 
-    let Selection { scheme, kind } =
-        select_method(tc_state, object_ty, field, loc).unwrap_or_else(|| {
-            panic!(
-                "{}: Type {} does not have field or method {}",
-                loc_display(loc),
-                object_ty,
-                field
-            )
-        });
+    let Selection { scheme, kind } = select_method(tc_state, object_ty, field, loc)
+        .unwrap_or_else(|| panic!("{loc}: Type {object_ty} does not have field or method {field}"));
 
     let (fn_ty, fn_ty_args) = if user_ty_args.is_empty() {
         let (ty, args) = scheme.instantiate(tc_state.var_gen, tc_state.preds, loc);
@@ -1926,7 +1894,7 @@ fn check_field_sel(
             };
             panic!(
                 "{}: {} takes {} type arguments, but applied to {}",
-                loc_display(loc),
+                loc,
                 kind_str,
                 scheme.quantified_vars.len(),
                 user_ty_args.len()
@@ -1950,11 +1918,7 @@ fn check_field_sel(
             exceptions,
         } => (args, ret, exceptions),
 
-        _ => panic!(
-            "{}: Type of method is not a function type: {:?}",
-            loc_display(loc),
-            fn_ty
-        ),
+        _ => panic!("{loc}: Type of method is not a function type: {fn_ty:?}"),
     };
 
     match &mut args {
@@ -2032,7 +1996,7 @@ fn select_field(
         .tys
         .tys
         .get_con(&ty_con_id)
-        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con_id));
+        .unwrap_or_else(|| panic!("{loc}: Unknown type {ty_con_id}"));
 
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
@@ -2130,10 +2094,7 @@ fn select_method(
                 } => &args[0],
 
                 other => panic!(
-                    "{}: Method call candidate for {} does not have function type: {}",
-                    loc_display(loc),
-                    method,
-                    other
+                    "{loc}: Method call candidate for {method} does not have function type: {other}"
                 ),
             };
             if try_unify_one_way(
@@ -2168,7 +2129,7 @@ fn select_method(
 
             panic!(
                 "{}: Ambiguous method call, candidates: {}",
-                loc_display(loc),
+                loc,
                 candidates_str.join(", ")
             );
         }
@@ -2259,7 +2220,7 @@ fn select_method(
 
         panic!(
             "{}: Ambiguous call for {}, candidates: {}",
-            loc_display(loc),
+            loc,
             method,
             candidates_str.join(", ")
         );
@@ -2275,11 +2236,7 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) ->
     let con_id = match ty.normalize(tc_state.tys.tys.cons()) {
         Ty::Con(con, _) | Ty::App(con, _, _) => con.clone(),
 
-        ty => panic!(
-            "{}: Type in variant is not a constructor: {}",
-            loc_display(loc),
-            ty
-        ),
+        ty => panic!("{loc}: Type in variant is not a constructor: {ty}"),
     };
 
     if con_id == builtin_ids::I8()
@@ -2289,10 +2246,7 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, loc: &ast::Loc) ->
         || con_id == builtin_ids::I64()
         || con_id == builtin_ids::U64()
     {
-        panic!(
-            "{}: Integers can't be made variants in the interpreter",
-            loc_display(loc)
-        );
+        panic!("{loc}: Integers can't be made variants in the interpreter");
     }
 
     let row_ext = tc_state
@@ -2353,7 +2307,7 @@ fn refine_binders(binders: &HashMap<Name, HashSet<Ty>>, loc: &ast::Loc) -> HashM
                     | Ty::Fun { .. }
                     | Ty::Record { .. }
                     | Ty::AssocTySelect { .. } => {
-                        panic!("{}: {}", loc_display(loc), ty)
+                        panic!("{loc}: {ty}")
                     }
                 }
             }
@@ -2489,11 +2443,7 @@ fn check_record_expr(
     let mut field_names: HashSet<&Name> = Default::default();
     for (field_name, _field_expr) in fields.iter() {
         if !field_names.insert(field_name) {
-            panic!(
-                "{}: Field name {} occurs multiple times in the record",
-                loc_display(loc),
-                field_name
-            );
+            panic!("{loc}: Field name {field_name} occurs multiple times in the record");
         }
     }
 
@@ -2572,10 +2522,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
     assert!(ty_args.is_empty());
 
     if !ty_user_ty_args.is_empty() && !con_user_ty_args.is_empty() {
-        panic!(
-            "{}: Constructor selection expressions should have only one type argument list",
-            loc_display(loc)
-        );
+        panic!("{loc}: Constructor selection expressions should have only one type argument list");
     }
 
     let ty_arg_list: &[ast::L<ast::Type>] = if ty_user_ty_args.is_empty() {
@@ -2596,11 +2543,11 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
         .tys
         .tys
         .get_con(&ty_id)
-        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), con_ty));
+        .unwrap_or_else(|| panic!("{loc}: Unknown type {con_ty}"));
 
     match &ty_con.details {
         TyConDetails::Trait(_) => {
-            panic!("{}: Type {} is a trait", loc_display(loc), con_ty)
+            panic!("{loc}: Type {con_ty} is a trait")
         }
 
         TyConDetails::Type(_) => {}
@@ -2608,10 +2555,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
         TyConDetails::Synonym(ty) => {
             // With synonyms we don't allow constructor type arguments.
             if !con_user_ty_args.is_empty() {
-                panic!(
-                    "{}: Constructor type arguments not allowed with synonyms",
-                    loc_display(loc)
-                );
+                panic!("{loc}: Constructor type arguments not allowed with synonyms");
             }
 
             // E.g. type MyResult[t] = Result[U32, t]
@@ -2634,7 +2578,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
             {
                 panic!(
                     "{}: Type {} takes {} arguments, but passed {}",
-                    loc_display(loc),
+                    loc,
                     con_ty,
                     ty_con.arity(),
                     user_ty_args_converted.len()
@@ -2670,54 +2614,33 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
                 .tys
                 .tys
                 .get_con(&con)
-                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty));
+                .unwrap_or_else(|| panic!("{loc}: Unknown type {ty}"));
 
             *con_ty = con.name().clone();
             *resolved_ty_id = Some(con.clone());
         }
     }
 
-    let ty_details: &TypeDetails = ty_con.type_details().unwrap_or_else(|| {
-        panic!(
-            "{}: Type {} is a trait or type synonym",
-            loc_display(loc),
-            con_ty
-        )
-    });
+    let ty_details: &TypeDetails = ty_con
+        .type_details()
+        .unwrap_or_else(|| panic!("{loc}: Type {con_ty} is a trait or type synonym"));
 
     let scheme: &Scheme = match con_name {
         Some(con_name) => {
             if !ty_details.sum {
-                panic!(
-                    "{}: Type {} does not have sum constructors",
-                    loc_display(loc),
-                    con_ty
-                );
+                panic!("{loc}: Type {con_ty} does not have sum constructors");
             }
             ty_details.cons.get(con_name).unwrap_or_else(|| {
-                panic!(
-                    "{}: Type {} does not have a constructor named {}",
-                    loc_display(loc),
-                    con_ty,
-                    con_name
-                )
+                panic!("{loc}: Type {con_ty} does not have a constructor named {con_name}")
             })
         }
 
         None => {
             if ty_details.sum {
-                panic!(
-                    "{}: Sum type allocation {} needs a constructor",
-                    loc_display(loc),
-                    con_ty
-                );
+                panic!("{loc}: Sum type allocation {con_ty} needs a constructor");
             }
             if ty_details.cons.is_empty() {
-                panic!(
-                    "{}: Type {} has no constructor and cannot be used as a value",
-                    loc_display(loc),
-                    con_ty,
-                );
+                panic!("{loc}: Type {con_ty} has no constructor and cannot be used as a value");
             }
             assert_eq!(ty_details.cons.len(), 1);
             ty_details.cons.values().next().unwrap()
@@ -2733,7 +2656,7 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
         if scheme.quantified_vars.len() != user_ty_args_converted.len() {
             panic!(
                 "{}: Constructor {}{}{} takes {} type arguments, but applied to {}",
-                loc_display(loc),
+                loc,
                 con_ty,
                 if con_name.is_some() { "." } else { "" },
                 con_name.as_ref().cloned().unwrap_or(Name::new_static("")),

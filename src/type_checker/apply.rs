@@ -2,7 +2,6 @@ use crate::ast::{self, Name};
 use crate::collections::OrdMap;
 use crate::type_checker::unification::unify;
 use crate::type_checker::*;
-use crate::utils::loc_display;
 
 /// Apply a constructor type to arguments to get a pattern type.
 ///
@@ -34,7 +33,7 @@ pub(crate) fn apply_con_ty(
                     {
                         panic!(
                             "{}: Constructor takes {} positional arguments, but applied {}",
-                            loc_display(loc),
+                            loc,
                             con_ty_args.len(),
                             args.len()
                         );
@@ -42,9 +41,7 @@ pub(crate) fn apply_con_ty(
                     for (ty1, ty2) in con_ty_args.iter().zip(args.iter()) {
                         if let Some(name) = &ty2.name {
                             panic!(
-                                "{}: Constructor takes positional arguments, but applied named argument '{}'",
-                                loc_display(loc),
-                                name
+                                "{loc}: Constructor takes positional arguments, but applied named argument '{name}'"
                             );
                         }
                         unify(
@@ -75,17 +72,12 @@ pub(crate) fn apply_con_ty(
                             Some(name) => name,
                             None => {
                                 panic!(
-                                    "{}: Constructor takes named arguments, but passed positional argument",
-                                    loc_display(loc)
+                                    "{loc}: Constructor takes named arguments, but passed positional argument"
                                 );
                             }
                         };
                         if !arg_names.insert(name) {
-                            panic!(
-                                "{}: Named argument '{}' applied multiple times",
-                                loc_display(loc),
-                                name,
-                            );
+                            panic!("{loc}: Named argument '{name}' applied multiple times",);
                         }
                         if let Some(con_ty_arg) = con_ty_args.get(name) {
                             unify(
@@ -101,11 +93,7 @@ pub(crate) fn apply_con_ty(
                         } else if con_ty_extension.is_some() {
                             extra_pat_fields.insert(name.clone(), arg.node.clone());
                         } else {
-                            panic!(
-                                "{}: Constructor doesn't take named argument '{}'",
-                                loc_display(loc),
-                                name,
-                            );
+                            panic!("{loc}: Constructor doesn't take named argument '{name}'",);
                         }
                     }
 
@@ -134,10 +122,7 @@ pub(crate) fn apply_con_ty(
                                 .collect::<Vec<String>>()
                                 .join(", ");
                             panic!(
-                                "{}: Constructor takes named arguments {{{}}}, but applied {{{}}}",
-                                loc_display(loc),
-                                con_args_str,
-                                applied_args_str
+                                "{loc}: Constructor takes named arguments {{{con_args_str}}}, but applied {{{applied_args_str}}}"
                             );
                         }
                     }
@@ -257,7 +242,7 @@ pub(crate) fn apply_con_ty(
             }
             panic!(
                 "{}: Type {} doesn't take arguments, but applied {} arguments",
-                loc_display(loc),
+                loc,
                 con_ty,
                 args.len(),
             )

@@ -5,7 +5,6 @@ use crate::type_checker::TyCon;
 use crate::type_checker::id::Id;
 use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::ty::UVarGen;
-use crate::utils::loc_display;
 
 pub(super) fn normalize_stmt(
     stmt: &mut ast::Stmt,
@@ -30,7 +29,7 @@ pub(super) fn normalize_stmt(
         ast::Stmt::Expr(expr) => normalize_expr(expr, loc, cons, trait_env, var_gen),
 
         ast::Stmt::For(ast::ForStmt { .. }) => {
-            panic!("{}: Non-desugared for statement", loc_display(loc));
+            panic!("{loc}: Non-desugared for statement");
         }
 
         ast::Stmt::While(ast::WhileStmt {
@@ -62,7 +61,7 @@ fn normalize_expr(
             *inferred_ty = Some(
                 inferred_ty
                     .as_ref()
-                    .unwrap_or_else(|| panic!("{}", loc_display(loc)))
+                    .unwrap_or_else(|| panic!("{}", loc))
                     .deep_normalize(cons, trait_env, var_gen, &[]),
             );
             ty_args
@@ -78,7 +77,7 @@ fn normalize_expr(
             *inferred_ty = Some(
                 inferred_ty
                     .as_ref()
-                    .unwrap_or_else(|| panic!("{}", loc_display(loc)))
+                    .unwrap_or_else(|| panic!("{}", loc))
                     .deep_normalize(cons, trait_env, var_gen, &[]),
             );
             ty_args
@@ -130,7 +129,7 @@ fn normalize_expr(
             *inferred_ty = Some(
                 inferred_ty
                     .as_ref()
-                    .unwrap_or_else(|| panic!("{}", loc_display(loc)))
+                    .unwrap_or_else(|| panic!("{}", loc))
                     .deep_normalize(cons, trait_env, var_gen, &[]),
             );
             normalize_expr(&mut object.node, &object.loc, cons, trait_env, var_gen)
@@ -320,7 +319,7 @@ fn normalize_expr(
         ast::Expr::InlineC(_) => {}
 
         ast::Expr::Placeholder => {
-            panic!("{}: BUG: Placeholder in normalize_expr", loc_display(loc));
+            panic!("{loc}: BUG: Placeholder in normalize_expr");
         }
     }
 }

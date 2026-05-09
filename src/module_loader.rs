@@ -2,7 +2,6 @@ use crate::ast;
 use crate::collections::*;
 use crate::module::ModulePath;
 use crate::name::Name;
-use crate::utils::loc_display;
 
 use std::fmt;
 use std::path::Path;
@@ -180,9 +179,9 @@ impl LoadedPgm {
             if i != 0 {
                 println!();
             }
-            println!("mod {} {{\n", module_path);
+            println!("mod {module_path} {{\n");
             module.print();
-            println!("\n}} # {}", module_path);
+            println!("\n}} # {module_path}");
         }
     }
 }
@@ -333,8 +332,7 @@ fn no_implicit_prelude(import: &ast::L<ast::ImportDecl>) -> bool {
             }
             panic!(
                 "{}: Weird `NoImplicitPrelude` attribute: {}",
-                loc_display(&import.loc),
-                attr
+                import.loc, attr
             );
         }
     }
@@ -367,11 +365,7 @@ fn collect_extern_headers(import: &ast::L<ast::ImportDecl>, headers: &mut OrdSet
                 || !user_ty_args.is_empty()
                 || args.iter().any(|arg| arg.name.is_some())
             {
-                panic!(
-                    "{}: Weird `include` attribute: {}",
-                    loc_display(&import.loc),
-                    attr
-                );
+                panic!("{}: Weird `include` attribute: {attr}", import.loc);
             }
             for arg in args {
                 match &arg.expr.node {
@@ -382,11 +376,7 @@ fn collect_extern_headers(import: &ast::L<ast::ImportDecl>, headers: &mut OrdSet
                         headers.insert(str.to_string());
                     }
                     _ => {
-                        panic!(
-                            "{}: Weird `include` attribute: {}",
-                            loc_display(&import.loc),
-                            attr
-                        );
+                        panic!("{}: Weird `include` attribute: {attr}", import.loc);
                     }
                 }
             }
@@ -413,14 +403,14 @@ impl fmt::Display for SccGraph {
                 writeln!(f)?;
             }
 
-            write!(f, "SCC {}: ", i)?;
+            write!(f, "SCC {i}: ")?;
 
             write!(f, "{{")?;
             for (j, m) in node.modules.iter().enumerate() {
                 if j != 0 {
                     write!(f, ", ")?;
                 }
-                write!(f, "{}", m)?;
+                write!(f, "{m}")?;
             }
             write!(f, "}}")?;
 
@@ -432,8 +422,7 @@ impl fmt::Display for SccGraph {
 
             write!(
                 f,
-                " dependents={:?} dependencies={:?}",
-                dependents, dependencies
+                " dependents={dependents:?} dependencies={dependencies:?}"
             )?;
         }
         Ok(())

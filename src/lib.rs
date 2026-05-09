@@ -27,7 +27,6 @@ mod to_c;
 mod token;
 mod type_checker;
 mod type_collector;
-mod utils;
 
 use lexgen_util::Loc;
 use smol_str::SmolStr;
@@ -330,9 +329,9 @@ mod native {
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
         let parsed = parse_module(&module_path, &contents, test_ast_printer);
         if print_parsed_ast {
-            println!("mod {} {{\n", module);
+            println!("mod {module} {{\n");
             parsed.print();
-            println!("\n}} # {}\n", module);
+            println!("\n}} # {module}\n");
         }
         parsed
     }
@@ -577,7 +576,7 @@ mod tests {
         assert_eq!(module.decls.len(), 1);
         let import = match &module.decls[0].node {
             TopDecl::Import(i) => &i.node,
-            other => panic!("expected import, got {:?}", other),
+            other => panic!("expected import, got {other:?}"),
         };
         assert_eq!(import.items.len(), 8);
 
@@ -599,7 +598,7 @@ mod tests {
                 assert_eq!(names[0].original_name, "f1");
                 assert_eq!(names[1].original_name, "f2");
             }
-            other => panic!("expected Selective, got {:?}", other),
+            other => panic!("expected Selective, got {other:?}"),
         }
 
         // 2: A/B/C (import everything)
@@ -624,7 +623,7 @@ mod tests {
         );
         match &import.items[3].import_spec {
             Some(ImportSpec::Prefixed { prefix }) => assert_eq!(prefix, "E"),
-            other => panic!("expected Prefixed, got {:?}", other),
+            other => panic!("expected Prefixed, got {other:?}"),
         }
 
         // 4: A as B
@@ -634,7 +633,7 @@ mod tests {
         );
         match &import.items[4].import_spec {
             Some(ImportSpec::Prefixed { prefix }) => assert_eq!(prefix, "B"),
-            other => panic!("expected Prefixed, got {:?}", other),
+            other => panic!("expected Prefixed, got {other:?}"),
         }
 
         // 5: A/B/D/[f1, f2, Type1, Type2]
@@ -653,7 +652,7 @@ mod tests {
                 assert_eq!(names[0].local_name, "f1");
                 assert_eq!(names[2].original_name, "Type1");
             }
-            other => panic!("expected Selective, got {:?}", other),
+            other => panic!("expected Selective, got {other:?}"),
         }
 
         // 6: A/B/D/[f1 as g1, f2, Type1 as MyType, Type2]
@@ -666,7 +665,7 @@ mod tests {
                 assert_eq!(names[2].original_name, "Type1");
                 assert_eq!(names[2].local_name, "MyType");
             }
-            other => panic!("expected Selective, got {:?}", other),
+            other => panic!("expected Selective, got {other:?}"),
         }
 
         // 7: A/B/D/[f1 as _f1, Type1 as _Type1]
@@ -675,7 +674,7 @@ mod tests {
                 assert_eq!(names[0].local_name, "_f1");
                 assert_eq!(names[1].local_name, "_Type1");
             }
-            other => panic!("expected Selective, got {:?}", other),
+            other => panic!("expected Selective, got {other:?}"),
         }
     }
 }
