@@ -141,10 +141,8 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: Vec
         module: "".into(),
         line_start: 0,
         col_start: 0,
-        byte_offset_start: 0,
         line_end: 0,
         col_end: 0,
-        byte_offset_end: 0,
     };
 
     // Note: normally `call_fun` adjusts the stack, but when calling `main` we don't call
