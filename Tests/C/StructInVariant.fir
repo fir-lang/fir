@@ -10,7 +10,7 @@ extern type DivT = "div_t"(
 
 pickOne(b: Bool) [DivT, Bool]:
     if b:
-        ~DivT(quot = 42, rem = 13)
+        ~DivT(quot = 12, rem = 34)
     else:
         ~Bool.False
 
@@ -31,5 +31,5 @@ main():
 
 
 # expected stdout:
-# DivT: quot = 42, rem = 13
+# DivT: quot = 12, rem = 34
 # Bool.False

@@ -23,7 +23,7 @@ main():
         DivT(quot, rem):
             printStr("match:  quot = `quot`, rem = `rem`")
 
-    let constructed = DivT(quot = 42, rem = 13)
+    let constructed = DivT(quot = 12, rem = 34)
     let DivT(quot, rem) = constructed
     printStr("alloc:  quot = `quot`, rem = `rem`")
 
@@ -32,4 +32,4 @@ main():
 # let:   quot = 3, rem = 2
 # rename: q = 3, r = 2
 # match:  quot = 14, rem = 2
-# alloc:  quot = 42, rem = 13
+# alloc:  quot = 12, rem = 34

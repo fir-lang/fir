@@ -5,7 +5,12 @@ import []
 extern type Int = "int"
 
 
+## The libc `size_t` type.
 extern type SizeT = "size_t"
+
+
+## The libc `ssize_t` type.
+extern type SSizeT = "ssize_t"
 
 
 ## This is the C pointer type, e.g. `Ptr[Foo]` becomes `Foo*` in C.
