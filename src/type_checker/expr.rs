@@ -421,14 +421,26 @@ pub(super) fn check_expr(
                 && (mod_prefix.is_some() || tc_state.env.get(name).is_none())
                 && tc_state.module_env.resolve(name, mod_prefix, loc) == builtin_ids::C_INLINE()
             {
-                let ret_ty = match user_ty_args.first() {
-                    Some(ret_ty) => convert_ast_ty(
-                        &tc_state.tys.tys,
-                        tc_state.module_env,
-                        &ret_ty.node,
-                        &ret_ty.loc,
-                    ),
-                    None => Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
+                let (ret_ty, exn_ty) = if user_ty_args.is_empty() {
+                    (
+                        Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
+                        Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
+                    )
+                } else {
+                    (
+                        convert_ast_ty(
+                            &tc_state.tys.tys,
+                            tc_state.module_env,
+                            &user_ty_args[0].node,
+                            &user_ty_args[0].loc,
+                        ),
+                        convert_ast_ty(
+                            &tc_state.tys.tys,
+                            tc_state.module_env,
+                            &user_ty_args[1].node,
+                            &user_ty_args[1].loc,
+                        ),
+                    )
                 };
 
                 // The string argument is type checked as a inline C code template where for the
@@ -481,6 +493,17 @@ pub(super) fn check_expr(
                 let ty = unify_expected_ty(
                     ret_ty,
                     expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
+                    tc_state.var_gen,
+                    loc,
+                    tc_state.assumps,
+                    tc_state.preds,
+                );
+
+                unify(
+                    &exn_ty,
+                    &tc_state.exceptions,
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
                     tc_state.var_gen,

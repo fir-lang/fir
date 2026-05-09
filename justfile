@@ -54,6 +54,18 @@ interpreter_update_goldens: build
         sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"
     done
 
+c_update_goldens: build
+    #!/usr/bin/env bash
+    shopt -s globstar
+
+    FIR_RUN_C=true goldentests target/debug/fir Tests '# ' --overwrite --glob='!Tests/Interpreter/*' --glob='!Tests/Modules/*'
+
+    # goldentests leaves two newlines at the end of the files, remove one of
+    # them.
+    for f in Tests/**/*.fir; do
+        sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"
+    done
+
 compiler_unit_test: build_compiler
     ./target/Compiler Compiler/Main.fir
     ./Compiler/tests/tokenize.sh
