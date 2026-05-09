@@ -19,12 +19,6 @@ prim type Ptr[t]
 extern type Void = "void"
 
 
-extern type DivT = "div_t"(
-    quot: I32 = "quot",
-    rem: I32 = "rem",
-)
-
-
 ## An inline C directive.
 ##
 ## The argument should be a string literal and it can have interpolations. The
@@ -39,10 +33,6 @@ prim inline(template: Template) a
 ## These values are not first-class, the type checker special cases `inline`
 ## calls (defined below) to give this type to string literals in `inline`.
 prim type Template
-
-
-div(num: I32, den: I32) DivT:
-    inline("div(`num`, `den`)")
 
 
 Ptr.isNull(self: Ptr[t]) Bool / exn:
