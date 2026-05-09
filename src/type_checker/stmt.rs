@@ -1,11 +1,11 @@
 use crate::ast::{self, AssignOp, Name};
+use crate::type_checker::TcFunState;
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::expr::check_expr;
 use crate::type_checker::id::{self, Id};
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
-use crate::type_checker::{TcFunState, loc_display};
 
 pub(super) fn check_stmts(
     tc_state: &mut TcFunState,
@@ -50,7 +50,7 @@ fn check_stmt(
             if loop_stack.is_empty() {
                 panic!(
                     "{}: `break` or `continue` statement not inside a loop",
-                    loc_display(&stmt.loc)
+                    stmt.loc
                 );
             }
 
@@ -65,7 +65,7 @@ fn check_stmt(
                         *loop_level = depth as u32;
                     }
                     None => {
-                        panic!("{}: no loop with label {}", loc_display(&stmt.loc), label);
+                        panic!("{}: no loop with label {}", stmt.loc, label);
                     }
                 }
             }
@@ -174,9 +174,11 @@ fn check_stmt(
                     assert!(ty_args.is_empty());
                     assert!(user_ty_args.is_empty());
                     assert!(resolved_id.is_none());
-                    let var_ty = tc_state.env.get(name).cloned().unwrap_or_else(|| {
-                        panic!("{}: Unbound variable {}", loc_display(&lhs.loc), name)
-                    });
+                    let var_ty = tc_state
+                        .env
+                        .get(name)
+                        .cloned()
+                        .unwrap_or_else(|| panic!("{}: Unbound variable {}", lhs.loc, name));
                     *inferred_ty = Some(var_ty.clone());
                     check_expr(tc_state, &mut rhs.node, &rhs.loc, Some(&var_ty), loop_stack);
                     return Ty::unit();
@@ -201,7 +203,7 @@ fn check_stmt(
                                 .unwrap_or_else(|| {
                                     panic!(
                                         "{}: Type {} does not have field {}",
-                                        loc_display(&lhs.loc),
+                                        lhs.loc,
                                         con.name(),
                                         field
                                     )
@@ -213,7 +215,7 @@ fn check_stmt(
                                 .unwrap_or_else(|| {
                                     panic!(
                                         "{}: Type {} does not have field {}",
-                                        loc_display(&lhs.loc),
+                                        lhs.loc,
                                         con.name(),
                                         field
                                     )
@@ -222,16 +224,12 @@ fn check_stmt(
 
                         Ty::Record { is_row, .. } => {
                             assert!(!(*is_row));
-                            panic!(
-                                "{}: Records are value types and can't be updated",
-                                loc_display(&lhs.loc)
-                            );
+                            panic!("{}: Records are value types and can't be updated", lhs.loc);
                         }
 
                         _ => panic!(
                             "{}: Type {} doesn't have fields that can be assigned",
-                            loc_display(&lhs.loc),
-                            lhs_ty_normalized
+                            lhs.loc, lhs_ty_normalized
                         ),
                     };
 
@@ -240,7 +238,7 @@ fn check_stmt(
                     *inferred_ty = Some(rhs_ty);
                 }
 
-                _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),
+                _ => todo!("{}: Assignment with LHS: {:?}", lhs.loc, lhs),
             };
 
             unify_expected_ty(
@@ -552,14 +550,14 @@ fn select_field_for_assignment(
         .tys
         .tys
         .get_con(ty_con_id)
-        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con_id));
+        .unwrap_or_else(|| panic!("{loc}: Unknown type {ty_con_id}"));
 
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
     match &ty_con.details {
         TyConDetails::Type(TypeDetails { cons, sum, value }) if !sum => {
             if *value {
-                panic!("{}: Value types can't be updated", loc_display(loc));
+                panic!("{loc}: Value types can't be updated");
             }
 
             assert_eq!(cons.len(), 1);

@@ -1,9 +1,9 @@
 use crate::ast::{self, Name};
 use crate::collections::*;
+use crate::type_checker::TcFunState;
 use crate::type_checker::apply::apply_con_ty;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
-use crate::type_checker::{TcFunState, loc_display};
 
 /// Infer type of the pattern, add variables bound by the pattern to `env`.
 ///
@@ -95,7 +95,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
                     "{}: Or pattern alternatives bind different set of variables:
                      Left = {}
                      Right = {}",
-                    loc_display(&pat.loc),
+                    pat.loc,
                     left_vars.join(", "),
                     right_vars.join(", "),
                 )
@@ -179,10 +179,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>) -
                 if let ast::Pat::Var(var_pat) = &field.node.node {
                     field.name = Some(var_pat.var.clone());
                 } else {
-                    panic!(
-                        "{}: Record pattern with unnamed field",
-                        loc_display(&field.node.loc)
-                    )
+                    panic!("{}: Record pattern with unnamed field", field.node.loc)
                 }
             }
 

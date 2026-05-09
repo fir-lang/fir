@@ -18,7 +18,6 @@ mod ty;
 mod ty_map;
 mod unification;
 
-pub use crate::utils::loc_display;
 use convert::*;
 pub use id::Id;
 pub(crate) use module_env::ModuleEnv;
@@ -122,14 +121,14 @@ pub(crate) fn check_main_type(tys: &PgmTypes, main_module: &ModulePath, main: &s
     if !args.is_empty() {
         panic!(
             "{}: Main function `{main}` can't have arguments",
-            loc_display(&main_scheme.loc)
+            main_scheme.loc
         );
     }
 
     if !ret.is_unit() {
         panic!(
             "{}: Main function `{main}` should return `()`",
-            loc_display(&main_scheme.loc)
+            main_scheme.loc
         );
     }
 
@@ -140,7 +139,7 @@ pub(crate) fn check_main_type(tys: &PgmTypes, main_module: &ModulePath, main: &s
         if !main_scheme.quantified_vars.is_empty() || !main_scheme.preds.is_empty() {
             panic!(
                 "{}: Main function `{main}` can't have quantified variables or predicates",
-                loc_display(&main_scheme.loc)
+                main_scheme.loc
             );
         }
     } else {
@@ -150,20 +149,20 @@ pub(crate) fn check_main_type(tys: &PgmTypes, main_module: &ModulePath, main: &s
                 if !main_scheme.preds.is_empty() {
                     panic!(
                         "{}: Main function `{main}` can't have predicates",
-                        loc_display(&main_scheme.loc)
+                        main_scheme.loc
                     );
                 }
                 if main_scheme.quantified_vars.len() > 1 {
                     panic!(
                         "{}: Main function `{main}` can't have quantified variables other than the exception variable",
-                        loc_display(&main_scheme.loc)
+                        main_scheme.loc
                     );
                 }
             }
             _ => {
                 panic!(
                     "{}: Main function `{main}` exception type should be `[]` or a type variable like `exn`",
-                    loc_display(&main_scheme.loc)
+                    main_scheme.loc
                 );
             }
         }
@@ -266,14 +265,13 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                     ty_decl.node.type_params.len(),
                     ty_decl.node.type_param_kinds.len(),
                     "{}: Type parameter list and kind list don't match",
-                    loc_display(&decl.loc),
+                    decl.loc,
                 );
                 let ty_id = Id::new(module_path, &ty_decl.node.name);
                 if tys.has_con(&ty_id) {
                     panic!(
                         "{}: Type {} is defined multiple times",
-                        loc_display(&decl.loc),
-                        ty_decl.node.name
+                        decl.loc, ty_decl.node.name
                     );
                 }
                 tys.insert_con(
@@ -305,8 +303,7 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                 if tys.has_con(&ty_id) {
                     panic!(
                         "{}: Type {} is defined multiple times",
-                        loc_display(&decl.loc),
-                        trait_decl.node.name.node
+                        decl.loc, trait_decl.node.name.node
                     );
                 }
 
@@ -483,8 +480,7 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                             if old.is_some() {
                                 panic!(
                                     "{}: Associated type {} declared multiple times",
-                                    loc_display(&assoc_ty.loc),
-                                    assoc_ty.node
+                                    assoc_ty.loc, assoc_ty.node
                                 );
                             }
                             // Add a type synonym so that `Item` resolves to
@@ -546,7 +542,7 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                                 ast::SelfParam::Implicit => {
                                     panic!(
                                         "{}: Trait methods can't have implicit self type",
-                                        loc_display(&fun.loc)
+                                        fun.loc
                                     );
                                 }
                                 ast::SelfParam::Explicit(ty) => {
@@ -636,13 +632,12 @@ fn add_default_impl_items(
         // Check that the trait in the impl block is really a trait.
         if !tys
             .get_con(&trait_con_id)
-            .unwrap_or_else(|| panic!("{}: Unknown trait {}", loc_display(&decl.loc), trait_con_id))
+            .unwrap_or_else(|| panic!("{}: Unknown trait {}", decl.loc, trait_con_id))
             .is_trait()
         {
             panic!(
                 "{}: {} in impl declararation is not a trait",
-                loc_display(&decl.loc),
-                trait_con_id
+                decl.loc, trait_con_id
             );
         }
 
@@ -653,7 +648,7 @@ fn add_default_impl_items(
         if trait_arity as usize != impl_decl.tys.len() {
             panic!(
                 "{}: Trait {} takes {} type arguments, but impl passes {}",
-                loc_display(&decl.loc),
+                decl.loc,
                 trait_con_id,
                 trait_arity,
                 impl_decl.tys.len()
@@ -745,7 +740,7 @@ fn add_default_impl_items(
                 .type_params
                 .iter()
                 .map(|(ty_param, kind)| {
-                    let new_param = Name::new(format!("{}$copy", ty_param));
+                    let new_param = Name::new(format!("{ty_param}$copy"));
                     new_type_params.push((new_param.clone(), *kind));
                     (ty_param.clone(), ast::Type::Var(new_param))
                 })
@@ -786,7 +781,7 @@ fn check_value_type_sizes(ty_cons: &ScopeMap<Id, TyCon>) {
         let ty_args: Vec<Ty> = ty_con
             .ty_params
             .iter()
-            .map(|(name, kind)| Ty::RVar(Name::new(format!("#{}", name)), *kind))
+            .map(|(name, kind)| Ty::RVar(Name::new(format!("#{name}")), *kind))
             .collect();
         if visit_ty_con(ty_con, &ty_args, ty_cons, &mut visited) {
             panic!(
@@ -1034,7 +1029,7 @@ fn collect_schemes(
                         ast::SelfParam::Implicit => {
                             panic!(
                                 "{}: Trait method self parameters should have explicit self type",
-                                loc_display(&fun.loc)
+                                fun.loc
                             );
                         }
                         ast::SelfParam::Explicit(ty) => {
@@ -1123,15 +1118,14 @@ fn collect_schemes(
                                 if !parent_ty_con.ty_params.is_empty() {
                                     panic!(
                                         "{}: Can't infer `self` type as the parent type {} has type parameters",
-                                        loc_display(&decl.loc),
-                                        &parent_ty.node
+                                        decl.loc, &parent_ty.node
                                     );
                                 }
                                 arg_tys.insert(0, Ty::Con(parent_ty_con.id.clone(), Kind::Star));
                             }
                             None => panic!(
                                 "{}: Function with `self` type needs to have to be an associated function",
-                                loc_display(&decl.loc)
+                                decl.loc
                             ),
                         }
                     }
@@ -1186,9 +1180,7 @@ fn collect_schemes(
                         if old.is_some() {
                             panic!(
                                 "{}: {}.{} is defined multiple times",
-                                loc_display(loc),
-                                parent_ty.node,
-                                name.node
+                                loc, parent_ty.node, name.node
                             );
                         }
                     }
@@ -1196,11 +1188,7 @@ fn collect_schemes(
                         let id = Id::new(module_path, &name.node);
                         let old = top_schemes.insert(id, scheme);
                         if old.is_some() {
-                            panic!(
-                                "{}: {} is defined multiple times",
-                                loc_display(loc),
-                                name.node
-                            );
+                            panic!("{}: {} is defined multiple times", loc, name.node);
                         }
                     }
                 }
@@ -1255,10 +1243,7 @@ fn collect_schemes(
                 match rhs {
                     ast::TypeDeclRhs::Sum { cons, extension } => {
                         if extension.is_some() {
-                            panic!(
-                                "{}: Extensible sums not fully supported yet",
-                                loc_display(&ty_decl.loc)
-                            );
+                            panic!("{}: Extensible sums not fully supported yet", ty_decl.loc);
                         }
                         for con in cons {
                             let fields = &con.fields;
@@ -1292,7 +1277,7 @@ fn collect_schemes(
                             if old.is_some() {
                                 panic!(
                                     "{}: Constructor {}.{} is defined multiple times",
-                                    loc_display(&ty_decl.loc), // TODO: use con loc
+                                    ty_decl.loc, // TODO: use con loc
                                     ty_decl.node.name,
                                     con.name,
                                 );
@@ -1331,7 +1316,7 @@ fn collect_schemes(
                         if old.is_some() {
                             panic!(
                                 "{}: Constructor {} is defined multiple times",
-                                loc_display(&ty_decl.loc), // TODO: use con loc
+                                ty_decl.loc, // TODO: use con loc
                                 ty_decl.node.name,
                             );
                         }
@@ -1388,9 +1373,7 @@ fn collect_schemes(
                             .unwrap_or_else(|| {
                                 panic!(
                                     "{}: Trait {} does not have associated type {}",
-                                    loc_display(&assoc_ty.loc),
-                                    impl_trait_id,
-                                    assoc_ty.node,
+                                    assoc_ty.loc, impl_trait_id, assoc_ty.node,
                                 )
                             })
                             .kind;
@@ -1435,10 +1418,9 @@ fn collect_schemes(
 
                     match &sig.self_ {
                         ast::SelfParam::No => {}
-                        ast::SelfParam::Implicit => panic!(
-                            "{}: Impl method with implicit self type",
-                            loc_display(&fun.loc)
-                        ),
+                        ast::SelfParam::Implicit => {
+                            panic!("{}: Impl method with implicit self type", fun.loc)
+                        }
                         ast::SelfParam::Explicit(ty) => {
                             let ty = convert_ast_ty(tys, module_env, &ty.node, &ty.loc);
                             arg_tys.insert(0, ty);
@@ -1471,8 +1453,7 @@ fn collect_schemes(
                     let trait_ty_con = tys.get_con(&impl_trait_id).unwrap_or_else(|| {
                         panic!(
                             "{}: Unknown trait {}",
-                            loc_display(&impl_decl.loc),
-                            &impl_decl.node.trait_.node
+                            impl_decl.loc, &impl_decl.node.trait_.node
                         )
                     });
 
@@ -1481,8 +1462,7 @@ fn collect_schemes(
                         .unwrap_or_else(|| {
                             panic!(
                                 "{}: {} is not a trait",
-                                loc_display(&impl_decl.loc),
-                                &impl_decl.node.trait_.node
+                                impl_decl.loc, &impl_decl.node.trait_.node
                             )
                         })
                         .methods
@@ -1490,9 +1470,7 @@ fn collect_schemes(
                         .unwrap_or_else(|| {
                             panic!(
                                 "{}: Trait {} does not have a method named {}",
-                                loc_display(&impl_decl.loc),
-                                &impl_decl.node.trait_.node,
-                                &fun.node.name.node
+                                impl_decl.loc, &impl_decl.node.trait_.node, &fun.node.name.node
                             )
                         })
                         .scheme;
@@ -1521,7 +1499,7 @@ fn collect_schemes(
                             "{}: Trait method implementation of {} does not match the trait method type
                                 Trait method type:          {}
                                 Implementation method type: {}",
-                            loc_display(&fun.loc),
+                            fun.loc,
                             &fun.node.name.node,
                             trait_fun_scheme,
                             impl_fun_scheme
@@ -1575,18 +1553,14 @@ fn check_top_fun(
             match &fun.node.parent_ty {
                 Some(parent_ty) => {
                     let parent_ty_id = module_env.resolve(&parent_ty.node, &None, &parent_ty.loc);
-                    let parent_ty_con = tys.tys.get_con(&parent_ty_id).unwrap_or_else(|| {
-                        panic!(
-                            "{}: Unknown type {}",
-                            loc_display(&fun.loc),
-                            &parent_ty.node
-                        )
-                    });
+                    let parent_ty_con = tys
+                        .tys
+                        .get_con(&parent_ty_id)
+                        .unwrap_or_else(|| panic!("{}: Unknown type {}", fun.loc, &parent_ty.node));
                     if !parent_ty_con.ty_params.is_empty() {
                         panic!(
                             "{}: Can't infer `self` type as the parent type {} has type parameters",
-                            loc_display(&fun.loc),
-                            &parent_ty.node
+                            fun.loc, &parent_ty.node
                         );
                     }
                     env.insert(
@@ -1596,7 +1570,7 @@ fn check_top_fun(
                 }
                 None => panic!(
                     "{}: Function with `self` type needs to have to be an associated function",
-                    loc_display(&fun.loc)
+                    fun.loc
                 ),
             }
         }
@@ -1695,8 +1669,7 @@ fn check_impl(
     let trait_ty_con = tys.tys.get_con(&impl_trait_id).unwrap_or_else(|| {
         panic!(
             "{}: Unknown trait {}",
-            loc_display(&impl_.node.trait_.loc),
-            &impl_.node.trait_.node
+            impl_.node.trait_.loc, &impl_.node.trait_.node
         )
     });
 
@@ -1705,8 +1678,7 @@ fn check_impl(
         .unwrap_or_else(|| {
             panic!(
                 "{}: {} in `impl` block is not a trait",
-                loc_display(&impl_.node.trait_.loc),
-                impl_.node.trait_.node
+                impl_.node.trait_.loc, impl_.node.trait_.node
             )
         })
         .clone();
@@ -1720,7 +1692,7 @@ fn check_impl(
             if converted.kind() != assoc_ty_expected_kind {
                 panic!(
                     "{}: Associated type {} is expected to have kind {}, but has kind {}",
-                    loc_display(&assoc_ty.loc),
+                    assoc_ty.loc,
                     &assoc_ty.node,
                     assoc_ty_expected_kind,
                     converted.kind(),
@@ -1771,7 +1743,7 @@ fn check_impl(
                     // TODO: We can use the `self` type from the trait declaration here.
                     panic!(
                         "{}: `self` parameters without type signatures are not supported yet",
-                        loc_display(&fun.loc)
+                        fun.loc
                     );
                 }
                 ast::SelfParam::Explicit(ty) => {
@@ -1849,8 +1821,7 @@ fn check_impl(
                 if !new {
                     panic!(
                         "{}: Associated type {} implemented mutiple times",
-                        loc_display(&assoc_ty.loc),
-                        assoc_ty.node
+                        assoc_ty.loc, assoc_ty.node
                     );
                 }
                 continue;
@@ -1864,8 +1835,7 @@ fn check_impl(
         ) {
             (true, true) => panic!(
                 "{}: Trait method {} implemented multiple times",
-                loc_display(&fun.loc),
-                fun_id
+                fun.loc, fun_id
             ),
 
             (true, false) => {
@@ -1875,9 +1845,7 @@ fn check_impl(
             (false, _) => {
                 panic!(
                     "{}: Trait {} does not have method {}",
-                    loc_display(&fun.loc),
-                    impl_.node.trait_.node,
-                    fun_id
+                    fun.loc, impl_.node.trait_.node, fun_id
                 )
             }
         }
@@ -1888,8 +1856,7 @@ fn check_impl(
     if !missing_methods.is_empty() {
         panic!(
             "{}: Trait methods missing: {:?}",
-            loc_display(&impl_.loc),
-            missing_methods
+            impl_.loc, missing_methods
         );
     }
 
@@ -1901,8 +1868,7 @@ fn check_impl(
     if !missing_assoc_tys.is_empty() {
         panic!(
             "{}: Associated types missing: {:?}",
-            loc_display(&impl_.loc),
-            missing_assoc_tys,
+            impl_.loc, missing_assoc_tys,
         );
     }
 
@@ -1975,7 +1941,7 @@ fn resolve_preds(
                 Some(impls) => impls,
                 None => panic!(
                     "{}: Unable to resolve pred {}",
-                    loc_display(&pred.loc.clone()),
+                    pred.loc.clone(),
                     Pred {
                         trait_: pred.trait_,
                         params: pred.params,
@@ -2035,7 +2001,7 @@ fn resolve_preds(
         writeln!(&mut msg, "Unable to resolve predicates:").unwrap();
 
         for goal in goals {
-            writeln!(&mut msg, "{}: {}", loc_display(&goal.loc.clone()), goal).unwrap();
+            writeln!(&mut msg, "{}: {}", goal.loc.clone(), goal).unwrap();
         }
         panic!("{}", msg);
     }
@@ -2075,46 +2041,24 @@ fn check_and_default_int_lits(
                 id::builtins::I32()
             }
             other => {
-                panic!(
-                    "{}: Unexpected integer literal type: {}",
-                    loc_display(&loc),
-                    other,
-                )
+                panic!("{loc}: Unexpected integer literal type: {other}",)
             }
         };
         let negate = text.starts_with('-');
         if con == id::builtins::U8() {
             if negate {
-                panic!(
-                    "{}: Cannot negate unsigned integer: {}",
-                    loc_display(&loc),
-                    text
-                );
+                panic!("{loc}: Cannot negate unsigned integer: {text}");
             }
-            *kind.borrow_mut() = Some(ast::IntKind::U8(u8::try_from(parsed).unwrap_or_else(
-                |_| {
-                    panic!(
-                        "{}: Integer literal {} out of range for U8",
-                        loc_display(&loc),
-                        text
-                    )
-                },
-            )));
+            *kind.borrow_mut() =
+                Some(ast::IntKind::U8(u8::try_from(parsed).unwrap_or_else(
+                    |_| panic!("{loc}: Integer literal {text} out of range for U8"),
+                )));
         } else if con == id::builtins::I8() {
-            let mut bits = u8::try_from(parsed).unwrap_or_else(|_| {
-                panic!(
-                    "{}: Integer literal {} out of range for I8",
-                    loc_display(&loc),
-                    text
-                )
-            });
+            let mut bits = u8::try_from(parsed)
+                .unwrap_or_else(|_| panic!("{loc}: Integer literal {text} out of range for I8"));
             let limit = if negate { i8::MIN } else { i8::MAX }.unsigned_abs();
             if bits > limit {
-                panic!(
-                    "{}: Integer literal {} out of range for I8",
-                    loc_display(&loc),
-                    text
-                );
+                panic!("{loc}: Integer literal {text} out of range for I8");
             }
             if negate {
                 bits = !bits.wrapping_sub(1);
@@ -2122,36 +2066,18 @@ fn check_and_default_int_lits(
             *kind.borrow_mut() = Some(ast::IntKind::I8(bits as i8));
         } else if con == id::builtins::U32() {
             if negate {
-                panic!(
-                    "{}: Cannot negate unsigned integer: {}",
-                    loc_display(&loc),
-                    text
-                );
+                panic!("{loc}: Cannot negate unsigned integer: {text}");
             }
-            *kind.borrow_mut() = Some(ast::IntKind::U32(u32::try_from(parsed).unwrap_or_else(
-                |_| {
-                    panic!(
-                        "{}: Integer literal {} out of range for U32",
-                        loc_display(&loc),
-                        text
-                    )
-                },
-            )));
+            *kind.borrow_mut() =
+                Some(ast::IntKind::U32(u32::try_from(parsed).unwrap_or_else(
+                    |_| panic!("{loc}: Integer literal {text} out of range for U32"),
+                )));
         } else if con == id::builtins::I32() {
-            let mut bits = u32::try_from(parsed).unwrap_or_else(|_| {
-                panic!(
-                    "{}: Integer literal {} out of range for I32",
-                    loc_display(&loc),
-                    text
-                )
-            });
+            let mut bits = u32::try_from(parsed)
+                .unwrap_or_else(|_| panic!("{loc}: Integer literal {text} out of range for I32"));
             let limit = if negate { i32::MIN } else { i32::MAX }.unsigned_abs();
             if bits > limit {
-                panic!(
-                    "{}: Integer literal {} out of range for I32",
-                    loc_display(&loc),
-                    text
-                );
+                panic!("{loc}: Integer literal {text} out of range for I32");
             }
             if negate {
                 bits = !bits.wrapping_sub(1);
@@ -2159,33 +2085,21 @@ fn check_and_default_int_lits(
             *kind.borrow_mut() = Some(ast::IntKind::I32(bits as i32));
         } else if con == id::builtins::U64() {
             if negate {
-                panic!(
-                    "{}: Cannot negate unsigned integer: {}",
-                    loc_display(&loc),
-                    text
-                );
+                panic!("{loc}: Cannot negate unsigned integer: {text}");
             }
             *kind.borrow_mut() = Some(ast::IntKind::U64(parsed));
         } else if con == id::builtins::I64() {
             let mut bits = parsed;
             let limit = if negate { i64::MIN } else { i64::MAX }.unsigned_abs();
             if bits > limit {
-                panic!(
-                    "{}: Integer literal {} out of range for I32",
-                    loc_display(&loc),
-                    text
-                );
+                panic!("{loc}: Integer literal {text} out of range for I32");
             }
             if negate {
                 bits = !bits.wrapping_sub(1);
             }
             *kind.borrow_mut() = Some(ast::IntKind::I64(bits as i64));
         } else {
-            panic!(
-                "{}: Expected {}, found integer literal",
-                loc_display(&loc),
-                con.name(),
-            )
+            panic!("{}: Expected {}, found integer literal", loc, con.name(),)
         }
     }
 }

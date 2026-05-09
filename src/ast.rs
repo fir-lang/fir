@@ -44,6 +44,18 @@ impl std::fmt::Debug for Loc {
     }
 }
 
+impl std::fmt::Display for Loc {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}:{}:{}",
+            self.module,
+            self.line_start + 1,
+            self.col_start + 1
+        )
+    }
+}
+
 impl Loc {
     pub fn dummy() -> Self {
         Loc {

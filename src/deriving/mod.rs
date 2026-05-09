@@ -3,7 +3,6 @@ pub mod to_doc;
 
 use crate::ast;
 use crate::module_loader::LoadedPgm;
-use crate::utils::loc_display;
 
 use smol_str::SmolStr;
 
@@ -30,8 +29,7 @@ fn expand_derives_module(module: &mut ast::Module) {
                 if let Some(ast::TypeDeclRhs::Synonym(_)) = &type_decl.node.rhs {
                     panic!(
                         "{}: Cannot derive traits for type synonym `{}`",
-                        loc_display(&attr_loc),
-                        type_decl.node.name,
+                        attr_loc, type_decl.node.name,
                     );
                 }
 
@@ -44,7 +42,7 @@ fn expand_derives_module(module: &mut ast::Module) {
                             new_impls.push(to_doc::derive_to_doc(&type_decl.node, &attr_loc));
                         }
                         other => {
-                            panic!("{}: Unknown derive trait `{other}`", loc_display(&attr_loc));
+                            panic!("{attr_loc}: Unknown derive trait `{other}`");
                         }
                     }
                 }

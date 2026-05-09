@@ -92,7 +92,7 @@ fn derive_eq_product(
 
         ast::ConFields::Unnamed { fields } => {
             let field_names: Vec<ast::Name> = (0..fields.len())
-                .map(|i| ast::Name::new(format!("_{}", i)))
+                .map(|i| ast::Name::new(format!("_{i}")))
                 .collect();
             let field_refs: Vec<&ast::Name> = field_names.iter().collect();
             let expr = chain_eq_fields(loc, &field_refs, FieldAccess::SelfOther);
@@ -134,7 +134,7 @@ fn derive_eq_sum(
                         node: l(
                             loc,
                             ast::Pat::Var(ast::VarPat {
-                                var: ast::Name::new(format!("l{}", i)),
+                                var: ast::Name::new(format!("l{i}")),
                                 ty: None,
                                 refined: None,
                             }),
@@ -150,7 +150,7 @@ fn derive_eq_sum(
                         node: l(
                             loc,
                             ast::Pat::Var(ast::VarPat {
-                                var: ast::Name::new(format!("r{}", i)),
+                                var: ast::Name::new(format!("r{i}")),
                                 ty: None,
                                 refined: None,
                             }),
@@ -168,7 +168,7 @@ fn derive_eq_sum(
                         node: l(
                             loc,
                             ast::Pat::Var(ast::VarPat {
-                                var: ast::Name::new(format!("l{}", i)),
+                                var: ast::Name::new(format!("l{i}")),
                                 ty: None,
                                 refined: None,
                             }),
@@ -182,7 +182,7 @@ fn derive_eq_sum(
                         node: l(
                             loc,
                             ast::Pat::Var(ast::VarPat {
-                                var: ast::Name::new(format!("r{}", i)),
+                                var: ast::Name::new(format!("r{i}")),
                                 ty: None,
                                 refined: None,
                             }),
@@ -271,7 +271,7 @@ fn derive_eq_sum(
         } else {
             let mut eq_expr = if num_fields > 0 {
                 let field_names: Vec<ast::Name> = (0..num_fields)
-                    .map(|i| ast::Name::new(format!("{}", i)))
+                    .map(|i| ast::Name::new(format!("{i}")))
                     .collect();
                 let field_refs: Vec<&ast::Name> = field_names.iter().collect();
                 Some(chain_eq_fields(loc, &field_refs, FieldAccess::BoundVars))
@@ -342,7 +342,7 @@ fn chain_eq_fields(
                 field_sel(loc, var(loc, "self"), field_name),
                 field_sel(loc, var(loc, "other"), field_name),
             ),
-            FieldAccess::BoundVars => (var(loc, &format!("l{}", i)), var(loc, &format!("r{}", i))),
+            FieldAccess::BoundVars => (var(loc, &format!("l{i}")), var(loc, &format!("r{i}"))),
         };
 
         let eq = bin_op(loc, left, ast::BinOp::Equal, right);

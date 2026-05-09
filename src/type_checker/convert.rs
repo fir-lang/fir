@@ -2,7 +2,6 @@ use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::type_checker::ModuleEnv;
 use crate::type_checker::id::Id;
-use crate::type_checker::loc_display;
 use crate::type_checker::ty::*;
 use crate::type_checker::ty_map::TyMap;
 
@@ -18,7 +17,7 @@ pub(super) fn convert_ast_ty(
 
         ast::Type::Var(var) => tys
             .get_var(var)
-            .unwrap_or_else(|| panic!("{}: Unknown type variable {}", loc_display(loc), var))
+            .unwrap_or_else(|| panic!("{loc}: Unknown type variable {var}"))
             .clone(),
 
         ast::Type::Record {
@@ -32,11 +31,7 @@ pub(super) fn convert_ast_ty(
                 let ty = convert_ast_ty(tys, module_env, &field_ty.node, &field_ty.loc);
                 let old = labels.insert(field_name.clone(), ty);
                 if old.is_some() {
-                    panic!(
-                        "{}: Field {} defined multiple times in record",
-                        loc_display(loc),
-                        field_name
-                    );
+                    panic!("{loc}: Field {field_name} defined multiple times in record");
                 }
             }
 
@@ -46,7 +41,7 @@ pub(super) fn convert_ast_ty(
                     if ext_converted.kind() != Kind::Row(RecordOrVariant::Record) {
                         panic!(
                             "{}: Record extension type {} has kind {}",
-                            loc_display(&ext.loc),
+                            ext.loc,
                             &ext.node,
                             ext_converted.kind()
                         );
@@ -77,8 +72,7 @@ pub(super) fn convert_ast_ty(
                 if old.is_some() {
                     panic!(
                         "{}: Type {} used multiple times in variant type",
-                        loc_display(loc),
-                        alt.name
+                        loc, alt.name
                     );
                 }
             }
@@ -89,7 +83,7 @@ pub(super) fn convert_ast_ty(
                     if ext_converted.kind() != Kind::Row(RecordOrVariant::Variant) {
                         panic!(
                             "{}: Variant extension type {} has kind {}",
-                            loc_display(&ext.loc),
+                            ext.loc,
                             &ext.node,
                             ext_converted.kind()
                         );
@@ -123,9 +117,9 @@ pub(super) fn convert_ast_ty(
                 None => Ty::unit(),
             });
 
-            let exceptions = exceptions.as_ref().unwrap_or_else(|| {
-                panic!("{}: Function type without exception type", loc_display(loc))
-            });
+            let exceptions = exceptions
+                .as_ref()
+                .unwrap_or_else(|| panic!("{loc}: Function type without exception type"));
 
             let exceptions = Box::new(convert_ast_ty(
                 tys,
@@ -147,24 +141,16 @@ pub(super) fn convert_ast_ty(
                 assert_eq!(*kind, Kind::Star);
                 let kind = tys
                     .get_con(trait_)
-                    .unwrap_or_else(|| {
-                        panic!("{}: Unknown type {}", loc_display(loc), trait_.name())
-                    })
+                    .unwrap_or_else(|| panic!("{}: Unknown type {}", loc, trait_.name()))
                     .details
                     .trait_details()
-                    .unwrap_or_else(|| {
-                        panic!(
-                            "{}: Type {} is not a trait",
-                            loc_display(loc),
-                            trait_.name()
-                        )
-                    })
+                    .unwrap_or_else(|| panic!("{}: Type {} is not a trait", loc, trait_.name()))
                     .assoc_tys
                     .get(assoc_ty)
                     .unwrap_or_else(|| {
                         panic!(
                             "{}: Trait {} does not have an associated type named {}",
-                            loc_display(loc),
+                            loc,
                             trait_.name(),
                             assoc_ty
                         )
@@ -176,10 +162,7 @@ pub(super) fn convert_ast_ty(
                     kind,
                 }
             } else {
-                panic!(
-                    "{}: Type in associated type selection is not a trait",
-                    loc_display(loc)
-                );
+                panic!("{loc}: Type in associated type selection is not a trait");
             }
         }
     }
@@ -199,12 +182,12 @@ fn convert_named_ty(
 
     let ty_con = tys
         .resolve(module_env, name, mod_prefix, loc)
-        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), name));
+        .unwrap_or_else(|| panic!("{loc}: Unknown type {name}"));
 
     if ty_con.arity() as usize != args.len() {
         panic!(
             "{}: Incorrect number of type arguments to {}, expected {}, found {}",
-            loc_display(loc),
+            loc,
             name,
             ty_con.arity(),
             args.len()
@@ -255,10 +238,7 @@ pub(super) fn convert_fields(
                 if old.is_some() {
                     // Ideally location here should be the location of the field name rather than
                     // type, but it's OK for now.
-                    panic!(
-                        "{}: Field {name} defined multiple times",
-                        loc_display(&ty.loc)
-                    )
+                    panic!("{}: Field {name} defined multiple times", ty.loc)
                 }
             }
 
@@ -336,7 +316,7 @@ fn convert_pred(
         }) => Some(Pred {
             trait_: tys
                 .resolve(module_env, name, mod_prefix, loc)
-                .unwrap_or_else(|| panic!("{}: Unknown trait {}", loc_display(loc), name))
+                .unwrap_or_else(|| panic!("{loc}: Unknown trait {name}"))
                 .id
                 .clone(),
             params: args
@@ -359,7 +339,7 @@ fn convert_pred(
         } => Some(Pred {
             trait_: tys
                 .resolve(module_env, name, mod_prefix, loc)
-                .unwrap_or_else(|| panic!("{}: Unknown trait {}", loc_display(loc), name))
+                .unwrap_or_else(|| panic!("{loc}: Unknown trait {name}"))
                 .id
                 .clone(),
             params: args

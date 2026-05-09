@@ -4,7 +4,6 @@ use crate::module::ModulePath;
 use crate::module_loader::*;
 use crate::name::Name;
 use crate::type_checker::id::Id;
-use crate::utils::loc_display;
 
 /// Maps names visible in a module to their `Id`s.
 ///
@@ -43,7 +42,7 @@ impl NameMap {
         match self.map.entry(name.clone()) {
             Entry::Occupied(mut entry) => {
                 if entry.get().defined {
-                    panic!("{}: {} defined multiple times", loc_display(loc), name);
+                    panic!("{loc}: {name} defined multiple times");
                 }
                 entry.get_mut().ids.clear();
                 entry.get_mut().ids.insert(id);
@@ -81,7 +80,7 @@ impl NameMap {
     fn get(&self, name: &Name, loc: &ast::Loc) -> Id {
         match self.map.get(name) {
             None => {
-                panic!("{}: Unbound name {}", loc_display(loc), name)
+                panic!("{loc}: Unbound name {name}")
             }
             Some(id_set) => {
                 debug_assert!(!id_set.ids.is_empty());
@@ -90,8 +89,7 @@ impl NameMap {
                 } else {
                     let mut msg = String::new();
                     msg.push_str(&format!(
-                        "{}: Name {name} imported from multiple modules:\n",
-                        loc_display(loc)
+                        "{loc}: Name {name} imported from multiple modules:\n"
                     ));
                     for id in id_set.ids.iter() {
                         msg.push_str(&format!("- {}", id.module()));
@@ -146,16 +144,13 @@ impl ModuleEnv {
                 assert_eq!(
                     segments.len(),
                     1,
-                    "{}: Multi-segment module paths not yet supported in name resolution",
-                    loc_display(loc),
+                    "{loc}: Multi-segment module paths not yet supported in name resolution",
                 );
                 let prefix = Name::from(&segments[0]);
                 self.prefixed
                     .get(&prefix)
                     .map(|name_map| name_map.get(name, loc))
-                    .unwrap_or_else(|| {
-                        panic!("{}: Unbound name {}/{}", loc_display(loc), prefix, name)
-                    })
+                    .unwrap_or_else(|| panic!("{loc}: Unbound name {prefix}/{name}"))
             }
         }
     }

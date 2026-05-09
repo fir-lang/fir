@@ -2,8 +2,6 @@ use crate::ast::{self, Name};
 use crate::collections::{HashMap, HashSet, OrdMap};
 use crate::type_checker::id::Id;
 use crate::type_checker::{FunArgs, Scheme, TcFunState, Ty, TypeDetails, row_utils};
-#[allow(unused)]
-use crate::utils::loc_display;
 
 // Entry point.
 pub(crate) fn check_coverage(
@@ -509,7 +507,7 @@ impl PatMatrix {
 
         // Add the current column's fields.
         for row in self.rows.iter() {
-            // assert!(!row.is_empty(), "empty row at {}", loc_display(loc));
+            // assert!(!row.is_empty(), "empty row at {}", loc);
             let mut work: Vec<ast::L<ast::Pat>> = vec![row.pats[0].clone()];
             while let Some(pat) = work.pop() {
                 match pat.node {
@@ -760,12 +758,12 @@ impl<'a> std::fmt::Display for BoundVarsDisplay<'a> {
             if var_idx != 0 {
                 write!(f, ", ")?;
             }
-            write!(f, "{}: [", var)?;
+            write!(f, "{var}: [")?;
             for (ty_idx, ty) in tys.iter().enumerate() {
                 if ty_idx != 0 {
                     write!(f, ", ")?;
                 }
-                write!(f, "{}", ty)?;
+                write!(f, "{ty}")?;
             }
             write!(f, "]")?;
         }

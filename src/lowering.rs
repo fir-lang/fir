@@ -8,7 +8,6 @@ use crate::collections::*;
 use crate::mono_ast::{self as mono, L, Loc, Name};
 use crate::type_collector::collect_anonymous_types;
 pub(crate) use crate::type_collector::{RecordType, VariantType};
-use crate::utils::loc_display;
 
 use smol_str::SmolStr;
 
@@ -1711,7 +1710,7 @@ fn lower_expr(
                     }
                     panic!(
                         "BUG: {}: Type {} doesn't have constructor named {}",
-                        loc_display(loc),
+                        loc,
                         ty_id,
                         con.as_ref().unwrap()
                     );
@@ -1751,20 +1750,14 @@ fn lower_expr(
 
                     match &ty_decl.rhs {
                         None => {
-                            panic!(
-                                "BUG: {}: FieldSel object doesn't have fields",
-                                loc_display(loc)
-                            );
+                            panic!("BUG: {loc}: FieldSel object doesn't have fields");
                         }
                         Some(mono::TypeDeclRhs::Sum(_)) => {
-                            panic!("BUG: {}: FieldSel object is a sum type", loc_display(loc));
+                            panic!("BUG: {loc}: FieldSel object is a sum type");
                         }
                         Some(mono::TypeDeclRhs::Product(fields)) => match fields {
                             mono::ConFields::Empty => {
-                                panic!(
-                                    "BUG: {}: FieldSel object doesn't have fields",
-                                    loc_display(loc)
-                                );
+                                panic!("BUG: {loc}: FieldSel object doesn't have fields");
                             }
                             mono::ConFields::Named(named_fields) => {
                                 let mut field_idx: u32 = 0;
@@ -1777,10 +1770,7 @@ fn lower_expr(
                                 field_idx
                             }
                             mono::ConFields::Unnamed(_) => {
-                                panic!(
-                                    "BUG: {}: FieldSel object doesn't have named fields",
-                                    loc_display(loc)
-                                )
+                                panic!("BUG: {loc}: FieldSel object doesn't have named fields")
                             }
                         },
                     }
@@ -1798,10 +1788,10 @@ fn lower_expr(
                 }
 
                 mono::Type::Variant { .. } => {
-                    panic!("BUG: {}: FieldSel of variant", loc_display(loc))
+                    panic!("BUG: {loc}: FieldSel of variant")
                 }
 
-                mono::Type::Fn(_) => panic!("BUG: {}: FieldSel of function", loc_display(loc)),
+                mono::Type::Fn(_) => panic!("BUG: {loc}: FieldSel of function"),
             };
 
             (
@@ -1852,9 +1842,7 @@ fn lower_expr(
 
                 mono::Type::Named(_) | mono::Type::Record { .. } | mono::Type::Variant { .. } => {
                     panic!(
-                        "BUG: {}: Function in call expression does not have a function type: {}",
-                        loc_display(loc),
-                        fun_ty,
+                        "BUG: {loc}: Function in call expression does not have a function type: {fun_ty}",
                     )
                 }
             };
@@ -2379,7 +2367,7 @@ fn lower_pat(
                     }
                     panic!(
                         "BUG: {}: Type {} doesn't have constructor named {}",
-                        loc_display(loc),
+                        loc,
                         ty,
                         con.as_ref().unwrap()
                     );
@@ -2387,11 +2375,7 @@ fn lower_pat(
 
                 Some(mono::TypeDeclRhs::Product(fields)) => fields,
 
-                None => panic!(
-                    "BUG: {}: Type {} doesn't have any constructors",
-                    loc_display(loc),
-                    ty,
-                ),
+                None => panic!("BUG: {loc}: Type {ty} doesn't have any constructors",),
             };
 
             let field_pats = match con_fields {
@@ -2574,7 +2558,7 @@ fn lower_rest_pat(
 
             let rest_record_fields = match &var_pat.ty {
                 mono::Type::Record { fields } => fields.clone(),
-                other => panic!("BUG: RestPat::Bind var has non-record type: {:?}", other),
+                other => panic!("BUG: RestPat::Bind var has non-record type: {other:?}"),
             };
 
             let rest_con = *indices
@@ -2656,10 +2640,7 @@ fn lower_splice(
     let splice_field_tys: OrdMap<Name, mono::Type> = match &splice_ty {
         mono::Type::Record { fields } => fields.clone(),
         mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_) => {
-            panic!(
-                "{}: Record expression splice is not a record",
-                loc_display(&splice.loc)
-            )
+            panic!("{}: Record expression splice is not a record", splice.loc)
         }
     };
     let splice_local_idx = LocalIdx(scope.locals.len() as u32);

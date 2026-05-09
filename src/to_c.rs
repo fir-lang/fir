@@ -13,7 +13,6 @@ use crate::collections::*;
 use crate::indenting_printer::Printer;
 use crate::lowering::*;
 use crate::mono_ast as mono;
-use crate::utils::loc_display;
 
 use std::fmt::Write;
 
@@ -48,7 +47,7 @@ impl<'a> Cg<'a> {
     fn fresh_temp(&mut self) -> String {
         let n = self.temp_counter;
         self.temp_counter += 1;
-        format!("_t{}", n)
+        format!("_t{n}")
     }
 }
 
@@ -444,7 +443,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
 }
 
 fn forward_declare_fun(fun: &Fun, idx: usize, pgm: &LoweredPgm, p: &mut Printer) {
-    w!(p, "// {} {}", loc_display(&fun.name.loc), fun.name.node);
+    w!(p, "// {} {}", fun.name.loc, fun.name.node);
     if !fun.ty_args.is_empty() {
         w!(p, "[");
         p.sep(fun.ty_args.iter(), ", ", |p, ty_arg| {
@@ -466,7 +465,7 @@ fn forward_declare_fun(fun: &Fun, idx: usize, pgm: &LoweredPgm, p: &mut Printer)
 }
 
 fn forward_declare_closure(closure: &Closure, idx: usize, pgm: &LoweredPgm, p: &mut Printer) {
-    wln!(p, "// {}", loc_display(&closure.loc));
+    wln!(p, "// {}", closure.loc);
     w!(
         p,
         "static {} _closure_{}(CLOSURE* _closure_obj",
@@ -484,7 +483,7 @@ fn gen_closure_struct(closure: &Closure, idx: usize, pgm: &LoweredPgm, p: &mut P
         return;
     }
 
-    wln!(p, "// {}", loc_display(&closure.loc));
+    wln!(p, "// {}", closure.loc);
     w!(p, "typedef struct {{");
     p.indent();
     p.nl();
@@ -1494,7 +1493,7 @@ fn gen_int_cmp_fn(idx: usize, arg_ty: &str, pgm: &LoweredPgm, p: &mut Printer) {
 
 fn source_fun_to_c(fun: &Fun, source: &SourceFunDecl, idx: usize, cg: &mut Cg, p: &mut Printer) {
     let loc = &fun.name.loc;
-    w!(p, "// {} {}", loc_display(loc), fun.name.node);
+    w!(p, "// {} {}", loc, fun.name.node);
     if !fun.ty_args.is_empty() {
         w!(p, "[");
         p.sep(fun.ty_args.iter(), ", ", |p, ty_arg| {
@@ -1629,7 +1628,7 @@ fn stmt_to_c(
             let rhs_temp = cg.fresh_temp();
             w!(p, "{} {} = ", c_ty(rhs_ty, cg.pgm), rhs_temp);
             expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
-            wln!(p, "; // {}", loc_display(&rhs.loc));
+            wln!(p, "; // {}", rhs.loc);
             wln!(
                 p,
                 "{};",
@@ -1658,7 +1657,7 @@ fn stmt_to_c(
                 let obj_temp = cg.fresh_temp();
                 w!(p, "{} {} = ", c_ty(object_ty, cg.pgm), obj_temp);
                 expr_to_c(&object.node, &object.loc, locals, cg, p);
-                wln!(p, "; // {}", loc_display(&object.loc));
+                wln!(p, "; // {}", object.loc);
                 w!(p, "{obj_temp}->{} = ", c_field_name(field));
                 expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
                 wln!(p, ";");
@@ -1668,10 +1667,7 @@ fn stmt_to_c(
             }
             _ => {
                 // Type checker only accepts variables and fields on the LHS.
-                panic!(
-                    "{}: BUG: Assign statement with fancy LHS",
-                    loc_display(&lhs.loc)
-                )
+                panic!("{}: BUG: Assign statement with fancy LHS", lhs.loc)
             }
         },
 
@@ -1986,7 +1982,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             scrut_ty,
             ty,
         }) => {
-            // println!("{}: {}", loc_display(loc), ty);
+            // println!("{}: {}", loc, ty);
 
             w!(p, "({{");
             p.indent();
@@ -1994,18 +1990,13 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             let scrut_temp = cg.fresh_temp();
             w!(p, "{} {} = ", c_ty(scrut_ty, cg.pgm), scrut_temp);
             expr_to_c(&scrutinee.node, &scrutinee.loc, locals, cg, p);
-            wln!(p, "; // {}", loc_display(&scrutinee.loc));
+            wln!(p, "; // {}", scrutinee.loc);
 
             let match_temp = if ty.is_unit() {
                 None
             } else {
                 let match_temp = cg.fresh_temp();
-                wln!(
-                    p,
-                    "{} {match_temp}; // {}",
-                    c_ty(ty, cg.pgm),
-                    loc_display(loc)
-                );
+                wln!(p, "{} {match_temp}; // {}", c_ty(ty, cg.pgm), loc);
                 Some(match_temp)
             };
 
@@ -2058,7 +2049,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             else_branch,
             ty,
         }) => {
-            // println!("{}: {}", loc_display(loc), ty);
+            // println!("{}: {}", loc, ty);
 
             w!(p, "({{");
             p.indent();
@@ -2068,7 +2059,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                 None
             } else {
                 let if_temp = cg.fresh_temp();
-                wln!(p, "{} {if_temp}; // {}", c_ty(ty, cg.pgm), loc_display(loc));
+                wln!(p, "{} {if_temp}; // {}", c_ty(ty, cg.pgm), loc);
                 Some(if_temp)
             };
 
@@ -2166,7 +2157,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             let expr_temp = cg.fresh_temp();
             w!(p, "{} {} = ", c_ty(expr_ty, cg.pgm), expr_temp);
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);
-            wln!(p, "; // {}", loc_display(&expr.loc));
+            wln!(p, "; // {}", expr.loc);
             let true_tag = cg.pgm.true_con_idx.as_u64();
             let false_tag = cg.pgm.false_con_idx.as_u64();
             wln!(p, "Bool _is_result;");
@@ -2198,12 +2189,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.indent();
             p.nl();
             let expr_temp = cg.fresh_temp();
-            wln!(
-                p,
-                "{} {expr_temp}; // {}",
-                c_ty(ty, cg.pgm),
-                loc_display(loc)
-            );
+            wln!(p, "{} {expr_temp}; // {}", c_ty(ty, cg.pgm), loc);
             stmts_to_c(stmts, Some(&expr_temp), locals, cg, p);
             w!(p, "{expr_temp};");
             p.dedent();
@@ -2261,7 +2247,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             let expr_temp = cg.fresh_temp();
             w!(p, "{} {expr_temp} = ", c_ty(expr_ty, cg.pgm));
             expr_to_c(&expr.node, &expr.loc, locals, cg, p);
-            wln!(p, "; // {}", loc_display(&expr.loc));
+            wln!(p, "; // {}", expr.loc);
 
             let expr_tag_temp = cg.fresh_temp();
             wln!(
@@ -2292,7 +2278,7 @@ fn find_variant_alt_index(
 ) -> usize {
     let type_name = match pat_ty {
         mono::Type::Named(named_ty) => named_ty.name.as_str(),
-        _ => panic!("Non-named type in variant pattern: {:?}", pat_ty),
+        _ => panic!("Non-named type in variant pattern: {pat_ty:?}"),
     };
 
     variant_ty
@@ -2364,10 +2350,7 @@ fn gen_variant_conversion(
             .enumerate()
             .find(|(_, (name, _))| *name == type_name)
             .unwrap_or_else(|| {
-                panic!(
-                    "Type {} not found in source variant during conversion",
-                    type_name
-                )
+                panic!("Type {type_name} not found in source variant during conversion")
             });
 
         let alt_ty = mono::Type::Named(named_ty.clone());
@@ -2435,7 +2418,7 @@ fn pat_to_cond(
                     .clone()
                     .map(|(field_name, field_ty)| (field_name.clone(), field_ty.clone()))
                     .collect(),
-                HeapObj::Builtin(_) => panic!("Builtin constructor {:?} in Pat::Con", con),
+                HeapObj::Builtin(_) => panic!("Builtin constructor {con:?} in Pat::Con"),
                 HeapObj::Variant(_) => panic!("Variant in Pat::Con"),
             };
             assert_eq!(field_tys.len(), fields.len());
@@ -2499,7 +2482,7 @@ fn pat_to_cond(
             let mut escaped = String::new();
             for byte in s.bytes() {
                 if byte == b'"' || byte == b'\\' || !(32..=126).contains(&byte) {
-                    escaped.push_str(&format!("\\{:03o}", byte));
+                    escaped.push_str(&format!("\\{byte:03o}"));
                 } else {
                     escaped.push(byte as char);
                 }

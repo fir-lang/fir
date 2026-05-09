@@ -15,7 +15,6 @@ use crate::ast;
 use crate::collections::*;
 use crate::module_loader::LoadedPgm;
 use crate::type_checker::{Kind, Name, RecordOrVariant};
-use crate::utils::loc_display;
 
 pub fn add_missing_type_params(pgm: &mut LoadedPgm) {
     for (_, decl) in pgm.iter_decls_mut() {
@@ -326,11 +325,7 @@ fn collect_extension_tvs(
                 if let Some(Some(old)) = old
                     && old != Kind::Row(record_or_variant)
                 {
-                    panic!(
-                        "{}: Conflicting kind of type variable {}",
-                        loc_display(&ext.loc),
-                        var,
-                    );
+                    panic!("{}: Conflicting kind of type variable {}", ext.loc, var,);
                 }
             }
             other => collect_tvs(other, &ext.loc, tvs),
@@ -366,7 +361,7 @@ pub(crate) fn convert_kind(kind: &Option<ast::L<ast::Type>>) -> Option<Kind> {
     }
     panic!(
         "{}: Kind annotation must be `Row[Rec]` (record row) or `Row[Var]` (variant row)",
-        loc_display(&kind.loc)
+        kind.loc
     )
 }
 

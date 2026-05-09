@@ -1,7 +1,6 @@
 use crate::indenting_printer::Printer;
 use crate::lowering::*;
 use crate::mono_ast as mono;
-use crate::utils::loc_display;
 
 use std::fmt::Write;
 
@@ -60,7 +59,7 @@ impl LoweredPgm {
 
                 FunBody::Source(SourceFunDecl { locals, body }) => {
                     assert_eq!(fun.idx.0 as usize, fun_idx);
-                    write!(p, "// {}", loc_display(&fun.name.loc)).unwrap();
+                    write!(p, "// {}", fun.name.loc).unwrap();
                     p.nl();
                     write!(p, "fun{fun_idx}: ").unwrap();
                     if let Some(parent_ty) = &fun.parent_ty {
@@ -109,14 +108,14 @@ impl LoweredPgm {
         ) in self.closures.iter().enumerate()
         {
             assert_eq!(idx.0 as usize, closure_idx);
-            write!(p, "// {}", loc_display(loc)).unwrap();
+            write!(p, "// {loc}").unwrap();
             p.nl();
             write!(p, "closure{closure_idx}:").unwrap();
             p.indented(|p| {
                 p.nl();
                 p.str("locals: ");
                 p.sep(locals.iter(), ", ", |p, LocalInfo { name, ty }| {
-                    write!(p, "{}: {}", name, ty).unwrap();
+                    write!(p, "{name}: {ty}").unwrap();
                 });
                 p.nl();
                 p.str("fvs: ");
@@ -244,7 +243,7 @@ impl Expr {
                 p.char(')');
             }
 
-            Expr::Int(int) => write!(p, "{:#x}", int).unwrap(),
+            Expr::Int(int) => write!(p, "{int:#x}").unwrap(),
 
             Expr::Str(str) => {
                 p.char('"');

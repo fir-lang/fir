@@ -9,7 +9,6 @@ use heap::Heap;
 use crate::ast::{self, L, Loc, Name};
 use crate::lowering::*;
 use crate::mono_ast as mono;
-use crate::utils::loc_display;
 
 use std::cmp::Ordering;
 use std::io::Write;
@@ -323,7 +322,7 @@ fn call_ast_fun<W: Write>(
         fun.params.len(),
         args.len(),
         "{}, fun: {}",
-        loc_display(loc),
+        loc,
         fun.name.node
     );
 
@@ -401,7 +400,7 @@ fn call_closure<W: Write>(
             ret
         }
 
-        _ => panic!("{}: Function evaluated to non-callable", loc_display(loc)),
+        _ => panic!("{loc}: Function evaluated to non-callable"),
     }
 }
 
@@ -451,7 +450,7 @@ fn exec<W: Write>(
             }) => {
                 let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc, call_stack));
                 if !try_bind_pat(pgm, heap, lhs, locals, val) {
-                    panic!("{}: Pattern binding failed", loc_display(&stmt.loc));
+                    panic!("{}: Pattern binding failed", stmt.loc);
                 }
                 pgm.unit_alloc
             }
@@ -643,7 +642,7 @@ fn eval<W: Write>(
                     return exec(w, pgm, heap, locals, rhs, call_stack);
                 }
             }
-            panic!("{}: Non-exhaustive pattern match", loc_display(loc));
+            panic!("{loc}: Non-exhaustive pattern match");
         }
 
         Expr::If(IfExpr {
@@ -749,10 +748,7 @@ fn assign<W: Write>(
 
         _ => {
             // Type checker only accepts variables and fields on the LHS.
-            panic!(
-                "{}: BUG: Assign statement with fancy LHS",
-                loc_display(&lhs.loc)
-            )
+            panic!("{}: BUG: Assign statement with fancy LHS", lhs.loc)
         }
     }
     ControlFlow::Val(pgm.unit_alloc)
@@ -857,7 +853,7 @@ fn call_builtin_fun<W: Write>(
             let msg = args[0];
             let bytes = heap.str_bytes(msg);
             let msg = String::from_utf8_lossy(bytes).into_owned();
-            let mut msg_str = format!("{}: PANIC: {}\n", loc_display(loc), msg);
+            let mut msg_str = format!("{loc}: PANIC: {msg}\n");
             msg_str.push_str("\nFIR STACK:\n");
             write_call_stack(call_stack, &mut msg_str);
             panic!("{}", msg_str);
@@ -968,7 +964,7 @@ fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
             if i2 == 0 {
-                panic!("{}: Div by zero", loc_display(loc));
+                panic!("{loc}: Div by zero");
             }
             FunRet::Val(u32_as_val(val_as_u32(i1) % val_as_u32(i2)))
         }
@@ -1019,7 +1015,7 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
                 pgm.array_u8_con_idx,
-                format!("{}", i).as_bytes(),
+                format!("{i}").as_bytes(),
             ))
         }
 
@@ -1029,7 +1025,7 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
                 pgm.array_u8_con_idx,
-                format!("{}", i).as_bytes(),
+                format!("{i}").as_bytes(),
             ))
         }
 
@@ -1458,11 +1454,11 @@ fn call_builtin_fun<W: Write>(
 
 fn write_call_stack<W: std::fmt::Write>(call_stack: &[Frame], out: &mut W) {
     for frame in call_stack.iter().rev() {
-        write!(out, "{}: ", loc_display(&frame.call_site)).unwrap();
+        write!(out, "{}: ", frame.call_site).unwrap();
         match &frame.kind {
-            FrameKind::Fun(fun_id) => writeln!(out, "{}", fun_id).unwrap(),
+            FrameKind::Fun(fun_id) => writeln!(out, "{fun_id}").unwrap(),
             FrameKind::Closure(loc) => {
-                writeln!(out, "Closure at {}", loc_display(loc)).unwrap();
+                writeln!(out, "Closure at {loc}").unwrap();
             }
         }
     }

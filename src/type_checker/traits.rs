@@ -66,7 +66,6 @@ use crate::type_checker::id::Id;
 use crate::type_checker::ty::*;
 use crate::type_checker::ty_map::TyMap;
 use crate::type_checker::unification::try_unify_one_way;
-use crate::utils::loc_display;
 
 /// Maps trait ids to implementations.
 pub type TraitEnv = HashMap<Id, Vec<TraitImpl>>;
@@ -128,12 +127,12 @@ pub(crate) fn collect_trait_env(
         /*
         let ty_con = tys
             .get_con(&trait_id)
-            .unwrap_or_else(|| panic!("{}: Undefined trait {}", loc_display(&impl_.loc), trait_id));
+            .unwrap_or_else(|| panic!("{}: Undefined trait {}", impl_.loc, trait_id));
 
         let trait_details = ty_con.trait_details().unwrap_or_else(|| {
             panic!(
                 "{}: Type {} is not a trait",
-                loc_display(&impl_.loc),
+                impl_.loc,
                 trait_id
             )
         });
@@ -199,10 +198,7 @@ impl TraitImpl {
         loc: &ast::Loc,
     ) -> Option<(Vec<Pred>, HashMap<Name, Ty>)> {
         if args.len() != self.trait_args.len() {
-            panic!(
-                "{}: BUG: Number of arguments applied to the trait don't match the arity",
-                loc_display(loc)
-            );
+            panic!("{loc}: BUG: Number of arguments applied to the trait don't match the arity");
         }
 
         // Maps `QVar`s to instantiations.
