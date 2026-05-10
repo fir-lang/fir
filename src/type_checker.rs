@@ -332,8 +332,7 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                                     } => Some((
                                         name.node.clone(),
                                         AssocTyDetails {
-                                            kind: kind_inference::convert_kind(kind)
-                                                .unwrap_or(Kind::Star),
+                                            kind: convert_kind(kind).unwrap_or(Kind::Star),
                                             default: None, // we're not adding details in this pass
                                         },
                                     )),
@@ -475,7 +474,7 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                             kind,
                             default,
                         } => {
-                            let kind = kind_inference::convert_kind(kind).unwrap_or(Kind::Star);
+                            let kind = convert_kind(kind).unwrap_or(Kind::Star);
                             let old = assoc_tys.insert(
                                 assoc_ty.node.clone(),
                                 AssocTyDetails {
@@ -987,7 +986,7 @@ fn collect_schemes(
                             default: _,
                         } = trait_item
                         {
-                            let kind = kind_inference::convert_kind(kind).unwrap_or(Kind::Star);
+                            let kind = convert_kind(kind).unwrap_or(Kind::Star);
                             let trait_ty = {
                                 let args: Vec<Ty> = trait_decl
                                     .node

@@ -354,3 +354,35 @@ fn convert_pred(
         }),
     }
 }
+
+pub(crate) fn convert_kind(kind: &Option<ast::L<ast::Type>>) -> Option<Kind> {
+    let kind = match kind {
+        Some(kind) => kind,
+        None => return None,
+    };
+    if let ast::Type::Named(ast::NamedType {
+        mod_prefix: _,
+        name,
+        args,
+    }) = &kind.node
+        && name == "Row"
+        && args.len() == 1
+        && let ast::Type::Named(ast::NamedType {
+            mod_prefix: _,
+            name: kind_arg_name,
+            args: kind_arg_args,
+        }) = &args[0].node
+        && (kind_arg_name == "Rec" || kind_arg_name == "Var")
+        && kind_arg_args.is_empty()
+    {
+        return Some(Kind::Row(match kind_arg_name.as_str() {
+            "Rec" => RecordOrVariant::Record,
+            "Var" => RecordOrVariant::Variant,
+            _ => unreachable!(),
+        }));
+    }
+    panic!(
+        "{}: Kind annotation must be `Row[Rec]` (record row) or `Row[Var]` (variant row)",
+        kind.loc
+    )
+}
