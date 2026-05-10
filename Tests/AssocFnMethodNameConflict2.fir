@@ -23,7 +23,7 @@ impl Add[MyInt]:
         MyInt(i = self.i + other.i)
 
 
-main():
+main() / []:
     print(MyInt.__add(MyInt(i = 1), MyInt(i = 2)).i)
 
     # There are issues with the syntax used in the next line, see issue #232. If

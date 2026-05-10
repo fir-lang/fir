@@ -1,7 +1,6 @@
 use crate::indenting_printer::Printer;
 use crate::lowering::*;
 use crate::mono_ast as mono;
-use crate::utils::loc_display;
 
 use std::fmt::Write;
 
@@ -19,19 +18,23 @@ impl LoweredPgm {
                 HeapObj::Builtin(builtin) => write!(p, "{builtin:?}").unwrap(),
 
                 HeapObj::Source(SourceConDecl {
-                    name,
+                    ty_name,
+                    con_name,
                     idx,
                     ty_args,
                     fields,
-                    sum: _,
                     value: _,
                 }) => {
                     assert_eq!(idx.0 as usize, heap_obj_idx);
-                    p.str(name.as_str());
+                    p.str(ty_name.as_str());
+                    if let Some(con_name) = con_name {
+                        p.char('_');
+                        p.str(con_name.as_str());
+                    }
                     print_ty_args(ty_args, p);
                     p.char('(');
-                    p.sep(fields.iter(), ", ", |p, field_ty| {
-                        write!(p, "{field_ty}").unwrap()
+                    p.sep(fields.iter(), ", ", |p, (field_name, field_ty)| {
+                        write!(p, "{field_name}: {field_ty}").unwrap()
                     });
                     p.char(')');
                 }
@@ -56,7 +59,7 @@ impl LoweredPgm {
 
                 FunBody::Source(SourceFunDecl { locals, body }) => {
                     assert_eq!(fun.idx.0 as usize, fun_idx);
-                    write!(p, "// {}", loc_display(&fun.name.loc)).unwrap();
+                    write!(p, "// {}", fun.name.loc).unwrap();
                     p.nl();
                     write!(p, "fun{fun_idx}: ").unwrap();
                     if let Some(parent_ty) = &fun.parent_ty {
@@ -105,14 +108,14 @@ impl LoweredPgm {
         ) in self.closures.iter().enumerate()
         {
             assert_eq!(idx.0 as usize, closure_idx);
-            write!(p, "// {}", loc_display(loc)).unwrap();
+            write!(p, "// {loc}").unwrap();
             p.nl();
             write!(p, "closure{closure_idx}:").unwrap();
             p.indented(|p| {
                 p.nl();
                 p.str("locals: ");
                 p.sep(locals.iter(), ", ", |p, LocalInfo { name, ty }| {
-                    write!(p, "{}: {}", name, ty).unwrap();
+                    write!(p, "{name}: {ty}").unwrap();
                 });
                 p.nl();
                 p.str("fvs: ");
@@ -210,7 +213,6 @@ impl Expr {
             Expr::ConAlloc {
                 con_idx,
                 args,
-                arg_tys: _,
                 ret_ty: _,
             } => {
                 write!(p, "con{}", con_idx.as_usize()).unwrap();
@@ -224,6 +226,7 @@ impl Expr {
                 field,
                 idx: _,
                 object_ty: _,
+                deref: _,
             }) => {
                 object.node.print(p);
                 p.char('.');
@@ -241,7 +244,7 @@ impl Expr {
                 p.char(')');
             }
 
-            Expr::Int(int) => write!(p, "{:#x}", int).unwrap(),
+            Expr::Int(int) => write!(p, "{int:#x}").unwrap(),
 
             Expr::Str(str) => {
                 p.char('"');
@@ -349,12 +352,10 @@ impl Expr {
             Expr::Do(body, _) => {
                 p.str("do:");
                 p.indented(|p| {
-                    p.indented(|p| {
-                        p.nl();
-                        for stmt in body.iter() {
-                            stmt.node.print(p);
-                        }
-                    });
+                    p.nl();
+                    for stmt in body.iter() {
+                        stmt.node.print(p);
+                    }
                 });
             }
 
@@ -365,6 +366,19 @@ impl Expr {
             } => {
                 p.char('~');
                 expr.node.print(p);
+            }
+
+            Expr::InlineC { parts } => {
+                p.str("inline(\"");
+                for part in parts {
+                    match part {
+                        InlineCPart::Str(s) => crate::ast::printer::escape_str_lit(s, p),
+                        InlineCPart::Var(local_idx) => {
+                            write!(p, "`local{}`", local_idx.0).unwrap();
+                        }
+                    }
+                }
+                p.str("\")");
             }
         }
     }

@@ -15,7 +15,7 @@ f[Foo[t], ToStr[Foo[t].Ext]](x: Bar[t]):
     match x:
         Bar.Baz(ext, ..): print(ext)
 
-main():
+main() / []:
     f[MyFoo, []](Bar.Baz(ext = ()))
 
 # expected stdout:

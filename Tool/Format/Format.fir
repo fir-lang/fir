@@ -95,14 +95,14 @@ TopDecl.format(self: TopDecl, tokens: Array[Token]) Doc:
 TypeDecl.format(self: TypeDecl, tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
-    if self.attr is Option.Some(attr):
-        doc += attr.format(tokens) + Doc.hardLine()
+    if not self.attrs.isEmpty():
+        doc += self.attrs.iter().map(\(attr): attr.format(tokens)).join(
+            Doc.hardLine()
+        ) + Doc.hardLine()
 
-    if self.value_ is Option.Some(value_):
-        doc += formatToken(value_, tokens) + Doc.blank(1)
-
-    if self.prim_ is Option.Some(prim_):
-        doc += formatToken(prim_, tokens) + Doc.blank(1)
+    if self.kind is Option.Some(kind):
+        let token = kind.firstToken(tokens)
+        doc += formatToken(token, tokens) + Doc.blank(1)
 
     let type_ = prevNonTrivia(self.name.token, tokens).unwrap()
     assert(tokens.get(type_.idx).kind is TokenKind.Type)
@@ -161,45 +161,7 @@ TypeDecl.format(self: TypeDecl, tokens: Array[Token]) Doc:
 TypeDeclRhs.format(self: TypeDeclRhs, tokens: Array[Token]) Doc:
     match self:
         TypeDeclRhs.Sum(cons, extension):
-            assert(not (cons.isEmpty() and extension is Option.None))
-
-            let colon = match cons.getOpt(0):
-                Option.Some(firstCon):
-                    prevNonTrivia(firstCon.name.token, tokens).unwrap()
-                Option.None:
-                    let dotdot = prevNonTrivia(
-                        extension.unwrap().firstToken(tokens), tokens,
-                    ).unwrap()
-                    assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
-                    prevNonTrivia(dotdot, tokens).unwrap()
-
-            assert(tokens.get(colon.idx).kind is TokenKind.Colon)
-
-            let doc = Doc.empty()
-            let conIdx: U32 = 0
-            for con: ConDecl in cons.iter():
-                if conIdx != 0:
-                    doc += Doc.hardLine()
-
-                    let lastConLastLine = tokens.get(
-                        cons.get(conIdx - 1)._lastToken.idx,
-                    ).rightLoc().line
-                    if tokens.get(con.name.token.idx).line - lastConLastLine > 1:
-                        doc += Doc.hardLine()
-
-                doc += con.format(tokens)
-
-                conIdx += 1
-
-            if extension is Option.Some(ext):
-                if conIdx != 0:
-                    doc += Doc.hardLine()
-                let dotdot = prevNonTrivia(ext.firstToken(tokens), tokens)
-                    .unwrap()
-                assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
-                doc += formatToken(dotdot, tokens) + ext.format(tokens)
-
-            Doc.nested(4, formatToken(colon, tokens) + Doc.hardLine() + doc)
+            _formatSumDecl(cons, extension, tokens)
 
         TypeDeclRhs.Product(fields): fields.format(tokens)
 
@@ -210,6 +172,124 @@ TypeDeclRhs.format(self: TypeDeclRhs, tokens: Array[Token]) Doc:
                 + formatToken(eq, tokens)
                 + Doc.blank(1)
                 + ty.format(tokens)
+
+        TypeDeclRhs.Extern(cTypeBegin, cTypeEnd, fields):
+            _formatExternDecl(cTypeBegin, cTypeEnd, fields, tokens)
+
+
+_formatSumDecl(
+    cons: Vec[ConDecl],
+    extension: Option[Type],
+    tokens: Array[Token],
+) Doc:
+    assert(not (cons.isEmpty() and extension is Option.None))
+
+    let colon = match cons.getOpt(0):
+        Option.Some(firstCon):
+            prevNonTrivia(firstCon.name.token, tokens).unwrap()
+        Option.None:
+            let dotdot = prevNonTrivia(
+                extension.unwrap().firstToken(tokens), tokens,
+            ).unwrap()
+            assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+            prevNonTrivia(dotdot, tokens).unwrap()
+
+    assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+    let doc = Doc.empty()
+    let conIdx: U32 = 0
+    for con: ConDecl in cons.iter():
+        if conIdx != 0:
+            doc += Doc.hardLine()
+
+            let lastConLastLine = tokens.get(
+                cons.get(conIdx - 1)._lastToken.idx,
+            ).rightLoc().line
+            if tokens.get(con.name.token.idx).line - lastConLastLine > 1:
+                doc += Doc.hardLine()
+
+        doc += con.format(tokens)
+
+        conIdx += 1
+
+    if extension is Option.Some(ext):
+        if conIdx != 0:
+            doc += Doc.hardLine()
+        let dotdot = prevNonTrivia(ext.firstToken(tokens), tokens).unwrap()
+        assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+        doc += formatToken(dotdot, tokens) + ext.format(tokens)
+
+    Doc.nested(4, formatToken(colon, tokens) + Doc.hardLine() + doc)
+
+
+_formatExternDecl(
+    cTypeBegin: TokenIdx,
+    cTypeEnd: TokenIdx,
+    fields: Option[Vec[ExternField]],
+    tokens: Array[Token],
+) Doc:
+    let eq = prevNonTrivia(cTypeBegin, tokens).unwrap()
+    assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+
+    let doc = Doc.blank(1)
+        + formatToken(eq, tokens)
+        + Doc.blank(1)
+        + formatToken(cTypeBegin, tokens)
+        + formatToken(cTypeEnd, tokens)
+
+    if fields is Option.Some(fields):
+        let lparen = nextNonTrivia(cTypeEnd, tokens).unwrap()
+        assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
+
+        if fields.isEmpty():
+            let rparen = nextNonTrivia(lparen, tokens).unwrap()
+            assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+            return doc
+                + formatToken(lparen, tokens)
+                + formatToken(rparen, tokens)
+
+        let fieldList = Doc.empty()
+        let trailingComma = Bool.False
+        let lastToken = lparen
+        for ExternField(name, ty, cNameBegin, cNameEnd) in fields.iter():
+            if trailingComma:
+                fieldList += Doc.break_(1)
+                trailingComma = Bool.False
+
+            fieldList += formatToken(name.token, tokens)
+
+            let colon = nextNonTrivia(name.token, tokens).unwrap()
+            assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+            fieldList += formatToken(colon, tokens)
+                + Doc.blank(1)
+                + ty.format(tokens)
+                + Doc.blank(1)
+
+            let eq = nextNonTrivia(ty.lastToken(tokens), tokens).unwrap()
+            assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+
+            fieldList += formatToken(eq, tokens)
+                + Doc.blank(1)
+                + formatToken(cNameBegin, tokens)
+                + formatToken(cNameEnd, tokens)
+
+            lastToken = cNameEnd
+
+            if nextNonTrivia(lastToken, tokens) is Option.Some(next)
+                    and tokens.get(next.idx).kind is TokenKind.Comma:
+                trailingComma = Bool.True
+                fieldList += formatToken(next, tokens)
+                lastToken = next
+
+        let rparen = nextNonTrivia(lastToken, tokens).unwrap()
+        assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+
+        doc += (formatToken(lparen, tokens) + Doc.hardLine() + fieldList).nest(
+            4
+        ) + Doc.hardLine() + formatToken(rparen, tokens)
+
+    doc
 
 
 ConDecl.format(self: ConDecl, tokens: Array[Token]) Doc:
@@ -503,22 +583,27 @@ _formatSigArgList(
 
 
 ImportDecl.format(self: ImportDecl, tokens: Array[Token]) Doc:
-    assert(not self.items.isEmpty())
+    let attr = if self.attrs.isEmpty():
+        Doc.empty()
+    else:
+        self.attrs.iter().map(\(attr): attr.format(tokens)).join(Doc.hardLine())
+            + Doc.hardLine()
 
-    let firstItemFirstToken = self.items.get(0).firstToken(tokens)
-    let lbracket = prevNonTrivia(firstItemFirstToken, tokens).unwrap()
+    let lbracket = nextNonTrivia(self.import_, tokens).unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
-
-    let import_ = prevNonTrivia(lbracket, tokens).unwrap()
-    assert(tokens.get(import_.idx).kind is TokenKind.Import)
 
     # Leading comments of `import` contain hard line breaks; keep them outside
     # the group so they don't force the group to break.
-    let leading = formatLeadingComments(import_, tokens)
-    let header = Doc.str(tokens.get(import_.idx).text)
-        + formatTrailingComments(import_, tokens)
+    let leading = formatLeadingComments(self.import_, tokens)
+    let header = Doc.str(tokens.get(self.import_.idx).text)
+        + formatTrailingComments(self.import_, tokens)
         + Doc.blank(1)
         + formatToken(lbracket, tokens)
+
+    if self.items.isEmpty():
+        let rbracket = nextNonTrivia(lbracket, tokens).unwrap()
+        assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
+        return attr + leading + header + formatToken(rbracket, tokens)
 
     # Single-item imports stay on one line if they fit (using `break_(0)` so the
     # group can still break when the item is too long). Multi-item imports are
@@ -557,7 +642,8 @@ ImportDecl.format(self: ImportDecl, tokens: Array[Token]) Doc:
     assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
     if self.items.len() == 1:
-        leading
+        attr
+            + leading
             + Doc.grouped(
                 header
                     + docRest.nest(4)
@@ -565,7 +651,8 @@ ImportDecl.format(self: ImportDecl, tokens: Array[Token]) Doc:
                     + formatToken(rbracket, tokens),
             )
     else:
-        leading
+        attr
+            + leading
             + header
             + docRest.nest(4)
             + Doc.hardLine()
@@ -1510,12 +1597,20 @@ WhileStmt.format(self: WhileStmt, tokens: Array[Token]) Doc:
 
 
 LoopStmt.format(self: LoopStmt, tokens: Array[Token]) Doc:
+    let doc = Doc.empty()
     let loop_ = self.firstToken(tokens)
+
+    if self.label is Option.Some(label):
+        doc += formatToken(label.token, tokens) + Doc.blank(1)
+        loop_ = nextNonTrivia(label.token, tokens).unwrap()
+
+    assert(tokens.get(loop_.idx).kind is TokenKind.Loop)
 
     let colon = nextNonTrivia(loop_, tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    formatToken(loop_, tokens)
+    doc
+        + formatToken(loop_, tokens)
         + Doc.nested(
             4,
             formatToken(colon, tokens)
@@ -2283,3 +2378,6 @@ type Attribute = Ast/Attribute[Ast/DefaultAstExts]
 
 
 type TyArgs = Ast/TyArgs[Ast/DefaultAstExts]
+
+
+type ExternField = Ast/ExternField[Ast/DefaultAstExts]

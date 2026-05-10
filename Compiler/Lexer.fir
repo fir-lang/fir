@@ -260,6 +260,14 @@ Lexer._nextInit(self) Option[Token] / Error:
             Token(kind = TokenKind.Else, text = "else", byteIdx, line, col),
         )
 
+    if input.startsWith("extern")
+            and not _isIdContStr(input.substr(6, input.len())):
+        self._byteIdx += 6
+        self._col += 6
+        return Option.Some(
+            Token(kind = TokenKind.Extern, text = "extern", byteIdx, line, col),
+        )
+
     if input.startsWith("fn") and not _isIdContStr(input.substr(2, input.len())):
         self._byteIdx += 2
         self._col += 2
@@ -927,7 +935,7 @@ Lexer._nextString(self) Token / Error:
                 self._byteIdx += 1
                 self._col += 1
                 match self._nextChar():
-                    '`' | '"' | 'n' | 't' | 'r' | '\\':
+                    '`' | '"' | 'n' | 't' | 'r' | '\\' | '0':
                         self._byteIdx += 1
                         self._col += 1
                     '\n':
@@ -968,6 +976,7 @@ Lexer._char(self) Token / Error:
                 'n': '\n'
                 't': '\t'
                 'r': '\r'
+                '0': '\0'
                 other:
                     self._fail(
                         "invalid escape character in character literal: '`other`'",

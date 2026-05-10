@@ -1,14 +1,14 @@
 #![allow(clippy::all)]
 
 use crate::ast::*;
-use crate::interpolation::{str_parts, copy_update_escapes};
+use crate::interpolation::*;
 use crate::module::ModulePath;
 use crate::parser_utils::*;
 use crate::token::*;
 
 use std::convert::Infallible;
 use std::rc::Rc;
-
+use std::cell::RefCell;
 
 use lexgen_util::{LexerError, Loc};
 
@@ -74,6 +74,7 @@ extern {
         "do" => Token { kind: TokenKind::Do, .. },
         "elif" => Token { kind: TokenKind::Elif, .. },
         "else" => Token { kind: TokenKind::Else, .. },
+        "extern" => Token { kind: TokenKind::Extern, .. },
         "fn" => Token { kind: TokenKind::Fn, .. },
         "for" => Token { kind: TokenKind::For, .. },
         "if" => Token { kind: TokenKind::If, .. },
@@ -149,6 +150,11 @@ Attribute: Attribute = {
     },
 }
 
+#[inline]
+Attributes: Vec<Attribute> = {
+    Attribute*
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Type declarations
@@ -156,9 +162,14 @@ Attribute: Attribute = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TypeDecl: L<TypeDecl> = {
-    <l:@L> <attr:Attribute?> <value:"value"?> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
+
+    //
+    // Sums and products
+    //
+
+    <l:@L> <attrs:Attributes> <value:"value"?> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr,
+            attrs,
             value: value.is_some(),
             name: type_name.name(),
             type_params: vec![],
@@ -166,11 +177,11 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(rhs),
         }),
 
-    <l:@L> <attr:Attribute?>
+    <l:@L> <attrs:Attributes>
             <value:"value"?> "type" <type_name:UpperIdLBracket> <type_params:TypeParams>
             <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr,
+            attrs,
             value: value.is_some(),
             name: type_name.name(),
             type_params,
@@ -178,11 +189,15 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(rhs),
         }),
 
-    <l:@L> <attr:Attribute?>
+    //
+    // Type synonyms
+    //
+
+    <l:@L> <attrs:Attributes>
             "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "="
             <ty:LType> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr,
+            attrs,
             value: false,
             name: type_name.name(),
             type_params,
@@ -190,9 +205,9 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(TypeDeclRhs::Synonym(ty)),
         }),
 
-    <l:@L> <attr:Attribute?> "type" <type_name:UpperId> "=" <ty:LType> NEWLINE <r:@R> =>
+    <l:@L> <attrs:Attributes> "type" <type_name:UpperId> "=" <ty:LType> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr,
+            attrs,
             value: false,
             name: type_name.name(),
             type_params: vec![],
@@ -200,9 +215,13 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(TypeDeclRhs::Synonym(ty)),
         }),
 
-    <l:@L> <attr:Attribute?> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>
+    //
+    // Prim types
+    //
+
+    <l:@L> <attrs:Attributes> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr,
+            attrs,
             value: false,
             name: type_name.name(),
             type_params: vec![],
@@ -212,13 +231,46 @@ TypeDecl: L<TypeDecl> = {
 
     <l:@L> "prim" "type" <type_name:UpperIdLBracket> <type_params:TypeParams> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
-            attr: None,
+            attrs: vec![],
             value: false,
             name: type_name.name(),
             type_params,
             type_param_kinds: vec![],
             rhs: None,
         }),
+
+    //
+    // Extern types
+    //
+
+    <l:@L> "extern" "type" <type_name:UpperId> "=" BeginStr <str:EndStr>
+           <fields:("(" <Sep<ExternTypeField, ",">> ")")?> NEWLINE <r:@R> => {
+        let c_type = str.text.as_str();
+        let c_type = &c_type[0..c_type.len() - 1]; // drop the "
+        L::new(module, l, r, TypeDecl {
+            attrs: vec![],
+            value: true, // treat extern types as values
+            name: type_name.name(),
+            type_params: vec![],
+            type_param_kinds: vec![],
+            rhs: Some(TypeDeclRhs::Extern(ExternTypeDeclRhs {
+                c_type: c_type.to_string(),
+                fields,
+            })),
+        })
+    }
+}
+
+ExternTypeField: ExternTypeField = {
+    <name:LowerId> ":" <fir_type:LType> "=" BeginStr <str:EndStr> => {
+        let c_type = str.text.as_str();
+        let c_type = &c_type[0..c_type.len() - 1]; // drop the "
+        ExternTypeField {
+            name: Name::new(name.smol_str()),
+            fir_type,
+            c_type: c_type.to_string(),
+        }
+    }
 }
 
 TypeDeclRhs: TypeDeclRhs = {
@@ -824,8 +876,9 @@ InlineExpr: Expr = {
     <l:@L> <int:IntLit> => {
         Expr::Int(IntExpr {
             text: int.text.clone(),
-            kind: None, // for type checker
+            kind: Rc::new(RefCell::new(None)), // for type checker
             parsed: parse_int_lit(&int.text, module, &l),
+            inferred_ty: None,
         })
     },
 
@@ -1378,8 +1431,8 @@ FieldPat: Named<L<Pat>> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImportDecl: L<ImportDecl> = {
-    <l:@L> <attr:Attribute?> "import" "[" <items:Sep<ImportItem, ",">> "]" NEWLINE <r:@R> =>
-        L::new(module, l, r, ImportDecl { attr, items }),
+    <l:@L> <attrs:Attributes> "import" "[" <items:Sep<ImportItem, ",">> "]" NEWLINE <r:@R> =>
+        L::new(module, l, r, ImportDecl { attrs, items }),
 }
 
 ImportItem: ImportItem = {

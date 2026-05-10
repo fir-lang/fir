@@ -2,13 +2,20 @@
 Simple kind inference: analyzes one declaration at a time, infers kind of a type parameter without
 explicit kind annotation from the definition. If a type parameter is used in a row position its kind
 is inferred. Otherwise it's defaulted as `*`.
+
+Also adds a type parameter for the missing exception types in functions. E.g.
+
+    foo(x: U32, y: U32) U32
+    ==>
+    foo[?exn: *](x: U32, y: U32) U32 / ?exn
+
 */
 
 use crate::ast;
 use crate::collections::*;
 use crate::module_loader::LoadedPgm;
+use crate::type_checker::convert::convert_kind;
 use crate::type_checker::{Kind, Name, RecordOrVariant};
-use crate::utils::loc_display;
 
 pub fn add_missing_type_params(pgm: &mut LoadedPgm) {
     for (_, decl) in pgm.iter_decls_mut() {
@@ -38,9 +45,13 @@ pub fn add_missing_type_params(pgm: &mut LoadedPgm) {
 fn add_missing_type_params_fun(
     sig: &mut ast::FunSig,
     tvs: &mut OrderMap<Name, Option<Kind>>,
-    _loc: &ast::Loc,
+    loc: &ast::Loc,
 ) {
     assert!(sig.context.type_params.is_empty());
+
+    if sig.exceptions.is_none() {
+        sig.exceptions = Some(exn_type(loc));
+    }
 
     // Variables bound in the enclosing `trait` or `impl` context.
     let bound_vars: HashSet<Name> = tvs.keys().cloned().collect();
@@ -166,6 +177,14 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
 fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     assert!(ty.type_param_kinds.is_empty());
 
+    // `extern` types can only take `*` arguments.
+    if let Some(ast::TypeDeclRhs::Extern(_)) = &ty.rhs {
+        for _ in &ty.type_params {
+            ty.type_param_kinds.push(Kind::Star);
+        }
+        return;
+    }
+
     let mut type_param_kinds: OrderMap<Name, Option<Kind>> = Default::default();
     for param in &ty.type_params {
         type_param_kinds.insert(param.name.node.clone(), convert_kind(&param.kind));
@@ -183,6 +202,9 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
         }
         Some(ast::TypeDeclRhs::Synonym(ty)) => {
             collect_tvs(&ty.node, &ty.loc, &mut type_param_kinds);
+        }
+        Some(ast::TypeDeclRhs::Extern(_)) => {
+            panic!() // handled above
         }
         None => {}
     }
@@ -315,11 +337,7 @@ fn collect_extension_tvs(
                 if let Some(Some(old)) = old
                     && old != Kind::Row(record_or_variant)
                 {
-                    panic!(
-                        "{}: Conflicting kind of type variable {}",
-                        loc_display(&ext.loc),
-                        var,
-                    );
+                    panic!("{}: Conflicting kind of type variable {}", ext.loc, var,);
                 }
             }
             other => collect_tvs(other, &ext.loc, tvs),
@@ -327,34 +345,12 @@ fn collect_extension_tvs(
     }
 }
 
-pub(crate) fn convert_kind(kind: &Option<ast::L<ast::Type>>) -> Option<Kind> {
-    let kind = match kind {
-        Some(kind) => kind,
-        None => return None,
-    };
-    if let ast::Type::Named(ast::NamedType {
-        mod_prefix: _,
-        name,
-        args,
-    }) = &kind.node
-        && name == "Row"
-        && args.len() == 1
-        && let ast::Type::Named(ast::NamedType {
-            mod_prefix: _,
-            name: kind_arg_name,
-            args: kind_arg_args,
-        }) = &args[0].node
-        && (kind_arg_name == "Rec" || kind_arg_name == "Var")
-        && kind_arg_args.is_empty()
-    {
-        return Some(Kind::Row(match kind_arg_name.as_str() {
-            "Rec" => RecordOrVariant::Record,
-            "Var" => RecordOrVariant::Variant,
-            _ => unreachable!(),
-        }));
+// The default exception type: `?exn`.
+fn exn_type(loc: &ast::Loc) -> ast::L<ast::Type> {
+    ast::L {
+        node: ast::Type::Var(EXN_QVAR_NAME),
+        loc: loc.clone(),
     }
-    panic!(
-        "{}: Kind annotation must be `Row[Rec]` (record row) or `Row[Var]` (variant row)",
-        loc_display(&kind.loc)
-    )
 }
+
+const EXN_QVAR_NAME: Name = Name::new_static("?exn");

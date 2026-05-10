@@ -16,7 +16,7 @@ impl[Seq[s, exn]] Seq[Wrapper[s, exn], exn]:
     first(self: Wrapper[s, exn]) Option[Seq[Wrapper[s, exn], exn].Item] / exn:
         self.inner.first()
 
-main():
+main() / []:
     # This makes the first trait arg concrete, while the trait-level `exn`
     # `UVar` stays unlinked.
     let w: Wrapper[MySeq, []] = Wrapper(inner = MySeq(val = 42))

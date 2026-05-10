@@ -1,6 +1,6 @@
 pub mod printer;
 
-pub use crate::ast::{IntExpr, L, Loc, Name, Named};
+pub use crate::ast::{L, Loc, Name, Named};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -30,6 +30,7 @@ pub struct TypeDecl {
 pub enum TypeDeclRhs {
     Sum(Vec<ConDecl>),
     Product(ConFields),
+    Extern(ExternType),
 }
 
 #[derive(Debug, Clone)]
@@ -43,6 +44,24 @@ pub enum ConFields {
     Empty,
     Named(OrdMap<Name, Type>),
     Unnamed(Vec<Type>),
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternType {
+    pub c_type: String,
+    pub fields: Option<Vec<ExternField>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternField {
+    /// Fir name of the field.
+    pub fir_name: Name,
+
+    /// Field type with the enclosing type's parameters substituted.
+    pub ty: Type,
+
+    /// Name of the field in the C struct.
+    pub c_name: String,
 }
 
 // Note: `Type` is used in maps and sets and it *cannot* have `Loc`s in it to avoid duplicating
@@ -86,13 +105,6 @@ impl Type {
         })
     }
 
-    pub(crate) fn u32() -> Type {
-        Type::Named(NamedType {
-            name: Name::new_static("U32"),
-            args: vec![],
-        })
-    }
-
     pub(crate) fn u64() -> Type {
         Type::Named(NamedType {
             name: Name::new_static("U64"),
@@ -126,6 +138,13 @@ impl Type {
             return fields.is_empty();
         }
         false
+    }
+
+    pub(crate) fn is_c_void(&self) -> bool {
+        match self {
+            Type::Named(NamedType { name, args: _ }) => name == "Void",
+            _ => false,
+        }
     }
 }
 
@@ -311,7 +330,7 @@ pub enum Expr {
     FieldSel(FieldSelExpr),     // <expr>.<id>
     AssocFnSel(AssocFnSelExpr), // <id>.<id>
     Call(CallExpr),
-    Int(IntExpr),
+    Int(IntKind),
     Str(String),
     Char(char),
     BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
@@ -324,6 +343,7 @@ pub enum Expr {
     Do(Vec<L<Stmt>>, Type),
     Record(RecordExpr),
     Variant(VariantExpr),
+    InlineC(InlineCExpr),
 }
 
 impl Expr {
@@ -338,10 +358,15 @@ impl Expr {
             | Expr::Do(_, ty)
             | Expr::Return(_, ty)
             | Expr::Match(MatchExpr { ty, .. })
-            | Expr::If(IfExpr { ty, .. }) => ty.clone(),
+            | Expr::If(IfExpr { ty, .. })
+            | Expr::InlineC(InlineCExpr { ty, .. }) => ty.clone(),
 
-            Expr::Int(IntExpr { kind, .. }) => {
-                let con = match kind.unwrap() {
+            Expr::Int(kind) => {
+                // This code is quite hacky/delicate. The names below should be the mangled names of
+                // `Fir/Num/...` types. Because we monomorphise these types as first thing in
+                // `monomorphise` they get a name without a prefix/suffix, but if that ever changes
+                // the code below will return an incorrect type.
+                let con = match kind {
                     IntKind::I8(_) => "I8",
                     IntKind::U8(_) => "U8",
                     IntKind::I32(_) => "I32",
@@ -417,6 +442,18 @@ pub struct RecordExpr {
 pub struct VariantExpr {
     pub expr: Box<L<Expr>>,
     pub ty: OrdMap<Name, NamedType>, // the variant type
+}
+
+#[derive(Debug, Clone)]
+pub struct InlineCExpr {
+    pub parts: Vec<InlineCPart>,
+    pub ty: Type,
+}
+
+#[derive(Debug, Clone)]
+pub enum InlineCPart {
+    Str(String),
+    Var(Name),
 }
 
 #[derive(Debug, Clone)]

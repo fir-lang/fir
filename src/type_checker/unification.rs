@@ -1,7 +1,6 @@
 use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::type_checker::id::Id;
-use crate::type_checker::loc_display;
 use crate::type_checker::row_utils::*;
 use crate::type_checker::traits::TraitEnv;
 use crate::type_checker::ty::*;
@@ -22,7 +21,7 @@ pub(super) fn unify(
     if ty1.kind() != ty2.kind() {
         panic!(
             "{}: Unable to unify types {} and {} (kind mismatch, {} ~ {})",
-            loc_display(loc),
+            loc,
             ty1,
             ty2,
             ty1.kind(),
@@ -35,7 +34,7 @@ pub(super) fn unify(
             if con1 != con2 {
                 panic!(
                     "{}: Unable to unify types {} and {}",
-                    loc_display(loc),
+                    loc,
                     con1.name(),
                     con2.name(),
                 )
@@ -44,12 +43,7 @@ pub(super) fn unify(
 
         (Ty::RVar(con1, _kind1), Ty::RVar(con2, _kind2)) => {
             if con1 != con2 {
-                panic!(
-                    "{}: Unable to unify types {} and {}",
-                    loc_display(loc),
-                    con1,
-                    con2,
-                )
+                panic!("{loc}: Unable to unify types {con1} and {con2}",)
             }
         }
 
@@ -57,7 +51,7 @@ pub(super) fn unify(
             if con1 != con2 {
                 panic!(
                     "{}: Unable to unify types {} and {}",
-                    loc_display(loc),
+                    loc,
                     con1.name(),
                     con2.name(),
                 )
@@ -65,7 +59,7 @@ pub(super) fn unify(
             if args1.len() != args2.len() {
                 panic!(
                     "{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify",
-                    loc_display(loc),
+                    loc,
                     con1.name()
                 )
             }
@@ -88,10 +82,7 @@ pub(super) fn unify(
         ) => {
             if args1.len() != args2.len() {
                 panic!(
-                    "{}: Unable to unify functions {} and {} (argument numbers don't match)",
-                    loc_display(loc),
-                    ty1,
-                    ty2
+                    "{loc}: Unable to unify functions {ty1} and {ty2} (argument numbers don't match)"
                 );
             }
 
@@ -120,10 +111,7 @@ pub(super) fn unify(
 
                 (FunArgs::Named { .. }, FunArgs::Positional { .. })
                 | (FunArgs::Positional { .. }, FunArgs::Named { .. }) => {
-                    panic!(
-                        "{}: Unable to unify functions with positional and named arguments",
-                        loc_display(loc)
-                    )
+                    panic!("{loc}: Unable to unify functions with positional and named arguments")
                 }
             }
 
@@ -152,7 +140,7 @@ pub(super) fn unify(
         }
 
         (Ty::QVar(var, _kind), _) | (_, Ty::QVar(var, _kind)) => {
-            panic!("{}: QVar {} during unification", loc_display(loc), var);
+            panic!("{loc}: QVar {var} during unification");
         }
 
         (Ty::UVar(var1), Ty::UVar(var2)) => {
@@ -265,12 +253,7 @@ pub(super) fn unify(
             },
         ) => {
             if assoc1 != assoc2 {
-                panic!(
-                    "{}: Unable to unify types {} and {}",
-                    loc_display(loc),
-                    ty1,
-                    ty2,
-                );
+                panic!("{loc}: Unable to unify types {ty1} and {ty2}",);
             }
             unify(
                 ty1_inner, ty2_inner, cons, trait_env, var_gen, loc, assumps, preds,
@@ -297,9 +280,7 @@ pub(super) fn unify(
                 Ty::App(con, args, _) => (con, args.as_slice()),
                 Ty::Con(con, _) => (con, &[]),
                 _ => panic!(
-                    "{}: Cannot construct predicate from AssocTySelect with inner type: {}",
-                    loc_display(loc),
-                    inner_ty,
+                    "{loc}: Cannot construct predicate from AssocTySelect with inner type: {inner_ty}",
                 ),
             };
             preds.push(Pred {
@@ -311,18 +292,13 @@ pub(super) fn unify(
         }
 
         (ty1, ty2) => panic!(
-            "{}: Unable to unify types
-             {} and
-             {}
+            "{loc}: Unable to unify types
+             {ty1} and
+             {ty2}
              (
-                {:?}
-                {:?}
+                {ty1:?}
+                {ty2:?}
              )",
-            loc_display(loc),
-            ty1,
-            ty2,
-            ty1,
-            ty2,
         ),
     }
 }
@@ -383,7 +359,7 @@ fn unify_record_labels(
                 )));
             }
             _ => {
-                panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
+                panic!("{loc}: Unable to unify {ty1} with {ty2}",);
             }
         }
     }
@@ -396,7 +372,7 @@ fn unify_record_labels(
                 )));
             }
             _ => {
-                panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
+                panic!("{loc}: Unable to unify {ty1} with {ty2}",);
             }
         }
     }
@@ -495,7 +471,7 @@ fn unify_variant_labels(
                 )));
             }
             _ => {
-                panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
+                panic!("{loc}: Unable to unify {ty1} with {ty2}",);
             }
         }
     }
@@ -508,7 +484,7 @@ fn unify_variant_labels(
                 )));
             }
             _ => {
-                panic!("{}: Unable to unify {} with {}", loc_display(loc), ty1, ty2,);
+                panic!("{loc}: Unable to unify {ty1} with {ty2}",);
             }
         }
     }
@@ -652,7 +628,7 @@ pub(super) fn try_unify_one_way(
         }
 
         (Ty::QVar(var, _kind), _) | (_, Ty::QVar(var, _kind)) => {
-            panic!("{}: QVar {} during unification", loc_display(loc), var);
+            panic!("{loc}: QVar {var} during unification");
         }
 
         (Ty::UVar(var1), Ty::UVar(var2)) => {

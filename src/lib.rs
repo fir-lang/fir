@@ -27,7 +27,6 @@ mod to_c;
 mod token;
 mod type_checker;
 mod type_collector;
-mod utils;
 
 use lexgen_util::Loc;
 use smol_str::SmolStr;
@@ -127,7 +126,7 @@ fn report_parse_error(
 
         lalrpop_util::ParseError::UnrecognizedToken { token, expected: _ } => {
             panic!(
-                "{}: Unexpected token {:?} (\"{}\")",
+                "{}: Unexpected token {:?} ({:?})",
                 lexgen_loc_display(module, token.0),
                 token.1.kind,
                 token.1.text,
@@ -205,7 +204,7 @@ mod native {
             loaded_pgm.print();
         }
 
-        let (tys, module_envs) = type_checker::check_pgm(&mut loaded_pgm, &opts.main);
+        let (tys, module_envs) = type_checker::check_pgm(&mut loaded_pgm);
 
         if opts.print_checked_ast {
             loaded_pgm.print();
@@ -215,11 +214,18 @@ mod native {
             return;
         }
 
-        type_checker::check_main_type(&tys, &Default::default(), &loaded_pgm.entry, &opts.main);
+        type_checker::check_main_type(&tys, &loaded_pgm.entry, &opts.main);
 
         type_checker::expand_type_synonyms(&mut loaded_pgm, &module_envs);
 
-        let mut mono_pgm = monomorph::monomorphise(&loaded_pgm, module_envs, &opts.main);
+        let headers = loaded_pgm.extern_headers;
+
+        let mut mono_pgm = monomorph::monomorphise(
+            loaded_pgm.modules,
+            loaded_pgm.entry,
+            module_envs,
+            &opts.main,
+        );
 
         if opts.print_mono_ast {
             mono_ast::printer::print_pgm(&mono_pgm);
@@ -248,7 +254,7 @@ mod native {
                         (Box::new(file), path)
                     }
                 };
-            let c = to_c::to_c(&lowered_pgm, &opts.main);
+            let c = to_c::to_c(&lowered_pgm, &opts.main, headers);
             let out_file_absolute_path = c_file_absolute_path.with_extension("");
             c_file.write_all(c.as_bytes()).unwrap();
             let mut gcc_cmd = std::process::Command::new("gcc");
@@ -295,7 +301,7 @@ mod native {
                 std::process::exit(1);
             }
         } else if let Some(output) = opts.output {
-            let c = to_c::to_c(&lowered_pgm, &opts.main);
+            let c = to_c::to_c(&lowered_pgm, &opts.main, headers);
             let mut file = std::fs::File::create(&output).unwrap();
             file.write_all(c.as_bytes()).unwrap();
             drop(file);
@@ -323,9 +329,9 @@ mod native {
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
         let parsed = parse_module(&module_path, &contents, test_ast_printer);
         if print_parsed_ast {
-            println!("mod {} {{\n", module);
+            println!("mod {module} {{\n");
             parsed.print();
-            println!("\n}} # {}\n", module);
+            println!("\n}} # {module}\n");
         }
         parsed
     }
@@ -448,13 +454,14 @@ mod wasm {
         // NB. This path handled specially in the web page, it returns the program input field
         // contents.
         let file_path = Path::new("Main.fir");
-        let mut loaded_program = module_loader::load(file_path, false, false);
-        deriving::expand_derives(&mut loaded_program);
+        let mut loaded_pgm = module_loader::load(file_path, false, false);
+        deriving::expand_derives(&mut loaded_pgm);
 
-        let (_tys, module_envs) = type_checker::check_pgm(&mut loaded_program, "main");
+        let (_tys, module_envs) = type_checker::check_pgm(&mut loaded_pgm);
 
-        type_checker::expand_type_synonyms(&mut loaded_program, &module_envs);
-        let mut mono_pgm = monomorph::monomorphise(&loaded_program, module_envs, "main");
+        type_checker::expand_type_synonyms(&mut loaded_pgm, &module_envs);
+        let mut mono_pgm =
+            monomorph::monomorphise(loaded_pgm.modules, loaded_pgm.entry, module_envs, "main");
         let lowered_pgm = lowering::lower(&mut mono_pgm);
 
         let mut w = WasmOutput;
@@ -569,7 +576,7 @@ mod tests {
         assert_eq!(module.decls.len(), 1);
         let import = match &module.decls[0].node {
             TopDecl::Import(i) => &i.node,
-            other => panic!("expected import, got {:?}", other),
+            other => panic!("expected import, got {other:?}"),
         };
         assert_eq!(import.items.len(), 8);
 
@@ -591,7 +598,7 @@ mod tests {
                 assert_eq!(names[0].original_name, "f1");
                 assert_eq!(names[1].original_name, "f2");
             }
-            other => panic!("expected Selective, got {:?}", other),
+            other => panic!("expected Selective, got {other:?}"),
         }
 
         // 2: A/B/C (import everything)
@@ -616,7 +623,7 @@ mod tests {
         );
         match &import.items[3].import_spec {
             Some(ImportSpec::Prefixed { prefix }) => assert_eq!(prefix, "E"),
-            other => panic!("expected Prefixed, got {:?}", other),
+            other => panic!("expected Prefixed, got {other:?}"),
         }
 
         // 4: A as B
@@ -626,7 +633,7 @@ mod tests {
         );
         match &import.items[4].import_spec {
             Some(ImportSpec::Prefixed { prefix }) => assert_eq!(prefix, "B"),
-            other => panic!("expected Prefixed, got {:?}", other),
+            other => panic!("expected Prefixed, got {other:?}"),
         }
 
         // 5: A/B/D/[f1, f2, Type1, Type2]
@@ -645,7 +652,7 @@ mod tests {
                 assert_eq!(names[0].local_name, "f1");
                 assert_eq!(names[2].original_name, "Type1");
             }
-            other => panic!("expected Selective, got {:?}", other),
+            other => panic!("expected Selective, got {other:?}"),
         }
 
         // 6: A/B/D/[f1 as g1, f2, Type1 as MyType, Type2]
@@ -658,7 +665,7 @@ mod tests {
                 assert_eq!(names[2].original_name, "Type1");
                 assert_eq!(names[2].local_name, "MyType");
             }
-            other => panic!("expected Selective, got {:?}", other),
+            other => panic!("expected Selective, got {other:?}"),
         }
 
         // 7: A/B/D/[f1 as _f1, Type1 as _Type1]
@@ -667,7 +674,7 @@ mod tests {
                 assert_eq!(names[0].local_name, "_f1");
                 assert_eq!(names[1].local_name, "_Type1");
             }
-            other => panic!("expected Selective, got {:?}", other),
+            other => panic!("expected Selective, got {other:?}"),
         }
     }
 }

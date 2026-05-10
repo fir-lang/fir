@@ -146,37 +146,53 @@ type TopDecl[exts]:
 #[derive(ToDoc)]
 type TypeDecl[exts](
     ## Attributes of the type: e.g. `#[derive(ToDoc, Eq)]`.
-    attr: Option[Attribute[exts]],
+    attrs: Vec[Attribute[exts]],
 
-    ## The `value` token in value type declarations: `value type Bool: ...`.
-    ##
-    ## A type can't be both `value` and `prim`, the parser only allows one of them.
-    value_: Option[TokenIdx],
-
-    ## The `prim` token in built-in type declarations: `prim type U32`.
-    ##
-    ## A type can't be both `value` and `prim`, the parser only allows one of them.
-    prim_: Option[TokenIdx],
+    ## `value`, `prim`, or `extern` token.
+    kind: Option[TypeDeclKind],
 
     ## The type name. `Vec` in the example.
     name: Id,
 
-    ## Constructors of the type.
-    rhs: Option[TypeDeclRhs[exts]],
-
     ## Type parameters of the type. `[t]` in the example.
     typeParams: Vec[DeclTypeParam[exts]],
+
+    ## Constructors of the type.
+    rhs: Option[TypeDeclRhs[exts]],
 
     ..AstExts[exts].TypeDeclExts
 )
 
 
+#[derive(ToDoc)]
+type TypeDeclKind:
+    Value(TokenIdx)
+    Prim(TokenIdx)
+    Extern(TokenIdx)
+
+
 impl Tokens[TypeDecl[exts]]:
     firstToken(self: TypeDecl[exts], tokens: Array[Token]) TokenIdx:
-        self.value_.or_(self.prim_).unwrapOr(self.name.token)
+        match self.kind:
+            Option.None:
+                let type_ = prevNonTrivia(self.name.token, tokens).unwrap()
+                assert(tokens.get(type_.idx).kind is TokenKind.Type)
+                type_
+            Option.Some(kind): kind.firstToken(tokens)
 
     lastToken(self: TypeDecl[exts], tokens: Array[Token]) TokenIdx:
         panic("TOOD")
+
+
+impl Tokens[TypeDeclKind]:
+    firstToken(self: TypeDeclKind, tokens: Array[Token]) TokenIdx:
+        match self:
+            TypeDeclKind.Value(t)
+                | TypeDeclKind.Prim(t)
+                | TypeDeclKind.Extern(t): t
+
+    lastToken(self: TypeDeclKind, tokens: Array[Token]) TokenIdx:
+        self.firstToken(tokens)
 
 
 ## Constructors of a type declaration.
@@ -193,6 +209,35 @@ type TypeDeclRhs[exts]:
 
     ## A type synonym: `type Foo = U32`
     Synonym(Type[exts])
+
+    ## An extern type:
+    ##
+    ## - `extern type File = "FILE"` (type-alias form, `fields = None`).
+    ## - `extern type DivT = "div_t"(quot: I32 = "quot", rem: I32 = "rem")`
+    ##   (constructor form, `fields = Some(...)`, possibly empty).
+    Extern(
+        ## The `BeginStr` token for the string literal for the C type.
+        cTypeBegin: TokenIdx,
+
+        ## The `EndStr` tokenf or the string literal for the C type.
+        cTypeEnd: TokenIdx,
+
+        fields: Option[Vec[ExternField[exts]]],
+    )
+
+
+#[derive(ToDoc)]
+type ExternField[exts](
+    ## Fir field name.
+    name: Id,
+
+    ## Fir field type.
+    ty: Type[exts],
+
+    ## C field name (used in the generated C struct).
+    cNameBegin: TokenIdx,
+    cNameEnd: TokenIdx,
+)
 
 
 ## A sum type constructor.
@@ -330,8 +375,12 @@ type SelfParam[exts]:
 
 #[derive(ToDoc)]
 type ImportDecl[exts](
-    ## Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`.
-    attr: Option[Attribute[exts]],
+    ## Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`,
+    ## `#[include(...)]`.
+    attrs: Vec[Attribute[exts]],
+
+    ## The `import` token.
+    import_: TokenIdx,
 
     ## Imported items, e.g. `[Fir/Prelude, Compiler/Parser/[parse]]`.
     items: Vec[ImportItem],
@@ -899,6 +948,7 @@ impl[Tokens[AstTyId[exts]], Tokens[AstVarId[exts]]] Tokens[WhileStmt[exts]]:
 
 #[derive(ToDoc)]
 type LoopStmt[exts](
+    label: Option[Id],
     body: Vec[Stmt[exts]],
     _firstToken: TokenIdx,
 )

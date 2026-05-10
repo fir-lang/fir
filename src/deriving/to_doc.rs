@@ -20,7 +20,9 @@ pub fn derive_to_doc(type_decl: &ast::TypeDecl, loc: &ast::Loc) -> ast::L<ast::T
             derive_to_doc_product(loc, &type_decl.name, fields)
         }
         Some(ast::TypeDeclRhs::Sum { cons, .. }) => derive_to_doc_sum(loc, &type_decl.name, cons),
-        Some(ast::TypeDeclRhs::Synonym(_)) => unreachable!("Caught in expand_derives"),
+        Some(ast::TypeDeclRhs::Synonym(_) | ast::TypeDeclRhs::Extern(_)) => {
+            panic!("BUG: Type synonym or extern type in derive(ToDoc) macro")
+        }
     };
 
     let fun = make_method(loc, "toDoc", self_ty, vec![], doc_ty, body);
@@ -191,7 +193,7 @@ fn derive_to_doc_sum(
                         node: l(
                             loc,
                             ast::Pat::Var(ast::VarPat {
-                                var: ast::Name::new(format!("i{}", i)),
+                                var: ast::Name::new(format!("i{i}")),
                                 ty: None,
                                 refined: None,
                             }),
@@ -284,7 +286,7 @@ fn gen_named_field_args(
         let nested = doc_nested(loc, 4, add(loc, doc_break(loc, 1), to_doc_call));
         let grouped = doc_grouped(
             loc,
-            add(loc, doc_str(loc, &format!("{} =", field_name)), nested),
+            add(loc, doc_str(loc, &format!("{field_name} =")), nested),
         );
         stmts.push(plus_eq_stmt(loc, "args", grouped));
     }
@@ -338,7 +340,7 @@ fn gen_unnamed_field_args(loc: &ast::Loc, num_fields: usize) -> Vec<ast::L<ast::
         }
 
         // args += i<N>.toDoc()
-        let to_doc_call = method_call(loc, var(loc, &format!("i{}", i)), "toDoc", vec![]);
+        let to_doc_call = method_call(loc, var(loc, &format!("i{i}")), "toDoc", vec![]);
         stmts.push(plus_eq_stmt(loc, "args", to_doc_call));
     }
 

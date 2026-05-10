@@ -3,8 +3,8 @@
 use crate::ast::{self, Name};
 use crate::collections::*;
 use crate::type_checker::id::Id;
+use crate::type_checker::rename_domain_var;
 use crate::type_checker::traits::TraitEnv;
-use crate::type_checker::{loc_display, rename_domain_var};
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -119,6 +119,13 @@ pub enum FunArgs {
 impl FunArgs {
     pub fn empty() -> FunArgs {
         FunArgs::Positional { args: vec![] }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            FunArgs::Positional { args } => args.is_empty(),
+            FunArgs::Named { .. } => false,
+        }
     }
 
     pub fn is_named(&self) -> bool {
@@ -364,12 +371,7 @@ impl Scheme {
         // Kind check type arguments.
         for ((_, qvar_kind), arg) in self.quantified_vars.iter().zip(arg_tys.iter()) {
             if arg.kind() != *qvar_kind {
-                panic!(
-                    "{}: Unable to pass type argument {} as {} (kind mismatch)",
-                    loc_display(loc),
-                    arg,
-                    qvar_kind
-                );
+                panic!("{loc}: Unable to pass type argument {arg} as {qvar_kind} (kind mismatch)");
             }
         }
 
@@ -472,7 +474,7 @@ impl Scheme {
             left_vars.len(),
             self.quantified_vars.len(),
             "{}: {:?}",
-            loc_display(loc),
+            loc,
             self.quantified_vars,
         );
 
@@ -487,7 +489,7 @@ impl Scheme {
             right_vars.len(),
             other.quantified_vars.len(),
             "{}: {:?}",
-            loc_display(loc),
+            loc,
             other.quantified_vars,
         );
 
@@ -711,15 +713,11 @@ fn ty_eq_modulo_alpha(
                 (None, None) => qvar1 == qvar2,
                 (Some(idx1), Some(idx2)) => idx1 == idx2,
                 (Some(_), None) => panic!(
-                    "{}: BUG: QVar {} is quantified in the left type but not on the right",
-                    loc_display(loc),
-                    qvar1
+                    "{loc}: BUG: QVar {qvar1} is quantified in the left type but not on the right"
                 ),
                 (None, Some(_)) => {
                     panic!(
-                        "{}: BUG: QVar {} is quantified in the right type but not on the left",
-                        loc_display(loc),
-                        qvar2
+                        "{loc}: BUG: QVar {qvar2} is quantified in the right type but not on the left"
                     )
                 }
             }
@@ -839,11 +837,33 @@ impl Ty {
         }
     }
 
+    pub(super) fn is_unit(&self) -> bool {
+        match self {
+            Ty::Record {
+                labels,
+                extension,
+                is_row,
+            } => labels.is_empty() && extension.is_none() && !is_row,
+            _ => false,
+        }
+    }
+
     pub(super) fn empty_variant() -> Ty {
         Ty::Variant {
             labels: Default::default(),
             extension: None,
             is_row: false,
+        }
+    }
+
+    pub(super) fn is_empty_variant(&self) -> bool {
+        match self {
+            Ty::Variant {
+                labels,
+                extension,
+                is_row,
+            } => labels.is_empty() && extension.is_none() && !is_row,
+            _ => false,
         }
     }
 
@@ -1497,7 +1517,7 @@ impl fmt::Display for Ty {
                 assoc_ty,
                 kind: _,
             } => {
-                write!(f, "{}.{}", ty, assoc_ty)
+                write!(f, "{ty}.{assoc_ty}")
             }
         }
     }

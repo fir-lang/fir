@@ -1,4 +1,4 @@
-main():
+main() / []:
     print(range(u32(0), u32(10)).size[RangeIterator[U32], [], []]())
     print(
         range(u32(0), u32(10)).take(0)

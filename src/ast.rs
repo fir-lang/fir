@@ -7,9 +7,9 @@ use crate::interpolation::StrPart;
 use crate::module::ModulePath;
 pub use crate::name::Name;
 pub use crate::token::IntKind;
-use crate::type_checker::id::builtins as builtin_ids;
 use crate::type_checker::{Id, Kind, Ty};
 
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use smol_str::SmolStr;
@@ -27,10 +27,8 @@ pub struct Loc {
     pub module: Rc<str>,
     pub line_start: u16,
     pub col_start: u16,
-    pub byte_offset_start: u32,
     pub line_end: u16,
     pub col_end: u16,
-    pub byte_offset_end: u32,
 }
 
 impl std::fmt::Debug for Loc {
@@ -46,16 +44,26 @@ impl std::fmt::Debug for Loc {
     }
 }
 
+impl std::fmt::Display for Loc {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}:{}:{}",
+            self.module,
+            self.line_start + 1,
+            self.col_start + 1
+        )
+    }
+}
+
 impl Loc {
     pub fn dummy() -> Self {
         Loc {
             module: "".into(),
             line_start: 0,
             col_start: 0,
-            byte_offset_start: 0,
             line_end: 0,
             col_end: 0,
-            byte_offset_end: 0,
         }
     }
 }
@@ -108,10 +116,8 @@ impl Loc {
             module: module.clone(),
             line_start: start.line as u16,
             col_start: start.col as u16,
-            byte_offset_start: start.byte_idx as u32,
             line_end: end.line as u16,
             col_end: end.col as u16,
-            byte_offset_end: end.byte_idx as u32,
         }
     }
 }
@@ -150,7 +156,7 @@ pub enum TopDecl {
 #[derive(Debug, Clone)]
 pub struct TypeDecl {
     /// Attributes of the type. E.g. `#[derive(ToDoc, Eq)]`.
-    pub attr: Option<Attribute>,
+    pub attrs: Vec<Attribute>,
 
     /// Whether this is a value type.
     pub value: bool,
@@ -198,6 +204,19 @@ pub enum TypeDeclRhs {
 
     /// A type synonym: `type Foo = U32`.
     Synonym(L<Type>),
+
+    /// An extern type definition:
+    ///
+    /// - `extern type File = "FILE"`
+    ///
+    /// - With fields:
+    ///   ```text
+    ///   extern type DivT = "div_t"(
+    ///       quot: I32 = "quot",
+    ///       rem: I32 = "rem",
+    ///   )
+    ///   ```
+    Extern(ExternTypeDeclRhs),
 }
 
 /// A sum type constructor.
@@ -217,6 +236,24 @@ pub enum ConFields {
     Unnamed {
         fields: Vec<L<Type>>,
     },
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternTypeDeclRhs {
+    pub c_type: String,
+
+    /// The field list of the extern type.
+    ///
+    /// When not available, the type is abstract in Fir: we can't allocate it, can't access fields
+    /// in Fir.
+    pub fields: Option<Vec<ExternTypeField>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternTypeField {
+    pub name: Name,
+    pub fir_type: L<Type>,
+    pub c_type: String,
 }
 
 #[derive(Debug, Clone)]
@@ -250,7 +287,7 @@ pub enum Type {
     AssocTySelect { ty: L<Box<Type>>, assoc_ty: Name },
 }
 
-/// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
+/// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, exn]`.
 #[derive(Debug, Clone)]
 pub struct NamedType {
     /// Module prefix of the type constructor, e.g. in `Fir/Vec/Vec` this is the `Fir/Vec/` part.
@@ -664,6 +701,12 @@ pub enum Expr {
 
     /// A variant: `~Option.Some(123)`, `~123`.
     Variant(VariantExpr),
+
+    /// An inline C expression, desugared by the type checker from a `C/inline("...")` call.
+    InlineC(InlineCExpr),
+
+    /// A dummy node used in place of removed AST nodes. (usually during desugaring)
+    Placeholder,
 }
 
 #[derive(Debug, Clone)]
@@ -825,17 +868,36 @@ pub struct ReturnExpr {
     pub inferred_ty: Option<Ty>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct IntExpr {
     /// The integer token contents. This includes the sign and radix parts, when available.
     /// Examples: `-0xabc`, `0b1010`, `123`.
     pub text: SmolStr,
 
     /// The type checker updates this based on the inferred type of the integer.
-    pub kind: Option<IntKind>,
+    pub kind: Rc<RefCell<Option<IntKind>>>,
 
     /// Absolute value of the parsed integer.
     pub parsed: u64,
+
+    /// Inferred type of the expression. Filled in by the type checker.
+    pub inferred_ty: Option<Ty>,
+}
+
+// Manual `Clone` implementation for `IntExpr` to avoid sharing `kind` field values when we copy
+// default method impls.
+impl Clone for IntExpr {
+    fn clone(&self) -> IntExpr {
+        // Type checked ASTs shouldn't be cloned, cloning is only for copying default trait methods
+        // to impls.
+        assert!(self.inferred_ty.is_none());
+        IntExpr {
+            text: self.text.clone(),
+            kind: Rc::new(RefCell::new(*self.kind.borrow())),
+            parsed: self.parsed,
+            inferred_ty: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -910,9 +972,21 @@ pub struct VariantExpr {
 }
 
 #[derive(Debug, Clone)]
+pub struct InlineCExpr {
+    pub parts: Vec<InlineCPart>,
+    pub inferred_ty: Option<Ty>,
+}
+
+#[derive(Debug, Clone)]
+pub enum InlineCPart {
+    Str(String),
+    Var(Name), // a local variable
+}
+
+#[derive(Debug, Clone)]
 pub struct ImportDecl {
-    /// Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`.
-    pub attr: Option<Attribute>,
+    /// Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`, `#[include(...)]`.
+    pub attrs: Vec<Attribute>,
     pub items: Vec<ImportItem>,
 }
 
@@ -1250,6 +1324,17 @@ impl Stmt {
 }
 
 impl Expr {
+    pub fn placeholder() -> Expr {
+        Expr::Placeholder
+    }
+
+    pub fn l_placeholder() -> L<Expr> {
+        L {
+            loc: Loc::dummy(),
+            node: Expr::Placeholder,
+        }
+    }
+
     pub fn subst_ty_ids(&mut self, substs: &HashMap<Name, Type>) {
         match self {
             Expr::ConSel(_) | Expr::Int(_) | Expr::Char(_) => {}
@@ -1438,6 +1523,12 @@ impl Expr {
                 assert!(inferred_ty.is_none());
                 expr.node.subst_ty_ids(substs);
             }
+
+            Expr::InlineC(_) => {}
+
+            Expr::Placeholder => {
+                panic!("BUG: Placeholder in subst_ty_ids")
+            }
         }
     }
 
@@ -1455,19 +1546,9 @@ impl Expr {
             | Expr::Fn(FnExpr { inferred_ty, .. })
             | Expr::Do(DoExpr { inferred_ty, .. })
             | Expr::Record(RecordExpr { inferred_ty, .. })
-            | Expr::Variant(VariantExpr { inferred_ty, .. }) => inferred_ty.clone(),
-
-            Expr::Int(IntExpr { kind, .. }) => {
-                let id = match kind.as_ref()? {
-                    IntKind::I8(_) => builtin_ids::I8(),
-                    IntKind::U8(_) => builtin_ids::U8(),
-                    IntKind::I32(_) => builtin_ids::I32(),
-                    IntKind::U32(_) => builtin_ids::U32(),
-                    IntKind::I64(_) => builtin_ids::I64(),
-                    IntKind::U64(_) => builtin_ids::U64(),
-                };
-                Some(Ty::Con(id, Kind::Star))
-            }
+            | Expr::Variant(VariantExpr { inferred_ty, .. })
+            | Expr::Int(IntExpr { inferred_ty, .. })
+            | Expr::InlineC(InlineCExpr { inferred_ty, .. }) => inferred_ty.clone(),
 
             Expr::Str(_) => Some(Ty::str()),
 
@@ -1481,6 +1562,10 @@ impl Expr {
 
             // Rest of the expressions will be desugared by the type checker.
             Expr::BinOp(_) | Expr::UnOp(_) | Expr::Seq { .. } => None,
+
+            Expr::Placeholder => {
+                panic!("BUG: Placeholder in inferred_ty");
+            }
         }
     }
 }

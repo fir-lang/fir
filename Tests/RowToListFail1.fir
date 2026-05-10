@@ -2,7 +2,7 @@ foo[r: Row[Rec], RecRowToList[r].List = U32]():
     ()
 
 
-main():
+main() / []:
     foo[row(msg: Str), []]()
 
 # expected exit status: 101

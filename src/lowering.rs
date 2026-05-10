@@ -8,7 +8,6 @@ use crate::collections::*;
 use crate::mono_ast::{self as mono, L, Loc, Name};
 use crate::type_collector::collect_anonymous_types;
 pub(crate) use crate::type_collector::{RecordType, VariantType};
-use crate::utils::loc_display;
 
 use smol_str::SmolStr;
 
@@ -47,17 +46,9 @@ impl LoweredPgm {
                 *self.named_tys.get(name).unwrap().get(args).unwrap()
             }
 
-            mono::Type::Record { fields } => *self
-                .record_tys
-                .get(&RecordType {
-                    fields: fields.clone(),
-                })
-                .unwrap(),
+            mono::Type::Record { fields } => *self.record_tys.get(fields).unwrap(),
 
-            mono::Type::Variant { alts } => *self
-                .variant_tys
-                .get(&VariantType { alts: alts.clone() })
-                .unwrap(),
+            mono::Type::Variant { alts } => *self.variant_tys.get(alts).unwrap(),
 
             mono::Type::Fn(_) => panic!(),
         }
@@ -84,13 +75,28 @@ pub enum TypeDecl {
     Variant(VariantType),
 }
 
+impl TypeDecl {
+    pub fn as_named(&self) -> &NamedTypeDecl {
+        match self {
+            TypeDecl::Named(named) => named,
+            _ => panic!(),
+        }
+    }
+
+    pub fn as_record(&self) -> (&RecordType, HeapObjIdx) {
+        match self {
+            TypeDecl::Record(record, heap_obj_idx) => (record, *heap_obj_idx),
+            _ => panic!(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct NamedTypeDecl {
     pub name: Name,
     pub ty_args: Vec<mono::Type>,
     pub rhs: NamedTypeRhs,
     pub con_indices: Vec<HeapObjIdx>,
-    pub sum: bool,
     pub value: bool,
 }
 
@@ -282,6 +288,10 @@ pub enum BuiltinFunDecl {
         t: mono::Type,
     },
 
+    ArrayPtr {
+        t: mono::Type,
+    },
+
     ReadFileUtf8,
 
     GetArgs,
@@ -341,16 +351,58 @@ pub enum BuiltinConDecl {
     U32,
     I64,
     U64,
+
+    /// A C pointer.
+    CPtr {
+        t: mono::Type,
+    },
 }
 
+/// A constructor defined in Fir, monomorphised. Examples in mono AST syntax:
+///
+/// ```ignore
+/// # A product constructor
+/// type Vec[U32](
+///    _data: Array[U32],
+///    _len: U32,
+/// )
+///
+/// # Sum constructors
+/// value type Option[U32]:
+///     None
+///     Some(U32)
+/// ```
 #[derive(Debug)]
 pub struct SourceConDecl {
-    pub name: Name,
+    /// Name of the type. `Vec` and `Option` in the examples.
+    pub ty_name: Name,
+
+    /// Only for sum types: name of the constructor. `None` and `Some` in the examples.
+    pub con_name: Option<Name>,
+
+    /// Tag of the constructor. Used in sum values and when the constructor is in a variant.
+    ///
+    /// Also reused as an index into `LoweredPgm.heap_objs`.
     pub idx: HeapObjIdx,
+
+    /// Type arguments of the types. `[U32]` in the examples.
     pub ty_args: Vec<mono::Type>,
-    pub fields: Vec<mono::Type>,
-    pub sum: bool,
+
+    /// Fields of the constructor. `_data` and `_len` in the `Vec` example.
+    ///
+    /// For positional fields, names are underscored indices of the fields. `_0` in the `Some`
+    /// constructor in the example.
+    pub fields: Vec<(Name, mono::Type)>,
+
+    /// Whether the constructor is for a value type. In the examples: `false` in `Vec`, `true` in
+    /// `Option` consturctors.
     pub value: bool,
+}
+
+impl SourceConDecl {
+    pub fn is_sum(&self) -> bool {
+        self.con_name.is_some()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -404,7 +456,6 @@ pub enum Expr {
     ConAlloc {
         con_idx: HeapObjIdx,
         args: Vec<L<Expr>>,
-        arg_tys: Vec<mono::Type>,
         ret_ty: mono::Type,
     },
 
@@ -450,13 +501,17 @@ pub enum Expr {
         expr_ty: mono::Type,
         variant_ty: OrdMap<Name, mono::NamedType>,
     },
+
+    InlineC {
+        parts: Vec<InlineCPart>,
+    },
 }
 
 #[derive(Debug, Clone)]
 pub struct FieldSelExpr {
     pub object: Box<L<Expr>>,
 
-    /// For debugging: name of the field.
+    /// Fir name of the field. Used in C backend.
     pub field: Name,
 
     /// Index of the field in the object's payload.
@@ -466,6 +521,9 @@ pub struct FieldSelExpr {
     pub idx: u32,
 
     pub object_ty: mono::Type,
+
+    /// Whether to index with `.` or `->`.
+    pub deref: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -502,6 +560,12 @@ pub struct IsExpr {
     pub expr: Box<L<Expr>>,
     pub pat: L<Pat>,
     pub expr_ty: mono::Type,
+}
+
+#[derive(Debug, Clone)]
+pub enum InlineCPart {
+    Str(String),
+    Var(LocalIdx),
 }
 
 #[derive(Debug, Clone)]
@@ -694,7 +758,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     }
                 }
 
-                Some(mono::TypeDeclRhs::Product(_)) | None => {
+                Some(mono::TypeDeclRhs::Product(_)) | Some(mono::TypeDeclRhs::Extern(_)) | None => {
                     product_con_nums
                         .entry(con_id.clone())
                         .or_default()
@@ -818,28 +882,25 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         .heap_objs
         .push(HeapObj::Builtin(BuiltinConDecl::Closure)); // CLOSURE_CON_IDX = 2
 
-    for (con_id, con_ty_map) in &mono_pgm.ty {
-        for (con_ty_args, con_decl) in con_ty_map {
+    for (ty_name, ty_arg_map) in &mono_pgm.ty {
+        for (ty_args, con_decl) in ty_arg_map {
             let mut con_indices: Vec<HeapObjIdx> = vec![];
-            let mut sum = false;
             let mut value = con_decl.value;
             let rhs: NamedTypeRhs = match &con_decl.rhs {
                 Some(rhs) => {
                     match rhs {
                         mono::TypeDeclRhs::Sum(cons) => {
-                            sum = true;
                             // For sum types, we generate an index representing the type itself (rather
                             // than its consturctors). This index is used in dependency anlaysis, and to
                             // get the type details during code generation.
                             for mono::ConDecl { name, fields } in cons {
                                 let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                                let name = Name::new(format!("{con_id}_{name}"));
                                 lowered_pgm.heap_objs.push(lower_source_con(
                                     idx,
-                                    &name,
-                                    con_ty_args,
+                                    ty_name,
+                                    Some(name),
+                                    ty_args,
                                     fields,
-                                    true, // sum
                                     con_decl.value,
                                 ));
                                 con_indices.push(idx);
@@ -850,12 +911,32 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
                             lowered_pgm.heap_objs.push(lower_source_con(
                                 idx,
-                                con_id,
-                                con_ty_args,
+                                ty_name,
+                                None,
+                                ty_args,
                                 fields,
-                                false, // product
                                 con_decl.value,
                             ));
+                            con_indices.push(idx);
+                        }
+
+                        mono::TypeDeclRhs::Extern(mono::ExternType { c_type: _, fields }) => {
+                            value = true;
+                            let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
+                            lowered_pgm.heap_objs.push(HeapObj::Source(SourceConDecl {
+                                ty_name: ty_name.clone(),
+                                con_name: None,
+                                idx,
+                                ty_args: ty_args.clone(),
+                                fields: match fields {
+                                    Some(fields) => fields
+                                        .iter()
+                                        .map(|f| (Name::new(&f.c_name), f.ty.clone()))
+                                        .collect(),
+                                    None => vec![],
+                                },
+                                value: true,
+                            }));
                             con_indices.push(idx);
                         }
                     }
@@ -866,42 +947,50 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     // We don't have the syntax to mark prim types as values, but they're all values
                     // currently.
                     value = true;
-                    let con = match con_id.as_str() {
+
+                    let con = match ty_name.as_str() {
                         "Array" => {
-                            assert_eq!(con_ty_args.len(), 1);
+                            assert_eq!(ty_args.len(), 1);
                             BuiltinConDecl::Array {
-                                t: con_ty_args[0].clone(),
+                                t: ty_args[0].clone(),
                             }
                         }
 
                         "I8" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::I8
                         }
 
                         "U8" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::U8
                         }
 
                         "I32" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::I32
                         }
 
                         "U32" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::U32
                         }
 
                         "I64" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::I64
                         }
 
                         "U64" => {
-                            assert_eq!(con_ty_args.len(), 0);
+                            assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::U64
+                        }
+
+                        "Ptr" => {
+                            assert_eq!(ty_args.len(), 1);
+                            BuiltinConDecl::CPtr {
+                                t: ty_args[0].clone(),
+                            }
                         }
 
                         other => panic!("Unknown built-in type: {other}"),
@@ -917,15 +1006,14 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             let ty_idx = TypeIdx(lowered_pgm.types.len() as u32);
             lowered_pgm
                 .named_tys
-                .entry(con_id.clone())
+                .entry(ty_name.clone())
                 .or_default()
-                .insert(con_ty_args.clone(), ty_idx);
+                .insert(ty_args.clone(), ty_idx);
             lowered_pgm.types.push(TypeDecl::Named(NamedTypeDecl {
-                name: con_id.clone(),
-                ty_args: con_ty_args.clone(),
+                name: ty_name.clone(),
+                ty_args: ty_args.clone(),
                 rhs,
                 con_indices,
-                sum,
                 value,
             }));
         }
@@ -1450,6 +1538,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 BuiltinFunDecl::ArrayCopyWithin { t }
                             }
 
+                            ("Array", "ptr") => {
+                                // prim Array.ptr(self: Array[t]) Ptr[t]
+                                assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                                let t = fun_ty_args[0].clone();
+                                BuiltinFunDecl::ArrayPtr { t }
+                            }
+
                             ("I32", "asU32") => {
                                 assert_eq!(fun_ty_args.len(), 1); // exception (implicit)
                                 BuiltinFunDecl::I32AsU32
@@ -1513,22 +1608,31 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
 
 fn lower_source_con(
     idx: HeapObjIdx,
-    con_id: &Name,
+    ty_name: &Name,
+    con_name: Option<&Name>,
     con_ty_args: &[mono::Type],
     fields: &mono::ConFields,
-    sum: bool,
     value: bool,
 ) -> HeapObj {
     HeapObj::Source(SourceConDecl {
-        name: con_id.clone(),
+        ty_name: ty_name.clone(),
+        con_name: con_name.cloned(),
         idx,
         ty_args: con_ty_args.to_vec(),
         fields: match fields {
             mono::ConFields::Empty => vec![],
-            mono::ConFields::Named(fields) => fields.values().cloned().collect(),
-            mono::ConFields::Unnamed(fields) => fields.to_vec(),
+            mono::ConFields::Named(fields) => fields
+                .iter()
+                .map(|(field_name, field_ty)| {
+                    (Name::new(c_field_name(field_name)), field_ty.clone())
+                })
+                .collect(),
+            mono::ConFields::Unnamed(fields) => fields
+                .iter()
+                .enumerate()
+                .map(|(i, field_ty)| (Name::new(format!("_{i}")), field_ty.clone()))
+                .collect(),
         },
-        sum,
         value,
     })
 }
@@ -1648,6 +1752,8 @@ fn lower_expr(
 
             let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty_id).unwrap().get(ty_args).unwrap();
 
+            let synthesized_extern_fields: mono::ConFields;
+
             let con_fields = match &ty_decl.rhs {
                 Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
                     for con_ in cons {
@@ -1657,13 +1763,26 @@ fn lower_expr(
                     }
                     panic!(
                         "BUG: {}: Type {} doesn't have constructor named {}",
-                        loc_display(loc),
+                        loc,
                         ty_id,
                         con.as_ref().unwrap()
                     );
                 }
 
                 Some(mono::TypeDeclRhs::Product(fields)) => fields,
+
+                Some(mono::TypeDeclRhs::Extern(extern_ty)) => {
+                    let extern_fields = extern_ty.fields.as_ref().unwrap_or_else(|| {
+                        panic!("BUG: {loc}: Pat::Con on an extern type without fields {ty}")
+                    });
+                    synthesized_extern_fields = mono::ConFields::Named(
+                        extern_fields
+                            .iter()
+                            .map(|f| (f.fir_name.clone(), f.ty.clone()))
+                            .collect(),
+                    );
+                    &synthesized_extern_fields
+                }
 
                 None => &mono::ConFields::Empty,
             };
@@ -1672,7 +1791,6 @@ fn lower_expr(
                 Expr::ConAlloc {
                     con_idx: idx,
                     args: vec![],
-                    arg_tys: vec![],
                     ret_ty: ty.clone(),
                 }
             } else {
@@ -1691,27 +1809,48 @@ fn lower_expr(
 
             let (object, _object_vars) = lower_bl_expr(object, closures, indices, scope, mono_pgm);
 
-            let field_idx: u32 = match &object_ty {
+            fn is_value_type(ty: &mono::Type, pgm: &mono::MonoPgm) -> bool {
+                match ty {
+                    mono::Type::Named(mono::NamedType { name, args }) => {
+                        pgm.ty.get(name).unwrap().get(args).unwrap().value
+                    }
+                    mono::Type::Record { .. } | mono::Type::Variant { .. } => true,
+                    mono::Type::Fn(_) => false,
+                }
+            }
+
+            let deref;
+
+            let object_with_field_ty = if let mono::Type::Named(mono::NamedType { name, args }) =
+                &object_ty
+                && name == "Ptr"
+            {
+                deref = true;
+                args[0].clone()
+            } else {
+                deref = !is_value_type(&object_ty, mono_pgm);
+                object_ty.clone()
+            };
+
+            // Defaults to the sanitized Fir name, extern types override with the C name from the
+            // declaration.
+            let mut field_name: Name = Name::new(c_field_name(field));
+
+            let field_idx: u32 = match &object_with_field_ty {
                 mono::Type::Named(mono::NamedType { name, args }) => {
                     let ty_decl: &mono::TypeDecl =
                         mono_pgm.ty.get(name).unwrap().get(args).unwrap();
 
                     match &ty_decl.rhs {
                         None => {
-                            panic!(
-                                "BUG: {}: FieldSel object doesn't have fields",
-                                loc_display(loc)
-                            );
+                            panic!("BUG: {loc}: FieldSel object doesn't have fields");
                         }
                         Some(mono::TypeDeclRhs::Sum(_)) => {
-                            panic!("BUG: {}: FieldSel object is a sum type", loc_display(loc));
+                            panic!("BUG: {loc}: FieldSel object is a sum type");
                         }
                         Some(mono::TypeDeclRhs::Product(fields)) => match fields {
                             mono::ConFields::Empty => {
-                                panic!(
-                                    "BUG: {}: FieldSel object doesn't have fields",
-                                    loc_display(loc)
-                                );
+                                panic!("BUG: {loc}: FieldSel object doesn't have fields");
                             }
                             mono::ConFields::Named(named_fields) => {
                                 let mut field_idx: u32 = 0;
@@ -1724,12 +1863,23 @@ fn lower_expr(
                                 field_idx
                             }
                             mono::ConFields::Unnamed(_) => {
-                                panic!(
-                                    "BUG: {}: FieldSel object doesn't have named fields",
-                                    loc_display(loc)
-                                )
+                                panic!("BUG: {loc}: FieldSel object doesn't have named fields")
                             }
                         },
+                        Some(mono::TypeDeclRhs::Extern(extern_ty)) => {
+                            let extern_fields = extern_ty.fields.as_ref().unwrap_or_else(|| {
+                                panic!("BUG: {loc}: FieldSel on extern type without fields {name}")
+                            });
+                            let mut field_idx: u32 = 0;
+                            for (field_idx_, extern_field) in extern_fields.iter().enumerate() {
+                                if field == &extern_field.fir_name {
+                                    field_idx = field_idx_ as u32;
+                                    field_name = Name::new(&extern_field.c_name);
+                                    break;
+                                }
+                            }
+                            field_idx
+                        }
                     }
                 }
 
@@ -1745,18 +1895,19 @@ fn lower_expr(
                 }
 
                 mono::Type::Variant { .. } => {
-                    panic!("BUG: {}: FieldSel of variant", loc_display(loc))
+                    panic!("BUG: {loc}: FieldSel of variant")
                 }
 
-                mono::Type::Fn(_) => panic!("BUG: {}: FieldSel of function", loc_display(loc)),
+                mono::Type::Fn(_) => panic!("BUG: {loc}: FieldSel of function"),
             };
 
             (
                 Expr::FieldSel(FieldSelExpr {
                     object,
-                    field: field.clone(),
+                    field: field_name,
                     idx: field_idx,
                     object_ty,
+                    deref,
                 }),
                 Default::default(),
             )
@@ -1799,9 +1950,7 @@ fn lower_expr(
 
                 mono::Type::Named(_) | mono::Type::Record { .. } | mono::Type::Variant { .. } => {
                     panic!(
-                        "BUG: {}: Function in call expression does not have a function type: {}",
-                        loc_display(loc),
-                        fun_ty,
+                        "BUG: {loc}: Function in call expression does not have a function type: {fun_ty}",
                     )
                 }
             };
@@ -1819,7 +1968,6 @@ fn lower_expr(
                         Expr::Con(heap_obj_idx) => Expr::ConAlloc {
                             con_idx: *heap_obj_idx,
                             args,
-                            arg_tys: arg_tys.clone(),
                             ret_ty: (*ret).clone(),
                         },
                         _ => Expr::Call(CallExpr {
@@ -1888,7 +2036,6 @@ fn lower_expr(
                         Expr::Con(heap_obj_idx) => Expr::ConAlloc {
                             con_idx: *heap_obj_idx,
                             args,
-                            arg_tys: named_args.values().cloned().collect(),
                             ret_ty: (*ret).clone(),
                         },
                         _ => Expr::Call(CallExpr {
@@ -1914,9 +2061,8 @@ fn lower_expr(
             (expr, Default::default())
         }
 
-        mono::Expr::Int(int) => {
-            let kind = int.kind.unwrap();
-            let value = match kind {
+        mono::Expr::Int(kind) => {
+            let value = match *kind {
                 ast::IntKind::I8(val) => val as u8 as u64,
                 ast::IntKind::U8(val) => val as u64,
                 ast::IntKind::I32(val) => val as u32 as u64,
@@ -1941,7 +2087,6 @@ fn lower_expr(
                     loc: loc.clone(),
                     node: Expr::Int(u64::from(*char as u32)),
                 }],
-                arg_tys: vec![mono::Type::u32()],
                 ret_ty: mono::Type::char(),
             },
             Default::default(),
@@ -1970,12 +2115,7 @@ fn lower_expr(
             splice,
             ty: field_tys,
         }) => {
-            let record_idx = *indices
-                .records
-                .get(&RecordType {
-                    fields: field_tys.clone(),
-                })
-                .unwrap();
+            let record_idx = *indices.records.get(field_tys).unwrap();
 
             // Evaluate args in program order, pass in the order expected by the constructor.
             let mut arg_locals: HashMap<Name, LocalIdx> = Default::default();
@@ -2031,7 +2171,6 @@ fn lower_expr(
                             loc: loc.clone(),
                         })
                         .collect(),
-                    arg_tys: field_tys.values().cloned().collect(),
                     ret_ty: ty.clone(),
                 }),
                 loc: loc.clone(),
@@ -2225,6 +2364,19 @@ fn lower_expr(
                 vars,
             )
         }
+
+        mono::Expr::InlineC(mono::InlineCExpr { parts, ty: _ }) => (
+            Expr::InlineC {
+                parts: parts
+                    .iter()
+                    .map(|part| match part {
+                        mono::InlineCPart::Str(str) => InlineCPart::Str(str.clone()),
+                        mono::InlineCPart::Var(var) => InlineCPart::Var(scope.use_var(var, loc)),
+                    })
+                    .collect(),
+            },
+            Default::default(),
+        ),
     }
 }
 
@@ -2322,6 +2474,8 @@ fn lower_pat(
 
             let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty).unwrap().get(ty_args).unwrap();
 
+            let synthesized_extern_fields: mono::ConFields;
+
             let con_fields: &mono::ConFields = match &ty_decl.rhs {
                 Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
                     for con_ in cons {
@@ -2331,7 +2485,7 @@ fn lower_pat(
                     }
                     panic!(
                         "BUG: {}: Type {} doesn't have constructor named {}",
-                        loc_display(loc),
+                        loc,
                         ty,
                         con.as_ref().unwrap()
                     );
@@ -2339,11 +2493,20 @@ fn lower_pat(
 
                 Some(mono::TypeDeclRhs::Product(fields)) => fields,
 
-                None => panic!(
-                    "BUG: {}: Type {} doesn't have any constructors",
-                    loc_display(loc),
-                    ty,
-                ),
+                Some(mono::TypeDeclRhs::Extern(extern_ty)) => {
+                    let extern_fields = extern_ty.fields.as_ref().unwrap_or_else(|| {
+                        panic!("BUG: {loc}: Pat::Con on extern type without fields {ty}")
+                    });
+                    synthesized_extern_fields = mono::ConFields::Named(
+                        extern_fields
+                            .iter()
+                            .map(|f| (f.fir_name.clone(), f.ty.clone()))
+                            .collect(),
+                    );
+                    &synthesized_extern_fields
+                }
+
+                None => panic!("BUG: {loc}: Type {ty} doesn't have any constructors",),
             };
 
             let field_pats = match con_fields {
@@ -2406,10 +2569,7 @@ fn lower_pat(
         }
 
         mono::Pat::Record(mono::RecordPat { fields, ty, rest }) => {
-            let idx = *indices
-                .records
-                .get(&RecordType { fields: ty.clone() })
-                .unwrap();
+            let idx = *indices.records.get(ty).unwrap();
 
             let mut field_pats: Vec<L<Pat>> = Vec::with_capacity(ty.len());
 
@@ -2525,16 +2685,11 @@ fn lower_rest_pat(
             }
 
             let rest_record_fields = match &var_pat.ty {
-                mono::Type::Record { fields } => fields.clone(),
-                other => panic!("BUG: RestPat::Bind var has non-record type: {:?}", other),
+                mono::Type::Record { fields } => fields,
+                other => panic!("BUG: RestPat::Bind var has non-record type: {other:?}"),
             };
 
-            let rest_con = *indices
-                .records
-                .get(&RecordType {
-                    fields: rest_record_fields,
-                })
-                .unwrap();
+            let rest_con = *indices.records.get(rest_record_fields).unwrap();
 
             let var_idx = LocalIdx(scope.locals.len() as u32);
             scope.locals.push(LocalInfo {
@@ -2608,10 +2763,7 @@ fn lower_splice(
     let splice_field_tys: OrdMap<Name, mono::Type> = match &splice_ty {
         mono::Type::Record { fields } => fields.clone(),
         mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_) => {
-            panic!(
-                "{}: Record expression splice is not a record",
-                loc_display(&splice.loc)
-            )
+            panic!("{}: Record expression splice is not a record", splice.loc)
         }
     };
     let splice_local_idx = LocalIdx(scope.locals.len() as u32);
@@ -2655,14 +2807,55 @@ fn lower_splice(
                             node: Expr::LocalVar(splice_local_idx),
                             loc: splice.loc.clone(),
                         }),
-                        field: splice_field_name.clone(),
+                        field: Name::new(c_field_name(splice_field_name)),
                         idx: field_idx,
                         object_ty: splice_ty.clone(),
+                        deref: false,
                     }),
                     loc: splice.loc.clone(),
                 },
             }),
             loc: splice.loc.clone(),
         })
+    }
+}
+
+pub fn c_field_name(name: &Name) -> &str {
+    match name.as_str() {
+        "auto" => "auto_",
+        "break" => "break_",
+        "case" => "case_",
+        "char" => "char_",
+        "const" => "const_",
+        "continue" => "continue_",
+        "default" => "default_",
+        "do" => "do_",
+        "double" => "double_",
+        "else" => "else_",
+        "enum" => "enum_",
+        "extern" => "extern_",
+        "float" => "float_",
+        "for" => "for_",
+        "goto" => "goto_",
+        "if" => "if_",
+        "inline" => "inline_",
+        "int" => "int_",
+        "long" => "long_",
+        "register" => "register_",
+        "restrict" => "restrict_",
+        "return" => "return_",
+        "short" => "short_",
+        "signed" => "signed_",
+        "sizeof" => "sizeof_",
+        "static" => "static_",
+        "struct" => "struct_",
+        "switch" => "switch_",
+        "typedef" => "typedef_",
+        "union" => "union_",
+        "unsigned" => "unsigned_",
+        "void" => "void_",
+        "volatile" => "volatile_",
+        "while" => "while_",
+        s => s,
     }
 }

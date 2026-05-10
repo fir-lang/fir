@@ -1,11 +1,11 @@
 use crate::ast::{self, AssignOp, Name};
+use crate::type_checker::TcFunState;
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::expr::check_expr;
 use crate::type_checker::id::{self, Id};
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
-use crate::type_checker::{TcFunState, loc_display};
 
 pub(super) fn check_stmts(
     tc_state: &mut TcFunState,
@@ -50,7 +50,7 @@ fn check_stmt(
             if loop_stack.is_empty() {
                 panic!(
                     "{}: `break` or `continue` statement not inside a loop",
-                    loc_display(&stmt.loc)
+                    stmt.loc
                 );
             }
 
@@ -65,7 +65,7 @@ fn check_stmt(
                         *loop_level = depth as u32;
                     }
                     None => {
-                        panic!("{}: no loop with label {}", loc_display(&stmt.loc), label);
+                        panic!("{}: no loop with label {}", stmt.loc, label);
                     }
                 }
             }
@@ -174,9 +174,11 @@ fn check_stmt(
                     assert!(ty_args.is_empty());
                     assert!(user_ty_args.is_empty());
                     assert!(resolved_id.is_none());
-                    let var_ty = tc_state.env.get(name).cloned().unwrap_or_else(|| {
-                        panic!("{}: Unbound variable {}", loc_display(&lhs.loc), name)
-                    });
+                    let var_ty = tc_state
+                        .env
+                        .get(name)
+                        .cloned()
+                        .unwrap_or_else(|| panic!("{}: Unbound variable {}", lhs.loc, name));
                     *inferred_ty = Some(var_ty.clone());
                     check_expr(tc_state, &mut rhs.node, &rhs.loc, Some(&var_ty), loop_stack);
                     return Ty::unit();
@@ -196,42 +198,46 @@ fn check_stmt(
 
                     let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                     let lhs_ty: Ty = match &lhs_ty_normalized {
-                        Ty::Con(con, _) => {
-                            select_field_for_assignment(tc_state, con, &[], field, &lhs.loc)
-                                .unwrap_or_else(|| {
-                                    panic!(
-                                        "{}: Type {} does not have field {}",
-                                        loc_display(&lhs.loc),
-                                        con.name(),
-                                        field
-                                    )
-                                })
-                        }
+                        Ty::Con(con, _) => select_field_for_assignment(
+                            tc_state,
+                            con.clone(),
+                            vec![],
+                            field,
+                            &lhs.loc,
+                        )
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}: Type {} does not have field {}",
+                                lhs.loc,
+                                con.name(),
+                                field
+                            )
+                        }),
 
-                        Ty::App(con, args, _) => {
-                            select_field_for_assignment(tc_state, con, args, field, &lhs.loc)
-                                .unwrap_or_else(|| {
-                                    panic!(
-                                        "{}: Type {} does not have field {}",
-                                        loc_display(&lhs.loc),
-                                        con.name(),
-                                        field
-                                    )
-                                })
-                        }
+                        Ty::App(con, args, _) => select_field_for_assignment(
+                            tc_state,
+                            con.clone(),
+                            args.clone(),
+                            field,
+                            &lhs.loc,
+                        )
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}: Type {} does not have field {}",
+                                lhs.loc,
+                                con.name(),
+                                field
+                            )
+                        }),
 
                         Ty::Record { is_row, .. } => {
                             assert!(!(*is_row));
-                            panic!(
-                                "{}: Records are value types and can't be updated",
-                                loc_display(&lhs.loc)
-                            );
+                            panic!("{}: Records are value types and can't be updated", lhs.loc);
                         }
 
                         _ => panic!(
                             "{}: Type {} doesn't have fields that can be assigned",
-                            loc_display(&lhs.loc),
-                            lhs_ty_normalized
+                            lhs.loc, lhs_ty_normalized
                         ),
                     };
 
@@ -240,7 +246,7 @@ fn check_stmt(
                     *inferred_ty = Some(rhs_ty);
                 }
 
-                _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),
+                _ => todo!("{}: Assignment with LHS: {:?}", lhs.loc, lhs),
             };
 
             unify_expected_ty(
@@ -384,6 +390,19 @@ fn check_stmt(
 
             let expr_local = Name::new(format!("temp{}", tc_state.local_gen));
             tc_state.local_gen += 1;
+
+            let iter_expr = ast::L {
+                loc: expr.loc.clone(),
+                node: std::mem::replace(&mut expr.node, ast::Expr::placeholder()),
+            };
+
+            let item_pat = ast::L {
+                loc: pat.loc.clone(),
+                node: std::mem::replace(&mut pat.node, ast::Pat::Ignore),
+            };
+
+            let body_stmts = std::mem::take(body);
+
             stmt.node = ast::Stmt::Expr(ast::Expr::Do(ast::DoExpr {
                 stmts: vec![
                     ast::L {
@@ -398,7 +417,7 @@ fn check_stmt(
                                 }),
                             },
                             ty: None,
-                            rhs: expr.clone(),
+                            rhs: iter_expr,
                         }),
                     },
                     ast::L {
@@ -481,14 +500,14 @@ fn check_stmt(
                                             },
                                             fields: vec![ast::Named {
                                                 name: None,
-                                                node: pat.clone(),
+                                                node: item_pat,
                                             }],
                                             rest: ast::RestPat::No,
                                         }),
                                     },
                                 }),
                             },
-                            body: body.clone(),
+                            body: body_stmts,
                         }),
                     },
                 ],
@@ -530,29 +549,39 @@ fn check_stmt(
 
 fn select_field_for_assignment(
     tc_state: &mut TcFunState,
-    ty_con_id: &Id,
-    ty_args: &[Ty],
+    mut ty_con_id: Id,
+    mut ty_args: Vec<Ty>,
     field: &Name,
     loc: &ast::Loc,
 ) -> Option<Ty> {
+    let mut behind_ptr = false;
+
+    if ty_con_id == id::builtins::C_PTR() {
+        assert_eq!(ty_args.len(), 1);
+        let (con, args) = ty_args[0].con(tc_state.tys.tys.cons())?;
+        ty_con_id = con;
+        ty_args = args;
+        behind_ptr = true;
+    }
+
     let ty_con = tc_state
         .tys
         .tys
-        .get_con(ty_con_id)
-        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con_id));
+        .get_con(&ty_con_id)
+        .unwrap_or_else(|| panic!("{loc}: Unknown type {ty_con_id}"));
 
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
     match &ty_con.details {
         TyConDetails::Type(TypeDetails { cons, sum, value }) if !sum => {
-            if *value {
-                panic!("{}: Value types can't be updated", loc_display(loc));
+            if *value && !behind_ptr {
+                panic!("{loc}: Value types can't be updated");
             }
 
             assert_eq!(cons.len(), 1);
             let con_scheme = cons.values().next().unwrap();
             let con_ty = con_scheme
-                .instantiate_with_tys(ty_args, tc_state.preds, loc)
+                .instantiate_with_tys(&ty_args, tc_state.preds, loc)
                 .deep_normalize(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,

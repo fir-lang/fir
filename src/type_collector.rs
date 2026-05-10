@@ -2,6 +2,8 @@ use crate::ast::Name;
 use crate::collections::*;
 use crate::mono_ast as mono;
 
+use std::borrow::Borrow;
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct RecordType {
     pub(crate) fields: OrdMap<Name, mono::Type>,
@@ -15,9 +17,21 @@ impl RecordType {
     }
 }
 
+impl Borrow<OrdMap<Name, mono::Type>> for RecordType {
+    fn borrow(&self) -> &OrdMap<Name, mono::Type> {
+        &self.fields
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) struct VariantType {
     pub(crate) alts: OrdMap<Name, mono::NamedType>,
+}
+
+impl Borrow<OrdMap<Name, mono::NamedType>> for VariantType {
+    fn borrow(&self) -> &OrdMap<Name, mono::NamedType> {
+        &self.alts
+    }
 }
 
 pub fn collect_anonymous_types(pgm: &mono::MonoPgm) -> (HashSet<RecordType>, HashSet<VariantType>) {
@@ -72,6 +86,15 @@ fn visit_ty_decl(
 
         Some(mono::TypeDeclRhs::Product(fields)) => {
             visit_fields(fields, records, variants);
+        }
+
+        #[allow(clippy::collapsible_match)]
+        Some(mono::TypeDeclRhs::Extern(mono::ExternType { c_type: _, fields })) => {
+            if let Some(fields) = fields {
+                for f in fields.iter() {
+                    visit_ty(&f.ty, records, variants);
+                }
+            }
         }
     }
 }
@@ -305,7 +328,8 @@ fn visit_expr(
         | mono::Expr::AssocFnSel(_)
         | mono::Expr::Int(_)
         | mono::Expr::Char(_)
-        | mono::Expr::Str(_) => {}
+        | mono::Expr::Str(_)
+        | mono::Expr::InlineC(_) => {}
 
         mono::Expr::FieldSel(mono::FieldSelExpr {
             object,

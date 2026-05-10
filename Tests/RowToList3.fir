@@ -91,7 +91,7 @@ printExt[
         Expr.Let(name, rhs, body, ..ext):
             print(RecRowToList[ExprExts[t].LetExt].rowToList(ext))
 
-main():
+main() / []:
     printExt(makeAstGeneric[FmtExprExts, []]())
     printExt(makeAstGeneric[TcExprExts, []]())
 

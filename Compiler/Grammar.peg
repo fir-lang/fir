@@ -27,6 +27,7 @@ Terminals:
     "for" = Token(kind = TokenKind.For, ..)
     "if" = Token(kind = TokenKind.If, ..)
     "impl" = Token(kind = TokenKind.Impl, ..)
+    "extern" = Token(kind = TokenKind.Extern, ..)
     "import" = Token(kind = TokenKind.Import, ..)
     "in" = Token(kind = TokenKind.In, ..)
     "is" = Token(kind = TokenKind.Is, ..)
@@ -283,13 +284,12 @@ returnTy[AstExts[exts], AstIds[AstExts[exts].Ids]] (ret: Option[Type[exts]], exn
 
 typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
     # Sum type: at least one constructors
-    attr=attr? val=^ valToken="value"? "type"
+    attrs=attr* val=^ valToken="value"? "type"
             name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT"
             rhs=conDecl* ext=(_".." type_ _"NEWLINE")? "DEDENT":
         TypeDecl(
-            attr,
-            value_ = valToken.map(\(a): TokenIdx(idx = val)),
-            prim_ = Option.None,
+            attrs,
+            kind = valToken.map(\(a): TypeDeclKind.Value(TokenIdx(idx = val))),
             name = newId(name),
             rhs = Option.Some(TypeDeclRhs.Sum(cons = rhs, extension = ext)),
             typeParams = match params:
@@ -299,14 +299,13 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
         )
 
     # Product type
-    attr=attr? val=^ valToken="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
+    attrs=attr* val=^ valToken="value"? "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
         let fs = match fs:
             Option.Some(fs): fs.fields
             Option.None: ConFields.Empty
         TypeDecl(
-            attr,
-            value_ = valToken.map(\(a): TokenIdx(idx = val)),
-            prim_ = Option.None,
+            attrs,
+            kind = valToken.map(\(a): TypeDeclKind.Value(TokenIdx(idx = val))),
             name = newId(name),
             rhs = Option.Some(TypeDeclRhs.Product(fs)),
             typeParams = match params:
@@ -316,11 +315,10 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
         )
 
     # Type synonym with type params
-    attr=attr? val=^ "type" name=^ "UpperId" "[" params=typeParams "]" "=" rhs=type_ "NEWLINE":
+    attrs=attr* val=^ "type" name=^ "UpperId" "[" params=typeParams "]" "=" rhs=type_ "NEWLINE":
         TypeDecl(
-            attr,
-            value_ = Option.None,
-            prim_ = Option.None,
+            attrs,
+            kind = Option.None,
             name = newId(name),
             rhs = Option.Some(TypeDeclRhs.Synonym(rhs)),
             typeParams = params,
@@ -328,27 +326,46 @@ typeDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] TypeDecl[exts]:
         )
 
     # Type synonym
-    attr=attr? val=^ "type" name=^ "UpperId" "=" rhs=type_ "NEWLINE":
+    attrs=attr* val=^ "type" name=^ "UpperId" "=" rhs=type_ "NEWLINE":
         TypeDecl(
-            attr,
-            value_ = Option.None,
-            prim_ = Option.None,
+            attrs,
+            kind = Option.None,
             name = newId(name),
             rhs = Option.Some(TypeDeclRhs.Synonym(rhs)),
             typeParams = Vec.empty(),
             ..AstExts[exts].defaultTypeDeclExts()
         )
 
-    attr=attr? prim_=^ "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
+    attrs=attr* prim_=^ "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
         TypeDecl(
-            attr,
-            value_ = Option.None,
-            prim_ = Option.Some(TokenIdx(idx = prim_)),
+            attrs,
+            kind = Option.Some(TypeDeclKind.Prim(TokenIdx(idx = prim_))),
             name = newId(name),
             rhs = Option.None,
             typeParams = match params:
                 Option.Some(params): params
                 Option.None: Vec.empty(),
+            ..AstExts[exts].defaultTypeDeclExts()
+        )
+
+    # Extern type, with optional type params and optional field list:
+    #
+    # - `extern type File = "FILE"`              (type alias, no constructor)
+    # - `extern type Foo = "..."()`              (empty struct constructor)
+    # - `extern type DivT = "div_t"(quot: I32 = "quot", rem: I32 = "rem")`
+    attrs=attr* extern_=^ "extern" "type" name=^ "UpperId" "="
+            cTypeBegin=^ "BeginStr" cTypeEnd=^ "EndStr"
+            fs=externTypeFields? "NEWLINE":
+        TypeDecl(
+            attrs,
+            kind = Option.Some(TypeDeclKind.Extern(TokenIdx(idx = extern_))),
+            name = newId(name),
+            rhs = Option.Some(TypeDeclRhs.Extern(
+                cTypeBegin = TokenIdx(idx = cTypeBegin),
+                cTypeEnd = TokenIdx(idx = cTypeEnd),
+                fields = fs,
+            )),
+            typeParams = Vec.empty(),
             ..AstExts[exts].defaultTypeDeclExts()
         )
 
@@ -399,6 +416,27 @@ conFields[AstExts[exts], AstIds[AstExts[exts].Ids]] (fields: ConFields[exts], la
 conField[AstExts[exts], AstIds[AstExts[exts].Ids]] (name: Option[Id], ty: Type[exts]):
     name=(^ _"LowerId" _":")? ty=type_:
         (name = name.map(\(name: U32): newId(name)), ty = ty)
+
+
+# Field list for an `extern type` constructor: `(name1: Ty1 = "c1", name2: Ty2 = "c2")`.
+# The empty `()` form is allowed and produces an empty `Vec`.
+externTypeFields[AstExts[exts], AstIds[AstExts[exts].Ids]] Vec[ExternField[exts]]:
+    "(" ")":
+        Vec.empty()
+
+    "(" f0=externTypeField fs=(_"," externTypeField)* ","? ")":
+        Vec.fromIter(once(f0).chain(fs.iter()))
+
+
+# A single `extern type` field: `name: FirType = "c_name"`.
+externTypeField[AstExts[exts], AstIds[AstExts[exts].Ids]] ExternField[exts]:
+    name=^ "LowerId" ":" ty=type_ "=" cNameBegin=^ "BeginStr" cNameEnd=^ "EndStr":
+        ExternField(
+            name = newId(name),
+            ty,
+            cNameBegin = TokenIdx(idx = cNameBegin),
+            cNameEnd = TokenIdx(idx = cNameEnd)
+        )
 
 
 # --------------------------------------------------------------------------------------------------
@@ -821,7 +859,7 @@ stmt[AstExts[exts], AstIds[AstExts[exts].Ids]] Stmt[exts]:
         Stmt.While(WhileStmt(label, cond, body, _firstToken = TokenIdx(idx = cur)))
 
     cur=^ label=loopLabel? "loop" ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
-        Stmt.Loop(LoopStmt(body, _firstToken = TokenIdx(idx = cur)))
+        Stmt.Loop(LoopStmt(label, body, _firstToken = TokenIdx(idx = cur)))
 
     lhs=inlineExpr rhs=stmtExprCont:
         match rhs:
@@ -976,12 +1014,20 @@ conFieldPat[AstExts[exts], AstIds[AstExts[exts].Ids]] Named[Pat[exts]]:
 
 
 importDecl[AstExts[exts], AstIds[AstExts[exts].Ids]] ImportDecl[exts]:
-    attr=attr? "import" "[" "]" "NEWLINE":
-        ImportDecl(attr, items = Vec.empty())
+    attrs=attr* import_=^ "import" "[" "]" "NEWLINE":
+        ImportDecl(
+            attrs,
+            import_ = TokenIdx(idx = import_),
+            items = Vec.empty(),
+        )
 
-    attr=attr? "import" "[" item0=importItem items=(_"," importItem)* ","? "]" "NEWLINE":
+    attrs=attr* import_=^ "import" "[" item0=importItem items=(_"," importItem)* ","? "]" "NEWLINE":
         items.insert(0, item0)
-        ImportDecl(attr, items = items)
+        ImportDecl(
+            attrs,
+            import_ = TokenIdx(idx = import_),
+            items = items
+        )
 
 
 importItem ImportItem:

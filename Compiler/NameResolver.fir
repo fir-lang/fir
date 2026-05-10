@@ -49,6 +49,11 @@ resolveNames(pgm: Program):
 
                     TypeDeclRhs.Synonym(ty): visitor.visitType(ty)
 
+                    TypeDeclRhs.Extern(cTypeBegin = _, cTypeEnd = _, fields):
+                        if fields is Option.Some(fs):
+                            for f: CExternField in fs.iter():
+                                visitor.visitType(f.ty)
+
         for traitDecl: HashMapEntry[Str, CTraitDecl] in
                 module._traitItems.iter():
             let traitDecl = traitDecl.val
