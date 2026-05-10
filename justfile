@@ -32,9 +32,11 @@ c_golden_test: build
 
 module_golden_test: build
     #!/usr/bin/env bash
+    status=0
     for main in Tests/Modules/*/Main.fir; do
-        goldentests target/debug/fir "$main" '# '
+        goldentests target/debug/fir "$main" '# ' || status=$?
     done
+    exit $status
 
 update_module_goldens: build
     #!/usr/bin/env bash
