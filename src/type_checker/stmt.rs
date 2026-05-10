@@ -198,29 +198,37 @@ fn check_stmt(
 
                     let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                     let lhs_ty: Ty = match &lhs_ty_normalized {
-                        Ty::Con(con, _) => {
-                            select_field_for_assignment(tc_state, con, &[], field, &lhs.loc)
-                                .unwrap_or_else(|| {
-                                    panic!(
-                                        "{}: Type {} does not have field {}",
-                                        lhs.loc,
-                                        con.name(),
-                                        field
-                                    )
-                                })
-                        }
+                        Ty::Con(con, _) => select_field_for_assignment(
+                            tc_state,
+                            con.clone(),
+                            vec![],
+                            field,
+                            &lhs.loc,
+                        )
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}: Type {} does not have field {}",
+                                lhs.loc,
+                                con.name(),
+                                field
+                            )
+                        }),
 
-                        Ty::App(con, args, _) => {
-                            select_field_for_assignment(tc_state, con, args, field, &lhs.loc)
-                                .unwrap_or_else(|| {
-                                    panic!(
-                                        "{}: Type {} does not have field {}",
-                                        lhs.loc,
-                                        con.name(),
-                                        field
-                                    )
-                                })
-                        }
+                        Ty::App(con, args, _) => select_field_for_assignment(
+                            tc_state,
+                            con.clone(),
+                            args.clone(),
+                            field,
+                            &lhs.loc,
+                        )
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}: Type {} does not have field {}",
+                                lhs.loc,
+                                con.name(),
+                                field
+                            )
+                        }),
 
                         Ty::Record { is_row, .. } => {
                             assert!(!(*is_row));
@@ -541,29 +549,39 @@ fn check_stmt(
 
 fn select_field_for_assignment(
     tc_state: &mut TcFunState,
-    ty_con_id: &Id,
-    ty_args: &[Ty],
+    mut ty_con_id: Id,
+    mut ty_args: Vec<Ty>,
     field: &Name,
     loc: &ast::Loc,
 ) -> Option<Ty> {
+    let mut behind_ptr = false;
+
+    if ty_con_id == id::builtins::C_PTR() {
+        assert_eq!(ty_args.len(), 1);
+        let (con, args) = ty_args[0].con(tc_state.tys.tys.cons())?;
+        ty_con_id = con;
+        ty_args = args;
+        behind_ptr = true;
+    }
+
     let ty_con = tc_state
         .tys
         .tys
-        .get_con(ty_con_id)
+        .get_con(&ty_con_id)
         .unwrap_or_else(|| panic!("{loc}: Unknown type {ty_con_id}"));
 
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
     match &ty_con.details {
         TyConDetails::Type(TypeDetails { cons, sum, value }) if !sum => {
-            if *value {
+            if *value && !behind_ptr {
                 panic!("{loc}: Value types can't be updated");
             }
 
             assert_eq!(cons.len(), 1);
             let con_scheme = cons.values().next().unwrap();
             let con_ty = con_scheme
-                .instantiate_with_tys(ty_args, tc_state.preds, loc)
+                .instantiate_with_tys(&ty_args, tc_state.preds, loc)
                 .deep_normalize(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,

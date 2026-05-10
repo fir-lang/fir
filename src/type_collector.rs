@@ -87,6 +87,15 @@ fn visit_ty_decl(
         Some(mono::TypeDeclRhs::Product(fields)) => {
             visit_fields(fields, records, variants);
         }
+
+        #[allow(clippy::collapsible_match)]
+        Some(mono::TypeDeclRhs::Extern(mono::ExternType { c_type: _, fields })) => {
+            if let Some(fields) = fields {
+                for f in fields.iter() {
+                    visit_ty(&f.ty, records, variants);
+                }
+            }
+        }
     }
 }
 
@@ -319,7 +328,8 @@ fn visit_expr(
         | mono::Expr::AssocFnSel(_)
         | mono::Expr::Int(_)
         | mono::Expr::Char(_)
-        | mono::Expr::Str(_) => {}
+        | mono::Expr::Str(_)
+        | mono::Expr::InlineC(_) => {}
 
         mono::Expr::FieldSel(mono::FieldSelExpr {
             object,

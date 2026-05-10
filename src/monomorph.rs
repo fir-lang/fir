@@ -2,7 +2,6 @@ use crate::ast::{self, Name, Named};
 use crate::collections::*;
 use crate::interpolation::StrPart;
 use crate::module::ModulePath;
-use crate::module_loader::LoadedPgm;
 use crate::mono_ast as mono;
 use crate::mono_ast::MonoPgm;
 use crate::type_checker::id::{Id, IdMangler, builtins};
@@ -203,11 +202,11 @@ fn pgm_to_poly_pgm(
 }
 
 pub fn monomorphise(
-    loaded_pgm: LoadedPgm,
+    modules: HashMap<ModulePath, ast::Module>,
+    entry: ModulePath,
     module_envs: HashMap<ModulePath, ModuleEnv>,
     main: &str,
 ) -> MonoPgm {
-    let LoadedPgm { modules, entry, .. } = loaded_pgm;
     let poly_pgm = pgm_to_poly_pgm(modules, module_envs);
     let mut mono_pgm = MonoPgm::default();
     let mut mangler = IdMangler::new();
@@ -1310,6 +1309,26 @@ fn mono_expr(
                         module_env,
                     ),
                     loc,
+                ),
+            })
+        }
+
+        ast::Expr::InlineC(ast::InlineCExpr { parts, inferred_ty }) => {
+            mono::Expr::InlineC(mono::InlineCExpr {
+                parts: parts
+                    .iter()
+                    .map(|part| match part {
+                        ast::InlineCPart::Str(str) => mono::InlineCPart::Str(str.clone()),
+                        ast::InlineCPart::Var(var) => mono::InlineCPart::Var(var.clone()),
+                    })
+                    .collect(),
+                ty: mono_tc_ty(
+                    inferred_ty.as_ref().unwrap(),
+                    ty_map,
+                    poly_pgm,
+                    mono_pgm,
+                    mangler,
+                    module_env,
                 ),
             })
         }
@@ -2678,6 +2697,39 @@ fn mono_ty_decl(
 
         ast::TypeDeclRhs::Synonym(_) => {
             panic!("Type synonyms should be expanded before monomorphization")
+        }
+
+        ast::TypeDeclRhs::Extern(ast::ExternTypeDeclRhs { c_type, fields }) => {
+            let params = &ty_decl.type_params;
+            assert_eq!(
+                params.len(),
+                args.len(),
+                "BUG: extern type {} instantiated with wrong arity",
+                ty_decl.name,
+            );
+
+            let mono_fields: Option<Vec<mono::ExternField>> = fields.as_ref().map(|fs| {
+                fs.iter()
+                    .map(|f| mono::ExternField {
+                        fir_name: f.name.clone(),
+                        ty: mono_ast_ty(
+                            &f.fir_type.node,
+                            &ty_map,
+                            poly_pgm,
+                            mono_pgm,
+                            mangler,
+                            module_env,
+                            &f.fir_type.loc,
+                        ),
+                        c_name: f.c_type.clone(),
+                    })
+                    .collect()
+            });
+
+            mono::TypeDeclRhs::Extern(mono::ExternType {
+                c_type: c_type.to_string(),
+                fields: mono_fields,
+            })
         }
     });
 

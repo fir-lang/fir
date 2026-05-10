@@ -97,6 +97,9 @@ type CConFields = ConFields[CompilerAstExts]
 type CNamedField = NamedField[CompilerAstExts]
 
 
+type CExternField = ExternField[CompilerAstExts]
+
+
 type CFunDecl = FunDecl[CompilerAstExts]
 
 

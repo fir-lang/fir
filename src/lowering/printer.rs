@@ -226,6 +226,7 @@ impl Expr {
                 field,
                 idx: _,
                 object_ty: _,
+                deref: _,
             }) => {
                 object.node.print(p);
                 p.char('.');
@@ -365,6 +366,19 @@ impl Expr {
             } => {
                 p.char('~');
                 expr.node.print(p);
+            }
+
+            Expr::InlineC { parts } => {
+                p.str("inline(\"");
+                for part in parts {
+                    match part {
+                        InlineCPart::Str(s) => crate::ast::printer::escape_str_lit(s, p),
+                        InlineCPart::Var(local_idx) => {
+                            write!(p, "`local{}`", local_idx.0).unwrap();
+                        }
+                    }
+                }
+                p.str("\")");
             }
         }
     }

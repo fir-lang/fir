@@ -126,7 +126,7 @@ fn report_parse_error(
 
         lalrpop_util::ParseError::UnrecognizedToken { token, expected: _ } => {
             panic!(
-                "{}: Unexpected token {:?} (\"{}\")",
+                "{}: Unexpected token {:?} ({:?})",
                 lexgen_loc_display(module, token.0),
                 token.1.kind,
                 token.1.text,
@@ -218,7 +218,14 @@ mod native {
 
         type_checker::expand_type_synonyms(&mut loaded_pgm, &module_envs);
 
-        let mut mono_pgm = monomorph::monomorphise(loaded_pgm, module_envs, &opts.main);
+        let headers = loaded_pgm.extern_headers;
+
+        let mut mono_pgm = monomorph::monomorphise(
+            loaded_pgm.modules,
+            loaded_pgm.entry,
+            module_envs,
+            &opts.main,
+        );
 
         if opts.print_mono_ast {
             mono_ast::printer::print_pgm(&mono_pgm);
@@ -247,7 +254,7 @@ mod native {
                         (Box::new(file), path)
                     }
                 };
-            let c = to_c::to_c(&lowered_pgm, &opts.main);
+            let c = to_c::to_c(&lowered_pgm, &opts.main, headers);
             let out_file_absolute_path = c_file_absolute_path.with_extension("");
             c_file.write_all(c.as_bytes()).unwrap();
             let mut gcc_cmd = std::process::Command::new("gcc");
@@ -294,7 +301,7 @@ mod native {
                 std::process::exit(1);
             }
         } else if let Some(output) = opts.output {
-            let c = to_c::to_c(&lowered_pgm, &opts.main);
+            let c = to_c::to_c(&lowered_pgm, &opts.main, headers);
             let mut file = std::fs::File::create(&output).unwrap();
             file.write_all(c.as_bytes()).unwrap();
             drop(file);
@@ -447,13 +454,14 @@ mod wasm {
         // NB. This path handled specially in the web page, it returns the program input field
         // contents.
         let file_path = Path::new("Main.fir");
-        let mut loaded_program = module_loader::load(file_path, false, false);
-        deriving::expand_derives(&mut loaded_program);
+        let mut loaded_pgm = module_loader::load(file_path, false, false);
+        deriving::expand_derives(&mut loaded_pgm);
 
-        let (_tys, module_envs) = type_checker::check_pgm(&mut loaded_program);
+        let (_tys, module_envs) = type_checker::check_pgm(&mut loaded_pgm);
 
-        type_checker::expand_type_synonyms(&mut loaded_program, &module_envs);
-        let mut mono_pgm = monomorph::monomorphise(loaded_program, module_envs, "main");
+        type_checker::expand_type_synonyms(&mut loaded_pgm, &module_envs);
+        let mut mono_pgm =
+            monomorph::monomorphise(loaded_pgm.modules, loaded_pgm.entry, module_envs, "main");
         let lowered_pgm = lowering::lower(&mut mono_pgm);
 
         let mut w = WasmOutput;

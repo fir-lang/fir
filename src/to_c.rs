@@ -51,22 +51,21 @@ impl<'a> Cg<'a> {
     }
 }
 
-pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
+pub(crate) fn to_c(pgm: &LoweredPgm, main: &str, mut headers: OrdSet<String>) -> String {
     let mut p = Printer::new();
 
-    writedoc!(
-        p,
-        "
-        #include <inttypes.h>
-        #include <setjmp.h>
-        #include <stdbool.h>
-        #include <stdint.h>
-        #include <stdio.h>
-        #include <stdlib.h>
-        #include <string.h>
+    headers.insert("inttypes.h".to_string());
+    headers.insert("setjmp.h".to_string());
+    headers.insert("stdbool.h".to_string());
+    headers.insert("stdint.h".to_string());
+    headers.insert("stdio.h".to_string());
+    headers.insert("stdlib.h".to_string());
+    headers.insert("string.h".to_string());
 
-        "
-    );
+    for header in headers {
+        wln!(p, "#include <{header}>");
+    }
+    p.nl();
 
     // Generate the CLOSURE type before other types. CLOSURE is a special built-in that doesn't have
     // a TypeDecl entry, so it's not part of the dependency-sorted types.
@@ -94,10 +93,18 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
         for type_idx in scc {
             match &pgm.types[type_idx.as_usize()] {
                 TypeDecl::Named(named_type) => {
-                    if matches!(&named_type.rhs, NamedTypeRhs::Source(_)) {
+                    if let NamedTypeRhs::Source(rhs) = &named_type.rhs {
                         let struct_name =
                             named_type_struct_name(&named_type.name, &named_type.ty_args);
-                        wln!(p, "typedef struct {struct_name} {struct_name};");
+                        if let mono::TypeDeclRhs::Extern(mono::ExternType { c_type, fields: _ }) =
+                            rhs
+                        {
+                            wln!(p, "typedef {c_type} {struct_name};");
+                        } else {
+                            let struct_name =
+                                named_type_struct_name(&named_type.name, &named_type.ty_args);
+                            wln!(p, "typedef struct {struct_name} {struct_name};");
+                        }
                     }
                 }
                 TypeDecl::Record(record_ty, _) => {
@@ -293,7 +300,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 "return (({sum_struct}){{ ._tag = {tag_name}, .{con_field} = {{ ._tag = {tag_name}"
             );
             for (i, (field_name, _field_ty)) in source_con.fields.iter().enumerate() {
-                w!(p, ", .{} = p{i}", c_field_name(field_name));
+                w!(p, ", .{field_name} = p{i}");
             }
             w!(p, " }} }});");
             p.dedent();
@@ -316,7 +323,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 source_con.fields.iter().enumerate(),
                 ",",
                 |p, (i, (field_name, _field_ty))| {
-                    w!(p, " .{} = p{i}", c_field_name(field_name));
+                    w!(p, " .{field_name} = p{i}");
                 },
             );
             w!(p, " }});");
@@ -338,7 +345,7 @@ pub(crate) fn to_c(pgm: &LoweredPgm, main: &str) -> String {
                 wln!(p, "_obj->_tag = {tag_name};");
             }
             for (i, (field_name, _field_ty)) in source_con.fields.iter().enumerate() {
-                wln!(p, "_obj->{} = p{i};", c_field_name(field_name));
+                wln!(p, "_obj->{field_name} = p{i};",);
             }
             w!(p, "return (uint64_t)_obj;");
             p.dedent();
@@ -561,6 +568,12 @@ fn source_decl_to_c(
                 p,
             );
         }
+        mono::TypeDeclRhs::Extern(_) => {
+            let con_idx = con_indices[0];
+            let tag = con_idx.0;
+            let tag_name = source_con_tag_name(&ty.name, None, &ty.ty_args);
+            wln!(p, "#define {tag_name} {tag}");
+        }
     }
 }
 
@@ -708,6 +721,22 @@ fn builtin_con_decl_to_c(builtin: &BuiltinConDecl, tag: u32, pgm: &LoweredPgm, p
             wln!(p, "// U64 tag {}", tag);
             wln!(p, "typedef uint64_t U64;");
         }
+
+        BuiltinConDecl::CPtr { t } => {
+            let t_str = if let mono::Type::Named(_) = t
+                && let TypeDecl::Named(decl) = pgm.decl(t)
+                && let NamedTypeRhs::Source(mono::TypeDeclRhs::Extern(mono::ExternType {
+                    c_type,
+                    fields: _,
+                })) = &decl.rhs
+            {
+                c_type.to_string()
+            } else {
+                c_ty(t, pgm)
+            };
+            let typedef_name = ptr_typedef_name(t, pgm);
+            wln!(p, "typedef {t_str}* {typedef_name};");
+        }
     }
 }
 
@@ -776,6 +805,14 @@ fn variant_struct_name(alts: &OrdMap<Name, mono::NamedType>) -> String {
 
 fn array_struct_name(t: &mono::Type, pgm: &LoweredPgm) -> String {
     let mut name = String::from("Array_");
+    let t = c_ty(t, pgm);
+    let t_no_star = t.as_str().strip_suffix("*").unwrap_or(t.as_ref());
+    name.push_str(t_no_star);
+    name
+}
+
+fn ptr_typedef_name(t: &mono::Type, pgm: &LoweredPgm) -> String {
+    let mut name = String::from("Ptr_");
     let t = c_ty(t, pgm);
     let t_no_star = t.as_str().strip_suffix("*").unwrap_or(t.as_ref());
     name.push_str(t_no_star);
@@ -1403,6 +1440,25 @@ fn builtin_fun_to_c(
             );
         }
 
+        BuiltinFunDecl::ArrayPtr { t } => {
+            let t_ty = c_ty(t, pgm);
+            let array_ty = c_ty(
+                &mono::Type::Named(mono::NamedType {
+                    name: Name::new_static("Array"),
+                    args: vec![t.clone()],
+                }),
+                pgm,
+            );
+            writedoc!(
+                p,
+                "
+                static {t_ty}* _fun_{idx}({array_ty} arr) {{
+                    return arr.data_ptr;
+                }}
+                ",
+            );
+        }
+
         // End of array functions //////////////////////////////////////////////////////////////////
         BuiltinFunDecl::ReadFileUtf8 => {
             writedoc!(
@@ -1653,12 +1709,14 @@ fn stmt_to_c(
                 field,
                 idx: _,
                 object_ty,
+                deref,
             }) => {
                 let obj_temp = cg.fresh_temp();
                 w!(p, "{} {} = ", c_ty(object_ty, cg.pgm), obj_temp);
                 expr_to_c(&object.node, &object.loc, locals, cg, p);
                 wln!(p, "; // {}", object.loc);
-                w!(p, "{obj_temp}->{} = ", c_field_name(field));
+                let deref_str = if *deref { "->" } else { "." };
+                w!(p, "{obj_temp}{deref_str}{field} = ");
                 expr_to_c(&rhs.node, &rhs.loc, locals, cg, p);
                 wln!(p, ";");
                 if let Some(result_var) = result_var {
@@ -1815,7 +1873,7 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
                     wln!(p, "_obj->_tag = {tag_name};");
                 }
                 for ((field_name, _field_ty), arg) in fields.iter().zip(args.iter()) {
-                    w!(p, "_obj->{} = ", c_field_name(field_name));
+                    w!(p, "_obj->{field_name} = ");
                     expr_to_c(&arg.node, &arg.loc, locals, cg, p);
                     wln!(p, ";");
                 }
@@ -1830,15 +1888,13 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             object,
             field,
             idx: _,
-            object_ty,
+            object_ty: _,
+            deref,
         }) => {
             w!(p, "(");
             expr_to_c(&object.node, &object.loc, locals, cg, p);
-            if is_value_type(object_ty, cg.pgm) {
-                w!(p, ").{}", c_field_name(field));
-            } else {
-                w!(p, ")->{}", c_field_name(field));
-            }
+            let deref_str = if *deref { "->" } else { "." };
+            w!(p, "){deref_str}{field} ");
         }
 
         Expr::Call(CallExpr { fun, args, fun_ty }) => {
@@ -2188,10 +2244,17 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             w!(p, "({{");
             p.indent();
             p.nl();
-            let expr_temp = cg.fresh_temp();
-            wln!(p, "{} {expr_temp}; // {}", c_ty(ty, cg.pgm), loc);
-            stmts_to_c(stmts, Some(&expr_temp), locals, cg, p);
-            w!(p, "{expr_temp};");
+            let expr_temp = if ty.is_c_void() {
+                None
+            } else {
+                let expr_temp = cg.fresh_temp();
+                wln!(p, "{} {expr_temp}; // {loc}", c_ty(ty, cg.pgm));
+                Some(expr_temp)
+            };
+            stmts_to_c(stmts, expr_temp.as_deref(), locals, cg, p);
+            if let Some(expr_temp) = expr_temp {
+                w!(p, "{expr_temp};");
+            }
             p.dedent();
             p.nl();
             w!(p, "}})");
@@ -2264,6 +2327,19 @@ fn expr_to_c(expr: &Expr, loc: &Loc, locals: &[LocalInfo], cg: &mut Cg, p: &mut 
             p.dedent();
             p.nl();
             w!(p, "}})");
+        }
+
+        Expr::InlineC { parts } => {
+            for part in parts {
+                match part {
+                    InlineCPart::Str(str) => {
+                        w!(p, "{str}");
+                    }
+                    InlineCPart::Var(local_idx) => {
+                        w!(p, "_{}", local_idx.as_usize());
+                    }
+                }
+            }
         }
     }
 }
@@ -2410,8 +2486,9 @@ fn pat_to_cond(
                 HeapObj::Record(record) => record
                     .fields
                     .iter()
-                    .clone()
-                    .map(|(field_name, field_ty)| (field_name.clone(), field_ty.clone()))
+                    .map(|(field_name, field_ty)| {
+                        (Name::new(c_field_name(field_name)), field_ty.clone())
+                    })
                     .collect(),
                 HeapObj::Builtin(_) => panic!("Builtin constructor {con:?} in Pat::Con"),
                 HeapObj::Variant(_) => panic!("Variant in Pat::Con"),
@@ -2421,7 +2498,6 @@ fn pat_to_cond(
             let value = is_value_type(scrutinee_ty, cg.pgm);
             let value_sum = is_value_sum_type(con, cg.pgm);
             for ((field_name, field_ty), field_pat) in field_tys.iter().zip(fields.iter()) {
-                let field_name = c_field_name(field_name);
                 let field_expr = if value_sum {
                     format!("({scrutinee})._con_{}.{field_name}", con.as_usize())
                 } else if value {
@@ -2451,7 +2527,7 @@ fn pat_to_cond(
                     if rest_i > 0 {
                         rest_init.push(',');
                     }
-                    let src_field_name = c_field_name(&field_tys[src_field_idx as usize].0);
+                    let src_field_name = &field_tys[src_field_idx as usize].0;
                     let field_expr = if value_sum {
                         format!("({scrutinee})._con_{}.{src_field_name}", con.0)
                     } else if value {
@@ -2800,6 +2876,13 @@ fn type_decl_deps_(
                         }
                     }
                 },
+                mono::TypeDeclRhs::Extern(ext) => {
+                    if let Some(fields) = &ext.fields {
+                        for f in fields.iter() {
+                            type_deps(named_tys, record_tys, variant_tys, types, &f.ty, deps);
+                        }
+                    }
+                }
             },
             NamedTypeRhs::Builtin(_, _) => {
                 for ty in ty_args {
@@ -2882,45 +2965,5 @@ fn named_type_deps(
     let idx = *named_tys.get(&ty.name).unwrap().get(&ty.args).unwrap();
     if deps.insert(idx) {
         type_decl_deps_(named_tys, record_tys, variant_tys, types, idx, deps);
-    }
-}
-
-fn c_field_name(name: &Name) -> &str {
-    match name.as_str() {
-        "auto" => "auto_",
-        "break" => "break_",
-        "case" => "case_",
-        "char" => "char_",
-        "const" => "const_",
-        "continue" => "continue_",
-        "default" => "default_",
-        "do" => "do_",
-        "double" => "double_",
-        "else" => "else_",
-        "enum" => "enum_",
-        "extern" => "extern_",
-        "float" => "float_",
-        "for" => "for_",
-        "goto" => "goto_",
-        "if" => "if_",
-        "inline" => "inline_",
-        "int" => "int_",
-        "long" => "long_",
-        "register" => "register_",
-        "restrict" => "restrict_",
-        "return" => "return_",
-        "short" => "short_",
-        "signed" => "signed_",
-        "sizeof" => "sizeof_",
-        "static" => "static_",
-        "struct" => "struct_",
-        "switch" => "switch_",
-        "typedef" => "typedef_",
-        "union" => "union_",
-        "unsigned" => "unsigned_",
-        "void" => "void_",
-        "volatile" => "volatile_",
-        "while" => "while_",
-        s => s,
     }
 }

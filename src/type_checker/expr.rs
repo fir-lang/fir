@@ -396,6 +396,130 @@ pub(super) fn check_expr(
         }) => {
             assert!(inferred_ty.is_none());
 
+            if let ast::Expr::Var(ast::VarExpr {
+                mod_prefix,
+                name,
+                user_ty_args,
+                ty_args: _,
+                inferred_ty: _,
+                resolved_id: _,
+            }) = &fun.node
+                && (user_ty_args.is_empty() || user_ty_args.len() == 2)
+                && args.len() == 1
+                && let ast::CallArg {
+                    name: None,
+                    expr:
+                        ast::L {
+                            loc,
+                            node: ast::Expr::Str(parts),
+                        },
+                } = &mut args[0]
+                && splice.is_none()
+                // The next condition checks whether the variable is a local. `ModuleEnv::resolve`
+                // panics for local variables so we can't call it directly. This is the same special
+                // case we have in `VarExpr` handling above.
+                && (mod_prefix.is_some() || tc_state.env.get(name).is_none())
+                && tc_state.module_env.resolve(name, mod_prefix, loc) == builtin_ids::C_INLINE()
+            {
+                let (ret_ty, exn_ty) = if user_ty_args.is_empty() {
+                    (
+                        Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
+                        Ty::UVar(tc_state.var_gen.new_var(Kind::Star, loc.clone())),
+                    )
+                } else {
+                    (
+                        convert_ast_ty(
+                            &tc_state.tys.tys,
+                            tc_state.module_env,
+                            &user_ty_args[0].node,
+                            &user_ty_args[0].loc,
+                        ),
+                        convert_ast_ty(
+                            &tc_state.tys.tys,
+                            tc_state.module_env,
+                            &user_ty_args[1].node,
+                            &user_ty_args[1].loc,
+                        ),
+                    )
+                };
+
+                // The string argument is type checked as a inline C code template where for the
+                // interpolated expressions we accept any type.
+                //
+                // We also desugar the expression so that we won't have to pattern match on the same
+                // inline C expression in the monomorphiser and just deal with a dedicated `InlineC`
+                // expression.
+
+                let mut inline_c_parts: Vec<ast::InlineCPart> = Vec::with_capacity(parts.len());
+                let mut do_stmts: Vec<ast::L<ast::Stmt>> = Vec::with_capacity(parts.len());
+                for part in parts {
+                    match part {
+                        StrPart::Str(str) => {
+                            inline_c_parts.push(ast::InlineCPart::Str(str.clone()))
+                        }
+                        StrPart::Expr(expr) => {
+                            let (expr_ty, _) =
+                                check_expr(tc_state, &mut expr.node, &expr.loc, None, loop_stack);
+                            let var_idx = do_stmts.len();
+                            let var = Name::new(format!("${var_idx}"));
+                            do_stmts.push(ast::L {
+                                loc: expr.loc.clone(),
+                                node: ast::Stmt::Let(ast::LetStmt {
+                                    lhs: ast::L {
+                                        loc: expr.loc.clone(),
+                                        node: ast::Pat::Var(ast::VarPat {
+                                            var: var.clone(),
+                                            ty: Some(expr_ty),
+                                            refined: None,
+                                        }),
+                                    },
+                                    ty: None,
+                                    rhs: expr.clone(),
+                                }),
+                            });
+                            inline_c_parts.push(ast::InlineCPart::Var(var));
+                        }
+                    }
+                }
+
+                do_stmts.push(ast::L {
+                    loc: loc.clone(),
+                    node: ast::Stmt::Expr(ast::Expr::InlineC(ast::InlineCExpr {
+                        parts: inline_c_parts,
+                        inferred_ty: Some(ret_ty.clone()),
+                    })),
+                });
+
+                let ty = unify_expected_ty(
+                    ret_ty,
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
+                    tc_state.var_gen,
+                    loc,
+                    tc_state.assumps,
+                    tc_state.preds,
+                );
+
+                unify(
+                    &exn_ty,
+                    &tc_state.exceptions,
+                    tc_state.tys.tys.cons(),
+                    tc_state.trait_env,
+                    tc_state.var_gen,
+                    loc,
+                    tc_state.assumps,
+                    tc_state.preds,
+                );
+
+                *expr = ast::Expr::Do(ast::DoExpr {
+                    stmts: do_stmts,
+                    inferred_ty: Some(ty.clone()),
+                });
+
+                return (ty, Default::default());
+            }
+
             let (fun_ty, _) = check_expr(tc_state, &mut fun.node, &fun.loc, None, loop_stack);
 
             let fun_ty = fun_ty.normalize(tc_state.tys.tys.cons());
@@ -1570,6 +1694,11 @@ pub(super) fn check_expr(
             )
         }
 
+        ast::Expr::InlineC(_) => {
+            // Inline C expressions are desugared expressions generated by the type checker.
+            panic!("{loc}: BUG: Inline C expression in type checker");
+        }
+
         ast::Expr::Placeholder => {
             panic!("{loc}: BUG: Placeholder in check_expr");
         }
@@ -1757,7 +1886,7 @@ fn check_field_sel(
 ) -> (Ty, ast::Expr) {
     // TODO: What if we have a method and a field with the same name?
     if let Some((con, args)) = object_ty.con(tc_state.tys.tys.cons())
-        && let Some(field_ty) = select_field(tc_state, &con, &args, field, loc)
+        && let Some(field_ty) = select_field(tc_state, con, args, field, loc)
     {
         if !user_ty_args.is_empty() {
             panic!("{loc}: Field passed type arguments");
@@ -1874,15 +2003,22 @@ fn check_field_sel(
 
 fn select_field(
     tc_state: &mut TcFunState,
-    ty_con_id: &Id,
-    ty_args: &[Ty],
+    mut ty_con_id: Id,
+    mut ty_args: Vec<Ty>,
     field: &Name,
     loc: &ast::Loc,
 ) -> Option<Ty> {
+    if ty_con_id == id::builtins::C_PTR() {
+        assert_eq!(ty_args.len(), 1);
+        let (con, args) = ty_args[0].con(tc_state.tys.tys.cons())?;
+        ty_con_id = con;
+        ty_args = args;
+    }
+
     let ty_con = tc_state
         .tys
         .tys
-        .get_con(ty_con_id)
+        .get_con(&ty_con_id)
         .unwrap_or_else(|| panic!("{loc}: Unknown type {ty_con_id}"));
 
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
@@ -1893,11 +2029,15 @@ fn select_field(
             sum,
             value: _,
         }) if !sum => {
+            if cons.is_empty() {
+                return None;
+            }
             assert_eq!(cons.len(), 1);
+
             let con_scheme = cons.values().next().unwrap();
 
             let con_ty = con_scheme
-                .instantiate_with_tys(ty_args, tc_state.preds, loc)
+                .instantiate_with_tys(&ty_args, tc_state.preds, loc)
                 .deep_normalize(
                     tc_state.tys.tys.cons(),
                     tc_state.trait_env,
@@ -2521,6 +2661,9 @@ pub(crate) fn check_con_sel(tc_state: &mut TcFunState, con: &mut ast::Con, loc: 
         None => {
             if ty_details.sum {
                 panic!("{loc}: Sum type allocation {con_ty} needs a constructor");
+            }
+            if ty_details.cons.is_empty() {
+                panic!("{loc}: Type {con_ty} has no constructor and cannot be used as a value");
             }
             assert_eq!(ty_details.cons.len(), 1);
             ty_details.cons.values().next().unwrap()

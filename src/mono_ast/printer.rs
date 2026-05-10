@@ -74,6 +74,33 @@ impl TypeDeclRhs {
             TypeDeclRhs::Product(fields) => {
                 print_con_fields(fields, p);
             }
+
+            TypeDeclRhs::Extern(ExternType { c_type, fields }) => {
+                p.str(" = \"");
+                crate::ast::printer::escape_str_lit(c_type, p);
+                p.char('"');
+                if let Some(fields) = fields {
+                    p.char('(');
+                    p.indented(|p| {
+                        for ExternField {
+                            fir_name,
+                            ty,
+                            c_name,
+                        } in fields.iter()
+                        {
+                            p.nl();
+                            p.str(fir_name);
+                            p.str(": ");
+                            ty.print(p);
+                            p.str(" = \"");
+                            crate::ast::printer::escape_str_lit(c_name, p);
+                            p.str("\",");
+                        }
+                    });
+                    p.nl();
+                    p.char(')');
+                }
+            }
         }
     }
 }
@@ -538,6 +565,22 @@ impl Expr {
             Expr::Variant(VariantExpr { expr, ty: _ }) => {
                 p.char('~');
                 expr.node.print(p);
+            }
+
+            Expr::InlineC(InlineCExpr { parts, ty }) => {
+                p.str("inline(\"");
+                for part in parts {
+                    match part {
+                        InlineCPart::Str(s) => crate::ast::printer::escape_str_lit(s, p),
+                        InlineCPart::Var(name) => {
+                            p.char('`');
+                            p.str(name);
+                            p.char('`');
+                        }
+                    }
+                }
+                p.str("\")");
+                write!(p, " #| ty = {ty} |#").unwrap();
             }
         }
     }

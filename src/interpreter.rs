@@ -533,6 +533,7 @@ fn eval<W: Write>(
             field: _,
             idx,
             object_ty: _,
+            deref: _,
         }) => {
             let object = val!(eval(
                 w,
@@ -711,6 +712,10 @@ fn eval<W: Write>(
             // Also note: currently the only value types are integer types.
             eval(w, pgm, heap, locals, &expr.node, &expr.loc, call_stack)
         }
+
+        Expr::InlineC { .. } => {
+            panic!("{loc}: Interpreter cannot run inline C");
+        }
     }
 }
 
@@ -733,6 +738,7 @@ fn assign<W: Write>(
             field: _,
             idx,
             object_ty: _,
+            deref: _,
         }) => {
             let object = val!(eval(
                 w,
@@ -1421,6 +1427,10 @@ fn call_builtin_fun<W: Write>(
             let len = val_as_u32(args[3]);
             heap.array_copy_within(array, src, dst, len, Repr::from_mono_ty(t), loc, call_stack);
             FunRet::Val(pgm.unit_alloc)
+        }
+
+        BuiltinFunDecl::ArrayPtr { t: _ } => {
+            panic!("{loc}: Interpreter does not support Array.ptr");
         }
 
         BuiltinFunDecl::ReadFileUtf8 => {

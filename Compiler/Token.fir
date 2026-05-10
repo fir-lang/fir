@@ -110,6 +110,7 @@ value type TokenKind:
     Do
     Elif
     Else
+    Extern
     Fn_
     For
     If
@@ -294,6 +295,7 @@ impl ToStr[TokenKind]:
             TokenKind.DoubleRAngle: "DoubleRAngle"
             TokenKind.Elif: "Elif"
             TokenKind.Else: "Else"
+            TokenKind.Extern: "Extern"
             TokenKind.Eq: "Eq"
             TokenKind.EqEq: "EqEq"
             TokenKind.Exclamation: "Exclamation"

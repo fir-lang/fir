@@ -204,6 +204,19 @@ pub enum TypeDeclRhs {
 
     /// A type synonym: `type Foo = U32`.
     Synonym(L<Type>),
+
+    /// An extern type definition:
+    ///
+    /// - `extern type File = "FILE"`
+    ///
+    /// - With fields:
+    ///   ```text
+    ///   extern type DivT = "div_t"(
+    ///       quot: I32 = "quot",
+    ///       rem: I32 = "rem",
+    ///   )
+    ///   ```
+    Extern(ExternTypeDeclRhs),
 }
 
 /// A sum type constructor.
@@ -223,6 +236,24 @@ pub enum ConFields {
     Unnamed {
         fields: Vec<L<Type>>,
     },
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternTypeDeclRhs {
+    pub c_type: String,
+
+    /// The field list of the extern type.
+    ///
+    /// When not available, the type is abstract in Fir: we can't allocate it, can't access fields
+    /// in Fir.
+    pub fields: Option<Vec<ExternTypeField>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternTypeField {
+    pub name: Name,
+    pub fir_type: L<Type>,
+    pub c_type: String,
 }
 
 #[derive(Debug, Clone)]
@@ -256,7 +287,7 @@ pub enum Type {
     AssocTySelect { ty: L<Box<Type>>, assoc_ty: Name },
 }
 
-/// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
+/// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, exn]`.
 #[derive(Debug, Clone)]
 pub struct NamedType {
     /// Module prefix of the type constructor, e.g. in `Fir/Vec/Vec` this is the `Fir/Vec/` part.
@@ -671,6 +702,9 @@ pub enum Expr {
     /// A variant: `~Option.Some(123)`, `~123`.
     Variant(VariantExpr),
 
+    /// An inline C expression, desugared by the type checker from a `C/inline("...")` call.
+    InlineC(InlineCExpr),
+
     /// A dummy node used in place of removed AST nodes. (usually during desugaring)
     Placeholder,
 }
@@ -938,8 +972,20 @@ pub struct VariantExpr {
 }
 
 #[derive(Debug, Clone)]
+pub struct InlineCExpr {
+    pub parts: Vec<InlineCPart>,
+    pub inferred_ty: Option<Ty>,
+}
+
+#[derive(Debug, Clone)]
+pub enum InlineCPart {
+    Str(String),
+    Var(Name), // a local variable
+}
+
+#[derive(Debug, Clone)]
 pub struct ImportDecl {
-    /// Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`.
+    /// Attributes of the import declaration. E.g. `#[NoImplicitPrelude]`, `#[include(...)]`.
     pub attrs: Vec<Attribute>,
     pub items: Vec<ImportItem>,
 }
@@ -1478,6 +1524,8 @@ impl Expr {
                 expr.node.subst_ty_ids(substs);
             }
 
+            Expr::InlineC(_) => {}
+
             Expr::Placeholder => {
                 panic!("BUG: Placeholder in subst_ty_ids")
             }
@@ -1499,7 +1547,8 @@ impl Expr {
             | Expr::Do(DoExpr { inferred_ty, .. })
             | Expr::Record(RecordExpr { inferred_ty, .. })
             | Expr::Variant(VariantExpr { inferred_ty, .. })
-            | Expr::Int(IntExpr { inferred_ty, .. }) => inferred_ty.clone(),
+            | Expr::Int(IntExpr { inferred_ty, .. })
+            | Expr::InlineC(InlineCExpr { inferred_ty, .. }) => inferred_ty.clone(),
 
             Expr::Str(_) => Some(Ty::str()),
 

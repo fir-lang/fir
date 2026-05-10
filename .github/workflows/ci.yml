@@ -9,6 +9,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Install just
         run: sudo apt install -y just
 
@@ -21,6 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Install just
         run: sudo apt install -y just
 
@@ -32,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Install just
         run: sudo apt install -y just
@@ -48,6 +54,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Install just
         run: sudo apt install -y just
 
@@ -61,6 +69,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Install just
         run: sudo apt install -y just
 
@@ -73,6 +83,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Install just
         run: sudo apt install -y just
@@ -93,6 +105,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Install just
         run: sudo apt install -y just
 
@@ -105,6 +119,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Install just
         run: sudo apt install -y just
@@ -125,6 +141,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Install just
         run: sudo apt install -y just
 
@@ -144,6 +162,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Install just
         run: sudo apt install -y just
 
@@ -162,6 +182,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Install just
         run: sudo apt install -y just
@@ -185,6 +207,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Install just
         run: sudo apt install -y just
 
@@ -197,6 +221,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Install just
         run: sudo apt install -y just
@@ -216,6 +242,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Add wasm32 target
         run: rustup target add wasm32-unknown-unknown

@@ -288,6 +288,10 @@ pub enum BuiltinFunDecl {
         t: mono::Type,
     },
 
+    ArrayPtr {
+        t: mono::Type,
+    },
+
     ReadFileUtf8,
 
     GetArgs,
@@ -347,6 +351,11 @@ pub enum BuiltinConDecl {
     U32,
     I64,
     U64,
+
+    /// A C pointer.
+    CPtr {
+        t: mono::Type,
+    },
 }
 
 /// A constructor defined in Fir, monomorphised. Examples in mono AST syntax:
@@ -492,6 +501,10 @@ pub enum Expr {
         expr_ty: mono::Type,
         variant_ty: OrdMap<Name, mono::NamedType>,
     },
+
+    InlineC {
+        parts: Vec<InlineCPart>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -508,6 +521,9 @@ pub struct FieldSelExpr {
     pub idx: u32,
 
     pub object_ty: mono::Type,
+
+    /// Whether to index with `.` or `->`.
+    pub deref: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -544,6 +560,12 @@ pub struct IsExpr {
     pub expr: Box<L<Expr>>,
     pub pat: L<Pat>,
     pub expr_ty: mono::Type,
+}
+
+#[derive(Debug, Clone)]
+pub enum InlineCPart {
+    Str(String),
+    Var(LocalIdx),
 }
 
 #[derive(Debug, Clone)]
@@ -736,7 +758,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     }
                 }
 
-                Some(mono::TypeDeclRhs::Product(_)) | None => {
+                Some(mono::TypeDeclRhs::Product(_)) | Some(mono::TypeDeclRhs::Extern(_)) | None => {
                     product_con_nums
                         .entry(con_id.clone())
                         .or_default()
@@ -897,6 +919,26 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             ));
                             con_indices.push(idx);
                         }
+
+                        mono::TypeDeclRhs::Extern(mono::ExternType { c_type: _, fields }) => {
+                            value = true;
+                            let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
+                            lowered_pgm.heap_objs.push(HeapObj::Source(SourceConDecl {
+                                ty_name: ty_name.clone(),
+                                con_name: None,
+                                idx,
+                                ty_args: ty_args.clone(),
+                                fields: match fields {
+                                    Some(fields) => fields
+                                        .iter()
+                                        .map(|f| (Name::new(&f.c_name), f.ty.clone()))
+                                        .collect(),
+                                    None => vec![],
+                                },
+                                value: true,
+                            }));
+                            con_indices.push(idx);
+                        }
                     }
                     NamedTypeRhs::Source(rhs.clone())
                 }
@@ -905,6 +947,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     // We don't have the syntax to mark prim types as values, but they're all values
                     // currently.
                     value = true;
+
                     let con = match ty_name.as_str() {
                         "Array" => {
                             assert_eq!(ty_args.len(), 1);
@@ -941,6 +984,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         "U64" => {
                             assert_eq!(ty_args.len(), 0);
                             BuiltinConDecl::U64
+                        }
+
+                        "Ptr" => {
+                            assert_eq!(ty_args.len(), 1);
+                            BuiltinConDecl::CPtr {
+                                t: ty_args[0].clone(),
+                            }
                         }
 
                         other => panic!("Unknown built-in type: {other}"),
@@ -1488,6 +1538,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                                 BuiltinFunDecl::ArrayCopyWithin { t }
                             }
 
+                            ("Array", "ptr") => {
+                                // prim Array.ptr(self: Array[t]) Ptr[t]
+                                assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                                let t = fun_ty_args[0].clone();
+                                BuiltinFunDecl::ArrayPtr { t }
+                            }
+
                             ("I32", "asU32") => {
                                 assert_eq!(fun_ty_args.len(), 1); // exception (implicit)
                                 BuiltinFunDecl::I32AsU32
@@ -1566,7 +1623,9 @@ fn lower_source_con(
             mono::ConFields::Empty => vec![],
             mono::ConFields::Named(fields) => fields
                 .iter()
-                .map(|(field_name, field_ty)| (field_name.clone(), field_ty.clone()))
+                .map(|(field_name, field_ty)| {
+                    (Name::new(c_field_name(field_name)), field_ty.clone())
+                })
                 .collect(),
             mono::ConFields::Unnamed(fields) => fields
                 .iter()
@@ -1693,6 +1752,8 @@ fn lower_expr(
 
             let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty_id).unwrap().get(ty_args).unwrap();
 
+            let synthesized_extern_fields: mono::ConFields;
+
             let con_fields = match &ty_decl.rhs {
                 Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
                     for con_ in cons {
@@ -1709,6 +1770,19 @@ fn lower_expr(
                 }
 
                 Some(mono::TypeDeclRhs::Product(fields)) => fields,
+
+                Some(mono::TypeDeclRhs::Extern(extern_ty)) => {
+                    let extern_fields = extern_ty.fields.as_ref().unwrap_or_else(|| {
+                        panic!("BUG: {loc}: Pat::Con on an extern type without fields {ty}")
+                    });
+                    synthesized_extern_fields = mono::ConFields::Named(
+                        extern_fields
+                            .iter()
+                            .map(|f| (f.fir_name.clone(), f.ty.clone()))
+                            .collect(),
+                    );
+                    &synthesized_extern_fields
+                }
 
                 None => &mono::ConFields::Empty,
             };
@@ -1735,7 +1809,34 @@ fn lower_expr(
 
             let (object, _object_vars) = lower_bl_expr(object, closures, indices, scope, mono_pgm);
 
-            let field_idx: u32 = match &object_ty {
+            fn is_value_type(ty: &mono::Type, pgm: &mono::MonoPgm) -> bool {
+                match ty {
+                    mono::Type::Named(mono::NamedType { name, args }) => {
+                        pgm.ty.get(name).unwrap().get(args).unwrap().value
+                    }
+                    mono::Type::Record { .. } | mono::Type::Variant { .. } => true,
+                    mono::Type::Fn(_) => false,
+                }
+            }
+
+            let deref;
+
+            let object_with_field_ty = if let mono::Type::Named(mono::NamedType { name, args }) =
+                &object_ty
+                && name == "Ptr"
+            {
+                deref = true;
+                args[0].clone()
+            } else {
+                deref = !is_value_type(&object_ty, mono_pgm);
+                object_ty.clone()
+            };
+
+            // Defaults to the sanitized Fir name, extern types override with the C name from the
+            // declaration.
+            let mut field_name: Name = Name::new(c_field_name(field));
+
+            let field_idx: u32 = match &object_with_field_ty {
                 mono::Type::Named(mono::NamedType { name, args }) => {
                     let ty_decl: &mono::TypeDecl =
                         mono_pgm.ty.get(name).unwrap().get(args).unwrap();
@@ -1765,6 +1866,20 @@ fn lower_expr(
                                 panic!("BUG: {loc}: FieldSel object doesn't have named fields")
                             }
                         },
+                        Some(mono::TypeDeclRhs::Extern(extern_ty)) => {
+                            let extern_fields = extern_ty.fields.as_ref().unwrap_or_else(|| {
+                                panic!("BUG: {loc}: FieldSel on extern type without fields {name}")
+                            });
+                            let mut field_idx: u32 = 0;
+                            for (field_idx_, extern_field) in extern_fields.iter().enumerate() {
+                                if field == &extern_field.fir_name {
+                                    field_idx = field_idx_ as u32;
+                                    field_name = Name::new(&extern_field.c_name);
+                                    break;
+                                }
+                            }
+                            field_idx
+                        }
                     }
                 }
 
@@ -1789,9 +1904,10 @@ fn lower_expr(
             (
                 Expr::FieldSel(FieldSelExpr {
                     object,
-                    field: field.clone(),
+                    field: field_name,
                     idx: field_idx,
                     object_ty,
+                    deref,
                 }),
                 Default::default(),
             )
@@ -2248,6 +2364,19 @@ fn lower_expr(
                 vars,
             )
         }
+
+        mono::Expr::InlineC(mono::InlineCExpr { parts, ty: _ }) => (
+            Expr::InlineC {
+                parts: parts
+                    .iter()
+                    .map(|part| match part {
+                        mono::InlineCPart::Str(str) => InlineCPart::Str(str.clone()),
+                        mono::InlineCPart::Var(var) => InlineCPart::Var(scope.use_var(var, loc)),
+                    })
+                    .collect(),
+            },
+            Default::default(),
+        ),
     }
 }
 
@@ -2345,6 +2474,8 @@ fn lower_pat(
 
             let ty_decl: &mono::TypeDecl = mono_pgm.ty.get(ty).unwrap().get(ty_args).unwrap();
 
+            let synthesized_extern_fields: mono::ConFields;
+
             let con_fields: &mono::ConFields = match &ty_decl.rhs {
                 Some(mono::TypeDeclRhs::Sum(cons)) => 'l: {
                     for con_ in cons {
@@ -2361,6 +2492,19 @@ fn lower_pat(
                 }
 
                 Some(mono::TypeDeclRhs::Product(fields)) => fields,
+
+                Some(mono::TypeDeclRhs::Extern(extern_ty)) => {
+                    let extern_fields = extern_ty.fields.as_ref().unwrap_or_else(|| {
+                        panic!("BUG: {loc}: Pat::Con on extern type without fields {ty}")
+                    });
+                    synthesized_extern_fields = mono::ConFields::Named(
+                        extern_fields
+                            .iter()
+                            .map(|f| (f.fir_name.clone(), f.ty.clone()))
+                            .collect(),
+                    );
+                    &synthesized_extern_fields
+                }
 
                 None => panic!("BUG: {loc}: Type {ty} doesn't have any constructors",),
             };
@@ -2663,14 +2807,55 @@ fn lower_splice(
                             node: Expr::LocalVar(splice_local_idx),
                             loc: splice.loc.clone(),
                         }),
-                        field: splice_field_name.clone(),
+                        field: Name::new(c_field_name(splice_field_name)),
                         idx: field_idx,
                         object_ty: splice_ty.clone(),
+                        deref: false,
                     }),
                     loc: splice.loc.clone(),
                 },
             }),
             loc: splice.loc.clone(),
         })
+    }
+}
+
+pub fn c_field_name(name: &Name) -> &str {
+    match name.as_str() {
+        "auto" => "auto_",
+        "break" => "break_",
+        "case" => "case_",
+        "char" => "char_",
+        "const" => "const_",
+        "continue" => "continue_",
+        "default" => "default_",
+        "do" => "do_",
+        "double" => "double_",
+        "else" => "else_",
+        "enum" => "enum_",
+        "extern" => "extern_",
+        "float" => "float_",
+        "for" => "for_",
+        "goto" => "goto_",
+        "if" => "if_",
+        "inline" => "inline_",
+        "int" => "int_",
+        "long" => "long_",
+        "register" => "register_",
+        "restrict" => "restrict_",
+        "return" => "return_",
+        "short" => "short_",
+        "signed" => "signed_",
+        "sizeof" => "sizeof_",
+        "static" => "static_",
+        "struct" => "struct_",
+        "switch" => "switch_",
+        "typedef" => "typedef_",
+        "union" => "union_",
+        "unsigned" => "unsigned_",
+        "void" => "void_",
+        "volatile" => "volatile_",
+        "while" => "while_",
+        s => s,
     }
 }

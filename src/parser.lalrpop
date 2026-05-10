@@ -1,7 +1,7 @@
 #![allow(clippy::all)]
 
 use crate::ast::*;
-use crate::interpolation::{str_parts, copy_update_escapes};
+use crate::interpolation::*;
 use crate::module::ModulePath;
 use crate::parser_utils::*;
 use crate::token::*;
@@ -74,6 +74,7 @@ extern {
         "do" => Token { kind: TokenKind::Do, .. },
         "elif" => Token { kind: TokenKind::Elif, .. },
         "else" => Token { kind: TokenKind::Else, .. },
+        "extern" => Token { kind: TokenKind::Extern, .. },
         "fn" => Token { kind: TokenKind::Fn, .. },
         "for" => Token { kind: TokenKind::For, .. },
         "if" => Token { kind: TokenKind::If, .. },
@@ -161,6 +162,11 @@ Attributes: Vec<Attribute> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TypeDecl: L<TypeDecl> = {
+
+    //
+    // Sums and products
+    //
+
     <l:@L> <attrs:Attributes> <value:"value"?> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
             attrs,
@@ -182,6 +188,10 @@ TypeDecl: L<TypeDecl> = {
             type_param_kinds: vec![],
             rhs: Some(rhs),
         }),
+
+    //
+    // Type synonyms
+    //
 
     <l:@L> <attrs:Attributes>
             "type" <type_name:UpperIdLBracket> <type_params:TypeParams> "="
@@ -205,6 +215,10 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(TypeDeclRhs::Synonym(ty)),
         }),
 
+    //
+    // Prim types
+    //
+
     <l:@L> <attrs:Attributes> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
             attrs,
@@ -224,6 +238,39 @@ TypeDecl: L<TypeDecl> = {
             type_param_kinds: vec![],
             rhs: None,
         }),
+
+    //
+    // Extern types
+    //
+
+    <l:@L> "extern" "type" <type_name:UpperId> "=" BeginStr <str:EndStr>
+           <fields:("(" <Sep<ExternTypeField, ",">> ")")?> NEWLINE <r:@R> => {
+        let c_type = str.text.as_str();
+        let c_type = &c_type[0..c_type.len() - 1]; // drop the "
+        L::new(module, l, r, TypeDecl {
+            attrs: vec![],
+            value: true, // treat extern types as values
+            name: type_name.name(),
+            type_params: vec![],
+            type_param_kinds: vec![],
+            rhs: Some(TypeDeclRhs::Extern(ExternTypeDeclRhs {
+                c_type: c_type.to_string(),
+                fields,
+            })),
+        })
+    }
+}
+
+ExternTypeField: ExternTypeField = {
+    <name:LowerId> ":" <fir_type:LType> "=" BeginStr <str:EndStr> => {
+        let c_type = str.text.as_str();
+        let c_type = &c_type[0..c_type.len() - 1]; // drop the "
+        ExternTypeField {
+            name: Name::new(name.smol_str()),
+            fir_type,
+            c_type: c_type.to_string(),
+        }
+    }
 }
 
 TypeDeclRhs: TypeDeclRhs = {
