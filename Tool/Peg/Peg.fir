@@ -3,17 +3,15 @@ import [
     Compiler/Lexer,
     Compiler/Scanner,
     Compiler/Token,
-    Tool/Peg/ParseTree,
+    Tool/Peg/ParseTree as PT,
     Tool/Peg/PegGrammar,
 ]
 
 
-# This would normally be called just `ParseTree`, but we don't have proper
-# modules yet so that causes name conflicts. Rename after implementing modules.
-type PegParseTree = ParseTree[Token, NonTerminal]
+type ParseTree = PT/ParseTree[Token, NonTerminal]
 
 
-type TokenTree = Vec[ParseTree[Token, NonTerminal]]
+type TokenTree = Vec[ParseTree]
 
 
 main():
@@ -149,7 +147,7 @@ type Grammar(
 )
 
 
-convertParseTree(tree: PegParseTree) Grammar:
+convertParseTree(tree: ParseTree) Grammar:
     let grammar = tree.asNonTerminal(NonTerminal.Grammar)
 
     # This code is a bit hacky.. We used to have a proper AST type that we kept after bootstrapping,
@@ -162,14 +160,14 @@ convertParseTree(tree: PegParseTree) Grammar:
                 nodes = importDeclNodes,
             ):
         let importStr = StrBuf.withCapacity(50)
-        for pathTree: PegParseTree in importDeclNodes.iter():
+        for pathTree: ParseTree in importDeclNodes.iter():
             let pathNodes = pathTree.asNonTerminal(NonTerminal.Path)
             importStr.clear()
 
             # Path is either:
             # - ModulePrefix ("Compiler/") + UpperId ("Token"), or
             # - UpperId ("Foo") alone for single-segment imports.
-            for node: PegParseTree in pathNodes.iter():
+            for node: ParseTree in pathNodes.iter():
                 importStr.pushStr(node.asTerminal().text)
             imports.push(importStr.toStr())
 
@@ -177,7 +175,7 @@ convertParseTree(tree: PegParseTree) Grammar:
     let terminalType: Option[Str] = Option.None
     let nonTerminalType: Option[Str] = Option.None
     let userStateType: Option[Str] = Option.None
-    for typeDecl: PegParseTree in typeDecls.iter():
+    for typeDecl: ParseTree in typeDecls.iter():
         let nodes = typeDecl.asNonTerminal(NonTerminal.TypeDecl)
         let typeName = nodes.get(0).asTerminal().text
         let typeValue = nodes.get(1).asTerminal().text
@@ -211,7 +209,7 @@ convertParseTree(tree: PegParseTree) Grammar:
     let converted: Vec[NonTerminalDecl] = Vec.withCapacity(
         nonTerminalDecls.len(),
     )
-    for decl: PegParseTree in nonTerminalDecls.iter():
+    for decl: ParseTree in nonTerminalDecls.iter():
         converted.push(
             convertNonTerminalDecl(
                 decl.asNonTerminal(NonTerminal.NonTerminalDecl),
@@ -228,28 +226,28 @@ convertParseTree(tree: PegParseTree) Grammar:
     )
 
 
-convertTerminalsDecl(nodes: Vec[PegParseTree]) TerminalsDecl:
+convertTerminalsDecl(nodes: Vec[ParseTree]) TerminalsDecl:
     let terminals: Vec[TerminalDecl] = Vec.withCapacity(nodes.len())
 
-    for node: PegParseTree in nodes.iter():
+    for node: ParseTree in nodes.iter():
         let node = node.asNonTerminal(NonTerminal.TerminalDecl)
         let name = node.get(0).asTerminal().text
         let name = name.substr(0, name.len() - 1)
         let pat: Vec[Token] = Vec.withCapacity(node.len() - 1)
-        for tok: PegParseTree in node.iter().skip(1):
+        for tok: ParseTree in node.iter().skip(1):
             pat.push(tok.asTerminal())
         terminals.push(TerminalDecl(name, pat))
 
     TerminalsDecl(terminals)
 
 
-convertNonTerminalDecl(nodes: Vec[PegParseTree]) NonTerminalDecl:
+convertNonTerminalDecl(nodes: Vec[ParseTree]) NonTerminalDecl:
     let name = nodes.get(0).asTerminal().text
 
     let symIdx: U32 = 1
 
-    let preds: Vec[Vec[PegParseTree]] = Vec.empty()
-    let ret: Option[Vec[PegParseTree]] = Option.None
+    let preds: Vec[Vec[ParseTree]] = Vec.empty()
+    let ret: Option[Vec[ParseTree]] = Option.None
 
     # Predicates are added directly to the tree, so the last type is the return
     # type and the previous ones are predicates.
@@ -262,17 +260,17 @@ convertNonTerminalDecl(nodes: Vec[PegParseTree]) NonTerminalDecl:
 
     let alts: Vec[Alt] = Vec.withCapacity(nodes.len() - symIdx)
 
-    for altTree: PegParseTree in nodes.iter().skip(symIdx):
+    for altTree: ParseTree in nodes.iter().skip(symIdx):
         let altTreeNodes = altTree.asNonTerminal(NonTerminal.NonTerminalAlt)
         alts.push(convertAlt(altTreeNodes))
 
     NonTerminalDecl(name, preds, ret, alts)
 
 
-convertAlt(nodes: Vec[PegParseTree]) Alt:
+convertAlt(nodes: Vec[ParseTree]) Alt:
     let symbols: Vec[Symbol] = Vec.withCapacity(nodes.len())
 
-    for symbolTree: PegParseTree in nodes.iter():
+    for symbolTree: ParseTree in nodes.iter():
         if symbolTree
                 is ParseTree.NonTerminal(
                     kind = NonTerminal.NonTerminalRhs,
@@ -293,7 +291,7 @@ convertAlt(nodes: Vec[PegParseTree]) Alt:
     Alt(symbols, rhs = Option.None)
 
 
-convertSymbol(nodes: Vec[PegParseTree]) Symbol:
+convertSymbol(nodes: Vec[ParseTree]) Symbol:
     let symbolIdx: U32 = if nodes.get(0)
             is ParseTree.NonTerminal(kind = NonTerminal.SymbolPrefix, ..):
         1
@@ -337,7 +335,7 @@ convertSymbol(nodes: Vec[PegParseTree]) Symbol:
     symbol
 
 
-convertSymbolNonRec(nodes: Vec[PegParseTree]) Symbol:
+convertSymbolNonRec(nodes: Vec[ParseTree]) Symbol:
     if nodes.len() == 1:
         let terminal = nodes.get(0).asTerminal()
         match terminal.kind:
@@ -350,7 +348,7 @@ convertSymbolNonRec(nodes: Vec[PegParseTree]) Symbol:
             _: panic("")
     else:
         let symbols: Vec[Symbol] = Vec.withCapacity(nodes.len())
-        for node: PegParseTree in nodes.iter():
+        for node: ParseTree in nodes.iter():
             symbols.push(convertSymbol(node.asNonTerminal(NonTerminal.Symbol)))
         Symbol.Group(symbols)
 
@@ -551,7 +549,7 @@ generateNonTerminal(
                 )
             Option.Some(semanticActionTokens):
                 let tokens = Vec.withCapacity(50)
-                for node: PegParseTree in semanticActionTokens.iter():
+                for node: ParseTree in semanticActionTokens.iter():
                     parseTreeTokens(node, tokens)
                 let code = tokensToCode(tokens)
                 let lines: Vec[Str] = Vec.fromIter(code.lines())
@@ -1086,20 +1084,20 @@ makeThrow() Doc:
     Doc.str("throw(state.updateErrorCursor(state._cursor))")
 
 
-generateType(nodes: Vec[PegParseTree]) Str:
+generateType(nodes: Vec[ParseTree]) Str:
     # Size of a generic type with one argument, e.g. `Option[U32]`.
     let tokens: Vec[Token] = Vec.withCapacity(4)
-    for node: PegParseTree in nodes.iter():
+    for node: ParseTree in nodes.iter():
         parseTreeTokens(node, tokens)
     tokensToCode(tokens)
 
 
-parseTreeTokens(tree: ParseTree[t, nt], tokens: Vec[t]):
+parseTreeTokens(tree: ParseTree, tokens: Vec[Token]):
     match tree:
         ParseTree.Terminal(t): tokens.push(t)
 
         ParseTree.NonTerminal(nodes, ..):
-            for node: ParseTree[t, nt] in nodes.iter():
+            for node: ParseTree in nodes.iter():
                 parseTreeTokens(node, tokens)
 
 
