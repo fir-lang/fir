@@ -24,9 +24,9 @@ pub fn add_missing_type_params(pgm: &mut LoadedPgm) {
                 add_missing_type_params_fun(&mut decl.node.sig, &mut Default::default(), &decl.loc)
             }
 
-            ast::TopDecl::Impl(decl) => add_missing_type_params_impl(&mut decl.node, &decl.loc),
+            ast::TopDecl::Impl(decl) => add_missing_type_params_impl(&mut decl.node),
 
-            ast::TopDecl::Trait(decl) => add_missing_type_params_trait(&mut decl.node, &decl.loc),
+            ast::TopDecl::Trait(decl) => add_missing_type_params_trait(&mut decl.node),
 
             ast::TopDecl::Type(decl) => add_missing_type_params_type(&mut decl.node),
 
@@ -57,24 +57,24 @@ fn add_missing_type_params_fun(
     let bound_vars: HashSet<Name> = tvs.keys().cloned().collect();
 
     for pred in &sig.context.preds {
-        collect_pred_tvs(&pred.node, &pred.loc, tvs);
+        collect_pred_tvs(&pred.node, tvs);
     }
     match &sig.self_ {
         ast::SelfParam::No | ast::SelfParam::Implicit => {}
         ast::SelfParam::Explicit(ty) => {
-            collect_tvs(&ty.node, &ty.loc, tvs);
+            collect_tvs(&ty.node, tvs);
         }
     }
     for (_, param_ty) in &sig.params {
         if let Some(param_ty) = param_ty {
-            collect_tvs(&param_ty.node, &param_ty.loc, tvs);
+            collect_tvs(&param_ty.node, tvs);
         }
     }
     if let Some(ret) = &sig.return_ty {
-        collect_tvs(&ret.node, &ret.loc, tvs);
+        collect_tvs(&ret.node, tvs);
     }
     if let Some(exn) = &sig.exceptions {
-        collect_tvs(&exn.node, &exn.loc, tvs);
+        collect_tvs(&exn.node, tvs);
     }
 
     // NB. Do not use `Set::difference` here as that will change order of the type variables. We
@@ -88,17 +88,17 @@ fn add_missing_type_params_fun(
     }
 }
 
-fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
+fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
     assert!(decl.context.type_params.is_empty()); // first time visiting this impl
 
     let mut impl_context_var_kinds: OrderMap<Name, Option<Kind>> = Default::default();
 
     for pred in &decl.context.preds {
-        collect_pred_tvs(&pred.node, &pred.loc, &mut impl_context_var_kinds);
+        collect_pred_tvs(&pred.node, &mut impl_context_var_kinds);
     }
 
     for ty in &decl.tys {
-        collect_tvs(&ty.node, &ty.loc, &mut impl_context_var_kinds);
+        collect_tvs(&ty.node, &mut impl_context_var_kinds);
     }
 
     let impl_context_vars: OrderSet<Name> = impl_context_var_kinds.keys().cloned().collect();
@@ -128,7 +128,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
         .collect();
 }
 
-fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
+fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
     assert!(decl.type_param_kinds.is_empty());
 
     let mut trait_context_var_kinds: OrderMap<Name, Option<Kind>> = Default::default();
@@ -148,7 +148,7 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
                 default,
             } => {
                 if let Some(default) = default {
-                    collect_tvs(&default.node, &default.loc, &mut trait_context_var_kinds);
+                    collect_tvs(&default.node, &mut trait_context_var_kinds);
                 }
             }
 
@@ -201,7 +201,7 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
             collect_extension_tvs(extension, &mut type_param_kinds, RecordOrVariant::Variant);
         }
         Some(ast::TypeDeclRhs::Synonym(ty)) => {
-            collect_tvs(&ty.node, &ty.loc, &mut type_param_kinds);
+            collect_tvs(&ty.node, &mut type_param_kinds);
         }
         Some(ast::TypeDeclRhs::Extern(_)) => {
             panic!() // handled above
@@ -223,9 +223,9 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
 /// variant row in `tvs`. Otherwise we don't specify the kind of the variable so that we can update
 /// it as record or variant row when we see one of the marker traits later, or default the kind as
 /// `*` if not.
-pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Name, Option<Kind>>) {
+pub fn collect_tvs(ty: &ast::Type, tvs: &mut OrderMap<Name, Option<Kind>>) {
     match ty {
-        ast::Type::Named(named_ty) => collect_named_ty_tvs(named_ty, loc, tvs),
+        ast::Type::Named(named_ty) => collect_named_ty_tvs(named_ty, tvs),
 
         ast::Type::Var(var) => {
             tvs.entry(var.clone()).or_insert(None);
@@ -237,7 +237,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Name, Opti
             is_row: _,
         } => {
             for (_field_name, field_ty) in fields {
-                collect_tvs(&field_ty.node, &field_ty.loc, tvs);
+                collect_tvs(&field_ty.node, tvs);
             }
             collect_extension_tvs(extension, tvs, RecordOrVariant::Record);
         }
@@ -248,7 +248,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Name, Opti
             is_row: _,
         } => {
             for alt in alts {
-                collect_named_ty_tvs(alt, loc, tvs);
+                collect_named_ty_tvs(alt, tvs);
             }
             collect_extension_tvs(extension, tvs, RecordOrVariant::Variant);
         }
@@ -259,51 +259,47 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Name, Opti
             exceptions,
         }) => {
             for arg in args {
-                collect_tvs(&arg.node, &arg.loc, tvs);
+                collect_tvs(&arg.node, tvs);
             }
             if let Some(ret) = ret {
-                collect_tvs(&ret.node, &ret.loc, tvs);
+                collect_tvs(&ret.node, tvs);
             }
             if let Some(exn) = exceptions {
-                collect_tvs(&exn.node, &exn.loc, tvs);
+                collect_tvs(&exn.node, tvs);
             }
         }
 
         ast::Type::AssocTySelect { ty, assoc_ty: _ } => {
-            collect_tvs(&ty.node, &ty.loc, tvs);
+            collect_tvs(&ty.node, tvs);
         }
     }
 }
 
-fn collect_named_ty_tvs(
-    named_ty: &ast::NamedType,
-    _loc: &ast::Loc,
-    tvs: &mut OrderMap<Name, Option<Kind>>,
-) {
+fn collect_named_ty_tvs(named_ty: &ast::NamedType, tvs: &mut OrderMap<Name, Option<Kind>>) {
     let ast::NamedType {
         mod_prefix: _,
         name: _,
         args,
     } = named_ty;
     for arg in args {
-        collect_tvs(&arg.node, &arg.loc, tvs);
+        collect_tvs(&arg.node, tvs);
     }
 }
 
-fn collect_pred_tvs(pred: &ast::Pred, loc: &ast::Loc, tvs: &mut OrderMap<Name, Option<Kind>>) {
+fn collect_pred_tvs(pred: &ast::Pred, tvs: &mut OrderMap<Name, Option<Kind>>) {
     match pred {
         ast::Pred::Kind { var, kind } => {
             let old = tvs.insert(var.clone(), convert_kind(kind));
             assert!(old.is_none());
         }
-        ast::Pred::App(ty) => collect_named_ty_tvs(ty, loc, tvs),
+        ast::Pred::App(ty) => collect_named_ty_tvs(ty, tvs),
         ast::Pred::AssocTyEq {
             ty,
             assoc_ty: _,
             eq,
         } => {
-            collect_named_ty_tvs(ty, loc, tvs);
-            collect_tvs(&eq.node, &eq.loc, tvs);
+            collect_named_ty_tvs(ty, tvs);
+            collect_tvs(&eq.node, tvs);
         }
     }
 }
@@ -313,13 +309,13 @@ fn collect_fields_tvs(fields: &ast::ConFields, tvs: &mut OrderMap<Name, Option<K
         ast::ConFields::Empty => {}
         ast::ConFields::Named { fields, extension } => {
             for (_, ty) in fields.iter() {
-                collect_tvs(&ty.node, &ty.loc, tvs);
+                collect_tvs(&ty.node, tvs);
             }
             collect_extension_tvs(extension, tvs, RecordOrVariant::Record);
         }
         ast::ConFields::Unnamed { fields } => {
             for ty in fields.iter() {
-                collect_tvs(&ty.node, &ty.loc, tvs);
+                collect_tvs(&ty.node, tvs);
             }
         }
     }
@@ -340,7 +336,7 @@ fn collect_extension_tvs(
                     panic!("{}: Conflicting kind of type variable {}", ext.loc, var,);
                 }
             }
-            other => collect_tvs(other, &ext.loc, tvs),
+            other => collect_tvs(other, tvs),
         }
     }
 }

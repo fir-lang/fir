@@ -1546,7 +1546,7 @@ fn collect_schemes(
                         trait_ty_con.ty_params.iter().zip(impl_decl.node.tys.iter())
                     {
                         let ty_param_renamed = rename_domain_var(ty_param, uniq);
-                        kind_inference::collect_tvs(&ty_arg.node, &ty_arg.loc, &mut arg_fvs);
+                        kind_inference::collect_tvs(&ty_arg.node, &mut arg_fvs);
                         let ty_arg = convert_ast_ty(tys, module_env, &ty_arg.node, &ty_arg.loc);
                         trait_fun_scheme = trait_fun_scheme.subst(&ty_param_renamed, &ty_arg);
                     }
