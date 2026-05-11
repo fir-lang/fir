@@ -20,6 +20,7 @@ mod unification;
 
 use convert::*;
 pub use id::Id;
+use kind_inference::*;
 pub(crate) use module_env::ModuleEnv;
 use normalization::normalize_stmt;
 use stmt::check_stmts;
@@ -75,7 +76,6 @@ pub struct PgmTypes {
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
 pub(crate) fn check_pgm(pgm: &mut LoadedPgm) -> (PgmTypes, HashMap<ModulePath, ModuleEnv>) {
-    kind_inference::add_missing_type_params(pgm);
     let module_envs = module_env::generate_module_envs(pgm);
     let mut tys = collect_types(pgm, &module_envs);
     let trait_env = collect_trait_env(pgm, &mut tys.tys, &module_envs);
@@ -254,9 +254,11 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
     let mut tys: TyMap = Default::default();
 
     // Collect all type constructors first, then add fields and methods.
-    for (module_path, decl) in pgm.iter_decls() {
-        match &decl.node {
+    for (module_path, decl) in pgm.iter_decls_mut() {
+        match &mut decl.node {
             ast::TopDecl::Type(ty_decl) => {
+                add_missing_type_params_type(&mut ty_decl.node);
+
                 // Type synonyms are handled separately after this pass.
                 if matches!(ty_decl.node.rhs, Some(ast::TypeDeclRhs::Synonym(_))) {
                     continue;
@@ -295,6 +297,8 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
             }
 
             ast::TopDecl::Trait(trait_decl) => {
+                add_missing_type_params_trait(&mut trait_decl.node);
+
                 assert_eq!(
                     trait_decl.node.type_params.len(),
                     trait_decl.node.type_param_kinds.len()
@@ -344,7 +348,17 @@ fn collect_cons(pgm: &mut LoadedPgm, module_envs: &HashMap<ModulePath, ModuleEnv
                 );
             }
 
-            ast::TopDecl::Import(_) | ast::TopDecl::Fun(_) | ast::TopDecl::Impl(_) => {}
+            ast::TopDecl::Impl(impl_decl) => {
+                add_missing_type_params_impl(&mut impl_decl.node);
+            }
+
+            ast::TopDecl::Fun(fun_decl) => add_missing_type_params_fun(
+                &mut fun_decl.node.sig,
+                &mut Default::default(),
+                &decl.loc,
+            ),
+
+            ast::TopDecl::Import(_) => {}
         }
     }
 
@@ -1539,14 +1553,10 @@ fn collect_schemes(
 
                     // Substitute trait arguments. Add free variables of the arguments to the
                     // context.
-
-                    let mut arg_fvs: OrderMap<Name, Option<Kind>> = Default::default();
-
                     for ((ty_param, _), ty_arg) in
                         trait_ty_con.ty_params.iter().zip(impl_decl.node.tys.iter())
                     {
                         let ty_param_renamed = rename_domain_var(ty_param, uniq);
-                        kind_inference::collect_tvs(&ty_arg.node, &mut arg_fvs);
                         let ty_arg = convert_ast_ty(tys, module_env, &ty_arg.node, &ty_arg.loc);
                         trait_fun_scheme = trait_fun_scheme.subst(&ty_param_renamed, &ty_arg);
                     }

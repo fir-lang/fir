@@ -13,36 +13,17 @@ Also adds a type parameter for the missing exception types in functions. E.g.
 
 use crate::ast;
 use crate::collections::*;
-use crate::module_loader::LoadedPgm;
 use crate::type_checker::convert::convert_kind;
 use crate::type_checker::{Kind, Name, RecordOrVariant};
 
-pub fn add_missing_type_params(pgm: &mut LoadedPgm) {
-    for (_, decl) in pgm.iter_decls_mut() {
-        match &mut decl.node {
-            ast::TopDecl::Fun(decl) => {
-                add_missing_type_params_fun(&mut decl.node.sig, &mut Default::default(), &decl.loc)
-            }
-
-            ast::TopDecl::Impl(decl) => add_missing_type_params_impl(&mut decl.node),
-
-            ast::TopDecl::Trait(decl) => add_missing_type_params_trait(&mut decl.node),
-
-            ast::TopDecl::Type(decl) => add_missing_type_params_type(&mut decl.node),
-
-            ast::TopDecl::Import(_) => {}
-        }
-    }
-}
-
-// `tvs` are the variables bound in the enclosing `trait` or `impl` context.
-//
-// When checking a `trait`, the updated kinds in `tvs` will be used as the kinds of the `trait` type
-// parameters.
-//
-// When checking an `impl`, the kinds of type parameters in `tvs` should all be specified before
-// calling this function.
-fn add_missing_type_params_fun(
+/// `tvs` are the variables bound in the enclosing `trait` or `impl` context.
+///
+/// When checking a `trait`, the updated kinds in `tvs` will be used as the kinds of the `trait` type
+/// parameters.
+///
+/// When checking an `impl`, the kinds of type parameters in `tvs` should all be specified before
+/// calling this function.
+pub(crate) fn add_missing_type_params_fun(
     sig: &mut ast::FunSig,
     tvs: &mut OrderMap<Name, Option<Kind>>,
     loc: &ast::Loc,
@@ -88,7 +69,7 @@ fn add_missing_type_params_fun(
     }
 }
 
-fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
+pub(crate) fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
     assert!(decl.context.type_params.is_empty()); // first time visiting this impl
 
     let mut impl_context_var_kinds: OrderMap<Name, Option<Kind>> = Default::default();
@@ -128,7 +109,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
         .collect();
 }
 
-fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
+pub(crate) fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
     assert!(decl.type_param_kinds.is_empty());
 
     let mut trait_context_var_kinds: OrderMap<Name, Option<Kind>> = Default::default();
@@ -174,7 +155,7 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
         .collect();
 }
 
-fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
+pub(crate) fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
     assert!(ty.type_param_kinds.is_empty());
 
     // `extern` types can only take `*` arguments.
@@ -223,7 +204,7 @@ fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
 /// variant row in `tvs`. Otherwise we don't specify the kind of the variable so that we can update
 /// it as record or variant row when we see one of the marker traits later, or default the kind as
 /// `*` if not.
-pub fn collect_tvs(ty: &ast::Type, tvs: &mut OrderMap<Name, Option<Kind>>) {
+fn collect_tvs(ty: &ast::Type, tvs: &mut OrderMap<Name, Option<Kind>>) {
     match ty {
         ast::Type::Named(named_ty) => collect_named_ty_tvs(named_ty, tvs),
 

@@ -139,7 +139,7 @@ pub enum TopDecl {
     /// A type declaration: `type T = ...`.
     Type(L<TypeDecl>),
 
-    /// A function declaration: `fn f(...) = ...`.
+    /// A function declaration: `f(...): ...`.
     Fun(L<FunDecl>),
 
     /// An import declaration.
